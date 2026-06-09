@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>时分秒</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #4A90D9; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* === 模式1: 认识秒针 === */
+    .clock-area { text-align: center; padding: 20px 16px; }
+    .clock-svg { width: 280px; height: 280px; margin: 12px auto; display: block; }
+    .clock-face { fill: #FFFFFF; stroke: #4A90D9; stroke-width: 4; }
+    .clock-center { fill: #FF9500; }
+    .clock-hour-hand { stroke: #1D1D1F; stroke-width: 5; stroke-linecap: round; }
+    .clock-minute-hand { stroke: #4A90D9; stroke-width: 3; stroke-linecap: round; }
+    .clock-second-hand { stroke: #FF3B30; stroke-width: 2; stroke-linecap: round; }
+    .clock-number { font-size: 16px; font-weight: 700; fill: #1D1D1F; text-anchor: middle; dominant-baseline: central; }
+    .clock-tick { stroke: #9CA3AF; stroke-width: 1.5; }
+    .clock-tick.major { stroke: #4A90D9; stroke-width: 2.5; }
+    .time-display { font-size: 48px; font-weight: 800; color: #4A90D9; margin: 12px 0; font-variant-numeric: tabular-nums; }
+    .time-hint { font-size: 18px; color: #6E6E73; margin: 8px 0; }
+    .clock-controls { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+    .clock-btn {
+      min-width: 64px; min-height: 56px; padding: 10px 18px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+    }
+    .clock-btn:active { transform: scale(0.9); }
+    .clock-btn.active { border-color: #4A90D9; background: rgba(74,144,217,0.1); color: #4A90D9; }
+
+    /* === 模式2: 单位换算 === */
+    .convert-area { text-align: center; padding: 20px 16px; }
+    .convert-card {
+      background: white; border-radius: 20px; padding: 24px; margin: 16px auto;
+      max-width: 400px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .convert-title { font-size: 20px; font-weight: 700; color: #4A90D9; margin-bottom: 16px; }
+    .convert-row {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      margin: 16px 0; flex-wrap: wrap;
+    }
+    .convert-input {
+      width: 100px; height: 56px; border: 3px solid #E5E5EA; border-radius: 14px;
+      font-size: 28px; font-weight: 700; text-align: center; color: #4A90D9;
+      outline: none; transition: border-color 0.2s;
+      -webkit-appearance: none; appearance: none;
+    }
+    .convert-input:focus { border-color: #4A90D9; }
+    .convert-unit { font-size: 22px; font-weight: 600; color: #6E6E73; }
+    .convert-arrow { font-size: 28px; color: #FF9500; }
+    .convert-result {
+      font-size: 28px; font-weight: 700; color: #34C759; min-height: 40px;
+      margin: 12px 0;
+    }
+    .convert-check {
+      min-height: 56px; min-width: 120px; padding: 12px 24px; border: none;
+      background: #4A90D9; color: white; border-radius: 14px;
+      font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    }
+    .convert-check:active { transform: scale(0.95); }
+    .convert-feedback { font-size: 20px; font-weight: 600; min-height: 32px; margin: 8px 0; }
+
+    /* === 模式3: 经过时间 === */
+    .elapsed-area { text-align: center; padding: 20px 16px; }
+    .elapsed-card {
+      background: white; border-radius: 20px; padding: 24px; margin: 16px auto;
+      max-width: 420px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .elapsed-scene { font-size: 48px; margin: 8px 0; }
+    .elapsed-story { font-size: 18px; color: #6E6E73; margin: 8px 0 16px; line-height: 1.5; }
+    .elapsed-times {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin: 16px 0; flex-wrap: wrap;
+    }
+    .elapsed-time-box {
+      background: rgba(74,144,217,0.08); border-radius: 14px; padding: 12px 16px;
+      font-size: 28px; font-weight: 700; color: #4A90D9;
+    }
+    .elapsed-arrow { font-size: 24px; color: #FF9500; }
+    .elapsed-question { font-size: 20px; font-weight: 600; color: #1D1D1F; margin: 16px 0 8px; }
+    .elapsed-options {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+      max-width: 400px; margin: 12px auto;
+    }
+    .elapsed-opt {
+      min-height: 56px; padding: 12px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 14px; font-size: 20px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; color: #4A90D9;
+    }
+    .elapsed-opt:active { transform: scale(0.95); }
+    .elapsed-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .elapsed-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .elapsed-feedback { font-size: 20px; font-weight: 600; min-height: 32px; margin: 8px 0; }
+
+    /* === 模式4: 时间排序 === */
+    .sort-area { text-align: center; padding: 20px 16px; }
+    .sort-card {
+      background: white; border-radius: 20px; padding: 24px; margin: 16px auto;
+      max-width: 420px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .sort-instruction { font-size: 18px; font-weight: 600; color: #6E6E73; margin: 8px 0 16px; }
+    .sort-pool {
+      display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 16px 0;
+      min-height: 60px;
+    }
+    .sort-item {
+      padding: 12px 20px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 14px; font-size: 20px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; color: #4A90D9; user-select: none;
+    }
+    .sort-item:active { transform: scale(0.95); }
+    .sort-item.placed { opacity: 0.3; pointer-events: none; }
+    .sort-answer {
+      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+      margin: 16px 0; min-height: 60px; padding: 12px;
+      border: 3px dashed #E5E5EA; border-radius: 16px;
+    }
+    .sort-answer .sort-item { border-color: #4A90D9; background: rgba(74,144,217,0.08); }
+    .sort-answer-label { font-size: 16px; color: #AEAEB2; padding: 12px; }
+    .sort-controls { display: flex; gap: 12px; justify-content: center; margin: 12px 0; }
+    .sort-btn {
+      min-height: 48px; padding: 10px 24px; border: none; border-radius: 14px;
+      font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    }
+    .sort-btn.primary { background: #4A90D9; color: white; }
+    .sort-btn.secondary { background: #E5E5EA; color: #6E6E73; }
+    .sort-btn:active { transform: scale(0.95); }
+    .sort-feedback { font-size: 20px; font-weight: 600; min-height: 32px; margin: 8px 0; }
+
+    /* === 模式5: 挑战闯关 === */
+    .challenge-area { text-align: center; padding: 20px 16px; }
+    .challenge-problem {
+      font-size: 28px; font-weight: 700; color: #4A90D9; margin: 16px 0;
+      line-height: 1.5;
+    }
+    .challenge-options {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+      max-width: 400px; margin: 16px auto;
+    }
+    .challenge-opt {
+      min-height: 56px; padding: 14px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 14px; font-size: 22px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; color: #4A90D9;
+    }
+    .challenge-opt:active { transform: scale(0.95); }
+    .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .challenge-feedback { font-size: 20px; font-weight: 600; min-height: 32px; margin: 8px 0; }
+    .challenge-progress { font-size: 16px; color: #AEAEB2; margin: 8px 0; }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" aria-label="返回">←</button>
+      <span class="nav-title">⏱️ 时分秒</span>
+      <div style="width:56px"></div>
+    </nav>
+
+    <div class="score-display">
+      <span class="score-star">⭐</span>
+      <span class="score-value" id="score">0</span>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="explore">🔍 认识秒针</button>
+      <button class="mode-tab" data-mode="convert">🔄 单位换算</button>
+      <button class="mode-tab" data-mode="elapsed">⏳ 经过时间</button>
+      <button class="mode-tab" data-mode="sort">📊 时间排序</button>
+      <button class="mode-tab" data-mode="challenge">🏆 闯关挑战</button>
+    </div>
+
+    <!-- 模式1: 认识秒针 -->
+    <div class="mode-content active" id="mode-explore">
+      <div class="clock-area">
+        <p class="time-hint">拖动滑块，观察时针、分针、秒针的变化</p>
+        <svg class="clock-svg" viewBox="0 0 200 200" id="explore-clock">
+          <circle class="clock-face" cx="100" cy="100" r="90"/>
+          <!-- 刻度 -->
+          <g id="clock-ticks"></g>
+          <!-- 数字 -->
+          <g id="clock-numbers"></g>
+          <!-- 时针 -->
+          <line class="clock-hour-hand" id="exp-hour" x1="100" y1="100" x2="100" y2="50"/>
+          <!-- 分针 -->
+          <line class="clock-minute-hand" id="exp-minute" x1="100" y1="100" x2="100" y2="35"/>
+          <!-- 秒针 -->
+          <line class="clock-second-hand" id="exp-second" x1="100" y1="100" x2="100" y2="25"/>
+          <circle class="clock-center" cx="100" cy="100" r="5"/>
+        </svg>
+        <div class="time-display" id="exp-time-display">12:00:00</div>
+        <div class="time-hint" id="exp-hint-text">秒针走一圈 = 60秒 = 1分钟</div>
+        <div class="clock-controls">
+          <button class="clock-btn" id="exp-play">▶️ 走动</button>
+          <button class="clock-btn" id="exp-reset">🔄 归零</button>
+        </div>
+        <div class="clock-controls">
+          <button class="clock-btn" id="exp-add1s">+1秒</button>
+          <button class="clock-btn" id="exp-add1m">+1分</button>
+          <button class="clock-btn" id="exp-add1h">+1时</button>
+        </div>
+        <div style="margin-top:16px; padding:16px; background:rgba(74,144,217,0.06); border-radius:16px; max-width:380px; margin-left:auto; margin-right:auto;">
+          <p style="font-size:16px; color:#4A90D9; font-weight:600; margin-bottom:8px;">💡 小知识</p>
+          <p style="font-size:15px; color:#6E6E73; line-height:1.6;" id="exp-fact">
+            秒针走一小格是1秒，走一圈是60秒，也就是1分钟。<br>
+            分针走一小格是1分钟，走一圈是60分钟，也就是1小时。<br>
+            <strong>1时 = 60分，1分 = 60秒</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 单位换算 -->
+    <div class="mode-content" id="mode-convert">
+      <div class="convert-area">
+        <div class="convert-card">
+          <div class="convert-title" id="convert-title">单位换算</div>
+          <div class="convert-row" id="convert-row">
+            <input type="number" class="convert-input" id="convert-input" placeholder="?" inputmode="numeric">
+            <span class="convert-unit" id="convert-from-unit">分</span>
+            <span class="convert-arrow">=</span>
+            <input type="number" class="convert-input" id="convert-answer" placeholder="?" inputmode="numeric">
+            <span class="convert-unit" id="convert-to-unit">秒</span>
+          </div>
+          <button class="convert-check" id="convert-check">✅ 检查</button>
+          <div class="convert-feedback" id="convert-feedback"></div>
+          <button class="convert-check" id="convert-next" style="background:#FF9500; margin-top:8px;">👉 下一题</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 经过时间 -->
+    <div class="mode-content" id="mode-elapsed">
+      <div class="elapsed-area">
+        <div class="elapsed-card">
+          <div class="elapsed-scene" id="elapsed-scene">🏫</div>
+          <div class="elapsed-story" id="elapsed-story"></div>
+          <div class="elapsed-times" id="elapsed-times"></div>
+          <div class="elapsed-question">经过了多长时间？</div>
+          <div class="elapsed-options" id="elapsed-options"></div>
+          <div class="elapsed-feedback" id="elapsed-feedback"></div>
+          <button class="convert-check" id="elapsed-next" style="background:#FF9500; margin-top:8px;">👉 下一题</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 时间排序 -->
+    <div class="mode-content" id="mode-sort">
+      <div class="sort-area">
+        <div class="sort-card">
+          <div class="convert-title">⏰ 时间排序</div>
+          <div class="sort-instruction" id="sort-instruction">从短到长，点击排列这些时间</div>
+          <div class="sort-answer" id="sort-answer">
+            <span class="sort-answer-label" id="sort-placeholder">点击下方时间开始排列...</span>
+          </div>
+          <div class="sort-pool" id="sort-pool"></div>
+          <div class="sort-controls">
+            <button class="sort-btn secondary" id="sort-clear">🔄 重来</button>
+            <button class="sort-btn primary" id="sort-check">✅ 检查</button>
+          </div>
+          <div class="sort-feedback" id="sort-feedback"></div>
+          <button class="convert-check" id="sort-next" style="background:#FF9500; margin-top:8px;">👉 下一题</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式5: 闯关挑战 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="challenge-area">
+        <div class="challenge-progress" id="challenge-progress">第 1 题</div>
+        <div class="challenge-problem" id="challenge-problem"></div>
+        <div class="challenge-options" id="challenge-options"></div>
+        <div class="challenge-feedback" id="challenge-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+  (function() {
+    'use strict';
+
+    let score = 0;
+    function addScore(n) {
+      score += n;
+      document.getElementById('score').textContent = score;
+    }
+
+    // === Tab 切换 ===
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('mode-' + this.dataset.mode).classList.add('active');
+      });
+    });
+
+    // === 返回按钮 ===
+    document.querySelector('.nav-back').addEventListener('click', function() {
+      window.location.href = '../../index.html';
+    });
+
+    // ========================================
+    // 模式1: 认识秒针 - 交互式钟表
+    // ========================================
+    const expHour = document.getElementById('exp-hour');
+    const expMinute = document.getElementById('exp-minute');
+    const expSecond = document.getElementById('exp-second');
+    const expDisplay = document.getElementById('exp-time-display');
+    const expHint = document.getElementById('exp-hint-text');
+
+    // 画刻度和数字
+    (function drawClockFace() {
+      const ticksG = document.getElementById('clock-ticks');
+      const numsG = document.getElementById('clock-numbers');
+      for (let i = 0; i < 60; i++) {
+        const angle = (i * 6 - 90) * Math.PI / 180;
+        const isMajor = i % 5 === 0;
+        const r1 = isMajor ? 76 : 80;
+        const r2 = 86;
+        const x1 = 100 + r1 * Math.cos(angle);
+        const y1 = 100 + r1 * Math.sin(angle);
+        const x2 = 100 + r2 * Math.cos(angle);
+        const y2 = 100 + r2 * Math.sin(angle);
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+        line.setAttribute('class', 'clock-tick' + (isMajor ? ' major' : ''));
+        ticksG.appendChild(line);
+      }
+      for (let i = 1; i <= 12; i++) {
+        const angle = (i * 30 - 90) * Math.PI / 180;
+        const x = 100 + 65 * Math.cos(angle);
+        const y = 100 + 65 * Math.sin(angle);
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', x); text.setAttribute('y', y);
+        text.setAttribute('class', 'clock-number');
+        text.textContent = i;
+        numsG.appendChild(text);
+      }
+    })();
+
+    let expH = 0, expM = 0, expS = 0;
+    let playing = false;
+    let playTimer = null;
+
+    function updateExploreClock() {
+      // 秒针角度: 每秒6度
+      const sAngle = (expS * 6 - 90) * Math.PI / 180;
+      expSecond.setAttribute('x2', 100 + 72 * Math.cos(sAngle));
+      expSecond.setAttribute('y2', 100 + 72 * Math.sin(sAngle));
+      // 分针角度
+      const mAngle = ((expM + expS / 60) * 6 - 90) * Math.PI / 180;
+      expMinute.setAttribute('x2', 100 + 58 * Math.cos(mAngle));
+      expMinute.setAttribute('y2', 100 + 58 * Math.sin(mAngle));
+      // 时针角度
+      const hAngle = (((expH % 12) + expM / 60) * 30 - 90) * Math.PI / 180;
+      expHour.setAttribute('x2', 100 + 42 * Math.cos(hAngle));
+      expHour.setAttribute('y2', 100 + 42 * Math.sin(hAngle));
+      // 数字显示
+      const hh = String(expH).padStart(2, '0');
+      const mm = String(expM).padStart(2, '0');
+      const ss = String(expS).padStart(2, '0');
+      expDisplay.textContent = hh + ':' + mm + ':' + ss;
+    }
+
+    function tickSecond() {
+      expS++;
+      if (expS >= 60) { expS = 0; expM++; }
+      if (expM >= 60) { expM = 0; expH++; }
+      if (expH >= 24) expH = 0;
+      updateExploreClock();
+      // 更新提示
+      if (expS === 0 && expM > 0) {
+        expHint.textContent = '秒针走了 ' + expM + ' 圈，经过了 ' + expM + ' 分钟！';
+      } else if (expS === 0 && expM === 0 && expH > 0) {
+        expHint.textContent = '分针走了 ' + expH + ' 圈，经过了 ' + expH + ' 小时！';
+      }
+    }
+
+    document.getElementById('exp-play').addEventListener('click', function() {
+      if (playing) {
+        clearInterval(playTimer);
+        playing = false;
+        this.textContent = '▶️ 走动';
+        this.classList.remove('active');
+      } else {
+        playTimer = setInterval(tickSecond, 200); // 加速5倍
+        playing = true;
+        this.textContent = '⏸ 暂停';
+        this.classList.add('active');
+      }
+    });
+
+    document.getElementById('exp-reset').addEventListener('click', function() {
+      clearInterval(playTimer);
+      playing = false;
+      document.getElementById('exp-play').textContent = '▶️ 走动';
+      document.getElementById('exp-play').classList.remove('active');
+      expH = 0; expM = 0; expS = 0;
+      updateExploreClock();
+      expHint.textContent = '秒针走一圈 = 60秒 = 1分钟';
+    });
+
+    document.getElementById('exp-add1s').addEventListener('click', function() {
+      tickSecond();
+    });
+    document.getElementById('exp-add1m').addEventListener('click', function() {
+      expM++; if (expM >= 60) { expM = 0; expH++; }
+      updateExploreClock();
+    });
+    document.getElementById('exp-add1h').addEventListener('click', function() {
+      expH++; if (expH >= 24) expH = 0;
+      updateExploreClock();
+    });
+
+    updateExploreClock();
+
+    // ========================================
+    // 模式2: 单位换算
+    // ========================================
+    const convertTypes = [
+      { from: '分', to: '秒', factor: 60, genMin: 1, genMax: 10 },
+      { from: '时', to: '分', factor: 60, genMin: 1, genMax: 5 },
+      { from: '秒', to: '分', factor: 1/60, genMin: 60, genMax: 600, genStep: 60 },
+      { from: '分', to: '时', factor: 1/60, genMin: 60, genMax: 300, genStep: 60 },
+      { from: '时', to: '秒', factor: 3600, genMin: 1, genMax: 3 },
+      { from: '分秒', to: '秒', factor: null, genMin: 1, genMax: 5 }, // 特殊：X分Y秒=？秒
+    ];
+
+    let convertAnswer = 0;
+
+    function genConvert() {
+      const type = Random.pick(convertTypes);
+      const titleEl = document.getElementById('convert-title');
+      const fromUnit = document.getElementById('convert-from-unit');
+      const toUnit = document.getElementById('convert-to-unit');
+      const inputEl = document.getElementById('convert-input');
+      const answerEl = document.getElementById('convert-answer');
+      const feedback = document.getElementById('convert-feedback');
+
+      feedback.textContent = '';
+      answerEl.value = '';
+      inputEl.value = '';
+      inputEl.readOnly = false;
+      inputEl.style.borderColor = '#E5E5EA';
+      answerEl.style.borderColor = '#E5E5EA';
+
+      if (type.from === '分秒') {
+        // X分Y秒 = ?秒
+        const m = Random.int(1, type.genMax);
+        const s = Random.int(1, 59);
+        convertAnswer = m * 60 + s;
+        titleEl.textContent = '单位换算';
+        fromUnit.textContent = '';
+        toUnit.textContent = '秒';
+        inputEl.value = '';
+        inputEl.readOnly = true;
+        inputEl.style.display = 'none';
+        fromUnit.style.display = 'none';
+        // 用特殊显示
+        document.getElementById('convert-row').innerHTML =
+          '<span style="font-size:28px;font-weight:700;color:#4A90D9;">' + m + ' 分 ' + s + ' 秒</span>' +
+          '<span class="convert-arrow">=</span>' +
+          '<input type="number" class="convert-input" id="convert-answer" placeholder="?" inputmode="numeric">' +
+          '<span class="convert-unit">秒</span>';
+        // rebind
+        document.getElementById('convert-answer').addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') checkConvert();
+        });
+      } else {
+        const val = type.genStep
+          ? Random.int(type.genMin / type.genStep, type.genMax / type.genStep) * type.genStep
+          : Random.int(type.genMin, type.genMax);
+        convertAnswer = Math.round(val * type.factor);
+        // 恢复标准行
+        document.getElementById('convert-row').innerHTML =
+          '<input type="number" class="convert-input" id="convert-input" placeholder="?" inputmode="numeric" value="' + val + '">' +
+          '<span class="convert-unit" id="convert-from-unit">' + type.from + '</span>' +
+          '<span class="convert-arrow">=</span>' +
+          '<input type="number" class="convert-input" id="convert-answer" placeholder="?" inputmode="numeric">' +
+          '<span class="convert-unit" id="convert-to-unit">' + type.to + '</span>';
+        document.getElementById('convert-input').readOnly = true;
+        document.getElementById('convert-input').style.borderColor = '#E5E5EA';
+        document.getElementById('convert-answer').addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') checkConvert();
+        });
+      }
+    }
+
+    function checkConvert() {
+      const ansEl = document.getElementById('convert-answer');
+      const feedback = document.getElementById('convert-feedback');
+      const val = parseInt(ansEl.value);
+      if (isNaN(val)) { feedback.textContent = '请输入答案'; return; }
+      if (val === convertAnswer) {
+        feedback.textContent = '✅ 正确！太棒了！';
+        feedback.style.color = '#34C759';
+        ansEl.style.borderColor = '#34C759';
+        addScore(10);
+        showToast('⭐ +10');
+        setTimeout(genConvert, 1500);
+      } else {
+        feedback.textContent = '❌ 再想想，答案是 ' + convertAnswer;
+        feedback.style.color = '#FF3B30';
+        ansEl.style.borderColor = '#FF3B30';
+      }
+    }
+
+    document.getElementById('convert-check').addEventListener('click', checkConvert);
+    document.getElementById('convert-next').addEventListener('click', genConvert);
+
+    genConvert();
+
+    // ========================================
+    // 模式3: 经过时间
+    // ========================================
+    const elapsedScenes = [
+      { emoji: '🏫', story: '小明早上 {start} 到学校，{end} 放学回家' },
+      { emoji: '📺', story: '动画片 {start} 开始播放，{end} 结束' },
+      { emoji: '🏊', story: '小红 {start} 开始游泳，{end} 结束游泳课' },
+      { emoji: '📖', story: '妈妈 {start} 开始做饭，{end} 饭做好了' },
+      { emoji: '🚂', story: '火车 {start} 出发，{end} 到达目的地' },
+      { emoji: '🎵', story: '钢琴课 {start} 开始，{end} 下课' },
+    ];
+
+    function fmtTime(h, m) {
+      return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+    }
+
+    function genElapsed() {
+      const scene = Random.pick(elapsedScenes);
+      document.getElementById('elapsed-scene').textContent = scene.emoji;
+
+      const startH = Random.int(6, 16);
+      const startM = Random.pick([0, 15, 20, 30, 40, 45]);
+      const durMin = Random.int(30, 180);
+      const endTotal = startH * 60 + startM + durMin;
+      const endH = Math.floor(endTotal / 60);
+      const endM = endTotal % 60;
+
+      const story = scene.story
+        .replace('{start}', fmtTime(startH, startM))
+        .replace('{end}', fmtTime(endH > 24 ? endH - 24 : endH, endM));
+      document.getElementById('elapsed-story').textContent = story;
+
+      document.getElementById('elapsed-times').innerHTML =
+        '<div class="elapsed-time-box">' + fmtTime(startH, startM) + '</div>' +
+        '<span class="elapsed-arrow">→</span>' +
+        '<div class="elapsed-time-box">' + fmtTime(endH > 24 ? endH - 24 : endH, endM) + '</div>';
+
+      // 生成选项
+      const durH = Math.floor(durMin / 60);
+      const durRemain = durMin % 60;
+      const correctText = durH > 0
+        ? (durRemain > 0 ? durH + '时' + durRemain + '分' : durH + '时')
+        : durRemain + '分';
+
+      const wrongOptions = new Set();
+      wrongOptions.add(correctText);
+      while (wrongOptions.size < 4) {
+        const offH = Random.int(-1, 2);
+        const offM = Random.pick([-30, -15, 15, 30, 60]);
+        const wMin = durMin + offH * 60 + offM;
+        if (wMin > 0 && wMin !== durMin) {
+          const wH = Math.floor(wMin / 60);
+          const wR = wMin % 60;
+          const wText = wH > 0
+            ? (wR > 0 ? wH + '时' + wR + '分' : wH + '时')
+            : wR + '分';
+          wrongOptions.add(wText);
+        }
+      }
+
+      const options = Random.shuffle([...wrongOptions]);
+      const optContainer = document.getElementById('elapsed-options');
+      optContainer.innerHTML = '';
+      document.getElementById('elapsed-feedback').textContent = '';
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'elapsed-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', function() {
+          if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
+          optContainer.querySelectorAll('.elapsed-opt').forEach(b => {
+            if (b.textContent === correctText) b.classList.add('correct');
+          });
+          if (opt === correctText) {
+            this.classList.add('correct');
+            document.getElementById('elapsed-feedback').textContent = '✅ 正确！';
+            document.getElementById('elapsed-feedback').style.color = '#34C759';
+            addScore(10);
+            showToast('⭐ +10');
+            setTimeout(genElapsed, 1500);
+          } else {
+            this.classList.add('wrong');
+            document.getElementById('elapsed-feedback').textContent = '❌ 正确答案是 ' + correctText;
+            document.getElementById('elapsed-feedback').style.color = '#FF3B30';
+          }
+        });
+        optContainer.appendChild(btn);
+      });
+    }
+
+    document.getElementById('elapsed-next').addEventListener('click', genElapsed);
+    genElapsed();
+
+    // ========================================
+    // 模式4: 时间排序
+    // ========================================
+    let sortCorrectOrder = [];
+    let sortUserOrder = [];
+
+    function timeToSeconds(str) {
+      // 支持 "X时Y分", "X分", "X秒", "X分Y秒"
+      let total = 0;
+      const hMatch = str.match(/(\d+)\s*时/);
+      const mMatch = str.match(/(\d+)\s*分/);
+      const sMatch = str.match(/(\d+)\s*秒/);
+      if (hMatch) total += parseInt(hMatch[1]) * 3600;
+      if (mMatch) total += parseInt(mMatch[1]) * 60;
+      if (sMatch) total += parseInt(sMatch[1]);
+      return total;
+    }
+
+    function genTimeStr() {
+      const h = Random.int(0, 3);
+      const m = Random.pick([0, 5, 10, 15, 20, 25, 30, 40, 45, 50, 55]);
+      const s = Random.pick([0, 10, 20, 30, 40, 50]);
+      let parts = [];
+      if (h > 0) parts.push(h + '时');
+      if (m > 0) parts.push(m + '分');
+      if (s > 0 && h === 0) parts.push(s + '秒');
+      if (parts.length === 0) parts.push(Random.int(1,59) + '分');
+      return parts.join('');
+    }
+
+    function genSort() {
+      sortUserOrder = [];
+      const count = Random.int(3, 5);
+      const items = new Set();
+      while (items.size < count) {
+        items.add(genTimeStr());
+      }
+      const arr = [...items];
+      sortCorrectOrder = [...arr].sort((a, b) => timeToSeconds(a) - timeToSeconds(b));
+
+      const pool = document.getElementById('sort-pool');
+      const answer = document.getElementById('sort-answer');
+      pool.innerHTML = '';
+      answer.innerHTML = '<span class="sort-answer-label" id="sort-placeholder">点击下方时间开始排列...</span>';
+      document.getElementById('sort-feedback').textContent = '';
+
+      const shuffled = Random.shuffle(arr);
+      shuffled.forEach(t => {
+        const btn = document.createElement('button');
+        btn.className = 'sort-item';
+        btn.textContent = t;
+        btn.dataset.time = t;
+        btn.addEventListener('click', function() {
+          if (this.classList.contains('placed')) return;
+          this.classList.add('placed');
+          sortUserOrder.push(t);
+          // 更新答案区
+          const placeholder = document.getElementById('sort-placeholder');
+          if (placeholder) placeholder.remove();
+          const placed = document.createElement('button');
+          placed.className = 'sort-item';
+          placed.textContent = t;
+          placed.addEventListener('click', function() {
+            // 点击已放置的可以移除
+            sortUserOrder = sortUserOrder.filter(x => x !== t);
+            this.remove();
+            pool.querySelector('[data-time="' + t + '"]').classList.remove('placed');
+            if (sortUserOrder.length === 0) {
+              answer.innerHTML = '<span class="sort-answer-label" id="sort-placeholder">点击下方时间开始排列...</span>';
+            }
+          });
+          answer.appendChild(placed);
+        });
+        pool.appendChild(btn);
+      });
+    }
+
+    document.getElementById('sort-clear').addEventListener('click', function() {
+      genSort();
+    });
+
+    document.getElementById('sort-check').addEventListener('click', function() {
+      const feedback = document.getElementById('sort-feedback');
+      if (sortUserOrder.length !== sortCorrectOrder.length) {
+        feedback.textContent = '请先排列所有时间！';
+        feedback.style.color = '#FF9500';
+        return;
+      }
+      const isCorrect = sortUserOrder.every((v, i) => v === sortCorrectOrder[i]);
+      if (isCorrect) {
+        feedback.textContent = '✅ 完全正确！';
+        feedback.style.color = '#34C759';
+        addScore(15);
+        showToast('⭐ +15');
+        setTimeout(genSort, 1500);
+      } else {
+        feedback.textContent = '❌ 正确顺序：' + sortCorrectOrder.join(' < ');
+        feedback.style.color = '#FF3B30';
+      }
+    });
+
+    document.getElementById('sort-next').addEventListener('click', genSort);
+    genSort();
+
+    // ========================================
+    // 模式5: 闯关挑战
+    // ========================================
+    let challengeNum = 0;
+
+    function genChallenge() {
+      challengeNum++;
+      document.getElementById('challenge-progress').textContent = '第 ' + challengeNum + ' 题';
+      document.getElementById('challenge-feedback').textContent = '';
+
+      const types = [
+        genChConvert, genChElapsed, genChFill, genChCompare
+      ];
+      Random.pick(types)();
+    }
+
+    function makeOptions(correct, genWrong) {
+      const opts = new Set([correct]);
+      let tries = 0;
+      while (opts.size < 4 && tries < 50) {
+        opts.add(genWrong());
+        tries++;
+      }
+      return Random.shuffle([...opts]);
+    }
+
+    function renderChallenge(question, correct, genWrong) {
+      document.getElementById('challenge-problem').textContent = question;
+      const options = makeOptions(correct, genWrong);
+      const container = document.getElementById('challenge-options');
+      container.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'challenge-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', function() {
+          if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
+          container.querySelectorAll('.challenge-opt').forEach(b => {
+            if (b.textContent === correct) b.classList.add('correct');
+          });
+          if (opt === correct) {
+            this.classList.add('correct');
+            document.getElementById('challenge-feedback').textContent = '✅ 答对了！';
+            document.getElementById('challenge-feedback').style.color = '#34C759';
+            addScore(10);
+            showToast('⭐ +10');
+            setTimeout(genChallenge, 1500);
+          } else {
+            this.classList.add('wrong');
+            document.getElementById('challenge-feedback').textContent = '❌ 正确答案是 ' + correct;
+            document.getElementById('challenge-feedback').style.color = '#FF3B30';
+          }
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function genChConvert() {
+      const type = Random.pick([
+        { q: (v) => v + ' 分 = ? 秒', a: (v) => v * 60, w: () => Random.int(1,10) * 60 + Random.pick([-10,-5,5,10]), unit: '' },
+        { q: (v) => v + ' 时 = ? 分', a: (v) => v * 60, w: () => Random.int(1,5) * 60 + Random.pick([-15,-10,10,15]), unit: '' },
+        { q: (v) => v * 60 + ' 秒 = ? 分', a: (v) => v, w: () => Random.int(1,10) + Random.pick([-2,-1,1,2]), unit: '' },
+        { q: (v) => v * 60 + ' 分 = ? 时', a: (v) => v, w: () => Random.int(1,5) + Random.pick([-1,1,2]), unit: '' },
+      ]);
+      const val = Random.int(1, 5);
+      const question = type.q(val);
+      const answer = String(type.a(val));
+      renderChallenge(question, answer, () => String(Math.max(1, type.w())));
+    }
+
+    function genChElapsed() {
+      const startH = Random.int(7, 17);
+      const startM = Random.pick([0, 15, 30, 45]);
+      const durMin = Random.int(30, 120);
+      const endTotal = startH * 60 + startM + durMin;
+      const endH = Math.floor(endTotal / 60);
+      const endM = endTotal % 60;
+      const durH = Math.floor(durMin / 60);
+      const durR = durMin % 60;
+      const correctText = durH > 0
+        ? (durR > 0 ? durH + '时' + durR + '分' : durH + '时')
+        : durR + '分';
+      const question = '从 ' + fmtTime(startH, startM) + ' 到 ' + fmtTime(endH, endM) + '，经过了多久？';
+      renderChallenge(question, correctText, () => {
+        const off = Random.pick([-30, -15, 15, 30, 60]);
+        const wMin = Math.max(5, durMin + off);
+        const wH = Math.floor(wMin / 60);
+        const wR = wMin % 60;
+        return wH > 0 ? (wR > 0 ? wH + '时' + wR + '分' : wH + '时') : wR + '分';
+      });
+    }
+
+    function genChFill() {
+      const facts = [
+        { q: '1 时 = ? 分', a: '60', w: () => String(Random.pick([30, 100, 24])) },
+        { q: '1 分 = ? 秒', a: '60', w: () => String(Random.pick([30, 100, 10])) },
+        { q: '半小时 = ? 分', a: '30', w: () => String(Random.pick([15, 45, 60])) },
+        { q: '1 时 30 分 = ? 分', a: '90', w: () => String(Random.pick([60, 80, 100, 130])) },
+        { q: '2 时 = ? 分', a: '120', w: () => String(Random.pick([60, 100, 200])) },
+        { q: '1 时 15 分 = ? 分', a: '75', w: () => String(Random.pick([60, 70, 80, 115])) },
+        { q: '一刻 = ? 分', a: '15', w: () => String(Random.pick([10, 20, 30])) },
+      ];
+      const f = Random.pick(facts);
+      renderChallenge(f.q, f.a, f.w);
+    }
+
+    function genChCompare() {
+      const a = Random.int(1, 5) * 60 + Random.pick([0, 15, 30, 45]);
+      let b = a + Random.pick([-30, -15, 15, 30, 60]);
+      if (b <= 0) b = a + 30;
+      const fmtS = (s) => {
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const sec = s % 60;
+        let parts = [];
+        if (h > 0) parts.push(h + '时');
+        if (m > 0) parts.push(m + '分');
+        if (sec > 0) parts.push(sec + '秒');
+        return parts.join('') || '0分';
+      };
+      const aText = fmtS(a);
+      const bText = fmtS(b);
+      const correct = a < b ? (aText + ' < ' + bText) : (aText + ' > ' + bText);
+      const wrongs = [
+        a > b ? (aText + ' < ' + bText) : (aText + ' > ' + bText),
+        aText + ' = ' + bText,
+        b < a ? (fmtS(b+15) + ' < ' + aText) : (aText + ' > ' + fmtS(b+15))
+      ];
+      renderChallenge('哪个正确？', correct, () => Random.pick(wrongs));
+    }
+
+    genChallenge();
+
+  })();
+  </script>
+</body>
+</html>
