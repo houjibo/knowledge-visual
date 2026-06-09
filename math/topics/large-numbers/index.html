@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>大数的认识</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs {
+      display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mode-tab {
+      flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA;
+      border-radius: 20px; font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-tab.active { background: #4A90D9; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 通用题目样式 */
+    .q-area { text-align: center; padding: 20px 16px; }
+    .q-label { font-size: 15px; color: #6E6E73; margin-bottom: 8px; }
+    .q-number {
+      font-size: 42px; font-weight: 800; color: #4A90D9;
+      margin: 12px 0; line-height: 1.3; word-break: break-all;
+    }
+    .q-hint { font-size: 14px; color: #8E8E93; margin-bottom: 16px; }
+    .q-options { display: flex; flex-direction: column; gap: 10px; padding: 0 8px; }
+    .q-btn {
+      padding: 14px 20px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 14px; font-size: 18px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; text-align: left;
+    }
+    .q-btn:active { transform: scale(0.97); }
+    .q-btn.correct {
+      border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759;
+    }
+    .q-btn.wrong {
+      border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30;
+    }
+
+    /* 数位顺序表 */
+    .place-chart {
+      overflow-x: auto; padding: 16px 0; -webkit-overflow-scrolling: touch;
+    }
+    .place-table {
+      display: flex; min-width: max-content; margin: 0 auto;
+    }
+    .place-col {
+      display: flex; flex-direction: column; align-items: center;
+      width: 52px; border-right: 1px solid #E5E5EA;
+    }
+    .place-col:last-child { border-right: none; }
+    .place-level {
+      font-size: 11px; font-weight: 700; color: white; padding: 4px 0;
+      width: 100%; text-align: center; border-radius: 6px 6px 0 0;
+    }
+    .place-name {
+      font-size: 12px; font-weight: 600; color: #6E6E73; padding: 6px 2px;
+      background: #F5F5F7; width: 100%; text-align: center;
+    }
+    .place-digit {
+      font-size: 28px; font-weight: 800; color: #4A90D9; padding: 10px 0;
+      width: 100%; text-align: center; background: white;
+    }
+    .place-digit.highlight { color: #FF9500; animation: popIn 0.3s ease; }
+    .level-g { background: #4A90D9; }
+    .level-w { background: #FF9500; }
+    .level-y { background: #FF3B30; }
+
+    /* 数位点击学习 */
+    .place-learn { padding: 16px; }
+    .place-learn-num {
+      font-size: 36px; font-weight: 800; color: #1D1D1F; text-align: center;
+      margin: 16px 0; letter-spacing: 4px;
+    }
+    .place-learn-num span {
+      cursor: pointer; padding: 4px 2px; border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    .place-learn-num span:active { background: rgba(74,144,217,0.15); }
+    .place-learn-num span.active { background: #4A90D9; color: white; }
+    .place-info {
+      background: #F5F5F7; border-radius: 14px; padding: 16px;
+      margin: 12px 0; text-align: center;
+    }
+    .place-info-title { font-size: 14px; color: #6E6E73; margin-bottom: 4px; }
+    .place-info-val { font-size: 24px; font-weight: 700; color: #4A90D9; }
+    .place-info-read { font-size: 16px; color: #333; margin-top: 8px; font-weight: 600; }
+
+    /* 写数模式 - 输入框 */
+    .write-input-wrap {
+      margin: 16px auto; max-width: 320px;
+    }
+    .write-input {
+      width: 100%; padding: 16px; font-size: 32px; font-weight: 700;
+      text-align: center; border: 3px solid #E5E5EA; border-radius: 14px;
+      background: white; color: #1D1D1F; outline: none;
+      box-sizing: border-box;
+    }
+    .write-input:focus { border-color: #4A90D9; }
+    .write-input.correct { border-color: #34C759; background: rgba(52,199,89,0.08); }
+    .write-input.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); }
+    .write-submit {
+      display: block; margin: 16px auto; padding: 14px 48px;
+      background: #4A90D9; color: white; border: none; border-radius: 14px;
+      font-size: 18px; font-weight: 700; cursor: pointer;
+    }
+    .write-submit:active { transform: scale(0.95); }
+    .write-answer {
+      font-size: 16px; color: #6E6E73; margin-top: 12px; text-align: center;
+    }
+    .write-answer strong { color: #34C759; font-size: 20px; }
+
+    /* 近似数模式 */
+    .approx-badge {
+      display: inline-block; background: #FFF3E0; color: #E65100;
+      padding: 6px 16px; border-radius: 20px; font-size: 15px;
+      font-weight: 700; margin: 8px 0;
+    }
+
+    /* 比较模式 */
+    .cmp-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin: 16px 0;
+    }
+    .cmp-num {
+      font-size: 28px; font-weight: 800; color: #4A90D9;
+      min-width: 80px; text-align: center;
+    }
+    .cmp-blank {
+      width: 56px; height: 56px; border: 3px dashed #FF9500;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 800; color: #FF9500;
+    }
+    .cmp-options { display: flex; justify-content: center; gap: 16px; margin-top: 16px; }
+    .cmp-btn {
+      width: 72px; height: 72px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 32px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .cmp-btn:active { transform: scale(0.9); }
+    .cmp-btn.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .cmp-btn.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+
+    /* 得分 */
+    .score-display {
+      display: flex; justify-content: center; align-items: center;
+      gap: 12px; padding: 12px; font-size: 18px; font-weight: 600;
+    }
+    .score-stars { font-size: 24px; }
+
+    /* 分隔线 */
+    .level-sep {
+      width: 100%; height: 2px; background: repeating-linear-gradient(
+        90deg, #E5E5EA 0, #E5E5EA 4px, transparent 4px, transparent 8px
+      );
+      margin: 4px 0;
+    }
+
+    @media (max-width: 480px) {
+      .q-number { font-size: 32px; }
+      .place-learn-num { font-size: 28px; }
+      .cmp-num { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" onclick="location.href='../../index.html'" aria-label="返回">←</button>
+      <span class="nav-title">🔢 大数的认识</span>
+      <div style="width:56px"></div>
+    </nav>
+
+    <div class="score-display">
+      <span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="place">📊 数位表</button>
+      <button class="mode-tab" data-mode="read">📖 读数</button>
+      <button class="mode-tab" data-mode="write">✏️ 写数</button>
+      <button class="mode-tab" data-mode="compare">⚖️ 比大小</button>
+      <button class="mode-tab" data-mode="approx">🎯 近似数</button>
+    </div>
+
+    <!-- 模式1: 数位顺序表 -->
+    <div class="mode-content active" data-mode="place">
+      <div class="place-learn">
+        <div class="q-label">点击数字，看看它在什么数位上</div>
+        <div class="place-learn-num" id="place-num"></div>
+        <div class="place-info" id="place-info">
+          <div class="place-info-title">👆 点击上面的数字</div>
+          <div class="place-info-val" id="place-info-val"></div>
+          <div class="place-info-read" id="place-info-read"></div>
+        </div>
+        <div style="text-align:center; margin-top:16px;">
+          <button class="write-submit" id="place-next" style="background:#FF9500;">换一个数 🔄</button>
+        </div>
+        <div class="place-chart" style="margin-top:20px;">
+          <div class="place-table" id="place-table"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 读数 -->
+    <div class="mode-content" data-mode="read">
+      <div class="q-area">
+        <div class="q-label">请读出下面这个数</div>
+        <div class="q-number" id="read-num"></div>
+        <div class="q-options" id="read-options"></div>
+      </div>
+    </div>
+
+    <!-- 模式3: 写数 -->
+    <div class="mode-content" data-mode="write">
+      <div class="q-area">
+        <div class="q-label">请写出下面这个数</div>
+        <div class="q-number" id="write-prompt" style="font-size:28px; color:#333;"></div>
+        <div class="write-input-wrap">
+          <input type="text" class="write-input" id="write-input" inputmode="numeric" placeholder="输入数字">
+        </div>
+        <button class="write-submit" id="write-submit">确认 ✓</button>
+        <div class="write-answer" id="write-answer"></div>
+      </div>
+    </div>
+
+    <!-- 模式4: 比大小 -->
+    <div class="mode-content" data-mode="compare">
+      <div class="q-area">
+        <div class="q-label">在 ○ 里填上 >、< 或 =</div>
+        <div class="cmp-row">
+          <div class="cmp-num" id="cmp-a"></div>
+          <div class="cmp-blank" id="cmp-sign">?</div>
+          <div class="cmp-num" id="cmp-b"></div>
+        </div>
+        <div class="cmp-options">
+          <button class="cmp-btn" data-val=">">&gt;</button>
+          <button class="cmp-btn" data-val="<">&lt;</button>
+          <button class="cmp-btn" data-val="=">=</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式5: 近似数 -->
+    <div class="mode-content" data-mode="approx">
+      <div class="q-area">
+        <div class="q-label">省略万位后面的尾数，求近似数</div>
+        <div class="q-number" id="approx-num"></div>
+        <div class="approx-badge" id="approx-hint"></div>
+        <div class="q-options" id="approx-options"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // ===== 工具函数 =====
+    const LEVELS = [
+      { name: '个级', digits: ['个位','十位','百位','千位'], color: '#4A90D9', cls: 'level-g' },
+      { name: '万级', digits: ['万位','十万位','百万位','千万位'], color: '#FF9500', cls: 'level-w' },
+      { name: '亿级', digits: ['亿位','十亿位','百亿位','千亿位'], color: '#FF3B30', cls: 'level-y' }
+    ];
+    const ALL_PLACES = [];
+    LEVELS.forEach(l => l.digits.forEach(d => ALL_PLACES.push({ name: d, level: l.name, color: l.color })));
+
+    let streak = 0;
+    let currentPlaceNum = '';
+
+    function updateStreak(correct) {
+      if (correct) { streak++; } else { streak = 0; }
+      document.getElementById('streak').textContent = streak;
+      const stars = document.getElementById('stars-display');
+      stars.textContent = streak >= 10 ? '🌟'.repeat(Math.min(Math.floor(streak/5), 5)) : '';
+    }
+
+    // 生成随机大数
+    function randLarge(minDigits, maxDigits) {
+      const n = minDigits + Math.floor(Math.random() * (maxDigits - minDigits + 1));
+      let s = String(1 + Math.floor(Math.random() * 9));
+      for (let i = 1; i < n; i++) s += String(Math.floor(Math.random() * 10));
+      return s;
+    }
+
+    // 给数字加分隔符（每4位）
+    function addSeparators(numStr) {
+      const arr = numStr.split('');
+      for (let i = arr.length - 4; i > 0; i -= 4) arr.splice(i, 0, ' ');
+      return arr.join('');
+    }
+
+    // 读出一个数
+    function readNumber(numStr) {
+      const n = numStr.length;
+      if (n <= 4) return readBelow10k(numStr);
+      // 分级
+      const yi = n > 8 ? numStr.slice(0, n - 8) : '';
+      const wan = n > 4 ? numStr.slice(Math.max(0, n - 8), n - 4) : '';
+      const ge = numStr.slice(n - 4);
+      let result = '';
+      if (yi) result += readBelow10k(yi) + '亿';
+      if (wan) {
+        const wanRead = readBelow10k(wan);
+        if (yi && wan === '0000') {
+          // 万级全零不读
+        } else {
+          result += wanRead + '万';
+        }
+      }
+      if (ge) {
+        const geRead = readBelow10k(ge);
+        // 处理中间有零的情况
+        if ((yi || wan) && ge.length === 4 && ge[0] === '0') {
+          result += '零' + readBelow10k(ge.replace(/^0+/, '') || '0');
+        } else if ((yi || wan) && ge.length < 4 && parseInt(ge) < 1000) {
+          result += '零' + readBelow10k(ge);
+        } else {
+          result += geRead;
+        }
+      }
+      return result.replace(/零+$/, '').replace(/零亿/, '亿').replace(/零万/, '万') || '零';
+    }
+
+    function readBelow10k(s) {
+      s = s.replace(/^0+/, '') || '0';
+      if (s === '0') return '零';
+      const digits = ['','一','二','三','四','五','六','七','八','九'];
+      const units = ['','十','百','千'];
+      let result = '';
+      let prevZero = false;
+      for (let i = 0; i < s.length; i++) {
+        const d = parseInt(s[i]);
+        const pos = s.length - 1 - i;
+        if (d === 0) {
+          prevZero = true;
+        } else {
+          if (prevZero && result) result += '零';
+          if (d === 1 && pos === 1 && i === 0) {
+            result += '十';
+          } else {
+            result += digits[d] + units[pos];
+          }
+          prevZero = false;
+        }
+      }
+      return result;
+    }
+
+    // ===== 模式切换 =====
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelector(`.mode-content[data-mode="${tab.dataset.mode}"]`).classList.add('active');
+        const mode = tab.dataset.mode;
+        if (mode === 'place') initPlace();
+        if (mode === 'read') initRead();
+        if (mode === 'write') initWrite();
+        if (mode === 'compare') initCompare();
+        if (mode === 'approx') initApprox();
+      });
+    });
+
+    // ===== 模式1: 数位顺序表 =====
+    function initPlace() {
+      currentPlaceNum = randLarge(5, 12);
+      renderPlaceNum();
+      renderPlaceTable();
+    }
+
+    function renderPlaceNum() {
+      const el = document.getElementById('place-num');
+      el.innerHTML = '';
+      const formatted = addSeparators(currentPlaceNum);
+      const spans = [];
+      let digitIdx = 0;
+      for (let i = 0; i < formatted.length; i++) {
+        if (formatted[i] === ' ') {
+          el.appendChild(document.createTextNode(' '));
+        } else {
+          const span = document.createElement('span');
+          span.textContent = formatted[i];
+          span.dataset.idx = digitIdx;
+          span.addEventListener('click', () => showPlaceInfo(digitIdx));
+          el.appendChild(span);
+          digitIdx++;
+        }
+      }
+      document.getElementById('place-info-val').textContent = '';
+      document.getElementById('place-info-read').textContent = '';
+      document.querySelector('.place-info-title').textContent = '👆 点击上面的数字';
+    }
+
+    function showPlaceInfo(idx) {
+      const n = currentPlaceNum.length;
+      const posFromRight = n - 1 - idx;
+      const place = ALL_PLACES[posFromRight];
+      const digit = currentPlaceNum[idx];
+
+      document.querySelectorAll('#place-num span').forEach(s => s.classList.remove('active'));
+      document.querySelector(`#place-num span[data-idx="${idx}"]`).classList.add('active');
+
+      document.querySelector('.place-info-title').textContent = `第 ${idx + 1} 位（从左边数）`;
+      document.getElementById('place-info-val').textContent =
+        `${digit} 在 ${place.name}`;
+
+      // 计算实际值
+      const val = parseInt(digit) * Math.pow(10, posFromRight);
+      document.getElementById('place-info-read').textContent =
+        val > 0 ? `表示 ${val.toLocaleString()}` : `表示 0`;
+
+      // 高亮数位表
+      document.querySelectorAll('.place-digit').forEach(el => el.classList.remove('highlight'));
+      const colIdx = 11 - posFromRight;
+      const cols = document.querySelectorAll('.place-col');
+      if (cols[colIdx]) {
+        cols[colIdx].querySelector('.place-digit').classList.add('highlight');
+      }
+    }
+
+    function renderPlaceTable() {
+      const table = document.getElementById('place-table');
+      table.innerHTML = '';
+      // 从千亿位到个位
+      for (let lvl = LEVELS.length - 1; lvl >= 0; lvl--) {
+        const level = LEVELS[lvl];
+        for (let d = level.digits.length - 1; d >= 0; d--) {
+          const col = document.createElement('div');
+          col.className = 'place-col';
+          const levelDiv = document.createElement('div');
+          levelDiv.className = `place-level ${level.cls}`;
+          levelDiv.textContent = d === level.digits.length - 1 ? level.name : '';
+          const nameDiv = document.createElement('div');
+          nameDiv.className = 'place-name';
+          nameDiv.textContent = level.digits[d];
+          const digitDiv = document.createElement('div');
+          digitDiv.className = 'place-digit';
+          digitDiv.textContent = '-';
+          col.appendChild(levelDiv);
+          col.appendChild(nameDiv);
+          col.appendChild(digitDiv);
+          table.appendChild(col);
+        }
+      }
+      updatePlaceTable();
+    }
+
+    function updatePlaceTable() {
+      const cols = document.querySelectorAll('.place-col');
+      const n = currentPlaceNum.length;
+      for (let i = 0; i < 12; i++) {
+        const digitIdx = i - (12 - n);
+        const digitEl = cols[i].querySelector('.place-digit');
+        if (digitIdx >= 0 && digitIdx < n) {
+          digitEl.textContent = currentPlaceNum[digitIdx];
+        } else {
+          digitEl.textContent = '-';
+        }
+      }
+    }
+
+    document.getElementById('place-next').addEventListener('click', () => {
+      currentPlaceNum = randLarge(5, 12);
+      renderPlaceNum();
+      updatePlaceTable();
+      document.querySelectorAll('.place-digit').forEach(el => el.classList.remove('highlight'));
+      document.querySelectorAll('#place-num span').forEach(s => s.classList.remove('active'));
+      document.querySelector('.place-info-title').textContent = '👆 点击上面的数字';
+      document.getElementById('place-info-val').textContent = '';
+      document.getElementById('place-info-read').textContent = '';
+    });
+
+    // ===== 模式2: 读数 =====
+    function initRead() { generateReadQ(); }
+
+    function generateReadQ() {
+      const numStr = randLarge(4, 10);
+      const correctRead = readNumber(numStr);
+      document.getElementById('read-num').textContent = addSeparators(numStr);
+
+      // 生成干扰项
+      const options = [correctRead];
+      const wrongReads = new Set();
+      // 生成错误读法
+      while (wrongReads.size < 3) {
+        const wrongType = Math.floor(Math.random() * 3);
+        let wrong;
+        if (wrongType === 0) {
+          // 少读一个零
+          wrong = correctRead.replace(/零/, '');
+        } else if (wrongType === 1) {
+          // 多读一个零
+          const idx = correctRead.indexOf('万');
+          if (idx > 0) {
+            wrong = correctRead.slice(0, idx) + '零' + correctRead.slice(idx);
+          } else {
+            wrong = correctRead + '零';
+          }
+        } else {
+          // 替换某个数字的读法
+          const digitReads = ['一','二','三','四','五','六','七','八','九'];
+          const r = digitReads[Math.floor(Math.random() * digitReads.length)];
+          wrong = correctRead.replace(/[一二三四五六七八九]/, r);
+        }
+        if (wrong && wrong !== correctRead && !wrongReads.has(wrong) && !options.includes(wrong)) {
+          wrongReads.add(wrong);
+          options.push(wrong);
+        }
+      }
+
+      // 打乱选项
+      for (let i = options.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [options[i], options[j]] = [options[j], options[i]];
+      }
+
+      const container = document.getElementById('read-options');
+      container.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'q-btn';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => handleReadAnswer(btn, opt === correctRead, correctRead));
+        container.appendChild(btn);
+      });
+    }
+
+    function handleReadAnswer(btn, correct, correctRead) {
+      if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+      const allBtns = document.querySelectorAll('#read-options .q-btn');
+      allBtns.forEach(b => {
+        b.style.pointerEvents = 'none';
+        if (b.textContent === correctRead) b.classList.add('correct');
+      });
+      if (correct) {
+        updateStreak(true);
+        setTimeout(generateReadQ, 1500);
+      } else {
+        btn.classList.add('wrong');
+        updateStreak(false);
+        setTimeout(generateReadQ, 2500);
+      }
+    }
+
+    // ===== 模式3: 写数 =====
+    function initWrite() { generateWriteQ(); }
+
+    let writeAnswer = '';
+    function generateWriteQ() {
+      const numStr = randLarge(4, 9);
+      writeAnswer = numStr;
+      const readStr = readNumber(numStr);
+      document.getElementById('write-prompt').textContent = readStr;
+      document.getElementById('write-input').value = '';
+      document.getElementById('write-input').className = 'write-input';
+      document.getElementById('write-answer').innerHTML = '';
+    }
+
+    document.getElementById('write-submit').addEventListener('click', () => {
+      const input = document.getElementById('write-input').value.replace(/\s/g, '');
+      const inputEl = document.getElementById('write-input');
+      const answerEl = document.getElementById('write-answer');
+      if (!input || !/^\d+$/.test(input)) {
+        answerEl.innerHTML = '<span style="color:#FF9500">请输入数字哦~</span>';
+        return;
+      }
+      if (input === writeAnswer) {
+        inputEl.classList.add('correct');
+        answerEl.innerHTML = '✅ 正确！<strong>' + addSeparators(writeAnswer) + '</strong>';
+        updateStreak(true);
+        setTimeout(generateWriteQ, 1500);
+      } else {
+        inputEl.classList.add('wrong');
+        answerEl.innerHTML = '❌ 再想想~ 正确答案是 <strong>' + addSeparators(writeAnswer) + '</strong>';
+        updateStreak(false);
+        setTimeout(generateWriteQ, 2500);
+      }
+    });
+
+    // 回车提交
+    document.getElementById('write-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('write-submit').click();
+    });
+
+    // ===== 模式4: 比大小 =====
+    function initCompare() { generateCompareQ(); }
+
+    let compareAnswer = '';
+    function generateCompareQ() {
+      const digits = 4 + Math.floor(Math.random() * 6);
+      let a = randLarge(digits, digits);
+      let b = randLarge(digits, digits);
+      // 偶尔让两个数相等
+      if (Math.random() < 0.15) b = a;
+
+      if (parseInt(a) > parseInt(b)) compareAnswer = '>';
+      else if (parseInt(a) < parseInt(b)) compareAnswer = '<';
+      else compareAnswer = '=';
+
+      document.getElementById('cmp-a').textContent = addSeparators(a);
+      document.getElementById('cmp-b').textContent = addSeparators(b);
+      document.getElementById('cmp-sign').textContent = '?';
+      document.getElementById('cmp-sign').style.color = '#FF9500';
+
+      document.querySelectorAll('.cmp-btn').forEach(btn => {
+        btn.classList.remove('correct', 'wrong');
+        btn.style.pointerEvents = 'auto';
+      });
+    }
+
+    document.querySelectorAll('.cmp-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+        const val = btn.dataset.val;
+        const signEl = document.getElementById('cmp-sign');
+        signEl.textContent = val;
+
+        document.querySelectorAll('.cmp-btn').forEach(b => b.style.pointerEvents = 'none');
+
+        if (val === compareAnswer) {
+          btn.classList.add('correct');
+          signEl.style.color = '#34C759';
+          updateStreak(true);
+          setTimeout(generateCompareQ, 1500);
+        } else {
+          btn.classList.add('wrong');
+          signEl.style.color = '#FF3B30';
+          // 高亮正确答案
+          document.querySelectorAll('.cmp-btn').forEach(b => {
+            if (b.dataset.val === compareAnswer) b.classList.add('correct');
+          });
+          updateStreak(false);
+          setTimeout(generateCompareQ, 2500);
+        }
+      });
+    });
+
+    // ===== 模式5: 近似数 =====
+    function initApprox() { generateApproxQ(); }
+
+    function generateApproxQ() {
+      const numStr = randLarge(5, 8);
+      const n = parseInt(numStr);
+      // 省略万位后面的尾数
+      const wanPart = Math.floor(n / 10000);
+      const remainder = n % 10000;
+      const approx = remainder >= 5000 ? wanPart + 1 : wanPart;
+      const correctAns = approx + '万';
+
+      document.getElementById('approx-num').textContent = addSeparators(numStr);
+      document.getElementById('approx-hint').textContent =
+        `千位是 ${numStr[numStr.length - 4]}，${numStr[numStr.length - 4] >= 5 ? '≥5 进1' : '<5 舍去'}`;
+
+      // 生成选项
+      const options = new Set([correctAns]);
+      options.add((approx + 1) + '万');
+      options.add((approx - 1) + '万');
+      if (approx + 10 !== approx) options.add((approx + 10) + '万');
+
+      const optArr = Array.from(options).slice(0, 4);
+      for (let i = optArr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [optArr[i], optArr[j]] = [optArr[j], optArr[i]];
+      }
+
+      const container = document.getElementById('approx-options');
+      container.innerHTML = '';
+      optArr.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'q-btn';
+        btn.textContent = opt;
+        btn.style.textAlign = 'center';
+        btn.addEventListener('click', () => handleApproxAnswer(btn, opt === correctAns, correctAns));
+        container.appendChild(btn);
+      });
+    }
+
+    function handleApproxAnswer(btn, correct, correctAns) {
+      if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+      const allBtns = document.querySelectorAll('#approx-options .q-btn');
+      allBtns.forEach(b => {
+        b.style.pointerEvents = 'none';
+        if (b.textContent === correctAns) b.classList.add('correct');
+      });
+      if (correct) {
+        updateStreak(true);
+        setTimeout(generateApproxQ, 1500);
+      } else {
+        btn.classList.add('wrong');
+        updateStreak(false);
+        setTimeout(generateApproxQ, 2500);
+      }
+    }
+
+    // ===== 初始化 =====
+    initPlace();
+  </script>
+</body>
+</html>

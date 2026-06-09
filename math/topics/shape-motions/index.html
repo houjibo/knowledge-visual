@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>图形的运动</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #7B1FA2; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 学习模式 */
+    .learn-section { text-align: center; padding: 20px 16px; }
+    .learn-title { font-size: 22px; font-weight: 700; color: #7B1FA2; margin: 12px 0; }
+    .learn-desc { font-size: 15px; color: #6E6E73; line-height: 1.6; margin: 12px 0; }
+    .demo-area {
+      width: 100%; max-width: 360px; height: 240px; margin: 16px auto;
+      border: 3px solid #E5E5EA; border-radius: 16px; background: white;
+      position: relative; overflow: hidden;
+    }
+    .demo-controls { display: flex; justify-content: center; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+    .demo-btn {
+      padding: 12px 24px; border: none; border-radius: 12px; font-size: 16px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .demo-btn:active { transform: scale(0.92); }
+    .demo-btn.primary { background: #7B1FA2; color: white; }
+    .demo-btn.secondary { background: #E5E5EA; color: #6E6E73; }
+    .demo-btn.active-btn { background: #4A90D9; color: white; }
+    .concept-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; max-width: 400px; margin: 0 auto; }
+    .concept-card {
+      padding: 20px 16px; border-radius: 16px; text-align: center;
+      border: 3px solid #E5E5EA; background: white;
+    }
+    .concept-card .icon { font-size: 40px; margin-bottom: 8px; }
+    .concept-card .name { font-size: 18px; font-weight: 700; color: #1D1D1F; }
+    .concept-card .desc { font-size: 13px; color: #6E6E73; margin-top: 6px; line-height: 1.4; }
+    .concept-card.highlight { border-color: #7B1FA2; background: rgba(123,31,162,0.05); }
+
+    /* 平移探索模式 */
+    .translate-area { text-align: center; padding: 20px 16px; }
+    .grid-container {
+      display: inline-grid; gap: 0; border: 2px solid #C7C7CC; border-radius: 8px;
+      background: #F2F2F7; margin: 12px auto; position: relative;
+    }
+    .grid-cell {
+      width: 40px; height: 40px; border: 1px solid #E5E5EA; background: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; position: relative;
+    }
+    .grid-cell.object-cell { background: rgba(123,31,162,0.15); }
+    .grid-cell.target-cell { background: rgba(52,199,89,0.15); border: 2px dashed #34C759; }
+    .grid-cell.trail-cell { background: rgba(74,144,217,0.1); }
+    .dir-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 16px auto; max-width: 280px; }
+    .dir-btn {
+      width: 64px; height: 52px; border: none; border-radius: 12px; font-size: 22px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+      background: #4A90D9; color: white;
+    }
+    .dir-btn:active { transform: scale(0.9); }
+    .dir-btn.reset-btn { background: #FF9500; width: auto; padding: 0 20px; font-size: 16px; }
+    .translate-info { font-size: 16px; font-weight: 600; color: #7B1FA2; margin: 12px 0; }
+    .translate-result { font-size: 18px; font-weight: 700; min-height: 28px; margin: 8px 0; }
+
+    /* 旋转探索模式 */
+    .rotate-area { text-align: center; padding: 20px 16px; }
+    .rotate-svg-wrap { width: 280px; height: 280px; margin: 16px auto; position: relative; }
+    .rotate-svg-wrap svg { width: 100%; height: 100%; }
+    .rotate-controls { display: flex; justify-content: center; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+    .rotate-btn {
+      padding: 12px 20px; border: none; border-radius: 12px; font-size: 16px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .rotate-btn:active { transform: scale(0.9); }
+    .rotate-btn.cw { background: #FF9500; color: white; }
+    .rotate-btn.ccw { background: #4A90D9; color: white; }
+    .rotate-btn.half { background: #34C759; color: white; }
+    .rotate-info { font-size: 16px; font-weight: 600; color: #7B1FA2; margin: 8px 0; }
+    .rotate-angle-display { font-size: 28px; font-weight: 700; color: #1D1D1F; margin: 12px 0; }
+
+    /* 挑战模式 */
+    .challenge-area { text-align: center; padding: 20px 16px; }
+    .ch-score { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; font-weight: 600; }
+    .ch-question { font-size: 18px; font-weight: 700; color: #1D1D1F; margin: 16px 0; line-height: 1.5; padding: 0 8px; }
+    .ch-visual { margin: 16px auto; }
+    .ch-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 400px; margin: 16px auto; padding: 0 16px; }
+    .ch-opt {
+      padding: 18px 12px; border: 3px solid #E5E5EA; background: white; border-radius: 16px;
+      font-size: 17px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center; min-height: 56px;
+    }
+    .ch-opt:active { transform: scale(0.92); }
+    .ch-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .ch-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .ch-result { font-size: 20px; font-weight: 700; min-height: 32px; margin: 12px 0; }
+    .ch-next-btn {
+      display: none; margin: 16px auto; padding: 14px 32px; border: none;
+      background: #7B1FA2; color: white; border-radius: 12px; font-size: 18px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .ch-next-btn:active { transform: scale(0.92); }
+    .ch-svg-area { width: 200px; height: 160px; margin: 12px auto; }
+    .ch-svg-area svg { width: 100%; height: 100%; }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  </style>
+</head>
+<body>
+  <nav class="nav-bar">
+    <a href="../../index.html" class="nav-back">←</a>
+    <span class="nav-title">🔄 图形的运动</span>
+    <span class="nav-sub">二年级</span>
+  </nav>
+
+  <div class="page-container">
+    <div class="mode-tabs" id="modeTabs">
+      <button class="mode-tab active" data-mode="learn">📖 学一学</button>
+      <button class="mode-tab" data-mode="translate">➡️ 平移</button>
+      <button class="mode-tab" data-mode="rotate">🔄 旋转</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- 模式1: 学一学 -->
+    <div class="mode-content active" id="mode-learn">
+      <div class="learn-section">
+        <div class="learn-title">🔄 图形的运动</div>
+        <div class="learn-desc">图形可以<strong>平移</strong>和<strong>旋转</strong>，运动后形状和大小不变！</div>
+
+        <div class="concept-cards">
+          <div class="concept-card highlight">
+            <div class="icon">➡️</div>
+            <div class="name">平移</div>
+            <div class="desc">图形沿着直线移动<br>方向和距离不变</div>
+          </div>
+          <div class="concept-card highlight">
+            <div class="icon">🔄</div>
+            <div class="name">旋转</div>
+            <div class="desc">图形绕一个点转动<br>转动角度不变</div>
+          </div>
+        </div>
+
+        <div class="demo-area" id="learnDemo">
+          <svg viewBox="0 0 360 240" width="100%" height="100%">
+            <defs>
+              <marker id="arrowG" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L8,3 L0,6" fill="#34C759"/>
+              </marker>
+            </defs>
+            <!-- 原始图形 -->
+            <rect id="demoOrig" x="30" y="80" width="50" height="50" rx="6" fill="rgba(123,31,162,0.2)" stroke="#7B1FA2" stroke-width="2.5"/>
+            <text x="55" y="112" text-anchor="middle" font-size="14" font-weight="600" fill="#7B1FA2">原图</text>
+            <!-- 平移后的图形 -->
+            <rect id="demoMoved" x="200" y="80" width="50" height="50" rx="6" fill="rgba(52,199,89,0.2)" stroke="#34C759" stroke-width="2.5" opacity="0"/>
+            <text id="demoMovedLabel" x="225" y="112" text-anchor="middle" font-size="14" font-weight="600" fill="#34C759" opacity="0">平移后</text>
+            <!-- 箭头 -->
+            <line id="demoArrow" x1="85" y1="105" x2="195" y2="105" stroke="#34C759" stroke-width="2.5" marker-end="url(#arrowG)" opacity="0"/>
+            <!-- 说明 -->
+            <text id="demoText" x="180" y="200" text-anchor="middle" font-size="14" fill="#6E6E73" opacity="0">向右平移了 5 格</text>
+          </svg>
+        </div>
+        <div class="demo-controls">
+          <button class="demo-btn primary" onclick="playDemo()">▶️ 播放演示</button>
+          <button class="demo-btn secondary" onclick="resetDemo()">🔄 重置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 平移探索 -->
+    <div class="mode-content" id="mode-translate">
+      <div class="translate-area">
+        <div class="learn-title">➡️ 平移探索</div>
+        <div class="learn-desc">用方向按钮把 🟪 移到 🟩 的位置！</div>
+
+        <div class="translate-info" id="trInfo">已移动: 0 步</div>
+        <div id="gridWrap"></div>
+        <div class="dir-buttons">
+          <button class="dir-btn" onclick="moveObj('up')">⬆️</button>
+          <button class="dir-btn" onclick="moveObj('left')">⬅️</button>
+          <button class="dir-btn" onclick="moveObj('down')">⬇️</button>
+          <button class="dir-btn" onclick="moveObj('right')">➡️</button>
+          <button class="dir-btn reset-btn" onclick="resetTranslate()">重置</button>
+        </div>
+        <div class="translate-result" id="trResult"></div>
+        <button class="demo-btn primary" onclick="newTranslateGame()" style="margin:12px auto;display:block;">🎲 换一题</button>
+      </div>
+    </div>
+
+    <!-- 模式3: 旋转探索 -->
+    <div class="mode-content" id="mode-rotate">
+      <div class="rotate-area">
+        <div class="learn-title">🔄 旋转探索</div>
+        <div class="learn-desc">点击按钮旋转图形，观察旋转后的变化！</div>
+
+        <div class="rotate-angle-display" id="rotAngleDisplay">0°</div>
+        <div class="rotate-svg-wrap">
+          <svg viewBox="0 0 280 280" id="rotSvg">
+            <!-- 中心点 -->
+            <circle cx="140" cy="140" r="5" fill="#FF9500"/>
+            <text x="140" y="170" text-anchor="middle" font-size="12" fill="#FF9500" font-weight="600">旋转中心</text>
+            <!-- 原始图形（虚线） -->
+            <g id="rotOrig">
+              <rect x="100" y="60" width="80" height="40" rx="4" fill="rgba(123,31,162,0.1)" stroke="#7B1FA2" stroke-width="2" stroke-dasharray="6,3"/>
+            </g>
+            <!-- 旋转后图形 -->
+            <g id="rotMoved" transform="rotate(0, 140, 140)">
+              <rect x="100" y="60" width="80" height="40" rx="4" fill="rgba(74,144,217,0.2)" stroke="#4A90D9" stroke-width="2.5"/>
+              <text x="140" y="85" text-anchor="middle" font-size="13" font-weight="600" fill="#4A90D9">旋转</text>
+            </g>
+          </svg>
+        </div>
+        <div class="rotate-info" id="rotInfo">顺时针旋转 90° 的整数倍</div>
+        <div class="rotate-controls">
+          <button class="rotate-btn cw" onclick="doRotate(90)">↻ 顺90°</button>
+          <button class="rotate-btn ccw" onclick="doRotate(-90)">↺ 逆90°</button>
+          <button class="rotate-btn half" onclick="doRotate(180)">🔃 180°</button>
+        </div>
+        <button class="demo-btn secondary" onclick="resetRotate()" style="margin:8px auto;display:block;">🔄 重置</button>
+      </div>
+    </div>
+
+    <!-- 模式4: 挑战 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="challenge-area">
+        <div class="ch-score">
+          <span>✅ 正确: <strong id="chCorrect">0</strong></span>
+          <span>📝 第 <strong id="chNum">1</strong> 题</span>
+        </div>
+        <div class="ch-question" id="chQuestion"></div>
+        <div class="ch-svg-area" id="chSvgArea"></div>
+        <div class="ch-options" id="chOptions"></div>
+        <div class="ch-result" id="chResult"></div>
+        <button class="ch-next-btn" id="chNext" onclick="nextChallenge()">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // === Mode tabs ===
+    document.querySelectorAll('.mode-tab').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.mode-tab').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.mode-content').forEach(function(c) { c.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('mode-' + btn.dataset.mode).classList.add('active');
+        if (btn.dataset.mode === 'translate') initTranslate();
+        if (btn.dataset.mode === 'rotate') resetRotate();
+        if (btn.dataset.mode === 'challenge') initChallenge();
+      });
+    });
+
+    // === 学一学 演示 ===
+    var demoTimer = null;
+    function playDemo() {
+      resetDemo();
+      var moved = document.getElementById('demoMoved');
+      var label = document.getElementById('demoMovedLabel');
+      var arrow = document.getElementById('demoArrow');
+      var text = document.getElementById('demoText');
+      setTimeout(function() {
+        arrow.setAttribute('opacity', '1');
+      }, 300);
+      setTimeout(function() {
+        moved.setAttribute('opacity', '1');
+        label.setAttribute('opacity', '1');
+        text.setAttribute('opacity', '1');
+      }, 800);
+    }
+    function resetDemo() {
+      document.getElementById('demoMoved').setAttribute('opacity', '0');
+      document.getElementById('demoMovedLabel').setAttribute('opacity', '0');
+      document.getElementById('demoArrow').setAttribute('opacity', '0');
+      document.getElementById('demoText').setAttribute('opacity', '0');
+    }
+
+    // === 平移探索 ===
+    var GRID_SIZE = 7;
+    var objPos = { r: 1, c: 1 };
+    var targetPos = { r: 5, c: 5 };
+    var moveCount = 0;
+    var translateDone = false;
+
+    function initTranslate() {
+      newTranslateGame();
+    }
+
+    function newTranslateGame() {
+      objPos = { r: 0, c: 0 };
+      targetPos = { r: Math.floor(Math.random() * 4) + 3, c: Math.floor(Math.random() * 4) + 3 };
+      moveCount = 0;
+      translateDone = false;
+      document.getElementById('trResult').textContent = '';
+      document.getElementById('trInfo').textContent = '已移动: 0 步';
+      renderGrid();
+    }
+
+    function renderGrid() {
+      var wrap = document.getElementById('gridWrap');
+      var html = '<div class="grid-container" style="grid-template-columns:repeat(' + GRID_SIZE + ', 40px);">';
+      for (var r = 0; r < GRID_SIZE; r++) {
+        for (var c = 0; c < GRID_SIZE; c++) {
+          var cls = 'grid-cell';
+          var content = '';
+          if (r === objPos.r && c === objPos.c) {
+            cls += ' object-cell';
+            content = '🟪';
+          } else if (r === targetPos.r && c === targetPos.c) {
+            cls += ' target-cell';
+            content = '🟩';
+          }
+          html += '<div class="' + cls + '">' + content + '</div>';
+        }
+      }
+      html += '</div>';
+      wrap.innerHTML = html;
+    }
+
+    function moveObj(dir) {
+      if (translateDone) return;
+      var nr = objPos.r, nc = objPos.c;
+      if (dir === 'up') nr--;
+      if (dir === 'down') nr++;
+      if (dir === 'left') nc--;
+      if (dir === 'right') nc++;
+      if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) return;
+      objPos.r = nr;
+      objPos.c = nc;
+      moveCount++;
+      document.getElementById('trInfo').textContent = '已移动: ' + moveCount + ' 步';
+      renderGrid();
+      if (objPos.r === targetPos.r && objPos.c === targetPos.c) {
+        translateDone = true;
+        var minSteps = Math.abs(targetPos.r) + Math.abs(targetPos.c);
+        document.getElementById('trResult').innerHTML = '🎉 到达目标！用了 ' + moveCount + ' 步';
+        document.getElementById('trResult').style.color = '#34C759';
+      }
+    }
+
+    function resetTranslate() {
+      objPos = { r: 0, c: 0 };
+      moveCount = 0;
+      translateDone = false;
+      document.getElementById('trResult').textContent = '';
+      document.getElementById('trInfo').textContent = '已移动: 0 步';
+      renderGrid();
+    }
+
+    // === 旋转探索 ===
+    var currentAngle = 0;
+    function doRotate(deg) {
+      currentAngle = (currentAngle + deg) % 360;
+      if (currentAngle < 0) currentAngle += 360;
+      document.getElementById('rotMoved').setAttribute('transform', 'rotate(' + currentAngle + ', 140, 140)');
+      document.getElementById('rotAngleDisplay').textContent = currentAngle + '°';
+      var desc = '';
+      if (currentAngle === 0) desc = '回到原位';
+      else if (currentAngle === 90) desc = '顺时针旋转了 90°（直角）';
+      else if (currentAngle === 180) desc = '旋转了 180°（半圈，上下颠倒）';
+      else if (currentAngle === 270) desc = '顺时针旋转了 270°（或逆时针 90°）';
+      document.getElementById('rotInfo').textContent = desc;
+    }
+    function resetRotate() {
+      currentAngle = 0;
+      document.getElementById('rotMoved').setAttribute('transform', 'rotate(0, 140, 140)');
+      document.getElementById('rotAngleDisplay').textContent = '0°';
+      document.getElementById('rotInfo').textContent = '点击按钮旋转图形';
+    }
+
+    // === 挑战模式 ===
+    var chIdx = 0, chCorrect = 0, chLocked = false;
+
+    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function shuffle(arr) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+
+    function makeArrowSVG(dx, dy) {
+      var sx = 40, sy = 80, ex = sx + dx * 25, ey = sy - dy * 25;
+      return '<svg viewBox="0 0 200 160">' +
+        '<rect x="' + sx + '" y="' + (sy - 20) + '" width="40" height="40" rx="4" fill="rgba(123,31,162,0.2)" stroke="#7B1FA2" stroke-width="2"/>' +
+        '<line x1="' + (sx + 45) + '" y1="' + sy + '" x2="' + (ex + 40) + '" y2="' + (ey) + '" stroke="#34C759" stroke-width="3" marker-end="url(#arrowG2)"/>' +
+        '<defs><marker id="arrowG2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#34C759"/></marker></defs>' +
+        '<rect x="' + (ex + 20) + '" y="' + (ey - 20) + '" width="40" height="40" rx="4" fill="rgba(52,199,89,0.2)" stroke="#34C759" stroke-width="2" stroke-dasharray="4,2"/>' +
+        '</svg>';
+    }
+
+    function makeRotateSVG(angle) {
+      var dashStyle = 'stroke-dasharray="6,3"';
+      return '<svg viewBox="0 0 200 160">' +
+        '<circle cx="100" cy="80" r="4" fill="#FF9500"/>' +
+        '<rect x="70" y="30" width="60" height="30" rx="3" fill="rgba(123,31,162,0.1)" stroke="#7B1FA2" stroke-width="2" ' + dashStyle + '/>' +
+        '<g transform="rotate(' + angle + ', 100, 80)">' +
+        '<rect x="70" y="30" width="60" height="30" rx="3" fill="rgba(74,144,217,0.2)" stroke="#4A90D9" stroke-width="2.5"/>' +
+        '</g></svg>';
+    }
+
+    function generateChallenge() {
+      var types = ['translate_dir', 'translate_dist', 'rotate_angle', 'rotate_type', 'concept', 'identify'];
+      var type = types[randInt(0, types.length - 1)];
+      var q = { question: '', visual: '', options: [], answer: 0 };
+
+      if (type === 'translate_dir') {
+        var dx = randInt(-3, 3), dy = randInt(-3, 3);
+        if (dx === 0 && dy === 0) dx = 2;
+        var dirs = [];
+        if (dy > 0) dirs.push('上');
+        if (dy < 0) dirs.push('下');
+        if (dx > 0) dirs.push('右');
+        if (dx < 0) dirs.push('左');
+        var mainDir = dirs.join('和');
+        q.question = '图形向 ' + mainDir + ' 移动，这是哪种运动？';
+        q.visual = makeArrowSVG(dx, dy);
+        q.options = shuffle(['平移', '旋转', '对称', '放大']);
+        q.answer = q.options.indexOf('平移');
+      } else if (type === 'translate_dist') {
+        var dist = randInt(2, 5);
+        var dirName = ['右', '下', '左', '上'][randInt(0, 3)];
+        q.question = '图形向' + dirName + '平移了 ' + dist + ' 格，形状和大小会变化吗？';
+        q.visual = '';
+        q.options = shuffle(['不变', '变大', '变小', '变胖']);
+        q.answer = q.options.indexOf('不变');
+      } else if (type === 'rotate_angle') {
+        var angles = [90, 180, 270];
+        var ang = angles[randInt(0, 2)];
+        q.question = '图形绕中心点顺时针旋转了多少度？';
+        q.visual = makeRotateSVG(ang);
+        q.options = shuffle(['90°', '180°', '270°', '45°']);
+        q.answer = q.options.indexOf(ang + '°');
+      } else if (type === 'rotate_type') {
+        q.question = '钟表上的指针从 12 转到 3，旋转了多少度？';
+        q.visual = '';
+        q.options = shuffle(['90°', '180°', '45°', '360°']);
+        q.answer = q.options.indexOf('90°');
+      } else if (type === 'concept') {
+        var concepts = [
+          { q: '下面哪个是旋转运动？', opts: ['电梯上下移动', '风车转动', '推箱子', '拉抽屉'], ans: '风车转动' },
+          { q: '下面哪个是平移运动？', opts: ['转方向盘', '开门', '滑滑梯', '拧瓶盖'], ans: '滑滑梯' },
+          { q: '图形平移后，什么不会变？', opts: ['位置', '形状和大小', '方向', '颜色'], ans: '形状和大小' },
+          { q: '图形旋转后，什么不会变？', opts: ['位置', '朝向', '形状和大小', '高低'], ans: '形状和大小' },
+          { q: '下面哪个不是图形的运动方式？', opts: ['平移', '旋转', '切割', '对称'], ans: '切割' },
+          { q: '旋转需要几个要素？', opts: ['旋转中心和角度', '只要方向', '只要距离', '不需要条件'], ans: '旋转中心和角度' },
+          { q: '风扇叶片转动属于什么运动？', opts: ['平移', '旋转', '对称', '放大'], ans: '旋转' },
+          { q: '电梯上下移动属于什么运动？', opts: ['旋转', '对称', '平移', '缩小'], ans: '平移' },
+        ];
+        var pick = concepts[randInt(0, concepts.length - 1)];
+        q.question = pick.q;
+        q.visual = '';
+        q.options = shuffle(pick.opts);
+        q.answer = q.options.indexOf(pick.ans);
+      } else {
+        // identify
+        var items = [
+          { q: '拉开抽屉是什么运动？', ans: '平移', wrong: ['旋转', '对称', '跳跃'] },
+          { q: '转动门把手是什么运动？', ans: '旋转', wrong: ['平移', '滑动', '弹跳'] },
+          { q: '国旗沿旗杆上升是什么运动？', ans: '平移', wrong: ['旋转', '翻滚', '折叠'] },
+          { q: '摩天轮转动是什么运动？', ans: '旋转', wrong: ['平移', '滑动', '拉伸'] },
+        ];
+        var it = items[randInt(0, items.length - 1)];
+        q.question = it.q;
+        q.visual = '';
+        q.options = shuffle([it.ans].concat(it.wrong));
+        q.answer = q.options.indexOf(it.ans);
+      }
+      return q;
+    }
+
+    var chData = null;
+
+    function initChallenge() {
+      chIdx = 0; chCorrect = 0; chLocked = false;
+      document.getElementById('chCorrect').textContent = '0';
+      document.getElementById('chNum').textContent = '1';
+      loadChallenge();
+    }
+
+    function loadChallenge() {
+      chData = generateChallenge();
+      document.getElementById('chQuestion').textContent = chData.question;
+      document.getElementById('chSvgArea').innerHTML = chData.visual || '';
+      var optDiv = document.getElementById('chOptions');
+      optDiv.innerHTML = '';
+      chData.options.forEach(function(opt, i) {
+        var btn = document.createElement('button');
+        btn.className = 'ch-opt';
+        btn.textContent = opt;
+        btn.setAttribute('data-idx', i);
+        btn.addEventListener('click', function() { pickChallenge(i); });
+        optDiv.appendChild(btn);
+      });
+      document.getElementById('chResult').textContent = '';
+      document.getElementById('chNext').style.display = 'none';
+      chLocked = false;
+    }
+
+    function pickChallenge(i) {
+      if (chLocked) return;
+      chLocked = true;
+      var opts = document.querySelectorAll('#chOptions .ch-opt');
+      var isCorrect = i === chData.answer;
+      opts[i].classList.add(isCorrect ? 'correct' : 'wrong');
+      if (!isCorrect) opts[chData.answer].classList.add('correct');
+      if (isCorrect) {
+        chCorrect++;
+        document.getElementById('chCorrect').textContent = chCorrect;
+      }
+      document.getElementById('chResult').textContent = isCorrect ? '✅ 回答正确！' : '❌ 不对哦，看看正确答案吧！';
+      document.getElementById('chResult').style.color = isCorrect ? '#34C759' : '#FF3B30';
+      document.getElementById('chNext').style.display = 'block';
+      // 1.5秒自动跳转
+      setTimeout(function() { nextChallenge(); }, 1500);
+    }
+
+    function nextChallenge() {
+      chIdx++;
+      document.getElementById('chNum').textContent = chIdx + 1;
+      loadChallenge();
+    }
+  </script>
+</body>
+</html>
