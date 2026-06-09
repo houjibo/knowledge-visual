@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>位置与方向</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs {
+      display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mode-tab {
+      flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA;
+      border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-tab.active { background: #4A90D9; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 学习模式 */
+    .learn-area { text-align: center; padding: 20px 16px; }
+    .compass-box {
+      width: 220px; height: 220px; margin: 20px auto; position: relative;
+      background: radial-gradient(circle, rgba(74,144,217,0.05) 0%, rgba(74,144,217,0.02) 100%);
+      border-radius: 50%; border: 3px solid #4A90D9;
+    }
+    .compass-dir {
+      position: absolute; font-size: 22px; font-weight: 700; color: #4A90D9;
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+    }
+    .compass-dir.n { top: 8px; left: 50%; transform: translateX(-50%); color: #FF3B30; }
+    .compass-dir.s { bottom: 8px; left: 50%; transform: translateX(-50%); }
+    .compass-dir.e { right: 8px; top: 50%; transform: translateY(-50%); }
+    .compass-dir.w { left: 8px; top: 50%; transform: translateY(-50%); }
+    .compass-dir.ne { top: 28px; right: 28px; font-size: 16px; color: #FF9500; }
+    .compass-dir.nw { top: 28px; left: 28px; font-size: 16px; color: #FF9500; }
+    .compass-dir.se { bottom: 28px; right: 28px; font-size: 16px; color: #FF9500; }
+    .compass-dir.sw { bottom: 28px; left: 28px; font-size: 16px; color: #FF9500; }
+    .compass-center {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      font-size: 28px;
+    }
+    .compass-needle {
+      position: absolute; top: 50%; left: 50%; width: 4px; height: 80px;
+      background: linear-gradient(to top, #FF3B30 50%, #E5E5EA 50%);
+      transform-origin: bottom center; border-radius: 2px;
+      transform: translate(-50%, -100%);
+      transition: transform 0.5s ease;
+    }
+    .learn-info {
+      background: #F0F4FF; border-radius: 16px; padding: 16px; margin: 16px 0;
+      font-size: 16px; line-height: 1.8; text-align: left;
+    }
+    .learn-info .tip { color: #FF9500; font-weight: 600; }
+
+    /* 辨认模式 */
+    .identify-area { text-align: center; padding: 20px 16px; }
+    .scene-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      max-width: 320px; margin: 16px auto; padding: 16px;
+      background: #F5F5F7; border-radius: 16px;
+    }
+    .scene-cell {
+      aspect-ratio: 1; background: white; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; border: 2px solid #E5E5EA; position: relative;
+    }
+    .scene-cell.center-cell { background: rgba(74,144,217,0.1); border-color: #4A90D9; }
+    .scene-cell .cell-label {
+      position: absolute; bottom: 2px; font-size: 10px; color: #6E6E73;
+    }
+    .identify-question {
+      font-size: 20px; font-weight: 700; color: #1D1D1F; margin: 16px 0;
+    }
+    .identify-options {
+      display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 16px 0;
+    }
+    .identify-opt {
+      padding: 12px 20px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 18px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; min-width: 80px;
+    }
+    .identify-opt:active { transform: scale(0.95); }
+    .identify-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); }
+    .identify-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+
+    /* 导航模式 */
+    .navigate-area { text-align: center; padding: 20px 16px; }
+    .nav-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+      max-width: 360px; margin: 16px auto; padding: 8px;
+      background: #E8F5E9; border-radius: 16px; border: 2px solid #66BB6A;
+    }
+    .nav-cell {
+      aspect-ratio: 1; background: white; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; border: 1px solid #E5E5EA; position: relative;
+    }
+    .nav-cell.start { background: rgba(74,144,217,0.2); }
+    .nav-cell.goal { background: rgba(255,149,0,0.2); }
+    .nav-cell.obstacle { background: #FFEBEE; }
+    .nav-cell.player { background: rgba(52,199,89,0.3); }
+    .nav-cell.path-mark { background: rgba(74,144,217,0.1); }
+    .nav-controls {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      max-width: 240px; margin: 16px auto;
+    }
+    .nav-btn {
+      padding: 16px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 28px; cursor: pointer;
+      transition: all 0.15s ease; user-select: none;
+    }
+    .nav-btn:active { transform: scale(0.9); background: #F0F4FF; border-color: #4A90D9; }
+    .nav-btn.empty { visibility: hidden; }
+    .nav-task {
+      font-size: 18px; font-weight: 600; color: #1D1D1F; margin: 12px 0;
+      padding: 12px; background: #FFF8E1; border-radius: 12px;
+    }
+    .nav-step-count {
+      font-size: 16px; color: #6E6E73; margin: 8px 0;
+    }
+
+    /* 挑战模式 */
+    .challenge-area { text-align: center; padding: 20px 16px; }
+    .challenge-question {
+      font-size: 20px; font-weight: 700; color: #1D1D1F; margin: 16px 0;
+      line-height: 1.6; text-align: left; padding: 0 8px;
+    }
+    .challenge-visual {
+      font-size: 48px; margin: 16px 0;
+    }
+    .challenge-options {
+      display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 16px 0;
+    }
+    .challenge-opt {
+      padding: 14px 24px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 18px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .challenge-opt:active { transform: scale(0.95); }
+    .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); }
+    .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+
+    /* 反馈 */
+    .feedback {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      font-size: 72px; z-index: 100; pointer-events: none;
+      animation: popFeedback 0.6s ease forwards;
+    }
+    @keyframes popFeedback {
+      0% { opacity: 0; transform: translate(-50%,-50%) scale(0.3); }
+      40% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); }
+      100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5) translateY(-30px); }
+    }
+
+    /* 进度 */
+    .progress-bar {
+      display: flex; align-items: center; gap: 8px; padding: 8px 16px;
+      font-size: 14px; color: #6E6E73; font-weight: 600;
+    }
+    .progress-fill {
+      flex: 1; height: 8px; background: #E5E5EA; border-radius: 4px; overflow: hidden;
+    }
+    .progress-fill-inner {
+      height: 100%; background: linear-gradient(90deg, #4A90D9, #34C759);
+      border-radius: 4px; transition: width 0.3s ease;
+    }
+
+    @media (max-width: 480px) {
+      .compass-box { width: 180px; height: 180px; }
+      .compass-dir { font-size: 18px; }
+      .compass-dir.ne, .compass-dir.nw, .compass-dir.se, .compass-dir.sw { font-size: 13px; }
+      .challenge-question { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" onclick="location.href='../../index.html'" aria-label="返回">←</button>
+      <span class="nav-title">🧭 位置与方向</span>
+      <div style="width:56px"></div>
+    </nav>
+
+    <div class="mode-tabs" id="mode-tabs">
+      <button class="mode-tab active" data-mode="learn">📖 学习</button>
+      <button class="mode-tab" data-mode="identify">🎯 辨认</button>
+      <button class="mode-tab" data-mode="navigate">🚶 导航</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- 学习模式 -->
+    <div class="mode-content active" id="mode-learn">
+      <div class="learn-area">
+        <h3 style="color:#4A90D9;margin-bottom:8px;">🧭 八个方向</h3>
+        <p style="color:#6E6E73;font-size:15px;">记住：面朝北，背后是南，左手是西，右手是东</p>
+
+        <div class="compass-box" id="compass">
+          <div class="compass-dir n">北</div>
+          <div class="compass-dir s">南</div>
+          <div class="compass-dir e">东</div>
+          <div class="compass-dir w">西</div>
+          <div class="compass-dir ne">东北</div>
+          <div class="compass-dir nw">西北</div>
+          <div class="compass-dir se">东南</div>
+          <div class="compass-dir sw">西南</div>
+          <div class="compass-center">🧭</div>
+        </div>
+
+        <div class="learn-info">
+          <div>☀️ <b>太阳</b>从<b style="color:#FF9500">东方</b>升起，在<b style="color:#FF3B30">西方</b>落下</div>
+          <div>🗺️ 地图上：<b style="color:#FF3B30">上北</b> <b>下南</b> <b style="color:#4A90D9">左西</b> <b style="color:#34C759">右东</b></div>
+          <div class="tip">💡 口诀：面朝北站立，左西右东，前北后南</div>
+        </div>
+
+        <div class="learn-info">
+          <div>📍 <b>相对方向</b>：</div>
+          <div> 北 ↔ 南 &nbsp;&nbsp; 东 ↔ 西</div>
+          <div> 东北 ↔ 西南 &nbsp;&nbsp; 西北 ↔ 东南</div>
+          <div class="tip">💡  opposite 方向正好相反！</div>
+        </div>
+
+        <button onclick="spinCompass()" style="padding:14px 32px;border:none;background:#4A90D9;color:white;border-radius:20px;font-size:18px;font-weight:600;cursor:pointer;margin-top:12px;">🔄 转动指南针</button>
+      </div>
+    </div>
+
+    <!-- 辨认模式 -->
+    <div class="mode-content" id="mode-identify">
+      <div class="identify-area">
+        <div class="progress-bar">
+          <span>第 <span id="id-current">1</span> 题</span>
+          <div class="progress-fill"><div class="progress-fill-inner" id="id-progress" style="width:0%"></div></div>
+          <span>✅ <span id="id-score">0</span></span>
+        </div>
+
+        <div class="identify-question" id="id-question">小明的北面是图书馆，图书馆在小明的哪个方向？</div>
+
+        <div class="scene-grid" id="id-scene"></div>
+
+        <div class="identify-options" id="id-options"></div>
+      </div>
+    </div>
+
+    <!-- 导航模式 -->
+    <div class="mode-content" id="mode-navigate">
+      <div class="navigate-area">
+        <div class="nav-task" id="nav-task">🐰 帮小兔子走到🥕，用方向按钮移动！</div>
+        <div class="nav-step-count">步数：<span id="nav-steps">0</span></div>
+
+        <div class="nav-grid" id="nav-grid"></div>
+
+        <div class="nav-controls">
+          <div class="nav-btn empty"></div>
+          <button class="nav-btn" onclick="movePlayer('north')">⬆️</button>
+          <div class="nav-btn empty"></div>
+          <button class="nav-btn" onclick="movePlayer('west')">⬅️</button>
+          <button class="nav-btn" onclick="movePlayer('south')">⬇️</button>
+          <button class="nav-btn" onclick="movePlayer('east')">➡️</button>
+        </div>
+
+        <button onclick="newNavLevel()" style="padding:12px 24px;border:none;background:#FF9500;color:white;border-radius:16px;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;">🆕 新关卡</button>
+      </div>
+    </div>
+
+    <!-- 挑战模式 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="challenge-area">
+        <div class="progress-bar">
+          <span>第 <span id="ch-current">1</span> 题</span>
+          <div class="progress-fill"><div class="progress-fill-inner" id="ch-progress" style="width:0%"></div></div>
+          <span>✅ <span id="ch-score">0</span></span>
+        </div>
+
+        <div class="challenge-visual" id="ch-visual"></div>
+        <div class="challenge-question" id="ch-question"></div>
+        <div class="challenge-options" id="ch-options"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // ===== 模式切换 =====
+    const tabs = document.querySelectorAll('.mode-tab');
+    const contents = document.querySelectorAll('.mode-content');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        if (tab.dataset.mode === 'identify') generateIdentify();
+        if (tab.dataset.mode === 'navigate') newNavLevel();
+        if (tab.dataset.mode === 'challenge') generateChallenge();
+      });
+    });
+
+    // ===== 学习模式 =====
+    function spinCompass() {
+      const needle = document.querySelector('.compass-needle');
+      if (!needle) {
+        const n = document.createElement('div');
+        n.className = 'compass-needle';
+        document.getElementById('compass').appendChild(n);
+      }
+      const deg = Math.floor(Math.random() * 360);
+      const el = document.querySelector('.compass-needle');
+      el.style.transform = `translate(-50%, -100%) rotate(${deg}deg)`;
+      setTimeout(() => {
+        el.style.transform = 'translate(-50%, -100%) rotate(0deg)';
+      }, 1500);
+    }
+
+    // ===== 辨认模式 =====
+    const DIRS = ['北','南','东','西','东北','西北','东南','西南'];
+    const DIR_EMOJI = {'北':'⬆️','南':'⬇️','东':'➡️','西':'⬅️','东北':'↗️','西北':'↖️','东南':'↘️','西南':'↙️'};
+    const OPPOSITE = {'北':'南','南':'北','东':'西','西':'东','东北':'西南','西南':'东北','西北':'东南','东南':'西北'};
+    const OBJECTS = ['🏠','🏫','🌳','🏪','⛲','🏥','🏖️','🏔️','🎪','🏰'];
+
+    let idScore = 0, idTotal = 0;
+
+    const IDENTIFY_TEMPLATES = [
+      function() {
+        const dir = DIRS[Math.floor(Math.random()*DIRS.length)];
+        const obj = OBJECTS[Math.floor(Math.random()*OBJECTS.length)];
+        return {
+          q: `从中心位置往${dir}走，能看到${obj}。${obj}在中心的${DIR_EMOJI[dir]}方向吗？`,
+          answer: dir,
+          options: shuffle([dir, OPPOSITE[dir], DIRS[(DIRS.indexOf(dir)+2)%8]])
+        };
+      },
+      function() {
+        const dir = DIRS[Math.floor(Math.random()*DIRS.length)];
+        const obj = OBJECTS[Math.floor(Math.random()*OBJECTS.length)];
+        return {
+          q: `${obj}在你的${dir}面，你面朝${dir}看，${obj}在你的？`,
+          answer: '前面',
+          options: shuffle(['前面','后面','左面','右面'])
+        };
+      },
+      function() {
+        const from = DIRS[Math.floor(Math.random()*DIRS.length)];
+        const to = OPPOSITE[from];
+        return {
+          q: `你面朝${from}站立，转身面向反方向，你现在面朝？`,
+          answer: to,
+          options: shuffle([to, from, DIRS[(DIRS.indexOf(from)+3)%8]])
+        };
+      },
+      function() {
+        const d1 = DIRS[Math.floor(Math.random()*4)]; // 基本方向
+        const d2 = DIRS[Math.floor(Math.random()*4)];
+        if (d1 === d2) return IDENTIFY_TEMPLATES[0]();
+        const mid = getMidDir(d1, d2);
+        return {
+          q: `先往${d1}走，再往${d2}走，大致是朝哪个方向走？`,
+          answer: mid,
+          options: shuffle([mid, OPPOSITE[mid], DIRS[(DIRS.indexOf(mid)+2)%8]])
+        };
+      }
+    ];
+
+    function getMidDir(a, b) {
+      const order = ['北','东北','东','东南','南','西南','西','西北'];
+      const ia = order.indexOf(a), ib = order.indexOf(b);
+      if (ia === -1 || ib === -1) return a;
+      const mid = Math.round((ia + ib) / 2) % 8;
+      return order[mid];
+    }
+
+    function generateIdentify() {
+      idTotal++;
+      document.getElementById('id-current').textContent = idTotal;
+      const tmpl = IDENTIFY_TEMPLATES[Math.floor(Math.random()*IDENTIFY_TEMPLATES.length)];
+      const data = tmpl();
+
+      document.getElementById('id-question').textContent = data.q;
+      document.getElementById('id-progress').style.width = Math.min(100, (idScore/idTotal)*100) + '%';
+
+      // 画场景
+      const scene = document.getElementById('id-scene');
+      scene.innerHTML = '';
+      const centerObj = OBJECTS[Math.floor(Math.random()*OBJECTS.length)];
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'scene-cell' + (i === 4 ? ' center-cell' : '');
+        if (i === 4) cell.textContent = '🧒';
+        scene.appendChild(cell);
+      }
+
+      const optsEl = document.getElementById('id-options');
+      optsEl.innerHTML = '';
+      data.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'identify-opt';
+        btn.textContent = `${DIR_EMOJI[opt] || ''} ${opt}`;
+        btn.onclick = () => handleIdentify(btn, opt, data.answer);
+        optsEl.appendChild(btn);
+      });
+    }
+
+    function handleIdentify(btn, chosen, answer) {
+      if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+      const allBtns = document.querySelectorAll('.identify-opt');
+      if (chosen === answer) {
+        btn.classList.add('correct');
+        idScore++;
+        document.getElementById('id-score').textContent = idScore;
+        showFeedback('✅');
+        setTimeout(generateIdentify, 1500);
+      } else {
+        btn.classList.add('wrong');
+        allBtns.forEach(b => {
+          if (b.textContent.includes(answer)) b.classList.add('correct');
+        });
+        showFeedback('❌');
+        setTimeout(generateIdentify, 2000);
+      }
+    }
+
+    // ===== 导航模式 =====
+    let playerPos = {x:0, y:0};
+    let goalPos = {x:4, y:4};
+    let navSteps = 0;
+    let navGrid = [];
+    const NAV_SIZE = 5;
+
+    function newNavLevel() {
+      playerPos = {x: Math.floor(Math.random()*2), y: Math.floor(Math.random()*2)};
+      goalPos = {x: NAV_SIZE-1-Math.floor(Math.random()*2), y: NAV_SIZE-1-Math.floor(Math.random()*2)};
+      navSteps = 0;
+      document.getElementById('nav-steps').textContent = '0';
+
+      // 生成简单地图（无障碍物）
+      navGrid = [];
+      for (let y = 0; y < NAV_SIZE; y++) {
+        navGrid[y] = [];
+        for (let x = 0; x < NAV_SIZE; x++) {
+          navGrid[y][x] = 0;
+        }
+      }
+      // 加1-2个障碍物
+      const obsCount = Math.floor(Math.random()*2) + 1;
+      for (let i = 0; i < obsCount; i++) {
+        const ox = Math.floor(Math.random()*NAV_SIZE);
+        const oy = Math.floor(Math.random()*NAV_SIZE);
+        if (!(ox === playerPos.x && oy === playerPos.y) && !(ox === goalPos.x && oy === goalPos.y)) {
+          navGrid[oy][ox] = 1;
+        }
+      }
+      renderNav();
+    }
+
+    function renderNav() {
+      const grid = document.getElementById('nav-grid');
+      grid.innerHTML = '';
+      for (let y = 0; y < NAV_SIZE; y++) {
+        for (let x = 0; x < NAV_SIZE; x++) {
+          const cell = document.createElement('div');
+          cell.className = 'nav-cell';
+          if (x === playerPos.x && y === playerPos.y) {
+            cell.classList.add('player');
+            cell.textContent = '🐰';
+          } else if (x === goalPos.x && y === goalPos.y) {
+            cell.classList.add('goal');
+            cell.textContent = '🥕';
+          } else if (navGrid[y][x] === 1) {
+            cell.classList.add('obstacle');
+            cell.textContent = '🪨';
+          } else {
+            cell.textContent = '';
+          }
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    function movePlayer(dir) {
+      let nx = playerPos.x, ny = playerPos.y;
+      if (dir === 'north') ny--;
+      if (dir === 'south') ny++;
+      if (dir === 'west') nx--;
+      if (dir === 'east') nx++;
+
+      if (nx < 0 || nx >= NAV_SIZE || ny < 0 || ny >= NAV_SIZE) return;
+      if (navGrid[ny][nx] === 1) {
+        showFeedback('🪨');
+        return;
+      }
+
+      playerPos = {x: nx, y: ny};
+      navSteps++;
+      document.getElementById('nav-steps').textContent = navSteps;
+      renderNav();
+
+      if (nx === goalPos.x && ny === goalPos.y) {
+        showFeedback('🎉');
+        document.getElementById('nav-task').textContent = `🎉 太棒了！用了 ${navSteps} 步到达！`;
+        setTimeout(newNavLevel, 2000);
+      }
+    }
+
+    // ===== 挑战模式 =====
+    let chScore = 0, chTotal = 0;
+
+    const CHALLENGE_TEMPLATES = [
+      function() {
+        const dir = DIRS[Math.floor(Math.random()*DIRS.length)];
+        const place = ['学校','公园','超市','图书馆','医院'][Math.floor(Math.random()*5)];
+        return {
+          visual: '🏘️',
+          q: `你家在中心，${place}在你家的${dir}面。从${place}看你家，你家在${place}的？`,
+          answer: OPPOSITE[dir],
+          options: shuffle([OPPOSITE[dir], dir, DIRS[(DIRS.indexOf(dir)+2)%8]])
+        };
+      },
+      function() {
+        const animals = ['🐱','🐶','🐰','🐸','🐻'];
+        const a1 = animals[Math.floor(Math.random()*animals.length)];
+        const a2 = animals[Math.floor(Math.random()*animals.length)];
+        const dir = DIRS[Math.floor(Math.random()*8)];
+        return {
+          visual: `${a1} ➡️ ${dir}走10米 ➡️ ${a2}`,
+          q: `${a1} 往 ${dir} 走 10 米找到 ${a2}，那 ${a2} 在 ${a1} 的哪个方向？`,
+          answer: dir,
+          options: shuffle([dir, OPPOSITE[dir], DIRS[(DIRS.indexOf(dir)+3)%8]])
+        };
+      },
+      function() {
+        return {
+          visual: '🗺️',
+          q: '在地图上，下面哪个说法是正确的？',
+          answer: '上面是北',
+          options: shuffle(['上面是北','上面是南','左边是东','右边是西'])
+        };
+      },
+      function() {
+        const hour = Math.floor(Math.random()*6) + 6; // 6-11
+        return {
+          visual: `🌅 早上${hour}点`,
+          q: `早上${hour}点，太阳从东方升起。你面朝太阳站立，你的右手边是？`,
+          answer: '南',
+          options: shuffle(['南','北','西','东'])
+        };
+      },
+      function() {
+        const hour = Math.floor(Math.random()*5) + 16; // 16-20
+        return {
+          visual: `🌇 傍晚${hour}点`,
+          q: `傍晚太阳快落山了，你背对太阳站立，你的前面是？`,
+          answer: '东',
+          options: shuffle(['东','西','南','北'])
+        };
+      },
+      function() {
+        const startDir = DIRS[Math.floor(Math.random()*4)];
+        const turnDir = Math.random() < 0.5 ? '左' : '右';
+        const resultDir = turnDir === '左' ? turnLeft(startDir) : turnRight(startDir);
+        return {
+          visual: `🧒 面朝${startDir}`,
+          q: `小明面朝${startDir}站立，向${turnDir}转90°，现在面朝？`,
+          answer: resultDir,
+          options: shuffle([resultDir, startDir, OPPOSITE[resultDir]])
+        };
+      }
+    ];
+
+    function turnRight(dir) {
+      const order = ['北','东','南','西'];
+      const i = order.indexOf(dir);
+      return i === -1 ? dir : order[(i+1)%4];
+    }
+    function turnLeft(dir) {
+      const order = ['北','东','南','西'];
+      const i = order.indexOf(dir);
+      return i === -1 ? dir : order[(i+3)%4];
+    }
+
+    function generateChallenge() {
+      chTotal++;
+      document.getElementById('ch-current').textContent = chTotal;
+      document.getElementById('ch-progress').style.width = Math.min(100, (chScore/Math.max(chTotal,1))*100) + '%';
+
+      const tmpl = CHALLENGE_TEMPLATES[Math.floor(Math.random()*CHALLENGE_TEMPLATES.length)];
+      const data = tmpl();
+
+      document.getElementById('ch-visual').textContent = data.visual;
+      document.getElementById('ch-question').textContent = data.q;
+
+      const optsEl = document.getElementById('ch-options');
+      optsEl.innerHTML = '';
+      data.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'challenge-opt';
+        btn.textContent = opt;
+        btn.onclick = () => handleChallenge(btn, opt, data.answer);
+        optsEl.appendChild(btn);
+      });
+    }
+
+    function handleChallenge(btn, chosen, answer) {
+      if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+      const allBtns = document.querySelectorAll('.challenge-opt');
+      if (chosen === answer) {
+        btn.classList.add('correct');
+        chScore++;
+        document.getElementById('ch-score').textContent = chScore;
+        showFeedback('✅');
+        setTimeout(generateChallenge, 1500);
+      } else {
+        btn.classList.add('wrong');
+        allBtns.forEach(b => {
+          if (b.textContent === answer) b.classList.add('correct');
+        });
+        showFeedback('❌');
+        setTimeout(generateChallenge, 2000);
+      }
+    }
+
+    // ===== 工具函数 =====
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function showFeedback(emoji) {
+      const el = document.createElement('div');
+      el.className = 'feedback';
+      el.textContent = emoji;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 700);
+    }
+
+    // 初始化
+    generateIdentify();
+    newNavLevel();
+    generateChallenge();
+  </script>
+</body>
+</html>
