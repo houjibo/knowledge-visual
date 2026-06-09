@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>观察物体</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #7B1FA2; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 认识立体图形模式 */
+    .shapes-area { text-align: center; padding: 24px 16px; }
+    .shape-card {
+      background: white; border-radius: 24px; padding: 28px 20px; margin: 16px auto;
+      max-width: 360px; box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .shape-3d { width: 180px; height: 150px; margin: 12px auto; }
+    .shape-name { font-size: 24px; font-weight: 700; color: #7B1FA2; margin: 8px 0; }
+    .shape-desc { font-size: 15px; color: #6E6E73; line-height: 1.6; }
+    .shape-features {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 12px 0;
+    }
+    .feature-tag {
+      padding: 6px 14px; border-radius: 12px; font-size: 13px; font-weight: 600;
+    }
+    .feature-tag.faces { background: rgba(74,144,217,0.12); color: #4A90D9; }
+    .feature-tag.edges { background: rgba(255,149,0,0.12); color: #FF9500; }
+    .feature-tag.vertices { background: rgba(123,31,162,0.12); color: #7B1FA2; }
+    .shape-nav { display: flex; justify-content: center; gap: 16px; margin: 20px 0; }
+    .shape-nav-btn {
+      width: 56px; height: 56px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 50%; font-size: 24px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; transition: all 0.2s ease;
+    }
+    .shape-nav-btn:active { transform: scale(0.9); background: #F0F4FF; }
+    .shape-counter { font-size: 14px; color: #6E6E73; margin: 8px 0; }
+
+    /* 观察方向模式 */
+    .view-area { text-align: center; padding: 24px 16px; }
+    .view-scene {
+      position: relative; width: 100%; max-width: 380px; margin: 16px auto;
+      background: white; border-radius: 20px; padding: 20px; min-height: 280px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .view-object { text-align: center; margin: 16px 0; }
+    .view-object svg { width: 160px; height: 140px; }
+    .view-directions {
+      display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 16px 0;
+    }
+    .dir-btn {
+      padding: 12px 20px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;
+    }
+    .dir-btn:active { transform: scale(0.92); }
+    .dir-btn.active { border-color: #7B1FA2; background: rgba(123,31,162,0.08); color: #7B1FA2; }
+    .dir-btn.correct { border-color: #34C759; background: rgba(52,199,89,0.12); }
+    .dir-btn.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); }
+    .view-result {
+      display: flex; justify-content: center; margin: 16px 0;
+      font-size: 18px; font-weight: 600; min-height: 28px;
+    }
+    .view-shape-display {
+      width: 200px; height: 120px; margin: 12px auto;
+      border: 2px dashed #E5E5EA; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(240,244,255,0.5);
+    }
+    .view-question { font-size: 18px; font-weight: 700; color: #1D1D1F; margin: 12px 0; }
+    .view-hint { font-size: 14px; color: #6E6E73; margin: 8px 16px; background: rgba(123,31,162,0.06); padding: 10px 14px; border-radius: 12px; }
+
+    /* 猜形状模式 */
+    .guess-area { text-align: center; padding: 24px 16px; }
+    .guess-clue {
+      background: white; border-radius: 20px; padding: 20px; margin: 16px auto;
+      max-width: 360px; box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .clue-item {
+      font-size: 17px; color: #1D1D1F; padding: 10px 0;
+      border-bottom: 1px solid #F0F0F0; display: flex; align-items: center; gap: 8px;
+    }
+    .clue-item:last-child { border-bottom: none; }
+    .clue-num { font-size: 20px; font-weight: 700; color: #7B1FA2; min-width: 28px; }
+    .guess-options {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+      max-width: 360px; margin: 20px auto; padding: 0 16px;
+    }
+    .guess-opt {
+      padding: 20px 12px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; cursor: pointer; transition: all 0.2s ease;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .guess-opt:active { transform: scale(0.92); }
+    .guess-opt svg { width: 80px; height: 70px; }
+    .guess-opt .opt-name { font-size: 15px; font-weight: 600; color: #1D1D1F; }
+    .guess-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.12); }
+    .guess-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); }
+    .guess-result { font-size: 20px; font-weight: 700; margin: 16px 0; min-height: 32px; }
+    .guess-score { font-size: 16px; font-weight: 600; color: #7B1FA2; margin: 8px 0; }
+
+    /* 挑战模式 */
+    .challenge-area { text-align: center; padding: 24px 16px; }
+    .ch-progress { display: flex; justify-content: center; gap: 16px; margin: 12px 0; font-size: 16px; font-weight: 600; }
+    .ch-question-box {
+      background: white; border-radius: 20px; padding: 24px 20px; margin: 16px auto;
+      max-width: 380px; box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .ch-question { font-size: 19px; font-weight: 700; color: #1D1D1F; margin: 12px 0; line-height: 1.5; }
+    .ch-visual { margin: 16px 0; }
+    .ch-visual svg { width: 160px; height: 140px; }
+    .ch-options { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+    .ch-opt {
+      padding: 16px 20px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 14px; font-size: 17px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; text-align: left;
+    }
+    .ch-opt:active { transform: scale(0.97); }
+    .ch-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.12); }
+    .ch-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); }
+    .ch-result { font-size: 20px; font-weight: 700; margin: 16px 0; min-height: 32px; }
+    .next-btn {
+      display: block; margin: 16px auto; padding: 14px 32px; border: none;
+      background: #7B1FA2; color: white; border-radius: 12px; font-size: 18px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .next-btn:active { transform: scale(0.92); }
+
+    @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .float-anim { animation: float 2s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+  <nav class="nav-bar">
+    <a href="../index.html" class="nav-back">←</a>
+    <span class="nav-title">👁️ 观察物体</span>
+    <span class="nav-sub">二年级</span>
+  </nav>
+
+  <div class="page-container">
+    <div class="mode-tabs" id="modeTabs">
+      <button class="mode-tab active" data-mode="shapes">🧊 认识立体图形</button>
+      <button class="mode-tab" data-mode="view">👁️ 观察方向</button>
+      <button class="mode-tab" data-mode="guess">🔍 猜形状</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- ===== 认识立体图形 ===== -->
+    <div class="mode-content active" id="mode-shapes">
+      <div class="shapes-area">
+        <h3 style="font-size:22px;color:#1D1D1F;margin-bottom:4px;">🧊 认识立体图形</h3>
+        <p style="font-size:15px;color:#6E6E73;">左右滑动，认识不同的立体图形朋友</p>
+        <div class="shape-counter" id="shapeCounter">1 / 5</div>
+        <div class="shape-card" id="shapeCard">
+          <!-- Dynamic content -->
+        </div>
+        <div class="shape-nav">
+          <button class="shape-nav-btn" onclick="prevShape()">◀</button>
+          <button class="shape-nav-btn" onclick="nextShape()">▶</button>
+        </div>
+        <div style="margin-top:16px;padding:12px 16px;background:rgba(123,31,162,0.06);border-radius:12px;font-size:14px;color:#6E6E73;text-align:left;">
+          💡 <strong>小提示：</strong>这些立体图形在生活中随处可见！易拉罐是圆柱体，皮球是球体，积木是长方体或正方体，冰淇淋蛋筒是圆锥体。
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 观察方向 ===== -->
+    <div class="mode-content" id="mode-view">
+      <div class="view-area">
+        <h3 style="font-size:22px;color:#1D1D1F;margin-bottom:4px;">👁️ 从不同方向观察</h3>
+        <p style="font-size:15px;color:#6E6E73;">同一个物体，从不同方向看，形状可能不同哦！</p>
+        <div class="view-hint">
+          🎯 <strong>核心知识：</strong>观察物体时，可以从<strong>前面</strong>、<strong>侧面</strong>、<strong>上面</strong>三个方向去看。
+        </div>
+        <div id="viewScene" class="view-scene">
+          <!-- Dynamic content -->
+        </div>
+        <div class="view-result" id="viewResult"></div>
+        <button class="next-btn" id="viewNext" style="display:none;" onclick="nextViewQuestion()">下一题 →</button>
+        <div style="display:flex;justify-content:center;gap:16px;margin:12px 0;font-size:15px;font-weight:600;">
+          <span>✅ <strong id="viewCorrect">0</strong></span>
+          <span>📝 第 <strong id="viewNum">1</strong>/<strong id="viewTotal">5</strong> 题</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 猜形状 ===== -->
+    <div class="mode-content" id="mode-guess">
+      <div class="guess-area">
+        <h3 style="font-size:22px;color:#1D1D1F;margin-bottom:4px;">🔍 根据线索猜形状</h3>
+        <p style="font-size:15px;color:#6E6E73;">读一读线索，猜猜是哪个立体图形！</p>
+        <div class="guess-score">⭐ 得分: <strong id="guessScore">0</strong></div>
+        <div class="guess-clue" id="guessClue">
+          <!-- Dynamic clues -->
+        </div>
+        <div class="guess-options" id="guessOptions">
+          <!-- Dynamic options -->
+        </div>
+        <div class="guess-result" id="guessResult"></div>
+        <button class="next-btn" id="guessNext" style="display:none;" onclick="nextGuess()">下一题 →</button>
+      </div>
+    </div>
+
+    <!-- ===== 挑战 ===== -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="challenge-area">
+        <h3 style="font-size:22px;color:#1D1D1F;margin-bottom:4px;">🏆 综合挑战</h3>
+        <div class="ch-progress">
+          <span>⭐ <strong id="chScore">0</strong></span>
+          <span>📝 第 <strong id="chNum">1</strong>/<strong id="chTotal">6</strong> 题</span>
+        </div>
+        <div class="ch-question-box" id="chBox">
+          <!-- Dynamic -->
+        </div>
+        <div class="ch-result" id="chResult"></div>
+        <button class="next-btn" id="chNext" style="display:none;" onclick="nextChallenge()">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // === SVG 立体图形绘制 ===
+    function svgCube(color1, color2, color3) {
+      return `<svg viewBox="0 0 180 150" class="float-anim">
+        <!-- 正方体/长方体 -->
+        <polygon points="30,50 90,30 150,50 150,120 90,140 30,120" fill="${color1}" opacity="0.85"/>
+        <polygon points="30,50 90,30 90,100 30,120" fill="${color2}" opacity="0.9"/>
+        <polygon points="90,30 150,50 150,120 90,100" fill="${color3}" opacity="0.8"/>
+        <line x1="30" y1="50" x2="30" y2="120" stroke="white" stroke-width="1.5" opacity="0.5"/>
+        <line x1="90" y1="30" x2="90" y2="100" stroke="white" stroke-width="1.5" opacity="0.5"/>
+        <line x1="150" y1="50" x2="150" y2="120" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      </svg>`;
+    }
+    function svgSphere(color) {
+      return `<svg viewBox="0 0 180 150" class="float-anim">
+        <defs><radialGradient id="sg" cx="40%" cy="35%"><stop offset="0%" stop-color="white" stop-opacity="0.6"/><stop offset="100%" stop-color="${color}"/></radialGradient></defs>
+        <circle cx="90" cy="80" r="55" fill="url(#sg)" stroke="${color}" stroke-width="2"/>
+        <ellipse cx="90" cy="80" rx="55" ry="16" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>
+        <ellipse cx="90" cy="80" rx="16" ry="55" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>
+      </svg>`;
+    }
+    function svgCylinder(color1, color2) {
+      return `<svg viewBox="0 0 180 150" class="float-anim">
+        <rect x="40" y="35" width="100" height="85" rx="2" fill="${color1}" opacity="0.8"/>
+        <ellipse cx="90" cy="35" rx="50" ry="18" fill="${color2}" opacity="0.9"/>
+        <ellipse cx="90" cy="120" rx="50" ry="18" fill="${color1}" opacity="0.95"/>
+        <line x1="40" y1="35" x2="40" y2="120" stroke="white" stroke-width="1" opacity="0.4"/>
+        <line x1="140" y1="35" x2="140" y2="120" stroke="white" stroke-width="1" opacity="0.4"/>
+        <ellipse cx="90" cy="35" rx="50" ry="18" fill="none" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      </svg>`;
+    }
+    function svgCone(color1, color2) {
+      return `<svg viewBox="0 0 180 150" class="float-anim">
+        <polygon points="90,15 35,120 145,120" fill="${color1}" opacity="0.85"/>
+        <ellipse cx="90" cy="120" rx="55" ry="18" fill="${color2}" opacity="0.9"/>
+        <line x1="90" y1="15" x2="35" y2="120" stroke="white" stroke-width="1" opacity="0.4"/>
+        <line x1="90" y1="15" x2="145" y2="120" stroke="white" stroke-width="1" opacity="0.4"/>
+        <ellipse cx="90" cy="120" rx="55" ry="18" fill="none" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      </svg>`;
+    }
+    function svgPrism(color1, color2, color3) {
+      return `<svg viewBox="0 0 180 150" class="float-anim">
+        <!-- 三棱柱 -->
+        <polygon points="90,20 30,120 150,120" fill="${color1}" opacity="0.7"/>
+        <polygon points="90,20 130,40 170,130 150,120" fill="${color2}" opacity="0.8"/>
+        <polygon points="30,120 150,120 170,130 50,130" fill="${color3}" opacity="0.85"/>
+        <line x1="90" y1="20" x2="130" y2="40" stroke="white" stroke-width="1.5" opacity="0.5"/>
+        <line x1="150" y1="120" x2="170" y2="130" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      </svg>`;
+    }
+
+    // === 立体图形数据 ===
+    const shapes = [
+      {
+        name: '长方体', svg: svgCube('#4A90D9','#3A7BC8','#5BA0E8'),
+        desc: '像砖块、课本、文具盒一样的形状',
+        features: [
+          { label: '6 个面', cls: 'faces' },
+          { label: '12 条棱', cls: 'edges' },
+          { label: '8 个顶点', cls: 'vertices' }
+        ],
+        extra: '对面完全相同，有长、宽、高三个维度'
+      },
+      {
+        name: '正方体', svg: svgCube('#AF52DE','#9B40CC','#C46AF0'),
+        desc: '像魔方、骰子一样的形状',
+        features: [
+          { label: '6 个面', cls: 'faces' },
+          { label: '12 条棱', cls: 'edges' },
+          { label: '8 个顶点', cls: 'vertices' }
+        ],
+        extra: '6个面完全相同，每条棱一样长'
+      },
+      {
+        name: '圆柱', svg: svgCylinder('#FF9500','#FFB340'),
+        desc: '像易拉罐、水杯、蜡笔一样的形状',
+        features: [
+          { label: '2 个圆面', cls: 'faces' },
+          { label: '1 个曲面', cls: 'edges' },
+        ],
+        extra: '上下两个圆一样大，能滚动'
+      },
+      {
+        name: '球', svg: svgSphere('#34C759'),
+        desc: '像皮球、地球仪、弹珠一样的形状',
+        features: [
+          { label: '1 个曲面', cls: 'faces' },
+          { label: '没有棱', cls: 'edges' },
+          { label: '没有顶点', cls: 'vertices' }
+        ],
+        extra: '从哪个方向看都是圆形，能向任何方向滚动'
+      },
+      {
+        name: '圆锥', svg: svgCone('#FF3B30','#FF6B6B'),
+        desc: '像冰淇淋蛋筒、漏斗、圣诞帽一样的形状',
+        features: [
+          { label: '1 个圆面', cls: 'faces' },
+          { label: '1 个曲面', cls: 'edges' },
+          { label: '1 个顶点', cls: 'vertices' }
+        ],
+        extra: '上面尖尖的，下面圆圆的'
+      }
+    ];
+    let shapeIdx = 0;
+
+    function renderShape() {
+      const s = shapes[shapeIdx];
+      document.getElementById('shapeCard').innerHTML = `
+        <div class="shape-3d">${s.svg}</div>
+        <div class="shape-name">${s.name}</div>
+        <div class="shape-desc">${s.desc}</div>
+        <div class="shape-features">${s.features.map(f => `<span class="feature-tag ${f.cls}">${f.label}</span>`).join('')}</div>
+        <div style="font-size:14px;color:#6E6E73;margin-top:8px;">${s.extra}</div>
+      `;
+      document.getElementById('shapeCounter').textContent = `${shapeIdx + 1} / ${shapes.length}`;
+    }
+    function nextShape() { shapeIdx = (shapeIdx + 1) % shapes.length; renderShape(); }
+    function prevShape() { shapeIdx = (shapeIdx - 1 + shapes.length) % shapes.length; renderShape(); }
+    renderShape();
+
+    // === Mode tabs ===
+    document.querySelectorAll('.mode-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('mode-' + btn.dataset.mode).classList.add('active');
+        if (btn.dataset.mode === 'view') initView();
+        if (btn.dataset.mode === 'guess') initGuess();
+        if (btn.dataset.mode === 'challenge') initChallenge();
+      });
+    });
+
+    // === 观察方向 ===
+    const viewQuestions = [
+      {
+        object: svgCube('#4A90D9','#3A7BC8','#5BA0E8'),
+        objectName: '长方体',
+        question: '从前面看这个长方体，看到的是什么形状？',
+        options: ['长方形', '正方形', '圆形', '三角形'],
+        answer: 0,
+        hint: '长方体的前面是一个长方形（特殊情况下是正方形）'
+      },
+      {
+        object: svgSphere('#34C759'),
+        objectName: '球',
+        question: '从上面看这个球，看到的是什么形状？',
+        options: ['椭圆形', '圆形', '正方形', '线段'],
+        answer: 1,
+        hint: '球从任何方向看都是圆形！'
+      },
+      {
+        object: svgCylinder('#FF9500','#FFB340'),
+        objectName: '圆柱',
+        question: '从上面看这个圆柱，看到的是什么形状？',
+        options: ['长方形', '圆形', '三角形', '正方形'],
+        answer: 1,
+        hint: '从上面看圆柱，看到的是顶部的圆面'
+      },
+      {
+        object: svgCone('#FF3B30','#FF6B6B'),
+        objectName: '圆锥',
+        question: '从侧面看这个圆锥，看到的像什么形状？',
+        options: ['圆形', '长方形', '三角形', '梯形'],
+        answer: 2,
+        hint: '从侧面看圆锥，尖尖的顶和宽宽的底，像一个三角形'
+      },
+      {
+        object: svgCylinder('#FF9500','#FFB340'),
+        objectName: '圆柱',
+        question: '从侧面看这个圆柱，看到的是什么形状？',
+        options: ['圆形', '长方形', '三角形', '梯形'],
+        answer: 1,
+        hint: '从侧面看圆柱，上下两条直边，上下两个圆弧，像长方形'
+      }
+    ];
+    let viewIdx = 0, viewCorrectCount = 0, viewLocked = false;
+
+    function initView() {
+      viewIdx = 0; viewCorrectCount = 0; viewLocked = false;
+      document.getElementById('viewCorrect').textContent = '0';
+      loadView();
+    }
+
+    function loadView() {
+      if (viewIdx >= viewQuestions.length) {
+        document.getElementById('viewScene').innerHTML = `<div style="text-align:center;padding:40px 0;"><div style="font-size:48px;">🎉</div><div style="font-size:20px;font-weight:700;color:#7B1FA2;margin:12px 0;">全部完成！</div><div style="font-size:16px;color:#6E6E73;">答对 ${viewCorrectCount} / ${viewQuestions.length} 题</div></div>`;
+        document.getElementById('viewResult').textContent = '';
+        document.getElementById('viewNext').style.display = 'none';
+        return;
+      }
+      const q = viewQuestions[viewIdx];
+      document.getElementById('viewScene').innerHTML = `
+        <div class="view-object">${q.object}</div>
+        <div class="view-question">${q.question}</div>
+        <div class="view-directions" id="viewOpts"></div>
+      `;
+      const optsDiv = document.getElementById('viewOpts');
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'dir-btn';
+        btn.textContent = opt;
+        btn.onclick = () => pickView(i);
+        optsDiv.appendChild(btn);
+      });
+      document.getElementById('viewResult').textContent = '';
+      document.getElementById('viewNext').style.display = 'none';
+      document.getElementById('viewNum').textContent = viewIdx + 1;
+      viewLocked = false;
+    }
+
+    function pickView(i) {
+      if (viewLocked) return;
+      viewLocked = true;
+      const q = viewQuestions[viewIdx];
+      const btns = document.querySelectorAll('#viewOpts .dir-btn');
+      btns[i].classList.add(i === q.answer ? 'correct' : 'wrong');
+      if (i !== q.answer) btns[q.answer].classList.add('correct');
+      if (i === q.answer) viewCorrectCount++;
+      document.getElementById('viewCorrect').textContent = viewCorrectCount;
+      document.getElementById('viewResult').innerHTML = i === q.answer ? '✅ 正确！' : `❌ 不对哦<br><small style="font-size:14px;color:#6E6E73;">${q.hint}</small>`;
+      document.getElementById('viewNext').style.display = 'block';
+    }
+
+    function nextViewQuestion() { viewIdx++; loadView(); }
+
+    // === 猜形状 ===
+    const guessQuestions = [
+      {
+        clues: ['我有 6 个面', '每个面都是正方形', '我有 12 条棱，8 个顶点', '骰子就是我的兄弟'],
+        answer: 1, // 正方体
+        options: [
+          { name: '长方体', svg: svgCube('#4A90D9','#3A7BC8','#5BA0E8') },
+          { name: '正方体', svg: svgCube('#AF52DE','#9B40CC','#C46AF0') },
+          { name: '圆柱', svg: svgCylinder('#FF9500','#FFB340') },
+          { name: '球', svg: svgSphere('#34C759') }
+        ]
+      },
+      {
+        clues: ['我上上下下一样粗', '我有两个圆圆的面', '我能躺着滚动', '易拉罐长得像我'],
+        answer: 2, // 圆柱
+        options: [
+          { name: '圆锥', svg: svgCone('#FF3B30','#FF6B6B') },
+          { name: '球', svg: svgSphere('#34C759') },
+          { name: '圆柱', svg: svgCylinder('#FF9500','#FFB340') },
+          { name: '正方体', svg: svgCube('#AF52DE','#9B40CC','#C46AF0') }
+        ]
+      },
+      {
+        clues: ['我圆圆的，鼓鼓的', '我没有棱也没有顶点', '我能向任何方向滚动', '地球仪就是我的样子'],
+        answer: 0, // 球
+        options: [
+          { name: '球', svg: svgSphere('#34C759') },
+          { name: '圆柱', svg: svgCylinder('#FF9500','#FFB340') },
+          { name: '圆锥', svg: svgCone('#FF3B30','#FF6B6B') },
+          { name: '正方体', svg: svgCube('#AF52DE','#9B40CC','#C46AF0') }
+        ]
+      },
+      {
+        clues: ['我有一个尖尖的顶点', '我有一个圆圆的底', '我像冰淇淋蛋筒', '圣诞帽长得像我'],
+        answer: 3, // 圆锥
+        options: [
+          { name: '圆柱', svg: svgCylinder('#FF9500','#FFB340') },
+          { name: '球', svg: svgSphere('#34C759') },
+          { name: '长方体', svg: svgCube('#4A90D9','#3A7BC8','#5BA0E8') },
+          { name: '圆锥', svg: svgCone('#FF3B30','#FF6B6B') }
+        ]
+      }
+    ];
+    let guessIdx = 0, guessScore = 0, guessLocked = false;
+
+    function initGuess() {
+      guessIdx = 0; guessScore = 0; guessLocked = false;
+      document.getElementById('guessScore').textContent = '0';
+      loadGuess();
+    }
+
+    function loadGuess() {
+      if (guessIdx >= guessQuestions.length) {
+        document.getElementById('guessClue').innerHTML = `<div style="text-align:center;padding:24px 0;"><div style="font-size:48px;">🎉</div><div style="font-size:18px;font-weight:700;color:#7B1FA2;margin:12px 0;">全部猜完！</div><div style="font-size:16px;color:#6E6E73;">得分 ${guessScore} / ${guessQuestions.length}</div></div>`;
+        document.getElementById('guessOptions').innerHTML = '';
+        document.getElementById('guessResult').textContent = '';
+        document.getElementById('guessNext').style.display = 'none';
+        return;
+      }
+      const q = guessQuestions[guessIdx];
+      document.getElementById('guessClue').innerHTML = `
+        <div style="font-size:16px;font-weight:700;color:#7B1FA2;margin-bottom:8px;">🔍 线索：</div>
+        ${q.clues.map((c, i) => `<div class="clue-item"><span class="clue-num">${i + 1}</span><span>${c}</span></div>`).join('')}
+      `;
+      const optsDiv = document.getElementById('guessOptions');
+      optsDiv.innerHTML = '';
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'guess-opt';
+        btn.innerHTML = `${opt.svg}<span class="opt-name">${opt.name}</span>`;
+        btn.onclick = () => pickGuess(i);
+        optsDiv.appendChild(btn);
+      });
+      document.getElementById('guessResult').textContent = '';
+      document.getElementById('guessNext').style.display = 'none';
+      guessLocked = false;
+    }
+
+    function pickGuess(i) {
+      if (guessLocked) return;
+      guessLocked = true;
+      const q = guessQuestions[guessIdx];
+      const opts = document.querySelectorAll('#guessOptions .guess-opt');
+      opts[i].classList.add(i === q.answer ? 'correct' : 'wrong');
+      if (i !== q.answer) opts[q.answer].classList.add('correct');
+      if (i === q.answer) { guessScore++; document.getElementById('guessScore').textContent = guessScore; }
+      document.getElementById('guessResult').textContent = i === q.answer ? '✅ 猜对啦！' : `❌ 不对哦，正确答案是 ${q.options[q.answer].name}`;
+      document.getElementById('guessNext').style.display = 'block';
+    }
+
+    function nextGuess() { guessIdx++; loadGuess(); }
+
+    // === 挑战 ===
+    const challengeQuestions = [
+      {
+        q: '下面哪个是正方体？',
+        visual: svgCube('#AF52DE','#9B40CC','#C46AF0'),
+        opts: ['6个面都是正方形', '6个面都是长方形', '有4个面', '没有顶点'],
+        ans: 0
+      },
+      {
+        q: '足球最像下面哪个立体图形？',
+        visual: svgSphere('#34C759'),
+        opts: ['圆柱', '圆锥', '球', '正方体'],
+        ans: 2
+      },
+      {
+        q: '一个长方体有几个面、几条棱、几个顶点？',
+        visual: null,
+        opts: ['6面、12棱、8顶点', '4面、8棱、6顶点', '6面、8棱、12顶点', '4面、6棱、8顶点'],
+        ans: 0
+      },
+      {
+        q: '从上面看圆柱，看到的形状是？',
+        visual: svgCylinder('#FF9500','#FFB340'),
+        opts: ['长方形', '三角形', '圆形', '正方形'],
+        ans: 2
+      },
+      {
+        q: '下面哪个立体图形能向任何方向滚动？',
+        visual: null,
+        opts: ['圆柱', '圆锥', '正方体', '球'],
+        ans: 3
+      },
+      {
+        q: '把一个圆柱从侧面看，看到的形状像？',
+        visual: svgCylinder('#FF9500','#FFB340'),
+        opts: ['圆形', '长方形', '三角形', '梯形'],
+        ans: 1
+      }
+    ];
+    let chIdx = 0, chScore = 0, chLocked = false;
+
+    function initChallenge() {
+      chIdx = 0; chScore = 0; chLocked = false;
+      document.getElementById('chScore').textContent = '0';
+      document.getElementById('chTotal').textContent = challengeQuestions.length;
+      loadChallenge();
+    }
+
+    function loadChallenge() {
+      if (chIdx >= challengeQuestions.length) {
+        const stars = chScore >= 5 ? '⭐⭐⭐' : chScore >= 3 ? '⭐⭐' : chScore >= 1 ? '⭐' : '';
+        document.getElementById('chBox').innerHTML = `<div style="text-align:center;padding:24px 0;"><div style="font-size:48px;">🏆</div><div style="font-size:20px;font-weight:700;color:#7B1FA2;margin:12px 0;">挑战完成！</div><div style="font-size:32px;margin:8px 0;">${stars}</div><div style="font-size:16px;color:#6E6E73;">得分 ${chScore} / ${challengeQuestions.length}</div></div>`;
+        document.getElementById('chResult').textContent = '';
+        document.getElementById('chNext').style.display = 'none';
+        return;
+      }
+      const q = challengeQuestions[chIdx];
+      document.getElementById('chNum').textContent = chIdx + 1;
+      document.getElementById('chBox').innerHTML = `
+        ${q.visual ? `<div class="ch-visual">${q.visual}</div>` : ''}
+        <div class="ch-question">${q.q}</div>
+        <div class="ch-options" id="chOpts"></div>
+      `;
+      const optsDiv = document.getElementById('chOpts');
+      q.opts.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'ch-opt';
+        btn.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+        btn.onclick = () => pickChallenge(i);
+        optsDiv.appendChild(btn);
+      });
+      document.getElementById('chResult').textContent = '';
+      document.getElementById('chNext').style.display = 'none';
+      chLocked = false;
+    }
+
+    function pickChallenge(i) {
+      if (chLocked) return;
+      chLocked = true;
+      const q = challengeQuestions[chIdx];
+      const btns = document.querySelectorAll('#chOpts .ch-opt');
+      btns[i].classList.add(i === q.ans ? 'correct' : 'wrong');
+      if (i !== q.ans) btns[q.ans].classList.add('correct');
+      if (i === q.ans) { chScore++; document.getElementById('chScore').textContent = chScore; }
+      document.getElementById('chResult').textContent = i === q.ans ? '✅ 正确！' : '❌ 不对哦，看看正确答案吧';
+      document.getElementById('chNext').style.display = 'block';
+    }
+
+    function nextChallenge() { chIdx++; loadChallenge(); }
+  </script>
+</body>
+</html>
