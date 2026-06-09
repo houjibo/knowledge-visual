@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>面积与周长</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs {
+      display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;
+      padding: 4px; -webkit-overflow-scrolling: touch;
+    }
+    .mode-tab {
+      flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA;
+      border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-tab.active { background: #7B1FA2; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 概念模式 */
+    .concept-area { text-align: center; padding: 24px 16px; }
+    .shape-canvas {
+      position: relative; margin: 16px auto; background: white;
+      border-radius: 16px; border: 2px solid #E5E5EA; overflow: hidden;
+    }
+    .shape-canvas svg { display: block; margin: 0 auto; }
+    .grid-cell {
+      transition: fill 0.2s ease;
+    }
+    .grid-cell.filled { fill: rgba(123,31,162,0.3); stroke: rgba(123,31,162,0.5); }
+    .grid-cell.border { stroke: #7B1FA2; stroke-width: 2; }
+    .concept-explain {
+      font-size: 18px; font-weight: 600; color: #1D1D1F;
+      margin: 16px 0; line-height: 1.6;
+    }
+    .concept-formula {
+      display: inline-block; padding: 12px 24px; background: #F3E5F5;
+      border-radius: 12px; font-size: 22px; font-weight: 700; color: #7B1FA2;
+      margin: 8px 4px;
+    }
+    .toggle-group { display: flex; justify-content: center; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+    .toggle-btn {
+      padding: 10px 20px; border: 2px solid #7B1FA2; background: white;
+      border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .toggle-btn.active { background: #7B1FA2; color: white; }
+    .toggle-btn:active { transform: scale(0.95); }
+
+    /* 长方形模式 */
+    .rect-area { text-align: center; padding: 24px 16px; }
+    .rect-svg { margin: 16px auto; display: block; }
+    .rect-dimensions {
+      display: flex; justify-content: center; gap: 32px; margin: 16px 0;
+    }
+    .dim-item { text-align: center; }
+    .dim-label { font-size: 14px; color: #6E6E73; }
+    .dim-value {
+      font-size: 32px; font-weight: 800; color: #7B1FA2;
+    }
+    .rect-controls {
+      display: flex; justify-content: center; gap: 16px; margin: 16px 0; flex-wrap: wrap;
+    }
+    .slider-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .slider-group label { font-size: 14px; font-weight: 600; color: #6E6E73; }
+    .slider-group input[type="range"] {
+      width: 140px; accent-color: #7B1FA2;
+    }
+    .rect-result {
+      display: flex; justify-content: center; gap: 24px; margin: 20px 0; flex-wrap: wrap;
+    }
+    .result-box {
+      padding: 12px 20px; border-radius: 12px; text-align: center; min-width: 120px;
+    }
+    .result-box.perimeter { background: rgba(74,144,217,0.1); border: 2px solid #4A90D9; }
+    .result-box.area { background: rgba(123,31,162,0.1); border: 2px solid #7B1FA2; }
+    .result-box .r-label { font-size: 14px; color: #6E6E73; }
+    .result-box .r-value { font-size: 28px; font-weight: 800; }
+    .result-box.perimeter .r-value { color: #4A90D9; }
+    .result-box.area .r-value { color: #7B1FA2; }
+
+    /* 正方形模式 */
+    .square-area { text-align: center; padding: 24px 16px; }
+    .square-svg { margin: 16px auto; display: block; }
+    .square-side {
+      font-size: 32px; font-weight: 800; color: #7B1FA2; margin: 12px 0;
+    }
+    .square-controls { display: flex; justify-content: center; align-items: center; gap: 12px; margin: 16px 0; }
+    .square-controls input[type="range"] { width: 160px; accent-color: #7B1FA2; }
+    .square-controls label { font-size: 16px; font-weight: 600; }
+    .square-result {
+      display: flex; justify-content: center; gap: 24px; margin: 20px 0;
+    }
+    .square-grid { display: grid; gap: 2px; margin: 16px auto; max-width: 300px; }
+    .sq-cell {
+      aspect-ratio: 1; background: rgba(123,31,162,0.15);
+      border: 1px solid rgba(123,31,162,0.3); border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    /* 练习模式 */
+    .practice-area { text-align: center; padding: 24px 16px; }
+    .practice-question {
+      font-size: 22px; font-weight: 700; color: #1D1D1F; margin: 20px 0;
+      line-height: 1.6;
+    }
+    .practice-shape { margin: 16px auto; display: block; }
+    .practice-input {
+      display: flex; justify-content: center; align-items: center; gap: 12px; margin: 24px 0;
+    }
+    .practice-answer {
+      width: 100px; height: 64px; border: 3px solid #E5E5EA; border-radius: 16px;
+      font-size: 36px; font-weight: 700; text-align: center; color: #7B1FA2;
+      outline: none; transition: border-color 0.2s ease;
+    }
+    .practice-answer:focus { border-color: #7B1FA2; }
+    .practice-answer.correct { border-color: #34C759; background: rgba(52,199,89,0.1); }
+    .practice-answer.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .unit-label { font-size: 18px; font-weight: 600; color: #6E6E73; }
+
+    .score-display {
+      display: flex; justify-content: center; align-items: center;
+      gap: 12px; padding: 12px; font-size: 18px; font-weight: 600;
+    }
+    .score-stars { font-size: 24px; }
+    .diff-badge {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      font-size: 14px; font-weight: 600;
+    }
+    .diff-easy { background: rgba(52,199,89,0.15); color: #34C759; }
+    .diff-medium { background: rgba(255,149,0,0.15); color: #FF9500; }
+    .diff-hard { background: rgba(255,59,48,0.15); color: #FF3B30; }
+
+    @keyframes popIn {
+      0% { transform: scale(0); opacity: 0; }
+      60% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 480px) {
+      .dim-value { font-size: 24px; }
+      .result-box .r-value { font-size: 22px; }
+      .concept-formula { font-size: 18px; padding: 8px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" aria-label="返回">←</button>
+      <span class="nav-title">📐 面积与周长</span>
+      <div style="width:56px"></div>
+    </nav>
+
+    <div class="score-display">
+      <span class="diff-badge diff-easy" id="diff-badge">三年级</span>
+      <span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <!-- 模式切换 -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="concept">📖 概念</button>
+      <button class="mode-tab" data-mode="rectangle">▭ 长方形</button>
+      <button class="mode-tab" data-mode="square">□ 正方形</button>
+      <button class="mode-tab" data-mode="practice">✏️ 练习</button>
+    </div>
+
+    <!-- 模式1: 概念讲解 -->
+    <div class="mode-content active" id="mode-concept">
+      <div class="card">
+        <p class="page-subtitle">什么是面积？什么是周长？</p>
+        <div class="concept-area">
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="toggle-rect">▭ 长方形</button>
+            <button class="toggle-btn" id="toggle-square">□ 正方形</button>
+          </div>
+          <svg id="concept-svg" width="300" height="220" viewBox="0 0 300 220"></svg>
+          <div class="concept-explain" id="concept-explain"></div>
+          <div id="concept-formulas"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 长方形 -->
+    <div class="mode-content" id="mode-rectangle">
+      <div class="card">
+        <p class="page-subtitle">拖动滑块，观察长方形的变化</p>
+        <div class="rect-area">
+          <svg id="rect-svg" width="300" height="240" viewBox="0 0 300 240" class="rect-svg"></svg>
+          <div class="rect-controls">
+            <div class="slider-group">
+              <label>长 = <span id="rect-l-val">6</span> cm</label>
+              <input type="range" id="rect-l" min="1" max="12" value="6">
+            </div>
+            <div class="slider-group">
+              <label>宽 = <span id="rect-w-val">4</span> cm</label>
+              <input type="range" id="rect-w" min="1" max="10" value="4">
+            </div>
+          </div>
+          <div class="rect-result">
+            <div class="result-box perimeter">
+              <div class="r-label">周长</div>
+              <div class="r-value" id="rect-perimeter"></div>
+            </div>
+            <div class="result-box area">
+              <div class="r-label">面积</div>
+              <div class="r-value" id="rect-area"></div>
+            </div>
+          </div>
+          <div id="rect-formula-display" style="font-size:16px;color:#6E6E73;margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 正方形 -->
+    <div class="mode-content" id="mode-square">
+      <div class="card">
+        <p class="page-subtitle">正方形是特殊的长方形</p>
+        <div class="square-area">
+          <svg id="square-svg" width="260" height="260" viewBox="0 0 260 260" class="square-svg"></svg>
+          <div class="square-controls">
+            <label>边长 = </label>
+            <input type="range" id="square-side" min="1" max="10" value="5">
+            <span id="sq-val" style="font-size:20px;font-weight:700;color:#7B1FA2">5</span>
+            <label> cm</label>
+          </div>
+          <div id="square-grid" class="square-grid"></div>
+          <div class="square-result">
+            <div class="result-box perimeter">
+              <div class="r-label">周长</div>
+              <div class="r-value" id="sq-perimeter"></div>
+            </div>
+            <div class="result-box area">
+              <div class="r-label">面积</div>
+              <div class="r-value" id="sq-area"></div>
+            </div>
+          </div>
+          <div id="sq-formula-display" style="font-size:16px;color:#6E6E73;margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 练习 -->
+    <div class="mode-content" id="mode-practice">
+      <div class="card">
+        <p class="page-subtitle">算一算，填答案</p>
+        <div class="practice-area">
+          <svg id="practice-svg" width="240" height="200" viewBox="0 0 240 200" class="practice-shape"></svg>
+          <div class="practice-question" id="practice-question"></div>
+          <div class="practice-input">
+            <input type="tel" class="practice-answer" id="practice-answer" maxlength="4" inputmode="numeric" autocomplete="off">
+            <span class="unit-label" id="unit-label">cm²</span>
+          </div>
+          <div class="action-bar">
+            <button class="btn btn-primary btn-large" id="btn-check-answer">✅ 检查</button>
+            <button class="btn btn-warning" id="btn-new-practice">🎲 换一个</button>
+          </div>
+          <div id="practice-hint" style="font-size:16px;color:#6E6E73;margin-top:12px;min-height:24px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/animation.js"></script>
+  <script src="../../assets/js/touch.js"></script>
+  <script>
+    document.querySelector('.nav-back').addEventListener('click', () => window.location.href = '../index.html');
+
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast(`🔥 连续 ${streak} 次！太厉害了！`);
+    }
+
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        if (Sound) Sound.play('click');
+      });
+    });
+
+    // === 模式1: 概念讲解 ===
+    (() => {
+      let shapeType = 'rect'; // rect | square
+
+      function drawConceptShape() {
+        const svg = document.getElementById('concept-svg');
+        const explain = document.getElementById('concept-explain');
+        const formulas = document.getElementById('concept-formulas');
+
+        if (shapeType === 'rect') {
+          const W = 300, H = 220;
+          const rw = 200, rh = 140;
+          const ox = (W - rw) / 2, oy = (H - rh) / 2;
+          const cellsPerRow = 10, cellsPerCol = 7;
+          const cw = rw / cellsPerRow, ch = rh / cellsPerCol;
+
+          let html = '';
+          // 网格
+          for (let r = 0; r < cellsPerCol; r++) {
+            for (let c = 0; c < cellsPerRow; c++) {
+              html += `<rect x="${ox + c * cw}" y="${oy + r * ch}" width="${cw}" height="${ch}" fill="rgba(123,31,162,0.08)" stroke="rgba(123,31,162,0.15)" stroke-width="0.5" rx="2"/>`;
+            }
+          }
+          // 面积文字
+          html += `<text x="${W/2}" y="${H/2 + 6}" text-anchor="middle" font-size="16" font-weight="700" fill="#7B1FA2">面积 = 长 × 宽</text>`;
+          // 周长线
+          html += `<rect x="${ox}" y="${oy}" width="${rw}" height="${rh}" fill="none" stroke="#4A90D9" stroke-width="3" rx="4"/>`;
+          // 标注
+          html += `<text x="${W/2}" y="${oy - 8}" text-anchor="middle" font-size="14" font-weight="600" fill="#4A90D9">← 长 →</text>`;
+          html += `<text x="${ox - 22}" y="${oy + rh/2 + 5}" text-anchor="middle" font-size="14" font-weight="600" fill="#FF9500" transform="rotate(-90,${ox - 22},${oy + rh/2 + 5})">← 宽 →</text>`;
+
+          svg.innerHTML = html;
+          explain.innerHTML = '🟣 <b>面积</b> = 图形内部占了多少个方格<br>🔵 <b>周长</b> = 图形外围一圈的长度';
+          formulas.innerHTML = `
+            <div class="concept-formula">周长 = (长 + 宽) × 2</div>
+            <div class="concept-formula">面积 = 长 × 宽</div>
+          `;
+        } else {
+          const W = 300, H = 220;
+          const side = 160;
+          const ox = (W - side) / 2, oy = (H - side) / 2;
+          const n = 8;
+          const cs = side / n;
+
+          let html = '';
+          for (let r = 0; r < n; r++) {
+            for (let c = 0; c < n; c++) {
+              html += `<rect x="${ox + c * cs}" y="${oy + r * cs}" width="${cs}" height="${cs}" fill="rgba(123,31,162,0.08)" stroke="rgba(123,31,162,0.15)" stroke-width="0.5" rx="2"/>`;
+            }
+          }
+          html += `<text x="${W/2}" y="${H/2 + 6}" text-anchor="middle" font-size="16" font-weight="700" fill="#7B1FA2">面积 = 边长 × 边长</text>`;
+          html += `<rect x="${ox}" y="${oy}" width="${side}" height="${side}" fill="none" stroke="#4A90D9" stroke-width="3" rx="4"/>`;
+          html += `<text x="${W/2}" y="${oy - 8}" text-anchor="middle" font-size="14" font-weight="600" fill="#4A90D9">← 边长 →</text>`;
+
+          svg.innerHTML = html;
+          explain.innerHTML = '🟣 <b>面积</b> = 边长 × 边长（有多少个小方格）<br>🔵 <b>周长</b> = 四条边加起来 = 边长 × 4';
+          formulas.innerHTML = `
+            <div class="concept-formula">周长 = 边长 × 4</div>
+            <div class="concept-formula">面积 = 边长 × 边长</div>
+          `;
+        }
+      }
+
+      document.getElementById('toggle-rect').addEventListener('click', () => {
+        shapeType = 'rect';
+        document.getElementById('toggle-rect').classList.add('active');
+        document.getElementById('toggle-square').classList.remove('active');
+        drawConceptShape();
+        if (Sound) Sound.play('click');
+      });
+      document.getElementById('toggle-square').addEventListener('click', () => {
+        shapeType = 'square';
+        document.getElementById('toggle-square').classList.add('active');
+        document.getElementById('toggle-rect').classList.remove('active');
+        drawConceptShape();
+        if (Sound) Sound.play('click');
+      });
+      drawConceptShape();
+    })();
+
+    // === 模式2: 长方形交互 ===
+    (() => {
+      function updateRect() {
+        const l = parseInt(document.getElementById('rect-l').value);
+        const w = parseInt(document.getElementById('rect-w').value);
+        document.getElementById('rect-l-val').textContent = l;
+        document.getElementById('rect-w-val').textContent = w;
+
+        const perimeter = (l + w) * 2;
+        const area = l * w;
+        document.getElementById('rect-perimeter').textContent = perimeter + ' cm';
+        document.getElementById('rect-area').textContent = area + ' cm²';
+
+        // 绘制带网格的长方形
+        const svg = document.getElementById('rect-svg');
+        const maxW = 260, maxH = 180;
+        const cellSize = Math.min(maxW / l, maxH / w, 24);
+        const svgW = l * cellSize + 40;
+        const svgH = w * cellSize + 40;
+        svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
+
+        let html = '';
+        const ox = 20, oy = 20;
+        // 网格单元
+        for (let r = 0; r < w; r++) {
+          for (let c = 0; c < l; c++) {
+            const delay = (r * l + c) * 30;
+            html += `<rect x="${ox + c * cellSize}" y="${oy + r * cellSize}" width="${cellSize - 1}" height="${cellSize - 1}" fill="rgba(123,31,162,0.15)" stroke="rgba(123,31,162,0.25)" stroke-width="0.5" rx="2">
+              <animate attributeName="opacity" from="0" to="1" dur="0.3s" begin="${delay}ms" fill="freeze"/>
+            </rect>`;
+          }
+        }
+        // 外框
+        html += `<rect x="${ox}" y="${oy}" width="${l * cellSize}" height="${w * cellSize}" fill="none" stroke="#4A90D9" stroke-width="2.5" rx="4"/>`;
+        // 标注
+        html += `<text x="${ox + l * cellSize / 2}" y="${oy - 6}" text-anchor="middle" font-size="13" font-weight="600" fill="#4A90D9">长 = ${l} cm</text>`;
+        html += `<text x="${ox - 10}" y="${oy + w * cellSize / 2 + 4}" text-anchor="middle" font-size="13" font-weight="600" fill="#FF9500" transform="rotate(-90,${ox - 10},${oy + w * cellSize / 2 + 4})">宽=${w}</text>`;
+
+        svg.innerHTML = html;
+
+        document.getElementById('rect-formula-display').innerHTML =
+          `周长 = (${l} + ${w}) × 2 = <b>${perimeter} cm</b><br>面积 = ${l} × ${w} = <b>${area} cm²</b>`;
+      }
+
+      document.getElementById('rect-l').addEventListener('input', updateRect);
+      document.getElementById('rect-w').addEventListener('input', updateRect);
+      updateRect();
+    })();
+
+    // === 模式3: 正方形交互 ===
+    (() => {
+      function updateSquare() {
+        const side = parseInt(document.getElementById('square-side').value);
+        document.getElementById('sq-val').textContent = side;
+
+        const perimeter = side * 4;
+        const area = side * side;
+        document.getElementById('sq-perimeter').textContent = perimeter + ' cm';
+        document.getElementById('sq-area').textContent = area + ' cm²';
+
+        // 正方形SVG
+        const svg = document.getElementById('square-svg');
+        const cellSize = Math.min(200 / side, 28);
+        const svgW = side * cellSize + 40;
+        const svgH = side * cellSize + 40;
+        svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
+
+        let html = '';
+        const ox = 20, oy = 20;
+        for (let r = 0; r < side; r++) {
+          for (let c = 0; c < side; c++) {
+            html += `<rect x="${ox + c * cellSize}" y="${oy + r * cellSize}" width="${cellSize - 1}" height="${cellSize - 1}" fill="rgba(123,31,162,0.15)" stroke="rgba(123,31,162,0.25)" stroke-width="0.5" rx="2"/>`;
+          }
+        }
+        html += `<rect x="${ox}" y="${oy}" width="${side * cellSize}" height="${side * cellSize}" fill="none" stroke="#4A90D9" stroke-width="2.5" rx="4"/>`;
+        html += `<text x="${ox + side * cellSize / 2}" y="${oy - 6}" text-anchor="middle" font-size="13" font-weight="600" fill="#4A90D9">边长 = ${side} cm</text>`;
+        svg.innerHTML = html;
+
+        // 底部方格展示
+        const grid = document.getElementById('square-grid');
+        grid.style.gridTemplateColumns = `repeat(${side}, 1fr)`;
+        grid.innerHTML = '';
+        for (let i = 0; i < area; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'sq-cell';
+          cell.style.animationDelay = (i * 20) + 'ms';
+          grid.appendChild(cell);
+        }
+
+        document.getElementById('sq-formula-display').innerHTML =
+          `周长 = ${side} × 4 = <b>${perimeter} cm</b><br>面积 = ${side} × ${side} = <b>${area} cm²</b>`;
+      }
+
+      document.getElementById('square-side').addEventListener('input', updateSquare);
+      updateSquare();
+    })();
+
+    // === 模式4: 练习 ===
+    (() => {
+      let questionType, w, h, answer;
+
+      function newPractice() {
+        questionType = Random.pick(['rect-area', 'rect-perimeter', 'square-area', 'square-perimeter']);
+
+        if (questionType === 'rect-area') {
+          w = Random.int(2, 8);
+          h = Random.int(2, 7);
+          answer = w * h;
+          document.getElementById('practice-question').innerHTML = `一个长方形，长 <b>${w}</b> cm，宽 <b>${h}</b> cm，<br>它的<b>面积</b>是多少？`;
+          document.getElementById('unit-label').textContent = 'cm²';
+        } else if (questionType === 'rect-perimeter') {
+          w = Random.int(2, 8);
+          h = Random.int(2, 7);
+          answer = (w + h) * 2;
+          document.getElementById('practice-question').innerHTML = `一个长方形，长 <b>${w}</b> cm，宽 <b>${h}</b> cm，<br>它的<b>周长</b>是多少？`;
+          document.getElementById('unit-label').textContent = 'cm';
+        } else if (questionType === 'square-area') {
+          w = Random.int(2, 8);
+          answer = w * w;
+          document.getElementById('practice-question').innerHTML = `一个正方形，边长 <b>${w}</b> cm，<br>它的<b>面积</b>是多少？`;
+          document.getElementById('unit-label').textContent = 'cm²';
+        } else {
+          w = Random.int(2, 8);
+          answer = w * 4;
+          document.getElementById('practice-question').innerHTML = `一个正方形，边长 <b>${w}</b> cm，<br>它的<b>周长</b>是多少？`;
+          document.getElementById('unit-label').textContent = 'cm';
+        }
+
+        // 绘制图形
+        const svg = document.getElementById('practice-svg');
+        const maxW = 200, maxH = 160;
+        const cellSize = Math.min(maxW / (w + 2), maxH / (h + 2), 22);
+        const shapeW = (questionType.startsWith('square') ? w : w) * cellSize;
+        const shapeH = (questionType.startsWith('square') ? w : h) * cellSize;
+        const svgW = shapeW + 60, svgH = shapeH + 50;
+        svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
+
+        let html = '';
+        const ox = 30, oy = 25;
+        const cols = questionType.startsWith('square') ? w : w;
+        const rows = questionType.startsWith('square') ? w : h;
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            html += `<rect x="${ox + c * cellSize}" y="${oy + r * cellSize}" width="${cellSize - 1}" height="${cellSize - 1}" fill="rgba(123,31,162,0.12)" stroke="rgba(123,31,162,0.2)" stroke-width="0.5" rx="2"/>`;
+          }
+        }
+        html += `<rect x="${ox}" y="${oy}" width="${cols * cellSize}" height="${rows * cellSize}" fill="none" stroke="#4A90D9" stroke-width="2" rx="3"/>`;
+        if (!questionType.startsWith('square')) {
+          html += `<text x="${ox + cols * cellSize / 2}" y="${oy - 6}" text-anchor="middle" font-size="12" font-weight="600" fill="#4A90D9">${w} cm</text>`;
+          html += `<text x="${ox - 8}" y="${oy + rows * cellSize / 2 + 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#FF9500" transform="rotate(-90,${ox - 8},${oy + rows * cellSize / 2 + 4})">${h}</text>`;
+        } else {
+          html += `<text x="${ox + cols * cellSize / 2}" y="${oy - 6}" text-anchor="middle" font-size="12" font-weight="600" fill="#4A90D9">${w} cm</text>`;
+        }
+        svg.innerHTML = html;
+
+        const inp = document.getElementById('practice-answer');
+        inp.value = ''; inp.className = 'practice-answer';
+        document.getElementById('practice-hint').textContent = '';
+        document.getElementById('btn-check-answer').disabled = false;
+      }
+
+      function checkAnswer() {
+        const inp = document.getElementById('practice-answer');
+        const val = parseInt(inp.value);
+        if (val === answer) {
+          inp.className = 'practice-answer correct';
+          streak++; if (Sound) Sound.play('correct'); if (typeof celebrate === 'function') celebrate();
+          updateStreak();
+          const shapeLabel = questionType.includes('area') ? '面积' : '周长';
+          document.getElementById('practice-hint').innerHTML = `🎉 正确！答案是 <b>${answer}</b>`;
+          document.getElementById('practice-hint').style.color = '#34C759';
+          document.getElementById('btn-check-answer').disabled = true;
+          setTimeout(newPractice, 1500);
+        } else {
+          inp.className = 'practice-answer wrong';
+          streak = 0; if (Sound) Sound.play('wrong'); updateStreak();
+          document.getElementById('practice-hint').textContent = `不对哦，再算算看`;
+          document.getElementById('practice-hint').style.color = '#FF9500';
+          inp.value = ''; inp.focus();
+        }
+      }
+
+      document.getElementById('btn-check-answer').addEventListener('click', checkAnswer);
+      document.getElementById('practice-answer').addEventListener('keydown', e => {
+        if (e.key === 'Enter') checkAnswer();
+      });
+      document.getElementById('btn-new-practice').addEventListener('click', newPractice);
+      newPractice();
+    })();
+  </script>
+</body>
+</html>
