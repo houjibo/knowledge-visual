@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>混合运算</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs {
+      display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mode-tab {
+      flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA;
+      border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-tab.active { background: #FF9800; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 模式1: 运算顺序学习 */
+    .order-area { text-align: center; padding: 24px 16px; }
+    .order-rule {
+      font-size: 18px; color: #E65100; font-weight: 700; margin: 16px 0;
+      padding: 16px; background: #FFF3E0; border-radius: 16px;
+      border-left: 4px solid #FF9800; text-align: left;
+    }
+    .order-rule .step { margin: 8px 0; }
+    .order-rule .step-num {
+      display: inline-block; width: 28px; height: 28px; line-height: 28px;
+      text-align: center; background: #FF9800; color: white; border-radius: 50%;
+      font-size: 14px; margin-right: 8px;
+    }
+    .expr-display {
+      font-size: 42px; font-weight: 800; color: #1D1D1F; margin: 24px 0;
+      font-family: 'Courier New', monospace; letter-spacing: 2px;
+    }
+    .expr-display .highlight {
+      background: rgba(255,152,0,0.2); border-radius: 8px; padding: 2px 4px;
+    }
+    .expr-display .bracket { color: #F44336; }
+    .result-reveal {
+      font-size: 56px; font-weight: 800; color: #34C759;
+      min-height: 80px; transition: all 0.3s ease;
+    }
+    .result-reveal.show { opacity: 1; }
+    .step-list { text-align: left; max-width: 400px; margin: 0 auto; }
+    .step-item {
+      padding: 12px 16px; margin: 8px 0; background: #F5F5F5;
+      border-radius: 12px; font-size: 20px; font-weight: 600;
+      display: none;
+    }
+    .step-item.show { display: block; animation: fadeInUp 0.3s ease; }
+    .step-item .step-label { color: #FF9800; font-size: 14px; }
+    .btn-row { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+    .btn-action {
+      padding: 12px 24px; border: none; border-radius: 16px;
+      font-size: 18px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-action:active { transform: scale(0.95); }
+    .btn-next { background: #FF9800; color: white; }
+    .btn-reveal { background: #4A90D9; color: white; }
+
+    /* 模式2: 括号魔法 */
+    .bracket-area { text-align: center; padding: 24px 16px; }
+    .bracket-demo {
+      font-size: 36px; font-weight: 700; margin: 16px 0;
+      font-family: 'Courier New', monospace;
+    }
+    .bracket-pair {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      max-width: 400px; margin: 24px auto;
+    }
+    .bracket-card {
+      padding: 16px; background: white; border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .bracket-card h4 {
+      font-size: 14px; color: #6E6E73; margin-bottom: 8px;
+    }
+    .bracket-card .expr {
+      font-size: 28px; font-weight: 700; font-family: 'Courier New', monospace;
+    }
+    .bracket-card .result {
+      font-size: 40px; font-weight: 800; margin-top: 8px;
+    }
+    .bracket-card .result.no { color: #F44336; }
+    .bracket-card .result.yes { color: #34C759; }
+    .bracket-notice {
+      font-size: 16px; color: #E65100; font-weight: 600;
+      padding: 12px 16px; background: #FFF3E0; border-radius: 12px;
+      margin-top: 16px; max-width: 360px; margin-left: auto; margin-right: auto;
+    }
+
+    /* 模式3: 分步计算 */
+    .stepcalc-area { text-align: center; padding: 24px 16px; }
+    .stepcalc-problem {
+      font-size: 36px; font-weight: 700; margin: 16px 0;
+      font-family: 'Courier New', monospace; color: #1D1D1F;
+    }
+    .stepcalc-inputs { display: flex; flex-direction: column; gap: 12px; max-width: 360px; margin: 16px auto; }
+    .stepcalc-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; font-size: 24px; font-weight: 600;
+    }
+    .stepcalc-row input {
+      width: 60px; height: 48px; text-align: center; font-size: 24px;
+      font-weight: 700; border: 3px solid #E5E5EA; border-radius: 12px;
+      outline: none; transition: all 0.2s ease;
+    }
+    .stepcalc-row input:focus { border-color: #FF9800; }
+    .stepcalc-row input.correct { border-color: #34C759; background: rgba(52,199,89,0.1); }
+    .stepcalc-row input.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .stepcalc-row .op { color: #FF9800; font-weight: 700; }
+    .stepcalc-check {
+      padding: 12px 32px; border: none; background: #34C759; color: white;
+      border-radius: 16px; font-size: 18px; font-weight: 600;
+      cursor: pointer; margin-top: 16px; transition: all 0.2s ease;
+    }
+    .stepcalc-check:active { transform: scale(0.95); }
+    .stepcalc-msg {
+      font-size: 20px; font-weight: 700; margin-top: 16px; min-height: 32px;
+    }
+    .stepcalc-msg.correct { color: #34C759; }
+    .stepcalc-msg.wrong { color: #FF3B30; }
+
+    /* 模式4: 闯关挑战 */
+    .challenge-area { text-align: center; padding: 24px 16px; }
+    .challenge-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .challenge-score {
+      font-size: 20px; font-weight: 700; color: #FF9800;
+    }
+    .challenge-level {
+      font-size: 14px; color: #6E6E73; background: #F5F5F5;
+      padding: 4px 12px; border-radius: 12px;
+    }
+    .challenge-problem {
+      font-size: 40px; font-weight: 800; margin: 24px 0;
+      font-family: 'Courier New', monospace; color: #1D1D1F;
+      letter-spacing: 2px;
+    }
+    .challenge-options {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+      max-width: 360px; margin: 16px auto;
+    }
+    .challenge-opt {
+      padding: 20px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 28px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease;
+      font-family: 'Courier New', monospace;
+    }
+    .challenge-opt:active { transform: scale(0.95); }
+    .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); }
+    .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .challenge-feedback {
+      font-size: 18px; font-weight: 600; margin-top: 16px; min-height: 28px;
+    }
+    .challenge-next {
+      padding: 12px 32px; border: none; background: #FF9800; color: white;
+      border-radius: 16px; font-size: 18px; font-weight: 600;
+      cursor: pointer; margin-top: 16px; display: none;
+    }
+    .progress-bar {
+      height: 8px; background: #E5E5EA; border-radius: 4px;
+      margin: 16px 0; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: linear-gradient(90deg, #FF9800, #FFB74D);
+      border-radius: 4px; transition: width 0.3s ease;
+    }
+
+    /* 通用动画 */
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .shake { animation: shake 0.4s ease; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <a href="../index.html" class="nav-back">← 返回</a>
+      <span class="nav-title">🧮 混合运算</span>
+    </nav>
+
+    <!-- Mode Tabs -->
+    <div class="mode-tabs" id="modeTabs">
+      <button class="mode-tab active" data-mode="order">📋 运算顺序</button>
+      <button class="mode-tab" data-mode="bracket">🪄 括号魔法</button>
+      <button class="mode-tab" data-mode="stepcalc">✏️ 分步计算</button>
+      <button class="mode-tab" data-mode="challenge">🏆 闯关挑战</button>
+    </div>
+
+    <!-- 模式1: 运算顺序 -->
+    <div class="mode-content active" id="mode-order">
+      <div class="order-area">
+        <h2 style="font-size:22px;color:#E65100;">📋 混合运算的顺序</h2>
+        <div class="order-rule">
+          <div class="step"><span class="step-num">1</span> 有括号先算 <b>括号里面</b> 的</div>
+          <div class="step"><span class="step-num">2</span> 再算 <b>乘除法</b>（从左到右）</div>
+          <div class="step"><span class="step-num">3</span> 最后算 <b>加减法</b>（从左到右）</div>
+        </div>
+        <p style="font-size:15px;color:#6E6E73;margin:12px 0;">看看例子，了解运算顺序 👇</p>
+        <div id="orderExamples"></div>
+        <div class="btn-row">
+          <button class="btn-action btn-reveal" id="btnOrderReveal">👀 显示答案</button>
+          <button class="btn-action btn-next" id="btnOrderNext">➡️ 下一个</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 括号魔法 -->
+    <div class="mode-content" id="mode-bracket">
+      <div class="bracket-area">
+        <h2 style="font-size:22px;color:#E65100;">🪄 括号的力量</h2>
+        <p style="font-size:15px;color:#6E6E73;margin:8px 0;">加了括号，结果会不一样！</p>
+        <div id="bracketDemo"></div>
+        <div class="bracket-notice" id="bracketNotice"></div>
+        <button class="btn-action btn-next" id="btnBracketNext" style="margin-top:20px;">➡️ 换一个</button>
+      </div>
+    </div>
+
+    <!-- 模式3: 分步计算 -->
+    <div class="mode-content" id="mode-stepcalc">
+      <div class="stepcalc-area">
+        <h2 style="font-size:22px;color:#E65100;">✏️ 分步计算练习</h2>
+        <p style="font-size:15px;color:#6E6E73;margin:8px 0;">一步一步填出正确答案</p>
+        <div id="stepcalcContent"></div>
+      </div>
+    </div>
+
+    <!-- 模式4: 闯关挑战 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="challenge-area">
+        <div class="challenge-header">
+          <span class="challenge-score" id="challengeScore">⭐ 0/10</span>
+          <span class="challenge-level" id="challengeLevel">第 1 题</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="challengeProgress" style="width:0%"></div>
+        </div>
+        <div class="challenge-problem" id="challengeProblem"></div>
+        <div class="challenge-options" id="challengeOptions"></div>
+        <div class="challenge-feedback" id="challengeFeedback"></div>
+        <button class="challenge-next" id="btnChallengeNext">下一题 ➡️</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // ===== Mode Tabs =====
+    document.querySelectorAll('.mode-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('mode-' + btn.dataset.mode).classList.add('active');
+        if (btn.dataset.mode === 'challenge' && challengeInit) initChallenge();
+        if (btn.dataset.mode === 'stepcalc' && stepCalcInit) initStepCalc();
+        if (btn.dataset.mode === 'bracket' && bracketInit) initBracket();
+        if (btn.dataset.mode === 'order' && orderInit) initOrder();
+      });
+    });
+
+    // ===== 模式1: 运算顺序 =====
+    const orderExamples = [
+      { expr: '3 + 2 × 4', steps: ['3 + 8 = 11'], answer: 11, explain: '先算 2×4=8，再算 3+8=11' },
+      { expr: '12 − 6 ÷ 2', steps: ['12 − 3 = 9'], answer: 9, explain: '先算 6÷2=3，再算 12−3=9' },
+      { expr: '2 × 3 + 5', steps: ['6 + 5 = 11'], answer: 11, explain: '先算 2×3=6，再算 6+5=11' },
+      { expr: '20 ÷ 4 + 7', steps: ['5 + 7 = 12'], answer: 12, explain: '先算 20÷4=5，再算 5+7=12' },
+      { expr: '3 × 4 − 5', steps: ['12 − 5 = 7'], answer: 7, explain: '先算 3×4=12，再算 12−5=7' },
+      { expr: '(3 + 2) × 4', steps: ['5 × 4 = 20'], answer: 20, explain: '先算括号里 3+2=5，再算 5×4=20', hasBracket: true },
+      { expr: '12 ÷ (4 − 1)', steps: ['12 ÷ 3 = 4'], answer: 4, explain: '先算括号里 4−1=3，再算 12÷3=4', hasBracket: true },
+      { expr: '2 × 3 + 4 × 2', steps: ['6 + 8 = 14'], answer: 14, explain: '先算 2×3=6 和 4×2=8，再算 6+8=14' },
+      { expr: '15 − 3 × 2', steps: ['15 − 6 = 9'], answer: 9, explain: '先算 3×2=6，再算 15−6=9' },
+      { expr: '(8 − 3) × 2', steps: ['5 × 2 = 10'], answer: 10, explain: '先算括号里 8−3=5，再算 5×2=10', hasBracket: true },
+    ];
+    let orderIdx = 0;
+    let orderRevealed = false;
+
+    function initOrder() {
+      renderOrderExample();
+    }
+
+    function renderOrderExample() {
+      const ex = orderExamples[orderIdx];
+      orderRevealed = false;
+      let html = '<div style="margin-top:20px;">';
+      // Highlight brackets if present
+      let displayExpr = ex.expr.replace(/\(/g, '<span class="bracket">(</span>').replace(/\)/g, '<span class="bracket">)</span>');
+      html += '<div class="expr-display">' + displayExpr + '</div>';
+      html += '<div class="step-list">';
+      ex.steps.forEach((s, i) => {
+        html += '<div class="step-item" id="step_' + i + '"><span class="step-label">第' + (i+1) + '步：</span>' + s + '</div>';
+      });
+      html += '<div class="step-item" id="step_final" style="background:#E8F5E9;border-left:4px solid #34C759;"><span class="step-label">结果：</span><span style="font-size:28px;color:#34C759;">' + ex.answer + '</span></div>';
+      html += '</div>';
+      html += '<p id="orderExplain" style="font-size:15px;color:#6E6E73;margin-top:12px;display:none;">' + ex.explain + '</p>';
+      html += '</div>';
+      document.getElementById('orderExamples').innerHTML = html;
+    }
+
+    document.getElementById('btnOrderReveal').addEventListener('click', () => {
+      if (orderRevealed) return;
+      orderRevealed = true;
+      const ex = orderExamples[orderIdx];
+      ex.steps.forEach((s, i) => {
+        setTimeout(() => document.getElementById('step_' + i).classList.add('show'), (i+1) * 500);
+      });
+      setTimeout(() => {
+        document.getElementById('step_final').classList.add('show');
+        document.getElementById('orderExplain').style.display = 'block';
+      }, (ex.steps.length + 1) * 500);
+    });
+
+    document.getElementById('btnOrderNext').addEventListener('click', () => {
+      orderIdx = (orderIdx + 1) % orderExamples.length;
+      renderOrderExample();
+    });
+
+    // ===== 模式2: 括号魔法 =====
+    const bracketDemos = [
+      { noBracket: '3 + 2 × 4', noResult: 11, withBracket: '(3 + 2) × 4', withResult: 20, notice: '先加后乘，结果从 11 变成 20！' },
+      { noBracket: '8 − 2 × 3', noResult: 2, withBracket: '(8 − 2) × 3', withResult: 18, notice: '先减后乘，结果从 2 变成 18！' },
+      { noBracket: '12 ÷ 2 + 4', noResult: 10, withBracket: '12 ÷ (2 + 4)', withResult: 2, notice: '改变除数，结果从 10 变成 2！' },
+      { noBracket: '5 × 2 + 3', noResult: 13, withBracket: '5 × (2 + 3)', withResult: 25, notice: '先加后乘，结果从 13 变成 25！' },
+      { noBracket: '10 − 4 ÷ 2', noResult: 8, withBracket: '(10 − 4) ÷ 2', withResult: 3, notice: '改变除数，结果从 8 变成 3！' },
+    ];
+    let bracketIdx = 0;
+
+    function initBracket() {
+      const b = bracketDemos[bracketIdx];
+      let html = '';
+      html += '<div class="bracket-pair">';
+      html += '<div class="bracket-card">';
+      html += '<h4>没有括号</h4>';
+      html += '<div class="expr">' + b.noBracket.replace(/\s/g, '&nbsp;') + '</div>';
+      html += '<div class="result no">= ' + b.noResult + '</div>';
+      html += '</div>';
+      html += '<div class="bracket-card" style="border:2px solid #FF9800;">';
+      html += '<h4>🪄 加括号后</h4>';
+      html += '<div class="expr" style="color:#E65100;">' + b.withBracket.replace(/[\(\)]/g, '<span style="color:#F44336;font-size:36px;">$&</span>').replace(/\s/g, '&nbsp;') + '</div>';
+      html += '<div class="result yes">= ' + b.withResult + '</div>';
+      html += '</div>';
+      html += '</div>';
+      document.getElementById('bracketDemo').innerHTML = html;
+      document.getElementById('bracketNotice').textContent = '💡 ' + b.notice;
+    }
+
+    document.getElementById('btnBracketNext').addEventListener('click', () => {
+      bracketIdx = (bracketIdx + 1) % bracketDemos.length;
+      initBracket();
+    });
+
+    // ===== 模式3: 分步计算 =====
+    const stepCalcProblems = [
+      { expr: '4 + 3 × 5', steps: [
+        { label: '第一步（先算乘法）', fill: '3 × 5', answer: 15 },
+        { label: '第二步（再算加法）', fill: '4 + 15', answer: 19 },
+      ]},
+      { expr: '20 − 3 × 4', steps: [
+        { label: '第一步（先算乘法）', fill: '3 × 4', answer: 12 },
+        { label: '第二步（再算减法）', fill: '20 − 12', answer: 8 },
+      ]},
+      { expr: '6 × 2 + 8', steps: [
+        { label: '第一步（先算乘法）', fill: '6 × 2', answer: 12 },
+        { label: '第二步（再算加法）', fill: '12 + 8', answer: 20 },
+      ]},
+      { expr: '(5 + 3) × 2', steps: [
+        { label: '第一步（先算括号）', fill: '5 + 3', answer: 8 },
+        { label: '第二步（再算乘法）', fill: '8 × 2', answer: 16 },
+      ]},
+      { expr: '18 ÷ (9 − 6)', steps: [
+        { label: '第一步（先算括号）', fill: '9 − 6', answer: 3 },
+        { label: '第二步（再算除法）', fill: '18 ÷ 3', answer: 6 },
+      ]},
+    ];
+    let stepCalcIdx = 0;
+
+    function initStepCalc() {
+      const p = stepCalcProblems[stepCalcIdx];
+      let html = '<div class="stepcalc-problem">' + p.expr + ' = ?</div>';
+      html += '<div class="stepcalc-inputs">';
+      p.steps.forEach((s, i) => {
+        html += '<div style="font-size:13px;color:#FF9800;font-weight:600;text-align:center;">' + s.label + '</div>';
+        html += '<div class="stepcalc-row">';
+        html += '<input type="number" id="sc_input_' + i + '" inputmode="numeric" placeholder="?" autocomplete="off">';
+        html += '<span style="color:#9CA3AF;">=</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '<button class="stepcalc-check" id="btnStepCheck">✅ 检查答案</button>';
+      html += '<button class="btn-action btn-next" id="btnStepNext" style="display:none;margin-left:8px;">下一题 ➡️</button>';
+      html += '<div class="stepcalc-msg" id="stepCalcMsg"></div>';
+      document.getElementById('stepcalcContent').innerHTML = html;
+
+      document.getElementById('btnStepCheck').addEventListener('click', checkStepCalc);
+      document.getElementById('btnStepNext').addEventListener('click', () => {
+        stepCalcIdx = (stepCalcIdx + 1) % stepCalcProblems.length;
+        initStepCalc();
+      });
+    }
+
+    function checkStepCalc() {
+      const p = stepCalcProblems[stepCalcIdx];
+      let allCorrect = true;
+      p.steps.forEach((s, i) => {
+        const input = document.getElementById('sc_input_' + i);
+        const val = parseInt(input.value);
+        if (val === s.answer) {
+          input.classList.add('correct');
+          input.classList.remove('wrong');
+        } else {
+          input.classList.add('wrong');
+          input.classList.remove('correct');
+          allCorrect = false;
+        }
+      });
+      const msg = document.getElementById('stepCalcMsg');
+      if (allCorrect) {
+        msg.className = 'stepcalc-msg correct';
+        msg.textContent = '🎉 全部正确！';
+        document.getElementById('btnStepNext').style.display = 'inline-block';
+        document.getElementById('btnStepCheck').style.display = 'none';
+      } else {
+        msg.className = 'stepcalc-msg wrong';
+        msg.textContent = '❌ 有些答案不对，再想想！';
+        msg.classList.add('shake');
+        setTimeout(() => msg.classList.remove('shake'), 400);
+      }
+    }
+
+    // ===== 模式4: 闯关挑战 =====
+    const challengeQuestions = [
+      { expr: '3 + 2 × 4', options: [20, 11, 10, 14], correct: 11, level: 1 },
+      { expr: '12 − 6 ÷ 2', options: [9, 3, 6, 8], correct: 9, level: 1 },
+      { expr: '5 × 3 − 4', options: [5, 11, 23, 15], correct: 11, level: 1 },
+      { expr: '(3 + 2) × 4', options: [11, 14, 20, 24], correct: 20, level: 2 },
+      { expr: '18 ÷ (9 − 6)', options: [6, 3, 12, 4], correct: 6, level: 2 },
+      { expr: '2 × 3 + 4 × 2', options: [20, 14, 18, 12], correct: 14, level: 2 },
+      { expr: '20 − 3 × 5', options: [85, 10, 5, 15], correct: 5, level: 2 },
+      { expr: '(10 − 4) ÷ 2', options: [3, 8, 6, 12], correct: 3, level: 3 },
+      { expr: '7 + 3 × 4 − 2', options: [38, 17, 15, 20], correct: 17, level: 3 },
+      { expr: '2 × (5 + 3) − 4', options: [12, 16, 14, 18], correct: 12, level: 3 },
+    ];
+    let challengeInit = false;
+    let challengeIdx = 0;
+    let challengeScore = 0;
+    let challengeAnswered = false;
+
+    function initChallenge() {
+      challengeInit = true;
+      challengeIdx = 0;
+      challengeScore = 0;
+      challengeAnswered = false;
+      updateChallengeUI();
+    }
+
+    function updateChallengeUI() {
+      if (challengeIdx >= challengeQuestions.length) {
+        showChallengeResult();
+        return;
+      }
+      challengeAnswered = false;
+      const q = challengeQuestions[challengeIdx];
+      document.getElementById('challengeScore').textContent = '⭐ ' + challengeScore + '/' + challengeQuestions.length;
+      document.getElementById('challengeLevel').textContent = '第 ' + (challengeIdx + 1) + ' 题';
+      document.getElementById('challengeProgress').style.width = (challengeIdx / challengeQuestions.length * 100) + '%';
+      document.getElementById('challengeProblem').textContent = q.expr + ' = ?';
+
+      let optHtml = '';
+      q.options.forEach(opt => {
+        optHtml += '<button class="challenge-opt" data-val="' + opt + '">' + opt + '</button>';
+      });
+      document.getElementById('challengeOptions').innerHTML = optHtml;
+      document.getElementById('challengeFeedback').textContent = '';
+      document.getElementById('btnChallengeNext').style.display = 'none';
+
+      document.querySelectorAll('.challenge-opt').forEach(btn => {
+        btn.addEventListener('click', function() {
+          if (challengeAnswered) return;
+          challengeAnswered = true;
+          const val = parseInt(this.dataset.val);
+          if (val === q.correct) {
+            challengeScore++;
+            this.classList.add('correct');
+            document.getElementById('challengeFeedback').textContent = '🎉 正确！';
+            document.getElementById('challengeFeedback').style.color = '#34C759';
+          } else {
+            this.classList.add('wrong');
+            // Highlight correct one
+            document.querySelectorAll('.challenge-opt').forEach(b => {
+              if (parseInt(b.dataset.val) === q.correct) b.classList.add('correct');
+            });
+            document.getElementById('challengeFeedback').textContent = '正确答案是 ' + q.correct;
+            document.getElementById('challengeFeedback').style.color = '#FF3B30';
+          }
+          document.getElementById('btnChallengeNext').style.display = 'inline-block';
+        });
+      });
+    }
+
+    document.getElementById('btnChallengeNext').addEventListener('click', () => {
+      challengeIdx++;
+      updateChallengeUI();
+    });
+
+    function showChallengeResult() {
+      document.getElementById('challengeProblem').textContent = '';
+      document.getElementById('challengeOptions').innerHTML = '';
+      document.getElementById('btnChallengeNext').style.display = 'none';
+      document.getElementById('challengeProgress').style.width = '100%';
+
+      let emoji = challengeScore >= 9 ? '🏆' : challengeScore >= 7 ? '🥈' : challengeScore >= 5 ? '🥉' : '💪';
+      let msg = challengeScore >= 9 ? '太棒了！你是运算小达人！' :
+                challengeScore >= 7 ? '很不错，继续加油！' :
+                challengeScore >= 5 ? '及格了，多练练会更好！' :
+                '再复习一下运算顺序吧！';
+
+      document.getElementById('challengeScore').textContent = emoji + ' 得分：' + challengeScore + '/' + challengeQuestions.length;
+      document.getElementById('challengeFeedback').textContent = msg;
+      document.getElementById('challengeFeedback').style.color = '#E65100';
+
+      let restartBtn = document.createElement('button');
+      restartBtn.className = 'btn-action btn-next';
+      restartBtn.textContent = '🔄 重新开始';
+      restartBtn.style.marginTop = '20px';
+      restartBtn.addEventListener('click', () => {
+        challengeIdx = 0;
+        challengeScore = 0;
+        updateChallengeUI();
+      });
+      document.getElementById('challengeOptions').appendChild(restartBtn);
+    }
+
+    // Initialize first modes
+    initOrder();
+    initBracket();
+  </script>
+</body>
+</html>
