@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>负数的初步认识</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #00897B; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 温度探索模式 */
+    .temp-area { text-align: center; padding: 24px 16px; }
+    .thermometer {
+      display: inline-block; width: 80px; height: 320px; background: linear-gradient(180deg, #E3F2FD 0%, #E3F2FD 50%, #FF8A80 50%, #FF5252 100%);
+      border-radius: 40px 40px 12px 12px; position: relative; margin: 20px auto;
+      border: 3px solid #B0BEC5;
+    }
+    .thermo-scale { position: absolute; right: -60px; top: 0; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+    .thermo-mark { font-size: 14px; font-weight: 600; color: #546E7A; white-space: nowrap; }
+    .thermo-mark.zero { color: #00897B; font-weight: 700; font-size: 16px; }
+    .thermo-fill {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(180deg, #EF5350, #FF5252);
+      border-radius: 0 0 10px 10px; transition: height 0.5s ease;
+    }
+    .thermo-bulb {
+      position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%);
+      width: 44px; height: 44px; background: #EF5350; border-radius: 50%;
+      border: 3px solid #B0BEC5;
+    }
+    .temp-display { font-size: 56px; font-weight: 800; margin: 16px 0; }
+    .temp-display.cold { color: #1565C0; }
+    .temp-display.warm { color: #00897B; }
+    .temp-display.hot { color: #E53935; }
+    .temp-label { font-size: 20px; color: #6E6E73; margin: 8px 0 20px; }
+    .temp-slider { width: 80%; max-width: 300px; margin: 16px auto; display: block; }
+    .temp-scenarios { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 16px 0; }
+    .temp-scenario {
+      padding: 12px 16px; border: 2px solid #B0BEC5; border-radius: 12px;
+      cursor: pointer; transition: all 0.2s; background: white; min-width: 100px;
+    }
+    .temp-scenario:active { transform: scale(0.95); }
+    .temp-scenario.active { border-color: #00897B; background: #E0F2F1; }
+    .temp-scenario .sc-icon { font-size: 28px; }
+    .temp-scenario .sc-text { font-size: 13px; color: #546E7A; margin-top: 4px; }
+
+    /* 数轴模式 */
+    .numberline-area { text-align: center; padding: 24px 16px; }
+    .numberline-svg { margin: 16px auto; display: block; }
+    .numberline-pointer { transition: transform 0.3s ease; }
+    .nl-controls { display: flex; gap: 12px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+    .nl-btn {
+      min-width: 48px; height: 48px; border: 2px solid #B0BEC5; background: white;
+      border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nl-btn:active { transform: scale(0.9); }
+    .nl-btn.highlight { border-color: #00897B; background: #E0F2F1; }
+    .nl-question { font-size: 22px; font-weight: 600; margin: 16px 0; color: #37474F; }
+    .nl-answer-row { display: flex; justify-content: center; gap: 8px; margin: 12px 0; }
+    .nl-input {
+      width: 72px; height: 52px; border: 3px solid #B0BEC5; border-radius: 12px;
+      font-size: 24px; font-weight: 700; text-align: center; outline: none;
+    }
+    .nl-input:focus { border-color: #00897B; }
+    .nl-check-btn {
+      height: 52px; padding: 0 20px; border: none; background: #00897B; color: white;
+      border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+    .nl-check-btn:active { transform: scale(0.95); }
+    .nl-feedback { font-size: 20px; font-weight: 600; margin: 12px 0; padding: 12px; border-radius: 12px; }
+    .nl-feedback.correct { background: rgba(52,199,89,0.15); color: #34C759; }
+    .nl-feedback.wrong { background: rgba(255,59,48,0.1); color: #FF3B30; }
+
+    /* 正负比较模式 */
+    .compare-area { text-align: center; padding: 24px 16px; }
+    .compare-pair {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; margin: 20px 0;
+    }
+    .compare-num {
+      font-size: 40px; font-weight: 800; padding: 12px 24px;
+      border-radius: 16px; min-width: 80px;
+    }
+    .compare-num.positive { color: #2E7D32; background: #E8F5E9; }
+    .compare-num.negative { color: #C62828; background: #FFEBEE; }
+    .compare-num.zero-val { color: #546E7A; background: #ECEFF1; }
+    .compare-sign { font-size: 48px; font-weight: 700; color: #00897B; }
+    .compare-options { display: flex; justify-content: center; gap: 16px; margin: 16px 0; }
+    .compare-opt {
+      width: 64px; height: 64px; border: 3px solid #B0BEC5; background: white;
+      border-radius: 16px; font-size: 32px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .compare-opt:active { transform: scale(0.9); }
+    .compare-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); }
+    .compare-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .compare-explain { font-size: 18px; color: #546E7A; margin: 12px 0; padding: 12px; background: #F0F4FF; border-radius: 12px; }
+    .compare-score { font-size: 18px; font-weight: 600; margin: 12px 0; }
+
+    /* 生活应用模式 */
+    .life-area { padding: 24px 16px; }
+    .life-card {
+      background: white; border-radius: 16px; padding: 20px; margin: 12px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 4px solid #00897B;
+    }
+    .life-card .life-icon { font-size: 36px; margin-bottom: 8px; }
+    .life-card .life-title { font-size: 18px; font-weight: 700; color: #1D1D1F; }
+    .life-card .life-body { font-size: 15px; color: #546E7A; margin-top: 8px; line-height: 1.6; text-align: left; }
+    .life-card .life-nums { font-size: 22px; font-weight: 700; margin: 12px 0; text-align: center; }
+    .life-quiz { margin: 16px 0; }
+    .life-quiz-q { font-size: 18px; font-weight: 600; margin: 16px 0 12px; color: #37474F; }
+    .life-quiz-opts { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .life-quiz-opt {
+      padding: 10px 20px; border: 2px solid #B0BEC5; border-radius: 12px;
+      background: white; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .life-quiz-opt:active { transform: scale(0.95); }
+    .life-quiz-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); }
+    .life-quiz-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" aria-label="返回">←</button>
+      <span class="nav-title">🌡️ 负数的初步认识</span>
+      <div style="width:56px"></div>
+    </nav>
+    <div class="score-display"><span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span><span id="stars-display" style="font-size:24px"></span></div>
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="temp">🌡️ 温度</button>
+      <button class="mode-tab" data-mode="numberline">📏 数轴</button>
+      <button class="mode-tab" data-mode="compare">⚖️ 比大小</button>
+      <button class="mode-tab" data-mode="life">🌍 生活应用</button>
+    </div>
+
+    <!-- 模式1: 温度探索 -->
+    <div class="mode-content active" id="mode-temp">
+      <div class="card">
+        <p class="page-subtitle">拖动温度滑块，认识零上和零下温度</p>
+        <div class="temp-area">
+          <div class="temp-display cold" id="temp-display">-5°C</div>
+          <div class="temp-label" id="temp-label">零下5摄氏度 🥶</div>
+          <div style="font-size:80px;margin:12px 0">🌡️</div>
+          <input type="range" class="temp-slider" id="temp-slider" min="-20" max="40" value="-5" step="1">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#9CA3AF;padding:0 8px;max-width:80%;margin:0 auto">
+            <span>-20°C</span><span>0°C</span><span>40°C</span>
+          </div>
+          <div style="margin-top:20px;padding:16px;background:#E0F2F1;border-radius:16px;">
+            <p style="font-size:16px;font-weight:600;color:#00897B;margin-bottom:12px;">👆 试试生活中的温度</p>
+            <div class="temp-scenarios" id="temp-scenarios">
+              <div class="temp-scenario" data-temp="-18"><div class="sc-icon">🧊</div><div class="sc-text">冰箱冷冻</div></div>
+              <div class="temp-scenario" data-temp="0"><div class="sc-icon">🧊</div><div class="sc-text">冰水混合</div></div>
+              <div class="temp-scenario" data-temp="4"><div class="sc-icon">🏠</div><div class="sc-text">冰箱冷藏</div></div>
+              <div class="temp-scenario" data-temp="22"><div class="sc-icon">🏡</div><div class="sc-text">室温舒适</div></div>
+              <div class="temp-scenario" data-temp="37"><div class="sc-icon">🤒</div><div class="sc-text">人体体温</div></div>
+              <div class="temp-scenario" data-temp="-5"><div class="sc-icon">❄️</div><div class="sc-text">哈尔滨冬天</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 数轴探索 -->
+    <div class="mode-content" id="mode-numberline">
+      <div class="card">
+        <p class="page-subtitle">在数轴上找到数字，认识正数和负数</p>
+        <div class="numberline-area">
+          <svg class="numberline-svg" id="numberline-svg" width="340" height="180" viewBox="0 0 340 180"></svg>
+          <div class="nl-question" id="nl-question">在数轴上找到 -3</div>
+          <div class="nl-controls" id="nl-controls"></div>
+          <div class="nl-answer-row">
+            <input type="text" class="nl-input" id="nl-input" placeholder="?">
+            <button class="nl-check-btn" id="nl-check-btn">检查</button>
+          </div>
+          <div class="nl-feedback" id="nl-feedback" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 正负数比较 -->
+    <div class="mode-content" id="mode-compare">
+      <div class="card">
+        <p class="page-subtitle">比较两个数的大小，填上 &gt;、&lt; 或 =</p>
+        <div class="compare-area">
+          <div class="compare-score">已答对 <span id="compare-correct" style="color:#34C759">0</span> / <span id="compare-total">0</span></div>
+          <div class="compare-pair">
+            <div class="compare-num positive" id="cmp-left">+5</div>
+            <div class="compare-sign" id="cmp-sign">?</div>
+            <div class="compare-num negative" id="cmp-right">-3</div>
+          </div>
+          <div class="compare-options">
+            <button class="compare-opt" data-val="&gt;">&gt;</button>
+            <button class="compare-opt" data-val="=">=</button>
+            <button class="compare-opt" data-val="&lt;">&lt;</button>
+          </div>
+          <div class="compare-explain" id="cmp-explain" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 生活应用 -->
+    <div class="mode-content" id="mode-life">
+      <div class="life-area">
+        <div class="card">
+          <p class="page-subtitle">生活中的负数 — 用正负数表示相反意义的量</p>
+        </div>
+        <div class="life-card">
+          <div class="life-icon">🌡️</div>
+          <div class="life-title">温度</div>
+          <div class="life-nums"><span style="color:#E53935">-5°C</span>（零下5度）&nbsp; vs &nbsp;<span style="color:#2E7D32">+15°C</span>（零上15度）</div>
+          <div class="life-body">以 <b>0°C</b>（冰水混合物的温度）为分界点，零上温度用<b>正数</b>表示，零下温度用<b>负数</b>表示。</div>
+        </div>
+        <div class="life-card">
+          <div class="life-icon">🏔️</div>
+          <div class="life-title">海拔高度</div>
+          <div class="life-nums"><span style="color:#E53930">-155m</span>（低于海平面）&nbsp; vs &nbsp;<span style="color:#2E7D32">+8848m</span>（珠穆朗玛峰）</div>
+          <div class="life-body">以 <b>海平面</b> 为0，高于海平面用正数，低于海平面用负数。</div>
+        </div>
+        <div class="life-card">
+          <div class="life-icon">💰</div>
+          <div class="life-title">收入与支出</div>
+          <div class="life-nums"><span style="color:#E53935">-200元</span>（支出200元）&nbsp; vs &nbsp;<span style="color:#2E7D32">+500元</span>（收入500元）</div>
+          <div class="life-body">以 <b>0元</b> 为基准，收入用正数，支出用负数。</div>
+        </div>
+        <div class="life-card">
+          <div class="life-icon">🏢</div>
+          <div class="life-title">楼层</div>
+          <div class="life-nums"><span style="color:#E53935">B2（-2楼）</span>（地下2层）&nbsp; vs &nbsp;<span style="color:#2E7D32">+3楼</span>（地上3层）</div>
+          <div class="life-body">以 <b>地面</b> 为0，地上楼层用正数，地下楼层用负数。</div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <p class="page-subtitle" style="text-align:left">🧠 小测验</p>
+          <div class="life-quiz" id="life-quiz">
+            <div class="life-quiz-q" id="lq-question"></div>
+            <div class="life-quiz-opts" id="lq-options"></div>
+            <div class="nl-feedback" id="lq-feedback" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // === 模式切换 ===
+    document.querySelectorAll('.mode-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('mode-' + btn.dataset.mode).classList.add('active');
+        if (btn.dataset.mode === 'numberline') initNumberLine();
+        if (btn.dataset.mode === 'compare') newCompare();
+        if (btn.dataset.mode === 'life') newLifeQuiz();
+      });
+    });
+    setupBackButton('../index.html');
+    let streak = 0;
+    function updateStreak(ok) { streak = ok ? streak + 1 : 0; document.getElementById('streak').textContent = streak; document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 5)); }
+
+    // === 模式1: 温度探索 ===
+    const tempSlider = document.getElementById('temp-slider');
+    const tempDisplay = document.getElementById('temp-display');
+    const tempLabel = document.getElementById('temp-label');
+    function updateTemp(val) {
+      val = parseInt(val);
+      tempDisplay.textContent = (val >= 0 ? '+' : '') + val + '°C';
+      tempDisplay.className = 'temp-display ' + (val < 0 ? 'cold' : val <= 15 ? 'warm' : 'hot');
+      if (val < 0) tempLabel.textContent = '零下' + Math.abs(val) + '摄氏度 🥶';
+      else if (val === 0) tempLabel.textContent = '0摄氏度 — 冰水混合物 🧊';
+      else tempLabel.textContent = '零上' + val + '摄氏度 ' + (val >= 30 ? '🥵' : '😊');
+    }
+    tempSlider.addEventListener('input', () => updateTemp(tempSlider.value));
+    document.querySelectorAll('.temp-scenario').forEach(s => {
+      s.addEventListener('click', () => {
+        document.querySelectorAll('.temp-scenario').forEach(x => x.classList.remove('active'));
+        s.classList.add('active');
+        const t = parseInt(s.dataset.temp);
+        tempSlider.value = t;
+        updateTemp(t);
+      });
+    });
+    updateTemp(-5);
+
+    // === 模式2: 数轴探索 ===
+    let nlTarget = 0;
+    function initNumberLine() {
+      const svg = document.getElementById('numberline-svg');
+      const nums = [-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10];
+      const w = 340, cx = w/2, y = 80, step = 15;
+      let svgContent = '';
+      // 轴线
+      svgContent += `<line x1="10" y1="${y}" x2="${w-10}" y2="${y}" stroke="#546E7A" stroke-width="2.5" stroke-linecap="round"/>`;
+      // 箭头
+      svgContent += `<polygon points="${w-10},${y} ${w-20},${y-5} ${w-20},${y+5}" fill="#546E7A"/>`;
+      // 刻度
+      nums.forEach(n => {
+        const x = cx + n * step;
+        const isZero = n === 0;
+        const tickH = isZero ? 24 : (n > 0 ? 14 : 14);
+        const color = isZero ? '#00897B' : (n < 0 ? '#C62828' : '#2E7D32');
+        svgContent += `<line x1="${x}" y1="${y - tickH}" x2="${x}" y2="${y + tickH}" stroke="${color}" stroke-width="${isZero ? 2.5 : 1.5}"/>`;
+        svgContent += `<text x="${x}" y="${y + (n < 0 ? 32 : 42)}" text-anchor="middle" font-size="${isZero ? 14 : 11}" font-weight="${isZero ? 700 : 600}" fill="${color}">${n}</text>`;
+      });
+      // 正/负标签
+      svgContent += `<text x="${cx + 7*step}" y="${y - 30}" text-anchor="middle" font-size="12" fill="#2E7D32" font-weight="600">正数 →</text>`;
+      svgContent += `<text x="${cx - 7*step}" y="${y - 30}" text-anchor="middle" font-size="12" fill="#C62828" font-weight="600">← 负数</text>`;
+      svgContent += `<text x="${cx}" y="${y - 30}" text-anchor="middle" font-size="12" fill="#00897B" font-weight="700">0</text>`;
+      svg.innerHTML = svgContent;
+      newNlQuestion();
+    }
+    function newNlQuestion() {
+      const questions = [
+        { q: '在数轴上找到 -3', a: -3 },
+        { q: '在数轴上找到 +5', a: 5 },
+        { q: '在数轴上找到 -7', a: -7 },
+        { q: '在数轴上找到 0', a: 0 },
+        { q: '在数轴上找到 -10', a: -10 },
+        { q: '在数轴上找到 +8', a: 8 },
+        { q: '在数轴上找到 -1', a: -1 },
+        { q: '在数轴上找到 +3', a: 3 },
+      ];
+      const q = questions[Math.floor(Math.random() * questions.length)];
+      nlTarget = q.a;
+      document.getElementById('nl-question').textContent = q.q;
+      document.getElementById('nl-input').value = '';
+      document.getElementById('nl-feedback').style.display = 'none';
+      // 按钮选项
+      const opts = [q.a, q.a + 2, q.a - 1, q.a + 3].filter((v,i,a) => a.indexOf(v) === i).slice(0,4);
+      while (opts.length < 4) opts.push(Math.floor(Math.random()*21) - 10);
+      const ctrl = document.getElementById('nl-controls');
+      ctrl.innerHTML = opts.sort(() => Math.random()-0.5).map(v =>
+        `<button class="nl-btn" data-val="${v}">${v >= 0 ? '+' : ''}${v}</button>`
+      ).join('');
+      ctrl.querySelectorAll('.nl-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          document.getElementById('nl-input').value = b.dataset.val;
+          ctrl.querySelectorAll('.nl-btn').forEach(x => x.classList.remove('highlight'));
+          b.classList.add('highlight');
+        });
+      });
+    }
+    document.getElementById('nl-check-btn').addEventListener('click', () => {
+      const val = parseInt(document.getElementById('nl-input').value);
+      const fb = document.getElementById('nl-feedback');
+      if (isNaN(val)) { fb.textContent = '请输入一个数字！'; fb.className = 'nl-feedback wrong'; fb.style.display = 'block'; return; }
+      if (val === nlTarget) {
+        fb.textContent = '✅ 正确！' + nlTarget + ' 在数轴上的位置找对了！';
+        fb.className = 'nl-feedback correct';
+        updateStreak(true);
+        setTimeout(newNlQuestion, 1200);
+      } else {
+        fb.textContent = '❌ 不对哦，再想想。' + nlTarget + ' 应该在0的' + (nlTarget < 0 ? '左边' : '右边');
+        fb.className = 'nl-feedback wrong';
+        updateStreak(false);
+      }
+      fb.style.display = 'block';
+    });
+
+    // === 模式3: 比大小 ===
+    let cmpA = 0, cmpB = 0;
+    let cmpCorrectCount = 0, cmpTotalCount = 0;
+    function newCompare() {
+      const nums = [-10,-8,-7,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,10];
+      cmpA = nums[Math.floor(Math.random()*nums.length)];
+      cmpB = nums[Math.floor(Math.random()*nums.length)];
+      while (cmpB === cmpA) cmpB = nums[Math.floor(Math.random()*nums.length)];
+      const leftEl = document.getElementById('cmp-left');
+      const rightEl = document.getElementById('cmp-right');
+      leftEl.textContent = (cmpA >= 0 ? '+' : '') + cmpA;
+      rightEl.textContent = (cmpB >= 0 ? '+' : '') + cmpB;
+      leftEl.className = 'compare-num ' + (cmpA > 0 ? 'positive' : cmpA === 0 ? 'zero-val' : 'negative');
+      rightEl.className = 'compare-num ' + (cmpB > 0 ? 'positive' : cmpB === 0 ? 'zero-val' : 'negative');
+      document.getElementById('cmp-sign').textContent = '?';
+      document.getElementById('cmp-explain').style.display = 'none';
+      document.querySelectorAll('.compare-opt').forEach(b => { b.disabled = false; b.style.opacity = 1; });
+    }
+    document.querySelectorAll('.compare-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const answer = btn.dataset.val;
+        const correct = (cmpA > cmpB) ? '>' : (cmpA === cmpB) ? '=' : '<';
+        const isCorrect = answer === correct;
+        document.querySelectorAll('.compare-opt').forEach(b => { b.disabled = true; b.style.opacity = 0.6; });
+        btn.classList.add(isCorrect ? 'correct' : 'wrong');
+        cmpTotalCount++;
+        if (isCorrect) cmpCorrectCount++;
+        document.getElementById('compare-correct').textContent = cmpCorrectCount;
+        document.getElementById('compare-total').textContent = cmpTotalCount;
+        const ex = document.getElementById('cmp-explain');
+        if (isCorrect) {
+          ex.textContent = '✅ 正确！' + cmpA + (correct === '>' ? ' > ' : ' < ') + cmpB;
+          ex.style.display = 'block';
+          updateStreak(true);
+          setTimeout(newCompare, 1200);
+        } else {
+          ex.textContent = '❌ 正确答案是 ' + cmpA + (correct === '>' ? ' > ' : correct === '<' ? ' < ' : ' = ') + cmpB + '（数轴上越靠右越大）';
+          ex.style.display = 'block';
+          updateStreak(false);
+          setTimeout(() => { document.querySelectorAll('.compare-opt').forEach(b => { b.disabled = false; b.style.opacity = 1; b.classList.remove('correct','wrong'); }); }, 2000);
+        }
+      });
+    });
+
+    // === 模式4: 生活小测验 ===
+    const lifeQuizzes = [
+      { q: '小明向东走5米记作 +5米，向西走3米记作？', opts: ['+3米', '-3米', '+5米', '-5米'], correct: 1 },
+      { q: '海平面以上800米记作 +800米，海平面以下200米记作？', opts: ['+200米', '-200米', '+800米', '200米'], correct: 1 },
+      { q: '如果收入100元记作 +100元，那么 -50元表示？', opts: ['收入50元', '支出50元', '收入100元', '欠50元'], correct: 1 },
+      { q: '0°C 表示什么温度？', opts: ['没有温度', '很热的温度', '冰水混合物的温度', '比零下更冷'], correct: 2 },
+      { q: '-8°C 和 +3°C 哪个温度更低？', opts: ['+3°C', '-8°C', '一样低', '无法比较'], correct: 1 },
+      { q: '电梯从3楼下降到地下1楼，地下1楼可以记作？', opts: ['+1楼', '-1楼', '1楼', '0楼'], correct: 1 },
+    ];
+    let lqIndex = 0;
+    function newLifeQuiz() {
+      lqIndex = Math.floor(Math.random() * lifeQuizzes.length);
+      const quiz = lifeQuizzes[lqIndex];
+      document.getElementById('lq-question').textContent = quiz.q;
+      document.getElementById('lq-options').innerHTML = quiz.opts.map((o, i) =>
+        `<button class="life-quiz-opt" data-idx="${i}">${o}</button>`
+      ).join('');
+      document.getElementById('lq-feedback').style.display = 'none';
+      document.querySelectorAll('.life-quiz-opt').forEach(b => { b.disabled = false; b.style.opacity = 1; b.classList.remove('correct','wrong'); });
+      document.querySelectorAll('.life-quiz-opt').forEach(b => {
+        b.addEventListener('click', () => {
+          const idx = parseInt(b.dataset.idx);
+          const correct = idx === quiz.correct;
+          document.querySelectorAll('.life-quiz-opt').forEach(x => { x.disabled = true; x.style.opacity = 0.6; });
+          b.classList.add(correct ? 'correct' : 'wrong');
+          if (!correct) document.querySelector(`.life-quiz-opt[data-idx="${quiz.correct}"]`).classList.add('correct');
+          const fb = document.getElementById('lq-feedback');
+          fb.textContent = correct ? '✅ 回答正确！' : '❌ 正确答案是：' + quiz.opts[quiz.correct];
+          fb.className = 'nl-feedback ' + (correct ? 'correct' : 'wrong');
+          fb.style.display = 'block';
+          updateStreak(correct);
+          setTimeout(newLifeQuiz, correct ? 1200 : 2500);
+        });
+      });
+    }
+
+    // 初始化
+    newCompare();
+    newLifeQuiz();
+  </script>
+</body>
+</html>
