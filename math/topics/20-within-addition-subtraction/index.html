@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>20以内进位加法与退位减法</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #4A90D9; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    .score-display { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px; font-size: 18px; font-weight: 600; }
+    .score-stars { font-size: 24px; }
+
+    /* === 模式1: 方块演示 === */
+    .blocks-area { text-align: center; padding: 24px 16px; }
+    .blocks-problem { font-size: 42px; font-weight: 700; color: #4A90D9; margin: 16px 0; }
+    .blocks-container {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin: 20px 0; flex-wrap: wrap;
+    }
+    .blocks-group {
+      display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;
+      padding: 12px; background: rgba(74,144,217,0.05); border-radius: 16px;
+      min-width: 60px; max-width: 200px;
+    }
+    .block-unit {
+      width: 28px; height: 28px; border-radius: 6px; display: flex;
+      align-items: center; justify-content: center; font-size: 16px;
+      animation: popIn 0.2s ease both;
+    }
+    .block-unit.a-color { background: rgba(74,144,217,0.2); border: 2px solid #4A90D9; }
+    .block-unit.b-color { background: rgba(255,149,0,0.2); border: 2px solid #FF9500; }
+    .block-unit.carry { background: rgba(52,199,89,0.2); border: 2px solid #34C759; }
+    .block-ten-bar {
+      width: 36px; height: 120px; border-radius: 8px;
+      background: linear-gradient(180deg, rgba(52,199,89,0.3) 0%, rgba(52,199,89,0.15) 100%);
+      border: 2px solid #34C759; display: flex; flex-direction: column;
+      align-items: center; justify-content: space-around; padding: 4px;
+      font-size: 12px; color: #34C759; font-weight: 700;
+    }
+    .blocks-op { font-size: 42px; font-weight: 700; color: #6E6E73; }
+    .blocks-result { font-size: 48px; font-weight: 800; color: #34C759; }
+    .blocks-explain {
+      font-size: 16px; color: #6E6E73; line-height: 1.8; margin: 16px 0;
+      padding: 16px; background: #FFFBEB; border-radius: 12px; text-align: left;
+    }
+    .blocks-explain .highlight { color: #4A90D9; font-weight: 700; }
+    .blocks-explain .highlight-green { color: #34C759; font-weight: 700; }
+
+    /* === 模式2: 凑十法 === */
+    .make10-area { text-align: center; padding: 24px 16px; }
+    .make10-problem { font-size: 42px; font-weight: 700; color: #4A90D9; margin: 16px 0; }
+    .make10-visual {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; margin: 20px 0; flex-wrap: wrap;
+    }
+    .make10-box {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 6px; padding: 12px; border: 3px dashed #E5E5EA;
+      border-radius: 16px; min-width: 180px;
+    }
+    .make10-box.ten-box { border-color: #FF9500; background: rgba(255,149,0,0.05); }
+    .make10-slot {
+      width: 40px; height: 40px; border: 2px solid #E5E5EA; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; transition: all 0.3s ease;
+    }
+    .make10-slot.filled-a { border-color: #4A90D9; background: rgba(74,144,217,0.15); }
+    .make10-slot.filled-b { border-color: #FF9500; background: rgba(255,149,0,0.15); }
+    .make10-arrow { font-size: 36px; color: #FF9500; }
+    .make10-steps {
+      font-size: 18px; line-height: 2; text-align: left;
+      padding: 16px; background: #F0F4FF; border-radius: 12px; margin: 16px 0;
+    }
+    .make10-steps .step-line { display: flex; align-items: center; gap: 8px; }
+    .make10-steps .step-num {
+      display: inline-flex; width: 28px; height: 28px; border-radius: 50%;
+      background: #4A90D9; color: white; font-size: 14px; font-weight: 700;
+      align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .make10-options { display: flex; justify-content: center; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+    .make10-opt {
+      width: 64px; height: 64px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 28px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .make10-opt:active { transform: scale(0.9); }
+    .make10-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); }
+    .make10-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .make10-hint { font-size: 16px; color: #6E6E73; margin: 12px 0; }
+
+    /* === 模式3: 破十法 === */
+    .break10-area { text-align: center; padding: 24px 16px; }
+    .break10-problem { font-size: 42px; font-weight: 700; color: #AF52DE; margin: 16px 0; }
+    .break10-visual {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin: 20px 0; flex-wrap: wrap;
+    }
+    .break10-ten-bar {
+      display: flex; gap: 2px; padding: 8px; background: rgba(175,82,222,0.08);
+      border: 2px solid #AF52DE; border-radius: 12px; position: relative;
+    }
+    .break10-ten-bar .bar-unit {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: rgba(175,82,222,0.2); border: 2px solid #AF52DE;
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+      transition: all 0.3s ease;
+    }
+    .break10-ten-bar .bar-unit.used {
+      background: rgba(255,59,48,0.15); border-color: #FF3B30; opacity: 0.5;
+    }
+    .break10-ten-bar .bar-unit.scissors {
+      border-style: dashed; border-color: #FF9500;
+    }
+    .break10-scissors { font-size: 28px; }
+    .break10-remaining {
+      display: flex; gap: 4px; padding: 8px; background: rgba(52,199,89,0.08);
+      border: 2px solid #34C759; border-radius: 12px;
+    }
+    .break10-remaining .bar-unit {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: rgba(52,199,89,0.2); border: 2px solid #34C759;
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .break10-steps {
+      font-size: 18px; line-height: 2; text-align: left;
+      padding: 16px; background: #F5F0FF; border-radius: 12px; margin: 16px 0;
+    }
+    .break10-steps .step-num {
+      display: inline-flex; width: 28px; height: 28px; border-radius: 50%;
+      background: #AF52DE; color: white; font-size: 14px; font-weight: 700;
+      align-items: center; justify-content: center; flex-shrink: 0; margin-right: 8px;
+    }
+    .break10-options { display: flex; justify-content: center; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+    .break10-opt {
+      width: 64px; height: 64px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 28px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .break10-opt:active { transform: scale(0.9); }
+    .break10-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); }
+    .break10-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+
+    /* === 模式4: 闯关练习 === */
+    .practice-area { text-align: center; padding: 24px 16px; }
+    .practice-problem { font-size: 52px; font-weight: 800; color: #4A90D9; margin: 20px 0; }
+    .practice-level {
+      display: inline-block; padding: 6px 16px; border-radius: 20px;
+      font-size: 14px; font-weight: 700; margin-bottom: 12px;
+    }
+    .level-1 { background: rgba(52,199,89,0.15); color: #34C759; }
+    .level-2 { background: rgba(255,149,0,0.15); color: #FF9500; }
+    .level-3 { background: rgba(255,59,48,0.15); color: #FF3B30; }
+    .practice-hint-text { font-size: 15px; color: #6E6E73; margin: 8px 0; }
+    .practice-input-row {
+      display: flex; justify-content: center; align-items: center;
+      gap: 16px; margin: 20px 0;
+    }
+    .practice-answer {
+      width: 100px; height: 72px; border: 3px solid #E5E5EA; border-radius: 16px;
+      font-size: 40px; font-weight: 700; text-align: center; color: #4A90D9;
+      outline: none; transition: border-color 0.2s ease;
+    }
+    .practice-answer:focus { border-color: #4A90D9; }
+    .practice-answer.correct { border-color: #34C759; background: rgba(52,199,89,0.1); }
+    .practice-answer.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .practice-progress {
+      display: flex; gap: 6px; justify-content: center; margin: 16px 0; flex-wrap: wrap;
+    }
+    .progress-dot {
+      width: 16px; height: 16px; border-radius: 50%; background: #E5E5EA;
+      transition: all 0.3s ease;
+    }
+    .progress-dot.done { background: #34C759; }
+    .progress-dot.current { background: #4A90D9; transform: scale(1.3); }
+    .progress-dot.wrong-dot { background: #FF3B30; }
+
+    @media (max-width: 480px) {
+      .blocks-problem, .make10-problem, .break10-problem { font-size: 32px; }
+      .practice-problem { font-size: 40px; }
+      .make10-slot { width: 34px; height: 34px; font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="mode-tabs" style="display:none"></nav>
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" aria-label="返回">←</button>
+      <span class="nav-title">🧮 20以内加减法</span>
+      <div style="width:56px"></div>
+    </nav>
+
+    <div class="score-display">
+      <span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="blocks">🧱 方块</button>
+      <button class="mode-tab" data-mode="make10">🔟 凑十法</button>
+      <button class="mode-tab" data-mode="break10">✂️ 破十法</button>
+      <button class="mode-tab" data-mode="practice">✏️ 闯关</button>
+    </div>
+
+    <!-- 模式1: 方块演示 -->
+    <div class="mode-content active" id="mode-blocks">
+      <div class="card">
+        <p class="page-subtitle">看方块理解进位和退位</p>
+        <div class="blocks-area">
+          <div class="blocks-problem" id="blocks-problem"></div>
+          <div class="blocks-container" id="blocks-container"></div>
+          <div class="blocks-explain" id="blocks-explain"></div>
+          <div class="action-bar">
+            <button class="btn btn-primary btn-large" id="btn-new-blocks">🎲 换一题</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 凑十法 -->
+    <div class="mode-content" id="mode-make10">
+      <div class="card">
+        <p class="page-subtitle">凑成10再加，进位加法好简单</p>
+        <div class="make10-area">
+          <div class="make10-problem" id="make10-problem"></div>
+          <div class="make10-visual" id="make10-visual"></div>
+          <div class="make10-steps" id="make10-steps"></div>
+          <p class="make10-hint" id="make10-hint"></p>
+          <div class="make10-options" id="make10-options"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 破十法 -->
+    <div class="mode-content" id="mode-break10">
+      <div class="card">
+        <p class="page-subtitle">先减到10再减，退位减法不难</p>
+        <div class="break10-area">
+          <div class="break10-problem" id="break10-problem"></div>
+          <div class="break10-visual" id="break10-visual"></div>
+          <div class="break10-steps" id="break10-steps"></div>
+          <p class="make10-hint" id="break10-hint"></p>
+          <div class="break10-options" id="break10-options"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 闯关练习 -->
+    <div class="mode-content" id="mode-practice">
+      <div class="card">
+        <p class="page-subtitle">连闯10关，成为计算小达人！</p>
+        <div class="practice-area">
+          <div class="practice-level" id="practice-level">第1关</div>
+          <div class="practice-progress" id="practice-progress"></div>
+          <div class="practice-problem" id="practice-problem"></div>
+          <p class="practice-hint-text" id="practice-hint"></p>
+          <div class="practice-input-row">
+            <input type="tel" class="practice-answer" id="practice-answer" maxlength="2" inputmode="numeric" autocomplete="off">
+          </div>
+          <div class="action-bar">
+            <button class="btn btn-primary btn-large" id="btn-check-practice">✅ 检查</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/animation.js"></script>
+  <script src="../../assets/js/touch.js"></script>
+  <script>
+    // === 初始化 ===
+    document.querySelector('.nav-back').addEventListener('click', () => {
+      window.location.href = '../../index.html';
+    });
+
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast('🔥 连续 ' + streak + ' 次！太厉害了！');
+    }
+
+    document.querySelectorAll('.mode-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.mode-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.mode-content').forEach(function(c) { c.classList.remove('active'); });
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        Sound.play('click');
+      });
+    });
+
+    // === 工具函数 ===
+    function genAddProblem() {
+      // 进位加法: 9+2=11 ~ 9+9=18, 8+3=11 ~ ...
+      var a, b;
+      do {
+        a = Random.int(2, 9);
+        b = Random.int(2, 9);
+      } while (a + b <= 10 || a + b > 18);
+      return { a: a, b: b, op: '+', answer: a + b };
+    }
+
+    function genSubProblem() {
+      // 退位减法: 11-9=2 ~ 18-9=9
+      var a = Random.int(11, 18);
+      var b;
+      do {
+        b = Random.int(2, 9);
+      } while (a - b <= 0 || (a % 10) >= b); // 确保需要退位
+      return { a: a, b: b, op: '-', answer: a - b };
+    }
+
+    function genProblem(type) {
+      if (type === 'add') return genAddProblem();
+      if (type === 'sub') return genSubProblem();
+      return Math.random() < 0.5 ? genAddProblem() : genSubProblem();
+    }
+
+    // === 模式1: 方块演示 ===
+    (function() {
+      function renderBlocks() {
+        var p = genProblem();
+        document.getElementById('blocks-problem').textContent = p.a + ' ' + p.op + ' ' + p.b + ' = ?';
+        var container = document.getElementById('blocks-container');
+        var explain = document.getElementById('blocks-explain');
+        container.innerHTML = '';
+
+        if (p.op === '+') {
+          // 进位加法演示
+          var a = p.a, b = p.b, sum = a + b;
+          var needCarry = (a % 10) + (b % 10) >= 10;
+
+          // A的方块
+          var gA = document.createElement('div');
+          gA.className = 'blocks-group';
+          for (var i = 0; i < a; i++) {
+            var el = document.createElement('div');
+            el.className = 'block-unit a-color';
+            el.textContent = '●';
+            el.style.animationDelay = (i * 0.05) + 's';
+            gA.appendChild(el);
+          }
+          container.appendChild(gA);
+
+          var opEl = document.createElement('div');
+          opEl.className = 'blocks-op';
+          opEl.textContent = '+';
+          container.appendChild(opEl);
+
+          // B的方块
+          var gB = document.createElement('div');
+          gB.className = 'blocks-group';
+          for (var i = 0; i < b; i++) {
+            var el = document.createElement('div');
+            el.className = 'block-unit b-color';
+            el.textContent = '●';
+            el.style.animationDelay = ((a + i) * 0.05) + 's';
+            gB.appendChild(el);
+          }
+          container.appendChild(gB);
+
+          var eqEl = document.createElement('div');
+          eqEl.className = 'blocks-op';
+          eqEl.textContent = '=';
+          container.appendChild(eqEl);
+
+          // 结果
+          var resEl = document.createElement('div');
+          resEl.className = 'blocks-result';
+          resEl.textContent = sum;
+          container.appendChild(resEl);
+
+          // 解释
+          if (needCarry) {
+            var onesA = a % 10;
+            var needFromB = 10 - onesA;
+            var remainB = b - needFromB;
+            explain.innerHTML =
+              '<div class="step-line">🔢 <span class="highlight">' + a + '</span> 的个位是 <span class="highlight">' + onesA + '</span></div>' +
+              '<div class="step-line">💡 还差 <span class="highlight">' + needFromB + '</span> 就凑成 <span class="highlight-green">10</span></div>' +
+              '<div class="step-line">✋ 从 <span class="highlight">' + b + '</span> 里拿出 <span class="highlight">' + needFromB + '</span>，还剩 <span class="highlight">' + remainB + '</span></div>' +
+              '<div class="step-line">🎯 <span class="highlight-green">10</span> + <span class="highlight">' + remainB + '</span> = <span class="highlight-green">' + sum + '</span></div>';
+          } else {
+            explain.innerHTML =
+              '<div class="step-line">🔢 <span class="highlight">' + a + '</span> + <span class="highlight">' + b + '</span> 不需要进位</div>' +
+              '<div class="step-line">🎯 直接算：' + a + ' + ' + b + ' = <span class="highlight-green">' + sum + '</span></div>';
+          }
+        } else {
+          // 退位减法演示
+          var a = p.a, b = p.b, diff = a - b;
+          var ones = a % 10; // 个位
+          var tens = Math.floor(a / 10); // 十位
+
+          // 十位条
+          if (tens > 0) {
+            var tenBar = document.createElement('div');
+            tenBar.className = 'break10-ten-bar';
+            tenBar.style.borderColor = '#4A90D9';
+            tenBar.style.background = 'rgba(74,144,217,0.08)';
+            for (var i = 0; i < 10; i++) {
+              var u = document.createElement('div');
+              u.className = 'bar-unit';
+              u.style.borderColor = '#4A90D9';
+              u.style.background = 'rgba(74,144,217,0.2)';
+              u.textContent = '●';
+              if (i < b) u.classList.add('used');
+              tenBar.appendChild(u);
+            }
+            container.appendChild(tenBar);
+          }
+
+          // 个位方块
+          if (ones > 0) {
+            var gOnes = document.createElement('div');
+            gOnes.className = 'blocks-group';
+            for (var i = 0; i < ones; i++) {
+              var el = document.createElement('div');
+              el.className = 'block-unit a-color';
+              el.textContent = '●';
+              el.style.animationDelay = (i * 0.05) + 's';
+              gOnes.appendChild(el);
+            }
+            container.appendChild(gOnes);
+          }
+
+          var opEl = document.createElement('div');
+          opEl.className = 'blocks-op';
+          opEl.textContent = '−';
+          container.appendChild(opEl);
+
+          // 减去的方块
+          var gB = document.createElement('div');
+          gB.className = 'blocks-group';
+          gB.style.borderColor = 'rgba(255,59,48,0.2)';
+          gB.style.background = 'rgba(255,59,48,0.05)';
+          for (var i = 0; i < b; i++) {
+            var el = document.createElement('div');
+            el.className = 'block-unit';
+            el.style.background = 'rgba(255,59,48,0.15)';
+            el.style.borderColor = '#FF3B30';
+            el.textContent = '✕';
+            el.style.color = '#FF3B30';
+            el.style.animationDelay = (i * 0.05) + 's';
+            gB.appendChild(el);
+          }
+          container.appendChild(gB);
+
+          var eqEl = document.createElement('div');
+          eqEl.className = 'blocks-op';
+          eqEl.textContent = '=';
+          container.appendChild(eqEl);
+
+          var resEl = document.createElement('div');
+          resEl.className = 'blocks-result';
+          resEl.style.color = '#AF52DE';
+          resEl.textContent = diff;
+          container.appendChild(resEl);
+
+          // 解释
+          explain.innerHTML =
+            '<div class="step-line">🔢 <span class="highlight">' + a + '</span> = 十位 <span class="highlight">' + tens + '</span> 个位 <span class="highlight">' + ones + '</span></div>' +
+            '<div class="step-line">✋ 个位 ' + ones + ' 不够减 ' + b + '，向十位借 <span class="highlight-green">1</span></div>' +
+            '<div class="step-line">💡 借来后个位变成 <span class="highlight">' + (10 + ones) + '</span>，减 ' + b + ' = <span class="highlight-green">' + diff + '</span></div>';
+        }
+      }
+
+      document.getElementById('btn-new-blocks').addEventListener('click', function() {
+        renderBlocks();
+        Sound.play('click');
+      });
+      renderBlocks();
+    })();
+
+    // === 模式2: 凑十法 ===
+    (function() {
+      var currentA, currentB, answer, splitPoint;
+
+      function newMake10() {
+        var p = genAddProblem();
+        currentA = p.a;
+        currentB = p.b;
+        answer = p.answer;
+        splitPoint = 10 - currentA; // 需要从b中拿出多少来凑10
+
+        document.getElementById('make10-problem').textContent = currentA + ' + ' + currentB + ' = ?';
+
+        // 视觉：两个十格框
+        var visual = document.getElementById('make10-visual');
+        visual.innerHTML = '';
+
+        // 第一个框：a个蓝色
+        var box1 = document.createElement('div');
+        box1.className = 'make10-box ten-box';
+        for (var i = 0; i < 10; i++) {
+          var slot = document.createElement('div');
+          slot.className = 'make10-slot';
+          if (i < currentA) {
+            slot.classList.add('filled-a');
+            slot.textContent = '🔵';
+          }
+          box1.appendChild(slot);
+        }
+        visual.appendChild(box1);
+
+        // 箭头
+        var arrow = document.createElement('div');
+        arrow.className = 'make10-arrow';
+        arrow.textContent = '➜';
+        visual.appendChild(arrow);
+
+        // 第二个框：b个橙色，但拆分显示
+        var box2 = document.createElement('div');
+        box2.className = 'make10-box';
+        box2.style.borderColor = '#FF9500';
+        for (var i = 0; i < 10; i++) {
+          var slot = document.createElement('div');
+          slot.className = 'make10-slot';
+          if (i < currentB) {
+            slot.classList.add('filled-b');
+            slot.textContent = '🟠';
+          }
+          box2.appendChild(slot);
+        }
+        visual.appendChild(box2);
+
+        // 步骤说明
+        var steps = document.getElementById('make10-steps');
+        steps.innerHTML =
+          '<div class="step-line"><span class="step-num">1</span>' + currentA + ' 再加 <span style="color:#FF9500;font-weight:700">' + splitPoint + '</span> 就凑成 10</div>' +
+          '<div class="step-line"><span class="step-num">2</span>把 ' + currentB + ' 分成 <span style="color:#FF9500;font-weight:700">' + splitPoint + '</span> 和 <span style="color:#4A90D9;font-weight:700">' + (currentB - splitPoint) + '</span></div>' +
+          '<div class="step-line"><span class="step-num">3</span>10 + ' + (currentB - splitPoint) + ' = <span style="color:#34C759;font-weight:700">?</span></div>';
+
+        document.getElementById('make10-hint').textContent = '10 + ' + (currentB - splitPoint) + ' 等于多少？';
+
+        // 选项
+        var opts = document.getElementById('make10-options');
+        opts.innerHTML = '';
+        var choices = [answer];
+        while (choices.length < 4) {
+          var c = Random.int(answer - 3, answer + 3);
+          if (c > 10 && c <= 20 && choices.indexOf(c) === -1) choices.push(c);
+        }
+        Random.shuffle(choices);
+        choices.forEach(function(c) {
+          var btn = document.createElement('button');
+          btn.className = 'make10-opt';
+          btn.textContent = c;
+          btn.addEventListener('click', function() {
+            if (c === answer) {
+              btn.classList.add('correct');
+              streak++;
+              Sound.play('correct');
+              celebrate();
+              updateStreak();
+              // 更新视觉：凑满
+              var slots = box1.querySelectorAll('.make10-slot');
+              for (var i = currentA; i < 10; i++) {
+                slots[i].classList.add('filled-b');
+                slots[i].textContent = '🟠';
+              }
+              document.getElementById('make10-hint').textContent = '🎉 ' + currentA + ' + ' + currentB + ' = ' + answer + '！凑十成功！';
+              document.getElementById('make10-hint').style.color = '#34C759';
+              setTimeout(function() {
+                document.getElementById('make10-hint').style.color = '';
+                newMake10();
+              }, 1500);
+            } else {
+              btn.classList.add('wrong');
+              Animator.shake(btn);
+              streak = 0;
+              Sound.play('wrong');
+              updateStreak();
+              showToast('再想想，10 + ' + (currentB - splitPoint) + ' = ？');
+            }
+          });
+          opts.appendChild(btn);
+        });
+      }
+
+      newMake10();
+    })();
+
+    // === 模式3: 破十法 ===
+    (function() {
+      var currentA, currentB, answer;
+
+      function newBreak10() {
+        var p = genSubProblem();
+        currentA = p.a;
+        currentB = p.b;
+        answer = p.answer;
+
+        document.getElementById('break10-problem').textContent = currentA + ' − ' + currentB + ' = ?';
+
+        var ones = currentA % 10;
+        var firstSub = 10 - currentB; // 10减b的结果
+        var finalAdd = firstSub + ones; // 再加上个位
+
+        // 视觉：十格条 + 个位
+        var visual = document.getElementById('break10-visual');
+        visual.innerHTML = '';
+
+        // 十格条
+        var tenBar = document.createElement('div');
+        tenBar.className = 'break10-ten-bar';
+        for (var i = 0; i < 10; i++) {
+          var u = document.createElement('div');
+          u.className = 'bar-unit';
+          u.textContent = '●';
+          tenBar.appendChild(u);
+        }
+        visual.appendChild(tenBar);
+
+        // 剪刀
+        var scissors = document.createElement('div');
+        scissors.className = 'break10-scissors';
+        scissors.textContent = '✂️';
+        visual.appendChild(scissors);
+
+        // 个位
+        if (ones > 0) {
+          var gOnes = document.createElement('div');
+          gOnes.className = 'break10-remaining';
+          for (var i = 0; i < ones; i++) {
+            var u = document.createElement('div');
+            u.className = 'bar-unit';
+            u.textContent = '●';
+            gOnes.appendChild(u);
+          }
+          visual.appendChild(gOnes);
+        }
+
+        // 步骤
+        var steps = document.getElementById('break10-steps');
+        steps.innerHTML =
+          '<div class="step-line"><span class="step-num">1</span>把 ' + currentA + ' 分成 <span style="color:#AF52DE;font-weight:700">10</span> 和 <span style="color:#4A90D9;font-weight:700">' + ones + '</span></div>' +
+          '<div class="step-line"><span class="step-num">2</span>先用 10 − ' + currentB + ' = <span style="color:#34C759;font-weight:700">' + firstSub + '</span></div>' +
+          '<div class="step-line"><span class="step-num">3</span>再用 ' + firstSub + ' + ' + ones + ' = <span style="color:#34C759;font-weight:700">?</span></div>';
+
+        document.getElementById('break10-hint').textContent = firstSub + ' + ' + ones + ' 等于多少？';
+
+        // 选项
+        var opts = document.getElementById('break10-options');
+        opts.innerHTML = '';
+        var choices = [answer];
+        while (choices.length < 4) {
+          var c = Random.int(Math.max(1, answer - 4), Math.min(18, answer + 4));
+          if (choices.indexOf(c) === -1) choices.push(c);
+        }
+        Random.shuffle(choices);
+        choices.forEach(function(c) {
+          var btn = document.createElement('button');
+          btn.className = 'break10-opt';
+          btn.textContent = c;
+          btn.addEventListener('click', function() {
+            if (c === answer) {
+              btn.classList.add('correct');
+              streak++;
+              Sound.play('correct');
+              celebrate();
+              updateStreak();
+              // 动画：标记用掉的
+              var units = tenBar.querySelectorAll('.bar-unit');
+              for (var i = 0; i < currentB; i++) {
+                units[i].classList.add('used');
+              }
+              document.getElementById('break10-hint').textContent = '🎉 ' + currentA + ' − ' + currentB + ' = ' + answer + '！破十成功！';
+              document.getElementById('break10-hint').style.color = '#34C759';
+              setTimeout(function() {
+                document.getElementById('break10-hint').style.color = '';
+                newBreak10();
+              }, 1500);
+            } else {
+              btn.classList.add('wrong');
+              Animator.shake(btn);
+              streak = 0;
+              Sound.play('wrong');
+              updateStreak();
+              showToast('再想想，' + firstSub + ' + ' + ones + ' = ？');
+            }
+          });
+          opts.appendChild(btn);
+        });
+      }
+
+      newBreak10();
+    })();
+
+    // === 模式4: 闯关练习 ===
+    (function() {
+      var level = 0;
+      var totalLevels = 10;
+      var currentProblem = null;
+      var progress = [];
+
+      function initProgress() {
+        progress = [];
+        for (var i = 0; i < totalLevels; i++) progress.push(false);
+        renderProgress();
+      }
+
+      function renderProgress() {
+        var container = document.getElementById('practice-progress');
+        container.innerHTML = '';
+        for (var i = 0; i < totalLevels; i++) {
+          var dot = document.createElement('div');
+          dot.className = 'progress-dot';
+          if (i === level) dot.classList.add('current');
+          else if (progress[i] === true) dot.classList.add('done');
+          else if (progress[i] === false && i < level) dot.classList.add('wrong-dot');
+          container.appendChild(dot);
+        }
+      }
+
+      function newLevel() {
+        if (level >= totalLevels) {
+          // 全部完成
+          var correct = progress.filter(function(v) { return v === true; }).length;
+          document.getElementById('practice-problem').textContent = '🏆';
+          document.getElementById('practice-hint').textContent = '闯关完成！答对 ' + correct + '/' + totalLevels + ' 题！';
+          document.getElementById('practice-level').textContent = '全部完成！';
+          document.getElementById('practice-level').className = 'practice-level level-3';
+          var inp = document.getElementById('practice-answer');
+          inp.style.display = 'none';
+          document.getElementById('btn-check-practice').textContent = '🔄 再来一次';
+          document.getElementById('btn-check-practice').onclick = function() {
+            level = 0;
+            initProgress();
+            inp.style.display = '';
+            document.getElementById('btn-check-practice').textContent = '✅ 检查';
+            document.getElementById('btn-check-practice').onclick = checkAnswer;
+            newLevel();
+          };
+          if (correct >= 8) celebrate();
+          return;
+        }
+
+        // 难度递增
+        var type;
+        if (level < 4) type = 'add'; // 前4关加法
+        else if (level < 7) type = 'sub'; // 中间3关减法
+        else type = 'mixed'; // 最后3关混合
+
+        currentProblem = genProblem(type);
+
+        var levelEl = document.getElementById('practice-level');
+        levelEl.textContent = '第' + (level + 1) + '关';
+        if (level < 4) { levelEl.className = 'practice-level level-1'; }
+        else if (level < 7) { levelEl.className = 'practice-level level-2'; }
+        else { levelEl.className = 'practice-level level-3'; }
+
+        document.getElementById('practice-problem').textContent =
+          currentProblem.a + ' ' + (currentProblem.op === '+' ? '+' : '−') + ' ' + currentProblem.b + ' = ?';
+
+        // 提示
+        var hint = '';
+        if (currentProblem.op === '+') {
+          var sp = 10 - (currentProblem.a % 10);
+          if (sp < currentProblem.b) {
+            hint = '💡 提示：试试凑十法！' + currentProblem.a + ' 再加 ' + sp + ' 凑成10';
+          } else {
+            hint = '💡 提示：个位相加不需要进位哦';
+          }
+        } else {
+          hint = '💡 提示：个位不够减，试试破十法！';
+        }
+        document.getElementById('practice-hint').textContent = hint;
+
+        var inp = document.getElementById('practice-answer');
+        inp.value = '';
+        inp.className = 'practice-answer';
+        inp.focus();
+
+        renderProgress();
+      }
+
+      function checkAnswer() {
+        var inp = document.getElementById('practice-answer');
+        var val = parseInt(inp.value);
+        if (isNaN(val)) {
+          showToast('请输入答案');
+          return;
+        }
+
+        if (val === currentProblem.answer) {
+          inp.className = 'practice-answer correct';
+          progress[level] = true;
+          level++;
+          streak++;
+          Sound.play('correct');
+          celebrate();
+          updateStreak();
+          setTimeout(function() {
+            newLevel();
+          }, 1500);
+        } else {
+          inp.className = 'practice-answer wrong';
+          Animator.shake(inp);
+          progress[level] = false;
+          level++;
+          streak = 0;
+          Sound.play('wrong');
+          updateStreak();
+          showToast('答案是 ' + currentProblem.answer + '，继续加油！');
+          setTimeout(function() {
+            newLevel();
+          }, 1500);
+        }
+      }
+
+      document.getElementById('btn-check-practice').addEventListener('click', checkAnswer);
+      document.getElementById('practice-answer').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') checkAnswer();
+      });
+
+      initProgress();
+      newLevel();
+    })();
+  </script>
+</body>
+</html>
