@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>10以内减法</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs {
+      display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mode-tab {
+      flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA;
+      border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-tab.active { background: #E85D75; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 拿走模式 */
+    .takeaway-area { text-align: center; padding: 24px 16px; }
+    .takeaway-visual {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin: 24px 0; flex-wrap: wrap;
+    }
+    .takeaway-group {
+      display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;
+      min-height: 48px; padding: 12px; background: rgba(232,93,117,0.05);
+      border-radius: 16px; min-width: 80px;
+    }
+    .takeaway-obj {
+      font-size: 36px; transition: all 0.4s ease;
+    }
+    .takeaway-obj.removed {
+      opacity: 0.2; transform: scale(0.6); text-decoration: line-through;
+    }
+    .takeaway-op { font-size: 48px; font-weight: 700; color: #E85D75; }
+    .takeaway-eq { font-size: 48px; font-weight: 700; color: #FF9500; }
+    .takeaway-result {
+      font-size: 72px; font-weight: 800; color: #34C759;
+      min-width: 100px;
+    }
+    .takeaway-formula {
+      font-size: 24px; font-weight: 700; color: #E85D75; margin-top: 16px;
+    }
+
+    /* 数轴模式 */
+    .numberline-area { text-align: center; padding: 24px 16px; }
+    .nl-problem {
+      font-size: 48px; font-weight: 700; color: #E85D75; margin: 16px 0;
+    }
+    .nl-container {
+      position: relative; margin: 40px auto 60px; max-width: 360px;
+      height: 80px;
+    }
+    .nl-axis {
+      position: absolute; top: 40px; left: 0; right: 0;
+      height: 4px; background: #E5E5EA; border-radius: 2px;
+    }
+    .nl-tick {
+      position: absolute; top: 32px; width: 4px; height: 20px;
+      background: #C7C7CC; border-radius: 2px;
+    }
+    .nl-num {
+      position: absolute; top: 56px; font-size: 16px; font-weight: 700;
+      color: #6E6E73; transform: translateX(-50%);
+    }
+    .nl-frog {
+      position: absolute; top: -4px; font-size: 32px;
+      transition: left 0.5s ease; transform: translateX(-50%);
+      z-index: 10;
+    }
+    .nl-hop {
+      position: absolute; top: 8px; border: 3px dashed #E85D75;
+      border-bottom: none; border-radius: 50% 50% 0 0;
+      opacity: 0; transition: opacity 0.3s ease;
+    }
+    .nl-hop.show { opacity: 1; }
+    .nl-hint {
+      font-size: 16px; color: #6E6E73; margin: 8px 0;
+    }
+    .nl-options {
+      display: flex; justify-content: center; gap: 12px; margin-top: 20px; flex-wrap: wrap;
+    }
+    .nl-opt {
+      width: 64px; height: 64px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 28px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .nl-opt:active { transform: scale(0.9); }
+    .nl-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); }
+    .nl-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+
+    /* 竖式模式 */
+    .vertical-area { text-align: center; padding: 24px 16px; }
+    .vertical-problem {
+      display: inline-block; font-size: 48px; font-weight: 700;
+      font-family: 'Courier New', monospace; text-align: right;
+      margin: 24px auto; padding: 24px 32px; background: #FFF5F5;
+      border-radius: 16px; border: 2px solid #E85D75;
+    }
+    .vertical-problem .v-line { border-top: 3px solid #1D1D1F; margin: 4px 0; }
+    .vertical-problem .v-op { color: #E85D75; }
+    .vertical-problem .v-result { color: #34C759; }
+    .vertical-step {
+      font-size: 18px; color: #6E6E73; margin: 12px 0;
+      padding: 8px 16px; background: #FFF0F3; border-radius: 8px;
+      display: none;
+    }
+    .vertical-step.show { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 练习模式 */
+    .practice-area { text-align: center; padding: 24px 16px; }
+    .practice-problem {
+      font-size: 56px; font-weight: 800; color: #E85D75; margin: 24px 0;
+    }
+    .practice-input {
+      display: flex; justify-content: center; align-items: center; gap: 16px; margin: 24px 0;
+    }
+    .practice-answer {
+      width: 100px; height: 72px; border: 3px solid #E5E5EA; border-radius: 16px;
+      font-size: 40px; font-weight: 700; text-align: center; color: #E85D75;
+      outline: none; transition: border-color 0.2s ease;
+    }
+    .practice-answer:focus { border-color: #E85D75; }
+    .practice-answer.correct { border-color: #34C759; background: rgba(52,199,89,0.1); }
+    .practice-answer.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .practice-emoji {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 4px; margin: 16px 0;
+    }
+    .practice-obj { font-size: 28px; animation: popIn 0.2s ease both; }
+    .practice-obj.crossed { opacity: 0.25; }
+
+    /* 连续答对 */
+    .score-display {
+      display: flex; justify-content: center; align-items: center;
+      gap: 12px; padding: 12px; font-size: 18px; font-weight: 600;
+    }
+    .score-stars { font-size: 24px; }
+
+    @media (max-width: 480px) {
+      .takeaway-obj { font-size: 28px; }
+      .takeaway-op, .takeaway-eq { font-size: 36px; }
+      .practice-problem { font-size: 40px; }
+      .nl-problem { font-size: 36px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" aria-label="返回">←</button>
+      <span class="nav-title">➖ 10以内减法</span>
+      <div style="width:56px"></div>
+    </nav>
+
+    <div class="score-display">
+      <span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <!-- 模式切换 -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="takeaway">🍪 拿走</button>
+      <button class="mode-tab" data-mode="numberline">🐸 数轴</button>
+      <button class="mode-tab" data-mode="vertical">📝 竖式</button>
+      <button class="mode-tab" data-mode="practice">✏️ 练习</button>
+    </div>
+
+    <!-- 模式1: 拿走实物 -->
+    <div class="mode-content active" id="mode-takeaway">
+      <div class="card">
+        <p class="page-subtitle">从一堆东西里拿走一些，还剩多少？</p>
+        <div class="takeaway-area">
+          <div class="takeaway-visual" id="takeaway-visual"></div>
+          <div class="action-bar">
+            <button class="btn btn-primary btn-large" id="btn-new-takeaway">🎲 换一个</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 数轴跳跃 -->
+    <div class="mode-content" id="mode-numberline">
+      <div class="card">
+        <p class="page-subtitle">小青蛙往回跳，每跳一步减1</p>
+        <div class="numberline-area">
+          <div class="nl-problem" id="nl-problem"></div>
+          <div class="nl-container" id="nl-container">
+            <div class="nl-axis"></div>
+          </div>
+          <p class="nl-hint" id="nl-hint"></p>
+          <div class="nl-options" id="nl-options"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 竖式计算 -->
+    <div class="mode-content" id="mode-vertical">
+      <div class="card">
+        <p class="page-subtitle">一步一步学竖式减法</p>
+        <div class="vertical-area">
+          <div class="vertical-problem" id="vertical-problem"></div>
+          <div id="vertical-steps"></div>
+          <div class="action-bar">
+            <button class="btn btn-primary" id="btn-next-step">👉 下一步</button>
+            <button class="btn btn-warning" id="btn-new-vertical">🎲 换一个</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 自由练习 -->
+    <div class="mode-content" id="mode-practice">
+      <div class="card">
+        <p class="page-subtitle">算一算，填答案</p>
+        <div class="practice-area">
+          <div class="practice-problem" id="practice-problem"></div>
+          <div class="practice-emoji" id="practice-emoji"></div>
+          <div class="practice-input">
+            <input type="tel" class="practice-answer" id="practice-answer" maxlength="2" inputmode="numeric" autocomplete="off">
+          </div>
+          <div class="action-bar">
+            <button class="btn btn-primary btn-large" id="btn-check-answer">✅ 检查</button>
+            <button class="btn btn-warning" id="btn-new-practice">🎲 换一个</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/animation.js"></script>
+  <script src="../../assets/js/touch.js"></script>
+  <script>
+    document.querySelector('.nav-back').addEventListener('click', () => window.location.href = '../../index.html');
+
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast(`🔥 连续 ${streak} 次！太厉害了！`);
+    }
+
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        Sound.play('click');
+      });
+    });
+
+    const emojis = ['🍎','🍊','🍋','🍇','🍓','🌟','🎈','🐱','🐶','🦋','🌸','🍪','🍬','🧁'];
+
+    // === 模式1: 拿走实物 ===
+    (() => {
+      function newTakeaway() {
+        const a = Random.int(2, 10);
+        const b = Random.int(1, a);
+        const result = a - b;
+        const em = Random.pick(emojis);
+        const v = document.getElementById('takeaway-visual');
+        v.innerHTML = '';
+
+        // 左边：初始数量
+        const g1 = document.createElement('div');
+        g1.className = 'takeaway-group';
+        const objs = [];
+        for (let i = 0; i < a; i++) {
+          const s = document.createElement('span');
+          s.className = 'takeaway-obj';
+          s.textContent = em;
+          s.style.animationDelay = (i * 0.06) + 's';
+          // 标记后面 b 个为要被拿走的
+          if (i >= a - b) {
+            s.dataset.removable = '1';
+          }
+          objs.push(s);
+          g1.appendChild(s);
+        }
+        v.appendChild(g1);
+
+        // 减号
+        const op = document.createElement('span');
+        op.className = 'takeaway-op'; op.textContent = '−';
+        v.appendChild(op);
+
+        // 拿走的数量
+        const g2 = document.createElement('div');
+        g2.className = 'takeaway-group';
+        g2.style.background = 'rgba(232,93,117,0.08)';
+        for (let i = 0; i < b; i++) {
+          const s = document.createElement('span');
+          s.className = 'takeaway-obj'; s.textContent = em;
+          s.style.opacity = '0.5';
+          s.style.animationDelay = ((a + i) * 0.06) + 's';
+          g2.appendChild(s);
+        }
+        v.appendChild(g2);
+
+        // 等号 + 结果
+        const eq = document.createElement('span');
+        eq.className = 'takeaway-eq'; eq.textContent = '=';
+        v.appendChild(eq);
+        const res = document.createElement('span');
+        res.className = 'takeaway-result';
+        res.textContent = result;
+        Animator.popIn(res, 400);
+        v.appendChild(res);
+
+        // 算式
+        const formula = document.createElement('div');
+        formula.className = 'takeaway-formula';
+        formula.textContent = `${a} − ${b} = ${result}`;
+        Animator.popIn(formula, 600);
+        v.appendChild(formula);
+
+        // 动画：延迟后划掉被拿走的
+        setTimeout(() => {
+          objs.forEach(o => {
+            if (o.dataset.removable === '1') {
+              o.classList.add('removed');
+            }
+          });
+        }, 800);
+      }
+      document.getElementById('btn-new-takeaway').addEventListener('click', newTakeaway);
+      newTakeaway();
+    })();
+
+    // === 模式2: 数轴跳跃 ===
+    (() => {
+      let a, b, answer;
+      function newNumberLine() {
+        a = Random.int(2, 10);
+        b = Random.int(1, a);
+        answer = a - b;
+        document.getElementById('nl-problem').textContent = `${a} − ${b} = ?`;
+
+        const container = document.getElementById('nl-container');
+        // 保留轴线，清除其他元素
+        container.innerHTML = '<div class="nl-axis"></div>';
+
+        const w = container.offsetWidth || 340;
+        const pad = 20;
+        const step = (w - pad * 2) / 10;
+
+        // 刻度和数字
+        for (let i = 0; i <= 10; i++) {
+          const tick = document.createElement('div');
+          tick.className = 'nl-tick';
+          tick.style.left = (pad + i * step) + 'px';
+          container.appendChild(tick);
+
+          const num = document.createElement('div');
+          num.className = 'nl-num';
+          num.textContent = i;
+          num.style.left = (pad + i * step) + 'px';
+          container.appendChild(num);
+        }
+
+        // 青蛙起始位置
+        const frog = document.createElement('div');
+        frog.className = 'nl-frog';
+        frog.textContent = '🐸';
+        frog.style.left = (pad + a * step) + 'px';
+        container.appendChild(frog);
+
+        // 跳跃弧线
+        for (let j = 0; j < b; j++) {
+          const hop = document.createElement('div');
+          hop.className = 'nl-hop';
+          const startX = pad + (a - j) * step;
+          const endX = pad + (a - j - 1) * step;
+          const cx = (startX + endX) / 2;
+          hop.style.left = endX + 'px';
+          hop.style.width = step + 'px';
+          hop.style.height = (step * 0.6) + 'px';
+          container.appendChild(hop);
+        }
+
+        document.getElementById('nl-hint').textContent = `从 ${a} 开始，往回跳 ${b} 步，落在几？`;
+
+        // 选项
+        const opts = document.getElementById('nl-options');
+        opts.innerHTML = '';
+        const choices = [answer];
+        while (choices.length < 4) {
+          const c = Random.int(0, 10);
+          if (!choices.includes(c)) choices.push(c);
+        }
+        Random.shuffle(choices).forEach(c => {
+          const btn = document.createElement('button');
+          btn.className = 'nl-opt'; btn.textContent = c;
+          btn.addEventListener('click', () => {
+            if (c === answer) {
+              btn.classList.add('correct');
+              streak++; Sound.play('correct'); celebrate();
+              updateStreak();
+              // 动画：青蛙跳回去
+              const hops = container.querySelectorAll('.nl-hop');
+              hops.forEach((h, i) => {
+                setTimeout(() => h.classList.add('show'), i * 300);
+              });
+              setTimeout(() => {
+                frog.style.left = (pad + answer * step) + 'px';
+              }, b * 300);
+              document.getElementById('nl-hint').innerHTML = `🎉 ${a} − ${b} = <b style="color:#34C759">${answer}</b>！`;
+              document.getElementById('nl-hint').style.color = '#34C759';
+              setTimeout(() => {
+                document.getElementById('nl-hint').style.color = '';
+                newNumberLine();
+              }, 2000);
+            } else {
+              btn.classList.add('wrong');
+              Animator.shake(btn);
+              streak = 0; Sound.play('wrong'); updateStreak();
+              showToast(`再想想，从 ${a} 往回跳 ${b} 步`);
+            }
+          });
+          opts.appendChild(btn);
+        });
+      }
+      newNumberLine();
+    })();
+
+    // === 模式3: 竖式 ===
+    (() => {
+      let a, b, result, steps = [], stepIdx = 0;
+      function newVertical() {
+        a = Random.int(2, 10);
+        b = Random.int(1, a);
+        result = a - b;
+        stepIdx = 0;
+        const p = document.getElementById('vertical-problem');
+        p.innerHTML = `
+          <div style="padding-right:8px">${a}</div>
+          <div style="display:flex;align-items:center;justify-content:flex-end;padding-right:8px">
+            <span class="v-op">−</span><span>${b}</span>
+          </div>
+          <div class="v-line"></div>
+          <div class="v-result" id="v-answer" style="padding-right:8px;opacity:0">?</div>
+        `;
+        steps = [
+          { text: `第一步：把 ${a} 和 ${b} 写对齐（个位对个位）` },
+          { text: `第二步：从个位开始算，${a} − ${b}` },
+          { text: `第三步：${a} − ${b} = ${result}` },
+          { text: `🎉 答案是 ${result}！` }
+        ];
+        const sc = document.getElementById('vertical-steps');
+        sc.innerHTML = '';
+        steps.forEach(s => {
+          const d = document.createElement('div');
+          d.className = 'vertical-step'; d.textContent = s.text;
+          sc.appendChild(d);
+        });
+        document.getElementById('v-answer').style.opacity = '0';
+        document.getElementById('btn-next-step').disabled = false;
+        document.getElementById('btn-next-step').textContent = '👉 下一步';
+      }
+      document.getElementById('btn-next-step').addEventListener('click', () => {
+        if (stepIdx >= steps.length) return;
+        const allSteps = document.querySelectorAll('.vertical-step');
+        allSteps[stepIdx].classList.add('show');
+        stepIdx++;
+        if (stepIdx === 4) {
+          const ans = document.getElementById('v-answer');
+          ans.textContent = result;
+          ans.style.opacity = '1';
+          Animator.popIn(ans);
+          celebrate();
+          document.getElementById('btn-next-step').textContent = '✅ 完成';
+          document.getElementById('btn-next-step').disabled = true;
+        }
+        Sound.play('click');
+      });
+      document.getElementById('btn-new-vertical').addEventListener('click', newVertical);
+      newVertical();
+    })();
+
+    // === 模式4: 自由练习 ===
+    (() => {
+      let a, b, answer;
+      function newPractice() {
+        a = Random.int(2, 10);
+        b = Random.int(1, a);
+        answer = a - b;
+        document.getElementById('practice-problem').textContent = `${a} − ${b} = ?`;
+        // emoji展示
+        const em = Random.pick(emojis);
+        const emojiEl = document.getElementById('practice-emoji');
+        emojiEl.innerHTML = '';
+        for (let i = 0; i < a; i++) {
+          const s = document.createElement('span');
+          s.className = 'practice-obj';
+          s.textContent = em;
+          s.style.animationDelay = (i * 0.05) + 's';
+          if (i >= a - b) s.classList.add('crossed');
+          emojiEl.appendChild(s);
+        }
+        const inp = document.getElementById('practice-answer');
+        inp.value = ''; inp.className = 'practice-answer'; inp.focus();
+      }
+      function checkAnswer() {
+        const inp = document.getElementById('practice-answer');
+        const val = parseInt(inp.value);
+        if (val === answer) {
+          inp.className = 'practice-answer correct';
+          streak++; Sound.play('correct'); celebrate();
+          updateStreak();
+          showToast('🎉 答对了！');
+          setTimeout(newPractice, 1200);
+        } else {
+          inp.className = 'practice-answer wrong';
+          Animator.shake(inp);
+          streak = 0; Sound.play('wrong'); updateStreak();
+          showToast(`不对哦，再算算看`);
+          inp.value = ''; inp.focus();
+        }
+      }
+      document.getElementById('btn-check-answer').addEventListener('click', checkAnswer);
+      document.getElementById('practice-answer').addEventListener('keydown', e => {
+        if (e.key === 'Enter') checkAnswer();
+      });
+      document.getElementById('btn-new-practice').addEventListener('click', newPractice);
+      newPractice();
+    })();
+  </script>
+</body>
+</html>
