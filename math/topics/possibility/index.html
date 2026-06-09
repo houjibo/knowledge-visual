@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>可能性</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #00897B; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 模式1: 概念 */
+    .concept-area { text-align: center; padding: 24px 16px; }
+    .concept-explain { font-size: 18px; font-weight: 600; color: #1D1D1F; margin: 16px 0; line-height: 1.8; }
+    .concept-example { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 20px 0; }
+    .example-card { display: flex; flex-direction: column; align-items: center; padding: 16px; background: white; border-radius: 16px; width: 140px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .example-card .icon { font-size: 40px; margin-bottom: 8px; }
+    .example-card .label { font-size: 14px; font-weight: 600; color: #6E6E73; text-align: center; }
+    .example-card .badge { margin-top: 8px; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 700; }
+    .badge-always { background: #E8F5E9; color: #2E7D32; }
+    .badge-possible { background: #FFF3E0; color: #E65100; }
+    .badge-never { background: #FFEBEE; color: #C62828; }
+
+    /* 模式2: 转盘 */
+    .spinner-area { text-align: center; padding: 24px 16px; }
+    .spinner-svg { width: 260px; height: 260px; margin: 16px auto; }
+    .spinner-result { font-size: 28px; font-weight: 700; margin: 16px 0; min-height: 40px; }
+    .spinner-btn {
+      padding: 14px 32px; border: none; background: #00897B; color: white;
+      border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,137,123,0.3); transition: all 0.2s ease;
+    }
+    .spinner-btn:active { transform: scale(0.95); }
+    .spinner-btn:disabled { opacity: 0.5; }
+    .spinner-stats { display: flex; justify-content: center; gap: 16px; margin: 16px 0; flex-wrap: wrap; }
+    .stat-card { background: #F0FAF8; border-radius: 12px; padding: 10px 16px; min-width: 80px; }
+    .stat-card .stat-label { font-size: 13px; color: #6E6E73; }
+    .stat-card .stat-value { font-size: 22px; font-weight: 700; }
+    .spinner-predict { font-size: 16px; color: #00897B; margin: 12px 0; }
+    .config-row { display: flex; justify-content: center; gap: 12px; margin: 12px 0; flex-wrap: wrap; }
+    .config-btn { padding: 8px 16px; border: 2px solid #00897B; background: white; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .config-btn.active { background: #00897B; color: white; }
+
+    /* 模式3: 摸球 */
+    .ball-area { text-align: center; padding: 24px 16px; }
+    .ball-jar { position: relative; width: 200px; height: 180px; margin: 16px auto; border: 3px solid #9CA3AF; border-radius: 0 0 32px 32px; overflow: hidden; background: rgba(255,255,255,0.5); }
+    .ball-jar::before {
+      content: ''; position: absolute; top: -12px; left: -8px; right: -8px;
+      height: 24px; background: #9CA3AF; border-radius: 8px;
+    }
+    .jar-ball {
+      position: absolute; width: 32px; height: 32px; border-radius: 50%;
+      transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .jar-ball.red { background: radial-gradient(circle at 35% 35%, #FF6B6B, #E53935); }
+    .jar-ball.blue { background: radial-gradient(circle at 35% 35%, #64B5F6, #1E88E5); }
+    .jar-ball.yellow { background: radial-gradient(circle at 35% 35%, #FFF176, #FDD835); }
+    .ball-pull {
+      width: 64px; height: 64px; border-radius: 50%; margin: 16px auto;
+      display: none; animation: popIn 0.3s ease;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    .ball-pull.show { display: block; }
+    .ball-pull.red { background: radial-gradient(circle at 35% 35%, #FF6B6B, #E53935); }
+    .ball-pull.blue { background: radial-gradient(circle at 35% 35%, #64B5F6, #1E88E5); }
+    .ball-pull.yellow { background: radial-gradient(circle at 35% 35%, #FFF176, #FDD835); }
+    .ball-result-text { font-size: 22px; font-weight: 700; margin: 8px 0; min-height: 30px; }
+    .ball-btn {
+      padding: 14px 28px; border: none; background: #00897B; color: white;
+      border-radius: 16px; font-size: 18px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,137,123,0.3); margin: 8px;
+    }
+    .ball-btn:active { transform: scale(0.95); }
+    .ball-stats { display: flex; justify-content: center; gap: 16px; margin: 16px 0; flex-wrap: wrap; }
+    .ball-stat-card { border-radius: 12px; padding: 10px 16px; min-width: 80px; }
+    .ball-stat-card.red-stat { background: #FFEBEE; }
+    .ball-stat-card.blue-stat { background: #E3F2FD; }
+    .ball-stat-card.yellow-stat { background: #FFFDE7; }
+
+    /* 模式4: 骰子挑战 */
+    .dice-area { text-align: center; padding: 24px 16px; }
+    .dice-display { font-size: 80px; margin: 16px 0; }
+    .dice-result { font-size: 24px; font-weight: 700; margin: 8px 0; }
+    .dice-btn {
+      padding: 14px 28px; border: none; background: #00897B; color: white;
+      border-radius: 16px; font-size: 18px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,137,123,0.3); margin: 8px;
+    }
+    .dice-btn:active { transform: scale(0.95); }
+    .dice-question { font-size: 18px; font-weight: 600; color: #1D1D1F; margin: 16px 0; line-height: 1.6; }
+    .dice-options { display: flex; justify-content: center; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+    .dice-opt {
+      padding: 12px 24px; border: 3px solid #9CA3AF; background: #F8F8FA;
+      border-radius: 16px; font-size: 18px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; min-width: 100px;
+    }
+    .dice-opt:active { transform: scale(0.9); }
+    .dice-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .dice-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .dice-score { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; }
+    .dice-explain { font-size: 16px; color: #6E6E73; margin: 12px 0; line-height: 1.6; min-height: 48px; }
+    .dice-hist { max-width: 300px; margin: 16px auto; }
+    .dice-hist-bar { height: 24px; background: #E5E5EA; border-radius: 12px; overflow: hidden; margin: 4px 0; display: flex; }
+    .dice-hist-fill { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; transition: width 0.3s ease; }
+
+    /* 通用 */
+    .score-display { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px; font-size: 18px; font-weight: 600; }
+    .score-stars { font-size: 24px; }
+
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .spinning { animation: spin 0.1s linear infinite; }
+    @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    .bounce { animation: bounce 0.6s ease; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" aria-label="返回">←</button>
+      <span class="nav-title">🎲 可能性</span>
+      <div style="width:56px"></div>
+    </nav>
+    <div class="score-display"><span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span><span class="score-stars" id="stars-display"></span></div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="concept">📖 概念</button>
+      <button class="mode-tab" data-mode="spinner">🎡 转盘</button>
+      <button class="mode-tab" data-mode="ball">🎱 摸球</button>
+      <button class="mode-tab" data-mode="dice">🎲 骰子挑战</button>
+    </div>
+
+    <!-- 模式1: 概念 -->
+    <div class="mode-content active" id="mode-concept">
+      <div class="concept-area">
+        <div class="card">
+          <p class="page-subtitle">生活中有些事一定会发生，有些事可能发生，有些事不可能发生</p>
+          <div class="concept-explain">
+            有些事情的发生是<strong style="color:#2E7D32">确定的</strong>，有些是<strong style="color:#E65100">不确定的</strong>。<br>
+            我们用"一定""可能""不可能"来描述。
+          </div>
+          <div class="concept-example">
+            <div class="example-card">
+              <div class="icon">☀️</div>
+              <div class="label">太阳从<br>东边升起</div>
+              <div class="badge badge-always">一定发生</div>
+            </div>
+            <div class="example-card">
+              <div class="icon">🌧️</div>
+              <div class="label">明天<br>会下雨</div>
+              <div class="badge badge-possible">可能发生</div>
+            </div>
+            <div class="example-card">
+              <div class="icon">🌙</div>
+              <div class="label">太阳从<br>西边升起</div>
+              <div class="badge badge-never">不可能发生</div>
+            </div>
+          </div>
+          <div class="concept-example" style="margin-top:12px">
+            <div class="example-card">
+              <div class="icon">🎲</div>
+              <div class="label">掷骰子<br>掷出6点</div>
+              <div class="badge badge-possible">可能发生</div>
+            </div>
+            <div class="example-card">
+              <div class="icon">💧</div>
+              <div class="label">水加热到<br>100°C沸腾</div>
+              <div class="badge badge-always">一定发生</div>
+            </div>
+            <div class="example-card">
+              <div class="icon">🐟</div>
+              <div class="label">鱼在<br>天上飞</div>
+              <div class="badge badge-never">不可能发生</div>
+            </div>
+          </div>
+          <div class="action-bar" style="margin-top:16px">
+            <button class="btn btn-primary" id="btn-start-explore">🎮 开始探索！</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 转盘实验 -->
+    <div class="mode-content" id="mode-spinner">
+      <div class="card">
+        <div class="spinner-area">
+          <p class="page-subtitle">转动转盘，看看指针停在哪里</p>
+          <div class="config-row">
+            <button class="config-btn active" data-type="2">2色转盘</button>
+            <button class="config-btn" data-type="3">3色转盘</button>
+            <button class="config-btn" data-type="4">4色转盘</button>
+          </div>
+          <svg class="spinner-svg" id="spinner-svg" viewBox="0 0 260 260"></svg>
+          <div class="spinner-result" id="spinner-result"></div>
+          <button class="spinner-btn" id="btn-spin">🎡 转动转盘！</button>
+          <div class="spinner-stats" id="spinner-stats"></div>
+          <div class="spinner-predict" id="spinner-predict"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 摸球 -->
+    <div class="mode-content" id="mode-ball">
+      <div class="card">
+        <div class="ball-area">
+          <p class="page-subtitle">罐子里有不同颜色的球，摸一摸看</p>
+          <div class="config-row" id="ball-config"></div>
+          <div class="ball-jar" id="ball-jar"></div>
+          <div class="ball-pull" id="ball-pull"></div>
+          <div class="ball-result-text" id="ball-result"></div>
+          <div>
+            <button class="ball-btn" id="btn-pull">🤚 摸一个球</button>
+            <button class="ball-btn" id="btn-pull10">🔟 连摸10次</button>
+          </div>
+          <div class="ball-stats" id="ball-stats"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 骰子挑战 -->
+    <div class="mode-content" id="mode-dice">
+      <div class="card">
+        <div class="dice-area">
+          <div class="dice-score">
+            <span>答对 <b id="dc-correct" style="color:#34C759">0</b></span>
+            <span>答错 <b id="dc-wrong" style="color:#FF3B30">0</b></span>
+          </div>
+          <div class="dice-display" id="dice-display">🎲</div>
+          <div class="dice-question" id="dice-question"></div>
+          <div class="dice-options" id="dice-opts"></div>
+          <div class="dice-explain" id="dice-explain"></div>
+          <div class="dice-hist" id="dice-hist"></div>
+          <button class="dice-btn" id="btn-next-q" style="display:none">下一题 →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/animation.js"></script>
+  <script src="../../assets/js/touch.js"></script>
+  <script>
+    document.querySelector('.nav-back').addEventListener('click', () => window.location.href = '../../index.html');
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast(`🔥 连续 ${streak} 次！可能性小达人！`);
+    }
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        Sound.play('click');
+      });
+    });
+
+    document.getElementById('btn-start-explore').addEventListener('click', () => {
+      document.querySelectorAll('.mode-tab')[1].click();
+      Sound.play('click');
+    });
+
+    // === 模式2: 转盘实验 ===
+    (() => {
+      let colorCount = 2;
+      let spinCounts = {};
+      let totalSpins = 0;
+      let spinning = false;
+      let currentRotation = 0;
+
+      const palettes = {
+        2: [{ color: '#E53935', label: '红色' }, { color: '#1E88E5', label: '蓝色' }],
+        3: [{ color: '#E53935', label: '红色' }, { color: '#1E88E5', label: '蓝色' }, { color: '#43A047', label: '绿色' }],
+        4: [{ color: '#E53935', label: '红色' }, { color: '#1E88E5', label: '蓝色' }, { color: '#43A047', label: '绿色' }, { color: '#FFB300', label: '黄色' }]
+      };
+
+      function drawSpinner() {
+        const svg = document.getElementById('spinner-svg');
+        const cx = 130, cy = 130, r = 110;
+        const colors = palettes[colorCount];
+        let paths = '';
+        for (let i = 0; i < colorCount; i++) {
+          const a1 = (Math.PI * 2 * i) / colorCount - Math.PI / 2;
+          const a2 = (Math.PI * 2 * (i + 1)) / colorCount - Math.PI / 2;
+          const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+          const x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
+          const large = (Math.PI * 2 / colorCount > Math.PI) ? 1 : 0;
+          paths += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z" fill="${colors[i].color}" stroke="white" stroke-width="2"/>`;
+          // 标签
+          const midA = (a1 + a2) / 2;
+          const lx = cx + r * 0.6 * Math.cos(midA);
+          const ly = cy + r * 0.6 * Math.sin(midA);
+          paths += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" fill="white" font-size="${colorCount > 3 ? 14 : 18}" font-weight="700">${colors[i].label}</text>`;
+        }
+        // 中心圆
+        paths += `<circle cx="${cx}" cy="${cy}" r="12" fill="white" stroke="#9CA3AF" stroke-width="2"/>`;
+        // 指针（固定在顶部）
+        paths += `<polygon points="${cx},${cy - r - 10} ${cx - 8},${cy - r + 5} ${cx + 8},${cy - r + 5}" fill="#333"/>`;
+        svg.innerHTML = `<g id="spinner-group">${paths}</g>`;
+        updateStats();
+      }
+
+      function updateStats() {
+        const colors = palettes[colorCount];
+        const statsEl = document.getElementById('spinner-stats');
+        statsEl.innerHTML = colors.map(c => {
+          const cnt = spinCounts[c.label] || 0;
+          const pct = totalSpins > 0 ? ((cnt / totalSpins) * 100).toFixed(1) : '0.0';
+          return `<div class="stat-card"><div class="stat-label" style="color:${c.color}">${c.label}</div><div class="stat-value">${cnt}次 (${pct}%)</div></div>`;
+        }).join('');
+
+        // 理论概率提示
+        const theory = (100 / colorCount).toFixed(1);
+        document.getElementById('spinner-predict').innerHTML = totalSpins > 0
+          ? `💡 理论概率：每种颜色约 ${theory}%，实验次数越多越接近！`
+          : `💡 理论概率：每种颜色约 ${theory}%，试试看吧！`;
+      }
+
+      function doSpin() {
+        if (spinning) return;
+        spinning = true;
+        document.getElementById('btn-spin').disabled = true;
+        Sound.play('click');
+
+        const result = Random.int(0, colorCount - 1);
+        const colors = palettes[colorCount];
+        const sliceAngle = 360 / colorCount;
+        // 计算目标角度（让指针对准结果区域）
+        const targetAngle = 360 - (result * sliceAngle + sliceAngle / 2);
+        const fullSpins = 5 + Random.int(0, 3);
+        const finalRotation = currentRotation + fullSpins * 360 + targetAngle;
+
+        const group = document.getElementById('spinner-group');
+        group.style.transition = 'transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+        group.style.transform = `rotate(${finalRotation}deg)`;
+        currentRotation = finalRotation;
+
+        setTimeout(() => {
+          group.style.transition = 'none';
+          spinning = false;
+          document.getElementById('btn-spin').disabled = false;
+
+          spinCounts[colors[result].label] = (spinCounts[colors[result].label] || 0) + 1;
+          totalSpins++;
+          document.getElementById('spinner-result').innerHTML = `👉 <span style="color:${colors[result].color}">${colors[result].label}</span>`;
+          document.getElementById('spinner-result').classList.add('bounce');
+          setTimeout(() => document.getElementById('spinner-result').classList.remove('bounce'), 600);
+          Sound.play('correct');
+          streak++; updateStreak();
+          updateStats();
+        }, 3200);
+      }
+
+      document.getElementById('btn-spin').addEventListener('click', doSpin);
+
+      document.querySelectorAll('.config-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.config-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          colorCount = parseInt(btn.dataset.type);
+          spinCounts = {}; totalSpins = 0; currentRotation = 0;
+          const group = document.getElementById('spinner-group');
+          if (group) { group.style.transition = 'none'; group.style.transform = 'rotate(0deg)'; }
+          document.getElementById('spinner-result').textContent = '';
+          drawSpinner();
+          Sound.play('click');
+        });
+      });
+
+      drawSpinner();
+    })();
+
+    // === 模式3: 摸球 ===
+    (() => {
+      let ballConfig = { red: 3, blue: 5, yellow: 2 };
+      let pullResults = { red: 0, blue: 0, yellow: 0 };
+      let totalPulls = 0;
+      let colorTimer = null;
+
+      const ballColors = { red: { label: '红色球', color: '#E53935', bg: '#FFEBEE' }, blue: { label: '蓝色球', color: '#1E88E5', bg: '#E3F2FD' }, yellow: { label: '黄色球', color: '#FDD835', bg: '#FFFDE7' } };
+      const configs = [
+        { label: '🔴3 🔵5 🟡2', cfg: { red: 3, blue: 5, yellow: 2 } },
+        { label: '🔴5 🔵5', cfg: { red: 5, blue: 5, yellow: 0 } },
+        { label: '🔴8 🔵2', cfg: { red: 8, blue: 2, yellow: 0 } },
+        { label: '🔴2 🔵2 🟡2', cfg: { red: 2, blue: 2, yellow: 2 } }
+      ];
+
+      function drawJar() {
+        const jar = document.getElementById('ball-jar');
+        jar.innerHTML = '';
+        const total = ballConfig.red + ballConfig.blue + ballConfig.yellow;
+        if (total === 0) return;
+        const balls = [];
+        for (let i = 0; i < ballConfig.red; i++) balls.push('red');
+        for (let i = 0; i < ballConfig.blue; i++) balls.push('blue');
+        for (let i = 0; i < ballConfig.yellow; i++) balls.push('yellow');
+
+        // 简单布局
+        const positions = [];
+        const rows = Math.ceil(total / 4);
+        for (let r = 0; r < rows; r++) {
+          const cols = Math.min(4, total - r * 4);
+          for (let c = 0; c < cols; c++) {
+            positions.push({ x: 25 + c * 42, y: 130 - r * 36 });
+          }
+        }
+
+        balls.forEach((color, i) => {
+          const el = document.createElement('div');
+          el.className = `jar-ball ${color}`;
+          if (positions[i]) {
+            el.style.left = positions[i].x + 'px';
+            el.style.top = positions[i].y + 'px';
+          }
+          jar.appendChild(el);
+        });
+      }
+
+      function updateBallStats() {
+        const statsEl = document.getElementById('ball-stats');
+        statsEl.innerHTML = ['red', 'blue', 'yellow'].filter(c => ballConfig[c] > 0).map(c => {
+          const cnt = pullResults[c];
+          const pct = totalPulls > 0 ? ((cnt / totalPulls) * 100).toFixed(1) : '0.0';
+          return `<div class="ball-stat-card ${c}-stat">
+            <div class="stat-label" style="color:${ballColors[c].color}">${ballColors[c].label}</div>
+            <div class="stat-value">${cnt}次 (${pct}%)</div>
+          </div>`;
+        }).join('');
+      }
+
+      function pullBall() {
+        const total = ballConfig.red + ballConfig.blue + ballConfig.yellow;
+        if (total === 0) return;
+        // 按比例随机
+        const rand = Random.int(1, total);
+        let color = '';
+        let cum = 0;
+        for (const c of ['red', 'blue', 'yellow']) {
+          cum += ballConfig[c];
+          if (rand <= cum) { color = c; break; }
+        }
+        return color;
+      }
+
+      function showPull() {
+        const color = pullBall();
+        if (!color) return;
+        pullResults[color]++;
+        totalPulls++;
+
+        const pullEl = document.getElementById('ball-pull');
+        pullEl.className = `ball-pull ${color} show`;
+        document.getElementById('ball-result').innerHTML = `<span style="color:${ballColors[color].color}">摸到了${ballColors[color].label}！</span>`;
+
+        if (totalPulls % 10 === 0) {
+          streak++; updateStreak(); Sound.play('correct');
+          showToast(`🎉 已摸了 ${totalPulls} 次！看看哪种颜色最多`);
+        } else {
+          Sound.play('click');
+        }
+
+        updateBallStats();
+      }
+
+      function doMultiPull() {
+        let count = 0;
+        const interval = setInterval(() => {
+          showPull();
+          count++;
+          if (count >= 10) {
+            clearInterval(interval);
+            showToast(`🔟 连摸了10次！红色${pullResults.red}次，蓝色${pullResults.blue}次，黄色${pullResults.yellow}次`);
+          }
+        }, 400);
+      }
+
+      document.getElementById('btn-pull').addEventListener('click', showPull);
+      document.getElementById('btn-pull10').addEventListener('click', doMultiPull);
+
+      // 配置按钮
+      const configEl = document.getElementById('ball-config');
+      configs.forEach((cfg, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'config-btn' + (i === 0 ? ' active' : '');
+        btn.textContent = cfg.label;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#ball-config .config-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          ballConfig = { ...cfg.cfg };
+          pullResults = { red: 0, blue: 0, yellow: 0 };
+          totalPulls = 0;
+          document.getElementById('ball-pull').className = 'ball-pull';
+          document.getElementById('ball-result').textContent = '';
+          drawJar(); updateBallStats();
+          Sound.play('click');
+        });
+        configEl.appendChild(btn);
+      });
+
+      drawJar(); updateBallStats();
+    })();
+
+    // === 模式4: 骰子挑战 ===
+    (() => {
+      let correct = 0, wrong = 0;
+      let diceHist = {};
+      for (let i = 1; i <= 6; i++) diceHist[i] = 0;
+
+      const diceFaces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+
+      const questions = [
+        { q: '掷一个骰子，掷出的点数比3大吗？', opts: ['一定', '可能', '不可能'], answer: 1, explain: '掷出4、5、6都比3大，掷出1、2、3不比3大，所以是"可能"' },
+        { q: '掷一个骰子，掷出的点数大于0吗？', opts: ['一定', '可能', '不可能'], answer: 0, explain: '骰子最小是1点，都大于0，所以是"一定"' },
+        { q: '掷一个骰子，掷出7点吗？', opts: ['一定', '可能', '不可能'], answer: 2, explain: '骰子只有1~6点，不可能掷出7点' },
+        { q: '从全是红球的袋子里摸出一个蓝球', opts: ['一定', '可能', '不可能'], answer: 2, explain: '袋子里只有红球，不可能摸出蓝球' },
+        { q: '掷一个骰子，掷出偶数点吗？', opts: ['一定', '可能', '不可能'], answer: 1, explain: '掷出2、4、6是偶数，掷出1、3、5不是，所以是"可能"' },
+        { q: '从红蓝球各半的袋子里摸出红球', opts: ['一定', '可能', '不可能'], answer: 1, explain: '两种颜色都有，摸到哪种都有可能' },
+        { q: '掷一个骰子，掷出的点数小于7吗？', opts: ['一定', '可能', '不可能'], answer: 0, explain: '骰子最大是6点，都小于7，所以是"一定"' },
+        { q: '掷两个骰子，点数之和是1吗？', opts: ['一定', '可能', '不可能'], answer: 2, explain: '两个骰子最小和是1+1=2，不可能和为1' },
+        { q: '掷一个骰子，掷出奇数点的可能性大还是偶数点大？', opts: ['一样大', '奇数大', '偶数大'], answer: 0, explain: '奇数有1、3、5三种，偶数有2、4、6三种，可能性一样大！' },
+        { q: '袋子里有3个红球、1个蓝球，摸到哪种颜色的可能性更大？', opts: ['红球', '蓝球', '一样大'], answer: 0, explain: '红球3个，蓝球1个，红球数量多，摸到的可能性更大！' }
+      ];
+
+      let qIndex = 0;
+      let qOrder = [];
+
+      function shuffleQuestions() {
+        qOrder = [...Array(questions.length).keys()];
+        for (let i = qOrder.length - 1; i > 0; i--) {
+          const j = Random.int(0, i);
+          [qOrder[i], qOrder[j]] = [qOrder[j], qOrder[i]];
+        }
+        qIndex = 0;
+      }
+
+      function showQuestion() {
+        if (qIndex >= qOrder.length) {
+          shuffleQuestions();
+        }
+        const qi = questions[qOrder[qIndex]];
+        document.getElementById('dice-question').textContent = qi.q;
+        document.getElementById('dice-explain').textContent = '';
+        document.getElementById('btn-next-q').style.display = 'none';
+
+        const optsEl = document.getElementById('dice-opts');
+        optsEl.innerHTML = '';
+        qi.opts.forEach((opt, i) => {
+          const btn = document.createElement('button');
+          btn.className = 'dice-opt';
+          btn.textContent = opt;
+          btn.addEventListener('click', () => {
+            // 先掷骰子动画
+            animateDiceRoll(() => {
+              const ok = i === qi.answer;
+              if (ok) {
+                btn.classList.add('correct'); correct++; streak++; Sound.play('correct'); celebrate();
+              } else {
+                btn.classList.add('wrong'); wrong++; streak = 0; Sound.play('wrong'); Animator.shake(btn);
+              }
+              updateStreak();
+              document.getElementById('dc-correct').textContent = correct;
+              document.getElementById('dc-wrong').textContent = wrong;
+              document.getElementById('dice-explain').innerHTML = ok ? `✅ 对！${qi.explain}` : `❌ 答案是"${qi.opts[qi.answer]}"。${qi.explain}`;
+              document.getElementById('btn-next-q').style.display = 'inline-block';
+              qIndex++;
+            });
+          });
+          optsEl.appendChild(btn);
+        });
+
+        updateDiceHist();
+      }
+
+      function animateDiceRoll(callback) {
+        const el = document.getElementById('dice-display');
+        let count = 0;
+        const maxCount = 15;
+        const interval = setInterval(() => {
+          el.textContent = diceFaces[Random.int(0, 5)];
+          count++;
+          if (count >= maxCount) {
+            clearInterval(interval);
+            Sound.play('click');
+            if (callback) callback();
+          }
+        }, 80);
+      }
+
+      function updateDiceHist() {
+        const histEl = document.getElementById('dice-hist');
+        const total = Object.values(diceHist).reduce((a, b) => a + b, 0);
+        if (total === 0) {
+          histEl.innerHTML = '<p style="font-size:14px;color:#6E6E73">掷骰子统计会在答题过程中更新</p>';
+          return;
+        }
+        const colors = ['#E53935','#FF9800','#FFB300','#43A047','#1E88E5','#7B1FA2'];
+        let html = '<p style="font-size:14px;font-weight:600;margin-bottom:8px">📊 骰子点数统计</p>';
+        for (let i = 1; i <= 6; i++) {
+          const pct = total > 0 ? ((diceHist[i] / total) * 100).toFixed(1) : '0.0';
+          html += `<div class="dice-hist-bar">
+            <div class="dice-hist-fill" style="width:${Math.max(pct, 3)}%;background:${colors[i-1]}">${i}点 ${diceHist[i]}次</div>
+          </div>`;
+        }
+        histEl.innerHTML = html;
+      }
+
+      document.getElementById('btn-next-q').addEventListener('click', () => {
+        showQuestion(); Sound.play('click');
+      });
+
+      // 每次掷骰子更新统计
+      const origShow = showQuestion;
+      let diceCount = 0;
+      const _showQuestion = showQuestion;
+      showQuestion = function() {
+        diceCount++;
+        const face = Random.int(1, 6);
+        diceHist[face]++;
+        _showQuestion();
+        updateDiceHist();
+      };
+
+      shuffleQuestions();
+      showQuestion();
+    })();
+  </script>
+</body>
+</html>
