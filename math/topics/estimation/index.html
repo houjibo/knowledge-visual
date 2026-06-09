@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>估算</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #E65100; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    .section-title { font-size: 22px; color: #1D1D1F; font-weight: 700; text-align: center; margin: 8px 0; }
+    .section-desc { font-size: 15px; color: #6E6E73; text-align: center; margin-bottom: 16px; }
+    .score-bar { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; font-weight: 600; }
+    .result-text { font-size: 22px; font-weight: 700; text-align: center; margin: 16px 0; min-height: 36px; }
+    .next-btn {
+      display: block; margin: 16px auto; padding: 14px 32px; border: none;
+      background: #E65100; color: white; border-radius: 12px; font-size: 18px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .next-btn:active { transform: scale(0.92); }
+
+    /* 学习模式 */
+    .learn-card {
+      background: white; border-radius: 20px; padding: 24px 16px; margin: 16px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .learn-card h4 { font-size: 18px; color: #E65100; margin-bottom: 12px; text-align: center; }
+    .demo-row { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+    .demo-item {
+      padding: 12px 20px; border-radius: 16px; font-size: 28px; font-weight: 700;
+      border: 3px solid #E5E5EA; background: white; transition: all 0.3s ease;
+    }
+    .demo-item.highlight { border-color: #E65100; background: rgba(230,81,0,0.08); transform: scale(1.1); }
+    .demo-arrow { font-size: 24px; color: #E65100; }
+    .tip-box {
+      font-size: 14px; color: #6E6E73; background: rgba(230,81,0,0.06);
+      padding: 12px 16px; border-radius: 12px; margin: 12px 0; line-height: 1.6;
+    }
+    .rule-card {
+      display: flex; align-items: center; gap: 16px; padding: 16px;
+      background: white; border-radius: 16px; margin: 12px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .rule-icon { font-size: 40px; flex-shrink: 0; }
+    .rule-text { font-size: 15px; color: #1D1D1F; line-height: 1.6; }
+    .rule-text strong { color: #E65100; }
+
+    /* 四舍五入练习 */
+    .round-area { text-align: center; padding: 16px; }
+    .round-number {
+      font-size: 48px; font-weight: 700; color: #E65100; margin: 20px 0 8px;
+      letter-spacing: 4px;
+    }
+    .round-target { font-size: 16px; color: #6E6E73; margin-bottom: 16px; }
+    .round-options { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+    .round-opt {
+      padding: 14px 28px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 24px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; min-width: 100px;
+    }
+    .round-opt:active { transform: scale(0.9); }
+    .round-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.12); color: #34C759; }
+    .round-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); color: #FF3B30; }
+
+    /* 估算挑战 */
+    .est-area { text-align: center; padding: 16px; }
+    .est-expression {
+      font-size: 32px; font-weight: 700; color: #1D1D1F; margin: 20px 0;
+      display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+    }
+    .est-num { padding: 8px 16px; background: rgba(230,81,0,0.08); border-radius: 12px; color: #E65100; }
+    .est-op { color: #6E6E73; }
+    .est-options { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+    .est-opt {
+      padding: 14px 24px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 22px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; min-width: 90px;
+    }
+    .est-opt:active { transform: scale(0.9); }
+    .est-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.12); color: #34C759; }
+    .est-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); color: #FF3B30; }
+
+    /* 生活应用 */
+    .life-area { text-align: center; padding: 16px; }
+    .life-scene { font-size: 64px; margin: 16px 0; }
+    .life-question {
+      font-size: 17px; font-weight: 600; color: #1D1D1F; margin: 12px 0;
+      line-height: 1.8; text-align: left; padding: 0 8px;
+    }
+    .life-question .highlight-num { color: #E65100; font-weight: 700; font-size: 20px; }
+    .life-options { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+    .life-opt {
+      padding: 14px 20px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 17px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; text-align: left;
+    }
+    .life-opt:active { transform: scale(0.97); }
+    .life-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.12); }
+    .life-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); }
+
+    .feedback { font-size: 18px; font-weight: 700; margin: 12px 0; min-height: 28px; }
+    .feedback.correct-fb { color: #34C759; }
+    .feedback.wrong-fb { color: #FF3B30; }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <a href="../../index.html" class="nav-back">←</a>
+      <span class="nav-title">🎯 估算</span>
+    </nav>
+
+    <h1 class="page-title">🎯 估算</h1>
+    <p class="page-subtitle">不用精确计算，快速得到接近的答案</p>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="learn">📖 学习</button>
+      <button class="mode-tab" data-mode="round">🎯 四舍五入</button>
+      <button class="mode-tab" data-mode="estimate">⚡ 估算挑战</button>
+      <button class="mode-tab" data-mode="life">🛒 生活应用</button>
+    </div>
+
+    <!-- 模式1: 学习 -->
+    <div class="mode-content active" data-mode="learn">
+      <div class="learn-card">
+        <h4>🤔 什么是估算？</h4>
+        <p style="font-size:16px;color:#1D1D1F;line-height:1.8;text-align:center;margin:12px 0;">
+          估算就是<strong style="color:#E65100;">不用精确计算</strong>，<br>
+          把数字看成<strong style="color:#E65100;">整十、整百</strong>的数，<br>
+          快速算出一个<strong style="color:#E65100;">接近正确答案</strong>的结果。
+        </p>
+        <div class="demo-row">
+          <div class="demo-item">298 + 403</div>
+          <div class="demo-arrow">→</div>
+          <div class="demo-item highlight">≈ 700</div>
+        </div>
+        <div class="tip-box">
+          💡 298 接近 300，403 接近 400<br>
+          300 + 400 = 700，所以 298 + 403 ≈ 700
+        </div>
+      </div>
+
+      <div class="learn-card">
+        <h4>📏 四舍五入规则</h4>
+        <div class="rule-card">
+          <div class="rule-icon">⬇️</div>
+          <div class="rule-text">
+            个位是 <strong>0、1、2、3、4</strong><br>
+            → <strong>舍去</strong>，往小的方向靠<br>
+            例：34 → 30，451 → 450
+          </div>
+        </div>
+        <div class="rule-card">
+          <div class="rule-icon">⬆️</div>
+          <div class="rule-text">
+            个位是 <strong>5、6、7、8、9</strong><br>
+            → <strong>进一</strong>，往大的方向靠<br>
+            例：37 → 40，458 → 460
+          </div>
+        </div>
+        <div class="tip-box">
+          🎵 记忆口诀：「四舍五入」看个位，<br>
+          0-4 舍去不变，5-9 进一加1！
+        </div>
+      </div>
+
+      <div class="learn-card">
+        <h4>🧮 估算三步法</h4>
+        <div style="text-align:center;margin:16px 0;">
+          <div style="display:inline-flex;flex-direction:column;gap:12px;align-items:flex-start;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="width:36px;height:36px;border-radius:50%;background:#E65100;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;">1</span>
+              <span style="font-size:16px;color:#1D1D1F;">看题目，找到每个数</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="width:36px;height:36px;border-radius:50%;background:#E65100;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;">2</span>
+              <span style="font-size:16px;color:#1D1D1F;">四舍五入变成整十整百</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="width:36px;height:36px;border-radius:50%;background:#E65100;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;">3</span>
+              <span style="font-size:16px;color:#1D1D1F;">口算出大约的结果</span>
+            </div>
+          </div>
+        </div>
+        <div class="demo-row">
+          <div class="demo-item">196 × 5</div>
+          <div class="demo-arrow">→</div>
+          <div class="demo-item">200 × 5</div>
+          <div class="demo-arrow">→</div>
+          <div class="demo-item highlight">≈ 1000</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 四舍五入练习 -->
+    <div class="mode-content" data-mode="round">
+      <div class="round-area">
+        <div class="score-bar">
+          <span>✅ <span id="round-correct">0</span></span>
+          <span>❌ <span id="round-wrong">0</span></span>
+        </div>
+        <div class="round-number" id="round-number">--</div>
+        <div class="round-target" id="round-target">四舍五入到十位</div>
+        <div class="round-options" id="round-options"></div>
+        <div class="feedback" id="round-feedback"></div>
+      </div>
+    </div>
+
+    <!-- 模式3: 估算挑战 -->
+    <div class="mode-content" data-mode="estimate">
+      <div class="est-area">
+        <div class="score-bar">
+          <span>✅ <span id="est-correct">0</span></span>
+          <span>❌ <span id="est-wrong">0</span></span>
+        </div>
+        <div class="est-expression" id="est-expression"></div>
+        <div class="est-options" id="est-options"></div>
+        <div class="feedback" id="est-feedback"></div>
+      </div>
+    </div>
+
+    <!-- 模式4: 生活应用 -->
+    <div class="mode-content" data-mode="life">
+      <div class="life-area">
+        <div class="score-bar">
+          <span>✅ <span id="life-correct">0</span></span>
+          <span>❌ <span id="life-wrong">0</span></span>
+        </div>
+        <div class="life-scene" id="life-scene">🛒</div>
+        <div class="life-question" id="life-question"></div>
+        <div class="life-options" id="life-options"></div>
+        <div class="feedback" id="life-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // ===== 模式切换 =====
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        const mode = tab.dataset.mode;
+        document.querySelector(`.mode-content[data-mode="${mode}"]`).classList.add('active');
+        if (mode === 'round') newRoundQuestion();
+        if (mode === 'estimate') newEstQuestion();
+        if (mode === 'life') newLifeQuestion();
+      });
+    });
+
+    // ===== 工具函数 =====
+    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = randInt(0, i); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+
+    // ===== 模式2: 四舍五入 =====
+    let roundState = { correct: 0, wrong: 0, locked: false };
+
+    function roundTo(num, place) {
+      // place: 10 = 十位, 100 = 百位
+      if (place === 10) return Math.round(num / 10) * 10;
+      if (place === 100) return Math.round(num / 100) * 100;
+      return Math.round(num / place) * place;
+    }
+
+    function newRoundQuestion() {
+      roundState.locked = false;
+      document.getElementById('round-feedback').textContent = '';
+      document.getElementById('round-feedback').className = 'feedback';
+
+      const type = randInt(0, 2); // 0: 十位(2位数), 1: 十位(3位数), 2: 百位
+      let num, target, answer;
+
+      if (type === 0) {
+        num = randInt(11, 99);
+        // 避免个位为0或5的边界情况
+        while (num % 10 === 0 || num % 10 === 5) num = randInt(11, 99);
+        target = '四舍五入到十位';
+        answer = roundTo(num, 10);
+      } else if (type === 1) {
+        num = randInt(101, 999);
+        while (num % 10 === 0 || num % 10 === 5) num = randInt(101, 999);
+        target = '四舍五入到十位';
+        answer = roundTo(num, 10);
+      } else {
+        num = randInt(101, 999);
+        while (num % 100 === 0 || num % 100 === 50) num = randInt(101, 999);
+        target = '四舍五入到百位';
+        answer = roundTo(num, 100);
+      }
+
+      document.getElementById('round-number').textContent = num;
+      document.getElementById('round-target').textContent = target;
+
+      // 生成选项
+      let options = [answer];
+      if (type === 2) {
+        // 百位
+        const down = Math.floor(num / 100) * 100;
+        const up = down + 100;
+        if (down !== answer) options.push(down);
+        if (up !== answer) options.push(up);
+        // 干扰项
+        const fake1 = down - 100 > 0 ? down - 100 : up + 100;
+        if (fake1 !== answer && !options.includes(fake1)) options.push(fake1);
+      } else {
+        // 十位
+        const down = Math.floor(num / 10) * 10;
+        const up = down + 10;
+        if (down !== answer) options.push(down);
+        if (up !== answer) options.push(up);
+        // 干扰项
+        const fake1 = down - 10 > 0 ? down - 10 : up + 10;
+        if (fake1 !== answer && !options.includes(fake1)) options.push(fake1);
+      }
+
+      while (options.length < 4) {
+        const fake = answer + (randInt(0, 1) === 0 ? 1 : -1) * (type === 2 ? 100 : 10) * randInt(1, 3);
+        if (fake > 0 && !options.includes(fake)) options.push(fake);
+      }
+
+      options = shuffle(options.slice(0, 4));
+      const container = document.getElementById('round-options');
+      container.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'round-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => handleRoundAnswer(btn, opt, answer, container));
+        container.appendChild(btn);
+      });
+    }
+
+    function handleRoundAnswer(btn, selected, answer, container) {
+      if (roundState.locked) return;
+      roundState.locked = true;
+
+      const fb = document.getElementById('round-feedback');
+      if (selected === answer) {
+        btn.classList.add('correct');
+        fb.textContent = '✅ 正确！';
+        fb.className = 'feedback correct-fb';
+        roundState.correct++;
+        document.getElementById('round-correct').textContent = roundState.correct;
+        setTimeout(newRoundQuestion, 1500);
+      } else {
+        btn.classList.add('wrong');
+        fb.textContent = `❌ 正确答案是 ${answer}`;
+        fb.className = 'feedback wrong-fb';
+        roundState.wrong++;
+        document.getElementById('round-wrong').textContent = roundState.wrong;
+        // 高亮正确答案
+        container.querySelectorAll('.round-opt').forEach(b => {
+          if (parseInt(b.textContent) === answer) b.classList.add('correct');
+        });
+        setTimeout(newRoundQuestion, 2500);
+      }
+    }
+
+    // ===== 模式3: 估算挑战 =====
+    let estState = { correct: 0, wrong: 0, locked: false };
+
+    function newEstQuestion() {
+      estState.locked = false;
+      document.getElementById('est-feedback').textContent = '';
+      document.getElementById('est-feedback').className = 'feedback';
+
+      const opType = randInt(0, 2); // 0:加法, 1:减法, 2:乘法
+      let a, b, op, opSymbol, exactAnswer, estAnswer;
+
+      if (opType === 0) {
+        a = randInt(101, 999);
+        b = randInt(101, 999);
+        opSymbol = '+';
+        exactAnswer = a + b;
+        estAnswer = roundTo(a, 100) + roundTo(b, 100);
+      } else if (opType === 1) {
+        a = randInt(201, 999);
+        b = randInt(101, a - 10);
+        opSymbol = '−';
+        exactAnswer = a - b;
+        estAnswer = roundTo(a, 100) - roundTo(b, 100);
+      } else {
+        a = randInt(11, 99);
+        b = randInt(2, 9);
+        opSymbol = '×';
+        exactAnswer = a * b;
+        estAnswer = roundTo(a, 10) * b;
+      }
+
+      // 显示算式
+      const exprEl = document.getElementById('est-expression');
+      exprEl.innerHTML = `
+        <span class="est-num">${a}</span>
+        <span class="est-op">${opSymbol}</span>
+        <span class="est-num">${b}</span>
+        <span class="est-op">≈ ？</span>
+      `;
+
+      // 生成选项（围绕估算值）
+      let options = [estAnswer];
+      const step = opType === 2 ? 10 : 100;
+      const offsets = [-2, -1, 1, 2];
+      shuffle(offsets);
+      for (const off of offsets) {
+        const fake = estAnswer + off * step;
+        if (fake > 0 && !options.includes(fake) && fake !== exactAnswer) {
+          options.push(fake);
+        }
+        if (options.length >= 4) break;
+      }
+      // 确保有4个选项
+      let fill = 1;
+      while (options.length < 4) {
+        const fake = estAnswer + fill * step * 3;
+        if (fake > 0 && !options.includes(fake)) options.push(fake);
+        fill++;
+      }
+
+      options = shuffle(options.slice(0, 4));
+      const container = document.getElementById('est-options');
+      container.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'est-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => handleEstAnswer(btn, opt, estAnswer, exactAnswer, container));
+        container.appendChild(btn);
+      });
+    }
+
+    function handleEstAnswer(btn, selected, estAnswer, exactAnswer, container) {
+      if (estState.locked) return;
+      estState.locked = true;
+
+      const fb = document.getElementById('est-feedback');
+      if (selected === estAnswer) {
+        btn.classList.add('correct');
+        fb.textContent = `✅ 正确！精确值是 ${exactAnswer}`;
+        fb.className = 'feedback correct-fb';
+        estState.correct++;
+        document.getElementById('est-correct').textContent = estState.correct;
+        setTimeout(newEstQuestion, 1500);
+      } else {
+        btn.classList.add('wrong');
+        fb.textContent = `❌ 估算值约 ${estAnswer}，精确值 ${exactAnswer}`;
+        fb.className = 'feedback wrong-fb';
+        estState.wrong++;
+        document.getElementById('est-wrong').textContent = estState.wrong;
+        container.querySelectorAll('.est-opt').forEach(b => {
+          if (parseInt(b.textContent) === estAnswer) b.classList.add('correct');
+        });
+        setTimeout(newEstQuestion, 2500);
+      }
+    }
+
+    // ===== 模式4: 生活应用 =====
+    let lifeState = { correct: 0, wrong: 0, locked: false };
+
+    const lifeScenes = [
+      { emoji: '🛒', category: '购物' },
+      { emoji: '🍎', category: '水果' },
+      { emoji: '📚', category: '图书' },
+      { emoji: '🚌', category: '出行' },
+      { emoji: '🏫', category: '学校' },
+      { emoji: '🍽️', category: '餐厅' },
+      { emoji: '🎁', category: '礼物' },
+      { emoji: '⚽', category: '运动' }
+    ];
+
+    function newLifeQuestion() {
+      lifeState.locked = false;
+      document.getElementById('life-feedback').textContent = '';
+      document.getElementById('life-feedback').className = 'feedback';
+
+      const scene = lifeScenes[randInt(0, lifeScenes.length - 1)];
+      document.getElementById('life-scene').textContent = scene.emoji;
+
+      const qType = randInt(0, 3);
+      let question, answer, options;
+
+      if (qType === 0) {
+        // 购物估算总价
+        const items = randInt(2, 4);
+        const prices = [];
+        let total = 0;
+        const itemNames = ['书包', '文具盒', '水彩笔', '笔记本', '跳绳', '字典', '台灯', '足球'];
+        const chosen = shuffle([...itemNames]).slice(0, items);
+        let html = `小明去商店买了：<br>`;
+        for (let i = 0; i < items; i++) {
+          const price = randInt(1, 20) * 10 + randInt(1, 9);
+          prices.push(price);
+          total += price;
+          html += `• ${chosen[i]} <span class="highlight-num">${price}元</span><br>`;
+        }
+        html += `<br>估一估，大约花了多少钱？`;
+        question = html;
+
+        const estTotal = prices.reduce((s, p) => s + roundTo(p, 10), 0);
+        answer = estTotal;
+        options = [estTotal];
+        while (options.length < 4) {
+          const fake = estTotal + (randInt(0, 1) === 0 ? 1 : -1) * 10 * randInt(1, 5);
+          if (fake > 0 && !options.includes(fake)) options.push(fake);
+        }
+        options = shuffle(options).map(o => o + '元');
+        answer = estTotal + '元';
+      } else if (qType === 1) {
+        // 够不够
+        const price = randInt(2, 9) * 100 + randInt(1, 9) * 10 + randInt(1, 9);
+        const has = roundTo(price, 100) + 100;
+        question = `一件商品标价 <span class="highlight-num">${price}元</span>，<br>妈妈带了 <span class="highlight-num">${has}元</span>，<br>估一估，钱够吗？`;
+        const enough = has >= price;
+        answer = enough ? '够，大约需要' + roundTo(price, 100) + '元' : '不够，大约需要' + roundTo(price, 100) + '元';
+        const wrongEst = roundTo(price, 100) + (enough ? 200 : -200);
+        options = [
+          answer,
+          (enough ? '不够' : '够') + '，大约需要' + wrongEst + '元',
+          (enough ? '不够' : '够') + '，大约需要' + roundTo(price, 10) + '元',
+          '无法判断'
+        ];
+        options = shuffle(options);
+      } else if (qType === 2) {
+        // 乘法估算：每份×份数
+        const unitPrice = randInt(1, 9) * 10 + randInt(1, 9);
+        const count = randInt(3, 9);
+        const totalExact = unitPrice * count;
+        const estUnit = roundTo(unitPrice, 10);
+        const estTotal = estUnit * count;
+        question = `每本故事书 <span class="highlight-num">${unitPrice}元</span>，<br>老师要买 <span class="highlight-num">${count}本</span>，<br>估一估，大约需要多少钱？`;
+        answer = estTotal + '元';
+        options = [estTotal];
+        while (options.length < 4) {
+          const fake = estTotal + (randInt(0, 1) === 0 ? 1 : -1) * 10 * randInt(1, 3);
+          if (fake > 0 && !options.includes(fake)) options.push(fake);
+        }
+        options = shuffle(options).map(o => o + '元');
+        answer = estTotal + '元';
+      } else {
+        // 剩余估算
+        const total = randInt(5, 10) * 100;
+        const spent = randInt(1, total / 10 - 1) * 10 + randInt(1, 9);
+        const remainExact = total - spent;
+        const estSpent = roundTo(spent, 100);
+        const estRemain = total - estSpent;
+        question = `小红有 <span class="highlight-num">${total}元</span>，<br>买文具花了 <span class="highlight-num">${spent}元</span>，<br>估一估，大约还剩多少钱？`;
+        answer = estRemain + '元';
+        options = [estRemain];
+        while (options.length < 4) {
+          const fake = estRemain + (randInt(0, 1) === 0 ? 1 : -1) * 100 * randInt(1, 2);
+          if (fake > 0 && !options.includes(fake)) options.push(fake);
+        }
+        options = shuffle(options).map(o => o + '元');
+        answer = estRemain + '元';
+      }
+
+      document.getElementById('life-question').innerHTML = question;
+      const container = document.getElementById('life-options');
+      container.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'life-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => handleLifeAnswer(btn, opt, answer, container));
+        container.appendChild(btn);
+      });
+    }
+
+    function handleLifeAnswer(btn, selected, answer, container) {
+      if (lifeState.locked) return;
+      lifeState.locked = true;
+
+      const fb = document.getElementById('life-feedback');
+      if (selected === answer) {
+        btn.classList.add('correct');
+        fb.textContent = '✅ 正确！';
+        fb.className = 'feedback correct-fb';
+        lifeState.correct++;
+        document.getElementById('life-correct').textContent = lifeState.correct;
+        setTimeout(newLifeQuestion, 1500);
+      } else {
+        btn.classList.add('wrong');
+        fb.textContent = `❌ 正确答案：${answer}`;
+        fb.className = 'feedback wrong-fb';
+        lifeState.wrong++;
+        document.getElementById('life-wrong').textContent = lifeState.wrong;
+        container.querySelectorAll('.life-opt').forEach(b => {
+          if (b.textContent === answer) b.classList.add('correct');
+        });
+        setTimeout(newLifeQuestion, 2500);
+      }
+    }
+
+    // 初始化
+    newRoundQuestion();
+    newEstQuestion();
+    newLifeQuestion();
+  </script>
+</body>
+</html>

@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>分数加减法</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs {
+      display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;
+      padding: 4px; -webkit-overflow-scrolling: touch;
+    }
+    .mode-tab {
+      flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA;
+      border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-tab.active { background: #FF9800; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 通用 */
+    .area { text-align: center; padding: 24px 16px; }
+    .section-title {
+      font-size: 20px; font-weight: 700; color: #1D1D1F;
+      margin: 16px 0 12px;
+    }
+    .explain {
+      font-size: 16px; color: #6E6E73; line-height: 1.6;
+      margin: 12px 0; text-align: left;
+      padding: 12px 16px; background: #FFF8E1; border-radius: 12px;
+    }
+    .explain strong { color: #E65100; }
+
+    /* 分数显示 */
+    .frac {
+      display: inline-flex; flex-direction: column; align-items: center;
+      vertical-align: middle; margin: 0 6px; font-weight: 700;
+    }
+    .frac .num { font-size: 28px; color: #FF9800; line-height: 1.2; }
+    .frac .bar { width: 100%; min-width: 32px; height: 3px; background: #1D1D1F; border-radius: 2px; }
+    .frac .den { font-size: 28px; color: #FF9800; line-height: 1.2; }
+    .frac.big .num, .frac.big .den { font-size: 36px; }
+    .frac.big .bar { height: 4px; min-width: 40px; }
+    .op { font-size: 32px; font-weight: 700; color: #4A90D9; vertical-align: middle; margin: 0 4px; }
+    .eq { font-size: 32px; font-weight: 700; color: #34C759; vertical-align: middle; margin: 0 4px; }
+
+    /* 可视化条 */
+    .bar-visual {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 12px; margin: 20px auto; max-width: 360px;
+    }
+    .bar-row {
+      display: flex; align-items: center; gap: 8px; width: 100%;
+    }
+    .bar-label { font-size: 14px; font-weight: 600; color: #6E6E73; min-width: 60px; text-align: right; }
+    .bar-track {
+      flex: 1; display: flex; height: 40px; border: 2px solid #E5E5EA;
+      border-radius: 8px; overflow: hidden; background: #FAFAFA;
+    }
+    .bar-seg {
+      height: 100%; transition: all 0.3s ease;
+      border-right: 1px solid rgba(0,0,0,0.1);
+    }
+    .bar-seg.a { background: rgba(255,152,0,0.5); }
+    .bar-seg.b { background: rgba(74,144,217,0.5); }
+    .bar-seg.result { background: rgba(52,199,89,0.5); }
+
+    /* 探索模式 */
+    .explore-controls {
+      display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+      margin: 20px 0; align-items: center;
+    }
+    .explore-row {
+      display: flex; align-items: center; gap: 8px; justify-content: center;
+      flex-wrap: wrap;
+    }
+    .explore-row .label { font-size: 16px; font-weight: 600; color: #6E6E73; }
+    .num-input {
+      width: 64px; height: 56px; border: 3px solid #E5E5EA; border-radius: 12px;
+      text-align: center; font-size: 24px; font-weight: 700; color: #FF9800;
+      background: white; outline: none;
+    }
+    .num-input:focus { border-color: #FF9800; }
+    .calc-btn {
+      padding: 14px 28px; border: none; background: #FF9800; color: white;
+      border-radius: 16px; font-size: 18px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; margin: 8px;
+    }
+    .calc-btn:active { transform: scale(0.95); }
+    .result-display {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 16px 24px; background: #E8F5E9; border-radius: 16px;
+      margin: 16px 0; font-size: 24px; font-weight: 700;
+    }
+    .result-display .frac .num, .result-display .frac .den { color: #34C759; }
+    .step-box {
+      text-align: left; padding: 16px; background: #F0F4FF;
+      border-radius: 12px; margin: 12px 0; font-size: 15px;
+      line-height: 1.8; color: #1D1D1F;
+    }
+    .step-box .step-num {
+      display: inline-block; width: 24px; height: 24px; background: #4A90D9;
+      color: white; border-radius: 50%; text-align: center; line-height: 24px;
+      font-size: 13px; font-weight: 700; margin-right: 8px;
+    }
+
+    /* 练习模式 */
+    .problem-display {
+      font-size: 28px; margin: 24px 0; display: flex;
+      align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+    }
+    .answer-inputs {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; margin: 20px 0;
+    }
+    .answer-inputs .num-input { width: 72px; height: 64px; font-size: 28px; }
+    .answer-inputs .bar-line { width: 4px; height: 48px; background: #1D1D1F; border-radius: 2px; }
+    .submit-btn {
+      display: block; margin: 20px auto; padding: 16px 48px;
+      border: none; background: #FF9800; color: white;
+      border-radius: 20px; font-size: 20px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .submit-btn:active { transform: scale(0.95); }
+    .submit-btn:disabled { background: #E5E5EA; color: #AEAEB2; }
+    .feedback {
+      font-size: 20px; font-weight: 700; margin: 16px 0;
+      min-height: 32px; transition: all 0.3s ease;
+    }
+    .feedback.correct { color: #34C759; }
+    .feedback.wrong { color: #FF3B30; }
+    .score-bar {
+      display: flex; justify-content: center; gap: 24px;
+      margin: 16px 0; font-size: 16px; font-weight: 600;
+    }
+    .score-item { padding: 8px 16px; border-radius: 12px; }
+    .score-item.correct { background: rgba(52,199,89,0.1); color: #34C759; }
+    .score-item.wrong { background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .hint-btn {
+      padding: 10px 20px; border: 2px solid #FF9800; background: white;
+      border-radius: 12px; font-size: 15px; font-weight: 600;
+      color: #FF9800; cursor: pointer; margin: 8px;
+    }
+    .hint-btn:active { background: #FFF3E0; }
+    .hint-box {
+      display: none; text-align: left; padding: 12px 16px;
+      background: #FFF8E1; border-radius: 12px; margin: 12px auto;
+      max-width: 320px; font-size: 14px; line-height: 1.6; color: #E65100;
+    }
+    .hint-box.show { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 闯关模式 */
+    .level-bar {
+      display: flex; justify-content: center; gap: 8px; margin: 16px 0;
+    }
+    .level-dot {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid #E5E5EA; display: flex; align-items: center;
+      justify-content: center; font-size: 14px; font-weight: 700;
+      color: #AEAEB2; transition: all 0.3s ease;
+    }
+    .level-dot.active { border-color: #FF9800; color: #FF9800; transform: scale(1.1); }
+    .level-dot.done { border-color: #34C759; background: #34C759; color: white; }
+    .level-dot.failed { border-color: #FF3B30; background: #FF3B30; color: white; }
+    .level-info {
+      font-size: 16px; color: #6E6E73; margin: 8px 0;
+    }
+    .level-info .diff { font-weight: 700; color: #FF9800; }
+
+    /* 选择按钮（练习/闯关） */
+    .options-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; max-width: 360px; margin: 16px auto;
+    }
+    .opt-btn {
+      padding: 16px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 20px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    .opt-btn:active { transform: scale(0.95); }
+    .opt-btn.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .opt-btn.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .opt-btn.disabled { pointer-events: none; opacity: 0.6; }
+    .opt-btn .frac { margin: 0; }
+    .opt-btn .frac .num, .opt-btn .frac .den { font-size: 20px; }
+    .opt-btn .frac .bar { height: 2px; min-width: 20px; }
+
+    /* 动画 */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes popIn {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+    .pop-in { animation: popIn 0.3s ease both; }
+
+    /* nav */
+    .nav-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; margin-bottom: 8px;
+    }
+    .nav-back {
+      display: inline-flex; align-items: center; gap: 4px;
+      text-decoration: none; color: #FF9800; font-weight: 600; font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <div class="nav-bar">
+      <a href="../../index.html" class="nav-back">← 返回</a>
+    </div>
+
+    <h1 style="font-size:24px;font-weight:800;text-align:center;margin-bottom:4px;">🍕 分数加减法</h1>
+    <p style="text-align:center;color:#6E6E73;font-size:14px;margin-bottom:16px;">五年级 · 同分母/异分母分数加减</p>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="explore">🔍 探索</button>
+      <button class="mode-tab" data-mode="same-den">🟠 同分母</button>
+      <button class="mode-tab" data-mode="diff-den">🔵 异分母</button>
+      <button class="mode-tab" data-mode="practice">✏️ 练习</button>
+      <button class="mode-tab" data-mode="challenge">🏆 闯关</button>
+    </div>
+
+    <!-- 探索模式 -->
+    <div class="mode-content active" id="mode-explore">
+      <div class="area">
+        <div class="section-title">🔍 分数加减法探索器</div>
+        <div class="explain">
+          <strong>核心规则：</strong><br>
+          • <strong>同分母</strong>：分母不变，分子相加减<br>
+          • <strong>异分母</strong>：先通分（找最小公倍数），再按同分母计算<br>
+          • 结果要<strong>约分</strong>到最简分数
+        </div>
+
+        <div class="explore-controls">
+          <div class="explore-row">
+            <div class="frac big">
+              <span class="num"><input type="number" class="num-input" id="exp-n1" value="1" min="0" max="20"></span>
+              <span class="bar"></span>
+              <span class="den"><input type="number" class="num-input" id="exp-d1" value="3" min="1" max="20"></span>
+            </div>
+            <select id="exp-op" style="width:56px;height:56px;border:3px solid #E5E5EA;border-radius:12px;font-size:28px;text-align:center;font-weight:700;color:#4A90D9;background:white;outline:none;">
+              <option value="+">+</option>
+              <option value="-">−</option>
+            </select>
+            <div class="frac big">
+              <span class="num"><input type="number" class="num-input" id="exp-n2" value="1" min="0" max="20"></span>
+              <span class="bar"></span>
+              <span class="den"><input type="number" class="num-input" id="exp-d2" value="3" min="1" max="20"></span>
+            </div>
+          </div>
+          <button class="calc-btn" id="exp-calc">✨ 计算</button>
+        </div>
+
+        <div class="bar-visual" id="exp-visual"></div>
+        <div id="exp-result"></div>
+        <div id="exp-steps"></div>
+      </div>
+    </div>
+
+    <!-- 同分母模式 -->
+    <div class="mode-content" id="mode-same-den">
+      <div class="area">
+        <div class="section-title">🟠 同分母分数加减</div>
+        <div class="explain">
+          <strong>口诀：</strong>分母不变，分子相加减！<br>
+          例：<span class="frac"><span class="num">2</span><span class="bar"></span><span class="den">7</span></span>
+          + <span class="frac"><span class="num">3</span><span class="bar"></span><span class="den">7</span></span>
+          = <span class="frac"><span class="num">5</span><span class="bar"></span><span class="den">7</span></span>
+        </div>
+
+        <div class="problem-display" id="same-problem"></div>
+        <div class="bar-visual" id="same-visual"></div>
+        <div class="options-grid" id="same-options"></div>
+        <div class="feedback" id="same-feedback"></div>
+        <button class="hint-btn" id="same-hint">💡 提示</button>
+        <div class="hint-box" id="same-hint-box"></div>
+        <div class="score-bar">
+          <span class="score-item correct">✅ <span id="same-correct">0</span></span>
+          <span class="score-item wrong">❌ <span id="same-wrong">0</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 异分母模式 -->
+    <div class="mode-content" id="mode-diff-den">
+      <div class="area">
+        <div class="section-title">🔵 异分母分数加减</div>
+        <div class="explain">
+          <strong>三步走：</strong><br>
+          ① 找最小公倍数（通分）<br>
+          ② 分子相加减<br>
+          ③ 约分到最简
+        </div>
+
+        <div class="problem-display" id="diff-problem"></div>
+        <div class="bar-visual" id="diff-visual"></div>
+        <div class="options-grid" id="diff-options"></div>
+        <div class="feedback" id="diff-feedback"></div>
+        <button class="hint-btn" id="diff-hint">💡 提示</button>
+        <div class="hint-box" id="diff-hint-box"></div>
+        <div class="score-bar">
+          <span class="score-item correct">✅ <span id="diff-correct">0</span></span>
+          <span class="score-item wrong">❌ <span id="diff-wrong">0</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 练习模式 -->
+    <div class="mode-content" id="mode-practice">
+      <div class="area">
+        <div class="section-title">✏️ 自由练习</div>
+        <div class="explain">
+          随机出题，输入答案的分子和分母，点击提交。<br>
+          记得要约分到<strong>最简分数</strong>哦！
+        </div>
+
+        <div class="problem-display" id="prac-problem"></div>
+        <div class="answer-inputs">
+          <span class="eq">=</span>
+          <input type="number" class="num-input" id="prac-num" placeholder="?" min="0" max="99">
+          <div class="bar-line"></div>
+          <input type="number" class="num-input" id="prac-den" placeholder="?" min="1" max="99">
+        </div>
+        <button class="submit-btn" id="prac-submit">提交答案</button>
+        <div class="feedback" id="prac-feedback"></div>
+        <button class="hint-btn" id="prac-hint">💡 提示</button>
+        <div class="hint-box" id="prac-hint-box"></div>
+        <div class="score-bar">
+          <span class="score-item correct">✅ <span id="prac-correct">0</span></span>
+          <span class="score-item wrong">❌ <span id="prac-wrong">0</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 闯关模式 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="area">
+        <div class="section-title">🏆 闯关挑战</div>
+        <div class="level-bar" id="level-bar"></div>
+        <div class="level-info" id="level-info"></div>
+
+        <div class="problem-display" id="ch-problem"></div>
+        <div class="options-grid" id="ch-options"></div>
+        <div class="feedback" id="ch-feedback"></div>
+        <div id="ch-complete" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+  (function() {
+    'use strict';
+
+    // === 工具函数 ===
+    function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; }
+    function lcm(a, b) { return Math.abs(a * b) / gcd(a, b); }
+    function simplify(n, d) {
+      if (d === 0) return [n, d];
+      if (n === 0) return [0, 1];
+      const g = gcd(Math.abs(n), Math.abs(d));
+      let sn = n / g, sd = d / g;
+      if (sd < 0) { sn = -sn; sd = -sd; }
+      return [sn, sd];
+    }
+    function fracHTML(n, d, cls) {
+      const c = cls ? ` ${cls}` : '';
+      return `<span class="frac${c}"><span class="num">${n}</span><span class="bar"></span><span class="den">${d}</span></span>`;
+    }
+    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    // === Mode Tabs ===
+    const tabs = document.querySelectorAll('.mode-tab');
+    const contents = document.querySelectorAll('.mode-content');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        tabs.forEach(t => t.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('mode-' + this.dataset.mode).classList.add('active');
+        // 初始化对应模式
+        const mode = this.dataset.mode;
+        if (mode === 'same-den') genSameDen();
+        if (mode === 'diff-den') genDiffDen();
+        if (mode === 'practice') genPractice();
+        if (mode === 'challenge') initChallenge();
+      });
+    });
+
+    // === 可视化条 ===
+    function drawBar(container, n, d, colorClass, label) {
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      const lbl = document.createElement('span');
+      lbl.className = 'bar-label';
+      lbl.textContent = label || `${n}/${d}`;
+      const track = document.createElement('div');
+      track.className = 'bar-track';
+      for (let i = 0; i < d; i++) {
+        const seg = document.createElement('div');
+        seg.className = 'bar-seg' + (i < n ? ` ${colorClass}` : '');
+        seg.style.width = (100 / d) + '%';
+        track.appendChild(seg);
+      }
+      row.appendChild(lbl);
+      row.appendChild(track);
+      container.appendChild(row);
+    }
+
+    // ==========================================
+    // 探索模式
+    // ==========================================
+    document.getElementById('exp-calc').addEventListener('click', function() {
+      const n1 = parseInt(document.getElementById('exp-n1').value) || 0;
+      const d1 = parseInt(document.getElementById('exp-d1').value) || 1;
+      const n2 = parseInt(document.getElementById('exp-n2').value) || 0;
+      const d2 = parseInt(document.getElementById('exp-d2').value) || 1;
+      const op = document.getElementById('exp-op').value;
+
+      if (d1 < 1 || d2 < 1 || n1 < 0 || n2 < 0 || d1 > 20 || d2 > 20) {
+        showToast('请输入 1~20 的正整数作为分母', 'warning');
+        return;
+      }
+
+      // 计算
+      const commonD = lcm(d1, d2);
+      const newN1 = n1 * (commonD / d1);
+      const newN2 = n2 * (commonD / d2);
+      let resultN = op === '+' ? newN1 + newN2 : newN1 - newN2;
+      let resultD = commonD;
+      const [sn, sd] = simplify(resultN, resultD);
+
+      // 可视化
+      const vis = document.getElementById('exp-visual');
+      vis.innerHTML = '';
+      drawBar(vis, n1, d1, 'a', `${n1}/${d1}`);
+      drawBar(vis, n2, d2, 'b', `${n2}/${d2}`);
+      if (sd <= 30) {
+        drawBar(vis, Math.abs(sn), sd, 'result', `=${sn}/${sd}`);
+      }
+
+      // 结果
+      const resDiv = document.getElementById('exp-result');
+      const stepsDiv = document.getElementById('exp-steps');
+
+      let resHTML = `<div class="result-display pop-in">`;
+      resHTML += fracHTML(n1, d1) + ` <span class="op">${op === '+' ? '+' : '−'}</span> ` + fracHTML(n2, d2);
+      resHTML += ` <span class="eq">=</span> ` + fracHTML(sn, sd);
+      resHTML += `</div>`;
+      resDiv.innerHTML = resHTML;
+
+      // 步骤
+      let stepsHTML = '<div class="step-box">';
+      if (d1 === d2) {
+        stepsHTML += `<div><span class="step-num">1</span>分母相同，直接分子${op === '+' ? '相加' : '相减'}</div>`;
+        stepsHTML += `<div style="padding-left:32px;">${fracHTML(n1, d1)} ${op === '+' ? '+' : '−'} ${fracHTML(n2, d2)} = ${fracHTML(resultN, resultD)}</div>`;
+        if (sn !== resultN || sd !== resultD) {
+          stepsHTML += `<div><span class="step-num">2</span>约分：${fracHTML(resultN, resultD)} = ${fracHTML(sn, sd)}</div>`;
+        }
+      } else {
+        stepsHTML += `<div><span class="step-num">1</span>找最小公倍数：LCM(${d1}, ${d2}) = ${commonD}</div>`;
+        stepsHTML += `<div><span class="step-num">2</span>通分：${fracHTML(n1, d1)} = ${fracHTML(newN1, commonD)}，${fracHTML(n2, d2)} = ${fracHTML(newN2, commonD)}</div>`;
+        stepsHTML += `<div><span class="step-num">3</span>分子${op === '+' ? '相加' : '相减'}：${fracHTML(newN1, commonD)} ${op === '+' ? '+' : '−'} ${fracHTML(newN2, commonD)} = ${fracHTML(resultN, resultD)}</div>`;
+        if (sn !== resultN || sd !== resultD) {
+          stepsHTML += `<div><span class="step-num">4</span>约分：${fracHTML(resultN, resultD)} = ${fracHTML(sn, sd)}</div>`;
+        }
+      }
+      stepsHTML += '</div>';
+      stepsDiv.innerHTML = stepsHTML;
+    });
+
+    // ==========================================
+    // 同分母模式
+    // ==========================================
+    let sameState = { n1: 0, d: 0, n2: 0, ansN: 0, ansD: 0, correct: 0, wrong: 0, locked: false };
+
+    function genSameDen() {
+      sameState.locked = false;
+      const d = randInt(2, 12);
+      const n1 = randInt(1, d - 1);
+      const n2 = randInt(1, d - n1);
+      const op = Math.random() < 0.5 ? '+' : '-';
+      const ansN = op === '+' ? n1 + n2 : n1 - n2;
+      const [sn, sd] = simplify(ansN, d);
+
+      sameState = { ...sameState, n1, d, n2, op, ansN: sn, ansD: sd, locked: false };
+
+      document.getElementById('same-problem').innerHTML =
+        fracHTML(n1, d, 'big') + ` <span class="op">${op === '+' ? '+' : '−'}</span> ` + fracHTML(n2, d, 'big') + ' <span class="eq">= ?</span>';
+
+      // 可视化
+      const vis = document.getElementById('same-visual');
+      vis.innerHTML = '';
+      drawBar(vis, n1, d, 'a', `${n1}/${d}`);
+      drawBar(vis, n2, d, 'b', `${n2}/${d}`);
+
+      // 选项
+      const opts = generateOptions(sn, sd, d);
+      const grid = document.getElementById('same-options');
+      grid.innerHTML = '';
+      opts.forEach(o => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.innerHTML = fracHTML(o[0], o[1]);
+        btn.addEventListener('click', () => checkSame(btn, o[0], o[1]));
+        grid.appendChild(btn);
+      });
+
+      document.getElementById('same-feedback').textContent = '';
+      document.getElementById('same-feedback').className = 'feedback';
+      document.getElementById('same-hint-box').classList.remove('show');
+    }
+
+    function checkSame(btn, n, d) {
+      if (sameState.locked) return;
+      sameState.locked = true;
+      const isCorrect = (n === sameState.ansN && d === sameState.ansD);
+      const allBtns = document.querySelectorAll('#same-options .opt-btn');
+
+      if (isCorrect) {
+        btn.classList.add('correct');
+        sameState.correct++;
+        document.getElementById('same-correct').textContent = sameState.correct;
+        document.getElementById('same-feedback').textContent = '🎉 答对了！';
+        document.getElementById('same-feedback').className = 'feedback correct';
+        allBtns.forEach(b => b.classList.add('disabled'));
+        setTimeout(genSameDen, 1500);
+      } else {
+        btn.classList.add('wrong');
+        sameState.wrong++;
+        document.getElementById('same-wrong').textContent = sameState.wrong;
+        document.getElementById('same-feedback').textContent = '❌ 再想想，分母不变哦！';
+        document.getElementById('same-feedback').className = 'feedback wrong';
+        setTimeout(() => {
+          btn.classList.remove('wrong');
+          allBtns.forEach(b => b.classList.remove('disabled'));
+          sameState.locked = false;
+        }, 800);
+      }
+    }
+
+    document.getElementById('same-hint').addEventListener('click', function() {
+      const box = document.getElementById('same-hint-box');
+      box.innerHTML = `<strong>提示：</strong>分母 ${sameState.d} 不变，分子${sameState.op === '+' ? '相加' : '相减'}：${sameState.n1} ${sameState.op === '+' ? '+' : '−'} ${sameState.n2} = ?<br>算完后记得检查能否约分！`;
+      box.classList.toggle('show');
+    });
+
+    // ==========================================
+    // 异分母模式
+    // ==========================================
+    let diffState = { n1: 0, d1: 0, n2: 0, d2: 0, ansN: 0, ansD: 0, correct: 0, wrong: 0, locked: false };
+
+    function genDiffDen() {
+      diffState.locked = false;
+      const denoms = [2, 3, 4, 5, 6, 8, 10, 12];
+      let d1 = denoms[randInt(0, denoms.length - 1)];
+      let d2 = d1;
+      while (d2 === d1) d2 = denoms[randInt(0, denoms.length - 1)];
+      const n1 = randInt(1, d1 - 1);
+      const n2 = randInt(1, d2 - 1);
+      const op = Math.random() < 0.5 ? '+' : '-';
+      const commonD = lcm(d1, d2);
+      const newN1 = n1 * (commonD / d1);
+      const newN2 = n2 * (commonD / d2);
+      const rawN = op === '+' ? newN1 + newN2 : newN1 - newN2;
+      const [sn, sd] = simplify(rawN, commonD);
+
+      diffState = { ...diffState, n1, d1, n2, d2, op, ansN: sn, ansD: sd, commonD, newN1, newN2, rawN, locked: false };
+
+      document.getElementById('diff-problem').innerHTML =
+        fracHTML(n1, d1, 'big') + ` <span class="op">${op === '+' ? '+' : '−'}</span> ` + fracHTML(n2, d2, 'big') + ' <span class="eq">= ?</span>';
+
+      const vis = document.getElementById('diff-visual');
+      vis.innerHTML = '';
+      drawBar(vis, n1, d1, 'a', `${n1}/${d1}`);
+      drawBar(vis, n2, d2, 'b', `${n2}/${d2}`);
+
+      const opts = generateOptions(sn, sd, Math.max(d1, d2));
+      const grid = document.getElementById('diff-options');
+      grid.innerHTML = '';
+      opts.forEach(o => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.innerHTML = fracHTML(o[0], o[1]);
+        btn.addEventListener('click', () => checkDiff(btn, o[0], o[1]));
+        grid.appendChild(btn);
+      });
+
+      document.getElementById('diff-feedback').textContent = '';
+      document.getElementById('diff-feedback').className = 'feedback';
+      document.getElementById('diff-hint-box').classList.remove('show');
+    }
+
+    function checkDiff(btn, n, d) {
+      if (diffState.locked) return;
+      diffState.locked = true;
+      const isCorrect = (n === diffState.ansN && d === diffState.ansD);
+      const allBtns = document.querySelectorAll('#diff-options .opt-btn');
+
+      if (isCorrect) {
+        btn.classList.add('correct');
+        diffState.correct++;
+        document.getElementById('diff-correct').textContent = diffState.correct;
+        document.getElementById('diff-feedback').textContent = '🎉 太棒了！通分正确！';
+        document.getElementById('diff-feedback').className = 'feedback correct';
+        allBtns.forEach(b => b.classList.add('disabled'));
+        setTimeout(genDiffDen, 1500);
+      } else {
+        btn.classList.add('wrong');
+        diffState.wrong++;
+        document.getElementById('diff-wrong').textContent = diffState.wrong;
+        document.getElementById('diff-feedback').textContent = '❌ 先通分再计算哦！';
+        document.getElementById('diff-feedback').className = 'feedback wrong';
+        setTimeout(() => {
+          btn.classList.remove('wrong');
+          allBtns.forEach(b => b.classList.remove('disabled'));
+          diffState.locked = false;
+        }, 800);
+      }
+    }
+
+    document.getElementById('diff-hint').addEventListener('click', function() {
+      const box = document.getElementById('diff-hint-box');
+      const s = diffState;
+      box.innerHTML = `<strong>提示：</strong><br>
+        ① LCM(${s.d1}, ${s.d2}) = ${s.commonD}<br>
+        ② ${s.n1}/${s.d1} = ${s.newN1}/${s.commonD}，${s.n2}/${s.d2} = ${s.newN2}/${s.commonD}<br>
+        ③ 分子${s.op === '+' ? '相加' : '相减'}得 ${s.rawN}/${s.commonD}，再约分！`;
+      box.classList.toggle('show');
+    });
+
+    // ==========================================
+    // 练习模式（输入答案）
+    // ==========================================
+    let pracState = { ansN: 0, ansD: 0, correct: 0, wrong: 0, locked: false };
+
+    function genPractice() {
+      pracState.locked = false;
+      const sameDen = Math.random() < 0.4;
+      let d1, d2, n1, n2;
+      if (sameDen) {
+        d1 = randInt(2, 12);
+        d2 = d1;
+        n1 = randInt(1, d1 - 1);
+        n2 = randInt(1, d1 - n1);
+      } else {
+        const denoms = [2, 3, 4, 5, 6, 8, 10];
+        d1 = denoms[randInt(0, denoms.length - 1)];
+        d2 = d1;
+        while (d2 === d1) d2 = denoms[randInt(0, denoms.length - 1)];
+        n1 = randInt(1, d1 - 1);
+        n2 = randInt(1, d2 - 1);
+      }
+      const op = Math.random() < 0.5 ? '+' : '-';
+      const commonD = lcm(d1, d2);
+      const rawN = op === '+' ? n1 * (commonD / d1) + n2 * (commonD / d2) : n1 * (commonD / d1) - n2 * (commonD / d2);
+      const [sn, sd] = simplify(rawN, commonD);
+
+      pracState = { ...pracState, n1, d1, n2, d2, op, ansN: sn, ansD: sd, commonD, locked: false };
+
+      document.getElementById('prac-problem').innerHTML =
+        fracHTML(n1, d1, 'big') + ` <span class="op">${op === '+' ? '+' : '−'}</span> ` + fracHTML(n2, d2, 'big') + ' <span class="eq">= ?</span>';
+
+      document.getElementById('prac-num').value = '';
+      document.getElementById('prac-den').value = '';
+      document.getElementById('prac-feedback').textContent = '';
+      document.getElementById('prac-feedback').className = 'feedback';
+      document.getElementById('prac-hint-box').classList.remove('show');
+      document.getElementById('prac-num').focus();
+    }
+
+    document.getElementById('prac-submit').addEventListener('click', function() {
+      if (pracState.locked) return;
+      const userN = parseInt(document.getElementById('prac-num').value);
+      const userD = parseInt(document.getElementById('prac-den').value);
+
+      if (isNaN(userN) || isNaN(userD) || userD === 0) {
+        showToast('请输入分子和分母', 'warning');
+        return;
+      }
+
+      const [usn, usd] = simplify(userN, userD);
+      const isCorrect = (usn === pracState.ansN && usd === pracState.ansD);
+
+      if (isCorrect) {
+        pracState.correct++;
+        document.getElementById('prac-correct').textContent = pracState.correct;
+        document.getElementById('prac-feedback').textContent = '🎉 完全正确！';
+        document.getElementById('prac-feedback').className = 'feedback correct';
+        pracState.locked = true;
+        setTimeout(genPractice, 1500);
+      } else {
+        pracState.wrong++;
+        document.getElementById('prac-wrong').textContent = pracState.wrong;
+        document.getElementById('prac-feedback').textContent = '❌ 不对哦，检查是否约分到最简？';
+        document.getElementById('prac-feedback').className = 'feedback wrong';
+      }
+    });
+
+    document.getElementById('prac-hint').addEventListener('click', function() {
+      const box = document.getElementById('prac-hint-box');
+      const s = pracState;
+      if (s.d1 === s.d2) {
+        box.innerHTML = `<strong>提示：</strong>分母相同，分母 ${s.d1} 不变，分子${s.op === '+' ? '相加' : '相减'}即可。别忘了约分！`;
+      } else {
+        const commonD = lcm(s.d1, s.d2);
+        box.innerHTML = `<strong>提示：</strong>先通分！LCM(${s.d1}, ${s.d2}) = ${commonD}，然后分子相${s.op === '+' ? '加' : '减'}，最后约分。`;
+      }
+      box.classList.toggle('show');
+    });
+
+    // ==========================================
+    // 闯关模式
+    // ==========================================
+    const LEVELS = [
+      { diff: '简单', desc: '同分母加法', gen: () => genChallengeProblem(true, false, 1) },
+      { diff: '简单', desc: '同分母减法', gen: () => genChallengeProblem(true, true, 1) },
+      { diff: '普通', desc: '异分母加法', gen: () => genChallengeProblem(false, false, 2) },
+      { diff: '普通', desc: '异分母减法', gen: () => genChallengeProblem(false, true, 2) },
+      { diff: '困难', desc: '需要约分', gen: () => genChallengeProblem(false, Math.random() < 0.5, 3) },
+    ];
+    let chState = { level: 0, ansN: 0, ansD: 0, locked: false, results: [] };
+
+    function initChallenge() {
+      chState = { level: 0, locked: false, results: [] };
+      renderLevelBar();
+      loadChallengeLevel();
+    }
+
+    function renderLevelBar() {
+      const bar = document.getElementById('level-bar');
+      bar.innerHTML = '';
+      LEVELS.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'level-dot';
+        dot.textContent = i + 1;
+        if (i < chState.level) dot.classList.add('done');
+        if (i === chState.level) dot.classList.add('active');
+        bar.appendChild(dot);
+      });
+    }
+
+    function genChallengeProblem(sameDen, isSub, difficulty) {
+      let d1, d2, n1, n2;
+      if (sameDen) {
+        d1 = randInt(2, difficulty === 1 ? 8 : 12);
+        d2 = d1;
+      } else {
+        const denoms = difficulty <= 2 ? [2, 3, 4, 5, 6] : [2, 3, 4, 5, 6, 7, 8, 9, 10];
+        d1 = denoms[randInt(0, denoms.length - 1)];
+        d2 = d1;
+        while (d2 === d1) d2 = denoms[randInt(0, denoms.length - 1)];
+      }
+      n1 = randInt(1, d1 - 1);
+      n2 = randInt(1, (sameDen ? d1 - n1 : d2 - 1));
+      const op = isSub ? '-' : '+';
+      const commonD = lcm(d1, d2);
+      const rawN = op === '+' ? n1 * (commonD / d1) + n2 * (commonD / d2) : n1 * (commonD / d1) - n2 * (commonD / d2);
+      const [sn, sd] = simplify(rawN, commonD);
+      return { n1, d1, n2, d2, op, ansN: sn, ansD: sd };
+    }
+
+    function loadChallengeLevel() {
+      if (chState.level >= LEVELS.length) {
+        showChallengeComplete();
+        return;
+      }
+      chState.locked = false;
+      const lv = LEVELS[chState.level];
+      document.getElementById('level-info').innerHTML = `第 ${chState.level + 1} 关 · <span class="diff">${lv.diff}</span> · ${lv.desc}`;
+      renderLevelBar();
+
+      const p = lv.gen();
+      chState.ansN = p.ansN;
+      chState.ansD = p.ansD;
+
+      document.getElementById('ch-problem').innerHTML =
+        fracHTML(p.n1, p.d1, 'big') + ` <span class="op">${p.op === '+' ? '+' : '−'}</span> ` + fracHTML(p.n2, p.d2, 'big') + ' <span class="eq">= ?</span>';
+
+      const opts = generateOptions(p.ansN, p.ansD, Math.max(p.d1, p.d2));
+      const grid = document.getElementById('ch-options');
+      grid.innerHTML = '';
+      opts.forEach(o => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.innerHTML = fracHTML(o[0], o[1]);
+        btn.addEventListener('click', () => checkChallenge(btn, o[0], o[1]));
+        grid.appendChild(btn);
+      });
+
+      document.getElementById('ch-feedback').textContent = '';
+      document.getElementById('ch-feedback').className = 'feedback';
+      document.getElementById('ch-complete').style.display = 'none';
+    }
+
+    function checkChallenge(btn, n, d) {
+      if (chState.locked) return;
+      chState.locked = true;
+      const isCorrect = (n === chState.ansN && d === chState.ansD);
+      const allBtns = document.querySelectorAll('#ch-options .opt-btn');
+
+      if (isCorrect) {
+        btn.classList.add('correct');
+        chState.results.push(true);
+        document.getElementById('ch-feedback').textContent = '🎉 过关！';
+        document.getElementById('ch-feedback').className = 'feedback correct';
+        allBtns.forEach(b => b.classList.add('disabled'));
+        const dots = document.querySelectorAll('.level-dot');
+        if (dots[chState.level]) dots[chState.level].classList.add('done');
+        chState.level++;
+        setTimeout(() => {
+          renderLevelBar();
+          loadChallengeLevel();
+        }, 1500);
+      } else {
+        btn.classList.add('wrong');
+        chState.results.push(false);
+        document.getElementById('ch-feedback').textContent = '❌ 再算一次！';
+        document.getElementById('ch-feedback').className = 'feedback wrong';
+        setTimeout(() => {
+          btn.classList.remove('wrong');
+          allBtns.forEach(b => b.classList.remove('disabled'));
+          chState.locked = false;
+        }, 800);
+      }
+    }
+
+    function showChallengeComplete() {
+      const correct = chState.results.filter(r => r).length;
+      const total = chState.results.length;
+      const stars = correct >= total ? '⭐⭐⭐' : correct >= total * 0.6 ? '⭐⭐' : '⭐';
+      const div = document.getElementById('ch-complete');
+      div.style.display = 'block';
+      div.innerHTML = `
+        <div style="font-size:48px;margin:16px 0;">${stars}</div>
+        <div style="font-size:20px;font-weight:700;color:#1D1D1F;margin:8px 0;">闯关完成！</div>
+        <div style="font-size:16px;color:#6E6E73;">答对 ${correct}/${total} 题</div>
+        <button class="calc-btn" onclick="initChallenge()" style="margin-top:16px;">🔄 再来一次</button>
+      `;
+      document.getElementById('ch-problem').innerHTML = '';
+      document.getElementById('ch-options').innerHTML = '';
+      document.getElementById('ch-feedback').textContent = '';
+      renderLevelBar();
+    }
+
+    // === 生成选项 ===
+    function generateOptions(correctN, correctD, maxDen) {
+      const opts = [[correctN, correctD]];
+      const seen = new Set([`${correctN}/${correctD}`]);
+
+      // 常见错误答案
+      const errors = [];
+      // 分子分母分别相加（不通分）
+      errors.push([correctN + 1, correctD + maxDen]);
+      errors.push([correctN - 1, correctD]);
+      errors.push([correctN, correctD + 1]);
+      errors.push([correctN + 1, correctD + 1]);
+
+      // 随机干扰项
+      for (let i = 0; i < 20 && opts.length < 4; i++) {
+        const d = randInt(2, Math.max(maxDen + 2, 12));
+        const n = randInt(0, d);
+        errors.push([n, d]);
+      }
+
+      for (const [en, ed] of errors) {
+        if (opts.length >= 4) break;
+        const [sn, sd] = simplify(en, ed);
+        if (sn < 0 || sd <= 0) continue;
+        const key = `${sn}/${sd}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          opts.push([sn, sd]);
+        }
+      }
+
+      // 确保有4个选项
+      while (opts.length < 4) {
+        const n = randInt(0, 10);
+        const d = randInt(2, 12);
+        const [sn, sd] = simplify(n, d);
+        const key = `${sn}/${sd}`;
+        if (!seen.has(key) && sn >= 0) {
+          seen.add(key);
+          opts.push([sn, sd]);
+        }
+      }
+
+      // 打乱顺序
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = randInt(0, i);
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+      return opts;
+    }
+
+    // === 初始化 ===
+    genSameDen();
+  })();
+  </script>
+</body>
+</html>

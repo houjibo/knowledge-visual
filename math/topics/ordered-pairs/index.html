@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>数对与位置</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #00897B; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 模式1: 概念介绍 */
+    .concept-area { text-align: center; padding: 24px 16px; }
+    .concept-title { font-size: 22px; font-weight: 700; color: #00897B; margin: 16px 0; }
+    .concept-explain { font-size: 17px; color: #1D1D1F; line-height: 1.8; margin: 16px 0; }
+    .concept-explain .highlight { color: #00897B; font-weight: 700; }
+    .concept-example { display: flex; flex-direction: column; align-items: center; gap: 16px; margin: 20px 0; }
+    .example-grid { display: grid; grid-template-columns: repeat(5, 48px); gap: 4px; }
+    .example-cell { width: 48px; height: 48px; border: 2px solid #C0C4CC; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #9CA3AF; background: #F5F5F7; }
+    .example-cell.highlight { background: #E0F2F1; border-color: #00897B; }
+    .example-cell.target { background: #00897B; color: white; font-weight: 700; }
+    .example-label { font-size: 18px; font-weight: 600; color: #6E6E73; }
+    .example-pair { font-size: 28px; font-weight: 800; color: #00897B; }
+
+    /* 模式2: 找位置 */
+    .find-area { text-align: center; padding: 24px 16px; }
+    .find-instruction { font-size: 20px; font-weight: 600; margin: 16px 0; }
+    .find-pair-display { font-size: 36px; font-weight: 800; color: #00897B; margin: 16px 0; }
+    .grid-container { display: inline-block; position: relative; margin: 16px auto; }
+    .position-grid { display: grid; gap: 4px; }
+    .grid-cell-click {
+      width: 48px; height: 48px; border: 2px solid #C0C4CC; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: #9CA3AF; background: #F5F5F7;
+      cursor: pointer; transition: all 0.2s ease; user-select: none;
+    }
+    .grid-cell-click:active { transform: scale(0.9); }
+    .grid-cell-click.correct { background: #34C759; border-color: #2E7D32; color: white; }
+    .grid-cell-click.wrong { background: #FF3B30; border-color: #C62828; color: white; }
+    .grid-cell-click.hint { background: #FFF3E0; border-color: #FF9500; }
+    .grid-labels-left { position: absolute; left: -30px; top: 0; display: flex; flex-direction: column; gap: 4px; }
+    .grid-labels-bottom { position: absolute; bottom: -30px; left: 0; display: flex; gap: 4px; }
+    .grid-label { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #6E6E73; }
+    .grid-label-left { width: 30px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #6E6E73; }
+    .find-score { display: flex; justify-content: center; gap: 20px; margin: 16px 0; font-size: 16px; font-weight: 600; }
+    .find-feedback { font-size: 24px; font-weight: 700; min-height: 40px; margin: 12px 0; }
+
+    /* 模式3: 写数对 */
+    .write-area { text-align: center; padding: 24px 16px; }
+    .write-instruction { font-size: 20px; font-weight: 600; margin: 16px 0; }
+    .write-grid-container { position: relative; display: inline-block; margin: 16px auto; }
+    .write-target { font-size: 48px; margin: 8px 0; }
+    .write-input-row { display: flex; justify-content: center; align-items: center; gap: 12px; margin: 16px 0; }
+    .write-input {
+      width: 80px; height: 56px; border: 3px solid #9CA3AF; border-radius: 14px;
+      font-size: 28px; font-weight: 700; text-align: center; color: #00897B;
+      outline: none; transition: border-color 0.2s ease;
+    }
+    .write-input:focus { border-color: #00897B; }
+    .write-input.correct { border-color: #34C759; background: rgba(52,199,89,0.1); }
+    .write-input.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .write-separator { font-size: 32px; font-weight: 700; color: #6E6E73; }
+    .write-check-btn {
+      padding: 14px 28px; border: none; background: #00897B; color: white;
+      border-radius: 14px; font-size: 18px; font-weight: 700; cursor: pointer;
+      margin: 16px auto; display: block; box-shadow: 0 4px 12px rgba(0,137,123,0.3);
+    }
+    .write-check-btn:active { transform: scale(0.95); }
+    .write-feedback { font-size: 24px; font-weight: 700; min-height: 40px; margin: 12px 0; }
+    .write-score { display: flex; justify-content: center; gap: 20px; margin: 16px 0; font-size: 16px; font-weight: 600; }
+
+    /* 模式4: 挑战模式 */
+    .challenge-area { text-align: center; padding: 24px 16px; }
+    .challenge-start-btn {
+      padding: 16px 32px; border: none; background: #00897B; color: white;
+      border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer;
+      margin: 16px auto; display: block; box-shadow: 0 4px 12px rgba(0,137,123,0.3);
+    }
+    .challenge-start-btn:active { transform: scale(0.95); }
+    .challenge-running { display: none; }
+    .challenge-header { display: flex; justify-content: space-between; align-items: center; margin: 16px 0; }
+    .challenge-timer { font-size: 18px; font-weight: 700; color: #FF9500; }
+    .challenge-score-display { font-size: 18px; font-weight: 700; color: #00897B; }
+    .timer-bar { height: 8px; background: #E5E5EA; border-radius: 4px; overflow: hidden; margin: 12px 0; }
+    .timer-fill { height: 100%; background: linear-gradient(90deg, #34C759, #FF9500, #FF3B30); border-radius: 4px; transition: width 0.1s linear; }
+    .challenge-question { font-size: 22px; font-weight: 700; margin: 16px 0; }
+    .challenge-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 320px; margin: 16px auto; }
+    .challenge-option-btn {
+      padding: 16px; border: 3px solid #9CA3AF; background: white;
+      border-radius: 14px; font-size: 18px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .challenge-option-btn:active { transform: scale(0.95); }
+    .challenge-option-btn.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .challenge-option-btn.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .challenge-result { display: none; text-align: center; padding: 24px; }
+    .challenge-result-title { font-size: 28px; font-weight: 800; color: #00897B; margin: 16px 0; }
+    .challenge-result-score { font-size: 48px; font-weight: 800; color: #FF9500; margin: 16px 0; }
+    .challenge-restart-btn {
+      padding: 14px 28px; border: none; background: #00897B; color: white;
+      border-radius: 14px; font-size: 18px; font-weight: 700; cursor: pointer;
+      margin: 16px auto; display: block;
+    }
+
+    .score-display { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px; font-size: 18px; font-weight: 600; }
+    .score-stars { font-size: 24px; }
+  </style>
+</head>
+<body>
+  <nav class="nav-bar">
+    <button class="nav-btn nav-back" aria-label="返回">←</button>
+    <span class="nav-title">📍 数对与位置</span>
+    <div style="width:56px"></div>
+  </nav>
+
+  <div class="page-container">
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="concept">📖 认识</button>
+      <button class="mode-tab" data-mode="find">🎯 找位置</button>
+      <button class="mode-tab" data-mode="write">✍️ 写数对</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- 模式1: 概念介绍 -->
+    <div class="mode-content active" data-mode="concept">
+      <div class="concept-area">
+        <div class="concept-title">什么是数对？</div>
+        <div class="concept-explain">
+          在方格纸上，我们用 <span class="highlight">两个数</span> 来确定一个位置。<br>
+          第一个数表示 <span class="highlight">第几列</span>（从左往右），<br>
+          第二个数表示 <span class="highlight">第几行</span>（从下往上）。
+        </div>
+        <div class="concept-example">
+          <div class="example-label">比如：第3列，第2行</div>
+          <div class="example-grid" id="concept-grid">
+            <!-- JS 生成 -->
+          </div>
+          <div class="example-pair">数对：(3, 2)</div>
+          <div class="example-label" style="font-size:14px; color:#9CA3AF;">
+            记住：先说列，再说行
+          </div>
+        </div>
+        <div class="concept-explain" style="background:#E0F2F1; padding:16px; border-radius:12px; margin-top:20px;">
+          💡 <span class="highlight">小技巧</span>：先左右找到列，再上下找到行，交叉点就是位置！
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 找位置 -->
+    <div class="mode-content" data-mode="find">
+      <div class="find-area">
+        <div class="find-instruction">点击数对表示的位置</div>
+        <div class="find-pair-display" id="find-pair">( ?, ? )</div>
+        <div class="grid-container">
+          <div class="grid-labels-left" id="find-row-labels"></div>
+          <div class="position-grid" id="find-grid" style="grid-template-columns: repeat(5, 48px);">
+            <!-- JS 生成 -->
+          </div>
+          <div class="grid-labels-bottom" id="find-col-labels"></div>
+        </div>
+        <div class="find-feedback" id="find-feedback"></div>
+        <div class="find-score">
+          <span>✅ <span id="find-correct">0</span></span>
+          <span>❌ <span id="find-wrong">0</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 写数对 -->
+    <div class="mode-content" data-mode="write">
+      <div class="write-area">
+        <div class="write-instruction">写出标记位置对应的数对</div>
+        <div class="write-grid-container">
+          <div class="grid-labels-left" id="write-row-labels"></div>
+          <div class="position-grid" id="write-grid" style="grid-template-columns: repeat(5, 48px);">
+            <!-- JS 生成 -->
+          </div>
+          <div class="grid-labels-bottom" id="write-col-labels"></div>
+        </div>
+        <div class="write-target" id="write-target">⭐</div>
+        <div class="write-input-row">
+          <span style="font-size:28px; font-weight:700; color:#6E6E73;">(</span>
+          <input type="number" class="write-input" id="write-col" min="1" max="5" placeholder="列">
+          <span class="write-separator">,</span>
+          <input type="number" class="write-input" id="write-row" min="1" max="5" placeholder="行">
+          <span style="font-size:28px; font-weight:700; color:#6E6E73;">)</span>
+        </div>
+        <button class="write-check-btn" id="write-check">确认</button>
+        <div class="write-feedback" id="write-feedback"></div>
+        <div class="write-score">
+          <span>✅ <span id="write-correct">0</span></span>
+          <span>❌ <span id="write-wrong">0</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 挑战模式 -->
+    <div class="mode-content" data-mode="challenge">
+      <div class="challenge-area">
+        <button class="challenge-start-btn" id="challenge-start">开始挑战 (60秒)</button>
+        <div class="challenge-running" id="challenge-running">
+          <div class="challenge-header">
+            <span class="challenge-timer">⏱️ <span id="challenge-time">60</span>s</span>
+            <span class="challenge-score-display">得分: <span id="challenge-score">0</span></span>
+          </div>
+          <div class="timer-bar"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+          <div class="challenge-question" id="challenge-question">准备...</div>
+          <div class="challenge-options" id="challenge-options">
+            <!-- JS 生成 -->
+          </div>
+        </div>
+        <div class="challenge-result" id="challenge-result">
+          <div class="challenge-result-title">挑战结束！</div>
+          <div class="challenge-result-score" id="challenge-final-score">0</div>
+          <div style="font-size:16px; color:#6E6E73;">答对题数</div>
+          <button class="challenge-restart-btn" id="challenge-restart">再来一次</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="score-display">
+      <span>📍 数对与位置</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+  </div>
+
+  <script>
+    // === 导航返回 ===
+    document.querySelector('.nav-back').addEventListener('click', () => window.location.href = '../../index.html');
+
+    // === 模式切换 ===
+    const modeTabs = document.querySelectorAll('.mode-tab');
+    const modeContents = document.querySelectorAll('.mode-content');
+    modeTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const mode = tab.dataset.mode;
+        modeTabs.forEach(t => t.classList.remove('active'));
+        modeContents.forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelector(`.mode-content[data-mode="${mode}"]`).classList.add('active');
+      });
+    });
+
+    // === 工具函数 ===
+    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function updateStars() {
+      const total = correctCount;
+      const stars = Math.min(5, Math.floor(total / 3));
+      document.getElementById('stars-display').textContent = '⭐'.repeat(stars);
+    }
+    let correctCount = 0;
+
+    // === 模式1: 概念介绍 ===
+    function initConceptGrid() {
+      const grid = document.getElementById('concept-grid');
+      grid.innerHTML = '';
+      for (let row = 5; row >= 1; row--) {
+        for (let col = 1; col <= 5; col++) {
+          const cell = document.createElement('div');
+          cell.className = 'example-cell';
+          if (col === 3 && row === 2) {
+            cell.classList.add('target');
+            cell.textContent = '📍';
+          } else if (col === 3 || row === 2) {
+            cell.classList.add('highlight');
+          }
+          grid.appendChild(cell);
+        }
+      }
+    }
+    initConceptGrid();
+
+    // === 模式2: 找位置 ===
+    let findTarget = { col: 0, row: 0 };
+    let findCorrect = 0, findWrong = 0;
+    let findLocked = false;
+
+    function initFindGrid() {
+      const grid = document.getElementById('find-grid');
+      grid.innerHTML = '';
+      // 行标签
+      const rowLabels = document.getElementById('find-row-labels');
+      rowLabels.innerHTML = '';
+      for (let row = 5; row >= 1; row--) {
+        const label = document.createElement('div');
+        label.className = 'grid-label-left';
+        label.textContent = row;
+        rowLabels.appendChild(label);
+      }
+      // 列标签
+      const colLabels = document.getElementById('find-col-labels');
+      colLabels.innerHTML = '';
+      for (let col = 1; col <= 5; col++) {
+        const label = document.createElement('div');
+        label.className = 'grid-label';
+        label.textContent = col;
+        colLabels.appendChild(label);
+      }
+      // 网格
+      for (let row = 5; row >= 1; row--) {
+        for (let col = 1; col <= 5; col++) {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell-click';
+          cell.dataset.col = col;
+          cell.dataset.row = row;
+          cell.addEventListener('click', () => handleFindClick(cell, col, row));
+          grid.appendChild(cell);
+        }
+      }
+      nextFindQuestion();
+    }
+
+    function nextFindQuestion() {
+      findTarget = { col: randInt(1, 5), row: randInt(1, 5) };
+      document.getElementById('find-pair').textContent = `( ${findTarget.col}, ${findTarget.row} )`;
+      document.getElementById('find-feedback').textContent = '';
+      findLocked = false;
+      // 清除所有高亮
+      document.querySelectorAll('#find-grid .grid-cell-click').forEach(c => {
+        c.classList.remove('correct', 'wrong', 'hint');
+      });
+    }
+
+    function handleFindClick(cell, col, row) {
+      if (findLocked) return;
+      findLocked = true;
+      if (col === findTarget.col && row === findTarget.row) {
+        cell.classList.add('correct');
+        document.getElementById('find-feedback').textContent = '✅ 正确！';
+        document.getElementById('find-feedback').style.color = '#34C759';
+        findCorrect++;
+        correctCount++;
+        document.getElementById('find-correct').textContent = findCorrect;
+        updateStars();
+        setTimeout(nextFindQuestion, 1500);
+      } else {
+        cell.classList.add('wrong');
+        // 显示正确位置
+        document.querySelectorAll('#find-grid .grid-cell-click').forEach(c => {
+          if (parseInt(c.dataset.col) === findTarget.col && parseInt(c.dataset.row) === findTarget.row) {
+            c.classList.add('hint');
+          }
+        });
+        document.getElementById('find-feedback').textContent = '❌ 再试试！';
+        document.getElementById('find-feedback').style.color = '#FF3B30';
+        findWrong++;
+        document.getElementById('find-wrong').textContent = findWrong;
+        setTimeout(() => { findLocked = false; }, 1000);
+      }
+    }
+
+    initFindGrid();
+
+    // === 模式3: 写数对 ===
+    let writeTarget = { col: 0, row: 0 };
+    let writeCorrect = 0, writeWrong = 0;
+
+    function initWriteGrid() {
+      const grid = document.getElementById('write-grid');
+      grid.innerHTML = '';
+      // 行标签
+      const rowLabels = document.getElementById('write-row-labels');
+      rowLabels.innerHTML = '';
+      for (let row = 5; row >= 1; row--) {
+        const label = document.createElement('div');
+        label.className = 'grid-label-left';
+        label.textContent = row;
+        rowLabels.appendChild(label);
+      }
+      // 列标签
+      const colLabels = document.getElementById('write-col-labels');
+      colLabels.innerHTML = '';
+      for (let col = 1; col <= 5; col++) {
+        const label = document.createElement('div');
+        label.className = 'grid-label';
+        label.textContent = col;
+        colLabels.appendChild(label);
+      }
+      // 网格
+      for (let row = 5; row >= 1; row--) {
+        for (let col = 1; col <= 5; col++) {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell-click';
+          cell.dataset.col = col;
+          cell.dataset.row = row;
+          cell.style.cursor = 'default';
+          grid.appendChild(cell);
+        }
+      }
+      nextWriteQuestion();
+    }
+
+    function nextWriteQuestion() {
+      writeTarget = { col: randInt(1, 5), row: randInt(1, 5) };
+      // 更新网格显示
+      document.querySelectorAll('#write-grid .grid-cell-click').forEach(c => {
+        c.classList.remove('correct', 'wrong');
+        c.textContent = '';
+        if (parseInt(c.dataset.col) === writeTarget.col && parseInt(c.dataset.row) === writeTarget.row) {
+          c.textContent = '⭐';
+          c.style.fontSize = '24px';
+        }
+      });
+      document.getElementById('write-col').value = '';
+      document.getElementById('write-row').value = '';
+      document.getElementById('write-col').classList.remove('correct', 'wrong');
+      document.getElementById('write-row').classList.remove('correct', 'wrong');
+      document.getElementById('write-feedback').textContent = '';
+    }
+
+    document.getElementById('write-check').addEventListener('click', () => {
+      const col = parseInt(document.getElementById('write-col').value);
+      const row = parseInt(document.getElementById('write-row').value);
+      const colInput = document.getElementById('write-col');
+      const rowInput = document.getElementById('write-row');
+
+      if (isNaN(col) || isNaN(row)) {
+        document.getElementById('write-feedback').textContent = '请输入完整的数对';
+        document.getElementById('write-feedback').style.color = '#FF9500';
+        return;
+      }
+
+      if (col === writeTarget.col && row === writeTarget.row) {
+        colInput.classList.add('correct');
+        rowInput.classList.add('correct');
+        document.getElementById('write-feedback').textContent = '✅ 正确！';
+        document.getElementById('write-feedback').style.color = '#34C759';
+        writeCorrect++;
+        correctCount++;
+        document.getElementById('write-correct').textContent = writeCorrect;
+        updateStars();
+        setTimeout(nextWriteQuestion, 1500);
+      } else {
+        colInput.classList.add('wrong');
+        rowInput.classList.add('wrong');
+        document.getElementById('write-feedback').textContent = `❌ 正确答案是 (${writeTarget.col}, ${writeTarget.row})`;
+        document.getElementById('write-feedback').style.color = '#FF3B30';
+        writeWrong++;
+        document.getElementById('write-wrong').textContent = writeWrong;
+        setTimeout(nextWriteQuestion, 2000);
+      }
+    });
+
+    // 回车确认
+    document.getElementById('write-row').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') document.getElementById('write-check').click();
+    });
+
+    initWriteGrid();
+
+    // === 模式4: 挑战模式 ===
+    let challengeTimer = null;
+    let challengeTimeLeft = 60;
+    let challengeScore = 0;
+    let challengeLocked = false;
+
+    document.getElementById('challenge-start').addEventListener('click', startChallenge);
+    document.getElementById('challenge-restart').addEventListener('click', startChallenge);
+
+    function startChallenge() {
+      document.getElementById('challenge-start').style.display = 'none';
+      document.getElementById('challenge-result').style.display = 'none';
+      document.getElementById('challenge-running').style.display = 'block';
+      challengeTimeLeft = 60;
+      challengeScore = 0;
+      challengeLocked = false;
+      document.getElementById('challenge-time').textContent = challengeTimeLeft;
+      document.getElementById('challenge-score').textContent = challengeScore;
+      document.getElementById('timer-fill').style.width = '100%';
+      nextChallengeQuestion();
+      challengeTimer = setInterval(() => {
+        challengeTimeLeft--;
+        document.getElementById('challenge-time').textContent = challengeTimeLeft;
+        document.getElementById('timer-fill').style.width = (challengeTimeLeft / 60 * 100) + '%';
+        if (challengeTimeLeft <= 0) endChallenge();
+      }, 1000);
+    }
+
+    function nextChallengeQuestion() {
+      challengeLocked = false;
+      const type = randInt(1, 2);
+      const col = randInt(1, 5);
+      const row = randInt(1, 5);
+
+      if (type === 1) {
+        // 给数对选位置
+        document.getElementById('challenge-question').textContent = `数对 (${col}, ${row}) 表示哪个位置？`;
+        const options = generateOptions(col, row);
+        renderChallengeOptions(options, `第${col}列第${row}行`);
+      } else {
+        // 给位置选数对
+        document.getElementById('challenge-question').textContent = `第${col}列第${row}行用数对怎么表示？`;
+        const options = generatePairOptions(col, row);
+        renderChallengeOptions(options, `(${col}, ${row})`);
+      }
+    }
+
+    function generateOptions(targetCol, targetRow) {
+      const correct = `第${targetCol}列第${targetRow}行`;
+      const options = [correct];
+      while (options.length < 4) {
+        const c = randInt(1, 5);
+        const r = randInt(1, 5);
+        const opt = `第${c}列第${r}行`;
+        if (!options.includes(opt)) options.push(opt);
+      }
+      return shuffle(options);
+    }
+
+    function generatePairOptions(targetCol, targetRow) {
+      const correct = `(${targetCol}, ${targetRow})`;
+      const options = [correct];
+      while (options.length < 4) {
+        const c = randInt(1, 5);
+        const r = randInt(1, 5);
+        const opt = `(${c}, ${r})`;
+        if (!options.includes(opt)) options.push(opt);
+      }
+      return shuffle(options);
+    }
+
+    function renderChallengeOptions(options, correctAnswer) {
+      const container = document.getElementById('challenge-options');
+      container.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'challenge-option-btn';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => {
+          if (challengeLocked) return;
+          challengeLocked = true;
+          if (opt === correctAnswer) {
+            btn.classList.add('correct');
+            challengeScore++;
+            document.getElementById('challenge-score').textContent = challengeScore;
+            setTimeout(nextChallengeQuestion, 1500);
+          } else {
+            btn.classList.add('wrong');
+            // 高亮正确答案
+            container.querySelectorAll('.challenge-option-btn').forEach(b => {
+              if (b.textContent === correctAnswer) b.classList.add('correct');
+            });
+            setTimeout(nextChallengeQuestion, 1500);
+          }
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = randInt(0, i);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function endChallenge() {
+      clearInterval(challengeTimer);
+      document.getElementById('challenge-running').style.display = 'none';
+      document.getElementById('challenge-result').style.display = 'block';
+      document.getElementById('challenge-final-score').textContent = challengeScore;
+    }
+  </script>
+</body>
+</html>
