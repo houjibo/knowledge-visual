@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>简易方程</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #4A90D9; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+    .balance-area { text-align: center; padding: 24px 16px; }
+    .equation-display { font-size: 36px; font-weight: 700; color: #4A90D9; margin: 16px 0; }
+    .balance-input { display: flex; justify-content: center; align-items: center; gap: 16px; margin: 16px 0; }
+    .balance-answer { width: 80px; height: 56px; border: 3px solid #E5E5EA; border-radius: 12px; font-size: 28px; font-weight: 700; text-align: center; color: #4A90D9; outline: none; }
+    .balance-answer:focus { border-color: #4A90D9; }
+    .balance-answer.correct { border-color: #34C759; background: rgba(52,199,89,0.1); }
+    .balance-answer.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .slider-area { text-align: center; padding: 24px 16px; }
+    .slider-display { font-size: 32px; font-weight: 700; margin: 16px 0; }
+    .slider-row { display: flex; align-items: center; gap: 16px; justify-content: center; margin: 12px 0; }
+    .slider-label { font-size: 18px; font-weight: 600; min-width: 100px; text-align: right; }
+    .slider-val { font-size: 24px; font-weight: 800; min-width: 40px; text-align: center; }
+    .equation-check { font-size: 20px; font-weight: 600; margin: 16px 0; padding: 12px; border-radius: 12px; }
+    .equation-check.balanced { background: rgba(52,199,89,0.15); color: #34C759; }
+    .equation-check.unbalanced { background: rgba(255,149,0,0.15); color: #FF9500; }
+    .story-area { text-align: center; padding: 24px 16px; }
+    .story-text { font-size: 20px; line-height: 1.6; margin: 16px 0; text-align: left; padding: 16px; background: #FFFBEB; border-radius: 12px; }
+    .story-equation { font-size: 28px; font-weight: 700; color: #4A90D9; margin: 16px 0; }
+    .steps-area { text-align: center; padding: 24px 16px; }
+    .step-item { font-size: 20px; font-weight: 600; margin: 8px 0; padding: 12px; background: #F0F4FF; border-radius: 8px; display: none; text-align: left; }
+    .step-item.show { display: block; animation: fadeInUp 0.3s ease; }
+    .step-num { display: inline-block; width: 28px; height: 28px; background: #4A90D9; color: white; border-radius: 50%; text-align: center; line-height: 28px; font-size: 14px; margin-right: 8px; }
+    .score-display { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px; font-size: 18px; font-weight: 600; }
+    .score-stars { font-size: 24px; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" aria-label="返回">←</button>
+      <span class="nav-title">🔤 简易方程</span>
+      <div style="width:56px"></div>
+    </nav>
+    <div class="score-display"><span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span><span class="score-stars" id="stars-display"></span></div>
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="balance">⚖️ 天平</button>
+      <button class="mode-tab" data-mode="slider">🎚️ 滑块</button>
+      <button class="mode-tab" data-mode="story">📖 故事题</button>
+      <button class="mode-tab" data-mode="steps">📝 步骤</button>
+    </div>
+
+    <!-- 模式1: 天平 -->
+    <div class="mode-content active" id="mode-balance">
+      <div class="card"><p class="page-subtitle">天平两边相等，求出x</p>
+        <div class="balance-area">
+          <div class="equation-display" id="balance-eq"></div>
+          <div style="font-size:48px;margin:16px 0">⚖️</div>
+          <div class="balance-input"><span style="font-size:20px;font-weight:600">x = </span><input type="tel" class="balance-answer" id="balance-ans" maxlength="2" inputmode="numeric" autocomplete="off"></div>
+          <div class="action-bar"><button class="btn btn-primary btn-large" id="btn-check-balance">✅ 检查</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 滑块 -->
+    <div class="mode-content" id="mode-slider">
+      <div class="card"><p class="page-subtitle">拖动滑块改变x，让等式平衡</p>
+        <div class="slider-area">
+          <div class="slider-display" id="slider-eq"></div>
+          <div class="slider-row"><span class="slider-label">左边 =</span><input type="range" id="slider-x" min="0" max="20" value="0"><span class="slider-val" id="slider-left-val">0</span></div>
+          <div class="slider-row"><span class="slider-label">右边 =</span><span class="slider-val" id="slider-right-val">0</span></div>
+          <div class="equation-check" id="slider-check">拖动滑块试试</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 故事题 -->
+    <div class="mode-content" id="mode-story">
+      <div class="card"><p class="page-subtitle">根据故事列出方程</p>
+        <div class="story-area">
+          <div class="story-text" id="story-text"></div>
+          <div class="story-equation" id="story-eq"></div>
+          <div class="balance-input"><span style="font-size:20px;font-weight:600">x = </span><input type="tel" class="balance-answer" id="story-ans" maxlength="2" inputmode="numeric" autocomplete="off"></div>
+          <div class="action-bar"><button class="btn btn-primary btn-large" id="btn-check-story">✅ 检查</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 步骤 -->
+    <div class="mode-content" id="mode-steps">
+      <div class="card"><p class="page-subtitle">一步一步解方程</p>
+        <div class="steps-area">
+          <div class="equation-display" id="steps-eq"></div>
+          <div id="steps-container"></div>
+          <div class="action-bar">
+            <button class="btn btn-primary" id="btn-next-step">👉 下一步</button>
+            <button class="btn btn-warning" id="btn-new-steps">🎲 换一个</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/animation.js"></script>
+  <script src="../../assets/js/touch.js"></script>
+  <script>
+    document.querySelector('.nav-back').addEventListener('click', () => window.location.href = '../../index.html');
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast('🔥 连续 ' + streak + ' 次！方程高手！');
+    }
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        Sound.play('click');
+      });
+    });
+
+    // === 模式1: 天平 ===
+    (function() {
+      let x, a, result;
+      function newBalance() {
+        x = Random.int(1, 10);
+        a = Random.int(1, 10);
+        result = x + a;
+        document.getElementById('balance-eq').innerHTML = 'x + ' + a + ' = <span style="color:#FF9500">' + result + '</span>';
+        document.getElementById('balance-ans').value = '';
+        document.getElementById('balance-ans').className = 'balance-answer';
+        Sound.play('click');
+      }
+      document.getElementById('btn-check-balance').addEventListener('click', function() {
+        var ans = parseInt(document.getElementById('balance-ans').value);
+        var inp = document.getElementById('balance-ans');
+        if (ans === x) {
+          inp.className = 'balance-answer correct';
+          streak++; Sound.play('correct'); celebrate(); updateStreak();
+          showToast('🎉 x = ' + x + '，答对了！');
+          setTimeout(newBalance, 1500);
+        } else {
+          inp.className = 'balance-answer wrong';
+          Animator.shake(inp);
+          streak = 0; Sound.play('wrong'); updateStreak();
+          showToast('再算算，' + x + ' + ' + a + ' = ' + result + '，x = ?');
+        }
+      });
+      document.getElementById('balance-ans').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('btn-check-balance').click();
+      });
+      newBalance();
+    })();
+
+    // === 模式2: 滑块 ===
+    (function() {
+      var answer, a, b;
+      function newSlider() {
+        answer = Random.int(1, 10);
+        a = Random.int(2, 5);
+        b = a * answer;
+        document.getElementById('slider-eq').innerHTML = a + ' × x = <span style="color:#FF9500">' + b + '</span>';
+        var slider = document.getElementById('slider-x');
+        slider.max = 20; slider.value = 0;
+        document.getElementById('slider-right-val').textContent = b;
+        document.getElementById('slider-check').dataset.done = '';
+        updateSlider();
+        Sound.play('click');
+      }
+      function updateSlider() {
+        var v = parseInt(document.getElementById('slider-x').value);
+        var av = a * v;
+        document.getElementById('slider-left-val').textContent = av;
+        var check = document.getElementById('slider-check');
+        if (av === b) {
+          check.textContent = '🎉 平衡了！x = ' + v;
+          check.className = 'equation-check balanced';
+          if (v === answer && !check.dataset.done) {
+            check.dataset.done = '1';
+            streak++; Sound.play('correct'); celebrate(); updateStreak();
+            setTimeout(function() { check.dataset.done = ''; newSlider(); }, 1500);
+          }
+        } else {
+          check.textContent = av < b ? '左边太小了，加大 x' : '左边太大了，减小 x';
+          check.className = 'equation-check unbalanced';
+          check.dataset.done = '';
+        }
+      }
+      document.getElementById('slider-x').addEventListener('input', updateSlider);
+      newSlider();
+    })();
+
+    // === 模式3: 故事题 ===
+    (function() {
+      var stories = [
+        function() {
+          var x = Random.int(2, 10);
+          var add = Random.int(1, 10);
+          var total = x + add;
+          return { text: '小明有一些苹果🍎，妈妈又给了他 ' + add + ' 个，现在一共有 ' + total + ' 个。小明原来有多少个苹果？', eq: 'x + ' + add + ' = ' + total, ans: x };
+        },
+        function() {
+          var x = Random.int(2, 8);
+          var mul = Random.int(2, 5);
+          var total = x * mul;
+          return { text: '一盒巧克力🍫有 ' + mul + ' 排，每排一样多，一共有 ' + total + ' 块。每排有多少块？', eq: mul + ' × x = ' + total, ans: x };
+        },
+        function() {
+          var x = Random.int(5, 20);
+          var spent = Random.int(1, x - 1);
+          var left = x - spent;
+          return { text: '小红有 ' + x + ' 元💰，买文具花了 ' + spent + ' 元，还剩 ' + left + ' 元。小红原来有多少元？', eq: 'x - ' + spent + ' = ' + left, ans: x };
+        }
+      ];
+      var current;
+      function newStory() {
+        current = Random.pick(stories)();
+        document.getElementById('story-text').textContent = current.text;
+        document.getElementById('story-eq').innerHTML = '<span style="color:#6E6E73">方程：</span>' + current.eq;
+        document.getElementById('story-ans').value = '';
+        document.getElementById('story-ans').className = 'balance-answer';
+        Sound.play('click');
+      }
+      document.getElementById('btn-check-story').addEventListener('click', function() {
+        var ans = parseInt(document.getElementById('story-ans').value);
+        var inp = document.getElementById('story-ans');
+        if (ans === current.ans) {
+          inp.className = 'balance-answer correct';
+          streak++; Sound.play('correct'); celebrate(); updateStreak();
+          showToast('🎉 x = ' + current.ans + '，答对了！');
+          setTimeout(newStory, 1500);
+        } else {
+          inp.className = 'balance-answer wrong';
+          Animator.shake(inp);
+          streak = 0; Sound.play('wrong'); updateStreak();
+          showToast('再想想哦');
+        }
+      });
+      document.getElementById('story-ans').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('btn-check-story').click();
+      });
+      newStory();
+    })();
+
+    // === 模式4: 步骤 ===
+    (function() {
+      var stepIdx = 0, steps = [];
+      function newSteps() {
+        var x = Random.int(1, 10);
+        var a = Random.int(1, 10);
+        var result = x + a;
+        stepIdx = 0;
+        steps = [
+          { text: '方程：x + ' + a + ' = ' + result },
+          { text: '两边同时减去 ' + a },
+          { text: 'x + ' + a + ' - ' + a + ' = ' + result + ' - ' + a },
+          { text: 'x = ' + (result - a) },
+          { text: '🎉 答案：x = ' + x + '！验算：' + x + ' + ' + a + ' = ' + result + ' ✅' }
+        ];
+        document.getElementById('steps-eq').innerHTML = 'x + ' + a + ' = <span style="color:#FF9500">' + result + '</span>';
+        var container = document.getElementById('steps-container');
+        container.innerHTML = '';
+        steps.forEach(function(s, idx) {
+          var d = document.createElement('div');
+          d.className = 'step-item';
+          d.innerHTML = '<span class="step-num">' + (idx + 1) + '</span>' + s.text;
+          container.appendChild(d);
+        });
+        document.getElementById('btn-next-step').disabled = false;
+        document.getElementById('btn-next-step').textContent = '👉 下一步';
+        Sound.play('click');
+      }
+      document.getElementById('btn-next-step').addEventListener('click', function() {
+        if (stepIdx >= steps.length) return;
+        var allSteps = document.querySelectorAll('.step-item');
+        allSteps[stepIdx].classList.add('show');
+        stepIdx++;
+        if (stepIdx === steps.length) {
+          document.getElementById('btn-next-step').textContent = '✅ 完成';
+          document.getElementById('btn-next-step').disabled = true;
+          celebrate();
+          streak++; Sound.play('correct'); updateStreak();
+        }
+      });
+      document.getElementById('btn-new-steps').addEventListener('click', newSteps);
+      newSteps();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>运算律</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #4A90D9; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    .exchange-area { text-align: center; padding: 24px 16px; }
+    .exchange-visual { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 24px 0; flex-wrap: wrap; }
+    .exchange-group { padding: 16px 24px; background: rgba(74,144,217,0.08); border-radius: 16px; font-size: 28px; font-weight: 700; color: #4A90D9; min-width: 100px; }
+    .exchange-op { font-size: 40px; font-weight: 700; color: #FF9500; }
+    .exchange-eq { font-size: 40px; font-weight: 700; color: #34C759; }
+    .exchange-formula { font-size: 24px; font-weight: 600; margin: 16px 0; color: #6E6E73; }
+
+    .combine-area { text-align: center; padding: 24px 16px; }
+    .combine-formula { font-size: 24px; font-weight: 700; margin: 16px 0; }
+    .combine-formula .highlight { color: #FF9500; background: rgba(255,149,0,0.15); padding: 2px 8px; border-radius: 4px; }
+    .combine-result { font-size: 32px; font-weight: 800; color: #34C759; margin: 16px 0; }
+
+    .distribute-area { text-align: center; padding: 24px 16px; }
+    .distribute-matrix { display: inline-grid; gap: 4px; margin: 16px auto; }
+    .dist-cell { width: 60px; height: 60px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; transition: all 0.3s ease; }
+    .dist-header { background: #F0F4FF; color: #4A90D9; }
+    .dist-filled { background: #4A90D9; color: white; }
+    .dist-empty { background: #E5E5EA; }
+
+    .challenge-area { text-align: center; padding: 24px 16px; }
+    .challenge-problem { font-size: 28px; font-weight: 700; color: #4A90D9; margin: 24px 0; }
+    .challenge-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 400px; margin: 24px auto; padding: 0 16px; }
+    .challenge-opt { padding: 20px; border: 3px solid #E5E5EA; background: white; border-radius: 16px; font-size: 20px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .challenge-opt:active { transform: scale(0.9); }
+    .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .timer-bar { height: 8px; background: #E5E5EA; border-radius: 4px; overflow: hidden; margin: 16px 0; }
+    .timer-fill { height: 100%; background: linear-gradient(90deg, #34C759, #FF9500, #FF3B30); border-radius: 4px; transition: width 0.1s linear; }
+    .challenge-start-btn {
+      padding: 16px 32px; border: none; background: #4A90D9; color: white;
+      border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer;
+      margin: 16px auto; display: block; box-shadow: 0 4px 12px rgba(74,144,217,0.3);
+    }
+    .challenge-start-btn:active { transform: scale(0.95); }
+    .challenge-running { display: none; }
+    .challenge-active .challenge-start-btn { display: none; }
+    .challenge-active .challenge-running { display: block; }
+    .challenge-toolbar { display: flex; justify-content: center; gap: 12px; margin: 12px 0; }
+    .toolbar-btn {
+      padding: 8px 16px; border: 2px solid #E5E5EA; background: white;
+      border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .toolbar-btn:active { transform: scale(0.95); }
+    .toolbar-btn.danger { border-color: #FF3B30; color: #FF3B30; }
+    .challenge-score { display: flex; justify-content: center; gap: 24px; margin: 16px 0; font-size: 18px; }
+    .challenge-history { max-height: 200px; overflow-y: auto; margin: 12px 0; padding: 8px; background: #F8F9FE; border-radius: 12px; }
+    .history-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-radius: 8px; margin: 4px 0; font-size: 14px; font-weight: 600; }
+    .history-item.correct { background: rgba(52,199,89,0.1); color: #34C759; }
+    .history-item.wrong { background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .history-item.timeout { background: rgba(255,149,0,0.15); color: #FF9500; }
+    .history-item .problem { color: #6E6E73; }
+    .history-panel { display: none; }
+    .history-panel.show { display: block; animation: fadeInUp 0.3s ease; }
+    .history-tabs { display: flex; gap: 8px; margin-bottom: 8px; }
+    .history-tab {
+      flex: 1; padding: 6px 8px; border: 2px solid #E5E5EA; background: white;
+      border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+      text-align: center; transition: all 0.2s ease;
+    }
+    .history-tab.active { border-color: #4A90D9; background: #4A90D9; color: white; }
+    .history-tab .count { display: inline-block; background: rgba(0,0,0,0.1); border-radius: 8px; padding: 0 6px; font-size: 11px; }
+
+    .score-display { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px; font-size: 18px; font-weight: 600; }
+    .score-stars { font-size: 24px; }
+    .diff-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+    .diff-easy { background: rgba(52,199,89,0.15); color: #34C759; }
+    .diff-medium { background: rgba(255,149,0,0.15); color: #FF9500; }
+    .diff-hard { background: rgba(255,59,48,0.15); color: #FF3B30; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" aria-label="返回">←</button>
+      <span class="nav-title">⚖️ 运算律</span>
+      <div style="width:56px"></div>
+    </nav>
+    <div class="score-display">
+      <span class="diff-badge diff-easy" id="diff-badge">交换律</span>
+      <span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="exchange">🔄 交换律</button>
+      <button class="mode-tab" data-mode="combine">🔗 结合律</button>
+      <button class="mode-tab" data-mode="distribute">📊 分配律</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- 模式1: 交换律 -->
+    <div class="mode-content active" id="mode-exchange">
+      <div class="card">
+        <p class="page-subtitle">交换两个数的位置，结果不变</p>
+        <div class="exchange-area">
+          <div class="exchange-visual" id="exchange-visual"></div>
+          <div class="exchange-formula" id="exchange-formula"></div>
+          <div class="action-bar"><button class="btn btn-primary btn-large" id="btn-new-exchange">🎲 换一个</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 结合律 -->
+    <div class="mode-content" id="mode-combine">
+      <div class="card">
+        <p class="page-subtitle">不同的组合方式，结果相同</p>
+        <div class="combine-area">
+          <div id="combine-content"></div>
+          <div class="action-bar"><button class="btn btn-primary btn-large" id="btn-new-combine">🎲 换一个</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 分配律 -->
+    <div class="mode-content" id="mode-distribute">
+      <div class="card">
+        <p class="page-subtitle">一个数乘以两个数的和 = 分别乘再相加</p>
+        <div class="distribute-area">
+          <div id="distribute-content"></div>
+          <div class="action-bar"><button class="btn btn-primary btn-large" id="btn-new-distribute">🎲 换一个</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 挑战 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="card">
+        <div class="challenge-area">
+          <div class="challenge-score">
+            <span>答对 <b id="ch-correct" style="color:#34C759">0</b></span>
+            <span>答错 <b id="ch-wrong" style="color:#FF3B30">0</b></span>
+            <span>超时 <b id="ch-timeout" style="color:#FF9500">0</b></span>
+          </div>
+          <div class="timer-bar"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+          <div class="challenge-toolbar" id="challenge-toolbar" style="display:none">
+            <button class="toolbar-btn" id="btn-history">📋 查看记录</button>
+            <button class="toolbar-btn danger" id="btn-clear-history">🗑️ 清空记录</button>
+          </div>
+          <div class="history-panel" id="history-panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px">
+              <span style="font-size:16px;font-weight:700;color:#4A90D9">📋 答题记录</span>
+              <button class="toolbar-btn" id="btn-close-history" style="padding:4px 12px">关闭</button>
+            </div>
+            <div class="history-tabs">
+              <div class="history-tab active" data-type="all">📋 全部</div>
+              <div class="history-tab" data-type="correct">✅ 正确</div>
+              <div class="history-tab" data-type="wrong">❌ 答错</div>
+              <div class="history-tab" data-type="timeout">⏰ 超时</div>
+            </div>
+            <div class="challenge-history" id="history-list"></div>
+          </div>
+          <button class="challenge-start-btn" id="btn-start-challenge">🏆 开始挑战！</button>
+          <div class="challenge-running">
+            <div class="challenge-problem" id="challenge-problem"></div>
+            <div class="challenge-options" id="challenge-options"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/animation.js"></script>
+  <script src="../../assets/js/touch.js"></script>
+  <script>
+    document.querySelector('.nav-back').addEventListener('click', () => window.location.href = '../../index.html');
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast(`🔥 连续 ${streak} 次！运算律大师！`);
+    }
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        Sound.play('click');
+      });
+    });
+
+    const emojis = ['🍎','🍊','🍋','🍇','🍓','🌟','🎈','🐱','🐶','🦋'];
+
+    // === 模式1: 交换律 ===
+    (() => {
+      function newExchange() {
+        const a = Random.int(1, 9), b = Random.int(1, 9);
+        const em = Random.pick(emojis);
+        const vis = document.getElementById('exchange-visual');
+        // 左边: a + b
+        vis.innerHTML = '';
+        vis.innerHTML = `
+          <div class="exchange-group">${a} + ${b}</div>
+          <span class="exchange-op">=</span>
+          <div class="exchange-group">${b} + ${a}</div>
+          <span class="exchange-eq">= ${a + b}</span>
+        `;
+        // 右边: a × b
+        vis.innerHTML += `
+          <div style="width:100%;margin-top:16px;padding-top:16px;border-top:2px solid #E5E5EA">
+            <div class="exchange-group">${a} × ${b}</div>
+            <span class="exchange-op">=</span>
+            <div class="exchange-group">${b} × ${a}</div>
+            <span class="exchange-eq">= ${a * b}</span>
+          </div>
+        `;
+        document.getElementById('exchange-formula').innerHTML = `
+          加法交换律：<span style="color:#4A90D9">a + b = b + a</span><br>
+          乘法交换律：<span style="color:#4A90D9">a × b = b × a</span><br>
+          <span style="color:#6E6E73">交换两个数的位置，和（或积）不变</span>
+        `;
+        // 动画
+        vis.querySelectorAll('.exchange-group').forEach((g, i) => Animator.popIn(g, i * 100));
+        Sound.play('click');
+      }
+      document.getElementById('btn-new-exchange').addEventListener('click', newExchange);
+      newExchange();
+    })();
+
+    // === 模式2: 结合律 ===
+    (() => {
+      function newCombine() {
+        const a = Random.int(1, 5), b = Random.int(1, 5), c = Random.int(1, 5);
+        const left = (a + b) + c;
+        const right = a + (b + c);
+        document.getElementById('combine-content').innerHTML = `
+          <div class="combine-formula">
+            <span class="highlight">(${a} + ${b})</span> + ${c} = ${a + b} + ${c} = <span style="color:#34C759;font-size:28px">${left}</span>
+          </div>
+          <div class="combine-formula" style="margin-top:8px">
+            ${a} + <span class="highlight">(${b} + ${c})</span> = ${a} + ${b + c} = <span style="color:#34C759;font-size:28px">${right}</span>
+          </div>
+          <div class="combine-result" style="margin-top:24px">
+            两种算法结果相同！(${a}+${b})+${c} = ${a}+(${b}+${c}) = ${left}
+          </div>
+          <div style="font-size:18px;color:#6E6E73;margin-top:12px">
+            加法结合律：<span style="color:#4A90D9">(a + b) + c = a + (b + c)</span><br>
+            先把哪两个数相加，结果都一样
+          </div>
+        `;
+        Sound.play('click');
+      }
+      document.getElementById('btn-new-combine').addEventListener('click', newCombine);
+      newCombine();
+    })();
+
+    // === 模式3: 分配律 ===
+    (() => {
+      function newDistribute() {
+        const a = Random.int(2, 5), b = Random.int(1, 4), c = Random.int(1, 4);
+        const left = a * (b + c);
+        const right = a * b + a * c;
+        // 矩阵可视化
+        const matrixW = b + c;
+        const colors = ['#4A90D9','#FF9500'];
+        let cellsHtml = '';
+        for (let r = 0; r < a; r++) {
+          for (let col = 0; col < matrixW; col++) {
+            const ci = col < b ? 0 : 1;
+            cellsHtml += `<div class="dist-cell dist-filled" style="background:${colors[ci]};animation:popIn 0.2s ease ${((r * matrixW + col) * 30)}ms both">${a}</div>`;
+          }
+        }
+        document.getElementById('distribute-content').innerHTML = `
+          <div class="combine-formula" style="margin-bottom:16px">
+            <span class="highlight">${a} × (${b} + ${c})</span> = ${a} × ${b + c} = <span style="color:#34C759;font-size:28px">${left}</span>
+          </div>
+          <div style="font-size:16px;color:#6E6E73;margin-bottom:8px">
+            蓝色 ${a}×${b}=${a*b} &nbsp;|&nbsp; 橙色 ${a}×${c}=${a*c}
+          </div>
+          <div class="distribute-matrix" style="grid-template-columns:repeat(${matrixW}, 60px)">${cellsHtml}</div>
+          <div class="combine-formula" style="margin-top:16px">
+            ${a}×${b} + ${a}×${c} = ${a*b} + ${a*c} = <span style="color:#34C759;font-size:28px">${right}</span>
+          </div>
+          <div style="font-size:18px;color:#6E6E73;margin-top:12px">
+            乘法分配律：<span style="color:#4A90D9">a × (b + c) = a × b + a × c</span>
+          </div>
+        `;
+        Sound.play('click');
+      }
+      document.getElementById('btn-new-distribute').addEventListener('click', newDistribute);
+      newDistribute();
+    })();
+
+    // === 模式4: 挑战（与二年级保持一致） ===
+    (() => {
+      let correct = 0, wrong = 0, timeoutCount = 0, answer = 0, timer = null, timeLeft = 100, running = false;
+      let history = [];
+
+      function saveHistory() {
+        try { localStorage.setItem('arith-challenge-history', JSON.stringify(history)); } catch(e) {}
+      }
+      function loadHistory() {
+        try { const d = localStorage.getItem('arith-challenge-history'); return d ? JSON.parse(d) : []; } catch(e) { return []; }
+      }
+      history = loadHistory();
+
+      function renderHistory(filter = 'all') {
+        const list = document.getElementById('history-list');
+        if (history.length === 0) {
+          list.innerHTML = '<div style="text-align:center;padding:24px;color:#9E9EA7">暂无答题记录</div>';
+          return;
+        }
+        let filtered = history;
+        if (filter === 'correct') filtered = history.filter(h => h.correct === true);
+        else if (filter === 'wrong') filtered = history.filter(h => h.correct === false && h.timedOut !== true);
+        else if (filter === 'timeout') filtered = history.filter(h => h.timedOut === true);
+        if (filtered.length === 0) {
+          list.innerHTML = `<div style="text-align:center;padding:24px;color:#9E9EA7">暂无${filter === 'correct' ? '正确' : filter === 'wrong' ? '答错' : '超时'}记录</div>`;
+          return;
+        }
+        const recent = filtered.slice(-20).reverse();
+        list.innerHTML = recent.map(h => {
+          if (h.timedOut) {
+            return `<div class="history-item timeout"><span class="problem">${h.problem}</span><span>⏰ 超时（答案：${h.answer}）</span></div>`;
+          } else if (h.correct) {
+            return `<div class="history-item correct"><span class="problem">${h.problem}</span><span>✅ 正确</span></div>`;
+          } else {
+            return `<div class="history-item wrong"><span class="problem">${h.problem}</span><span>❌ 选了${h.userAnswer}（答案：${h.answer}）</span></div>`;
+          }
+        }).join('');
+      }
+
+      function renderHistoryCounts() {
+        const cc = history.filter(h => h.correct === true).length;
+        const wc = history.filter(h => h.correct === false && h.timedOut !== true).length;
+        const tc = history.filter(h => h.timedOut === true).length;
+        document.querySelectorAll('.history-tab').forEach(tab => {
+          tab.classList.remove('active');
+          const type = tab.dataset.type;
+          if (type === 'correct') tab.innerHTML = `✅ 正确 <span class="count">${cc}</span>`;
+          else if (type === 'wrong') tab.innerHTML = `❌ 答错 <span class="count">${wc}</span>`;
+          else if (type === 'timeout') tab.innerHTML = `⏰ 超时 <span class="count">${tc}</span>`;
+          else tab.innerHTML = `📋 全部 <span class="count">${history.length}</span>`;
+        });
+      }
+
+      function newChallenge() {
+        const type = Random.int(1, 3);
+        let question, answer, options;
+        if (type === 1) {
+          const a = Random.int(1, 9), b = Random.int(1, 9);
+          question = `${a} + ${b} = ${b} + ?`;
+          answer = a;
+          options = [a, b, a + b, a * b];
+        } else if (type === 2) {
+          const a = Random.int(1, 5), b = Random.int(1, 5), c = Random.int(1, 5);
+          question = `(${a} + ${b}) + ${c} = ${a} + (? + ${c})`;
+          answer = b;
+          options = [b, a, c, a + b];
+        } else {
+          const a = Random.int(2, 5), b = Random.int(1, 4), c = Random.int(1, 4);
+          question = `${a} × (${b} + ${c}) = ${a}×${b} + ${a}×?`;
+          answer = c;
+          options = [c, a, b, b + c];
+        }
+        options = [...new Set(options)];
+        while (options.length < 4) { const f = Random.int(1, 20); if (!options.includes(f)) options.push(f); }
+        options = Random.shuffle(options).slice(0, 4);
+        if (!options.includes(answer)) options[0] = answer;
+
+        document.getElementById('challenge-problem').textContent = question;
+        Animator.numberPop(document.getElementById('challenge-problem'));
+        const container = document.getElementById('challenge-options');
+        container.innerHTML = '';
+        Random.shuffle(options).forEach(val => {
+          const btn = document.createElement('div');
+          btn.className = 'challenge-opt'; btn.textContent = val;
+          btn.addEventListener('click', () => {
+            clearInterval(timer); timer = null;
+            const isCorrect = val === answer;
+            const record = { problem: question, answer, userAnswer: val, correct: isCorrect, timedOut: false, time: Date.now() };
+            history.push(record); saveHistory();
+            if (isCorrect) {
+              btn.classList.add('correct'); correct++; streak++;
+              Sound.play('correct'); celebrate(); updateStreak();
+              document.getElementById('ch-correct').textContent = correct;
+              setTimeout(newChallenge, 800);
+            } else {
+              btn.classList.add('wrong'); Animator.shake(btn);
+              wrong++; streak = 0; Sound.play('wrong'); updateStreak();
+              document.getElementById('ch-wrong').textContent = wrong;
+              showToast(`答案是 ${answer}`);
+              setTimeout(newChallenge, 1500);
+            }
+          });
+          container.appendChild(btn);
+        });
+        timeLeft = 100;
+        document.getElementById('timer-fill').style.width = '100%';
+      }
+
+      function startTimer() {
+        clearInterval(timer);
+        timer = setInterval(() => {
+          timeLeft -= 1;
+          document.getElementById('timer-fill').style.width = timeLeft + '%';
+          if (timeLeft <= 0) {
+            clearInterval(timer); timer = null;
+            timeoutCount++; streak = 0;
+            const record = { problem: document.getElementById('challenge-problem').textContent.replace(' = ?', ''), answer, userAnswer: '超时', correct: false, timedOut: true, time: Date.now() };
+            history.push(record); saveHistory();
+            Sound.play('wrong'); updateStreak();
+            document.getElementById('ch-timeout').textContent = timeoutCount;
+            showToast(`⏰ 时间到！答案是 ${answer}`);
+            setTimeout(newChallenge, 1500);
+          }
+        }, 100);
+      }
+
+      function stopTimer() { clearInterval(timer); timer = null; }
+
+      document.getElementById('btn-start-challenge').addEventListener('click', () => {
+        stopTimer(); correct = 0; wrong = 0; timeoutCount = 0;
+        document.getElementById('ch-correct').textContent = 0;
+        document.getElementById('ch-wrong').textContent = 0;
+        document.getElementById('ch-timeout').textContent = 0;
+        document.querySelector('.challenge-area').classList.add('challenge-active');
+        document.getElementById('challenge-toolbar').style.display = 'flex';
+        document.getElementById('history-panel').classList.remove('show');
+        running = true; newChallenge(); startTimer(); Sound.play('click');
+      });
+
+      document.getElementById('btn-history').addEventListener('click', () => {
+        const panel = document.getElementById('history-panel');
+        const isShowing = panel.classList.contains('show');
+        panel.classList.toggle('show');
+        if (!isShowing) { renderHistoryCounts(); renderHistory('all'); }
+        Sound.play('click');
+      });
+      document.getElementById('btn-close-history').addEventListener('click', () => {
+        document.getElementById('history-panel').classList.remove('show');
+        Sound.play('click');
+      });
+      document.querySelectorAll('.history-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.history-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          renderHistory(tab.dataset.type);
+          Sound.play('click');
+        });
+      });
+      document.getElementById('btn-clear-history').addEventListener('click', () => {
+        history = []; saveHistory();
+        showToast('📋 答题记录已清空');
+        renderHistoryCounts(); renderHistory('all');
+        Sound.play('click');
+      });
+
+      const origTabs = document.querySelectorAll('.mode-tab');
+      origTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const isChallenge = tab.dataset.mode === 'challenge';
+          if (!isChallenge && running) {
+            stopTimer(); running = false;
+            document.querySelector('.challenge-area').classList.remove('challenge-active');
+          } else if (isChallenge && !running && correct + wrong + timeoutCount > 0) {
+            running = true;
+            document.querySelector('.challenge-area').classList.add('challenge-active');
+            document.getElementById('challenge-toolbar').style.display = 'flex';
+            startTimer();
+            showToast('⏱️ 计时恢复！继续挑战');
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

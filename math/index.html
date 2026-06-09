@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小学数学 - 知识地图</title>
+  <link rel="stylesheet" href="assets/css/common.css">
+  <style>
+    .map-header {
+      text-align: center; padding: 32px 20px 24px;
+      background: linear-gradient(135deg, #43A047 0%, #66BB6A 100%);
+      border-radius: 24px; margin-bottom: 24px; color: white;
+    }
+    .map-header h1 { font-size: 28px; margin-bottom: 8px; }
+    .map-header p { font-size: 15px; opacity: 0.9; }
+    .map-legend {
+      display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+      margin-top: 16px; font-size: 13px;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 12px;
+    }
+
+    /* 知识地图 - 横向流程图 */
+    .knowledge-map {
+      overflow-x: auto; padding: 20px 0; -webkit-overflow-scrolling: touch;
+    }
+    .map-row {
+      display: flex; align-items: stretch; gap: 0; min-width: fit-content;
+      padding: 16px 0;
+    }
+
+    /* 阶段分组 */
+    .stage-group {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px; position: relative;
+    }
+    .stage-label {
+      font-size: 13px; font-weight: 600; color: #6E6E73;
+      margin-bottom: 12px; text-align: center; white-space: nowrap;
+    }
+    .stage-nodes {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+
+    /* 知识点卡片 */
+    .topic-node {
+      display: block; text-decoration: none; background: white;
+      border-radius: 16px; padding: 16px; width: 200px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border-left: 4px solid #4A90D9;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+    .topic-node:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+    .topic-node .node-icon { font-size: 28px; margin-bottom: 6px; }
+    .topic-node .node-name { font-size: 16px; font-weight: 700; color: #1D1D1F; }
+    .topic-node .node-desc { font-size: 12px; color: #6E6E73; margin-top: 4px; line-height: 1.4; }
+    .topic-node .node-grades {
+      display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap;
+    }
+    .grade-tag {
+      font-size: 11px; padding: 2px 8px; border-radius: 10px;
+      font-weight: 600;
+    }
+    .grade-g1 { background: #E3F2FD; color: #1565C0; }
+    .grade-g2 { background: #E8F5E9; color: #2E7D32; }
+    .grade-g3 { background: #FFF3E0; color: #E65100; }
+    .grade-g4 { background: #F3E5F5; color: #7B1FA2; }
+    .grade-g5 { background: #FFF8E1; color: #F57F17; }
+    .grade-g6 { background: #FFEBEE; color: #C62828; }
+
+    /* 依赖箭头 - 阶段间 */
+    .stage-arrow {
+      display: flex; align-items: center; justify-content: center;
+      width: 48px; flex-shrink: 0;
+    }
+    .stage-arrow svg { width: 40px; height: 40px; }
+
+    /* 依赖标注 */
+    .dep-line {
+      position: absolute; right: -20px; top: 50%;
+      width: 20px; height: 2px; background: #4A90D9;
+      opacity: 0.4;
+    }
+
+    /* 不同类别用不同颜色 */
+    .topic-node.cat-number { border-left-color: #4A90D9; }
+    .topic-node.cat-shape { border-left-color: #7B1FA2; }
+    .topic-node.cat-fraction { border-left-color: #FF9800; }
+    .topic-node.cat-algebra { border-left-color: #F44336; }
+
+    /* 分类标题 */
+    .cat-header {
+      font-size: 17px; font-weight: 700; color: #1D1D1F;
+      padding: 20px 0 12px; border-left: 4px solid #4A90D9;
+      margin: 16px 0 8px; padding-left: 12px;
+    }
+    .cat-header.cat-shapes { border-left-color: #7B1FA2; }
+    .cat-header.cat-fractions { border-left-color: #FF9800; }
+    .cat-header.cat-algebra { border-left-color: #F44336; }
+
+    .topic-grid {
+      display: grid; gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+    .topic-card {
+      display: block; text-decoration: none; background: white;
+      border-radius: 16px; padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border-left: 4px solid #4A90D9;
+      transition: transform 0.2s ease;
+    }
+    .topic-card:hover { transform: translateY(-2px); }
+    .topic-card.cat-shapes { border-left-color: #7B1FA2; }
+    .topic-card.cat-fractions { border-left-color: #FF9800; }
+    .topic-card.cat-algebra { border-left-color: #F44336; }
+    .topic-card .card-icon { font-size: 32px; margin-bottom: 8px; }
+    .topic-card .card-name { font-size: 17px; font-weight: 700; color: #1D1D1F; }
+    .topic-card .card-desc { font-size: 13px; color: #6E6E73; margin-top: 4px; line-height: 1.5; }
+    .topic-card .card-grades {
+      display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <a href="../index.html" style="display:inline-block;padding:12px 16px;color:#4A90D9;text-decoration:none;font-weight:600;font-size:15px;">← 返回学科目录</a>
+
+    <div class="map-header">
+      <h1>📐 小学数学 · 知识地图</h1>
+      <p>从左到右，前置知识 → 后续知识，掌握前者才能学好后者</p>
+      <div class="map-legend">
+        <div class="legend-item">🔵 数与运算</div>
+        <div class="legend-item">🟣 图形与位置</div>
+        <div class="legend-item">🟠 分数与百分数</div>
+        <div class="legend-item">🔴 运算律与方程</div>
+      </div>
+    </div>
+
+    <!-- ===== 横向知识地图 ===== -->
+    <h2 style="font-size:18px;color:#6E6E73;padding:0 0 8px;">🗺️ 知识依赖图</h2>
+    <div class="knowledge-map">
+      <div class="map-row">
+        <!-- 阶段1: 基础认知 -->
+        <div class="stage-group">
+          <div class="stage-label">🌱 基础认知（一年级）</div>
+          <div class="stage-nodes">
+            <a href="topics/numbers/index.html" class="topic-node cat-number">
+              <div class="node-icon">🔢</div>
+              <div class="node-name">认识数字</div>
+              <div class="node-desc">数数、数轴、比大小</div>
+              <div class="node-grades"><span class="grade-tag grade-g1">G1</span></div>
+            </a>
+            <a href="topics/shapes-and-position/index.html" class="topic-node cat-shape">
+              <div class="node-icon">🔷</div>
+              <div class="node-name">认识图形与位置</div>
+              <div class="node-desc">6种图形、分类、9宫格</div>
+              <div class="node-grades"><span class="grade-tag grade-g1">G1</span></div>
+            </a>
+          </div>
+        </div>
+
+        <div class="stage-arrow">
+          <svg viewBox="0 0 40 40" fill="none"><path d="M8 20h24m0 0l-6-6m6 6l-6 6" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+
+        <!-- 阶段2: 四则运算 -->
+        <div class="stage-group">
+          <div class="stage-label">🔢 四则运算（一~二年级）</div>
+          <div class="stage-nodes">
+            <a href="topics/addition/index.html" class="topic-node cat-number">
+              <div class="node-icon">➕</div>
+              <div class="node-name">加减法</div>
+              <div class="node-desc">合并、凑十、竖式</div>
+              <div class="node-grades"><span class="grade-tag grade-g1">G1</span></div>
+            </a>
+            <a href="topics/multiplication/index.html" class="topic-node cat-number">
+              <div class="node-icon">✖️</div>
+              <div class="node-name">表内乘法</div>
+              <div class="node-desc">矩阵可视化、口诀表</div>
+              <div class="node-grades"><span class="grade-tag grade-g2">G2</span></div>
+            </a>
+          </div>
+        </div>
+
+        <div class="stage-arrow">
+          <svg viewBox="0 0 40 40" fill="none"><path d="M8 20h24m0 0l-6-6m6 6l-6 6" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+
+        <!-- 阶段3: 运算律与分数 -->
+        <div class="stage-group">
+          <div class="stage-label">⚡ 运算律与分数（三~四年级）</div>
+          <div class="stage-nodes">
+            <a href="topics/arithmetic-laws/index.html" class="topic-node cat-algebra">
+              <div class="node-icon">🔄</div>
+              <div class="node-name">运算律</div>
+              <div class="node-desc">交换律、结合律、分配律</div>
+              <div class="node-grades"><span class="grade-tag grade-g4">G4</span></div>
+            </a>
+            <a href="topics/fractions/index.html" class="topic-node cat-fraction">
+              <div class="node-icon">🍕</div>
+              <div class="node-name">分数</div>
+              <div class="node-desc">切披萨、分数条、比大小</div>
+              <div class="node-grades"><span class="grade-tag grade-g3">G3</span></div>
+            </a>
+          </div>
+        </div>
+
+        <div class="stage-arrow">
+          <svg viewBox="0 0 40 40" fill="none"><path d="M8 20h24m0 0l-6-6m6 6l-6 6" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+
+        <!-- 阶段4: 方程 -->
+        <div class="stage-group">
+          <div class="stage-label">🔤 代数思维（五年级）</div>
+          <div class="stage-nodes">
+            <a href="topics/equations/index.html" class="topic-node cat-algebra">
+              <div class="node-icon">🔤</div>
+              <div class="node-name">简易方程</div>
+              <div class="node-desc">天平、滑块、逐步求解</div>
+              <div class="node-grades"><span class="grade-tag grade-g5">G5</span></div>
+            </a>
+          </div>
+        </div>
+
+        <div class="stage-arrow">
+          <svg viewBox="0 0 40 40" fill="none"><path d="M8 20h24m0 0l-6-6m6 6l-6 6" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+
+        <!-- 阶段5: 高级主题 -->
+        <div class="stage-group">
+          <div class="stage-label">🎯 高级主题（六年级）</div>
+          <div class="stage-nodes">
+            <a href="topics/ratio-and-proportion/index.html" class="topic-node cat-fraction">
+              <div class="node-icon">⚖️</div>
+              <div class="node-name">比和比例</div>
+              <div class="node-desc">认识比、正反比例、比例尺</div>
+              <div class="node-grades"><span class="grade-tag grade-g6">G6</span></div>
+            </a>
+            <a href="topics/percentage/index.html" class="topic-node cat-fraction">
+              <div class="node-icon">💯</div>
+              <div class="node-name">百分数</div>
+              <div class="node-desc">折扣、税率、利率</div>
+              <div class="node-grades"><span class="grade-tag grade-g6">G6</span></div>
+            </a>
+            <a href="topics/circle/index.html" class="topic-node cat-shape">
+              <div class="node-icon">⭕</div>
+              <div class="node-name">圆的认识</div>
+              <div class="node-desc">周长、面积、探索π</div>
+              <div class="node-grades"><span class="grade-tag grade-g6">G6</span></div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 按分类浏览 ===== -->
+    <h2 style="font-size:18px;color:#6E6E73;padding:16px 0 0;">📂 按分类浏览</h2>
+
+    <div class="cat-header">🔢 数与运算</div>
+    <div class="topic-grid">
+      <a href="topics/numbers/index.html" class="topic-card">
+        <div class="card-icon">🔢</div>
+        <div class="card-name">认识数字</div>
+        <div class="card-desc">数数、数轴、比大小、排序、拨珠、找数字</div>
+        <div class="card-grades"><span class="grade-tag grade-g1">G1</span></div>
+      </a>
+      <a href="topics/addition/index.html" class="topic-card">
+        <div class="card-icon">➕</div>
+        <div class="card-name">加减法</div>
+        <div class="card-desc">合并、凑十、竖式、练习</div>
+        <div class="card-grades"><span class="grade-tag grade-g1">G1</span></div>
+      </a>
+      <a href="topics/multiplication/index.html" class="topic-card">
+        <div class="card-icon">✖️</div>
+        <div class="card-name">表内乘法</div>
+        <div class="card-desc">矩阵可视化、口诀表、几个几、挑战</div>
+        <div class="card-grades"><span class="grade-tag grade-g2">G2</span></div>
+      </a>
+    </div>
+
+    <div class="cat-header cat-shapes">🔷 图形与位置</div>
+    <div class="topic-grid">
+      <a href="topics/shapes-and-position/index.html" class="topic-card cat-shapes">
+        <div class="card-icon">🔷</div>
+        <div class="card-name">认识图形与位置</div>
+        <div class="card-desc">6种图形、分类、9宫格位置、拼图</div>
+        <div class="card-grades"><span class="grade-tag grade-g1">G1</span></div>
+      </a>
+      <a href="topics/circle/index.html" class="topic-card cat-shapes">
+        <div class="card-icon">⭕</div>
+        <div class="card-name">圆的认识</div>
+        <div class="card-desc">周长、面积、探索π</div>
+        <div class="card-grades"><span class="grade-tag grade-g6">G6</span></div>
+      </a>
+    </div>
+
+    <div class="cat-header cat-fractions">📊 分数与百分数</div>
+    <div class="topic-grid">
+      <a href="topics/fractions/index.html" class="topic-card cat-fractions">
+        <div class="card-icon">🍕</div>
+        <div class="card-name">分数</div>
+        <div class="card-desc">切披萨、分数条、涂色、比大小</div>
+        <div class="card-grades"><span class="grade-tag grade-g3">G3</span></div>
+      </a>
+      <a href="topics/ratio-and-proportion/index.html" class="topic-card cat-fractions">
+        <div class="card-icon">⚖️</div>
+        <div class="card-name">比和比例</div>
+        <div class="card-desc">认识比、正反比例、比例尺</div>
+        <div class="card-grades"><span class="grade-tag grade-g6">G6</span></div>
+      </a>
+      <a href="topics/percentage/index.html" class="topic-card cat-fractions">
+        <div class="card-icon">💯</div>
+        <div class="card-name">百分数</div>
+        <div class="card-desc">折扣、税率、利率</div>
+        <div class="card-grades"><span class="grade-tag grade-g6">G6</span></div>
+      </a>
+    </div>
+
+    <div class="cat-header cat-algebra">⚖️ 运算律与方程</div>
+    <div class="topic-grid">
+      <a href="topics/arithmetic-laws/index.html" class="topic-card cat-algebra">
+        <div class="card-icon">🔄</div>
+        <div class="card-name">运算律</div>
+        <div class="card-desc">交换律、结合律、分配律、挑战</div>
+        <div class="card-grades"><span class="grade-tag grade-g4">G4</span></div>
+      </a>
+      <a href="topics/equations/index.html" class="topic-card cat-algebra">
+        <div class="card-icon">🔤</div>
+        <div class="card-name">简易方程</div>
+        <div class="card-desc">天平、滑块、故事题、逐步求解</div>
+        <div class="card-grades"><span class="grade-tag grade-g5">G5</span></div>
+      </a>
+    </div>
+  </div>
+
+  <script src="assets/js/common.js"></script>
+</body>
+</html>

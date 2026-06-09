@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>表内乘法</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs {
+      display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mode-tab {
+      flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA;
+      border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-tab.active { background: #4A90D9; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 矩阵模式 */
+    .matrix-area { text-align: center; padding: 24px 16px; }
+    .matrix-grid {
+      display: grid; gap: 4px; justify-content: center; margin: 24px auto;
+      max-width: 360px;
+    }
+    .matrix-cell {
+      aspect-ratio: 1; border-radius: 8px; background: #E5E5EA;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; transition: all 0.3s ease;
+    }
+    .matrix-cell.filled { background: #4A90D9; animation: popIn 0.2s ease both; }
+    .matrix-formula { font-size: 36px; font-weight: 700; color: #4A90D9; margin: 16px 0; }
+    .matrix-controls { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+    .matrix-slider {
+      width: 100%; max-width: 300px; margin: 16px auto; display: block;
+    }
+
+    /* 口诀表模式 */
+    .table-grid {
+      display: grid; grid-template-columns: repeat(10, 1fr); gap: 1px;
+      padding: 8px;
+    }
+    .table-cell {
+      aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center;
+      justify-content: center; font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+      background: #FFFFFF; border: 1px solid #D1D5DB;
+      min-width: 28px; min-height: 28px;
+    }
+    .table-cell:active { transform: scale(0.9); }
+    .table-cell.highlight { background: #4A90D9; color: white; border-color: #4A90D9; transform: scale(1.1); z-index: 1; }
+    .table-cell.row-highlight { background: rgba(74,144,217,0.15); }
+    .table-cell.col-highlight { background: rgba(74,144,217,0.15); }
+    .table-cell.row-header-highlight { background: rgba(255,149,0,0.25); color: #FF9500; }
+    .table-cell.col-header-highlight { background: rgba(255,149,0,0.25); color: #FF9500; }
+    .table-header { background: #E8ECF4; font-weight: 700; color: #3F51B5; border-color: #C5CAE9; }
+    .table-result {
+      font-size: 28px; font-weight: 700; color: #FF9500; text-align: center;
+      padding: 8px 16px; min-height: 44px;
+    }
+
+    /* 几个几模式 */
+    .groups-area { text-align: center; padding: 24px 16px; }
+    .groups-visual {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin: 24px 0;
+    }
+    .group-box {
+      border: 3px solid #4A90D9; border-radius: 16px; padding: 12px;
+      display: flex; gap: 4px; background: rgba(74,144,217,0.05);
+    }
+    .group-item { font-size: 28px; animation: popIn 0.3s ease both; }
+    .groups-formula { font-size: 28px; font-weight: 700; color: #4A90D9; margin: 16px 0; }
+    .groups-controls { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+    .groups-btn {
+      min-width: 56px; min-height: 56px; border: 2px solid #E5E5EA; background: white;
+      border-radius: 12px; font-size: 20px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .groups-btn:active { transform: scale(0.9); }
+    .groups-btn.active { border-color: #4A90D9; background: #4A90D9; color: white; }
+
+    /* 口诀挑战模式 */
+    .challenge-area { text-align: center; padding: 24px 16px; }
+    .challenge-problem {
+      font-size: 48px; font-weight: 700; color: #4A90D9; margin: 24px 0;
+    }
+    .challenge-options {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+      max-width: 400px; margin: 24px auto; padding: 0 16px;
+    }
+    .challenge-opt {
+      padding: 24px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 28px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .challenge-opt:active { transform: scale(0.9); }
+    .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .challenge-score {
+      display: flex; justify-content: center; gap: 24px; margin: 16px 0;
+      font-size: 18px;
+    }
+    .timer-bar {
+      height: 8px; background: #E5E5EA; border-radius: 4px; overflow: hidden;
+      margin: 16px 0;
+    }
+    .timer-fill {
+      height: 100%; background: linear-gradient(90deg, #34C759, #FF9500, #FF3B30);
+      border-radius: 4px; transition: width 0.1s linear;
+    }
+
+    /* 连续答对 */
+    .score-display {
+      display: flex; justify-content: center; align-items: center;
+      gap: 12px; padding: 12px; font-size: 18px; font-weight: 600;
+    }
+    .score-stars { font-size: 24px; }
+    .challenge-start-btn {
+      padding: 16px 32px; border: none; background: #4A90D9; color: white;
+      border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer;
+      margin: 16px auto; display: block;
+      box-shadow: 0 4px 12px rgba(74,144,217,0.3);
+    }
+    .challenge-start-btn:active { transform: scale(0.95); }
+    .challenge-start-btn.reset { background: #FF9500; }
+    .challenge-running { display: none; }
+    .challenge-active .challenge-start-btn { display: none; }
+    .challenge-active .challenge-running { display: block; }
+    .challenge-toolbar {
+      display: flex; justify-content: center; gap: 12px; margin: 12px 0;
+    }
+    .toolbar-btn {
+      padding: 8px 16px; border: 2px solid #E5E5EA; background: white;
+      border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .toolbar-btn:active { transform: scale(0.95); }
+    .toolbar-btn.danger { border-color: #FF3B30; color: #FF3B30; }
+    .challenge-history {
+      max-height: 200px; overflow-y: auto; margin: 12px 0; padding: 8px;
+      background: #F8F9FE; border-radius: 12px;
+    }
+    .history-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 12px; border-radius: 8px; margin: 4px 0;
+      font-size: 14px; font-weight: 600;
+    }
+    .history-item { background: rgba(52,199,89,0.1); color: #34C759; }
+    .history-item.wrong { background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .history-item.timeout { background: rgba(255,149,0,0.15); color: #FF9500; }
+    .history-item .problem { color: #6E6E73; }
+    .history-panel { display: none; }
+    .history-panel.show { display: block; animation: fadeInUp 0.3s ease; }
+    .history-tabs { display: flex; gap: 8px; margin-bottom: 8px; }
+    .history-tab {
+      flex: 1; padding: 6px 8px; border: 2px solid #E5E5EA; background: white;
+      border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+      text-align: center; transition: all 0.2s ease;
+    }
+    .history-tab.active { border-color: #4A90D9; background: #4A90D9; color: white; }
+    .history-tab .count { display: inline-block; background: rgba(0,0,0,0.1); border-radius: 8px; padding: 0 6px; font-size: 11px; }
+    .diff-badge {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      font-size: 14px; font-weight: 600;
+    }
+    .diff-easy { background: rgba(52,199,89,0.15); color: #34C759; }
+    .diff-medium { background: rgba(255,149,0,0.15); color: #FF9500; }
+
+    @media (max-width: 480px) {
+      .table-cell { font-size: 10px; min-width: 24px; min-height: 24px; }
+      .matrix-cell { font-size: 14px; }
+      .challenge-problem { font-size: 36px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" aria-label="返回">←</button>
+      <span class="nav-title">✖️ 表内乘法</span>
+      <div style="width:56px"></div>
+    </nav>
+
+    <div class="score-display">
+      <span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <!-- 模式切换 -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="matrix">📊 矩阵</button>
+      <button class="mode-tab" data-mode="table">📋 口诀表</button>
+      <button class="mode-tab" data-mode="groups">📦 几个几</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- 模式1: 矩阵可视化 -->
+    <div class="mode-content active" id="mode-matrix">
+      <div class="card">
+        <p class="page-subtitle">拖拽滑块看看乘法矩阵</p>
+        <div class="matrix-area">
+          <div class="matrix-formula" id="matrix-formula">3 × 4 = 12</div>
+          <div class="matrix-grid" id="matrix-grid"></div>
+          <div style="display:flex;justify-content:center;gap:32px;margin:16px 0">
+            <div>
+              <label style="font-size:14px;color:#6E6E73">行数</label><br>
+              <input type="range" class="matrix-slider" id="matrix-rows" min="1" max="9" value="3">
+              <span id="matrix-rows-val" style="font-size:20px;font-weight:700">3</span>
+            </div>
+            <div>
+              <label style="font-size:14px;color:#6E6E73">列数</label><br>
+              <input type="range" class="matrix-slider" id="matrix-cols" min="1" max="9" value="4">
+              <span id="matrix-cols-val" style="font-size:20px;font-weight:700">4</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 口诀表 -->
+    <div class="mode-content" id="mode-table">
+      <div class="card">
+        <p class="page-subtitle">点击口诀表的格子，看看对应的乘法</p>
+        <div class="table-result" id="table-result">点击一个格子看看</div>
+        <div class="table-grid" id="table-grid"></div>
+      </div>
+    </div>
+
+    <!-- 模式3: 几个几 -->
+    <div class="mode-content" id="mode-groups">
+      <div class="card">
+        <p class="page-subtitle">理解"几个几"的含义</p>
+        <div class="groups-area">
+          <div class="groups-formula" id="groups-formula">3 个 4 = 12</div>
+          <div class="groups-visual" id="groups-visual"></div>
+          <div style="display:flex;justify-content:center;gap:24px;margin:16px 0">
+            <div>
+              <label style="font-size:14px;color:#6E6E73">几组</label><br>
+              <div style="display:flex;gap:8px;margin-top:4px">
+                <button class="groups-btn" data-target="g" data-dir="-1">➖</button>
+                <span id="groups-g" style="font-size:24px;font-weight:700;min-width:40px;display:inline-flex;align-items:center">3</span>
+                <button class="groups-btn" data-target="g" data-dir="1">➕</button>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:14px;color:#6E6E73">每组几个</label><br>
+              <div style="display:flex;gap:8px;margin-top:4px">
+                <button class="groups-btn" data-target="p" data-dir="-1">➖</button>
+                <span id="groups-p" style="font-size:24px;font-weight:700;min-width:40px;display:inline-flex;align-items:center">4</span>
+                <button class="groups-btn" data-target="p" data-dir="1">➕</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 口诀挑战 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="card">
+        <div class="challenge-area">
+          <div class="challenge-score">
+            <span>答对 <b id="ch-correct" style="color:#34C759">0</b></span>
+            <span>答错 <b id="ch-wrong" style="color:#FF3B30">0</b></span>
+            <span>超时 <b id="ch-timeout" style="color:#FF9500">0</b></span>
+          </div>
+          <div class="timer-bar"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+          <!-- 工具栏（挑战进行中显示） -->
+          <div class="challenge-toolbar" id="challenge-toolbar" style="display:none">
+            <button class="toolbar-btn" id="btn-history">📋 查看记录</button>
+            <button class="toolbar-btn danger" id="btn-clear-history">🗑️ 清空记录</button>
+          </div>
+          <!-- 历史记录面板 -->
+          <div class="history-panel" id="history-panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px">
+              <span style="font-size:16px;font-weight:700;color:#4A90D9">📋 答题记录</span>
+              <button class="toolbar-btn" id="btn-close-history" style="padding:4px 12px">关闭</button>
+            </div>
+            <div class="history-tabs">
+              <div class="history-tab active" data-type="all">📋 全部</div>
+              <div class="history-tab" data-type="correct">✅ 正确</div>
+              <div class="history-tab" data-type="wrong">❌ 答错</div>
+              <div class="history-tab" data-type="timeout">⏰ 超时</div>
+            </div>
+            <div class="challenge-history" id="history-list"></div>
+          </div>
+          <!-- 开始按钮 -->
+          <button class="challenge-start-btn" id="btn-start-challenge">🏆 开始挑战！</button>
+          <!-- 挑战区域（开始后显示） -->
+          <div class="challenge-running">
+            <div class="challenge-problem" id="challenge-problem">3 × 4 = ?</div>
+            <div class="challenge-options" id="challenge-options"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/animation.js"></script>
+  <script src="../../assets/js/touch.js"></script>
+  <script>
+    document.querySelector('.nav-back').addEventListener('click', () => window.location.href = '../../index.html');
+
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast(`🔥 连续 ${streak} 次！乘法小能手！`);
+    }
+
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        Sound.play('click');
+      });
+    });
+
+    const emojis = ['🍎','🍊','🍋','🍇','🍓','🌟','🎈','🐱','🐶','🦋','🌸','🎀'];
+
+    // === 模式1: 矩阵 ===
+    (() => {
+      let rows = 3, cols = 4;
+      const em = Random.pick(emojis);
+      function updateMatrix() {
+        document.getElementById('matrix-rows-val').textContent = rows;
+        document.getElementById('matrix-cols-val').textContent = cols;
+        document.getElementById('matrix-formula').textContent = `${rows} × ${cols} = ${rows * cols}`;
+        const grid = document.getElementById('matrix-grid');
+        grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        grid.innerHTML = '';
+        const cellSize = Math.min(60, Math.floor(360 / cols));
+        for (let i = 0; i < rows * cols; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'matrix-cell';
+          cell.style.width = cellSize + 'px';
+          cell.style.height = cellSize + 'px';
+          const r = Math.floor(i / cols), c = i % cols;
+          if (r < rows && c < cols) {
+            cell.textContent = em;
+            cell.style.fontSize = Math.max(14, cellSize / 3) + 'px';
+          }
+          grid.appendChild(cell);
+          setTimeout(() => cell.classList.add('filled'), i * 30);
+        }
+      }
+      document.getElementById('matrix-rows').addEventListener('input', e => {
+        rows = parseInt(e.target.value); updateMatrix(); Sound.play('click');
+      });
+      document.getElementById('matrix-cols').addEventListener('input', e => {
+        cols = parseInt(e.target.value); updateMatrix(); Sound.play('click');
+      });
+      updateMatrix();
+    })();
+
+    // === 模式2: 口诀表 (1-9, 9x9) 十字高亮 ===
+    (() => {
+      const grid = document.getElementById('table-grid');
+      // 保存所有表头单元格引用
+      const rowHeaders = [];
+      const colHeaders = [];
+      const cells = {};
+
+      // 表头行：空 + 1~9
+      const corner = document.createElement('div');
+      corner.className = 'table-cell table-header';
+      corner.textContent = '×';
+      grid.appendChild(corner);
+      for (let c = 1; c <= 9; c++) {
+        const h = document.createElement('div');
+        h.className = 'table-cell table-header';
+        h.textContent = c;
+        h.dataset.colHeader = c;
+        grid.appendChild(h);
+        colHeaders.push(h);
+      }
+      // 数据行
+      for (let r = 1; r <= 9; r++) {
+        // 行头
+        const rh = document.createElement('div');
+        rh.className = 'table-cell table-header';
+        rh.textContent = r;
+        rh.dataset.rowHeader = r;
+        grid.appendChild(rh);
+        rowHeaders.push(rh);
+        // 数据格
+        cells[r] = cells[r] || {};
+        for (let c = 1; c <= 9; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'table-cell';
+          cell.textContent = r * c;
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          if (r === c) {
+            cell.style.background = 'rgba(255,149,0,0.1)';
+            cell.style.borderColor = '#FFB74D';
+          }
+          cells[r][c] = cell;
+          grid.appendChild(cell);
+        }
+      }
+
+      // 点击：十字准星高亮
+      grid.addEventListener('click', (e) => {
+        const cell = e.target.closest('.table-cell');
+        if (!cell || !cell.dataset.row) return;
+        const r = parseInt(cell.dataset.row);
+        const c = parseInt(cell.dataset.col);
+        Sound.play('click');
+
+        // 清除所有高亮
+        grid.querySelectorAll('.table-cell').forEach(tc => {
+          tc.classList.remove('highlight', 'row-highlight', 'col-highlight',
+            'row-header-highlight', 'col-header-highlight');
+        });
+
+        // 高亮行数据格
+        for (let cc = 1; cc <= 9; cc++) {
+          if (cc !== c) cells[r][cc].classList.add('row-highlight');
+        }
+        // 高亮列数据格
+        for (let rr = 1; rr <= 9; rr++) {
+          if (rr !== r) cells[rr][c].classList.add('col-highlight');
+        }
+        // 高亮点击的格子
+        cell.classList.add('highlight');
+        // 高亮行头和列头
+        rowHeaders[r - 1].classList.add('row-header-highlight');
+        colHeaders[c - 1].classList.add('col-header-highlight');
+
+        document.getElementById('table-result').innerHTML =
+          `<span style="color:#4A90D9">${r}</span> × <span style="color:#4A90D9">${c}</span> = <span style="color:#FF9500">${r * c}</span>`;
+      });
+    })();
+
+    // === 模式3: 几个几 ===
+    (() => {
+      let g = 3, p = 4;
+      const em = Random.pick(emojis);
+      function updateGroups() {
+        document.getElementById('groups-g').textContent = g;
+        document.getElementById('groups-p').textContent = p;
+        document.getElementById('groups-formula').textContent = `${g} 个 ${p} = ${g * p}`;
+        document.getElementById('groups-formula').innerHTML =
+          `<span style="color:#FF9500">${g}</span> 个 <span style="color:#4A90D9">${p}</span> = <span style="color:#34C759">${g * p}</span>`;
+        const vis = document.getElementById('groups-visual');
+        vis.innerHTML = '';
+        for (let i = 0; i < g; i++) {
+          const box = document.createElement('div');
+          box.className = 'group-box';
+          for (let j = 0; j < p; j++) {
+            const item = document.createElement('span');
+            item.className = 'group-item';
+            item.textContent = em;
+            item.style.animationDelay = ((i * p + j) * 0.05) + 's';
+            box.appendChild(item);
+          }
+          vis.appendChild(box);
+        }
+      }
+      document.querySelectorAll('.groups-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.target;
+          const dir = parseInt(btn.dataset.dir);
+          if (target === 'g') {
+            g = Math.max(1, Math.min(9, g + dir));
+          } else {
+            p = Math.max(1, Math.min(9, p + dir));
+          }
+          updateGroups(); Sound.play('click');
+        });
+      });
+      updateGroups();
+    })();
+
+    // === 模式4: 口诀挑战（点开始才计时 + 历史记录 + 超时分开） ===
+    (() => {
+      let correct = 0, wrong = 0, timeoutCount = 0, answer = 0, answerA = 0, answerB = 0, timer = null, timeLeft = 100, running = false;
+      let history = [];
+
+      function saveHistory() {
+        try { localStorage.setItem('math-challenge-history', JSON.stringify(history)); } catch(e) {}
+      }
+      function loadHistory() {
+        try { const d = localStorage.getItem('math-challenge-history'); return d ? JSON.parse(d) : []; } catch(e) { return []; }
+      }
+      history = loadHistory();
+
+      function renderHistory(filter = 'all') {
+        const list = document.getElementById('history-list');
+        if (history.length === 0) {
+          list.innerHTML = '<div style="text-align:center;padding:24px;color:#9E9EA7">暂无答题记录</div>';
+          return;
+        }
+        let filtered = history;
+        if (filter === 'correct') filtered = history.filter(h => h.correct === true);
+        else if (filter === 'wrong') filtered = history.filter(h => h.correct === false && h.timedOut !== true);
+        else if (filter === 'timeout') filtered = history.filter(h => h.timedOut === true);
+        if (filtered.length === 0) {
+          list.innerHTML = `<div style="text-align:center;padding:24px;color:#9E9EA7">暂无${filter === 'correct' ? '正确' : filter === 'wrong' ? '答错' : '超时'}记录</div>`;
+          return;
+        }
+        const recent = filtered.slice(-20).reverse();
+        list.innerHTML = recent.map(h => {
+          if (h.timedOut) {
+            return `<div class="history-item timeout"><span class="problem">${h.problem}</span><span>⏰ 超时（答案：${h.answer}）</span></div>`;
+          } else if (h.correct) {
+            return `<div class="history-item correct"><span class="problem">${h.problem}</span><span>✅ 正确</span></div>`;
+          } else {
+            return `<div class="history-item wrong"><span class="problem">${h.problem}</span><span>❌ 选了${h.userAnswer}（答案：${h.answer}）</span></div>`;
+          }
+        }).join('');
+      }
+
+      function renderHistoryCounts() {
+        const correctCount = history.filter(h => h.correct === true).length;
+        const wrongCount = history.filter(h => h.correct === false && h.timedOut !== true).length;
+        const timeoutCount = history.filter(h => h.timedOut === true).length;
+        document.querySelectorAll('.history-tab').forEach(tab => {
+          tab.classList.remove('active');
+          const type = tab.dataset.type;
+          if (type === 'correct') tab.innerHTML = `✅ 正确 <span class="count">${correctCount}</span>`;
+          else if (type === 'wrong') tab.innerHTML = `❌ 答错 <span class="count">${wrongCount}</span>`;
+          else if (type === 'timeout') tab.innerHTML = `⏰ 超时 <span class="count">${timeoutCount}</span>`;
+          else tab.innerHTML = `📋 全部 <span class="count">${history.length}</span>`;
+        });
+      }
+
+      function newChallenge() {
+        answerA = Random.int(1, 9); answerB = Random.int(1, 9);
+        answer = answerA * answerB;
+        document.getElementById('challenge-problem').textContent = `${answerA} × ${answerB} = ?`;
+        Animator.numberPop(document.getElementById('challenge-problem'));
+        const opts = [answer];
+        while (opts.length < 4) {
+          const fake = answer + Random.int(-10, 10);
+          if (fake > 0 && fake !== answer && !opts.includes(fake)) opts.push(fake);
+          if (opts.length < 4) {
+            const fake2 = Random.int(1, 81);
+            if (!opts.includes(fake2)) opts.push(fake2);
+          }
+        }
+        const shuffled = Random.shuffle(opts);
+        const container = document.getElementById('challenge-options');
+        container.innerHTML = '';
+        shuffled.forEach(val => {
+          const btn = document.createElement('div');
+          btn.className = 'challenge-opt'; btn.textContent = val;
+          btn.addEventListener('click', () => {
+            clearInterval(timer); timer = null;
+            const isCorrect = val === answer;
+            const record = { problem: `${answerA} × ${answerB}`, answer, userAnswer: val, correct: isCorrect, timedOut: false, time: Date.now() };
+            history.push(record); saveHistory();
+            if (isCorrect) {
+              btn.classList.add('correct'); correct++; streak++;
+              Sound.play('correct'); celebrate(); updateStreak();
+              document.getElementById('ch-correct').textContent = correct;
+              setTimeout(newChallenge, 800);
+            } else {
+              btn.classList.add('wrong'); Animator.shake(btn);
+              wrong++; streak = 0; Sound.play('wrong'); updateStreak();
+              document.getElementById('ch-wrong').textContent = wrong;
+              showToast(`答案是 ${answer}，再想想`);
+              setTimeout(newChallenge, 1500);
+            }
+          });
+          container.appendChild(btn);
+          Animator.popIn(btn, shuffled.indexOf(val) * 60);
+        });
+        timeLeft = 100;
+        document.getElementById('timer-fill').style.width = '100%';
+        // 答完题后重新启动计时
+        if (running) startTimer();
+      }
+
+      function startTimer() {
+        clearInterval(timer);
+        timer = setInterval(() => {
+          timeLeft -= 1;
+          document.getElementById('timer-fill').style.width = timeLeft + '%';
+          if (timeLeft <= 0) {
+            clearInterval(timer); timer = null;
+            timeoutCount++; streak = 0;
+            const record = { problem: `${answerA} × ${answerB}`, answer, userAnswer: '超时', correct: false, timedOut: true, time: Date.now() };
+            history.push(record); saveHistory();
+            Sound.play('wrong'); updateStreak();
+            document.getElementById('ch-timeout').textContent = timeoutCount;
+            showToast(`⏰ 时间到！答案是 ${answer}`);
+            setTimeout(newChallenge, 1500);
+          }
+        }, 100);
+      }
+
+      function stopTimer() {
+        clearInterval(timer); timer = null;
+      }
+
+      // 点开始按钮
+      const startBtn = document.getElementById('btn-start-challenge');
+      startBtn.addEventListener('click', () => {
+        stopTimer(); correct = 0; wrong = 0; timeoutCount = 0;
+        document.getElementById('ch-correct').textContent = 0;
+        document.getElementById('ch-wrong').textContent = 0;
+        document.getElementById('ch-timeout').textContent = 0;
+        document.querySelector('.challenge-area').classList.add('challenge-active');
+        document.getElementById('challenge-toolbar').style.display = 'flex';
+        document.getElementById('history-panel').classList.remove('show');
+        running = true; newChallenge(); startTimer(); Sound.play('click');
+      });
+
+      // 查看记录
+      document.getElementById('btn-history').addEventListener('click', () => {
+        const panel = document.getElementById('history-panel');
+        const isShowing = panel.classList.contains('show');
+        panel.classList.toggle('show');
+        if (!isShowing) { renderHistoryCounts(); renderHistory('all'); }
+        Sound.play('click');
+      });
+      document.getElementById('btn-close-history').addEventListener('click', () => {
+        document.getElementById('history-panel').classList.remove('show');
+        Sound.play('click');
+      });
+      document.querySelectorAll('.history-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.history-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          renderHistory(tab.dataset.type);
+          Sound.play('click');
+        });
+      });
+
+      // 清空记录
+      document.getElementById('btn-clear-history').addEventListener('click', () => {
+        history = []; saveHistory();
+        showToast('📋 答题记录已清空');
+        renderHistoryCounts(); renderHistory('all');
+        Sound.play('click');
+      });
+
+      // 切 tab：离开暂停，回来继续
+      const origTabs = document.querySelectorAll('.mode-tab');
+      origTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const isChallenge = tab.dataset.mode === 'challenge';
+          if (!isChallenge && running) {
+            stopTimer(); running = false;
+            document.querySelector('.challenge-area').classList.remove('challenge-active');
+          } else if (isChallenge && !running && correct + wrong + timeoutCount > 0) {
+            running = true;
+            document.querySelector('.challenge-area').classList.add('challenge-active');
+            document.getElementById('challenge-toolbar').style.display = 'flex';
+            startTimer();
+            showToast('⏱️ 计时恢复！继续挑战');
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

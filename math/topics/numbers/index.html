@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>认识数字 0-100</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    /* === 本节专用样式 === */
+    .mode-tabs {
+      display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mode-tab {
+      flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA;
+      border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-tab.active { background: #4A90D9; color: white; }
+
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 数数模式 */
+    .count-display { text-align: center; padding: 32px 16px; }
+    .count-number {
+      font-size: 96px; font-weight: 800; color: #4A90D9;
+      line-height: 1; margin-bottom: 16px; transition: transform 0.15s ease;
+    }
+    .count-objects {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 6px; min-height: 80px; padding: 16px;
+    }
+    .count-obj { font-size: 32px; animation: popIn 0.3s ease both; }
+    .count-controls { display: flex; justify-content: center; gap: 24px; margin-top: 24px; }
+    .count-obj { font-size: 36px; animation: popIn 0.3s ease both; }
+
+    /* 数轴模式 */
+    .number-line-container { padding: 20px 0; overflow-x: auto; }
+    .number-line { position: relative; height: 80px; margin: 20px 16px; min-width: 600px; }
+    .number-line-track {
+      position: absolute; top: 50%; left: 0; right: 0; height: 4px;
+      background: #1D1D1F; border-radius: 2px; transform: translateY(-50%);
+    }
+    .number-line-fill {
+      position: absolute; top: 50%; left: 0; height: 4px;
+      background: linear-gradient(90deg, #4A90D9, #7AB3E8);
+      border-radius: 2px; transform: translateY(-50%); transition: width 0.3s ease;
+    }
+    .number-dot {
+      position: absolute; top: 50%; width: 20px; height: 20px; border-radius: 50%;
+      background: #FFFFFF; border: 2px solid #1D1D1F; transform: translate(-50%, -50%); cursor: pointer;
+      transition: all 0.2s ease; display: flex; align-items: center; justify-content: center;
+      font-size: 0px; font-weight: 700; color: transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .number-dot.filled {
+      background: #4A90D9; border-color: #2C6FB5; color: white; font-size: 10px;
+      transform: translate(-50%, -50%) scale(1.1);
+      box-shadow: 0 2px 6px rgba(74,144,217,0.3);
+    }
+    .number-dot.highlight {
+      background: #FF9500; border-color: #CC7A00; color: white; font-size: 11px; font-weight: 800;
+      transform: translate(-50%, -50%) scale(1.5);
+      box-shadow: 0 0 12px rgba(255,149,0,0.5);
+    }
+    .number-label {
+      position: absolute; top: 50px; transform: translateX(-50%);
+      font-size: 12px; color: #1D1D1F; font-weight: 700;
+    }
+
+    /* 比大小模式 */
+    .compare-area { text-align: center; padding: 24px 16px; }
+    .compare-numbers {
+      display: flex; align-items: center; justify-content: center;
+      gap: 20px; margin: 24px 0;
+    }
+    .compare-num { font-size: 64px; font-weight: 800; color: #4A90D9; min-width: 100px; }
+    .compare-sign { font-size: 48px; color: #6E6E73; }
+    .compare-options { display: flex; justify-content: center; gap: 16px; margin-top: 24px; }
+    .compare-btn {
+      width: 72px; height: 72px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 32px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .compare-btn:active { transform: scale(0.9); }
+    .compare-btn.correct {
+      border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759;
+    }
+    .compare-btn.wrong {
+      border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30;
+    }
+
+    /* 排序模式 */
+    .sort-area { padding: 16px; }
+    .sort-target {
+      display: flex; flex-wrap: wrap; gap: 8px; min-height: 64px; padding: 16px;
+      background: rgba(74,144,217,0.05); border-radius: 16px;
+      border: 2px dashed #4A90D9; margin-bottom: 16px;
+    }
+    .sort-num {
+      width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 700; cursor: pointer; touch-action: none;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+    .sort-num.in-pool { background: #4A90D9; color: white; }
+    .sort-num.in-pool:active { transform: scale(0.9); }
+    .sort-num.in-target { background: #E5E5EA; color: #333; border: 2px solid #4A90D9; }
+    .sort-num.in-target:active { transform: scale(0.9); }
+    .sort-idx { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; background: #FF9500; color: white; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .sort-pool { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; min-height: 64px; }
+
+    /* 拨珠模式 */
+    .abacus { display: flex; justify-content: center; gap: 16px; padding: 16px 8px; min-width: max-content; }
+    .abacus-column { text-align: center; min-width: 60px; }
+    .abacus-label { font-size: 14px; font-weight: 700; color: #4A90D9; margin-bottom: 6px; }
+    .abacus-beads { display: flex; flex-direction: column-reverse; gap: 2px; align-items: center; padding: 6px 4px; min-height: 160px; background: #F8F0E0; border-radius: 8px; }
+    .abacus-bead {
+      width: 44px; height: 22px; border-radius: 11px; border: 2px solid #D0A060;
+      cursor: pointer; transition: all 0.15s ease;
+      background: linear-gradient(180deg, #F5E6D0 0%, #E0C8A0 100%);
+    }
+    .abacus-bead:active { transform: scale(0.95); }
+    .abacus-bead.active {
+      background: linear-gradient(180deg, #6AAFE8 0%, #3A7BD5 100%);
+      border-color: #2A5BA5;
+      box-shadow: 0 2px 6px rgba(74,123,213,0.3);
+    }
+    .abacus-col-val { font-size: 20px; font-weight: 800; color: #FF9500; margin-top: 6px; }
+
+    /* 找数字模式 */
+    .find-area { text-align: center; padding: 16px; }
+    .find-target-wrap {
+      background: #FFF8E1; border-radius: 20px; padding: 16px;
+      margin: 12px 16px; border: 3px solid #FFD54F;
+    }
+    .find-target-label { font-size: 16px; color: #6E6E73; margin-bottom: 4px; }
+    .find-target {
+      font-size: 80px; font-weight: 800; color: #FF9500;
+      margin: 4px 0; line-height: 1.1;
+    }
+    .find-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 12px; padding: 16px;
+    }
+    .find-cell {
+      aspect-ratio: 1; border: 3px solid #D0D0D5; background: #FAFAFA;
+      border-radius: 16px; font-size: 28px; font-weight: 700; color: #333;
+      cursor: pointer; transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .find-cell:active { transform: scale(0.9); }
+    .find-cell.correct {
+      border-color: #34C759; background: rgba(52,199,89,0.15);
+      color: #34C759; animation: correctPulse 0.5s ease;
+    }
+    .find-cell.wrong {
+      border-color: #FF3B30; background: rgba(255,59,48,0.1);
+      color: #FF3B30; animation: wrongShake 0.4s ease;
+    }
+
+    /* 连续答对 */
+    .score-display {
+      display: flex; justify-content: center; align-items: center;
+      gap: 12px; padding: 12px; font-size: 18px; font-weight: 600;
+    }
+    .score-stars { font-size: 24px; }
+
+    @media (max-width: 480px) {
+      .find-grid { grid-template-columns: repeat(4, 1fr); }
+      .count-number { font-size: 72px; }
+      .compare-num { font-size: 48px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" aria-label="返回">←</button>
+      <span class="nav-title">🔢 认识数字</span>
+      <div style="width:56px"></div>
+    </nav>
+
+    <div class="score-display">
+      <span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <!-- 模式切换 -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="count">🔢 数数</button>
+      <button class="mode-tab" data-mode="numberline">📏 数轴</button>
+      <button class="mode-tab" data-mode="compare">⚖️ 比大小</button>
+      <button class="mode-tab" data-mode="sort">📊 排序</button>
+      <button class="mode-tab" data-mode="abacus">🧮 拨珠</button>
+      <button class="mode-tab" data-mode="find">🔍 找数字</button>
+    </div>
+
+    <!-- 模式1: 数数 -->
+    <div class="mode-content active" id="mode-count">
+      <div class="card">
+        <div class="count-display">
+          <div class="count-number" id="count-num">0</div>
+          <div class="count-objects" id="count-objects"></div>
+        </div>
+        <div class="count-controls">
+          <button class="btn btn-warning btn-large" id="btn-less">➖ 减1</button>
+          <button class="btn btn-primary btn-large" id="btn-more">➕ 加1</button>
+        </div>
+        <p style="text-align:center;color:#6E6E73;font-size:14px;margin-top:12px">
+          点击加1/减1，看看数字对应多少物体
+        </p>
+      </div>
+    </div>
+
+    <!-- 模式2: 数轴 -->
+    <div class="mode-content" id="mode-numberline">
+      <div class="card">
+        <p style="text-align:center;font-size:18px;color:#6E6E73;margin-bottom:16px">
+          👆 点击数轴上的圆点，看看数字对应的数量
+        </p>
+        <div class="number-line-container">
+          <div class="number-line" id="number-line">
+            <div class="number-line-track"></div>
+            <div class="number-line-fill" id="nl-fill"></div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:24px">
+          <span style="font-size:64px;font-weight:800;color:#4A90D9" id="nl-number">?</span>
+          <div class="count-objects" id="nl-objects" style="margin-top:16px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 比大小 -->
+    <div class="mode-content" id="mode-compare">
+      <div class="card">
+        <p class="page-subtitle" id="compare-prompt">哪个数字更大？</p>
+        <div class="compare-area">
+          <div class="compare-numbers">
+            <span class="compare-num" id="cmp-left">0</span>
+            <span class="compare-sign">?</span>
+            <span class="compare-num" id="cmp-right">0</span>
+          </div>
+          <div class="compare-options">
+            <button class="compare-btn" data-answer="left">&lt;</button>
+            <button class="compare-btn" data-answer="eq">=</button>
+            <button class="compare-btn" data-answer="right">&gt;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 排序 -->
+    <div class="mode-content" id="mode-sort">
+      <div class="card">
+        <p class="page-subtitle">把数字从小到大排一排</p>
+        <div class="sort-area">
+          <p style="text-align:center;font-size:15px;color:#6E6E73;margin-bottom:8px">
+            👆 拖拽数字到上方蓝色虚线区域，按从小到大排列
+          </p>
+          <div class="sort-target" id="sort-target"></div>
+          <div class="sort-pool" id="sort-pool"></div>
+          <div class="action-bar">
+            <button class="btn btn-primary" id="btn-check-sort">✅ 检查</button>
+            <button class="btn btn-warning" id="btn-new-sort">🔄 换一组</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式5: 拨珠 -->
+    <div class="mode-content" id="mode-abacus">
+      <div class="card">
+        <p class="page-subtitle">点击珠子来拨珠，练习不同位数</p>
+        <div style="text-align:center;margin-bottom:16px">
+          <label style="font-size:14px;color:#6E6E73;margin-right:8px">位数：</label>
+          <input type="range" id="abacus-places-slider" min="2" max="8" value="2" style="width:200px;vertical-align:middle">
+          <span id="abacus-places-label" style="font-size:16px;font-weight:700;color:#4A90D9;margin-left:8px">2位（个十）</span>
+        </div>
+        <div style="overflow-x:auto;padding:8px 0">
+          <div class="abacus" id="abacus-area"></div>
+        </div>
+        <div style="text-align:center">
+          <span style="font-size:48px;font-weight:800;color:#4A90D9" id="abacus-value">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式6: 找数字 -->
+    <div class="mode-content" id="mode-find">
+      <div class="card">
+        <div class="find-area">
+          <div class="find-target-wrap">
+            <div class="find-target-label">🔍 找到下面这个数字：</div>
+            <div class="find-target" id="find-target">?</div>
+          </div>
+          <div class="find-grid" id="find-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/animation.js"></script>
+  <script src="../../assets/js/touch.js"></script>
+  <script>
+    // 返回按钮
+    document.querySelector('.nav-back').addEventListener('click', () => {
+      window.location.href = '../../index.html';
+    });
+
+    // 连续答对
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      const starsEl = document.getElementById('stars-display');
+      starsEl.textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast(`🔥 连续 ${streak} 次正确！太棒了！`);
+    }
+
+    // 模式切换
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        Sound.play('click');
+      });
+    });
+
+    // === 模式1: 数数 ===
+    let countNum = 0;
+    const ALL_EMOJIS = ['🍎','🍊','🍋','🍇','🍓','🌟','🎈','🐱','🐶','🦋','🌸','🎀','🍩','🍪','🐟','🐰','🦊','🐼','🐨','🦁','🐸','🐙','🍌','🍑','🍒','🥕','🌺','🎵','🏀','🐝'];
+    let currentEmoji = ALL_EMOJIS[0];
+    function updateCount(n) {
+      countNum = Math.max(0, Math.min(99, n));
+      Animator.numberPop(document.getElementById('count-num'));
+      document.getElementById('count-num').textContent = countNum;
+      const objEl = document.getElementById('count-objects');
+      objEl.innerHTML = '';
+      // 随机选一个不同的emoji，不要重复上次的
+      let newEmoji;
+      do { newEmoji = Random.pick(ALL_EMOJIS); } while (newEmoji === currentEmoji && ALL_EMOJIS.length > 1);
+      currentEmoji = newEmoji;
+      // 超过30个时只显示部分，避免太多图标
+      const showMax = 30;
+      const showCount = Math.min(countNum, showMax);
+      for (let i = 0; i < showCount; i++) {
+        const s = document.createElement('span');
+        s.className = 'count-obj';
+        s.textContent = currentEmoji;
+        s.style.animationDelay = (i * 0.03) + 's';
+        s.style.opacity = '1';
+        objEl.appendChild(s);
+      }
+      if (countNum > showMax) {
+        const more = document.createElement('span');
+        more.className = 'count-obj';
+        more.textContent = `+${countNum - showMax}`;
+        more.style.fontSize = '20px';
+        more.style.fontWeight = '700';
+        more.style.color = '#4A90D9';
+        more.style.display = 'flex';
+        more.style.alignItems = 'center';
+        objEl.appendChild(more);
+      }
+      Sound.play('click');
+    }
+    document.getElementById('btn-more').addEventListener('click', () => updateCount(countNum + 1));
+    document.getElementById('btn-less').addEventListener('click', () => updateCount(countNum - 1));
+    updateCount(0);
+
+    // === 模式2: 数轴 ===
+    (() => {
+      const lineEl = document.getElementById('number-line');
+      const maxN = 99;
+      for (let i = 0; i <= maxN; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'number-dot';
+        dot.style.left = ((i / maxN) * 100) + '%';
+        ((function(n) {
+          dot.addEventListener('click', () => selectNumber(n));
+        })(i));
+        lineEl.appendChild(dot);
+        // 每10个显示标签
+        if (i % 10 === 0 || i === maxN) {
+          const label = document.createElement('div');
+          label.className = 'number-label';
+          label.textContent = i;
+          label.style.left = ((i / maxN) * 100) + '%';
+          lineEl.appendChild(label);
+        }
+      }
+      function selectNumber(n) {
+        document.querySelectorAll('.number-dot').forEach((d, i) => {
+          d.classList.toggle('filled', i <= n);
+          d.classList.toggle('highlight', i === n);
+        });
+        document.getElementById('nl-fill').style.width = ((n / maxN) * 100) + '%';
+        Animator.numberPop(document.getElementById('nl-number'));
+        document.getElementById('nl-number').textContent = n;
+        const objEl = document.getElementById('nl-objects');
+        objEl.innerHTML = '';
+        const em = ALL_EMOJIS[n % ALL_EMOJIS.length];
+        for (let i = 0; i < n; i++) {
+          const s = document.createElement('span');
+          s.className = 'count-obj';
+          s.textContent = em;
+          s.style.animationDelay = (i * 0.04) + 's';
+          objEl.appendChild(s);
+        }
+        Sound.play('click');
+      }
+    })();
+
+    // === 模式3: 比大小 ===
+    (() => {
+      let leftNum, rightNum;
+      function newQ() {
+        leftNum = Random.int(1, 50);
+        do { rightNum = Random.int(1, 50); } while (rightNum === leftNum);
+        document.getElementById('cmp-left').textContent = leftNum;
+        document.getElementById('cmp-right').textContent = rightNum;
+        document.querySelectorAll('.compare-btn').forEach(b => b.classList.remove('correct', 'wrong'));
+      }
+      document.querySelectorAll('.compare-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const ans = btn.dataset.answer;
+          let ok;
+          if (ans === 'left') ok = leftNum < rightNum;
+          else if (ans === 'right') ok = leftNum > rightNum;
+          else ok = leftNum === rightNum;
+          if (ok) {
+            btn.classList.add('correct'); streak++;
+            Sound.play('correct'); celebrate();
+            updateStreak(); setTimeout(newQ, 1000);
+          } else {
+            btn.classList.add('wrong'); Animator.shake(btn);
+            streak = 0; Sound.play('wrong'); updateStreak();
+          }
+        });
+      });
+      newQ();
+    })();
+
+    // === 模式4: 排序（单击选中） ===
+    (() => {
+      let sortNums = [];
+      function newSort() {
+        sortNums = [];
+        const used = new Set();
+        const count = Random.int(4, 7);
+        while (sortNums.length < count) {
+          const n = Random.int(1, 20);
+          if (!used.has(n)) { used.add(n); sortNums.push(n); }
+        }
+        sortNums = Random.shuffle(sortNums);
+        document.getElementById('sort-target').innerHTML = '';
+        const pool = document.getElementById('sort-pool');
+        pool.innerHTML = '';
+        sortNums.forEach((n, idx) => {
+          const d = document.createElement('div');
+          d.className = 'sort-num in-pool';
+          d.textContent = n;
+          d.dataset.value = n;
+          d.style.position = 'relative';
+          pool.appendChild(d);
+          Animator.popIn(d, idx * 50);
+        });
+        // 点击事件：池中的点选进排序区，排序区的点退回池中
+        pool.querySelectorAll('.sort-num').forEach(el => {
+          el.addEventListener('click', () => {
+            document.getElementById('sort-target').appendChild(el);
+            el.className = 'sort-num in-target';
+            el.style.position = 'relative';
+            updateSortIdx();
+            Sound.play('click');
+          });
+        });
+        document.getElementById('sort-target').addEventListener('click', e => {
+          const el = e.target.closest('.sort-num');
+          if (!el) return;
+          pool.appendChild(el);
+          el.className = 'sort-num in-pool';
+          el.style.position = 'relative';
+          updateSortIdx();
+          Sound.play('click');
+        });
+      }
+      function updateSortIdx() {
+        document.querySelectorAll('#sort-target .sort-num').forEach((el, i) => {
+          let idxEl = el.querySelector('.sort-idx');
+          if (!idxEl) {
+            idxEl = document.createElement('span');
+            idxEl.className = 'sort-idx';
+            el.appendChild(idxEl);
+          }
+          idxEl.textContent = i + 1;
+        });
+      }
+      document.getElementById('btn-check-sort').addEventListener('click', () => {
+        const nums = [...document.getElementById('sort-target').querySelectorAll('.sort-num')]
+          .map(el => parseInt(el.dataset.value));
+        const sorted = [...nums].sort((a, b) => a - b);
+        if (JSON.stringify(nums) === JSON.stringify(sorted)) {
+          streak++; Sound.play('correct');
+          celebrate(document.getElementById('sort-target'));
+          updateStreak(); showToast('🎉 排得完全正确！');
+        } else {
+          streak = 0; Sound.play('wrong'); updateStreak();
+          showToast('💪 再想想，从小到大排哦');
+        }
+      });
+      document.getElementById('btn-new-sort').addEventListener('click', newSort);
+      newSort();
+    })();
+
+    // === 模式5: 拨珠（可配置位数） ===
+    (() => {
+      const PLACE_NAMES = ['个','十','百','千','万','十万','百万','千万'];
+      const PLACE_VALUES = [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000];
+      let placeCount = 2;
+      let beadVals = [0, 0, 0, 0, 0, 0, 0, 0]; // 每位当前激活的珠子数
+
+      function buildAbacus() {
+        const area = document.getElementById('abacus-area');
+        area.innerHTML = '';
+        for (let p = placeCount - 1; p >= 0; p--) {
+          const col = document.createElement('div');
+          col.className = 'abacus-column';
+          col.innerHTML = `
+            <div class="abacus-label">${PLACE_NAMES[p]}</div>
+            <div class="abacus-beads" id="abacus-place-${p}"></div>
+            <div class="abacus-col-val" id="abacus-pval-${p}">0</div>
+          `;
+          area.appendChild(col);
+          const beadsEl = document.getElementById(`abacus-place-${p}`);
+          for (let i = 0; i < 9; i++) {
+            const b = document.createElement('div');
+            b.className = 'abacus-bead';
+            ((function(places, idx) {
+              b.addEventListener('click', () => {
+                beadVals[places] = idx + 1;
+                updBeads(); updTotal();
+                Sound.play('click');
+              });
+            })(p, i));
+            beadsEl.appendChild(b);
+          }
+        }
+        updBeads();
+      }
+
+      function updBeads() {
+        for (let p = 0; p < placeCount; p++) {
+          const beads = document.getElementById(`abacus-place-${p}`).children;
+          for (let i = 0; i < beads.length; i++) {
+            beads[i].classList.toggle('active', i < beadVals[p]);
+          }
+          document.getElementById(`abacus-pval-${p}`).textContent = beadVals[p];
+        }
+      }
+
+      function updTotal() {
+        let total = 0;
+        for (let p = 0; p < placeCount; p++) {
+          total += beadVals[p] * PLACE_VALUES[p];
+        }
+        Animator.numberPop(document.getElementById('abacus-value'));
+        document.getElementById('abacus-value').textContent = total.toLocaleString('zh-CN');
+      }
+
+      const slider = document.getElementById('abacus-places-slider');
+      const label = document.getElementById('abacus-places-label');
+      slider.addEventListener('input', () => {
+        placeCount = parseInt(slider.value);
+        // 重置超出范围的位数
+        for (let p = placeCount; p < 8; p++) beadVals[p] = 0;
+        const names = PLACE_NAMES.slice(0, placeCount).reverse().join('');
+        label.textContent = `${placeCount}位（${PLACE_NAMES[placeCount-1]}${PLACE_NAMES[0]}）`;
+        buildAbacus();
+        updTotal();
+        Sound.play('click');
+      });
+
+      buildAbacus();
+    })();
+
+    // === 模式6: 找数字 ===
+    (() => {
+      let target = 0;
+      function newFind() {
+        target = Random.int(1, 50);
+        document.getElementById('find-target').textContent = target;
+        Animator.numberPop(document.getElementById('find-target'));
+        const grid = document.getElementById('find-grid');
+        grid.innerHTML = '';
+        // 生成网格：包含目标数字的干扰项
+        const nums = new Set([target]);
+        while (nums.size < 12) {
+          let n = target + Random.int(-10, 10);
+          if (n > 0 && n <= 50) nums.add(n);
+        }
+        const arr = Random.shuffle([...nums]);
+        arr.forEach(n => {
+          const cell = document.createElement('div');
+          cell.className = 'find-cell';
+          cell.textContent = n;
+          cell.addEventListener('click', () => {
+            if (n === target) {
+              cell.classList.add('correct');
+              streak++; Sound.play('correct');
+              celebrate(grid); updateStreak();
+              showToast(`🎉 找到了 ${target}！`);
+              setTimeout(newFind, 1000);
+            } else {
+              cell.classList.add('wrong');
+              Animator.shake(cell);
+              streak = 0; Sound.play('wrong'); updateStreak();
+              showToast(`不对哦，要找 ${target}`);
+            }
+          });
+          grid.appendChild(cell);
+          Animator.popIn(cell, arr.indexOf(n) * 30);
+        });
+      }
+      newFind();
+    })();
+  </script>
+</body>
+</html>

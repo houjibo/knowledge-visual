@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>百分数</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #FF9500; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    .score-display { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px; font-size: 18px; font-weight: 600; }
+    .score-stars { font-size: 24px; }
+
+    /* === 模式1: 认识百分数 === */
+    .pct-area { text-align: center; padding: 24px 16px; }
+    .pct-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; max-width: 320px; margin: 16px auto; }
+    .pct-cell { aspect-ratio: 1; border-radius: 4px; background: #E5E5EA; transition: all 0.3s ease; }
+    .pct-cell.filled { background: #FF9500; animation: popIn 0.2s ease both; }
+    .pct-display { font-size: 48px; font-weight: 800; color: #FF9500; margin: 16px 0; }
+    .pct-frac { font-size: 22px; color: #6E6E73; }
+    .pct-slider-wrap { display: flex; align-items: center; gap: 16px; justify-content: center; margin: 24px 0; }
+    .pct-slider { width: 200px; accent-color: #FF9500; }
+    .pct-equiv { font-size: 20px; font-weight: 600; margin: 16px 0; }
+    .pct-equiv span { display: inline-block; padding: 4px 12px; border-radius: 8px; margin: 0 4px; }
+    .pct-equiv .p { background: rgba(255,149,0,0.15); color: #FF9500; }
+    .pct-equiv .f { background: rgba(74,144,217,0.15); color: #4A90D9; }
+    .pct-equiv .d { background: rgba(52,199,89,0.15); color: #34C759; }
+
+    /* === 模式2: 折扣 === */
+    .discount-area { text-align: center; padding: 24px 16px; }
+    .product-card { max-width: 280px; margin: 16px auto; padding: 24px; background: #FFF8E1; border-radius: 20px; }
+    .product-name { font-size: 24px; margin-bottom: 8px; }
+    .original-price { font-size: 20px; color: #999; text-decoration: line-through; }
+    .discount-price { font-size: 36px; font-weight: 800; color: #FF3B30; margin: 8px 0; }
+    .discount-badge { display: inline-block; padding: 6px 16px; background: #FF3B30; color: white; border-radius: 20px; font-size: 18px; font-weight: 700; }
+    .discount-calc { font-size: 18px; color: #6E6E73; margin: 16px 0; }
+
+    /* === 模式3: 税率 === */
+    .tax-area { text-align: center; padding: 24px 16px; }
+    .tax-result { font-size: 24px; font-weight: 700; margin: 16px 0; }
+    .tax-breakdown { max-width: 300px; margin: 16px auto; }
+    .tax-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E5E5EA; }
+    .tax-row:last-child { border-bottom: none; font-weight: 700; font-size: 20px; color: #FF9500; }
+
+    /* === 模式4: 利率 === */
+    .interest-area { text-align: center; padding: 24px 16px; }
+    .interest-chart { margin: 16px auto; }
+    .interest-chart canvas { background: white; border-radius: 16px; }
+    .interest-result { font-size: 22px; font-weight: 700; margin: 16px 0; }
+    .interest-table { max-width: 320px; margin: 16px auto; }
+
+    /* === 模式5: 挑战 === */
+    .challenge-area { text-align: center; padding: 24px 16px; }
+    .challenge-problem { font-size: 26px; font-weight: 700; color: #FF9500; margin: 24px 0; line-height: 1.5; }
+    .challenge-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 400px; margin: 24px auto; padding: 0 16px; }
+    .challenge-opt { padding: 20px; border: 3px solid #E5E5EA; background: white; border-radius: 16px; font-size: 18px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .challenge-opt:active { transform: scale(0.9); }
+    .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .hint-box { background: rgba(255,149,0,0.08); border-radius: 12px; padding: 12px 16px; margin: 12px 16px; font-size: 15px; color: #6E6E73; text-align: left; }
+    .hint-box strong { color: #FF9500; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" aria-label="返回">←</button>
+      <span class="nav-title">💯 百分数</span>
+      <div style="width:56px"></div>
+    </nav>
+    <div class="score-display">
+      <span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="learn">💯 认识百分数</button>
+      <button class="mode-tab" data-mode="discount">🏷️ 折扣</button>
+      <button class="mode-tab" data-mode="tax">📋 税率</button>
+      <button class="mode-tab" data-mode="interest">🏦 利率</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- 模式1: 认识百分数 -->
+    <div class="mode-content active" id="mode-learn">
+      <div class="card">
+        <p class="page-subtitle">百分数表示一个数是另一个数的百分之几</p>
+        <div class="pct-area">
+          <div class="pct-slider-wrap">
+            <span>百分比：</span>
+            <input type="range" class="pct-slider" id="pct-slider" min="0" max="100" value="25" step="5">
+            <span id="pct-val" style="font-size:24px;font-weight:700;color:#FF9500;min-width:60px">25%</span>
+          </div>
+          <div class="pct-grid" id="pct-grid"></div>
+          <div class="pct-equiv" id="pct-equiv"></div>
+          <div class="pct-slider-wrap">
+            <button class="btn btn-primary" id="btn-random-pct">🎲 随机</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 折扣 -->
+    <div class="mode-content" id="mode-discount">
+      <div class="card">
+        <p class="page-subtitle">几折就是百分之几十</p>
+        <div class="discount-area">
+          <div class="product-card" id="product-card"></div>
+          <div class="discount-calc" id="discount-calc"></div>
+          <div class="action-bar"><button class="btn btn-primary btn-large" id="btn-new-discount">🎲 换一件</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 税率 -->
+    <div class="mode-content" id="mode-tax">
+      <div class="card">
+        <p class="page-subtitle">应纳税额 = 收入 × 税率</p>
+        <div class="tax-area">
+          <div class="pct-slider-wrap">
+            <span>收入：</span>
+            <input type="range" class="pct-slider" id="tax-slider" min="1000" max="20000" value="5000" step="500">
+            <span id="tax-val" style="font-size:20px;font-weight:700;color:#FF9500;min-width:80px">5000</span>
+          </div>
+          <div id="tax-content"></div>
+          <div class="action-bar"><button class="btn btn-primary btn-large" id="btn-new-tax">🎲 换一个</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 利率 -->
+    <div class="mode-content" id="mode-interest">
+      <div class="card">
+        <p class="page-subtitle">利息 = 本金 × 利率 × 时间</p>
+        <div class="interest-area">
+          <div class="pct-slider-wrap">
+            <span>本金：</span>
+            <input type="range" class="pct-slider" id="int-slider" min="1000" max="100000" value="10000" step="1000">
+            <span id="int-val" style="font-size:18px;font-weight:700;color:#FF9500;min-width:80px">10000</span>
+          </div>
+          <div id="interest-content"></div>
+          <div class="action-bar"><button class="btn btn-primary btn-large" id="btn-new-interest">🎲 换一个</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式5: 挑战 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="card">
+        <div class="challenge-area">
+          <div class="challenge-problem" id="challenge-problem"></div>
+          <div class="challenge-options" id="challenge-options"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/animation.js"></script>
+  <script src="../../assets/js/touch.js"></script>
+  <script>
+    document.querySelector('.nav-back').addEventListener('click', () => window.location.href = '../../index.html');
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast(`🔥 连续 ${streak} 次！百分数大师！`);
+    }
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        Sound.play('click');
+      });
+    });
+
+    // === 模式1: 认识百分数 ===
+    (() => {
+      const grid = document.getElementById('pct-grid');
+      const slider = document.getElementById('pct-slider');
+      function updatePct() {
+        const pct = parseInt(slider.value);
+        document.getElementById('pct-val').textContent = pct + '%';
+        grid.innerHTML = '';
+        for (let i = 0; i < 100; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'pct-cell' + (i < pct ? ' filled' : '');
+          if (i < pct) cell.style.animationDelay = (i * 8) + 'ms';
+          grid.appendChild(cell);
+        }
+        // 等值转换
+        const frac = pct / 100;
+        const dec = (pct / 100).toFixed(2);
+        document.getElementById('pct-equiv').innerHTML = `
+          <span class="p">${pct}%</span> = <span class="f">${fracToText(pct)}</span> = <span class="d">${parseFloat(dec)}</span>
+        `;
+      }
+      function fracToText(pct) {
+        const g = gcd(pct, 100);
+        const a = pct / g, b = 100 / g;
+        return b === 1 ? a.toString() : `${a}/${b}`;
+      }
+      function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+      slider.addEventListener('input', updatePct);
+      document.getElementById('btn-random-pct').addEventListener('click', () => {
+        slider.value = Random.pick([10, 15, 20, 25, 30, 33, 40, 50, 60, 66, 75, 80, 90, 95, 100]);
+        updatePct(); Sound.play('click');
+      });
+      updatePct();
+    })();
+
+    // === 模式2: 折扣 ===
+    (() => {
+      const products = [
+        { name: '👟 运动鞋', price: 599 },
+        { name: '📱 手机壳', price: 99 },
+        { name: '🎧 耳机', price: 399 },
+        { name: '📚 课外书', price: 45 },
+        { name: '🧸 毛绒玩具', price: 128 },
+        { name: '🎮 游戏卡', price: 299 },
+        { name: '👕 T恤衫', price: 159 },
+        { name: '⌚ 手表', price: 888 },
+      ];
+      const discounts = [
+        { label: '八折', pct: 0.8 },
+        { label: '七五折', pct: 0.75 },
+        { label: '六折', pct: 0.6 },
+        { label: '九折', pct: 0.9 },
+        { label: '五折', pct: 0.5 },
+        { label: '八五折', pct: 0.85 },
+      ];
+      function newDiscount() {
+        const prod = Random.pick(products);
+        const disc = Random.pick(discounts);
+        const salePrice = Math.round(prod.price * disc.pct);
+        const saved = prod.price - salePrice;
+        document.getElementById('product-card').innerHTML = `
+          <div class="product-name">${prod.name}</div>
+          <div class="original-price">原价：¥${prod.price}</div>
+          <div class="discount-badge">${disc.label}</div>
+          <div class="discount-price">现价：¥${salePrice}</div>
+          <div style="color:#34C759;font-size:16px;margin-top:8px">省下：¥${saved}</div>
+        `;
+        document.getElementById('discount-calc').innerHTML = `
+          <strong>计算公式：</strong><br>
+          ¥${prod.price} × ${disc.pct * 100}% = ¥${prod.price} × ${disc.pct} = <span style="color:#FF3B30;font-weight:700">¥${salePrice}</span>
+        `;
+        Sound.play('click');
+      }
+      document.getElementById('btn-new-discount').addEventListener('click', newDiscount);
+      newDiscount();
+    })();
+
+    // === 模式3: 税率 ===
+    (() => {
+      const taxRates = [
+        { label: '增值税', rate: 0.13, desc: '商品销售' },
+        { label: '个人所得税', rate: 0.03, desc: '月收入≤5000' },
+        { label: '营业税', rate: 0.05, desc: '服务业' },
+        { label: '消费税', rate: 0.10, desc: '高档商品' },
+      ];
+      let sc = Random.pick(taxRates);
+      const slider = document.getElementById('tax-slider');
+      function updateTax() {
+        const income = parseInt(slider.value);
+        document.getElementById('tax-val').textContent = '¥' + income.toLocaleString();
+        const tax = Math.round(income * sc.rate);
+        const after = income - tax;
+        document.getElementById('tax-content').innerHTML = `
+          <div style="font-size:18px;color:#6E6E73;margin:12px 0">${sc.label}（${sc.desc}）税率：<span style="color:#FF9500;font-weight:700">${(sc.rate * 100).toFixed(0)}%</span></div>
+          <div class="tax-breakdown">
+            <div class="tax-row"><span>收入</span><span>¥${income.toLocaleString()}</span></div>
+            <div class="tax-row"><span>税率</span><span>${(sc.rate * 100).toFixed(0)}%</span></div>
+            <div class="tax-row"><span>应纳税额</span><span style="color:#FF3B30">¥${tax.toLocaleString()}</span></div>
+            <div class="tax-row"><span>税后收入</span><span style="color:#34C759">¥${after.toLocaleString()}</span></div>
+          </div>
+          <div style="font-size:16px;color:#6E6E73;margin-top:16px">
+            <strong>公式：</strong>应纳税额 = ¥${income.toLocaleString()} × ${sc.rate} = <span style="color:#FF3B30;font-weight:700">¥${tax.toLocaleString()}</span>
+          </div>
+        `;
+      }
+      slider.addEventListener('input', updateTax);
+      document.getElementById('btn-new-tax').addEventListener('click', () => {
+        sc = Random.pick(taxRates); updateTax(); Sound.play('click');
+      });
+      updateTax();
+    })();
+
+    // === 模式4: 利率 ===
+    (() => {
+      const rates = [
+        { label: '活期', rate: 0.003 },
+        { label: '一年定期', rate: 0.015 },
+        { label: '二年定期', rate: 0.021 },
+        { label: '三年定期', rate: 0.0275 },
+      ];
+      let sc = Random.pick(rates);
+      const slider = document.getElementById('int-slider');
+      function updateInterest() {
+        const principal = parseInt(slider.value);
+        document.getElementById('int-val').textContent = '¥' + principal.toLocaleString();
+        const years = [1, 2, 3, 5];
+        let tableRows = '';
+        years.forEach(y => {
+          const interest = Math.round(principal * sc.rate * y);
+          const total = principal + interest;
+          const active = Math.abs(sc.rate * y - sc.rate) < 0.0001 ? 'style="background:rgba(255,149,0,0.12)"' : '';
+          tableRows += `<div class="tax-row" ${active}><span>${y}年</span><span>¥${interest.toLocaleString()}</span><span style="color:#34C759">¥${total.toLocaleString()}</span></div>`;
+        });
+        const interest = Math.round(principal * sc.rate);
+        document.getElementById('interest-content').innerHTML = `
+          <div style="font-size:18px;color:#6E6E73;margin:12px 0">${sc.label} 年利率：<span style="color:#FF9500;font-weight:700">${(sc.rate * 100).toFixed(2)}%</span></div>
+          <div class="interest-result">一年利息：<span style="color:#FF9500">¥${interest.toLocaleString()}</span></div>
+          <div class="interest-table">
+            <div style="font-weight:700;color:#4A90D9;margin-bottom:8px">不同期限利息表</div>
+            <div class="tax-row" style="font-weight:700;color:#4A90D9"><span>期限</span><span>利息</span><span>本息合计</span></div>
+            ${tableRows}
+          </div>
+          <div style="font-size:16px;color:#6E6E73;margin-top:16px">
+            <strong>公式：</strong>利息 = 本金 × 利率 × 时间 = ¥${principal.toLocaleString()} × ${sc.rate} × 1 = <span style="color:#FF9500;font-weight:700">¥${interest.toLocaleString()}</span>
+          </div>
+        `;
+      }
+      slider.addEventListener('input', updateInterest);
+      document.getElementById('btn-new-interest').addEventListener('click', () => {
+        sc = Random.pick(rates); updateInterest(); Sound.play('click');
+      });
+      updateInterest();
+    })();
+
+    // === 模式5: 挑战 ===
+    (() => {
+      function newChallenge() {
+        const type = Random.int(1, 5);
+        let question, answer, options, hint;
+        if (type === 1) {
+          // 分数转百分数
+          const den = Random.pick([2, 4, 5, 8, 10, 20, 25, 50]);
+          const num = Random.int(1, den - 1);
+          const pct = Math.round(num / den * 100);
+          question = `${num}/${den} 化成百分数 = ?`;
+          answer = pct + '%';
+          options = [pct + '%', (pct + 5) + '%', (pct - 5) + '%', (pct + 10) + '%'];
+          hint = `💡 ${num}/${den} = ${num} ÷ ${den} = ${(num/den).toFixed(2)}，乘以 100 加 %`;
+        } else if (type === 2) {
+          // 折扣计算
+          const price = Random.pick([100, 200, 300, 500, 800]);
+          const discPct = Random.pick([80, 75, 60, 90, 50]);
+          const salePrice = price * discPct / 100;
+          question = `¥${price} 的商品打 ${discPct / 10} 折，现价多少元？`;
+          answer = salePrice;
+          options = [salePrice, salePrice + price * 0.1, salePrice - price * 0.1, salePrice + 10];
+          hint = `💡 ¥${price} × ${discPct}% = ¥${salePrice}`;
+        } else if (type === 3) {
+          // 税率计算
+          const income = Random.pick([3000, 5000, 8000, 10000]);
+          const rate = Random.pick([3, 5, 10]);
+          const tax = income * rate / 100;
+          question = `收入 ¥${income.toLocaleString()}，税率 ${rate}%，应纳税多少元？`;
+          answer = tax;
+          options = [tax, tax + income * 0.01, tax * 2, tax - 10];
+          hint = `💡 应纳税额 = ¥${income.toLocaleString()} × ${rate}% = ¥${tax}`;
+        } else if (type === 4) {
+          // 百分数比较
+          const a = Random.int(20, 80);
+          const b = Random.int(20, 80);
+          const increase = Math.round((b - a) / a * 100);
+          question = `从 ${a} 增加到 ${b}，增加了百分之几？`;
+          answer = increase + '%';
+          options = [increase + '%', (increase + 10) + '%', Math.abs(increase - 10) + '%', (increase + 20) + '%'];
+          hint = `💡 增加量 = ${b} - ${a} = ${b - a}，增加百分比 = ${b - a} ÷ ${a} × 100% = ${increase}%`;
+        } else {
+          // 利息计算
+          const principal = Random.pick([1000, 5000, 10000]);
+          const rate = Random.pick([2, 3, 5]);
+          const years = Random.pick([1, 2, 3]);
+          const interest = principal * rate / 100 * years;
+          question = `本金 ¥${principal.toLocaleString()}，年利率 ${rate}%，存 ${years} 年利息多少？`;
+          answer = interest;
+          options = [interest, interest + principal * 0.01, interest * 2, interest + 100];
+          hint = `💡 利息 = ¥${principal.toLocaleString()} × ${rate}% × ${years} = ¥${interest}`;
+        }
+        options = [...new Set(options.map(x => typeof x === 'number' ? Math.round(x) : x))];
+        while (options.length < 4) {
+          const fake = typeof answer === 'number' ? answer + Random.int(-20, 20) : (parseInt(answer) + Random.int(-10, 10)) + '%';
+          if (!options.includes(fake)) options.push(fake);
+        }
+        options = Random.shuffle(options).slice(0, 4);
+        if (!options.includes(answer)) options[0] = answer;
+        document.getElementById('challenge-problem').innerHTML = `<div style="font-size:14px;color:#6E6E73;margin-bottom:8px">${hint}</div>${question}`;
+        const container = document.getElementById('challenge-options');
+        container.innerHTML = '';
+        Random.shuffle(options).forEach(val => {
+          const btn = document.createElement('div');
+          btn.className = 'challenge-opt'; btn.textContent = val;
+          btn.addEventListener('click', () => {
+            if (String(val) === String(answer)) {
+              btn.classList.add('correct'); streak++;
+              Sound.play('correct'); celebrate(); updateStreak();
+              setTimeout(newChallenge, 800);
+            } else {
+              btn.classList.add('wrong'); Animator.shake(btn);
+              streak = 0; Sound.play('wrong'); updateStreak();
+              showToast(`答案是 ${answer}`);
+              setTimeout(newChallenge, 1500);
+            }
+          });
+          container.appendChild(btn);
+        });
+      }
+      newChallenge();
+    })();
+  </script>
+</body>
+</html>
