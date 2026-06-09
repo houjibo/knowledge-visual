@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>年月日的认识</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #FF9800; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 日历探索 */
+    .calendar-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 16px 0; }
+    .calendar-nav-btn { width: 48px; height: 48px; border: none; background: #FF9800; color: white; border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .calendar-nav-btn:active { transform: scale(0.9); }
+    .calendar-month-title { font-size: 22px; font-weight: 700; color: #1D1D1F; min-width: 120px; text-align: center; }
+    .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
+    .weekday-label { text-align: center; font-size: 13px; font-weight: 600; color: #6E6E73; padding: 6px 0; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 8px 0; }
+    .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 16px; font-weight: 600; background: #F8F8FA; color: #1D1D1F; }
+    .calendar-day.empty { background: transparent; }
+    .calendar-day.today { background: #FF9800; color: white; font-weight: 700; }
+    .calendar-day.weekend { color: #FF3B30; }
+    .calendar-day.today.weekend { background: #FF3B30; color: white; }
+    .month-info { text-align: center; padding: 12px; background: #FFF3E0; border-radius: 12px; margin: 12px 0; font-size: 16px; color: #E65100; }
+    .season-info { text-align: center; font-size: 15px; color: #6E6E73; margin: 4px 0; }
+    .season-spring { color: #34C759; }
+    .season-summer { color: #FF3B30; }
+    .season-autumn { color: #FF9500; }
+    .season-winter { color: #4A90D9; }
+
+    /* 单位换算 */
+    .unit-problem { text-align: center; padding: 24px 16px; }
+    .unit-question { font-size: 22px; font-weight: 700; margin: 20px 0; color: #1D1D1F; }
+    .unit-answer-input { width: 100px; font-size: 28px; font-weight: 700; text-align: center; border: 3px solid #FF9800; border-radius: 12px; padding: 8px; outline: none; color: #1D1D1F; }
+    .unit-check-btn { margin-left: 12px; padding: 12px 24px; border: none; background: #FF9800; color: white; border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; }
+    .unit-check-btn:active { transform: scale(0.95); }
+    .unit-feedback { font-size: 20px; font-weight: 700; margin: 16px 0; min-height: 28px; }
+    .unit-ref { text-align: center; padding: 16px; background: #FFF3E0; border-radius: 12px; margin: 16px 0; font-size: 15px; color: #E65100; line-height: 1.8; }
+    .unit-score { display: flex; justify-content: center; gap: 16px; font-size: 18px; font-weight: 600; margin: 12px 0; }
+
+    /* 闰年探索 */
+    .leap-area { text-align: center; padding: 24px 16px; }
+    .leap-input { font-size: 28px; font-weight: 700; text-align: center; border: 3px solid #34C759; border-radius: 12px; padding: 8px; width: 140px; outline: none; }
+    .leap-check-btn { margin-top: 12px; padding: 12px 32px; border: none; background: #34C759; color: white; border-radius: 16px; font-size: 18px; font-weight: 600; cursor: pointer; }
+    .leap-check-btn:active { transform: scale(0.95); }
+    .leap-result { font-size: 20px; font-weight: 700; margin: 16px 0; padding: 16px; border-radius: 12px; min-height: 24px; }
+    .leap-result.is-leap { background: #E8F5E9; color: #2E7D32; }
+    .leap-result.not-leap { background: #FFEBEE; color: #C62828; }
+    .leap-rule { text-align: center; padding: 16px; background: #E8F5E9; border-radius: 12px; margin: 16px 0; font-size: 15px; color: #2E7D32; line-height: 1.8; }
+    .leap-timeline { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
+    .leap-year-badge { padding: 4px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; }
+    .leap-year-badge.is-leap { background: #C8E6C9; color: #2E7D32; }
+    .leap-year-badge.not-leap { background: #F5F5F5; color: #9CA3AF; }
+
+    /* 日期计算 */
+    .datecalc-problem { text-align: center; padding: 24px 16px; }
+    .datecalc-question { font-size: 20px; font-weight: 700; margin: 16px 0; color: #1D1D1F; line-height: 1.6; }
+    .datecalc-options { display: flex; flex-direction: column; gap: 12px; max-width: 400px; margin: 20px auto; }
+    .datecalc-option { padding: 16px; border: 3px solid #E5E5EA; border-radius: 16px; font-size: 18px; font-weight: 600; background: white; cursor: pointer; transition: all 0.2s ease; text-align: center; }
+    .datecalc-option:active { transform: scale(0.97); }
+    .datecalc-option.correct { border-color: #34C759; background: #E8F5E9; color: #2E7D32; }
+    .datecalc-option.wrong { border-color: #FF3B30; background: #FFEBEE; color: #C62828; }
+    .datecalc-hint { font-size: 15px; color: #6E6E73; margin: 12px 0; }
+    .datecalc-score { display: flex; justify-content: center; gap: 16px; font-size: 18px; font-weight: 600; margin: 12px 0; }
+
+    .feedback-correct { color: #34C759; }
+    .feedback-wrong { color: #FF3B30; }
+  </style>
+</head>
+<body>
+  <nav class="nav-bar">
+    <a href="../index.html" class="nav-back">← 返回</a>
+    <span class="nav-title">📅 年月日的认识</span>
+    <span class="nav-badge">三年级</span>
+  </nav>
+
+  <div class="page-container">
+    <div class="mode-tabs" role="tablist">
+      <button class="mode-tab active" data-mode="calendar">📅 日历</button>
+      <button class="mode-tab" data-mode="convert">🔄 换算</button>
+      <button class="mode-tab" data-mode="leap">🔍 闰年</button>
+      <button class="mode-tab" data-mode="datecalc">🧮 日期计算</button>
+    </div>
+
+    <!-- 模式1: 日历探索 -->
+    <div class="mode-content active" id="mode-calendar">
+      <div class="calendar-nav">
+        <button class="calendar-nav-btn" id="prev-month">◀</button>
+        <span class="calendar-month-title" id="month-title"></span>
+        <button class="calendar-nav-btn" id="next-month">▶</button>
+      </div>
+      <div class="calendar-weekdays" id="weekday-row"></div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+      <div class="month-info" id="month-info"></div>
+      <div class="season-info" id="season-info"></div>
+    </div>
+
+    <!-- 模式2: 单位换算 -->
+    <div class="mode-content" id="mode-convert">
+      <div class="unit-problem">
+        <h3 style="margin:0;font-size:20px;color:#6E6E73;">⏰ 时间单位换算</h3>
+        <div class="unit-score">
+          <span>⭐ 正确: <span id="unit-correct">0</span></span>
+          <span>📝 已做: <span id="unit-total">0</span></span>
+        </div>
+        <div class="unit-question" id="unit-question"></div>
+        <div style="text-align:center;margin:16px 0;">
+          <input type="number" class="unit-answer-input" id="unit-answer" placeholder="?">
+          <button class="unit-check-btn" id="unit-check">✓</button>
+        </div>
+        <div class="unit-feedback" id="unit-feedback"></div>
+        <button class="unit-check-btn" id="unit-next" style="background:#9CA3AF;">下一题 →</button>
+        <div class="unit-ref">
+          💡 <b>换算口诀</b><br>
+          1 年 = 12 个月<br>
+          1 天 = 24 小时<br>
+          1 小时 = 60 分钟<br>
+          1 分钟 = 60 秒<br>
+          1 个星期 = 7 天
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 闰年探索 -->
+    <div class="mode-content" id="mode-leap">
+      <div class="leap-area">
+        <h3 style="margin:0;font-size:20px;color:#6E6E73;">🔍 闰年探测器</h3>
+        <p style="font-size:16px;color:#6E6E73;margin:8px 0;">输入一个年份，看看它是不是闰年</p>
+        <input type="number" class="leap-input" id="leap-year-input" placeholder="2024" min="1" max="9999">
+        <br>
+        <button class="leap-check-btn" id="leap-check-btn">🔍 检测</button>
+        <div class="leap-result" id="leap-result"></div>
+        <div class="leap-rule">
+          📏 <b>闰年判断规则</b><br>
+          ① 能被 <b>4</b> 整除 → 可能是闰年<br>
+          ② 但能被 <b>100</b> 整除 → 不是闰年<br>
+          ③ 除非能被 <b>400</b> 整除 → 还是闰年！<br><br>
+          简单记：<b>"四年一闰，百年不闰，四百年再闰"</b><br><br>
+          闰年 2 月有 <b>29 天</b>，全年 <b>366 天</b><br>
+          平年 2 月有 <b>28 天</b>，全年 <b>365 天</b>
+        </div>
+        <h4 style="color:#6E6E73;margin:20px 0 8px;">📊 近年闰年速查</h4>
+        <div class="leap-timeline" id="leap-timeline"></div>
+      </div>
+    </div>
+
+    <!-- 模式4: 日期计算挑战 -->
+    <div class="mode-content" id="mode-datecalc">
+      <div class="datecalc-problem">
+        <h3 style="margin:0;font-size:20px;color:#6E6E73;">🧮 日期计算挑战</h3>
+        <div class="datecalc-score">
+          <span>⭐ 正确: <span id="dc-correct">0</span></span>
+          <span>🔥 连对: <span id="dc-streak">0</span></span>
+        </div>
+        <div class="datecalc-question" id="dc-question"></div>
+        <div class="datecalc-hint" id="dc-hint"></div>
+        <div class="datecalc-options" id="dc-options"></div>
+        <div style="text-align:center;margin-top:16px;">
+          <button class="unit-check-btn" id="dc-next" style="background:#9CA3AF;">下一题 →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // ========== 数据 ==========
+    const MONTH_NAMES = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+    const WEEKDAY_LABELS = ['日','一','二','三','四','五','六'];
+    const SEASONS = [
+      '❄️ 冬季（12月-2月）','🌸 春季（3月-5月）','🌞 夏季（6月-8月）','🍂 秋季（9月-11月）'
+    ];
+
+    function getDaysInMonth(year, month) {
+      return new Date(year, month + 1, 0).getDate();
+    }
+
+    function isLeapYear(year) {
+      return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+    }
+
+    function getMonthDays(year) {
+      return [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    }
+
+    // ========== 模式切换 ==========
+    const modeTabs = document.querySelectorAll('.mode-tab');
+    const modeContents = document.querySelectorAll('.mode-content');
+    modeTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        modeTabs.forEach(t => t.classList.remove('active'));
+        modeContents.forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        const mode = tab.dataset.mode;
+        document.getElementById('mode-' + mode).classList.add('active');
+      });
+    });
+
+    // ========== 日历探索 ==========
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+    const today = new Date();
+
+    function renderCalendar() {
+      document.getElementById('month-title').textContent = `${currentYear}年 ${MONTH_NAMES[currentMonth]}`;
+      const days = getDaysInMonth(currentYear, currentMonth);
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const totalDays = days;
+
+      // weekday row
+      const weekdayRow = document.getElementById('weekday-row');
+      weekdayRow.innerHTML = WEEKDAY_LABELS.map(w => `<div class="weekday-label">${w}</div>`).join('');
+
+      // grid
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+      for (let i = 0; i < firstDay; i++) {
+        grid.innerHTML += '<div class="calendar-day empty"></div>';
+      }
+      for (let d = 1; d <= days; d++) {
+        const isToday = (d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear());
+        const dow = new Date(currentYear, currentMonth, d).getDay();
+        const isWeekend = (dow === 0 || dow === 6);
+        let cls = 'calendar-day';
+        if (isToday) cls += ' today';
+        if (isWeekend) cls += ' weekend';
+        grid.innerHTML += `<div class="${cls}">${d}</div>`;
+      }
+
+      // month info
+      const febDays = isLeapYear(currentYear) ? 29 : 28;
+      document.getElementById('month-info').innerHTML =
+        `${MONTH_NAMES[currentMonth]} 有 <b>${days}</b> 天${currentMonth === 1 ? `（${isLeapYear(currentYear) ? '闰年' : '平年'}，2月有${febDays}天）` : ''}`;
+
+      // season
+      const seasonIdx = Math.floor(((currentMonth % 12 + 12) % 12) / 3);
+      const seasonEl = document.getElementById('season-info');
+      seasonEl.textContent = SEASONS[seasonIdx];
+      seasonEl.className = 'season-info ' + ['season-winter','season-spring','season-summer','season-autumn'][seasonIdx];
+    }
+
+    document.getElementById('prev-month').addEventListener('click', () => {
+      currentMonth--;
+      if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+      renderCalendar();
+    });
+    document.getElementById('next-month').addEventListener('click', () => {
+      currentMonth++;
+      if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+      renderCalendar();
+    });
+
+    renderCalendar();
+
+    // ========== 单位换算 ==========
+    const unitProblems = [
+      { q: '3 年 = ? 个月', a: 36 },
+      { q: '2 天 = ? 小时', a: 48 },
+      { q: '1 小时 = ? 分钟', a: 60 },
+      { q: '2 分钟 = ? 秒', a: 120 },
+      { q: '1 个星期 = ? 天', a: 7 },
+      { q: '5 年 = ? 个月', a: 60 },
+      { q: '3 天 = ? 小时', a: 72 },
+      { q: '半小时 = ? 分钟', a: 30 },
+      { q: '3 分钟 = ? 秒', a: 180 },
+      { q: '2 个星期 = ? 天', a: 14 },
+      { q: '4 小时 = ? 分钟', a: 240 },
+      { q: '6 个月 = ? 个季度', a: 2 },
+      { q: '1 天 = ? 分钟', a: 1440 },
+      { q: '5 分钟 = ? 秒', a: 300 },
+      { q: '4 个星期 = ? 天', a: 28 },
+      { q: '半年 = ? 个月', a: 6 },
+      { q: '120 分钟 = ? 小时', a: 2 },
+      { q: '365 天 = ? 年（平年）', a: 1 },
+    ];
+    let unitCurrent = null;
+    let unitCorrectCount = 0;
+    let unitTotalCount = 0;
+
+    function newUnitProblem() {
+      const idx = Math.floor(Math.random() * unitProblems.length);
+      unitCurrent = unitProblems[idx];
+      document.getElementById('unit-question').textContent = unitCurrent.q;
+      document.getElementById('unit-answer').value = '';
+      document.getElementById('unit-feedback').textContent = '';
+      document.getElementById('unit-answer').focus();
+    }
+
+    function checkUnitAnswer() {
+      if (!unitCurrent) return;
+      const val = parseInt(document.getElementById('unit-answer').value);
+      unitTotalCount++;
+      if (val === unitCurrent.a) {
+        unitCorrectCount++;
+        document.getElementById('unit-feedback').innerHTML = '<span class="feedback-correct">✅ 正确！太棒了！</span>';
+      } else {
+        document.getElementById('unit-feedback').innerHTML = `<span class="feedback-wrong">❌ 不对哦，答案是 ${unitCurrent.a}</span>`;
+      }
+      document.getElementById('unit-correct').textContent = unitCorrectCount;
+      document.getElementById('unit-total').textContent = unitTotalCount;
+    }
+
+    document.getElementById('unit-check').addEventListener('click', checkUnitAnswer);
+    document.getElementById('unit-answer').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkUnitAnswer();
+    });
+    document.getElementById('unit-next').addEventListener('click', newUnitProblem);
+    newUnitProblem();
+
+    // ========== 闰年探索 ==========
+    function checkLeapYear() {
+      const year = parseInt(document.getElementById('leap-year-input').value);
+      const resultEl = document.getElementById('leap-result');
+      if (!year || year < 1 || year > 9999) {
+        resultEl.className = 'leap-result';
+        resultEl.textContent = '请输入 1-9999 之间的年份';
+        return;
+      }
+      const leap = isLeapYear(year);
+      resultEl.className = 'leap-result ' + (leap ? 'is-leap' : 'not-leap');
+      if (leap) {
+        resultEl.innerHTML = `🎉 <b>${year} 年是闰年！</b><br>2 月有 29 天，全年 366 天`;
+      } else {
+        resultEl.innerHTML = `📋 <b>${year} 年是平年</b><br>2 月有 28 天，全年 365 天`;
+      }
+    }
+
+    document.getElementById('leap-check-btn').addEventListener('click', checkLeapYear);
+    document.getElementById('leap-year-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkLeapYear();
+    });
+
+    // timeline
+    const timelineEl = document.getElementById('leap-timeline');
+    const now = new Date().getFullYear();
+    for (let y = now - 8; y <= now + 4; y++) {
+      const l = isLeapYear(y);
+      timelineEl.innerHTML += `<span class="leap-year-badge ${l ? 'is-leap' : 'not-leap'}">${y} ${l ? '🟢闰' : '⚪平'}</span>`;
+    }
+
+    // ========== 日期计算挑战 ==========
+    const datecalcProblems = [
+      { q: '小明 3月5日出发旅行，3月12日回来，他旅行了几天？', options: ['6天','7天','8天','5天'], correct: 1, hint: '12 - 5 = 7 天' },
+      { q: '今天是 4月10日，10天后是几月几日？', options: ['4月19日','4月20日','4月21日','5月1日'], correct: 1, hint: '10 + 10 = 20' },
+      { q: '一年有几个月？', options: ['10个','11个','12个','13个'], correct: 2, hint: '一年 = 12 个月' },
+      { q: '闰年全年有多少天？', options: ['364天','365天','366天','367天'], correct: 2, hint: '闰年2月多1天 → 366天' },
+      { q: '哪个节日在 10月1日？', options: ['儿童节','劳动节','国庆节','元旦'], correct: 2, hint: '10月1日是国庆节 🇨🇳' },
+      { q: '儿童节（6月1日）距离 7月1日有多少天？', options: ['28天','29天','30天','31天'], correct: 2, hint: '6月有30天 → 30天' },
+      { q: '小红 2月28日过生日，今年是闰年，她下次过生日是？', options: ['明年2月28日','明年2月29日','今年3月1日','今年2月29日'], correct: 0, hint: '每年2月都有28日，闰年额外多一天' },
+      { q: '一个星期有几天？', options: ['5天','6天','7天','8天'], correct: 2, hint: '一个星期 = 7 天' },
+      { q: '6月有多少天？', options: ['28天','29天','30天','31天'], correct: 2, hint: '6月是小月 → 30天' },
+      { q: '小明的生日是 5月15日，今天是 5月1日，还有几天到他生日？', options: ['13天','14天','15天','16天'], correct: 1, hint: '15 - 1 = 14 天' },
+      { q: '哪个季度包含 7月、8月、9月？', options: ['第一季度','第二季度','第三季度','第四季度'], correct: 2, hint: 'Q1:1-3月, Q2:4-6月, Q3:7-9月, Q4:10-12月' },
+      { q: '从 1月1日到 1月31日，过了多少天？', options: ['29天','30天','31天','32天'], correct: 2, hint: '31 - 1 + 1 = 31 天（含首尾）' },
+    ];
+    let dcCurrent = null;
+    let dcCorrectCount = 0;
+    let dcStreak = 0;
+
+    function newDatecalcProblem() {
+      const idx = Math.floor(Math.random() * datecalcProblems.length);
+      dcCurrent = datecalcProblems[idx];
+      document.getElementById('dc-question').textContent = dcCurrent.q;
+      document.getElementById('dc-hint').textContent = '';
+      const optionsEl = document.getElementById('dc-options');
+      optionsEl.innerHTML = '';
+      dcCurrent.options.forEach((opt, i) => {
+        optionsEl.innerHTML += `<button class="datecalc-option" data-idx="${i}">${opt}</button>`;
+      });
+      optionsEl.querySelectorAll('.datecalc-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const chosen = parseInt(btn.dataset.idx);
+          if (chosen === dcCurrent.correct) {
+            btn.classList.add('correct');
+            dcCorrectCount++;
+            dcStreak++;
+            document.getElementById('dc-hint').innerHTML = `<span class="feedback-correct">✅ 正确！${dcCurrent.hint}</span>`;
+          } else {
+            btn.classList.add('wrong');
+            dcStreak = 0;
+            // highlight correct
+            optionsEl.querySelectorAll('.datecalc-option').forEach(b => {
+              if (parseInt(b.dataset.idx) === dcCurrent.correct) b.classList.add('correct');
+            });
+            document.getElementById('dc-hint').innerHTML = `<span class="feedback-wrong">❌ 答案是「${dcCurrent.options[dcCurrent.correct]}」${dcCurrent.hint}</span>`;
+          }
+          document.getElementById('dc-correct').textContent = dcCorrectCount;
+          document.getElementById('dc-streak').textContent = dcStreak;
+          // disable all
+          optionsEl.querySelectorAll('.datecalc-option').forEach(b => b.style.pointerEvents = 'none');
+        });
+      });
+    }
+
+    document.getElementById('dc-next').addEventListener('click', newDatecalcProblem);
+    newDatecalcProblem();
+  </script>
+</body>
+</html>
