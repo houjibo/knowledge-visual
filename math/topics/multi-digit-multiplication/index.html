@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>多位数乘法</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs {
+      display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mode-tab {
+      flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA;
+      border-radius: 20px; font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-tab.active { background: #4A90D9; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 竖式演示模式 */
+    .vertical-area { text-align: center; padding: 16px; }
+    .vertical-display {
+      display: inline-block; font-family: 'Courier New', monospace;
+      font-size: 32px; font-weight: 700; text-align: right;
+      background: #FFF8E1; border-radius: 16px; padding: 24px 32px;
+      margin: 16px auto; min-width: 200px; position: relative;
+      border: 2px solid #FFD54F;
+    }
+    .v-row { margin: 4px 0; position: relative; min-height: 40px; display: flex; justify-content: flex-end; align-items: center; }
+    .v-row.top-num { color: #1D1D1F; }
+    .v-row.bottom-num { color: #4A90D9; }
+    .v-row.operator::before { content: '×'; position: absolute; left: -28px; color: #FF9500; font-size: 28px; }
+    .v-row.separator { border-bottom: 3px solid #1D1D1F; margin: 8px 0; min-height: 4px; }
+    .v-row.partial { color: #7B1FA2; font-size: 26px; }
+    .v-row.result { color: #34C759; font-size: 36px; border-bottom: 3px double #34C759; padding-bottom: 4px; }
+    .v-carry { font-size: 14px; color: #FF3B30; position: absolute; top: -16px; }
+    .vertical-controls {
+      display: flex; justify-content: center; gap: 12px; margin: 16px 0; flex-wrap: wrap;
+    }
+    .v-btn {
+      padding: 12px 24px; border: none; border-radius: 12px;
+      font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+    }
+    .v-btn:active { transform: scale(0.95); }
+    .v-btn-primary { background: #4A90D9; color: white; box-shadow: 0 4px 12px rgba(74,144,217,0.3); }
+    .v-btn-secondary { background: #E5E5EA; color: #1D1D1F; }
+    .v-btn-next { background: #FF9500; color: white; }
+    .v-step-label {
+      font-size: 15px; color: #6E6E73; margin: 12px 0; font-weight: 600;
+      background: #F5F5F7; padding: 8px 16px; border-radius: 12px; display: inline-block;
+    }
+
+    /* 分步拆解模式 */
+    .breakdown-area { text-align: center; padding: 16px; }
+    .breakdown-problem {
+      font-size: 32px; font-weight: 700; color: #4A90D9; margin: 16px 0;
+    }
+    .breakdown-visual {
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      margin: 20px 0; padding: 20px; background: #F5F5F7; border-radius: 16px;
+    }
+    .breakdown-row {
+      display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600;
+      flex-wrap: wrap; justify-content: center;
+    }
+    .bd-num { color: #4A90D9; background: rgba(74,144,217,0.1); padding: 4px 12px; border-radius: 8px; }
+    .bd-op { color: #FF9500; font-size: 24px; }
+    .bd-eq { color: #6E6E73; }
+    .bd-result { color: #34C759; font-size: 24px; font-weight: 700; background: rgba(52,199,89,0.1); padding: 8px 16px; border-radius: 12px; }
+    .bd-arrow { font-size: 24px; color: #9E9EA7; }
+    .breakdown-input-area {
+      display: flex; justify-content: center; gap: 8px; margin: 16px 0; flex-wrap: wrap;
+    }
+    .bd-input {
+      width: 80px; height: 56px; border: 3px solid #E5E5EA; border-radius: 12px;
+      font-size: 24px; font-weight: 700; text-align: center; background: white;
+      transition: border-color 0.2s ease;
+    }
+    .bd-input:focus { border-color: #4A90D9; outline: none; }
+    .bd-input.correct { border-color: #34C759; background: rgba(52,199,89,0.1); }
+    .bd-input.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+
+    /* 格子乘法模式 */
+    .lattice-area { text-align: center; padding: 16px; overflow-x: auto; }
+    .lattice-grid {
+      display: inline-grid; gap: 0; margin: 20px auto;
+      border: 3px solid #4A90D9; border-radius: 8px; overflow: hidden;
+    }
+    .lattice-cell {
+      width: 64px; height: 64px; position: relative; background: white;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid #D1D5DB;
+    }
+    .lattice-cell.diagonal {
+      background: linear-gradient(to top left, transparent 49.5%, #4A90D9 49.5%, #4A90D9 50.5%, transparent 50.5%);
+    }
+    .lattice-cell .top-digit {
+      position: absolute; top: 4px; right: 8px; font-size: 20px;
+      font-weight: 700; color: #4A90D9;
+    }
+    .lattice-cell .bottom-digit {
+      position: absolute; bottom: 4px; left: 8px; font-size: 20px;
+      font-weight: 700; color: #FF9500;
+    }
+    .lattice-cell .product-top {
+      position: absolute; top: 6px; left: 10px; font-size: 16px;
+      font-weight: 600; color: #7B1FA2;
+    }
+    .lattice-cell .product-bottom {
+      position: absolute; bottom: 6px; right: 10px; font-size: 16px;
+      font-weight: 600; color: #7B1FA2;
+    }
+    .lattice-header-top {
+      width: 64px; height: 40px; display: flex; align-items: center;
+      justify-content: center; font-size: 24px; font-weight: 700; color: #4A90D9;
+      background: #E8F0FE; border: 1px solid #D1D5DB;
+    }
+    .lattice-header-right {
+      width: 40px; height: 64px; display: flex; align-items: center;
+      justify-content: center; font-size: 24px; font-weight: 700; color: #FF9500;
+      background: #FFF3E0; border: 1px solid #D1D5DB;
+    }
+    .lattice-corner { width: 40px; height: 40px; background: #F5F5F7; border: 1px solid #D1D5DB; }
+    .lattice-result-row {
+      display: flex; justify-content: flex-end; gap: 0; margin-top: 8px;
+    }
+    .lattice-result-digit {
+      width: 64px; height: 48px; display: flex; align-items: center;
+      justify-content: center; font-size: 24px; font-weight: 700; color: #34C759;
+      background: rgba(52,199,89,0.1); border-radius: 8px; margin-left: 4px;
+    }
+    .lattice-controls { display: flex; justify-content: center; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+
+    /* 挑战模式 */
+    .challenge-area { text-align: center; padding: 16px; }
+    .challenge-problem {
+      font-size: 40px; font-weight: 700; color: #4A90D9; margin: 20px 0;
+    }
+    .challenge-options {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+      max-width: 400px; margin: 20px auto; padding: 0 16px;
+    }
+    .challenge-opt {
+      padding: 20px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 24px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .challenge-opt:active { transform: scale(0.9); }
+    .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .challenge-score {
+      display: flex; justify-content: center; gap: 24px; margin: 12px 0;
+      font-size: 16px;
+    }
+    .timer-bar {
+      height: 8px; background: #E5E5EA; border-radius: 4px; overflow: hidden; margin: 12px 0;
+    }
+    .timer-fill {
+      height: 100%; background: linear-gradient(90deg, #34C759, #FF9500, #FF3B30);
+      border-radius: 4px; transition: width 0.1s linear;
+    }
+    .score-display {
+      display: flex; justify-content: center; align-items: center;
+      gap: 12px; padding: 12px; font-size: 18px; font-weight: 600;
+    }
+    .score-stars { font-size: 24px; }
+    .challenge-start-btn {
+      padding: 16px 32px; border: none; background: #4A90D9; color: white;
+      border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer;
+      margin: 16px auto; display: block; box-shadow: 0 4px 12px rgba(74,144,217,0.3);
+    }
+    .challenge-start-btn:active { transform: scale(0.95); }
+    .challenge-running { display: none; }
+    .challenge-active .challenge-start-btn { display: none; }
+    .challenge-active .challenge-running { display: block; }
+    .diff-select {
+      display: flex; justify-content: center; gap: 8px; margin: 12px 0; flex-wrap: wrap;
+    }
+    .diff-btn {
+      padding: 8px 16px; border: 2px solid #E5E5EA; background: white;
+      border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .diff-btn:active { transform: scale(0.95); }
+    .diff-btn.active { border-color: #4A90D9; background: #4A90D9; color: white; }
+
+    .hint-box {
+      background: #FFF8E1; border-radius: 12px; padding: 12px 16px;
+      margin: 12px 0; font-size: 14px; color: #F57F17; font-weight: 600;
+      border: 1px solid #FFD54F;
+    }
+
+    @media (max-width: 480px) {
+      .vertical-display { font-size: 24px; padding: 16px 20px; }
+      .challenge-problem { font-size: 32px; }
+      .lattice-cell { width: 52px; height: 52px; }
+      .lattice-header-top { width: 52px; height: 36px; font-size: 20px; }
+      .lattice-header-right { width: 36px; height: 52px; font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="breadcrumb">
+      <a href="../../index.html" class="breadcrumb-item">🏠 首页</a><span class="breadcrumb-sep">›</span><a href="../index.html" class="breadcrumb-item">📐 数学</a><span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">✖️ 多位数乘法</span>
+    </nav>
+
+    <div class="score-display">
+      <span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <!-- 模式切换 -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="vertical">📝 竖式演示</button>
+      <button class="mode-tab" data-mode="breakdown">🔍 分步拆解</button>
+      <button class="mode-tab" data-mode="lattice">🔲 格子乘法</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- 模式1: 竖式演示 -->
+    <div class="mode-content active" id="mode-vertical">
+      <div class="card">
+        <p class="page-subtitle">一步一步看竖式怎么算</p>
+        <div class="vertical-area">
+          <div class="v-step-label" id="v-step-label">点击"下一步"开始演示</div>
+          <div class="vertical-display" id="vertical-display"></div>
+          <div class="vertical-controls">
+            <button class="v-btn v-btn-secondary" id="v-btn-new">🔄 换一题</button>
+            <button class="v-btn v-btn-primary" id="v-btn-reset">↩️ 重来</button>
+            <button class="v-btn v-btn-next" id="v-btn-next">👉 下一步</button>
+          </div>
+          <div class="hint-box" id="v-hint" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 分步拆解 -->
+    <div class="mode-content" id="mode-breakdown">
+      <div class="card">
+        <p class="page-subtitle">把大数拆成小数再分别乘</p>
+        <div class="breakdown-area">
+          <div class="breakdown-problem" id="bd-problem">23 × 4 = ?</div>
+          <div class="breakdown-visual" id="bd-visual"></div>
+          <div class="breakdown-input-area" id="bd-inputs"></div>
+          <div class="vertical-controls">
+            <button class="v-btn v-btn-secondary" id="bd-btn-new">🔄 换一题</button>
+            <button class="v-btn v-btn-primary" id="bd-btn-check">✅ 检查</button>
+            <button class="v-btn v-btn-next" id="bd-btn-show">💡 看答案</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 格子乘法 -->
+    <div class="mode-content" id="mode-lattice">
+      <div class="card">
+        <p class="page-subtitle">古老的格子乘法，画格子就能算</p>
+        <div class="lattice-area">
+          <div id="lattice-container"></div>
+          <div class="lattice-controls">
+            <button class="v-btn v-btn-secondary" id="lt-btn-new">🔄 换一题</button>
+            <button class="v-btn v-btn-primary" id="lt-btn-solve">✨ 演示计算</button>
+          </div>
+          <div class="hint-box" id="lt-hint" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 挑战 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="card">
+        <div class="challenge-area">
+          <div class="challenge-score">
+            <span>答对 <b id="ch-correct" style="color:#34C759">0</b></span>
+            <span>答错 <b id="ch-wrong" style="color:#FF3B30">0</b></span>
+          </div>
+          <div class="timer-bar"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+          <div class="diff-select" id="diff-select">
+            <button class="diff-btn active" data-diff="easy">⭐ 两位×一位</button>
+            <button class="diff-btn" data-diff="medium">⭐⭐ 三位×一位</button>
+            <button class="diff-btn" data-diff="hard">⭐⭐⭐ 两位×两位</button>
+          </div>
+          <button class="challenge-start-btn" id="btn-start-challenge">🏆 开始挑战！</button>
+          <div class="challenge-running">
+            <div class="challenge-problem" id="challenge-problem">23 × 4 = ?</div>
+            <div class="challenge-options" id="challenge-options"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/animation.js"></script>
+  <script src="../../assets/js/touch.js"></script>
+  <script>
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast('🔥 连续 ' + streak + ' 次！计算小能手！');
+    }
+
+    // 模式切换
+    document.querySelectorAll('.mode-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.mode-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.mode-content').forEach(function(c) { c.classList.remove('active'); });
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        Sound.play('click');
+      });
+    });
+
+    // ============================
+    // 模式1: 竖式演示
+    // ============================
+    (function() {
+      var topNum, bottomNum, steps, currentStep, display;
+
+      function generateProblem() {
+        var type = Random.int(0, 2);
+        if (type === 0) {
+          // 两位×一位
+          topNum = Random.int(11, 99);
+          bottomNum = Random.int(2, 9);
+        } else if (type === 1) {
+          // 三位×一位
+          topNum = Random.int(101, 999);
+          bottomNum = Random.int(2, 9);
+        } else {
+          // 两位×两位
+          topNum = Random.int(11, 99);
+          bottomNum = Random.int(11, 99);
+        }
+        buildSteps();
+        currentStep = 0;
+        renderStep();
+      }
+
+      function buildSteps() {
+        steps = [];
+        var result = topNum * bottomNum;
+        var topStr = String(topNum);
+        var botStr = String(bottomNum);
+
+        // Step 0: 列出算式
+        steps.push({
+          label: '📝 列出竖式',
+          hint: '把 ' + topNum + ' 写在上面，' + bottomNum + ' 写在下面，个位对齐',
+          show: ['top', 'bottom', 'separator']
+        });
+
+        if (bottomNum < 10) {
+          // 简单情况：多位数×一位
+          var digits = topStr.split('').map(Number);
+          var carry = 0;
+          var partialDigits = [];
+
+          for (var i = digits.length - 1; i >= 0; i--) {
+            var prod = digits[i] * bottomNum + carry;
+            carry = Math.floor(prod / 10);
+            partialDigits.unshift(prod % 10);
+          }
+          if (carry > 0) partialDigits.unshift(carry);
+
+          steps.push({
+            label: '✏️ 从个位开始逐位相乘',
+            hint: '用 ' + bottomNum + ' 分别去乘 ' + topNum + ' 的每一位',
+            show: ['top', 'bottom', 'separator', 'partial']
+          });
+
+          // Show individual multiplications
+          for (var j = digits.length - 1; j >= 0; j--) {
+            var d = digits[j];
+            var placeName = j === digits.length - 1 ? '个位' : j === digits.length - 2 ? '十位' : '百位';
+            var p = d * bottomNum;
+            steps.push({
+              label: placeName + '：' + d + ' × ' + bottomNum + ' = ' + p,
+              hint: p >= 10 ? '写 ' + (p % 10) + ' 进 ' + Math.floor(p / 10) : '直接写 ' + p,
+              show: ['top', 'bottom', 'separator', 'partial', 'result']
+            });
+          }
+
+          steps.push({
+            label: '✅ 得出结果',
+            hint: topNum + ' × ' + bottomNum + ' = ' + result,
+            show: ['top', 'bottom', 'separator', 'result']
+          });
+        } else {
+          // 两位×两位
+          var ones = bottomNum % 10;
+          var tens = Math.floor(bottomNum / 10);
+          var p1 = topNum * ones;
+          var p2 = topNum * tens;
+
+          steps.push({
+            label: '✏️ 先用个位 ' + ones + ' 去乘',
+            hint: topNum + ' × ' + ones + ' = ' + p1,
+            show: ['top', 'bottom', 'separator', 'partial1']
+          });
+
+          steps.push({
+            label: '✏️ 再用十位 ' + tens + ' 去乘',
+            hint: topNum + ' × ' + tens + '0 = ' + (p2 * 10) + '（注意末位对齐十位）',
+            show: ['top', 'bottom', 'separator', 'partial1', 'partial2']
+          });
+
+          steps.push({
+            label: '➕ 把两部分加起来',
+            hint: p1 + ' + ' + (p2 * 10) + ' = ' + result,
+            show: ['top', 'bottom', 'separator', 'partial1', 'partial2', 'result']
+          });
+        }
+      }
+
+      function renderStep() {
+        display = document.getElementById('vertical-display');
+        var step = steps[currentStep];
+        document.getElementById('v-step-label').textContent = '第' + (currentStep + 1) + '步/' + steps.length + '：' + step.label;
+        document.getElementById('v-hint').style.display = 'block';
+        document.getElementById('v-hint').textContent = '💡 ' + step.hint;
+
+        var show = step.show;
+        var html = '';
+        // Top number
+        html += '<div class="v-row top-num">' + topNum + '</div>';
+        // Bottom number with operator
+        html += '<div class="v-row bottom-num operator">' + bottomNum + '</div>';
+        // Separator
+        html += '<div class="v-row separator"></div>';
+
+        if (show.indexOf('partial') >= 0) {
+          html += '<div class="v-row partial">' + (topNum * bottomNum) + '</div>';
+        }
+        if (show.indexOf('partial1') >= 0) {
+          var ones = bottomNum % 10;
+          html += '<div class="v-row partial">' + (topNum * ones) + '</div>';
+        }
+        if (show.indexOf('partial2') >= 0) {
+          var tens = Math.floor(bottomNum / 10);
+          html += '<div class="v-row partial" style="margin-right:-20px">' + (topNum * tens) + '<span style="font-size:14px;color:#9E9EA7"> ← 末位对齐十位</span></div>';
+        }
+        if (show.indexOf('result') >= 0) {
+          html += '<div class="v-row result">' + (topNum * bottomNum) + '</div>';
+        }
+
+        display.innerHTML = html;
+
+        if (currentStep >= steps.length - 1) {
+          document.getElementById('v-btn-next').textContent = '✅ 完成';
+        } else {
+          document.getElementById('v-btn-next').textContent = '👉 下一步';
+        }
+      }
+
+      document.getElementById('v-btn-next').addEventListener('click', function() {
+        if (currentStep < steps.length - 1) {
+          currentStep++;
+          renderStep();
+          Sound.play('click');
+        } else {
+          generateProblem();
+          Sound.play('correct');
+          showToast('🎉 太棒了！来看下一题');
+        }
+      });
+
+      document.getElementById('v-btn-reset').addEventListener('click', function() {
+        currentStep = 0;
+        renderStep();
+        Sound.play('click');
+      });
+
+      document.getElementById('v-btn-new').addEventListener('click', function() {
+        generateProblem();
+        Sound.play('click');
+      });
+
+      generateProblem();
+    })();
+
+    // ============================
+    // 模式2: 分步拆解
+    // ============================
+    (function() {
+      var topNum, bottomNum, parts, answers;
+
+      function generateProblem() {
+        var type = Random.int(0, 1);
+        if (type === 0) {
+          topNum = Random.int(11, 99);
+          bottomNum = Random.int(2, 9);
+        } else {
+          topNum = Random.int(11, 99);
+          bottomNum = Random.int(11, 99);
+        }
+        buildBreakdown();
+      }
+
+      function buildBreakdown() {
+        var topStr = String(topNum);
+        var digits = topStr.split('').map(Number);
+        parts = [];
+        answers = [];
+
+        for (var i = 0; i < digits.length; i++) {
+          var placeValue = Math.pow(10, digits.length - 1 - i);
+          var val = digits[i] * placeValue;
+          if (val > 0) {
+            parts.push({ digit: digits[i], place: val, product: val * bottomNum });
+            answers.push(val * bottomNum);
+          }
+        }
+
+        renderBreakdown();
+      }
+
+      function renderBreakdown() {
+        document.getElementById('bd-problem').innerHTML =
+          '<span style="color:#4A90D9">' + topNum + '</span> × <span style="color:#FF9500">' + bottomNum + '</span> = ?';
+
+        var vis = document.getElementById('bd-visual');
+        var html = '<div class="breakdown-row">';
+        html += '<span class="bd-num">' + topNum + '</span>';
+        html += '<span class="bd-op">=</span>';
+
+        var partStrs = [];
+        for (var i = 0; i < parts.length; i++) {
+          partStrs.push('<span class="bd-num">' + parts[i].place + '</span>');
+        }
+        html += partStrs.join('<span class="bd-op">+</span>');
+        html += '</div>';
+
+        html += '<div class="bd-arrow">⬇️</div>';
+
+        for (var j = 0; j < parts.length; j++) {
+          html += '<div class="breakdown-row">';
+          html += '<span class="bd-num">' + parts[j].place + '</span>';
+          html += '<span class="bd-op">×</span>';
+          html += '<span class="bd-num">' + bottomNum + '</span>';
+          html += '<span class="bd-eq">=</span>';
+          html += '<span class="bd-result" id="bd-ans-' + j + '">?</span>';
+          html += '</div>';
+        }
+
+        html += '<div class="bd-arrow">⬇️</div>';
+        html += '<div class="breakdown-row">';
+        for (var k = 0; k < parts.length; k++) {
+          if (k > 0) html += '<span class="bd-op">+</span>';
+          html += '<span class="bd-result" id="bd-sum-' + k + '">?</span>';
+        }
+        html += '<span class="bd-eq">=</span>';
+        html += '<span class="bd-result" id="bd-total" style="font-size:28px">?</span>';
+        html += '</div>';
+
+        vis.innerHTML = html;
+
+        // Input fields
+        var inputs = document.getElementById('bd-inputs');
+        var ihtml = '';
+        for (var m = 0; m < parts.length; m++) {
+          ihtml += '<input type="number" class="bd-input" id="bd-inp-' + m + '" placeholder="?" data-idx="' + m + '">';
+        }
+        ihtml += '<input type="number" class="bd-input" id="bd-inp-total" placeholder="总" style="width:100px;border-color:#34C759">';
+        inputs.innerHTML = ihtml;
+      }
+
+      document.getElementById('bd-btn-check').addEventListener('click', function() {
+        var allCorrect = true;
+        for (var i = 0; i < parts.length; i++) {
+          var inp = document.getElementById('bd-inp-' + i);
+          var val = parseInt(inp.value);
+          var ansEl = document.getElementById('bd-ans-' + i);
+          if (val === answers[i]) {
+            inp.classList.remove('wrong'); inp.classList.add('correct');
+            ansEl.textContent = answers[i];
+          } else {
+            inp.classList.remove('correct'); inp.classList.add('wrong');
+            allCorrect = false;
+          }
+        }
+        var totalInp = document.getElementById('bd-inp-total');
+        var totalVal = parseInt(totalInp.value);
+        var correctTotal = topNum * bottomNum;
+        var totalEl = document.getElementById('bd-total');
+        if (totalVal === correctTotal) {
+          totalInp.classList.remove('wrong'); totalInp.classList.add('correct');
+          totalEl.textContent = correctTotal;
+        } else {
+          totalInp.classList.remove('correct'); totalInp.classList.add('wrong');
+          allCorrect = false;
+        }
+
+        if (allCorrect) {
+          streak++; updateStreak(); Sound.play('correct');
+          showToast('🎉 全部正确！');
+          setTimeout(generateProblem, 1500);
+        } else {
+          streak = 0; updateStreak(); Sound.play('wrong');
+          showToast('❌ 有些不对，再想想');
+        }
+      });
+
+      document.getElementById('bd-btn-show').addEventListener('click', function() {
+        for (var i = 0; i < parts.length; i++) {
+          document.getElementById('bd-ans-' + i).textContent = answers[i];
+          document.getElementById('bd-inp-' + i).value = answers[i];
+          document.getElementById('bd-inp-' + i).classList.add('correct');
+        }
+        var total = topNum * bottomNum;
+        document.getElementById('bd-total').textContent = total;
+        document.getElementById('bd-inp-total').value = total;
+        document.getElementById('bd-inp-total').classList.add('correct');
+        // Show sum parts
+        for (var j = 0; j < parts.length; j++) {
+          document.getElementById('bd-sum-' + j).textContent = answers[j];
+        }
+        Sound.play('click');
+      });
+
+      document.getElementById('bd-btn-new').addEventListener('click', function() {
+        generateProblem();
+        Sound.play('click');
+      });
+
+      generateProblem();
+    })();
+
+    // ============================
+    // 模式3: 格子乘法
+    // ============================
+    (function() {
+      var topNum, bottomNum, solved;
+
+      function generateProblem() {
+        topNum = Random.int(11, 99);
+        bottomNum = Random.int(11, 99);
+        solved = false;
+        document.getElementById('lt-hint').style.display = 'none';
+        renderLattice(false);
+      }
+
+      function renderLattice(showProducts) {
+        var container = document.getElementById('lattice-container');
+        var topDigits = String(topNum).split('').map(Number);
+        var botDigits = String(bottomNum).split('').map(Number);
+        var rows = topDigits.length;
+        var cols = botDigits.length;
+
+        var html = '<div style="display:inline-grid;grid-template-columns:repeat(' + cols + ', 64px) 40px;grid-template-rows:40px repeat(' + rows + ', 64px);gap:0;">';
+
+        // Top headers
+        for (var c = 0; c < cols; c++) {
+          html += '<div class="lattice-header-top">' + botDigits[c] + '</div>';
+        }
+        html += '<div class="lattice-corner"></div>';
+
+        // Grid rows
+        for (var r = 0; r < rows; r++) {
+          for (var cc = 0; cc < cols; cc++) {
+            var prod = topDigits[r] * botDigits[cc];
+            var tens = Math.floor(prod / 10);
+            var ones = prod % 10;
+            html += '<div class="lattice-cell diagonal">';
+            html += '<span class="top-digit">' + topDigits[r] + '</span>';
+            if (showProducts) {
+              html += '<span class="product-top">' + tens + '</span>';
+              html += '<span class="product-bottom">' + ones + '</span>';
+            }
+            html += '</div>';
+          }
+          html += '<div class="lattice-header-right">' + topDigits[r] + '</div>';
+        }
+
+        html += '</div>';
+
+        // Result
+        if (showProducts) {
+          var result = topNum * bottomNum;
+          html += '<div style="margin-top:16px;font-size:24px;font-weight:700;color:#34C759;">';
+          html += topNum + ' × ' + bottomNum + ' = <span style="font-size:32px">' + result + '</span>';
+          html += '</div>';
+        }
+
+        container.innerHTML = html;
+      }
+
+      document.getElementById('lt-btn-solve').addEventListener('click', function() {
+        if (!solved) {
+          renderLattice(true);
+          solved = true;
+          var result = topNum * bottomNum;
+          document.getElementById('lt-hint').style.display = 'block';
+          document.getElementById('lt-hint').textContent = '💡 每个格子里填两个数字的乘积，十位写左上，个位写右下，最后沿对角线相加！';
+          Sound.play('correct');
+        } else {
+          generateProblem();
+          Sound.play('click');
+        }
+      });
+
+      document.getElementById('lt-btn-new').addEventListener('click', function() {
+        generateProblem();
+        Sound.play('click');
+      });
+
+      generateProblem();
+    })();
+
+    // ============================
+    // 模式4: 挑战
+    // ============================
+    (function() {
+      var correct = 0, wrong = 0, answer = 0, timer = null, timeLeft = 100, running = false;
+      var difficulty = 'easy';
+
+      function newProblem() {
+        var a, b;
+        if (difficulty === 'easy') {
+          a = Random.int(11, 99); b = Random.int(2, 9);
+        } else if (difficulty === 'medium') {
+          a = Random.int(101, 999); b = Random.int(2, 9);
+        } else {
+          a = Random.int(11, 99); b = Random.int(11, 99);
+        }
+        answer = a * b;
+        document.getElementById('challenge-problem').textContent = a + ' × ' + b + ' = ?';
+        Animator.numberPop(document.getElementById('challenge-problem'));
+
+        var opts = [answer];
+        while (opts.length < 4) {
+          var delta = Random.int(-20, 20);
+          var fake = answer + delta;
+          if (fake > 0 && fake !== answer && opts.indexOf(fake) < 0) opts.push(fake);
+          if (opts.length < 4) {
+            var fake2 = Random.int(Math.max(1, answer - 50), answer + 50);
+            if (fake2 > 0 && opts.indexOf(fake2) < 0) opts.push(fake2);
+          }
+        }
+        var shuffled = Random.shuffle(opts);
+        var container = document.getElementById('challenge-options');
+        container.innerHTML = '';
+        shuffled.forEach(function(val) {
+          var btn = document.createElement('div');
+          btn.className = 'challenge-opt'; btn.textContent = val;
+          btn.addEventListener('click', function() {
+            clearInterval(timer); timer = null;
+            var isCorrect = val === answer;
+            if (isCorrect) {
+              btn.classList.add('correct'); correct++; streak++;
+              Sound.play('correct'); celebrate(); updateStreak();
+              document.getElementById('ch-correct').textContent = correct;
+              setTimeout(newProblem, 1500);
+            } else {
+              btn.classList.add('wrong'); Animator.shake(btn);
+              wrong++; streak = 0; Sound.play('wrong'); updateStreak();
+              document.getElementById('ch-wrong').textContent = wrong;
+              showToast('答案是 ' + answer + '，再想想');
+              setTimeout(newProblem, 1500);
+            }
+          });
+          container.appendChild(btn);
+          Animator.popIn(btn, shuffled.indexOf(val) * 60);
+        });
+
+        timeLeft = 100;
+        document.getElementById('timer-fill').style.width = '100%';
+        if (running) startTimer();
+      }
+
+      function startTimer() {
+        clearInterval(timer);
+        timer = setInterval(function() {
+          timeLeft -= 1;
+          document.getElementById('timer-fill').style.width = timeLeft + '%';
+          if (timeLeft <= 0) {
+            clearInterval(timer); timer = null;
+            streak = 0; Sound.play('wrong'); updateStreak();
+            showToast('⏰ 时间到！答案是 ' + answer);
+            setTimeout(newProblem, 1500);
+          }
+        }, 100);
+      }
+
+      // Difficulty select
+      document.querySelectorAll('.diff-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.diff-btn').forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          difficulty = btn.dataset.diff;
+          Sound.play('click');
+        });
+      });
+
+      document.getElementById('btn-start-challenge').addEventListener('click', function() {
+        clearInterval(timer); correct = 0; wrong = 0;
+        document.getElementById('ch-correct').textContent = 0;
+        document.getElementById('ch-wrong').textContent = 0;
+        document.querySelector('.challenge-area').classList.add('challenge-active');
+        running = true; newProblem(); startTimer(); Sound.play('click');
+      });
+    })();
+  </script>
+</body>
+</html>
