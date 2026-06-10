@@ -483,9 +483,11 @@
     function genSameDen() {
       sameState.locked = false;
       const d = randInt(2, 12);
-      const n1 = randInt(1, d - 1);
-      const n2 = randInt(1, d - n1);
+      let n1 = randInt(1, d - 1);
+      let n2 = randInt(1, d - n1);
       const op = Math.random() < 0.5 ? '+' : '-';
+      // 减法时确保 n1 >= n2，避免负数结果
+      if (op === '-' && n1 < n2) { const tmp = n1; n1 = n2; n2 = tmp; }
       const ansN = op === '+' ? n1 + n2 : n1 - n2;
       const [sn, sd] = simplify(ansN, d);
 
@@ -562,12 +564,19 @@
       let d1 = denoms[randInt(0, denoms.length - 1)];
       let d2 = d1;
       while (d2 === d1) d2 = denoms[randInt(0, denoms.length - 1)];
-      const n1 = randInt(1, d1 - 1);
-      const n2 = randInt(1, d2 - 1);
+      let n1 = randInt(1, d1 - 1);
+      let n2 = randInt(1, d2 - 1);
       const op = Math.random() < 0.5 ? '+' : '-';
       const commonD = lcm(d1, d2);
-      const newN1 = n1 * (commonD / d1);
-      const newN2 = n2 * (commonD / d2);
+      let newN1 = n1 * (commonD / d1);
+      let newN2 = n2 * (commonD / d2);
+      // 减法时确保 newN1 >= newN2，避免负数结果
+      if (op === '-' && newN1 < newN2) {
+        const tmpN = n1; n1 = n2; n2 = tmpN;
+        const tmpD = d1; d1 = d2; d2 = tmpD;
+        newN1 = n1 * (commonD / d1);
+        newN2 = n2 * (commonD / d2);
+      }
       const rawN = op === '+' ? newN1 + newN2 : newN1 - newN2;
       const [sn, sd] = simplify(rawN, commonD);
 
@@ -659,7 +668,12 @@
       }
       const op = Math.random() < 0.5 ? '+' : '-';
       const commonD = lcm(d1, d2);
-      const rawN = op === '+' ? n1 * (commonD / d1) + n2 * (commonD / d2) : n1 * (commonD / d1) - n2 * (commonD / d2);
+      let adjN1 = n1, adjN2 = n2;
+      // 减法时确保结果不为负数
+      if (op === '-' && n1 * (commonD / d1) < n2 * (commonD / d2)) {
+        adjN1 = n2; adjN2 = n1;
+      }
+      const rawN = op === '+' ? adjN1 * (commonD / d1) + adjN2 * (commonD / d2) : adjN1 * (commonD / d1) - adjN2 * (commonD / d2);
       const [sn, sd] = simplify(rawN, commonD);
 
       pracState = { ...pracState, n1, d1, n2, d2, op, ansN: sn, ansD: sd, commonD, locked: false };
@@ -761,9 +775,15 @@
       n2 = randInt(1, (sameDen ? d1 - n1 : d2 - 1));
       const op = isSub ? '-' : '+';
       const commonD = lcm(d1, d2);
-      const rawN = op === '+' ? n1 * (commonD / d1) + n2 * (commonD / d2) : n1 * (commonD / d1) - n2 * (commonD / d2);
+      let adjN1 = n1, adjN2 = n2, adjD1 = d1, adjD2 = d2;
+      // 减法时确保结果不为负数
+      if (isSub && n1 * (commonD / d1) < n2 * (commonD / d2)) {
+        adjN1 = n2; adjN2 = n1;
+        adjD1 = d2; adjD2 = d1;
+      }
+      const rawN = op === '+' ? adjN1 * (commonD / adjD1) + adjN2 * (commonD / adjD2) : adjN1 * (commonD / adjD1) - adjN2 * (commonD / adjD2);
       const [sn, sd] = simplify(rawN, commonD);
-      return { n1, d1, n2, d2, op, ansN: sn, ansD: sd };
+      return { n1: adjN1, d1: adjD1, n2: adjN2, d2: adjD2, op, ansN: sn, ansD: sd };
     }
 
     function loadChallengeLevel() {
