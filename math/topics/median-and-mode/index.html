@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>中位数和众数</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #00897B; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 通用 */
+    .section-title { font-size: 22px; color: #1D1D1F; font-weight: 700; text-align: center; margin: 8px 0; }
+    .section-desc { font-size: 15px; color: #6E6E73; text-align: center; margin-bottom: 16px; }
+    .score-bar { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; font-weight: 600; }
+    .result-text { font-size: 22px; font-weight: 700; text-align: center; margin: 16px 0; min-height: 36px; }
+    .opt-btn {
+      padding: 14px 20px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; min-width: 80px; text-align: center;
+    }
+    .opt-btn:active { transform: scale(0.92); }
+    .opt-btn.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .opt-btn.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .next-btn {
+      display: block; margin: 16px auto; padding: 14px 32px; border: none;
+      background: #00897B; color: white; border-radius: 12px; font-size: 18px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .next-btn:active { transform: scale(0.92); }
+
+    /* ===== 模式1: 概念学习 ===== */
+    .concept-area { text-align: center; padding: 16px; }
+    .concept-story { font-size: 17px; color: #1D1D1F; line-height: 2; margin: 16px 0; text-align: left; padding: 0 8px; }
+    .concept-story .emoji { font-size: 24px; }
+    .concept-box {
+      background: linear-gradient(135deg, #E0F2F1, #B2DFDB); border-radius: 20px;
+      padding: 24px; margin: 20px 0; text-align: center;
+    }
+    .concept-box .formula { font-size: 20px; font-weight: 700; color: #004D40; line-height: 1.8; }
+    .concept-box .formula-desc { font-size: 14px; color: #00897B; margin-top: 8px; line-height: 1.6; }
+    .demo-numbers { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
+    .demo-num {
+      width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center;
+      justify-content: center; font-size: 22px; font-weight: 700; color: white;
+      transition: all 0.3s ease;
+    }
+    .demo-num.highlight-median { box-shadow: 0 0 0 4px #FF6F00, 0 0 16px rgba(255,111,0,0.4); transform: scale(1.15); z-index: 2; }
+    .demo-num.highlight-mode { box-shadow: 0 0 0 4px #E91E63, 0 0 16px rgba(233,30,99,0.4); transform: scale(1.15); z-index: 2; }
+    .concept-label { font-size: 16px; font-weight: 700; margin: 8px 0; }
+    .concept-label.median-label { color: #FF6F00; }
+    .concept-label.mode-label { color: #E91E63; }
+    .concept-tip {
+      font-size: 15px; color: #00897B; background: rgba(0,137,123,0.08);
+      padding: 14px 16px; border-radius: 14px; margin: 16px 0; line-height: 1.8;
+      text-align: left;
+    }
+    .concept-tip b { color: #004D40; }
+    .concept-nav-btn {
+      display: block; margin: 16px auto; padding: 14px 32px; border: none;
+      background: #00897B; color: white; border-radius: 12px; font-size: 18px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .concept-nav-btn:active { transform: scale(0.92); }
+
+    /* ===== 模式2: 排序探索 ===== */
+    .explore-area { text-align: center; padding: 16px; }
+    .explore-instruction { font-size: 18px; font-weight: 600; color: #00897B; margin: 12px 0; }
+    .explore-numbers { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 16px 0; min-height: 60px; }
+    .explore-num {
+      width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center;
+      justify-content: center; font-size: 22px; font-weight: 700; color: white;
+      cursor: grab; transition: all 0.3s ease; user-select: none; -webkit-user-select: none;
+    }
+    .explore-num:active { transform: scale(0.92); cursor: grabbing; }
+    .explore-num.selected { box-shadow: 0 0 0 4px #00897B, 0 0 16px rgba(0,137,123,0.4); transform: scale(1.1); z-index: 2; }
+    .explore-num.placed { opacity: 0.4; }
+    .sort-slots { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin: 16px 0; }
+    .sort-slot {
+      width: 52px; height: 52px; border: 3px dashed #B2DFDB; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 700; color: #00897B;
+      transition: all 0.3s ease;
+    }
+    .sort-slot.filled { border-style: solid; background: rgba(0,137,123,0.1); }
+    .sort-slot.correct-pos { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .sort-slot.wrong-pos { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .sort-arrow { display: flex; align-items: center; font-size: 20px; color: #6E6E73; }
+    .explore-buttons { display: flex; justify-content: center; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+    .explore-btn {
+      padding: 12px 24px; border: none; border-radius: 14px; font-size: 17px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .explore-btn:active { transform: scale(0.95); }
+    .explore-btn.primary { background: #00897B; color: white; box-shadow: 0 4px 12px rgba(0,137,123,0.3); }
+    .explore-btn.secondary { border: 2px solid #00897B; background: white; color: #00897B; }
+    .explore-result { font-size: 18px; font-weight: 600; margin: 12px 0; min-height: 28px; }
+    .median-highlight { color: #FF6F00; font-weight: 700; }
+    .mode-highlight { color: #E91E63; font-weight: 700; }
+
+    /* ===== 模式3: 计算练习 ===== */
+    .practice-area { text-align: center; padding: 16px; }
+    .practice-data { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
+    .practice-data-item {
+      background: #E0F2F1; border-radius: 12px; padding: 10px 16px;
+      font-size: 20px; font-weight: 700; color: #004D40;
+    }
+    .practice-question { font-size: 17px; color: #1D1D1F; line-height: 1.8; margin: 16px 0; text-align: left; padding: 0 8px; }
+    .practice-input-row { display: flex; justify-content: center; align-items: center; gap: 12px; margin: 20px 0; flex-wrap: wrap; }
+    .practice-input-label { font-size: 16px; font-weight: 600; color: #6E6E73; }
+    .practice-input {
+      width: 100px; padding: 14px; border: 3px solid #E5E5EA; border-radius: 14px;
+      font-size: 24px; font-weight: 700; text-align: center; outline: none;
+      transition: border-color 0.2s; background: white;
+    }
+    .practice-input:focus { border-color: #00897B; }
+    .practice-input.correct { border-color: #34C759; background: rgba(52,199,89,0.08); }
+    .practice-input.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); }
+    .practice-submit-btn {
+      padding: 14px 32px; border: none; background: #00897B; color: white;
+      border-radius: 14px; font-size: 18px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,137,123,0.3); margin: 8px;
+    }
+    .practice-submit-btn:active { transform: scale(0.95); }
+    .practice-hint { font-size: 14px; color: #6E6E73; margin: 12px 0; }
+
+    /* ===== 模式4: 应用挑战 ===== */
+    .challenge-area { text-align: center; padding: 16px; }
+    .challenge-question { font-size: 17px; color: #1D1D1F; line-height: 1.8; margin: 16px 0; text-align: left; padding: 0 8px; }
+    .challenge-options { display: flex; flex-direction: column; gap: 10px; max-width: 360px; margin: 16px auto; }
+    .challenge-opt {
+      padding: 16px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 18px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; text-align: center;
+    }
+    .challenge-opt:active { transform: scale(0.97); }
+    .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .challenge-explain { font-size: 15px; color: #00897B; margin: 12px 0; line-height: 1.6; min-height: 24px; }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { 0% { transform: scale(0); } 80% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    .pop-in { animation: popIn 0.3s ease; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <!-- 导航栏 -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <a href="../../index.html" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:#F0F0F5;border-radius:12px;color:#00897B;text-decoration:none;font-weight:600;font-size:15px;">
+        ← 返回
+      </a>
+      <span style="font-size:15px;color:#6E6E73;">五年级 · 统计与概率</span>
+    </div>
+
+    <h1 style="font-size:24px;font-weight:700;color:#1D1D1F;text-align:center;margin-bottom:4px;">📊 中位数和众数</h1>
+    <p style="font-size:14px;color:#6E6E73;text-align:center;margin-bottom:16px;">找到数据的"中间值"和"最常见值"</p>
+
+    <!-- 模式切换 -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="learn">📖 学一学</button>
+      <button class="mode-tab" data-mode="explore">🔀 排一排</button>
+      <button class="mode-tab" data-mode="practice">✏️ 算一算</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- ===== 模式1: 概念学习 ===== -->
+    <div id="mode-learn" class="mode-content active">
+      <div class="concept-area">
+        <div class="section-title">📖 什么是中位数和众数？</div>
+        <div class="concept-story">
+          <span class="emoji">🏃</span> 体育课上，5位同学的跳绳成绩分别是：<br>
+          <div class="demo-numbers" id="demo-nums-1"></div>
+          老师想知道一个<b>"中等水平"</b>的成绩是多少……
+        </div>
+
+        <div class="concept-box">
+          <div class="concept-label median-label">🔶 中位数</div>
+          <div class="formula">把数据从小到大排列，<br>最中间的那个数就是<b>中位数</b></div>
+          <div class="formula-desc">
+            3, 5, <b style="color:#FF6F00;font-size:22px;">7</b>, 9, 11 → 中位数是 <b style="color:#FF6F00;">7</b>
+          </div>
+        </div>
+
+        <div class="concept-story">
+          <span class="emoji">🍎</span> 水果店卖出水果的数量：<br>
+          苹果 8 箱、香蕉 <b>5</b> 箱、橘子 <b>5</b> 箱、葡萄 3 箱<br>
+          哪种卖得最多？——香蕉和橘子！
+        </div>
+
+        <div class="concept-box">
+          <div class="concept-label mode-label">🔷 众数</div>
+          <div class="formula">一组数据中<b>出现次数最多</b>的数<br>就是<b>众数</b></div>
+          <div class="formula-desc">
+            2, 3, <b style="color:#E91E63;">5</b>, <b style="color:#E91E63;">5</b>, 8 → 众数是 <b style="color:#E91E63;">5</b>
+          </div>
+        </div>
+
+        <div class="concept-tip">
+          💡 <b>小贴士：</b><br>
+          • 中位数：先排序，再找中间 → 不受极端值影响<br>
+          • 众数：看谁出现最多 → 可能不止一个！<br>
+          • 偶数个数时，中位数 = 中间两个数的平均值
+        </div>
+
+        <button class="concept-nav-btn" id="go-explore-btn">学会了！去排一排 →</button>
+      </div>
+    </div>
+
+    <!-- ===== 模式2: 排序探索 ===== -->
+    <div id="mode-explore" class="mode-content">
+      <div class="explore-area">
+        <div class="section-title">🔀 动手排一排</div>
+        <div class="explore-instruction" id="explore-instruction">点击数字，按从小到大的顺序排列！</div>
+
+        <div class="explore-numbers" id="explore-numbers"></div>
+
+        <div style="font-size:14px;color:#6E6E73;margin:8px 0;">↓ 从小到大排列 ↓</div>
+
+        <div class="sort-slots" id="sort-slots"></div>
+
+        <div class="explore-result" id="explore-result"></div>
+
+        <div class="explore-buttons">
+          <button class="explore-btn primary" id="check-sort-btn">✅ 检查</button>
+          <button class="explore-btn secondary" id="reset-sort-btn">🔄 重来</button>
+          <button class="explore-btn primary" id="new-explore-btn">🎲 换一组</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 模式3: 计算练习 ===== -->
+    <div id="mode-practice" class="mode-content">
+      <div class="practice-area">
+        <div class="section-title">✏️ 计算练习</div>
+        <div class="score-bar">
+          <span>✅ <span id="practice-correct">0</span></span>
+          <span>❌ <span id="practice-wrong">0</span></span>
+        </div>
+
+        <div class="practice-question" id="practice-question"></div>
+        <div class="practice-data" id="practice-data"></div>
+
+        <div class="practice-input-row" id="practice-inputs"></div>
+
+        <div class="result-text" id="practice-result"></div>
+
+        <div style="text-align:center;">
+          <button class="practice-submit-btn" id="practice-submit-btn">提交答案</button>
+        </div>
+        <div class="practice-hint" id="practice-hint">💡 提示：先把数据从小到大排列哦！</div>
+      </div>
+    </div>
+
+    <!-- ===== 模式4: 应用挑战 ===== -->
+    <div id="mode-challenge" class="mode-content">
+      <div class="challenge-area">
+        <div class="section-title">🏆 应用挑战</div>
+        <div class="score-bar">
+          <span>✅ <span id="challenge-correct">0</span></span>
+          <span>❌ <span id="challenge-wrong">0</span></span>
+        </div>
+
+        <div class="challenge-question" id="challenge-question"></div>
+        <div class="challenge-options" id="challenge-options"></div>
+        <div class="challenge-explain" id="challenge-explain"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // ===== 颜色数组 =====
+    const COLORS = ['#4A90D9','#FF9500','#34C759','#AF52DE','#FF3B30','#5AC8FA','#FFCC00','#FF2D55','#00C7BE','#5856D6'];
+
+    // ===== 模式切换 =====
+    document.querySelectorAll('.mode-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.mode-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.mode-content').forEach(function(c) { c.classList.remove('active'); });
+        tab.classList.add('active');
+        var mode = tab.getAttribute('data-mode');
+        document.getElementById('mode-' + mode).classList.add('active');
+        if (mode === 'explore') initExplore();
+        if (mode === 'practice') initPractice();
+        if (mode === 'challenge') initChallenge();
+      });
+    });
+
+    // ===== 概念学习页演示数字 =====
+    (function() {
+      var nums = [3, 5, 7, 9, 11];
+      var container = document.getElementById('demo-nums-1');
+      nums.forEach(function(n, i) {
+        var el = document.createElement('div');
+        el.className = 'demo-num';
+        el.style.background = COLORS[i % COLORS.length];
+        el.textContent = n;
+        if (n === 7) el.classList.add('highlight-median');
+        container.appendChild(el);
+      });
+    })();
+
+    document.getElementById('go-explore-btn').addEventListener('click', function() {
+      document.querySelectorAll('.mode-tab').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.mode-content').forEach(function(c) { c.classList.remove('active'); });
+      document.querySelector('[data-mode="explore"]').classList.add('active');
+      document.getElementById('mode-explore').classList.add('active');
+      initExplore();
+    });
+
+    // ===== 模式2: 排序探索 =====
+    var exploreData = [];
+    var sortedData = [];
+    var userSorted = [];
+    var selectedNum = null;
+
+    function generateExploreData() {
+      var count = 5 + Math.floor(Math.random() * 2); // 5 or 6
+      var nums = [];
+      var used = {};
+      while (nums.length < count) {
+        var n = Math.floor(Math.random() * 20) + 1;
+        // Allow one duplicate for mode demonstration
+        if (!used[n] || (used[n] === 1 && nums.filter(function(x){return x===n;}).length < 2)) {
+          nums.push(n);
+          used[n] = (used[n] || 0) + 1;
+        }
+      }
+      return nums;
+    }
+
+    function initExplore() {
+      exploreData = generateExploreData();
+      sortedData = exploreData.slice().sort(function(a, b) { return a - b; });
+      userSorted = [];
+      selectedNum = null;
+      renderExplore();
+      document.getElementById('explore-result').innerHTML = '';
+      document.getElementById('explore-instruction').textContent = '点击数字，按从小到大的顺序排列！';
+    }
+
+    function renderExplore() {
+      // Render unsorted numbers
+      var numContainer = document.getElementById('explore-numbers');
+      numContainer.innerHTML = '';
+      exploreData.forEach(function(n, i) {
+        var el = document.createElement('div');
+        el.className = 'explore-num';
+        el.style.background = COLORS[i % COLORS.length];
+        el.textContent = n;
+        el.setAttribute('data-index', i);
+        if (userSorted.indexOf(i) !== -1) el.classList.add('placed');
+        if (selectedNum === i) el.classList.add('selected');
+        el.addEventListener('click', function() { handleExploreClick(i); });
+        numContainer.appendChild(el);
+      });
+
+      // Render sort slots
+      var slotsContainer = document.getElementById('sort-slots');
+      slotsContainer.innerHTML = '';
+      for (var s = 0; s < exploreData.length; s++) {
+        if (s > 0) {
+          var arrow = document.createElement('span');
+          arrow.className = 'sort-arrow';
+          arrow.textContent = '<';
+          slotsContainer.appendChild(arrow);
+        }
+        var slot = document.createElement('div');
+        slot.className = 'sort-slot';
+        if (userSorted[s] !== undefined) {
+          slot.textContent = exploreData[userSorted[s]];
+          slot.classList.add('filled');
+        }
+        slotsContainer.appendChild(slot);
+      }
+    }
+
+    function handleExploreClick(index) {
+      if (userSorted.indexOf(index) !== -1) return; // already placed
+      userSorted.push(index);
+      selectedNum = null;
+      renderExplore();
+
+      if (userSorted.length === exploreData.length) {
+        document.getElementById('explore-instruction').textContent = '排好了！点击"检查"看看对不对 👇';
+      }
+    }
+
+    document.getElementById('check-sort-btn').addEventListener('click', function() {
+      if (userSorted.length !== exploreData.length) {
+        document.getElementById('explore-result').innerHTML = '<span style="color:#FF9500;">先把所有数字排完哦！</span>';
+        return;
+      }
+
+      var userNums = userSorted.map(function(idx) { return exploreData[idx]; });
+      var allCorrect = true;
+      var slots = document.querySelectorAll('.sort-slot');
+      var slotIdx = 0;
+      for (var i = 0; i < userNums.length; i++) {
+        // Find the actual slot (accounting for arrow elements)
+        var slot = slots[i * 2]; // every other element is a slot
+        if (userNums[i] === sortedData[i]) {
+          if (slot) slot.classList.add('correct-pos');
+        } else {
+          allCorrect = false;
+          if (slot) slot.classList.add('wrong-pos');
+        }
+      }
+
+      if (allCorrect) {
+        // Find median
+        var median;
+        var mid = Math.floor(sortedData.length / 2);
+        if (sortedData.length % 2 === 1) {
+          median = sortedData[mid];
+        } else {
+          median = (sortedData[mid - 1] + sortedData[mid]) / 2;
+        }
+
+        // Find mode
+        var freq = {};
+        sortedData.forEach(function(n) { freq[n] = (freq[n] || 0) + 1; });
+        var maxFreq = Math.max.apply(null, Object.values(freq));
+        var modes = Object.keys(freq).filter(function(k) { return freq[k] === maxFreq; }).map(Number);
+        var modeStr = maxFreq > 1 ? modes.join(', ') : '没有众数（每个数只出现一次）';
+
+        document.getElementById('explore-result').innerHTML =
+          '✅ <span style="color:#34C759;">排序正确！</span><br>' +
+          '<span class="median-highlight">🔶 中位数 = ' + median + '</span><br>' +
+          '<span class="mode-highlight">🔷 众数：' + modeStr + '</span>';
+        document.getElementById('explore-instruction').textContent = '🎉 太棒了！';
+      } else {
+        document.getElementById('explore-result').innerHTML = '<span style="color:#FF3B30;">❌ 顺序不对，再试试！</span>';
+        document.getElementById('explore-instruction').textContent = '💡 想想哪个数更小，应该排在前面';
+      }
+    });
+
+    document.getElementById('reset-sort-btn').addEventListener('click', function() {
+      userSorted = [];
+      selectedNum = null;
+      renderExplore();
+      document.getElementById('explore-result').innerHTML = '';
+      document.getElementById('explore-instruction').textContent = '点击数字，按从小到大的顺序排列！';
+    });
+
+    document.getElementById('new-explore-btn').addEventListener('click', function() {
+      initExplore();
+    });
+
+    // ===== 模式3: 计算练习 =====
+    var practiceState = { correct: 0, wrong: 0, currentData: [], currentMedian: 0, currentMode: '', askType: '' };
+
+    function generatePracticeData() {
+      var count = Math.random() < 0.5 ? 5 : 7; // odd count for simpler median
+      var nums = [];
+      var used = {};
+      while (nums.length < count) {
+        var n = Math.floor(Math.random() * 30) + 1;
+        if (!used[n]) {
+          nums.push(n);
+          used[n] = true;
+        }
+      }
+      // Sometimes add a duplicate for mode
+      if (Math.random() < 0.6) {
+        var dupIdx = Math.floor(Math.random() * nums.length);
+        nums.push(nums[dupIdx]);
+      }
+      return nums;
+    }
+
+    function findMedian(arr) {
+      var sorted = arr.slice().sort(function(a, b) { return a - b; });
+      var mid = Math.floor(sorted.length / 2);
+      if (sorted.length % 2 === 1) return sorted[mid];
+      return (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
+    function findMode(arr) {
+      var freq = {};
+      arr.forEach(function(n) { freq[n] = (freq[n] || 0) + 1; });
+      var maxFreq = Math.max.apply(null, Object.values(freq));
+      if (maxFreq <= 1) return 'none';
+      var modes = Object.keys(freq).filter(function(k) { return freq[k] === maxFreq; }).map(Number).sort(function(a,b){return a-b;});
+      return modes.join(',');
+    }
+
+    function initPractice() {
+      var data = generatePracticeData();
+      var sorted = data.slice().sort(function(a, b) { return a - b; });
+      var median = findMedian(data);
+      var mode = findMode(data);
+
+      practiceState.currentData = data;
+      practiceState.currentMedian = median;
+      practiceState.currentMode = mode;
+      practiceState.askType = Math.random() < 0.5 ? 'median' : 'mode';
+
+      // Render question
+      document.getElementById('practice-question').innerHTML =
+        practiceState.askType === 'median'
+          ? '📊 请找出下面这组数据的<b class="median-highlight">中位数</b>：'
+          : '📊 请找出下面这组数据的<b class="mode-highlight">众数</b>：';
+
+      // Render data
+      var dataContainer = document.getElementById('practice-data');
+      dataContainer.innerHTML = '';
+      data.forEach(function(n, i) {
+        var el = document.createElement('span');
+        el.className = 'practice-data-item';
+        el.textContent = n;
+        dataContainer.appendChild(el);
+      });
+
+      // Render input
+      var inputsContainer = document.getElementById('practice-inputs');
+      inputsContainer.innerHTML = '';
+
+      var label = document.createElement('span');
+      label.className = 'practice-input-label';
+      label.textContent = practiceState.askType === 'median' ? '中位数 =' : '众数 =';
+      inputsContainer.appendChild(label);
+
+      var input = document.createElement('input');
+      input.type = 'number';
+      input.className = 'practice-input';
+      input.id = 'practice-answer';
+      input.placeholder = '?';
+      inputsContainer.appendChild(input);
+
+      if (practiceState.askType === 'median' && data.length % 2 === 0) {
+        var hint = document.createElement('div');
+        hint.style.cssText = 'width:100%;font-size:13px;color:#6E6E73;margin-top:8px;';
+        hint.textContent = '💡 偶数个数时，中位数 = 中间两个数之和 ÷ 2';
+        inputsContainer.appendChild(hint);
+      }
+
+      document.getElementById('practice-result').innerHTML = '';
+      document.getElementById('practice-hint').textContent = '💡 提示：先把数据从小到大排列，再找中间位置！';
+    }
+
+    document.getElementById('practice-submit-btn').addEventListener('click', function() {
+      var input = document.getElementById('practice-answer');
+      var userAnswer = parseFloat(input.value);
+      if (isNaN(userAnswer)) {
+        document.getElementById('practice-result').innerHTML = '<span style="color:#FF9500;">请输入一个数字！</span>';
+        return;
+      }
+
+      var correctAnswer;
+      if (practiceState.askType === 'median') {
+        correctAnswer = practiceState.currentMedian;
+      } else {
+        var modeParts = practiceState.currentMode.split(',');
+        correctAnswer = parseFloat(modeParts[0]);
+      }
+
+      if (Math.abs(userAnswer - correctAnswer) < 0.01) {
+        input.classList.remove('wrong');
+        input.classList.add('correct');
+        practiceState.correct++;
+        document.getElementById('practice-correct').textContent = practiceState.correct;
+        var sorted = practiceState.currentData.slice().sort(function(a,b){return a-b;});
+        var explainText = practiceState.askType === 'median'
+          ? '✅ 正确！排序后 ' + sorted.join(', ') + '，中位数 = ' + correctAnswer
+          : '✅ 正确！' + practiceState.currentMode + ' 出现次数最多';
+        document.getElementById('practice-result').innerHTML = '<span style="color:#34C759;">' + explainText + '</span>';
+        document.getElementById('practice-hint').textContent = '';
+        setTimeout(initPractice, 1500);
+      } else {
+        input.classList.remove('correct');
+        input.classList.add('wrong');
+        practiceState.wrong++;
+        document.getElementById('practice-wrong').textContent = practiceState.wrong;
+        var sorted = practiceState.currentData.slice().sort(function(a,b){return a-b;});
+        var explainText = practiceState.askType === 'median'
+          ? '❌ 再想想！排序后是 ' + sorted.join(', ') + '，中间位置是第' + Math.ceil(sorted.length/2) + '个'
+          : '❌ 再想想！看看哪个数出现次数最多';
+        document.getElementById('practice-result').innerHTML = '<span style="color:#FF3B30;">' + explainText + '</span>';
+      }
+    });
+
+    // ===== 模式4: 应用挑战 =====
+    var challengeState = { correct: 0, wrong: 0 };
+
+    var challengeTemplates = [
+      {
+        gen: function() {
+          var scores = [];
+          for (var i = 0; i < 5; i++) scores.push(Math.floor(Math.random() * 40) + 60);
+          var sorted = scores.slice().sort(function(a,b){return a-b;});
+          var median = sorted[2];
+          var options = [median, median+2, median-3, sorted[0]];
+          shuffleArray(options);
+          return {
+            q: '📝 小明5次测验的成绩是：' + scores.join('、') + ' 分。<br>这组成绩的中位数是多少？',
+            answer: median,
+            options: options,
+            explain: '排序后：' + sorted.join('、') + '，中间第3个就是中位数 → ' + median
+          };
+        }
+      },
+      {
+        gen: function() {
+          var base = Math.floor(Math.random() * 10) + 1;
+          var others = [];
+          var used = {}; used[base] = true;
+          while (others.length < 4) {
+            var n = Math.floor(Math.random() * 15) + 1;
+            if (!used[n]) { others.push(n); used[n] = true; }
+          }
+          var data = [base, base, base].concat(others);
+          var freq = {};
+          data.forEach(function(n) { freq[n] = (freq[n]||0)+1; });
+          var maxF = Math.max.apply(null, Object.values(freq));
+          var modes = Object.keys(freq).filter(function(k){return freq[k]===maxF;}).map(Number);
+          var modeAns = modes[0];
+          var options = [modeAns];
+          while (options.length < 4) {
+            var opt = Math.floor(Math.random() * 15) + 1;
+            if (options.indexOf(opt) === -1) options.push(opt);
+          }
+          shuffleArray(options);
+          return {
+            q: '🍎 商店一周卖出苹果数量：' + data.join('、') + ' 箱。<br>这组数据的众数是多少？',
+            answer: modeAns,
+            options: options,
+            explain: base + ' 出现了3次，是最多的 → 众数 = ' + modeAns
+          };
+        }
+      },
+      {
+        gen: function() {
+          var temps = [];
+          for (var i = 0; i < 7; i++) temps.push(Math.floor(Math.random() * 15) + 20);
+          var sorted = temps.slice().sort(function(a,b){return a-b;});
+          var median = sorted[3];
+          var options = [median, median+1, median-2, sorted[6]];
+          shuffleArray(options);
+          return {
+            q: '🌡️ 一周气温记录（℃）：' + temps.join('、') + '。<br>这组气温的中位数是多少？',
+            answer: median,
+            options: options,
+            explain: '7个数排序后第4个是中位数 → ' + median + '℃'
+          };
+        }
+      },
+      {
+        gen: function() {
+          var data = [];
+          var mode = Math.floor(Math.random() * 10) + 5;
+          data.push(mode, mode);
+          while (data.length < 6) {
+            var n = Math.floor(Math.random() * 15) + 1;
+            if (n !== mode && data.indexOf(n) === -1) data.push(n);
+          }
+          shuffleArray(data);
+          var options = [mode];
+          while (options.length < 4) {
+            var opt = Math.floor(Math.random() * 15) + 1;
+            if (options.indexOf(opt) === -1) options.push(opt);
+          }
+          shuffleArray(options);
+          return {
+            q: '📚 图书角借阅次数：' + data.join('、') + ' 次。<br>众数是多少？',
+            answer: mode,
+            options: options,
+            explain: mode + ' 出现了2次，其他数各出现1次 → 众数 = ' + mode
+          };
+        }
+      },
+      {
+        gen: function() {
+          var nums = [];
+          for (var i = 0; i < 6; i++) nums.push(Math.floor(Math.random() * 20) + 10);
+          var sorted = nums.slice().sort(function(a,b){return a-b;});
+          var median = (sorted[2] + sorted[3]) / 2;
+          var options = [median];
+          if (options.indexOf(median+1) === -1) options.push(median+1);
+          if (options.indexOf(median-1) === -1) options.push(median-1);
+          if (options.indexOf(sorted[0]) === -1) options.push(sorted[0]);
+          while (options.length < 4) options.push(options.length * 3);
+          options = options.slice(0, 4);
+          shuffleArray(options);
+          return {
+            q: '🏀 6场比赛得分：' + nums.join('、') + '。<br>中位数是多少？（提示：偶数个数时取中间两数平均值）',
+            answer: median,
+            options: options,
+            explain: '排序后中间两个数是 ' + sorted[2] + ' 和 ' + sorted[3] + '，平均值 = ' + median
+          };
+        }
+      }
+    ];
+
+    function shuffleArray(arr) {
+      for (var i = arr.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = arr[i]; arr[i] = arr[j]; arr[j] = temp;
+      }
+      return arr;
+    }
+
+    var currentChallenge = null;
+
+    function initChallenge() {
+      var template = challengeTemplates[Math.floor(Math.random() * challengeTemplates.length)];
+      currentChallenge = template.gen();
+
+      document.getElementById('challenge-question').innerHTML = currentChallenge.q;
+      document.getElementById('challenge-explain').innerHTML = '';
+
+      var optContainer = document.getElementById('challenge-options');
+      optContainer.innerHTML = '';
+      currentChallenge.options.forEach(function(opt) {
+        var btn = document.createElement('button');
+        btn.className = 'challenge-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', function() { handleChallengeClick(btn, opt); });
+        optContainer.appendChild(btn);
+      });
+    }
+
+    function handleChallengeClick(btn, selected) {
+      var allBtns = document.querySelectorAll('.challenge-opt');
+      allBtns.forEach(function(b) { b.style.pointerEvents = 'none'; });
+
+      if (selected === currentChallenge.answer) {
+        btn.classList.add('correct');
+        challengeState.correct++;
+        document.getElementById('challenge-correct').textContent = challengeState.correct;
+        document.getElementById('challenge-explain').innerHTML = '✅ ' + currentChallenge.explain;
+        setTimeout(initChallenge, 1500);
+      } else {
+        btn.classList.add('wrong');
+        challengeState.wrong++;
+        document.getElementById('challenge-wrong').textContent = challengeState.wrong;
+        // Highlight correct answer
+        allBtns.forEach(function(b) {
+          if (parseFloat(b.textContent) === currentChallenge.answer) {
+            b.classList.add('correct');
+          }
+        });
+        document.getElementById('challenge-explain').innerHTML = '❌ 正确答案是 ' + currentChallenge.answer + '。' + currentChallenge.explain;
+        setTimeout(initChallenge, 3000);
+      }
+    }
+
+    // ===== 初始化 =====
+    initExplore();
+    initPractice();
+    initChallenge();
+  </script>
+</body>
+</html>

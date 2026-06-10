@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>数学广角——优化</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #FF6F00; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    .score-display { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px; font-size: 18px; font-weight: 600; }
+    .score-stars { font-size: 24px; }
+
+    /* === 模式1: 故事引入 === */
+    .story-area { text-align: center; padding: 20px 16px; }
+    .story-scene { background: white; border-radius: 20px; padding: 24px 16px; margin: 16px 0; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .story-emoji { font-size: 72px; margin: 8px 0; }
+    .story-title { font-size: 22px; font-weight: 700; color: #FF6F00; margin: 12px 0; }
+    .story-text { font-size: 16px; color: #1D1D1F; line-height: 1.8; margin: 12px 0; text-align: left; padding: 0 8px; }
+    .story-text strong { color: #FF6F00; }
+    .story-steps { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+    .story-step {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+      background: #FFF8E1; border-radius: 14px; text-align: left;
+      border-left: 4px solid #FFB300; transition: all 0.3s ease;
+    }
+    .story-step.highlight { background: #FFE082; border-left-color: #FF6F00; transform: scale(1.02); }
+    .step-num { width: 32px; height: 32px; border-radius: 50%; background: #FF6F00; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+    .step-text { font-size: 15px; color: #1D1D1F; line-height: 1.5; }
+    .step-text .time { font-weight: 700; color: #FF6F00; }
+    .story-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .compare-box { padding: 16px; border-radius: 16px; text-align: center; }
+    .compare-box.bad { background: #FFEBEE; border: 2px solid #FFCDD2; }
+    .compare-box.good { background: #E8F5E9; border: 2px solid #A5D6A7; }
+    .compare-box .cb-icon { font-size: 36px; }
+    .compare-box .cb-label { font-size: 14px; font-weight: 700; margin: 8px 0 4px; }
+    .compare-box.bad .cb-label { color: #C62828; }
+    .compare-box.good .cb-label { color: #2E7D32; }
+    .compare-box .cb-time { font-size: 24px; font-weight: 800; }
+    .compare-box.bad .cb-time { color: #C62828; }
+    .compare-box.good .cb-time { color: #2E7D32; }
+    .story-nav { display: flex; justify-content: center; gap: 12px; margin: 20px 0; }
+    .story-btn {
+      padding: 12px 28px; border: none; border-radius: 16px; font-size: 17px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .story-btn:active { transform: scale(0.95); }
+    .story-btn.prev { background: #E5E5EA; color: #6E6E73; }
+    .story-btn.next { background: #FF6F00; color: white; box-shadow: 0 4px 12px rgba(255,111,0,0.3); }
+
+    /* === 模式2: 烙饼模拟 === */
+    .sim-area { text-align: center; padding: 20px 16px; }
+    .sim-pan { position: relative; width: 200px; height: 200px; margin: 16px auto; border-radius: 50%; background: radial-gradient(circle, #424242 0%, #616161 60%, #757575 100%); box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 2px 8px rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; }
+    .sim-pan::before { content: ''; position: absolute; width: 220px; height: 12px; bottom: -20px; left: 50%; transform: translateX(-50%); background: #5D4037; border-radius: 6px; }
+    .sim-cake {
+      width: 80px; height: 80px; border-radius: 50%; position: absolute;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: white;
+      transition: all 0.5s ease; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .sim-cake.side-a { background: radial-gradient(circle, #FFCC80 0%, #FFB74D 50%, #FFA726 100%); }
+    .sim-cake.side-b { background: radial-gradient(circle, #A1887F 0%, #8D6E63 50%, #795548 100%); }
+    .sim-cake.pos-0 { top: 20px; left: 30px; }
+    .sim-cake.pos-1 { top: 20px; right: 30px; }
+    .sim-cake.pos-2 { bottom: 20px; left: 50%; transform: translateX(-50%); }
+    .sim-cake.empty { opacity: 0; pointer-events: none; }
+    .sim-info { margin: 16px 0; }
+    .sim-status { font-size: 18px; font-weight: 600; color: #1D1D1F; margin: 8px 0; }
+    .sim-timer { font-size: 36px; font-weight: 800; color: #FF6F00; margin: 8px 0; }
+    .sim-timer-label { font-size: 14px; color: #6E6E73; }
+    .sim-controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
+    .sim-btn {
+      padding: 12px 20px; border: none; border-radius: 14px; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease; min-width: 80px;
+    }
+    .sim-btn:active { transform: scale(0.95); }
+    .sim-btn.flip { background: #FF6F00; color: white; box-shadow: 0 4px 12px rgba(255,111,0,0.3); }
+    .sim-btn.swap { background: #4A90D9; color: white; box-shadow: 0 4px 12px rgba(74,144,217,0.3); }
+    .sim-btn.remove { background: #E5E5EA; color: #6E6E73; }
+    .sim-btn.add { background: #34C759; color: white; box-shadow: 0 4px 12px rgba(52,199,89,0.3); }
+    .sim-btn:disabled { opacity: 0.4; }
+    .sim-progress { display: flex; justify-content: center; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+    .sim-cake-status {
+      display: flex; align-items: center; gap: 4px; padding: 6px 12px;
+      background: white; border-radius: 10px; font-size: 13px; font-weight: 600;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .sim-cake-status .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .sim-cake-status .dot.raw { background: #FFCC80; }
+    .sim-cake-status .dot.half { background: #A1887F; }
+    .sim-cake-status .dot.done { background: #34C759; }
+    .sim-result { font-size: 20px; font-weight: 700; margin: 16px 0; min-height: 32px; }
+    .sim-best { font-size: 15px; color: #6E6E73; margin: 8px 0; padding: 12px; background: #FFF8E1; border-radius: 12px; }
+
+    /* === 模式3: 沏茶排序 === */
+    .sort-area { text-align: center; padding: 20px 16px; }
+    .sort-task { background: white; border-radius: 16px; padding: 20px; margin: 16px 0; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .sort-task-title { font-size: 20px; font-weight: 700; color: #FF6F00; margin-bottom: 8px; }
+    .sort-task-desc { font-size: 15px; color: #6E6E73; line-height: 1.6; }
+    .sort-pool { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 16px 0; min-height: 60px; padding: 12px; background: #F5F5F5; border-radius: 16px; }
+    .sort-chip {
+      padding: 10px 16px; border: 2px solid #E0E0E0; background: white; border-radius: 12px;
+      font-size: 15px; font-weight: 600; cursor: grab; transition: all 0.2s ease;
+      display: flex; align-items: center; gap: 6px; user-select: none;
+    }
+    .sort-chip:active { transform: scale(0.95); cursor: grabbing; }
+    .sort-chip .chip-time { font-size: 13px; color: #FF6F00; font-weight: 700; }
+    .sort-chip.placed { opacity: 0.3; pointer-events: none; }
+    .sort-timeline { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+    .sort-slot {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+      border: 2px dashed #E0E0E0; border-radius: 14px; min-height: 52px;
+      transition: all 0.2s ease; cursor: pointer;
+    }
+    .sort-slot:active { background: #FFF8E1; }
+    .sort-slot.filled { border-style: solid; border-color: #FFB300; background: #FFF8E1; }
+    .sort-slot .slot-num { width: 28px; height: 28px; border-radius: 50%; background: #E0E0E0; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+    .sort-slot.filled .slot-num { background: #FF6F00; }
+    .sort-slot .slot-text { font-size: 15px; color: #6E6E73; }
+    .sort-slot.filled .slot-text { color: #1D1D1F; font-weight: 600; }
+    .sort-slot.parallel { border-color: #4A90D9; background: rgba(74,144,217,0.05); }
+    .sort-slot.parallel .slot-num { background: #4A90D9; }
+    .sort-parallel-label { font-size: 12px; color: #4A90D9; font-weight: 700; margin-left: auto; }
+    .sort-actions { display: flex; justify-content: center; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+    .sort-action-btn {
+      padding: 12px 24px; border: none; border-radius: 14px; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .sort-action-btn:active { transform: scale(0.95); }
+    .sort-action-btn.check { background: #FF6F00; color: white; box-shadow: 0 4px 12px rgba(255,111,0,0.3); }
+    .sort-action-btn.reset { background: #E5E5EA; color: #6E6E73; }
+    .sort-feedback { font-size: 18px; font-weight: 700; margin: 12px 0; min-height: 28px; }
+    .sort-score { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; font-weight: 600; }
+
+    /* === 模式4: 闯关 === */
+    .quiz-area { text-align: center; padding: 20px 16px; }
+    .quiz-progress { display: flex; justify-content: center; gap: 6px; margin: 12px 0; }
+    .progress-dot { width: 10px; height: 10px; border-radius: 50%; background: #E5E5EA; }
+    .progress-dot.done { background: #34C759; }
+    .progress-dot.current { background: #FF6F00; transform: scale(1.3); }
+    .quiz-question { font-size: 18px; font-weight: 600; color: #1D1D1F; margin: 16px 0; line-height: 1.7; text-align: left; padding: 0 8px; }
+    .quiz-visual { margin: 16px auto; }
+    .quiz-options { display: flex; flex-direction: column; gap: 12px; max-width: 400px; margin: 16px auto; }
+    .quiz-opt {
+      padding: 14px 18px; border: 3px solid #E5E5EA; background: white; border-radius: 16px;
+      font-size: 17px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+      text-align: left; display: flex; align-items: center; gap: 12px;
+    }
+    .quiz-opt:active { transform: scale(0.98); }
+    .quiz-opt .opt-letter { width: 32px; height: 32px; border-radius: 50%; background: #F0F0F0; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: #6E6E73; flex-shrink: 0; }
+    .quiz-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.1); }
+    .quiz-opt.correct .opt-letter { background: #34C759; color: white; }
+    .quiz-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); }
+    .quiz-opt.wrong .opt-letter { background: #FF3B30; color: white; }
+    .quiz-explain { font-size: 15px; color: #6E6E73; margin: 12px 0; line-height: 1.7; min-height: 24px; text-align: left; padding: 0 8px; }
+    .quiz-score-bar { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; font-weight: 600; }
+
+    /* 通用 */
+    @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    .bounce { animation: bounce 0.6s ease; }
+    @keyframes popIn { 0% { transform: scale(0); } 80% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    .pop-in { animation: popIn 0.4s ease; }
+    @keyframes sizzle { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .sizzle { animation: sizzle 0.3s ease infinite; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" onclick="location.href='../../index.html'" aria-label="返回">←</button>
+      <span class="nav-title">⏱️ 数学广角——优化</span>
+      <div style="width:56px"></div>
+    </nav>
+    <div class="score-display"><span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span><span class="score-stars" id="stars-display"></span></div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="story">📖 故事</button>
+      <button class="mode-tab" data-mode="sim">🍳 烙饼</button>
+      <button class="mode-tab" data-mode="sort">☕ 沏茶</button>
+      <button class="mode-tab" data-mode="quiz">🏆 闯关</button>
+    </div>
+
+    <!-- 模式1: 故事引入 -->
+    <div class="mode-content active" id="mode-story">
+      <div class="story-area" id="story-area">
+        <!-- JS fills -->
+      </div>
+    </div>
+
+    <!-- 模式2: 烙饼模拟 -->
+    <div class="mode-content" id="mode-sim">
+      <div class="sim-area">
+        <div class="card">
+          <p class="page-subtitle">锅里最多放2张饼，每面要烙3分钟，怎样最快？</p>
+          <div class="sim-pan" id="sim-pan">
+            <!-- JS fills cakes -->
+          </div>
+          <div class="sim-info">
+            <div class="sim-timer-label">已用时间</div>
+            <div class="sim-timer" id="sim-timer">0 分钟</div>
+            <div class="sim-status" id="sim-status">点击"放饼"开始烙饼</div>
+          </div>
+          <div class="sim-progress" id="sim-progress">
+            <!-- JS fills -->
+          </div>
+          <div class="sim-controls" id="sim-controls">
+            <button class="sim-btn add" id="btn-add">🫓 放饼</button>
+            <button class="sim-btn flip" id="btn-flip">🔄 翻面</button>
+            <button class="sim-btn swap" id="btn-swap">🔀 换饼</button>
+            <button class="sim-btn remove" id="btn-remove">✅ 取出</button>
+          </div>
+          <div class="sim-result" id="sim-result"></div>
+          <div class="sim-best">
+            💡 <strong>最优方案：</strong>3张饼至少需要 <strong style="color:#FF6F00">9分钟</strong><br>
+            <span style="font-size:13px">关键：锅里始终要有2张饼在烙，不要空着锅！</span>
+          </div>
+          <div style="display:flex;justify-content:center;margin-top:12px">
+            <button class="sim-btn reset" id="btn-reset" style="background:#E5E5EA;color:#6E6E73">🔄 重新开始</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 沏茶排序 -->
+    <div class="mode-content" id="mode-sort">
+      <div class="sort-area">
+        <div class="card">
+          <p class="page-subtitle">合理安排顺序，哪些事可以同时做？</p>
+          <div class="sort-score">
+            <span>✅ <span id="sort-correct">0</span></span>
+            <span>❌ <span id="sort-wrong">0</span></span>
+          </div>
+          <div class="sort-task" id="sort-task">
+            <!-- JS fills -->
+          </div>
+          <div style="font-size:15px;font-weight:600;color:#6E6E73;margin:8px 0">📋 可用步骤（点击放入时间线）：</div>
+          <div class="sort-pool" id="sort-pool">
+            <!-- JS fills -->
+          </div>
+          <div style="font-size:15px;font-weight:600;color:#6E6E73;margin:8px 0">📅 时间安排（蓝色 = 可以同时做的事）：</div>
+          <div class="sort-timeline" id="sort-timeline">
+            <!-- JS fills -->
+          </div>
+          <div class="sort-actions">
+            <button class="sort-action-btn reset" id="sort-reset">🔄 重来</button>
+            <button class="sort-action-btn check" id="sort-check">✅ 检查方案</button>
+          </div>
+          <div class="sort-feedback" id="sort-feedback"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 闯关 -->
+    <div class="mode-content" id="mode-quiz">
+      <div class="quiz-area">
+        <div class="card">
+          <p class="page-subtitle">来挑战优化问题闯关吧！</p>
+          <div class="quiz-score-bar">
+            <span>✅ <span id="quiz-correct">0</span></span>
+            <span>❌ <span id="quiz-wrong">0</span></span>
+          </div>
+          <div class="quiz-question" id="quiz-question"></div>
+          <div class="quiz-visual" id="quiz-visual"></div>
+          <div class="quiz-options" id="quiz-options"></div>
+          <div class="quiz-explain" id="quiz-explain"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      const stars = streak >= 10 ? '🌟🌟🌟' : streak >= 5 ? '🌟🌟' : streak >= 3 ? '🌟' : '';
+      document.getElementById('stars-display').textContent = stars;
+    }
+    function showToast(msg) { if (typeof Toast !== 'undefined') Toast.show(msg); }
+    function playSound(type) { if (typeof Sound !== 'undefined') Sound.play(type); }
+
+    // === 模式切换 ===
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        playSound('click');
+      });
+    });
+
+    // =============================================
+    // 模式1: 故事引入
+    // =============================================
+    (() => {
+      const STORIES = [
+        {
+          emoji: '🍳', title: '烙饼问题',
+          text: '小明家来了<strong>3位客人</strong>，妈妈要尽快烙好饼招待大家。<br>可是锅一次只能放<strong>2张饼</strong>，每面要烙<strong>3分钟</strong>。',
+          steps: [
+            { text: '第1次（3分钟）：放饼A和饼B，烙<strong>正面</strong>', highlight: true },
+            { text: '第2次（3分钟）：取出饼B，放饼C，饼A翻面烙<strong>反面</strong>', highlight: true },
+            { text: '第3次（3分钟）：取出饼A（好了！），饼C翻面，放回饼B烙<strong>反面</strong>', highlight: true }
+          ],
+          badTime: '12分钟', goodTime: '9分钟',
+          badLabel: '❌ 一张一张烙', goodLabel: '✅ 合理安排',
+          insight: '💡 <strong>核心思想：</strong>锅不要空着！能同时做的事就同时做，这就是<strong>统筹优化</strong>！'
+        },
+        {
+          emoji: '☕', title: '沏茶问题',
+          text: '小明要帮妈妈<strong>沏茶</strong>招待客人。需要做这些事：',
+          steps: [
+            { text: '洗水壶 <span class="time">1分钟</span>', highlight: false },
+            { text: '接水 <span class="time">1分钟</span>', highlight: false },
+            { text: '烧水 <span class="time">8分钟</span>', highlight: true },
+            { text: '洗茶杯 <span class="time">2分钟</span>', highlight: false },
+            { text: '找茶叶 <span class="time">1分钟</span>', highlight: false },
+            { text: '沏茶 <span class="time">1分钟</span>', highlight: false }
+          ],
+          badTime: '14分钟', goodTime: '11分钟',
+          badLabel: '❌ 一件一件做', goodLabel: '✅ 烧水时同时做别的',
+          insight: '💡 <strong>关键：</strong>烧水的时候可以同时洗茶杯、找茶叶！把能<strong>同时做</strong>的事安排在一起。'
+        },
+        {
+          emoji: '🚿', title: '理发排队问题',
+          text: '理发店有<strong>3位理发师</strong>，来了<strong>5位顾客</strong>。每位顾客理发需要<strong>10分钟</strong>。',
+          steps: [
+            { text: '第1-3位顾客同时开始（0分钟）', highlight: true },
+            { text: '第4-5位顾客等前面理完（10分钟后开始）', highlight: true },
+            { text: '所有人在第20分钟理完', highlight: true }
+          ],
+          badTime: '50分钟', goodTime: '20分钟',
+          badLabel: '❌ 排一队依次理', goodLabel: '✅ 多个窗口同时服务',
+          insight: '💡 <strong>核心思想：</strong>有多个服务窗口时，要<strong>同时利用</strong>所有窗口，减少等待时间。'
+        }
+      ];
+
+      let storyIdx = 0;
+      const area = document.getElementById('story-area');
+
+      function renderStory() {
+        const s = STORIES[storyIdx];
+        let stepsHtml = s.steps.map((st, i) =>
+          `<div class="story-step ${st.highlight ? 'highlight' : ''}">
+            <div class="step-num">${i + 1}</div>
+            <div class="step-text">${st.text}</div>
+          </div>`
+        ).join('');
+
+        area.innerHTML = `
+          <div class="story-scene">
+            <div class="story-emoji">${s.emoji}</div>
+            <div class="story-title">${s.title}</div>
+            <div class="story-text">${s.text}</div>
+            <div class="story-steps">${stepsHtml}</div>
+            <div class="story-compare">
+              <div class="compare-box bad">
+                <div class="cb-icon">😰</div>
+                <div class="cb-label">${s.badLabel}</div>
+                <div class="cb-time">${s.badTime}</div>
+              </div>
+              <div class="compare-box good">
+                <div class="cb-icon">😊</div>
+                <div class="cb-label">${s.goodLabel}</div>
+                <div class="cb-time">${s.goodTime}</div>
+              </div>
+            </div>
+            <div style="padding:16px;background:#FFF8E1;border-radius:14px;margin:12px 0;font-size:15px;line-height:1.7">${s.insight}</div>
+          </div>
+          <div class="story-nav">
+            <button class="story-btn prev" id="story-prev" ${storyIdx === 0 ? 'disabled style="opacity:0.4"' : ''}>⬅️ 上一个</button>
+            <button class="story-btn next" id="story-next" ${storyIdx === STORIES.length - 1 ? 'disabled style="opacity:0.4"' : ''}>下一个 ➡️</button>
+          </div>
+        `;
+
+        document.getElementById('story-prev')?.addEventListener('click', () => {
+          if (storyIdx > 0) { storyIdx--; renderStory(); playSound('click'); }
+        });
+        document.getElementById('story-next')?.addEventListener('click', () => {
+          if (storyIdx < STORIES.length - 1) { storyIdx++; renderStory(); playSound('click'); }
+        });
+      }
+
+      renderStory();
+    })();
+
+    // =============================================
+    // 模式2: 烙饼模拟
+    // =============================================
+    (() => {
+      // 锅最多2张饼，每面3分钟
+      const PAN_CAPACITY = 2;
+      const SIDE_TIME = 3;
+      const TOTAL_CAKES = 3;
+
+      let cakes = []; // { id, side: 'a'|'b', status: 'out'|'in'|'done' }
+      let elapsed = 0;
+      let finished = false;
+
+      const panEl = document.getElementById('sim-pan');
+      const timerEl = document.getElementById('sim-timer');
+      const statusEl = document.getElementById('sim-status');
+      const progressEl = document.getElementById('sim-progress');
+      const resultEl = document.getElementById('sim-result');
+
+      function initCakes() {
+        cakes = [];
+        for (let i = 0; i < TOTAL_CAKES; i++) {
+          cakes.push({ id: i, side: 'a', status: 'out' });
+        }
+        elapsed = 0;
+        finished = false;
+        resultEl.textContent = '';
+        render();
+      }
+
+      function getInPan() { return cakes.filter(c => c.status === 'in'); }
+      function getDone() { return cakes.filter(c => c.status === 'done'); }
+      function getOut() { return cakes.filter(c => c.status === 'out'); }
+
+      function render() {
+        // Timer
+        timerEl.textContent = elapsed + ' 分钟';
+
+        // Pan visualization
+        const inPan = getInPan();
+        let panHtml = '';
+        for (let i = 0; i < PAN_CAPACITY; i++) {
+          const cake = inPan[i];
+          if (cake) {
+            panHtml += `<div class="sim-cake ${cake.side === 'a' ? 'side-a' : 'side-b'} pos-${i} sizzle">
+              ${cake.side === 'A' ? 'A正' : cake.side === 'a' ? 'A反' : ''}${cake.id + 1}${cake.side === 'a' ? '正' : '反'}
+            </div>`;
+          } else {
+            panHtml += `<div class="sim-cake empty pos-${i}"></div>`;
+          }
+        }
+        panEl.innerHTML = panHtml;
+
+        // Status
+        const outCount = getOut().length;
+        const inCount = inPan.length;
+        const doneCount = getDone().length;
+        if (finished) {
+          statusEl.textContent = `🎉 全部完成！用时 ${elapsed} 分钟`;
+        } else {
+          statusEl.textContent = `锅里 ${inCount} 张 | 等待 ${outCount} 张 | 完成 ${doneCount} 张`;
+        }
+
+        // Progress
+        progressEl.innerHTML = cakes.map(c => {
+          let dotClass = 'raw', label = '未开始';
+          if (c.status === 'done') { dotClass = 'done'; label = '已完成'; }
+          else if (c.side === 'b') { dotClass = 'half'; label = '反面烙中'; }
+          else if (c.status === 'in') { label = '正面烙中'; }
+          return `<div class="sim-cake-status"><div class="dot ${dotClass}"></div>饼${c.id + 1} ${label}</div>`;
+        }).join('');
+
+        // Buttons
+        document.getElementById('btn-add').disabled = finished || inPan.length >= PAN_CAPACITY || getOut().length === 0;
+        document.getElementById('btn-flip').disabled = finished || inPan.length === 0;
+        document.getElementById('btn-swap').disabled = finished || inPan.length === 0 || getOut().length === 0;
+        document.getElementById('btn-remove').disabled = finished || inPan.length === 0;
+      }
+
+      document.getElementById('btn-add').addEventListener('click', () => {
+        const out = getOut();
+        const inPan = getInPan();
+        if (out.length === 0 || inPan.length >= PAN_CAPACITY) return;
+        out[0].status = 'in';
+        out[0].side = 'a';
+        elapsed += SIDE_TIME;
+        playSound('click');
+        checkFinish();
+        render();
+      });
+
+      document.getElementById('btn-flip').addEventListener('click', () => {
+        const inPan = getInPan();
+        if (inPan.length === 0) return;
+        inPan.forEach(c => {
+          if (c.side === 'a') c.side = 'b';
+        });
+        elapsed += SIDE_TIME;
+        playSound('click');
+        checkFinish();
+        render();
+      });
+
+      document.getElementById('btn-swap').addEventListener('click', () => {
+        const inPan = getInPan();
+        const out = getOut();
+        if (inPan.length === 0 || out.length === 0) return;
+        // Take out the first cake that has both sides done or side a done
+        const toSwap = inPan.find(c => c.side === 'b') || inPan[0];
+        if (toSwap.side === 'b') {
+          toSwap.status = 'done';
+        } else {
+          toSwap.status = 'out';
+          // Remember it was flipped to side b
+          toSwap.side = 'b';
+        }
+        const newCake = out[0];
+        newCake.status = 'in';
+        newCake.side = 'a';
+        elapsed += SIDE_TIME;
+        playSound('click');
+        checkFinish();
+        render();
+      });
+
+      document.getElementById('btn-remove').addEventListener('click', () => {
+        const inPan = getInPan();
+        if (inPan.length === 0) return;
+        // Remove cake with side b done (fully cooked)
+        const done = inPan.find(c => c.side === 'b');
+        if (done) {
+          done.status = 'done';
+        } else {
+          // Remove the first one (side a done, put back as side b)
+          const c = inPan[0];
+          c.side = 'b';
+          c.status = 'out';
+        }
+        elapsed += SIDE_TIME;
+        playSound('click');
+        checkFinish();
+        render();
+      });
+
+      document.getElementById('btn-reset').addEventListener('click', () => {
+        initCakes();
+        playSound('click');
+      });
+
+      function checkFinish() {
+        if (getDone().length === TOTAL_CAKES && !finished) {
+          finished = true;
+          if (elapsed <= 9) {
+            resultEl.innerHTML = '<span style="color:#34C759">🎉 太棒了！你用了最优方案！</span>';
+            streak++;
+            updateStreak();
+            playSound('correct');
+          } else {
+            resultEl.innerHTML = `<span style="color:#FF6F00">完成了！但用了 ${elapsed} 分钟，最优是 9 分钟哦</span>`;
+            streak = 0;
+            updateStreak();
+          }
+        }
+      }
+
+      initCakes();
+    })();
+
+    // =============================================
+    // 模式3: 沏茶排序
+    // =============================================
+    (() => {
+      const TASKS = [
+        {
+          title: '☕ 沏茶待客',
+          desc: '客人来了要沏茶，怎样安排最快？',
+          steps: [
+            { text: '洗水壶', time: 1, parallel: false, order: 0 },
+            { text: '接水', time: 1, parallel: false, order: 1 },
+            { text: '烧水', time: 8, parallel: false, order: 2 },
+            { text: '洗茶杯', time: 2, parallel: true, order: 2 },
+            { text: '找茶叶', time: 1, parallel: true, order: 2 },
+            { text: '沏茶', time: 1, parallel: false, order: 3 }
+          ],
+          bestTime: 11
+        },
+        {
+          title: '🍜 煮面条',
+          desc: '小明要煮面条给爸爸吃，怎样安排最快？',
+          steps: [
+            { text: '洗锅', time: 1, parallel: false, order: 0 },
+            { text: '烧水', time: 6, parallel: false, order: 1 },
+            { text: '切葱花', time: 2, parallel: true, order: 1 },
+            { text: '准备调料', time: 1, parallel: true, order: 1 },
+            { text: '下面条', time: 5, parallel: false, order: 2 },
+            { text: '盛碗', time: 1, parallel: false, order: 3 }
+          ],
+          bestTime: 13
+        },
+        {
+          title: '🧹 打扫卫生',
+          desc: '大扫除来了，怎样安排最快完成？',
+          steps: [
+            { text: '扫地', time: 10, parallel: false, order: 0 },
+            { text: '拖地', time: 8, parallel: false, order: 1 },
+            { text: '擦桌子', time: 5, parallel: true, order: 1 },
+            { text: '整理书架', time: 3, parallel: true, order: 1 },
+            { text: '倒垃圾', time: 2, parallel: false, order: 2 }
+          ],
+          bestTime: 20
+        }
+      ];
+
+      let taskIdx = 0;
+      let placed = []; // indices into steps
+      let correct = 0, wrong = 0;
+
+      const taskEl = document.getElementById('sort-task');
+      const poolEl = document.getElementById('sort-pool');
+      const timelineEl = document.getElementById('sort-timeline');
+      const feedbackEl = document.getElementById('sort-feedback');
+
+      function renderTask() {
+        const task = TASKS[taskIdx];
+        placed = [];
+        feedbackEl.textContent = '';
+
+        taskEl.innerHTML = `
+          <div class="sort-task-title">${task.title}</div>
+          <div class="sort-task-desc">${task.desc}</div>
+        `;
+
+        // Pool - shuffled
+        const shuffled = task.steps.map((s, i) => ({ ...s, origIdx: i }));
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+
+        poolEl.innerHTML = shuffled.map(s =>
+          `<div class="sort-chip" data-idx="${s.origIdx}" onclick="window._sortPlace(${s.origIdx})">
+            <span>${s.text}</span><span class="chip-time">${s.time}分钟</span>
+          </div>`
+        ).join('');
+
+        // Timeline - empty slots
+        const maxOrder = Math.max(...task.steps.map(s => s.order));
+        let timelineHtml = '';
+        for (let o = 0; o <= maxOrder; o++) {
+          const step = task.steps.find(s => s.order === o && !s.parallel);
+          const parallels = task.steps.filter(s => s.order === o && s.parallel);
+          timelineHtml += `<div class="sort-slot" data-order="${o}" onclick="window._sortSlotClick(${o})">
+            <div class="slot-num">${o + 1}</div>
+            <div class="slot-text" id="slot-text-${o}">点击放入步骤...</div>
+            ${parallels.length > 0 ? '<div class="sort-parallel-label" id="par-label-' + o + '"></div>' : ''}
+          </div>`;
+        }
+        timelineEl.innerHTML = timelineHtml;
+      }
+
+      window._sortPlace = function(idx) {
+        const task = TASKS[taskIdx];
+        const step = task.steps[idx];
+        if (placed.includes(idx)) return;
+
+        // Find next empty slot
+        const maxOrder = Math.max(...task.steps.map(s => s.order));
+        for (let o = 0; o <= maxOrder; o++) {
+          const slotText = document.getElementById('slot-text-' + o);
+          if (slotText && slotText.textContent.includes('点击')) {
+            slotText.textContent = step.text + ' (' + step.time + '分钟)';
+            slotText.closest('.sort-slot').classList.add('filled');
+            if (step.parallel) {
+              slotText.closest('.sort-slot').classList.add('parallel');
+            }
+            placed.push(idx);
+            // Mark chip as placed
+            poolEl.querySelector(`[data-idx="${idx}"]`)?.classList.add('placed');
+            playSound('click');
+            break;
+          }
+        }
+      };
+
+      window._sortSlotClick = function(order) {
+        // Remove the item in this slot
+        const task = TASKS[taskIdx];
+        const slotText = document.getElementById('slot-text-' + order);
+        if (!slotText || slotText.textContent.includes('点击')) return;
+
+        // Find which idx was placed here
+        const toRemove = placed.find(idx => {
+          const s = task.steps[idx];
+          return s.order === order && slotText.textContent.includes(s.text);
+        });
+        if (toRemove !== undefined) {
+          placed = placed.filter(i => i !== toRemove);
+          poolEl.querySelector(`[data-idx="${toRemove}"]`)?.classList.remove('placed');
+          slotText.textContent = '点击放入步骤...';
+          slotText.closest('.sort-slot').classList.remove('filled', 'parallel');
+          playSound('click');
+        }
+      };
+
+      document.getElementById('sort-check').addEventListener('click', () => {
+        const task = TASKS[taskIdx];
+        if (placed.length < task.steps.length) {
+          feedbackEl.innerHTML = '<span style="color:#FF6F00">⚠️ 还有步骤没放完哦！</span>';
+          return;
+        }
+
+        // Check if parallel items are in correct slots
+        let isCorrect = true;
+        task.steps.forEach((step, idx) => {
+          const slotText = document.getElementById('slot-text-' + step.order);
+          if (!slotText || !slotText.textContent.includes(step.text)) {
+            isCorrect = false;
+          }
+        });
+
+        if (isCorrect) {
+          correct++;
+          streak++;
+          feedbackEl.innerHTML = `<span style="color:#34C759">✅ 完美！最优时间是 ${task.bestTime} 分钟！</span>`;
+          playSound('correct');
+          updateStreak();
+          setTimeout(() => {
+            taskIdx = (taskIdx + 1) % TASKS.length;
+            renderTask();
+          }, 2000);
+        } else {
+          wrong++;
+          streak = 0;
+          feedbackEl.innerHTML = '<span style="color:#FF3B30">❌ 顺序不太对，想想哪些事可以同时做？</span>';
+          playSound('wrong');
+          updateStreak();
+        }
+
+        document.getElementById('sort-correct').textContent = correct;
+        document.getElementById('sort-wrong').textContent = wrong;
+      });
+
+      document.getElementById('sort-reset').addEventListener('click', () => {
+        renderTask();
+        playSound('click');
+      });
+
+      renderTask();
+    })();
+
+    // =============================================
+    // 模式4: 闯关
+    // =============================================
+    (() => {
+      let correctCount = 0, wrongCount = 0;
+      let answered = false;
+
+      function shuffle(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+
+      function generateQuestion() {
+        const generators = [genPancake, genTea, genWaiting, genPrinciple, genMultiTask];
+        const gen = generators[Math.floor(Math.random() * generators.length)];
+        return gen();
+      }
+
+      function genPancake() {
+        const n = Math.floor(Math.random() * 4) + 2; // 2-5 cakes
+        const capacity = 2;
+        const sideTime = 3;
+        const optimal = Math.ceil(n * 2 / capacity) * sideTime;
+        const wrongs = [n * 2 * sideTime, (n + 1) * sideTime, n * sideTime].filter(t => t !== optimal);
+
+        return {
+          question: `锅最多放${capacity}张饼，每面${sideTime}分钟。烙${n}张饼最少需要多少分钟？`,
+          visual: `<div style="font-size:48px">🍳 × ${n}</div>`,
+          options: shuffle([
+            { text: optimal + ' 分钟', correct: true },
+            { text: wrongs[0] + ' 分钟', correct: false },
+            { text: wrongs[1] + ' 分钟', correct: false },
+            { text: wrongs[2] + ' 分钟', correct: false }
+          ]),
+          explain: `${n}张饼共${n * 2}面，锅每次烙${capacity}面，至少需要${Math.ceil(n * 2 / capacity)}次，每次${sideTime}分钟 = ${optimal}分钟`
+        };
+      }
+
+      function genTea() {
+        const scenarios = [
+          {
+            setup: '烧水8分钟，洗茶杯2分钟，找茶叶1分钟，沏茶1分钟。烧水前需要洗水壶1分钟、接水1分钟。',
+            q: '最快多少分钟能沏好茶？',
+            answer: '11分钟',
+            wrongs: ['14分钟', '12分钟', '10分钟'],
+            explain: '洗水壶(1)→接水(1)→烧水(8)，烧水时同时洗茶杯+找茶叶(共3分钟不超过8分钟)→沏茶(1) = 1+1+8+1=11分钟'
+          },
+          {
+            setup: '洗衣机洗衣服30分钟，晾衣服5分钟。扫地10分钟，擦桌子8分钟。',
+            q: '做完所有事最少需要多少分钟？',
+            answer: '35分钟',
+            wrongs: ['53分钟', '45分钟', '40分钟'],
+            explain: '洗衣机工作30分钟时同时扫地+擦桌子(18分钟<30分钟)，然后晾衣服5分钟 = 30+5=35分钟'
+          },
+          {
+            setup: '用微波炉热饭3分钟，热菜3分钟，热汤2分钟。微波炉一次只能放一样。烧水5分钟可以同时做。',
+            q: '最快多少分钟完成？',
+            answer: '8分钟',
+            wrongs: ['13分钟', '11分钟', '10分钟'],
+            explain: '微波炉依次热饭(3)+热菜(3)+热汤(2)=8分钟，烧水5分钟可以在热饭热菜时完成(5<6) = 8分钟'
+          }
+        ];
+        const s = scenarios[Math.floor(Math.random() * scenarios.length)];
+        return {
+          question: s.setup + '\n' + s.q,
+          visual: '',
+          options: shuffle([
+            { text: s.answer, correct: true },
+            { text: s.wrongs[0], correct: false },
+            { text: s.wrongs[1], correct: false },
+            { text: s.wrongs[2], correct: false }
+          ]),
+          explain: s.explain
+        };
+      }
+
+      function genWaiting() {
+        const servers = Math.floor(Math.random() * 2) + 2; // 2-3 servers
+        const customers = Math.floor(Math.random() * 3) + servers + 1;
+        const perTime = (Math.floor(Math.random() * 3) + 1) * 5; // 5/10/15
+        const rounds = Math.ceil(customers / servers);
+        const optimal = rounds * perTime;
+        const naive = customers * perTime;
+        const wrongs = [naive, (rounds + 1) * perTime, (customers - 1) * perTime].filter(t => t !== optimal);
+
+        return {
+          question: `${servers}个窗口同时服务，${customers}位顾客排队，每人需要${perTime}分钟。所有人全部完成最少需要多少分钟？`,
+          visual: `<div style="font-size:32px">${'🧑‍💼'.repeat(servers)} 窗口 → ${'🧑'.repeat(customers)} 顾客</div>`,
+          options: shuffle([
+            { text: optimal + ' 分钟', correct: true },
+            { text: wrongs[0] + ' 分钟', correct: false },
+            { text: (wrongs[1] || wrongs[0] + 5) + ' 分钟', correct: false },
+            { text: (wrongs[2] || wrongs[0] + 10) + ' 分钟', correct: false }
+          ]),
+          explain: `${customers}人÷${servers}窗口=${rounds}轮（向上取整），每轮${perTime}分钟 = ${optimal}分钟。多个窗口要同时利用！`
+        };
+      }
+
+      function genPrinciple() {
+        const questions = [
+          {
+            q: '优化的核心思想是什么？',
+            answer: '能同时做的事就同时做，减少总时间',
+            wrongs: ['每件事都要认真做', '先做简单的事', '一次只做一件事'],
+            explain: '优化就是找到可以同时做的事情，合理安排，让总时间最短。'
+          },
+          {
+            q: '烙饼问题的关键是什么？',
+            answer: '锅不要空着，始终保持锅里有饼',
+            wrongs: ['火要大', '饼要薄', '先烙反面'],
+            explain: '锅是"资源"，不要让资源空闲。锅里始终有饼在烙，就是最优方案。'
+          },
+          {
+            q: '沏茶问题中，烧水的时候应该做什么？',
+            answer: '同时做其他不依赖开水的事',
+            wrongs: ['等着水开', '先沏茶再等水', '关掉火'],
+            explain: '烧水时人闲着，可以同时洗茶杯、找茶叶等不需要开水的事。'
+          },
+          {
+            q: '下面哪种情况不能用"同时做"来优化？',
+            answer: '写作业和看电视',
+            wrongs: ['洗衣机洗衣服时扫地', '烧水时洗茶杯', '等公交时背单词'],
+            explain: '写作业需要专注，不能同时看电视。优化不是"一心二用"，而是利用等待时间做别的事。'
+          }
+        ];
+        const q = questions[Math.floor(Math.random() * questions.length)];
+        return {
+          question: q.q,
+          visual: '',
+          options: shuffle([
+            { text: q.answer, correct: true },
+            { text: q.wrongs[0], correct: false },
+            { text: q.wrongs[1], correct: false },
+            { text: q.wrongs[2], correct: false }
+          ]),
+          explain: q.explain
+        };
+      }
+
+      function genMultiTask() {
+        const tasks = [
+          { main: '煮鸡蛋', mainTime: 10, parallel: ['刷牙', '洗脸'], parTime: 5, answer: 10 },
+          { main: '等妈妈做饭', mainTime: 20, parallel: ['写作业', '整理书包'], parTime: 15, answer: 20 },
+          { main: '坐车去学校', mainTime: 30, parallel: ['听英语', '背古诗'], parTime: 30, answer: 30 }
+        ];
+        const t = tasks[Math.floor(Math.random() * tasks.length)];
+        const wrongs = [t.mainTime + t.parTime, t.mainTime + t.parTime - 5, t.mainTime - 5].filter(x => x !== t.answer && x > 0);
+
+        return {
+          question: `小明${t.main}需要${t.mainTime}分钟，同时可以${t.parallel.join('和')}（共需${t.parTime}分钟）。做完这些事最少需要多少分钟？`,
+          visual: `<div style="font-size:28px">🍳 ${t.main} ${t.mainTime}分钟<br>📚 ${t.parallel.join('+')} ${t.parTime}分钟</div>`,
+          options: shuffle([
+            { text: t.answer + ' 分钟', correct: true },
+            { text: (wrongs[0] || t.answer + 5) + ' 分钟', correct: false },
+            { text: (wrongs[1] || t.answer + 10) + ' 分钟', correct: false },
+            { text: (wrongs[2] || t.answer - 3) + ' 分钟', correct: false }
+          ]),
+          explain: `${t.main}${t.mainTime}分钟的同时可以${t.parallel.join('和')}${t.parTime}分钟（${t.parTime}≤${t.mainTime}），所以总共只需${t.answer}分钟。`
+        };
+      }
+
+      function showQuestion() {
+        answered = false;
+        const q = generateQuestion();
+        document.getElementById('quiz-question').textContent = q.question;
+        document.getElementById('quiz-visual').innerHTML = q.visual || '';
+        document.getElementById('quiz-explain').textContent = '';
+
+        const optsEl = document.getElementById('quiz-options');
+        optsEl.innerHTML = '';
+        const letters = ['A', 'B', 'C', 'D'];
+        q.options.forEach((opt, i) => {
+          const btn = document.createElement('button');
+          btn.className = 'quiz-opt';
+          btn.innerHTML = `<span class="opt-letter">${letters[i]}</span><span>${opt.text}</span>`;
+          btn.addEventListener('click', () => {
+            if (answered) return;
+            answered = true;
+            if (opt.correct) {
+              btn.classList.add('correct');
+              correctCount++;
+              streak++;
+              playSound('correct');
+              document.getElementById('quiz-explain').innerHTML = `<span style="color:#34C759">✅ 答对啦！${q.explain}</span>`;
+            } else {
+              btn.classList.add('wrong');
+              wrongCount++;
+              streak = 0;
+              playSound('wrong');
+              optsEl.querySelectorAll('.quiz-opt').forEach((b, idx) => {
+                if (q.options[idx].correct) b.classList.add('correct');
+              });
+              document.getElementById('quiz-explain').innerHTML = `<span style="color:#FF3B30">❌ 答错了！${q.explain}</span>`;
+            }
+            updateStreak();
+            document.getElementById('quiz-correct').textContent = correctCount;
+            document.getElementById('quiz-wrong').textContent = wrongCount;
+            setTimeout(() => showQuestion(), 1500);
+          });
+          optsEl.appendChild(btn);
+        });
+      }
+
+      showQuestion();
+    })();
+  </script>
+</body>
+</html>
