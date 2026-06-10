@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>扇形统计图</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #E91E63; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    .section-title { font-size: 22px; color: #1D1D1F; font-weight: 700; text-align: center; margin: 8px 0; }
+    .section-desc { font-size: 15px; color: #6E6E73; text-align: center; margin-bottom: 16px; }
+    .score-bar { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; font-weight: 600; }
+    .result-text { font-size: 22px; font-weight: 700; text-align: center; margin: 16px 0; min-height: 36px; }
+
+    /* 模式1: 认识概念 */
+    .concept-area { text-align: center; padding: 20px 16px; }
+    .concept-explain { font-size: 18px; font-weight: 600; color: #1D1D1F; margin: 12px 0; line-height: 1.8; }
+    .concept-sub { font-size: 15px; color: #6E6E73; line-height: 1.6; margin-bottom: 16px; }
+    .demo-chart-wrap {
+      background: white; border-radius: 16px; padding: 20px; margin: 16px auto;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: 380px;
+    }
+    .demo-title { font-size: 16px; font-weight: 700; color: #E91E63; margin-bottom: 12px; }
+    .pie-svg { width: 220px; height: 220px; margin: 0 auto; }
+    .legend-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
+    .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
+    .feature-cards { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+    .feature-card {
+      background: white; border-radius: 14px; padding: 14px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: left;
+      border-left: 4px solid #E91E63;
+    }
+    .feature-card h4 { font-size: 16px; color: #E91E63; margin-bottom: 4px; }
+    .feature-card p { font-size: 14px; color: #6E6E73; line-height: 1.5; }
+
+    /* 模式2: 读图练习 */
+    .read-area { text-align: center; padding: 20px 16px; }
+    .read-chart-wrap {
+      background: white; border-radius: 16px; padding: 16px; margin: 12px auto;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: 380px;
+    }
+    .read-question { font-size: 20px; font-weight: 700; color: #1D1D1F; margin: 16px 0 12px; }
+    .read-opts { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 12px 0; }
+    .read-opt {
+      padding: 14px 24px; border: 3px solid #E0E0E0; background: white;
+      border-radius: 16px; font-size: 18px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; color: #1D1D1F; min-width: 80px;
+    }
+    .read-opt:active { transform: scale(0.9); }
+    .read-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .read-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+
+    /* 模式3: 计算练习 */
+    .calc-area { text-align: center; padding: 20px 16px; }
+    .calc-chart-wrap {
+      background: white; border-radius: 16px; padding: 16px; margin: 12px auto;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: 380px;
+    }
+    .calc-problem { font-size: 18px; font-weight: 700; color: #1D1D1F; margin: 16px 0 12px; line-height: 1.6; }
+    .calc-opts { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 12px 0; }
+    .calc-opt {
+      padding: 14px 24px; border: 3px solid #E0E0E0; background: white;
+      border-radius: 16px; font-size: 18px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; color: #1D1D1F; min-width: 80px;
+    }
+    .calc-opt:active { transform: scale(0.9); }
+    .calc-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .calc-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+
+    /* 模式4: 限时挑战 */
+    .challenge-area { text-align: center; padding: 20px 16px; }
+    .timer-bar { height: 12px; background: #E5E5EA; border-radius: 6px; margin: 12px 0; overflow: hidden; }
+    .timer-fill { height: 100%; background: linear-gradient(90deg, #34C759, #E91E63); border-radius: 6px; transition: width 1s linear; }
+    .timer-fill.warning { background: linear-gradient(90deg, #FF9500, #FF3B30); }
+    .timer-text { font-size: 18px; font-weight: 700; color: #E91E63; }
+    .ch-chart-wrap {
+      background: white; border-radius: 16px; padding: 16px; margin: 12px auto;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: 340px;
+    }
+    .ch-problem { font-size: 18px; font-weight: 700; color: #1D1D1F; margin: 12px 0; line-height: 1.5; }
+    .ch-opts { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 12px 0; }
+    .ch-opt {
+      padding: 12px 20px; border: 3px solid #E0E0E0; background: white;
+      border-radius: 16px; font-size: 17px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; color: #1D1D1F;
+    }
+    .ch-opt:active { transform: scale(0.9); }
+    .ch-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .ch-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .challenge-result {
+      background: white; border-radius: 20px; padding: 24px; margin: 16px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .challenge-result h3 { font-size: 24px; color: #E91E63; margin-bottom: 12px; }
+    .challenge-result .big-score { font-size: 56px; font-weight: 800; color: #E91E63; }
+    .challenge-result .detail { font-size: 16px; color: #6E6E73; margin-top: 8px; }
+
+    .btn-primary {
+      display: inline-block; padding: 14px 36px; background: #E91E63; color: white;
+      border: none; border-radius: 16px; font-size: 18px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease; margin: 8px 4px;
+    }
+    .btn-primary:active { transform: scale(0.95); opacity: 0.9; }
+    .btn-secondary {
+      display: inline-block; padding: 12px 28px; background: white; color: #E91E63;
+      border: 2px solid #E91E63; border-radius: 16px; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease; margin: 8px 4px;
+    }
+    .btn-secondary:active { transform: scale(0.95); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 导航栏 -->
+    <nav class="nav-bar">
+      <a href="../../index.html" class="nav-back">← 返回</a>
+      <span class="nav-title">扇形统计图</span>
+      <span class="nav-badge">六年级</span>
+    </nav>
+
+    <!-- 模式切换 -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="concept">📖 认识</button>
+      <button class="mode-tab" data-mode="read">👁️ 读图</button>
+      <button class="mode-tab" data-mode="calc">🧮 计算</button>
+      <button class="mode-tab" data-mode="challenge">⏱️ 挑战</button>
+    </div>
+
+    <!-- 模式1: 认识概念 -->
+    <div class="mode-content active" id="mode-concept">
+      <div class="concept-area">
+        <div class="section-title">📊 什么是扇形统计图？</div>
+        <div class="concept-explain">
+          用一个<strong>圆</strong>表示总量，<br>
+          用圆中各个<strong>扇形</strong>表示各部分<br>
+          占总量的<strong>百分比</strong>。
+        </div>
+        <div class="concept-sub">
+          扇形越大，表示这部分占的百分比越大。<br>
+          所有扇形的百分比之和 = <strong>100%</strong>
+        </div>
+
+        <div class="demo-chart-wrap">
+          <div class="demo-title">📋 示例：五(1)班最喜欢的运动</div>
+          <svg class="pie-svg" viewBox="-1.1 -1.1 2.2 2.2" id="demo-pie"></svg>
+          <div class="legend-list" id="demo-legend"></div>
+        </div>
+
+        <div class="feature-cards">
+          <div class="feature-card">
+            <h4>🔵 圆代表什么？</h4>
+            <p>圆代表<strong>总量（100%）</strong>，也就是所有部分的总和。</p>
+          </div>
+          <div class="feature-card">
+            <h4>🟠 扇形代表什么？</h4>
+            <p>每个扇形代表<strong>一个部分</strong>，大小表示它占总量的百分比。</p>
+          </div>
+          <div class="feature-card">
+            <h4>📐 扇形大小怎么看？</h4>
+            <p>百分比 × 360° = 扇形的圆心角。比如 25% 对应 90°（四分之一圆）。</p>
+          </div>
+          <div class="feature-card">
+            <h4>🆚 和条形统计图的区别？</h4>
+            <p>条形图能看出<strong>具体数量</strong>，扇形图能看出<strong>占比关系</strong>。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 读图练习 -->
+    <div class="mode-content" id="mode-read">
+      <div class="read-area">
+        <div class="section-title">👁️ 读图练习</div>
+        <div class="section-desc">观察扇形统计图，回答问题</div>
+        <div class="score-bar">
+          <span>✅ <span id="rd-correct">0</span></span>
+          <span>❌ <span id="rd-wrong">0</span></span>
+          <span id="rd-streak"></span>
+        </div>
+        <div class="read-chart-wrap">
+          <div class="demo-title" id="rd-title"></div>
+          <svg class="pie-svg" viewBox="-1.1 -1.1 2.2 2.2" id="rd-pie"></svg>
+          <div class="legend-list" id="rd-legend"></div>
+        </div>
+        <div class="read-question" id="rd-question"></div>
+        <div class="read-opts" id="rd-opts"></div>
+        <div class="result-text" id="rd-result"></div>
+        <button class="btn-primary" id="btn-next-read">下一题 →</button>
+      </div>
+    </div>
+
+    <!-- 模式3: 计算练习 -->
+    <div class="mode-content" id="mode-calc">
+      <div class="calc-area">
+        <div class="section-title">🧮 计算练习</div>
+        <div class="section-desc">根据扇形统计图计算具体数量</div>
+        <div class="score-bar">
+          <span>✅ <span id="cl-correct">0</span></span>
+          <span>❌ <span id="cl-wrong">0</span></span>
+          <span id="cl-streak"></span>
+        </div>
+        <div class="calc-chart-wrap">
+          <div class="demo-title" id="cl-title"></div>
+          <svg class="pie-svg" viewBox="-1.1 -1.1 2.2 2.2" id="cl-pie"></svg>
+          <div class="legend-list" id="cl-legend"></div>
+          <div style="font-size:15px; color:#E91E63; font-weight:700; margin-top:8px;" id="cl-total"></div>
+        </div>
+        <div class="calc-problem" id="cl-problem"></div>
+        <div class="calc-opts" id="cl-opts"></div>
+        <div class="result-text" id="cl-result"></div>
+        <button class="btn-primary" id="btn-next-calc">下一题 →</button>
+      </div>
+    </div>
+
+    <!-- 模式4: 限时挑战 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="challenge-area">
+        <div class="section-title">⏱️ 限时挑战</div>
+        <div class="section-desc">60秒内答对尽可能多的题！</div>
+        <div id="ch-start-area">
+          <button class="btn-primary" id="btn-start-challenge">开始挑战 🚀</button>
+        </div>
+        <div id="ch-game-area" class="hidden">
+          <div class="timer-bar"><div class="timer-fill" id="ch-timer-fill"></div></div>
+          <div class="timer-text">⏱️ <span id="ch-timer">60</span>秒</div>
+          <div class="score-bar">
+            <span>✅ <span id="ch-correct">0</span></span>
+            <span>❌ <span id="ch-wrong">0</span></span>
+            <span id="ch-streak"></span>
+          </div>
+          <div class="ch-chart-wrap">
+            <svg class="pie-svg" viewBox="-1.1 -1.1 2.2 2.2" id="ch-pie" style="width:160px;height:160px;"></svg>
+            <div class="legend-list" id="ch-legend"></div>
+            <div style="font-size:14px; color:#E91E63; font-weight:700; margin-top:6px;" id="ch-total"></div>
+          </div>
+          <div class="ch-problem" id="ch-problem"></div>
+          <div class="ch-opts" id="ch-opts"></div>
+        </div>
+        <div id="ch-result-area" class="hidden">
+          <div class="challenge-result">
+            <h3>⏱️ 挑战结束！</h3>
+            <div class="big-score"><span id="ch-final-score">0</span> 分</div>
+            <div class="detail">答对 <span id="ch-final-correct">0</span> 题，答错 <span id="ch-final-wrong">0</span> 题</div>
+          </div>
+          <button class="btn-primary" id="btn-restart-challenge">再来一次 🔄</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // ===== 工具函数 =====
+    const COLORS = ['#E91E63', '#FF9800', '#4CAF50', '#2196F3', '#9C27B0', '#00BCD4'];
+    const TOPIC_TEMPLATES = [
+      { title: '最喜欢的运动', items: ['篮球', '足球', '跑步', '游泳'], unit: '人' },
+      { title: '作息时间分配', items: ['学习', '睡眠', '运动', '娱乐'], unit: '小时' },
+      { title: '水果偏好调查', items: ['苹果', '香蕉', '橘子', '葡萄'], unit: '人' },
+      { title: '交通方式统计', items: ['公交', '地铁', '步行', '骑车'], unit: '人' },
+      { title: '课外书类型', items: ['科幻', '漫画', '科普', '故事'], unit: '本' },
+      { title: '零花钱用途', items: ['零食', '文具', '玩具', '存起来'], unit: '元' },
+      { title: '最喜欢的学科', items: ['语文', '数学', '英语', '科学'], unit: '人' },
+      { title: '天气统计', items: ['晴天', '多云', '阴天', '雨天'], unit: '天' },
+    ];
+
+    function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // 生成百分比（总和=100）
+    function genPercentages(n) {
+      let vals = [];
+      let remaining = 100;
+      for (let i = 0; i < n - 1; i++) {
+        const maxV = Math.min(remaining - (n - 1 - i) * 5, 60);
+        const minV = Math.max(5, remaining - (n - 1 - i) * 40);
+        const v = randInt(Math.max(5, minV), Math.max(minV + 1, maxV));
+        vals.push(v);
+        remaining -= v;
+      }
+      vals.push(remaining);
+      return shuffle(vals);
+    }
+
+    // 画扇形图
+    function drawPie(svgId, items, pcts) {
+      const svg = document.getElementById(svgId);
+      svg.innerHTML = '';
+      let startAngle = -Math.PI / 2;
+      const r = 1;
+      items.forEach((item, i) => {
+        const angle = (pcts[i] / 100) * 2 * Math.PI;
+        const endAngle = startAngle + angle;
+        const x1 = r * Math.cos(startAngle);
+        const y1 = r * Math.sin(startAngle);
+        const x2 = r * Math.cos(endAngle);
+        const y2 = r * Math.sin(endAngle);
+        const largeArc = angle > Math.PI ? 1 : 0;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const d = `M 0 0 L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+        path.setAttribute('d', d);
+        path.setAttribute('fill', COLORS[i % COLORS.length]);
+        path.setAttribute('stroke', 'white');
+        path.setAttribute('stroke-width', '0.02');
+        svg.appendChild(path);
+
+        // 标签
+        const midAngle = startAngle + angle / 2;
+        const labelR = 0.6;
+        const lx = labelR * Math.cos(midAngle);
+        const ly = labelR * Math.sin(midAngle);
+        if (pcts[i] >= 8) {
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('x', lx);
+          text.setAttribute('y', ly);
+          text.setAttribute('text-anchor', 'middle');
+          text.setAttribute('dominant-baseline', 'middle');
+          text.setAttribute('fill', 'white');
+          text.setAttribute('font-size', '0.14');
+          text.setAttribute('font-weight', '700');
+          text.textContent = pcts[i] + '%';
+          svg.appendChild(text);
+        }
+
+        startAngle = endAngle;
+      });
+    }
+
+    function drawLegend(containerId, items, pcts) {
+      const el = document.getElementById(containerId);
+      el.innerHTML = '';
+      items.forEach((item, i) => {
+        const div = document.createElement('div');
+        div.className = 'legend-item';
+        div.innerHTML = '<span class="legend-dot" style="background:' + COLORS[i % COLORS.length] + '"></span>' + item + ' ' + pcts[i] + '%';
+        el.appendChild(div);
+      });
+    }
+
+    function genTopic() {
+      const t = TOPIC_TEMPLATES[randInt(0, TOPIC_TEMPLATES.length - 1)];
+      const pcts = genPercentages(t.items.length);
+      const total = randInt(40, 200);
+      return { title: t.title, items: t.items, pcts: pcts, unit: t.unit, total: total };
+    }
+
+    function makeOptions(correct, count, genFn) {
+      const opts = new Set([String(correct)]);
+      let tries = 0;
+      while (opts.size < count && tries < 50) {
+        opts.add(String(genFn()));
+        tries++;
+      }
+      if (opts.size < count) {
+        for (let i = 1; opts.size < count; i++) {
+          opts.add(String(correct + i));
+        }
+      }
+      return shuffle([...opts]);
+    }
+
+    // ===== 模式切换 =====
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+      });
+    });
+
+    // ===== 模式1: 认识概念 =====
+    (function initConcept() {
+      const items = ['篮球', '足球', '跑步', '游泳'];
+      const pcts = [35, 30, 20, 15];
+      drawPie('demo-pie', items, pcts);
+      drawLegend('demo-legend', items, pcts);
+    })();
+
+    // ===== 模式2: 读图练习 =====
+    let rdState = { correct: 0, wrong: 0, streak: 0, current: null };
+
+    function nextReadQuestion() {
+      const topic = genTopic();
+      rdState.current = topic;
+      document.getElementById('rd-title').textContent = '📋 ' + topic.title;
+      drawPie('rd-pie', topic.items, topic.pcts);
+      drawLegend('rd-legend', topic.items, topic.pcts);
+      document.getElementById('rd-result').textContent = '';
+      document.getElementById('btn-next-read').classList.add('hidden');
+
+      // 随机问题类型
+      const qTypes = ['maxPct', 'minPct', 'whichPct', 'sumPct'];
+      const qType = qTypes[randInt(0, qTypes.length - 1)];
+      let question, correctAnswer, options;
+
+      if (qType === 'maxPct') {
+        const maxI = topic.pcts.indexOf(Math.max(...topic.pcts));
+        question = '哪项占比最大？';
+        correctAnswer = topic.items[maxI];
+        options = shuffle(topic.items.slice()).slice(0, 4);
+        if (!options.includes(correctAnswer)) options[randInt(0, 3)] = correctAnswer;
+        options = shuffle(options);
+      } else if (qType === 'minPct') {
+        const minI = topic.pcts.indexOf(Math.min(...topic.pcts));
+        question = '哪项占比最小？';
+        correctAnswer = topic.items[minI];
+        options = shuffle(topic.items.slice()).slice(0, 4);
+        if (!options.includes(correctAnswer)) options[randInt(0, 3)] = correctAnswer;
+        options = shuffle(options);
+      } else if (qType === 'whichPct') {
+        const idx = randInt(0, topic.items.length - 1);
+        question = topic.items[idx] + '占百分之几？';
+        correctAnswer = topic.pcts[idx] + '%';
+        options = makeOptions(topic.pcts[idx] + '%', 4, () => randInt(5, 55) + '%');
+      } else {
+        const aI = randInt(0, topic.items.length - 1);
+        let bI = randInt(0, topic.items.length - 2);
+        if (bI >= aI) bI++;
+        const sum = topic.pcts[aI] + topic.pcts[bI];
+        question = topic.items[aI] + '和' + topic.items[bI] + '一共占百分之几？';
+        correctAnswer = sum + '%';
+        options = makeOptions(sum + '%', 4, () => randInt(20, 90) + '%');
+      }
+
+      document.getElementById('rd-question').textContent = '❓ ' + question;
+      const optsEl = document.getElementById('rd-opts');
+      optsEl.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'read-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.read-opt').forEach(b => b.style.pointerEvents = 'none');
+          if (opt === correctAnswer) {
+            btn.classList.add('correct');
+            rdState.correct++;
+            rdState.streak++;
+            document.getElementById('rd-result').textContent = '✅ 答对啦！';
+            document.getElementById('rd-result').style.color = '#34C759';
+            if (typeof Sound !== 'undefined') Sound.play('correct');
+          } else {
+            btn.classList.add('wrong');
+            document.querySelectorAll('.read-opt').forEach(b => { if (b.textContent === correctAnswer) b.classList.add('correct'); });
+            rdState.wrong++;
+            rdState.streak = 0;
+            document.getElementById('rd-result').textContent = '❌ 正确答案：' + correctAnswer;
+            document.getElementById('rd-result').style.color = '#FF3B30';
+            if (typeof Sound !== 'undefined') Sound.play('wrong');
+          }
+          document.getElementById('rd-correct').textContent = rdState.correct;
+          document.getElementById('rd-wrong').textContent = rdState.wrong;
+          const streakEl = document.getElementById('rd-streak');
+          streakEl.textContent = rdState.streak >= 3 ? '🔥 连对' + rdState.streak + '题' : '';
+          document.getElementById('btn-next-read').classList.remove('hidden');
+        });
+        optsEl.appendChild(btn);
+      });
+    }
+
+    document.getElementById('btn-next-read').addEventListener('click', nextReadQuestion);
+    nextReadQuestion();
+
+    // ===== 模式3: 计算练习 =====
+    let clState = { correct: 0, wrong: 0, streak: 0, current: null };
+
+    function nextCalcQuestion() {
+      const topic = genTopic();
+      clState.current = topic;
+      document.getElementById('cl-title').textContent = '📋 ' + topic.title;
+      drawPie('cl-pie', topic.items, topic.pcts);
+      drawLegend('cl-legend', topic.items, topic.pcts);
+      document.getElementById('cl-total').textContent = '总量：共 ' + topic.total + ' ' + topic.unit;
+      document.getElementById('cl-result').textContent = '';
+      document.getElementById('btn-next-calc').classList.add('hidden');
+
+      // 计算类问题
+      const qTypes = ['findCount', 'findPct', 'findDiff', 'findTotal'];
+      const qType = qTypes[randInt(0, qTypes.length - 1)];
+      let question, correctAnswer, options;
+
+      if (qType === 'findCount') {
+        const idx = randInt(0, topic.items.length - 1);
+        const count = Math.round(topic.total * topic.pcts[idx] / 100);
+        question = topic.items[idx] + '有多少' + topic.unit + '？';
+        correctAnswer = count;
+        options = makeOptions(count, 4, () => Math.round(topic.total * randInt(5, 55) / 100));
+      } else if (qType === 'findPct') {
+        const idx = randInt(0, topic.items.length - 1);
+        const count = Math.round(topic.total * topic.pcts[idx] / 100);
+        question = topic.items[idx] + '有' + count + topic.unit + '，占总量的百分之几？';
+        correctAnswer = topic.pcts[idx] + '%';
+        options = makeOptions(topic.pcts[idx] + '%', 4, () => randInt(5, 55) + '%');
+      } else if (qType === 'findDiff') {
+        const aI = randInt(0, topic.items.length - 1);
+        let bI = randInt(0, topic.items.length - 2);
+        if (bI >= aI) bI++;
+        const countA = Math.round(topic.total * topic.pcts[aI] / 100);
+        const countB = Math.round(topic.total * topic.pcts[bI] / 100);
+        const diff = Math.abs(countA - countB);
+        question = topic.items[aI] + '比' + topic.items[bI] + '多多少' + topic.unit + '？';
+        correctAnswer = diff;
+        options = makeOptions(diff, 4, () => randInt(1, Math.max(diff + 10, 20)));
+      } else {
+        const idx = randInt(0, topic.items.length - 1);
+        const count = Math.round(topic.total * topic.pcts[idx] / 100);
+        question = topic.items[idx] + '占' + topic.pcts[idx] + '%，有' + count + topic.unit + '，总量是多少？';
+        correctAnswer = topic.total;
+        options = makeOptions(topic.total, 4, () => randInt(Math.max(20, topic.total - 50), topic.total + 50));
+      }
+
+      document.getElementById('cl-problem').textContent = '❓ ' + question;
+      const optsEl = document.getElementById('cl-opts');
+      optsEl.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'calc-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.calc-opt').forEach(b => b.style.pointerEvents = 'none');
+          const correctStr = String(correctAnswer);
+          if (opt === correctStr) {
+            btn.classList.add('correct');
+            clState.correct++;
+            clState.streak++;
+            document.getElementById('cl-result').textContent = '✅ 答对啦！';
+            document.getElementById('cl-result').style.color = '#34C759';
+            if (typeof Sound !== 'undefined') Sound.play('correct');
+          } else {
+            btn.classList.add('wrong');
+            document.querySelectorAll('.calc-opt').forEach(b => { if (b.textContent === correctStr) b.classList.add('correct'); });
+            clState.wrong++;
+            clState.streak = 0;
+            document.getElementById('cl-result').textContent = '❌ 正确答案：' + correctStr;
+            document.getElementById('cl-result').style.color = '#FF3B30';
+            if (typeof Sound !== 'undefined') Sound.play('wrong');
+          }
+          document.getElementById('cl-correct').textContent = clState.correct;
+          document.getElementById('cl-wrong').textContent = clState.wrong;
+          const streakEl = document.getElementById('cl-streak');
+          streakEl.textContent = clState.streak >= 3 ? '🔥 连对' + clState.streak + '题' : '';
+          document.getElementById('btn-next-calc').classList.remove('hidden');
+        });
+        optsEl.appendChild(btn);
+      });
+    }
+
+    document.getElementById('btn-next-calc').addEventListener('click', nextCalcQuestion);
+    nextCalcQuestion();
+
+    // ===== 模式4: 限时挑战 =====
+    let chState = { correct: 0, wrong: 0, streak: 0, timer: null, timeLeft: 60 };
+
+    function startChallenge() {
+      chState = { correct: 0, wrong: 0, streak: 0, timer: null, timeLeft: 60 };
+      document.getElementById('ch-start-area').classList.add('hidden');
+      document.getElementById('ch-result-area').classList.add('hidden');
+      document.getElementById('ch-game-area').classList.remove('hidden');
+      document.getElementById('ch-correct').textContent = '0';
+      document.getElementById('ch-wrong').textContent = '0';
+      document.getElementById('ch-streak').textContent = '';
+      document.getElementById('ch-timer').textContent = '60';
+      document.getElementById('ch-timer-fill').style.width = '100%';
+      document.getElementById('ch-timer-fill').classList.remove('warning');
+
+      chState.timer = setInterval(() => {
+        chState.timeLeft--;
+        document.getElementById('ch-timer').textContent = chState.timeLeft;
+        document.getElementById('ch-timer-fill').style.width = (chState.timeLeft / 60 * 100) + '%';
+        if (chState.timeLeft <= 15) document.getElementById('ch-timer-fill').classList.add('warning');
+        if (chState.timeLeft <= 0) endChallenge();
+      }, 1000);
+
+      nextChallengeQuestion();
+    }
+
+    function endChallenge() {
+      clearInterval(chState.timer);
+      document.getElementById('ch-game-area').classList.add('hidden');
+      document.getElementById('ch-result-area').classList.remove('hidden');
+      document.getElementById('ch-final-score').textContent = chState.correct;
+      document.getElementById('ch-final-correct').textContent = chState.correct;
+      document.getElementById('ch-final-wrong').textContent = chState.wrong;
+    }
+
+    function nextChallengeQuestion() {
+      if (chState.timeLeft <= 0) return;
+      const topic = genTopic();
+      document.getElementById('ch-total').textContent = '总量：共 ' + topic.total + ' ' + topic.unit;
+      drawPie('ch-pie', topic.items, topic.pcts);
+      drawLegend('ch-legend', topic.items, topic.pcts);
+
+      const qTypes = ['maxPct', 'findCount', 'whichPct', 'findDiff'];
+      const qType = qTypes[randInt(0, qTypes.length - 1)];
+      let question, correctAnswer, options;
+
+      if (qType === 'maxPct') {
+        const maxI = topic.pcts.indexOf(Math.max(...topic.pcts));
+        question = '哪项占比最大？';
+        correctAnswer = topic.items[maxI];
+        options = shuffle(topic.items.slice()).slice(0, 4);
+        if (!options.includes(correctAnswer)) options[randInt(0, 3)] = correctAnswer;
+        options = shuffle(options);
+      } else if (qType === 'findCount') {
+        const idx = randInt(0, topic.items.length - 1);
+        const count = Math.round(topic.total * topic.pcts[idx] / 100);
+        question = topic.items[idx] + '有多少' + topic.unit + '？';
+        correctAnswer = String(count);
+        options = makeOptions(count, 4, () => Math.round(topic.total * randInt(5, 55) / 100));
+      } else if (qType === 'whichPct') {
+        const idx = randInt(0, topic.items.length - 1);
+        question = topic.items[idx] + '占百分之几？';
+        correctAnswer = topic.pcts[idx] + '%';
+        options = makeOptions(topic.pcts[idx] + '%', 4, () => randInt(5, 55) + '%');
+      } else {
+        const aI = randInt(0, topic.items.length - 1);
+        let bI = randInt(0, topic.items.length - 2);
+        if (bI >= aI) bI++;
+        const countA = Math.round(topic.total * topic.pcts[aI] / 100);
+        const countB = Math.round(topic.total * topic.pcts[bI] / 100);
+        const diff = Math.abs(countA - countB);
+        question = topic.items[aI] + '比' + topic.items[bI] + '多多少' + topic.unit + '？';
+        correctAnswer = String(diff);
+        options = makeOptions(diff, 4, () => randInt(1, Math.max(diff + 10, 20)));
+      }
+
+      document.getElementById('ch-problem').textContent = '❓ ' + question;
+      const optsEl = document.getElementById('ch-opts');
+      optsEl.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'ch-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.ch-opt').forEach(b => b.style.pointerEvents = 'none');
+          const correctStr = String(correctAnswer);
+          if (opt === correctStr) {
+            btn.classList.add('correct');
+            chState.correct++;
+            chState.streak++;
+            if (typeof Sound !== 'undefined') Sound.play('correct');
+          } else {
+            btn.classList.add('wrong');
+            document.querySelectorAll('.ch-opt').forEach(b => { if (b.textContent === correctStr) b.classList.add('correct'); });
+            chState.wrong++;
+            chState.streak = 0;
+            if (typeof Sound !== 'undefined') Sound.play('wrong');
+          }
+          document.getElementById('ch-correct').textContent = chState.correct;
+          document.getElementById('ch-wrong').textContent = chState.wrong;
+          const streakEl = document.getElementById('ch-streak');
+          streakEl.textContent = chState.streak >= 3 ? '🔥 连对' + chState.streak + '题' : '';
+          setTimeout(nextChallengeQuestion, 1500);
+        });
+        optsEl.appendChild(btn);
+      });
+    }
+
+    document.getElementById('btn-start-challenge').addEventListener('click', startChallenge);
+    document.getElementById('btn-restart-challenge').addEventListener('click', startChallenge);
+  </script>
+</body>
+</html>
