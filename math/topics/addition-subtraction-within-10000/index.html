@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>万以内加减法</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #E65100; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+    /* === 通用 === */
+    .section-title { font-size: 20px; font-weight: 700; color: #1D1D1F; text-align: center; margin: 16px 0 12px; }
+    .section-desc { font-size: 15px; color: #6E6E73; text-align: center; margin-bottom: 16px; line-height: 1.5; }
+    .feedback-msg { text-align: center; font-size: 18px; font-weight: 700; margin: 12px 0; min-height: 28px; }
+    .feedback-msg.correct { color: #34C759; }
+    .feedback-msg.wrong { color: #FF3B30; }
+    .score-display { text-align: center; font-size: 16px; color: #6E6E73; margin: 8px 0; }
+    .score-display span { font-weight: 700; color: #E65100; }
+
+    /* === 竖式演示模式 === */
+    .vertical-demo { text-align: center; padding: 16px; }
+    .vertical-problem-box {
+      display: inline-block; background: #FFF8E1; border: 3px solid #FF9800;
+      border-radius: 16px; padding: 24px 32px; margin: 16px auto;
+      font-family: 'Courier New', monospace; font-size: 40px; font-weight: 700;
+      text-align: right; line-height: 1.6; min-width: 240px;
+    }
+    .v-row { display: flex; justify-content: flex-end; align-items: center; gap: 0; }
+    .v-char { width: 36px; text-align: center; position: relative; }
+    .v-op { color: #E65100; width: 36px; }
+    .v-line { border-top: 3px solid #1D1D1F; margin: 4px 0; }
+    .v-result { color: #34C759; }
+    .v-carry { position: absolute; top: -18px; right: 2px; font-size: 16px; color: #FF3B30; font-weight: 700; }
+    .v-borrow { position: absolute; top: -18px; left: 2px; font-size: 14px; color: #2196F3; font-weight: 700; }
+    .v-crossed { text-decoration: line-through; color: #BDBDBD; }
+    .step-explain {
+      background: rgba(230,81,0,0.06); border-radius: 12px; padding: 16px;
+      margin: 16px auto; max-width: 360px; font-size: 15px; line-height: 1.8;
+      color: #1D1D1F; text-align: left;
+    }
+    .step-explain .step-num {
+      display: inline-block; background: #E65100; color: white;
+      width: 24px; height: 24px; border-radius: 50%; text-align: center;
+      line-height: 24px; font-size: 13px; font-weight: 700; margin-right: 8px;
+    }
+    .nav-btns { display: flex; gap: 12px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+    .ctrl-btn {
+      padding: 12px 24px; border: none; border-radius: 12px;
+      font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .ctrl-btn:active { transform: scale(0.95); }
+    .ctrl-btn.primary { background: #E65100; color: white; }
+    .ctrl-btn.secondary { background: #E5E5EA; color: #1D1D1F; }
+
+    /* === 口算练习模式 === */
+    .mental-area { text-align: center; padding: 16px; }
+    .mental-problem {
+      font-size: 48px; font-weight: 800; color: #E65100; margin: 20px 0;
+      letter-spacing: 2px;
+    }
+    .mental-input-row {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      margin: 20px 0;
+    }
+    .mental-input {
+      width: 160px; height: 64px; border: 3px solid #E5E5EA; border-radius: 16px;
+      font-size: 36px; font-weight: 700; text-align: center; outline: none;
+      font-family: 'Courier New', monospace; color: #1D1D1F;
+      transition: border-color 0.2s;
+    }
+    .mental-input:focus { border-color: #E65100; }
+    .mental-input.correct { border-color: #34C759; background: rgba(52,199,89,0.08); }
+    .mental-input.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); animation: shake 0.4s; }
+    .submit-btn {
+      padding: 14px 28px; border: none; border-radius: 14px;
+      background: #E65100; color: white; font-size: 20px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .submit-btn:active { transform: scale(0.95); }
+    .hint-text { font-size: 14px; color: #6E6E73; margin: 8px 0; }
+    .streak-display { font-size: 16px; color: #E65100; font-weight: 700; margin: 8px 0; }
+
+    /* === 选择练习模式 === */
+    .choice-area { text-align: center; padding: 16px; }
+    .choice-problem {
+      font-size: 44px; font-weight: 800; color: #E65100; margin: 20px 0;
+    }
+    .choice-options {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+      max-width: 360px; margin: 16px auto;
+    }
+    .choice-btn {
+      padding: 18px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 28px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; color: #1D1D1F;
+    }
+    .choice-btn:active { transform: scale(0.95); }
+    .choice-btn.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .choice-btn.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .choice-btn.disabled { pointer-events: none; opacity: 0.6; }
+    .progress-bar {
+      height: 8px; background: #E5E5EA; border-radius: 4px; margin: 16px 0;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: linear-gradient(90deg, #E65100, #FF9800);
+      border-radius: 4px; transition: width 0.3s ease;
+    }
+
+    /* === 估算模式 === */
+    .estimate-area { text-align: center; padding: 16px; }
+    .estimate-problem {
+      font-size: 40px; font-weight: 800; color: #E65100; margin: 20px 0;
+    }
+    .estimate-hint {
+      font-size: 16px; color: #6E6E73; margin: 8px 0 16px;
+      background: rgba(230,81,0,0.06); padding: 12px; border-radius: 12px;
+    }
+    .estimate-options {
+      display: flex; flex-direction: column; gap: 10px;
+      max-width: 360px; margin: 16px auto;
+    }
+    .est-btn {
+      padding: 16px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 14px; font-size: 22px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; color: #1D1D1F;
+    }
+    .est-btn:active { transform: scale(0.97); }
+    .est-btn.correct { border-color: #34C759; background: rgba(52,199,89,0.15); }
+    .est-btn.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .est-btn.disabled { pointer-events: none; opacity: 0.6; }
+
+    /* === 应用题模式 === */
+    .word-area { text-align: center; padding: 16px; }
+    .word-problem-card {
+      background: white; border-radius: 16px; padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin: 16px auto;
+      max-width: 400px; text-align: left; border-left: 4px solid #E65100;
+    }
+    .word-problem-card .wp-icon { font-size: 40px; text-align: center; margin-bottom: 12px; }
+    .word-problem-card .wp-text { font-size: 17px; line-height: 1.7; color: #1D1D1F; }
+    .word-problem-card .wp-question { font-size: 18px; font-weight: 700; color: #E65100; margin-top: 12px; }
+    .word-input-row {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      margin: 20px 0;
+    }
+    .word-input {
+      width: 140px; height: 56px; border: 3px solid #E5E5EA; border-radius: 14px;
+      font-size: 28px; font-weight: 700; text-align: center; outline: none;
+      font-family: 'Courier New', monospace; color: #1D1D1F;
+    }
+    .word-input:focus { border-color: #E65100; }
+    .word-input.correct { border-color: #34C759; background: rgba(52,199,89,0.08); }
+    .word-input.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); }
+    .unit-label { font-size: 20px; font-weight: 600; color: #6E6E73; }
+
+    /* nav-bar */
+    .nav-bar {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+      background: white; border-radius: 16px; margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .nav-back {
+      display: flex; align-items: center; gap: 6px; text-decoration: none;
+      color: #E65100; font-weight: 600; font-size: 15px;
+    }
+    .nav-title { font-size: 17px; font-weight: 700; color: #1D1D1F; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <!-- 导航栏 -->
+    <div class="nav-bar">
+      <a href="../../index.html" class="nav-back">← 返回</a>
+      <span class="nav-title">🧮 万以内加减法</span>
+    </div>
+
+    <!-- 模式切换 -->
+    <div class="mode-tabs" id="modeTabs">
+      <button class="mode-tab active" data-mode="vertical">📝 竖式演示</button>
+      <button class="mode-tab" data-mode="mental">🧠 口算练习</button>
+      <button class="mode-tab" data-mode="choice">✅ 选择挑战</button>
+      <button class="mode-tab" data-mode="estimate">🎯 估算达人</button>
+      <button class="mode-tab" data-mode="word">📖 应用题</button>
+    </div>
+
+    <!-- ========== 模式1: 竖式演示 ========== -->
+    <div class="mode-content active" id="mode-vertical">
+      <div class="section-title">📝 竖式计算演示</div>
+      <div class="section-desc">看清算理，理解进位和退位</div>
+
+      <div class="vertical-demo" id="verticalDemo">
+        <div id="verticalDisplay"></div>
+        <div class="step-explain" id="stepExplain"></div>
+      </div>
+      <div class="nav-btns">
+        <button class="ctrl-btn secondary" onclick="newVerticalProblem()">🔄 换一题</button>
+        <button class="ctrl-btn primary" onclick="showNextStep()">👉 下一步</button>
+      </div>
+    </div>
+
+    <!-- ========== 模式2: 口算练习 ========== -->
+    <div class="mode-content" id="mode-mental">
+      <div class="section-title">🧠 口算练习</div>
+      <div class="section-desc">直接输入答案，看看你能连续答对几题</div>
+      <div class="mental-area">
+        <div class="score-display">答对 <span id="mentalScore">0</span> 题 | 连对 <span id="mentalStreak">0</span> 题</div>
+        <div class="mental-problem" id="mentalProblem"></div>
+        <div class="mental-input-row">
+          <input type="number" class="mental-input" id="mentalInput" placeholder="?" inputmode="numeric">
+          <button class="submit-btn" id="mentalSubmit" onclick="checkMental()">确定</button>
+        </div>
+        <div class="hint-text" id="mentalHint"></div>
+        <div class="feedback-msg" id="mentalFeedback"></div>
+      </div>
+    </div>
+
+    <!-- ========== 模式3: 选择挑战 ========== -->
+    <div class="mode-content" id="mode-choice">
+      <div class="section-title">✅ 选择挑战</div>
+      <div class="section-desc">10题挑战，选正确答案</div>
+      <div class="choice-area">
+        <div class="score-display">第 <span id="choiceNum">1</span>/10 题 | 得分 <span id="choiceScore">0</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="choiceProgress" style="width:10%"></div></div>
+        <div class="choice-problem" id="choiceProblem"></div>
+        <div class="choice-options" id="choiceOptions"></div>
+        <div class="feedback-msg" id="choiceFeedback"></div>
+      </div>
+    </div>
+
+    <!-- ========== 模式4: 估算达人 ========== -->
+    <div class="mode-content" id="mode-estimate">
+      <div class="section-title">🎯 估算达人</div>
+      <div class="section-desc">不用精确计算，选出最接近的答案</div>
+      <div class="estimate-area">
+        <div class="score-display">答对 <span id="estScore">0</span> 题</div>
+        <div class="estimate-problem" id="estProblem"></div>
+        <div class="estimate-hint" id="estHint"></div>
+        <div class="estimate-options" id="estOptions"></div>
+        <div class="feedback-msg" id="estFeedback"></div>
+      </div>
+    </div>
+
+    <!-- ========== 模式5: 应用题 ========== -->
+    <div class="mode-content" id="mode-word">
+      <div class="section-title">📖 应用题</div>
+      <div class="section-desc">读题列式，解决生活中的数学问题</div>
+      <div class="word-area">
+        <div class="score-display">答对 <span id="wordScore">0</span> 题</div>
+        <div id="wordCard"></div>
+        <div class="word-input-row">
+          <input type="number" class="word-input" id="wordInput" placeholder="?" inputmode="numeric">
+          <span class="unit-label" id="wordUnit"></span>
+          <button class="submit-btn" onclick="checkWord()">确定</button>
+        </div>
+        <div class="feedback-msg" id="wordFeedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // ========== 模式切换 ==========
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+      });
+    });
+
+    // ========== 工具函数 ==========
+    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+
+    // ========== 模式1: 竖式演示 ==========
+    let vProblem = null;
+    let vStep = 0;
+
+    function genVerticalProblem() {
+      const isAdd = Math.random() < 0.5;
+      let a, b;
+      if (isAdd) {
+        a = randInt(100, 5000);
+        b = randInt(100, 5000);
+        if (a + b > 10000) b = randInt(100, 10000 - a);
+      } else {
+        a = randInt(500, 9999);
+        b = randInt(100, a - 1);
+      }
+      const answer = isAdd ? a + b : a - b;
+      vProblem = { a, b, isAdd, answer, steps: [] };
+      buildVerticalSteps();
+      renderVertical();
+      renderSteps();
+    }
+
+    function buildVerticalSteps() {
+      const { a, b, isAdd } = vProblem;
+      const steps = [];
+      const aDigits = String(a).padStart(4, '0').split('').map(Number);
+      const bDigits = String(b).padStart(4, '0').split('').map(Number);
+      const labels = ['个位', '十位', '百位', '千位'];
+
+      if (isAdd) {
+        let carry = 0;
+        for (let i = 3; i >= 0; i--) {
+          const sum = aDigits[i] + bDigits[i] + carry;
+          const digit = sum % 10;
+          const newCarry = Math.floor(sum / 10);
+          let desc = `${labels[i]}：${aDigits[i]} + ${bDigits[i]}`;
+          if (carry > 0) desc += ` + 进位${carry}`;
+          desc += ` = ${sum}`;
+          if (newCarry > 0) desc += `，写${digit}进${newCarry}`;
+          else desc += `，写${digit}`;
+          steps.push({ pos: i, digit, carry: newCarry, oldCarry: carry, desc });
+          carry = newCarry;
+        }
+        if (carry > 0) steps.push({ pos: -1, digit: carry, carry: 0, oldCarry: 0, desc: `万位：进位${carry}，写${carry}` });
+      } else {
+        let borrow = 0;
+        const aCopy = [...aDigits];
+        for (let i = 3; i >= 0; i--) {
+          let top = aCopy[i] - borrow;
+          let needBorrow = top < bDigits[i];
+          let desc = `${labels[i]}：${aDigits[i]}`;
+          if (borrow > 0 && i < 3) desc += `(退位后${top})`;
+          desc += ` - ${bDigits[i]}`;
+          if (needBorrow) {
+            top += 10;
+            desc += `，不够减，向高位借1当10`;
+            borrow = 1;
+          } else {
+            borrow = 0;
+          }
+          const digit = top - bDigits[i];
+          desc += ` = ${digit}`;
+          steps.push({ pos: i, digit, borrow: needBorrow ? 1 : 0, oldBorrow: borrow === 1 && !needBorrow ? 0 : borrow, desc });
+        }
+      }
+      vProblem.steps = steps;
+    }
+
+    function renderVertical() {
+      const { a, b, isAdd, answer } = vProblem;
+      const aStr = String(a).padStart(4, '0');
+      const bStr = String(b).padStart(4, '0');
+      const ansStr = String(answer).padStart(isAdd ? 5 : 4, '0');
+
+      let html = `<div class="vertical-problem-box">`;
+      html += `<div class="v-row">`;
+      for (let i = 0; i < 4; i++) html += `<div class="v-char">${aStr[i]}</div>`;
+      html += `</div>`;
+      html += `<div class="v-row"><div class="v-op">${isAdd ? '+' : '−'}</div>`;
+      for (let i = 0; i < 4; i++) html += `<div class="v-char">${bStr[i]}</div>`;
+      html += `</div>`;
+      html += `<div class="v-line"></div>`;
+      if (vStep >= vProblem.steps.length) {
+        html += `<div class="v-row">`;
+        const start = isAdd ? 0 : 0;
+        for (let i = 0; i < ansStr.length; i++) {
+          html += `<div class="v-char v-result">${ansStr[i]}</div>`;
+        }
+        html += `</div>`;
+      } else {
+        html += `<div class="v-row"><div class="v-char v-result">?</div></div>`;
+      }
+      html += `</div>`;
+      document.getElementById('verticalDisplay').innerHTML = html;
+    }
+
+    function renderSteps() {
+      const { steps } = vProblem;
+      let html = '';
+      const showCount = Math.min(vStep, steps.length);
+      for (let i = 0; i < showCount; i++) {
+        html += `<div style="margin:8px 0;padding:8px 12px;background:rgba(230,81,0,0.04);border-radius:8px;font-size:14px;line-height:1.6;">`;
+        html += `<span style="display:inline-block;background:#E65100;color:white;width:22px;height:22px;border-radius:50%;text-align:center;line-height:22px;font-size:12px;font-weight:700;margin-right:8px;">${i+1}</span>`;
+        html += steps[i].desc;
+        html += `</div>`;
+      }
+      if (vStep >= steps.length) {
+        html += `<div style="text-align:center;margin-top:16px;font-size:20px;font-weight:700;color:#34C759;">✅ 计算完成！答案是 ${vProblem.answer}</div>`;
+      }
+      document.getElementById('stepExplain').innerHTML = html;
+    }
+
+    function showNextStep() {
+      if (vStep < vProblem.steps.length) {
+        vStep++;
+        renderVertical();
+        renderSteps();
+      }
+    }
+
+    function newVerticalProblem() {
+      vStep = 0;
+      genVerticalProblem();
+    }
+
+    // ========== 模式2: 口算练习 ==========
+    let mentalAnswer = 0;
+    let mentalScoreVal = 0;
+    let mentalStreakVal = 0;
+
+    function genMental() {
+      const isAdd = Math.random() < 0.5;
+      let a, b;
+      if (isAdd) {
+        a = randInt(100, 5000);
+        b = randInt(100, 5000);
+        if (a + b > 10000) b = randInt(100, 10000 - a);
+      } else {
+        a = randInt(500, 9999);
+        b = randInt(100, a);
+      }
+      mentalAnswer = isAdd ? a + b : a - b;
+      document.getElementById('mentalProblem').textContent = `${a} ${isAdd ? '+' : '−'} ${b} = ?`;
+      document.getElementById('mentalInput').value = '';
+      document.getElementById('mentalInput').className = 'mental-input';
+      document.getElementById('mentalFeedback').textContent = '';
+      document.getElementById('mentalHint').textContent = '';
+      document.getElementById('mentalInput').focus();
+    }
+
+    function checkMental() {
+      const input = document.getElementById('mentalInput');
+      const val = parseInt(input.value);
+      if (isNaN(val)) return;
+      const fb = document.getElementById('mentalFeedback');
+      if (val === mentalAnswer) {
+        input.className = 'mental-input correct';
+        fb.textContent = '✅ 答对了！';
+        fb.className = 'feedback-msg correct';
+        mentalScoreVal++;
+        mentalStreakVal++;
+        document.getElementById('mentalScore').textContent = mentalScoreVal;
+        document.getElementById('mentalStreak').textContent = mentalStreakVal;
+        setTimeout(genMental, 1500);
+      } else {
+        input.className = 'mental-input wrong';
+        fb.textContent = `❌ 正确答案是 ${mentalAnswer}`;
+        fb.className = 'feedback-msg wrong';
+        mentalStreakVal = 0;
+        document.getElementById('mentalStreak').textContent = mentalStreakVal;
+        setTimeout(genMental, 2000);
+      }
+    }
+
+    document.getElementById('mentalInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') checkMental();
+    });
+
+    // ========== 模式3: 选择挑战 ==========
+    let choiceAnswer = 0;
+    let choiceNum = 1;
+    let choiceScoreVal = 0;
+
+    function genChoice() {
+      const isAdd = Math.random() < 0.5;
+      let a, b;
+      if (isAdd) {
+        a = randInt(100, 5000);
+        b = randInt(100, 5000);
+        if (a + b > 10000) b = randInt(100, 10000 - a);
+      } else {
+        a = randInt(500, 9999);
+        b = randInt(100, a);
+      }
+      choiceAnswer = isAdd ? a + b : a - b;
+      document.getElementById('choiceProblem').textContent = `${a} ${isAdd ? '+' : '−'} ${b} = ?`;
+      document.getElementById('choiceNum').textContent = choiceNum;
+      document.getElementById('choiceProgress').style.width = (choiceNum * 10) + '%';
+      document.getElementById('choiceFeedback').textContent = '';
+
+      const opts = new Set([choiceAnswer]);
+      while (opts.size < 4) {
+        let wrong = choiceAnswer + randInt(-200, 200);
+        if (wrong < 0) wrong = randInt(0, choiceAnswer + 200);
+        if (wrong !== choiceAnswer) opts.add(wrong);
+      }
+      const shuffled = shuffle([...opts]);
+      const container = document.getElementById('choiceOptions');
+      container.innerHTML = '';
+      shuffled.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => checkChoice(opt, btn));
+        container.appendChild(btn);
+      });
+    }
+
+    function checkChoice(selected, btn) {
+      const allBtns = document.querySelectorAll('.choice-btn');
+      allBtns.forEach(b => b.classList.add('disabled'));
+      const fb = document.getElementById('choiceFeedback');
+      if (selected === choiceAnswer) {
+        btn.classList.add('correct');
+        choiceScoreVal++;
+        document.getElementById('choiceScore').textContent = choiceScoreVal;
+        fb.textContent = '✅ 正确！';
+        fb.className = 'feedback-msg correct';
+      } else {
+        btn.classList.add('wrong');
+        allBtns.forEach(b => { if (parseInt(b.textContent) === choiceAnswer) b.classList.add('correct'); });
+        fb.textContent = `❌ 答案是 ${choiceAnswer}`;
+        fb.className = 'feedback-msg wrong';
+      }
+      choiceNum++;
+      if (choiceNum > 10) {
+        setTimeout(() => {
+          const area = document.querySelector('.choice-area');
+          let emoji = choiceScoreVal >= 9 ? '🏆' : choiceScoreVal >= 7 ? '👍' : choiceScoreVal >= 5 ? '💪' : '🌟';
+          let msg = choiceScoreVal >= 9 ? '太厉害了！' : choiceScoreVal >= 7 ? '很棒！' : choiceScoreVal >= 5 ? '继续加油！' : '再来一次！';
+          area.innerHTML = `
+            <div style="text-align:center;padding:40px 20px;">
+              <div style="font-size:80px;margin:20px 0;">${emoji}</div>
+              <div style="font-size:24px;font-weight:700;color:#1D1D1F;">挑战完成！</div>
+              <div style="font-size:48px;font-weight:800;color:#E65100;margin:20px 0;">${choiceScoreVal}/10</div>
+              <div style="font-size:20px;color:#6E6E73;">${msg}</div>
+              <button class="ctrl-btn primary" onclick="resetChoice()" style="margin-top:20px;">再来一次</button>
+            </div>`;
+        }, 1500);
+      } else {
+        setTimeout(genChoice, 1500);
+      }
+    }
+
+    function resetChoice() {
+      choiceNum = 1; choiceScoreVal = 0;
+      document.getElementById('choiceScore').textContent = 0;
+      document.querySelector('.choice-area').innerHTML = `
+        <div class="score-display">第 <span id="choiceNum">1</span>/10 题 | 得分 <span id="choiceScore">0</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="choiceProgress" style="width:10%"></div></div>
+        <div class="choice-problem" id="choiceProblem"></div>
+        <div class="choice-options" id="choiceOptions"></div>
+        <div class="feedback-msg" id="choiceFeedback"></div>`;
+      genChoice();
+    }
+
+    // ========== 模式4: 估算达人 ==========
+    let estAnswer = 0;
+
+    function genEstimate() {
+      const isAdd = Math.random() < 0.5;
+      let a, b;
+      if (isAdd) {
+        a = randInt(100, 5000);
+        b = randInt(100, 5000);
+        if (a + b > 10000) b = randInt(100, 10000 - a);
+      } else {
+        a = randInt(500, 9999);
+        b = randInt(100, a);
+      }
+      estAnswer = isAdd ? a + b : a - b;
+
+      document.getElementById('estProblem').textContent = `${a} ${isAdd ? '+' : '−'} ${b} ≈ ?`;
+
+      // 提示估算方法
+      const roundA = Math.round(a / 100) * 100;
+      const roundB = Math.round(b / 100) * 100;
+      const estResult = isAdd ? roundA + roundB : roundA - roundB;
+      document.getElementById('estHint').innerHTML = `💡 提示：把数看成最接近的整百数再计算<br>${a} ≈ ${roundA}，${b} ≈ ${roundB}`;
+
+      // 生成选项（精确值附近 ± 估算值）
+      const opts = new Set([estResult]);
+      // 添加精确答案
+      opts.add(estAnswer);
+      while (opts.size < 4) {
+        let wrong = estAnswer + randInt(-500, 500);
+        if (wrong < 0) wrong = randInt(0, estAnswer + 500);
+        if (wrong !== estAnswer && wrong !== estResult) opts.add(wrong);
+      }
+      const shuffled = shuffle([...opts]);
+      const container = document.getElementById('estOptions');
+      container.innerHTML = '';
+      shuffled.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'est-btn';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => checkEstimate(opt, btn, estResult));
+        container.appendChild(btn);
+      });
+      document.getElementById('estFeedback').textContent = '';
+    }
+
+    function checkEstimate(selected, btn, correctEst) {
+      const allBtns = document.querySelectorAll('.est-btn');
+      allBtns.forEach(b => b.classList.add('disabled'));
+      const fb = document.getElementById('estFeedback');
+      if (selected === correctEst) {
+        btn.classList.add('correct');
+        const score = parseInt(document.getElementById('estScore').textContent) + 1;
+        document.getElementById('estScore').textContent = score;
+        fb.textContent = `✅ 估算正确！精确值是 ${estAnswer}`;
+        fb.className = 'feedback-msg correct';
+      } else if (selected === estAnswer) {
+        btn.classList.add('wrong');
+        allBtns.forEach(b => { if (parseInt(b.textContent) === correctEst) b.classList.add('correct'); });
+        fb.textContent = `⚠️ 这是精确值，估算应该用整百数！正确答案是 ${correctEst}`;
+        fb.className = 'feedback-msg wrong';
+      } else {
+        btn.classList.add('wrong');
+        allBtns.forEach(b => { if (parseInt(b.textContent) === correctEst) b.classList.add('correct'); });
+        fb.textContent = `❌ 估算答案是 ${correctEst}（精确值 ${estAnswer}）`;
+        fb.className = 'feedback-msg wrong';
+      }
+      setTimeout(genEstimate, 2000);
+    }
+
+    // ========== 模式5: 应用题 ==========
+    let wordAnswer = 0;
+
+    const wordTemplates = [
+      { gen: () => { const a=randInt(500,3000),b=randInt(200,3000); return { text:`学校图书馆有故事书 ${a} 本，又买来 ${b} 本。`, question:'现在一共有多少本故事书？', answer:a+b, unit:'本', icon:'📚' }; }},
+      { gen: () => { const a=randInt(2000,5000),b=randInt(500,1500); return { text:`工厂要生产 ${a} 个零件，已经生产了 ${b} 个。`, question:'还要生产多少个零件？', answer:a-b, unit:'个', icon:'🔧' }; }},
+      { gen: () => { const a=randInt(1000,4000),b=randInt(500,2000),c=randInt(200,1000); return { text:`果园里有苹果树 ${a} 棵，梨树 ${b} 棵，桃树 ${c} 棵。`, question:'苹果树和梨树一共有多少棵？', answer:a+b, unit:'棵', icon:'🌳' }; }},
+      { gen: () => { const total=randInt(3000,8000),spent=randInt(1000,2500); return { text:`妈妈带了 ${total} 元去商场买衣服，花了 ${spent} 元。`, question:'还剩多少元？', answer:total-spent, unit:'元', icon:'💰' }; }},
+      { gen: () => { const a=randInt(1000,3000),b=randInt(500,2000); return { text:`小明家离学校 ${a} 米，小红家离学校 ${b} 米，他们两家相距多少米？（学校在中间）`, question:'求小明家到小红家的距离', answer:a+b, unit:'米', icon:'🏫' }; }},
+      { gen: () => { const a=randInt(2000,6000),b=randInt(500,1500); return { text:`超市运来鸡蛋 ${a} 个，上午卖出了 ${b} 个。`, question:'还剩多少个鸡蛋？', answer:a-b, unit:'个', icon:'🥚' }; }},
+      { gen: () => { const a=randInt(1000,3000),b=randInt(1000,3000),c=randInt(500,1500); return { text:`三年级有 ${a} 人，四年级有 ${b} 人，五年级有 ${c} 人。`, question:'三年级和四年级一共有多少人？', answer:a+b, unit:'人', icon:'👨‍🎓' }; }},
+      { gen: () => { const total=randInt(5000,9000),used=randInt(1000,3000); return { text:`仓库里有 ${total} 千克大米，运走了 ${used} 千克。`, question:'仓库里还有多少千克大米？', answer:total-used, unit:'千克', icon:'🍚' }; }},
+    ];
+
+    function genWord() {
+      const template = wordTemplates[randInt(0, wordTemplates.length - 1)];
+      const p = template.gen();
+      wordAnswer = p.answer;
+      document.getElementById('wordCard').innerHTML = `
+        <div class="word-problem-card">
+          <div class="wp-icon">${p.icon}</div>
+          <div class="wp-text">${p.text}</div>
+          <div class="wp-question">${p.question}</div>
+        </div>`;
+      document.getElementById('wordUnit').textContent = p.unit;
+      document.getElementById('wordInput').value = '';
+      document.getElementById('wordInput').className = 'word-input';
+      document.getElementById('wordFeedback').textContent = '';
+    }
+
+    function checkWord() {
+      const input = document.getElementById('wordInput');
+      const val = parseInt(input.value);
+      if (isNaN(val)) return;
+      const fb = document.getElementById('wordFeedback');
+      if (val === wordAnswer) {
+        input.className = 'word-input correct';
+        fb.textContent = '✅ 答对了！';
+        fb.className = 'feedback-msg correct';
+        const score = parseInt(document.getElementById('wordScore').textContent) + 1;
+        document.getElementById('wordScore').textContent = score;
+        setTimeout(genWord, 1500);
+      } else {
+        input.className = 'word-input wrong';
+        fb.textContent = `❌ 正确答案是 ${wordAnswer}`;
+        fb.className = 'feedback-msg wrong';
+        setTimeout(genWord, 2000);
+      }
+    }
+
+    document.getElementById('wordInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') checkWord();
+    });
+
+    // ========== 初始化 ==========
+    genVerticalProblem();
+    genMental();
+    genChoice();
+    genEstimate();
+    genWord();
+  </script>
+</body>
+</html>
