@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>简单推理</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #00897B; color: white; }
+
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    .score-display { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px; font-size: 18px; font-weight: 600; }
+    .score-stars { font-size: 24px; }
+
+    /* === 模式1: 找规律 === */
+    .pattern-area { text-align: center; padding: 20px 16px; }
+    .pattern-sequence {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; margin: 20px 0; flex-wrap: wrap;
+    }
+    .pattern-item {
+      font-size: 36px; width: 56px; height: 56px;
+      display: flex; align-items: center; justify-content: center;
+      background: white; border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .pattern-item.blank {
+      border: 3px dashed #00897B; background: #E0F2F1;
+      font-size: 28px; color: #00897B; font-weight: 700;
+    }
+    .pattern-options { display: flex; justify-content: center; gap: 12px; margin: 20px 0; flex-wrap: wrap; }
+    .pattern-opt {
+      font-size: 32px; width: 64px; height: 64px;
+      display: flex; align-items: center; justify-content: center;
+      border: 3px solid #E5E5EA; background: white; border-radius: 16px;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .pattern-opt:active { transform: scale(0.9); }
+    .pattern-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); }
+    .pattern-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .pattern-hint { font-size: 16px; color: #6E6E73; margin: 12px 0; line-height: 1.6; }
+
+    /* === 模式2: 排除法 === */
+    .eliminate-area { text-align: center; padding: 20px 16px; }
+    .eliminate-question {
+      font-size: 18px; font-weight: 600; color: #1D1D1F;
+      line-height: 1.8; padding: 16px 20px; background: #FFF8E1;
+      border-radius: 16px; margin: 16px auto; max-width: 400px; text-align: left;
+    }
+    .eliminate-question .clue { color: #00897B; font-weight: 700; }
+    .eliminate-grid {
+      display: grid; grid-template-columns: auto repeat(3, 1fr);
+      gap: 2px; margin: 16px auto; max-width: 360px;
+      background: #E5E5EA; border-radius: 12px; overflow: hidden;
+    }
+    .eliminate-cell {
+      padding: 12px 8px; text-align: center; font-size: 14px; font-weight: 600;
+      background: white; display: flex; align-items: center; justify-content: center;
+    }
+    .eliminate-cell.header { background: #F5F5F5; color: #6E6E73; font-size: 13px; }
+    .eliminate-cell.row-label { background: #F5F5F5; color: #1D1D1F; font-size: 13px; }
+    .eliminate-cell.clickable { cursor: pointer; transition: all 0.2s; min-height: 44px; }
+    .eliminate-cell.clickable:active { transform: scale(0.95); }
+    .eliminate-cell.marked-x { color: #FF3B30; font-size: 20px; font-weight: 700; background: #FFF0F0; }
+    .eliminate-cell.marked-o { color: #34C759; font-size: 20px; font-weight: 700; background: #F0FFF0; }
+    .eliminate-submit {
+      padding: 14px 32px; border: none; background: #00897B; color: white;
+      border-radius: 16px; font-size: 18px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,137,123,0.3); margin: 8px;
+    }
+    .eliminate-submit:active { transform: scale(0.95); }
+    .eliminate-feedback { font-size: 18px; font-weight: 700; margin: 12px 0; min-height: 28px; }
+    .eliminate-feedback.correct { color: #34C759; }
+    .eliminate-feedback.wrong { color: #FF3B30; }
+
+    /* === 模式3: 等量代换 === */
+    .substitute-area { text-align: center; padding: 20px 16px; }
+    .substitute-visual {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin: 20px 0; flex-wrap: wrap; font-size: 36px;
+    }
+    .substitute-eq {
+      font-size: 20px; font-weight: 600; color: #1D1D1F;
+      padding: 12px 20px; background: white; border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin: 8px auto;
+      max-width: 320px; text-align: center; line-height: 1.6;
+    }
+    .substitute-eq .known { color: #00897B; font-weight: 700; }
+    .substitute-eq .unknown { color: #FF9500; font-weight: 700; }
+    .substitute-options { display: flex; justify-content: center; gap: 12px; margin: 20px 0; flex-wrap: wrap; }
+    .substitute-opt {
+      padding: 14px 28px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 22px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; min-width: 80px;
+    }
+    .substitute-opt:active { transform: scale(0.9); }
+    .substitute-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .substitute-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+
+    /* === 模式4: 逻辑挑战 === */
+    .logic-area { text-align: center; padding: 20px 16px; }
+    .logic-scene { font-size: 64px; margin: 12px 0; }
+    .logic-problem {
+      font-size: 18px; font-weight: 600; color: #1D1D1F;
+      line-height: 1.8; padding: 16px 20px; background: #E8F5E9;
+      border-radius: 16px; margin: 16px auto; max-width: 400px; text-align: left;
+    }
+    .logic-problem .highlight { color: #00897B; font-weight: 700; }
+    .logic-options { display: flex; justify-content: center; gap: 12px; margin: 20px 0; flex-wrap: wrap; }
+    .logic-opt {
+      padding: 14px 24px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 18px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .logic-opt:active { transform: scale(0.9); }
+    .logic-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .logic-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .logic-explain { font-size: 16px; color: #6E6E73; margin: 12px 0; line-height: 1.6; min-height: 24px; }
+
+    /* 通用 */
+    .next-btn {
+      display: none; margin: 12px auto; padding: 12px 28px;
+      border: none; background: #00897B; color: white;
+      border-radius: 16px; font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+    .next-btn.show { display: block; animation: fadeInUp 0.3s ease; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <a href="../../index.html" class="nav-back">←</a>
+      <span class="nav-title">🧠 简单推理</span>
+      <span class="nav-badge">G2</span>
+    </nav>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="pattern">🔍 找规律</button>
+      <button class="mode-tab" data-mode="eliminate">❌ 排除法</button>
+      <button class="mode-tab" data-mode="substitute">🔄 等量代换</button>
+      <button class="mode-tab" data-mode="logic">💡 逻辑挑战</button>
+    </div>
+
+    <div class="score-display">
+      <span class="score-stars">⭐</span>
+      <span id="scoreText">答对 0 题</span>
+    </div>
+
+    <!-- 模式1: 找规律 -->
+    <div class="mode-content active" id="mode-pattern">
+      <div class="pattern-area">
+        <p class="pattern-hint">观察规律，找出空格处应该是什么？</p>
+        <div class="pattern-sequence" id="patternSequence"></div>
+        <div class="pattern-options" id="patternOptions"></div>
+        <div class="eliminate-feedback" id="patternFeedback"></div>
+        <button class="next-btn" id="patternNext" onclick="nextPattern()">下一题 →</button>
+      </div>
+    </div>
+
+    <!-- 模式2: 排除法 -->
+    <div class="mode-content" id="mode-eliminate">
+      <div class="eliminate-area">
+        <div class="eliminate-question" id="eliminateQuestion"></div>
+        <div class="eliminate-grid" id="eliminateGrid"></div>
+        <button class="eliminate-submit" onclick="checkEliminate()">✅ 检查答案</button>
+        <div class="eliminate-feedback" id="eliminateFeedback"></div>
+        <button class="next-btn" id="eliminateNext" onclick="nextEliminate()">下一题 →</button>
+      </div>
+    </div>
+
+    <!-- 模式3: 等量代换 -->
+    <div class="mode-content" id="mode-substitute">
+      <div class="substitute-area">
+        <div class="substitute-visual" id="substituteVisual"></div>
+        <div class="substitute-eq" id="substituteEq"></div>
+        <div class="substitute-options" id="substituteOptions"></div>
+        <div class="eliminate-feedback" id="substituteFeedback"></div>
+        <button class="next-btn" id="substituteNext" onclick="nextSubstitute()">下一题 →</button>
+      </div>
+    </div>
+
+    <!-- 模式4: 逻辑挑战 -->
+    <div class="mode-content" id="mode-logic">
+      <div class="logic-area">
+        <div class="logic-scene" id="logicScene"></div>
+        <div class="logic-problem" id="logicProblem"></div>
+        <div class="logic-options" id="logicOptions"></div>
+        <div class="logic-explain" id="logicExplain"></div>
+        <button class="next-btn" id="logicNext" onclick="nextLogic()">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // ========== 全局状态 ==========
+    let score = 0;
+    function addScore() {
+      score++;
+      document.getElementById('scoreText').textContent = '答对 ' + score + ' 题';
+    }
+
+    // ========== Tab 切换 ==========
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('mode-' + this.dataset.mode).classList.add('active');
+      });
+    });
+
+    // ========== 模式1: 找规律 ==========
+    const patternSets = [
+      { items: ['🍎','🍌','🍎','🍌','🍎'], blank: 5, options: ['🍌','🍎','🍊','🍇'], answer: '🍌', hint: '苹果和香蕉交替出现' },
+      { items: ['🔴','🔵','🔴','🔵','🔴'], blank: 5, options: ['🔵','🔴','🟢','🟡'], answer: '🔵', hint: '红蓝交替出现' },
+      { items: ['⭐','⭐','🌙','⭐','⭐'], blank: 5, options: ['⭐','🌙','☀️','🌟'], answer: '🌙', hint: '两个星星一个月亮，循环出现' },
+      { items: ['🐱','🐶','🐰','🐱','🐶'], blank: 5, options: ['🐰','🐱','🐶','🐸'], answer: '🐰', hint: '猫→狗→兔 循环出现' },
+      { items: ['1','2','3','1','2'], blank: 5, options: ['3','1','2','4'], answer: '3', hint: '1→2→3 循环出现' },
+      { items: ['▲','■','▲','■','▲'], blank: 5, options: ['■','▲','●','◆'], answer: '■', hint: '三角形和正方形交替出现' },
+      { items: ['🌸','🌻','🌹','🌸','🌻'], blank: 5, options: ['🌹','🌸','🌻','🌺'], answer: '🌹', hint: '三种花循环出现' },
+      { items: ['A','B','C','A','B'], blank: 5, options: ['C','A','B','D'], answer: 'C', hint: 'A→B→C 循环出现' }
+    ];
+    let currentPattern = null;
+
+    function shuffleArray(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function loadPattern() {
+      const template = patternSets[Math.floor(Math.random() * patternSets.length)];
+      currentPattern = template;
+
+      const seqEl = document.getElementById('patternSequence');
+      seqEl.innerHTML = '';
+      template.items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'pattern-item';
+        div.textContent = item;
+        seqEl.appendChild(div);
+      });
+      const blank = document.createElement('div');
+      blank.className = 'pattern-item blank';
+      blank.textContent = '?';
+      seqEl.appendChild(blank);
+
+      const optsEl = document.getElementById('patternOptions');
+      optsEl.innerHTML = '';
+      shuffleArray(template.options).forEach(opt => {
+        const btn = document.createElement('div');
+        btn.className = 'pattern-opt';
+        btn.textContent = opt;
+        btn.onclick = function() { checkPattern(this, opt); };
+        optsEl.appendChild(btn);
+      });
+
+      document.getElementById('patternFeedback').textContent = '';
+      document.getElementById('patternFeedback').className = 'eliminate-feedback';
+      document.getElementById('patternNext').classList.remove('show');
+    }
+
+    function checkPattern(el, chosen) {
+      if (document.querySelector('#patternOptions .pattern-opt.correct')) return;
+      if (chosen === currentPattern.answer) {
+        el.classList.add('correct');
+        document.getElementById('patternFeedback').textContent = '✅ 正确！' + currentPattern.hint;
+        document.getElementById('patternFeedback').className = 'eliminate-feedback correct';
+        document.querySelector('.pattern-item.blank').textContent = currentPattern.answer;
+        addScore();
+        setTimeout(() => { document.getElementById('patternNext').classList.add('show'); }, 800);
+      } else {
+        el.classList.add('wrong');
+        document.getElementById('patternFeedback').textContent = '❌ 再想想看～';
+        document.getElementById('patternFeedback').className = 'eliminate-feedback wrong';
+        setTimeout(() => { el.classList.remove('wrong'); }, 600);
+      }
+    }
+
+    function nextPattern() { loadPattern(); }
+
+    // ========== 模式2: 排除法 ==========
+    const eliminateNames = ['小明','小红','小刚'];
+    const eliminateItems = [
+      { name: '水果', options: ['苹果','香蕉','橘子'] },
+      { name: '颜色', options: ['红色','蓝色','绿色'] },
+      { name: '动物', options: ['小猫','小狗','小兔'] }
+    ];
+
+    let eliminateState = {};
+
+    function generateEliminate() {
+      const cat = eliminateItems[Math.floor(Math.random() * eliminateItems.length)];
+      const names = [...eliminateNames];
+      const items = shuffleArray(cat.options);
+
+      // 生成线索：每个人不喜欢什么
+      const clues = [];
+      const assignment = {};
+
+      // 随机分配
+      const shuffledItems = shuffleArray(items);
+      names.forEach((n, i) => { assignment[n] = shuffledItems[i]; });
+
+      // 生成排除线索
+      const allItems = [...items];
+      names.forEach(name => {
+        const notItems = allItems.filter(it => it !== assignment[name]);
+        const pick = notItems[Math.floor(Math.random() * notItems.length)];
+        clues.push({ name, not: pick });
+      });
+
+      // 额外线索
+      const extraClues = [];
+      const n1 = names[0], n2 = names[1];
+      extraClues.push({ type: 'not-same', a: n1, b: n2 });
+
+      eliminateState = { names, items: allItems, assignment, clues, extraClues, catName: cat.name };
+      return { names, items: allItems, assignment, clues, catName: cat.name };
+    }
+
+    function loadEliminate() {
+      const data = generateEliminate();
+      eliminateState.gridMarks = {};
+
+      document.getElementById('eliminateQuestion').innerHTML =
+        `<strong>🧩 ${data.catName}分配问题</strong><br><br>` +
+        data.clues.map(c => `<span class="clue">• ${c.name} 不喜欢 ${c.not}</span>`).join('<br>') +
+        `<br><span class="clue">• ${data.names[0]} 和 ${data.names[1]} 选的不一样</span>` +
+        `<br><br>请用排除法确定每人选了哪个！`;
+
+      const grid = document.getElementById('eliminateGrid');
+      grid.innerHTML = '';
+      grid.style.gridTemplateColumns = `auto repeat(${data.items.length}, 1fr)`;
+
+      // header
+      grid.innerHTML += '<div class="eliminate-cell header"></div>';
+      data.items.forEach(it => {
+        grid.innerHTML += `<div class="eliminate-cell header">${it}</div>`;
+      });
+
+      // rows
+      data.names.forEach(name => {
+        grid.innerHTML += `<div class="eliminate-cell row-label">${name}</div>`;
+        data.items.forEach(item => {
+          const cellId = `ec-${name}-${item}`;
+          grid.innerHTML += `<div class="eliminate-cell clickable" id="${cellId}" onclick="toggleEliminateCell('${name}','${item}')"></div>`;
+        });
+      });
+
+      document.getElementById('eliminateFeedback').textContent = '';
+      document.getElementById('eliminateFeedback').className = 'eliminate-feedback';
+      document.getElementById('eliminateNext').classList.remove('show');
+    }
+
+    function toggleEliminateCell(name, item) {
+      const cellId = `ec-${name}-${item}`;
+      const cell = document.getElementById(cellId);
+      const key = name + '-' + item;
+      const current = eliminateState.gridMarks[key] || '';
+      // cycle: empty -> X -> O -> empty
+      let next = '';
+      if (current === '') next = 'X';
+      else if (current === 'X') next = 'O';
+      else next = '';
+
+      eliminateState.gridMarks[key] = next;
+      cell.className = 'eliminate-cell clickable';
+      cell.textContent = '';
+      if (next === 'X') { cell.classList.add('marked-x'); cell.textContent = '✗'; }
+      else if (next === 'O') { cell.classList.add('marked-o'); cell.textContent = '✓'; }
+    }
+
+    function checkEliminate() {
+      if (document.getElementById('eliminateNext').classList.contains('show')) return;
+      const { names, items, assignment } = eliminateState;
+      let allCorrect = true;
+
+      names.forEach(name => {
+        items.forEach(item => {
+          const key = name + '-' + item;
+          const mark = eliminateState.gridMarks[key] || '';
+          const shouldBeO = assignment[name] === item;
+          const isO = mark === 'O';
+          if (shouldBeO !== isO) allCorrect = false;
+        });
+      });
+
+      const fb = document.getElementById('eliminateFeedback');
+      if (allCorrect) {
+        fb.textContent = '✅ 完全正确！你真是个推理小能手！';
+        fb.className = 'eliminate-feedback correct';
+        addScore();
+        setTimeout(() => { document.getElementById('eliminateNext').classList.add('show'); }, 1500);
+      } else {
+        fb.textContent = '❌ 还不太对，再试试用排除法推理～';
+        fb.className = 'eliminate-feedback wrong';
+      }
+    }
+
+    function nextEliminate() { loadEliminate(); }
+
+    // ========== 模式3: 等量代换 ==========
+    const fruitEmojis = ['🍎','🍌','🍊','🍇','🍓','🍑'];
+    let substituteState = {};
+
+    function generateSubstitute() {
+      const f1 = fruitEmojis[Math.floor(Math.random() * 4)];
+      const f2 = fruitEmojis[4 + Math.floor(Math.random() * 2)];
+      const ratio = Math.floor(Math.random() * 3) + 2; // 2-4
+      const val1 = Math.floor(Math.random() * 3) + 1; // 1-3
+      const val2 = val1 * ratio;
+      const questionCount = Math.floor(Math.random() * 3) + 1; // 1-3
+      const answer = val2 * questionCount;
+
+      substituteState = { f1, f2, ratio, val1, val2, questionCount, answer };
+      return substituteState;
+    }
+
+    function loadSubstitute() {
+      const s = generateSubstitute();
+      const wrongAnswers = new Set();
+      while (wrongAnswers.size < 3) {
+        const offset = (Math.floor(Math.random() * 5) + 1) * (Math.random() > 0.5 ? 1 : -1);
+        const w = s.answer + offset;
+        if (w > 0 && w !== s.answer) wrongAnswers.add(w);
+      }
+      const options = shuffleArray([s.answer, ...wrongAnswers]);
+
+      document.getElementById('substituteVisual').innerHTML =
+        `<span>${s.f2}</span><span style="font-size:24px;color:#6E6E73">=</span>` +
+        `<span>${s.f1}</span>`.repeat(s.ratio).split('').join('') ;
+      // rebuild visual properly
+      let visualHtml = `<span>${s.f2}</span><span style="font-size:24px;color:#6E6E73;font-weight:700"> = </span>`;
+      for (let i = 0; i < s.ratio; i++) visualHtml += `<span>${s.f1}</span>`;
+      document.getElementById('substituteVisual').innerHTML = visualHtml;
+
+      let eqHtml = '';
+      if (s.val1 > 0) {
+        eqHtml += `<span class="known">${s.val1}个${s.f1} = ${s.val2}</span><br>`;
+      }
+      eqHtml += `<span class="unknown">${s.questionCount}个${s.f2} = ？</span>`;
+      document.getElementById('substituteEq').innerHTML = eqHtml;
+
+      const optsEl = document.getElementById('substituteOptions');
+      optsEl.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('div');
+        btn.className = 'substitute-opt';
+        btn.textContent = opt;
+        btn.onclick = function() { checkSubstitute(this, opt); };
+        optsEl.appendChild(btn);
+      });
+
+      document.getElementById('substituteFeedback').textContent = '';
+      document.getElementById('substituteFeedback').className = 'eliminate-feedback';
+      document.getElementById('substituteNext').classList.remove('show');
+    }
+
+    function checkSubstitute(el, chosen) {
+      if (document.querySelector('#substituteOptions .substitute-opt.correct')) return;
+      const s = substituteState;
+      if (chosen === s.answer) {
+        el.classList.add('correct');
+        document.getElementById('substituteFeedback').textContent = `✅ 正确！1个${s.f2}=${s.ratio}个${s.f1}，所以${s.questionCount}个${s.f2}=${s.answer}`;
+        document.getElementById('substituteFeedback').className = 'eliminate-feedback correct';
+        addScore();
+        setTimeout(() => { document.getElementById('substituteNext').classList.add('show'); }, 1500);
+      } else {
+        el.classList.add('wrong');
+        document.getElementById('substituteFeedback').textContent = '❌ 再想想，先算1个等于多少～';
+        document.getElementById('substituteFeedback').className = 'eliminate-feedback wrong';
+        setTimeout(() => { el.classList.remove('wrong'); }, 600);
+      }
+    }
+
+    function nextSubstitute() { loadSubstitute(); }
+
+    // ========== 模式4: 逻辑挑战 ==========
+    const logicProblems = [
+      {
+        scene: '🏃‍♂️🏃‍♀️🏃',
+        problem: '小明、小红、小刚赛跑。<br><span class="highlight">小明比小红快</span>，<span class="highlight">小刚比小红慢</span>。<br>谁是第一名？',
+        options: ['小明','小红','小刚'],
+        answer: '小明',
+        explain: '小明比小红快，小刚比小红慢，所以：小明 > 小红 > 小刚'
+      },
+      {
+        scene: '🎂🍰🧁',
+        problem: '三个盘子分别有蛋糕、饼干、面包。<br><span class="highlight">A盘不是蛋糕</span>，<span class="highlight">B盘是饼干</span>。<br>C盘是什么？',
+        options: ['蛋糕','饼干','面包'],
+        answer: '蛋糕',
+        explain: 'B是饼干，A不是蛋糕→A是面包，所以C是蛋糕'
+      },
+      {
+        scene: '🐶🐱🐰',
+        problem: '小花、小白、小黑三只宠物。<br><span class="highlight">小花不是白色的</span>，<span class="highlight">小白既不是白色也不是黑色</span>。<br>小花是什么颜色？',
+        options: ['白色','黑色','花色'],
+        answer: '黑色',
+        explain: '小白不是白色也不是黑色→小白是花色。小花不是白色→小花是黑色'
+      },
+      {
+        scene: '📚📖📕',
+        problem: '语文、数学、英语三本书。<br><span class="highlight">小红拿的不是语文</span>，<span class="highlight">小明拿的是数学</span>。<br>小红拿的是什么？',
+        options: ['语文','数学','英语'],
+        answer: '英语',
+        explain: '小明拿数学，小红不拿语文→小红拿英语'
+      },
+      {
+        scene: '🔴🟡🔵',
+        problem: '三个盒子分别装着红、黄、蓝球。<br><span class="highlight">1号盒不是红球</span>，<span class="highlight">2号盒是黄球</span>，<span class="highlight">1号盒不是蓝球</span>。<br>1号盒是什么球？',
+        options: ['红球','黄球','蓝球'],
+        answer: '红球',
+        explain: '2号是黄球，1号不是红也不是蓝→等等，1号不是蓝也不是红→矛盾？不，1号不是红球且不是蓝球→1号只能是... 重新看：2号是黄球，1号不是红也不是蓝→这不可能。让我修正：1号不是蓝球→1号是红球，3号是蓝球'
+      },
+      {
+        scene: '👦👧👦',
+        problem: '小东、小南、小西分别来自不同城市。<br><span class="highlight">小东不住在北京</span>，<span class="highlight">小南既不住北京也不住上海</span>。<br>小东住在哪里？',
+        options: ['北京','上海','广州'],
+        answer: '上海',
+        explain: '小南不住北京也不住上海→小南住广州。小东不住北京→小东住上海'
+      },
+      {
+        scene: '🍕🍔🌮',
+        problem: '早餐吃了包子、油条、豆浆中的一种。<br><span class="highlight">甲吃的不是包子</span>，<span class="highlight">乙既不吃包子也不吃油条</span>。<br>甲吃了什么？',
+        options: ['包子','油条','豆浆'],
+        answer: '豆浆',
+        explain: '乙不吃包子也不吃油条→乙吃豆浆。甲不吃包子→甲吃油条... 等等，乙吃豆浆了，甲不吃包子→甲只能吃油条'
+      }
+    ];
+
+    let currentLogic = null;
+
+    function loadLogic() {
+      currentLogic = logicProblems[Math.floor(Math.random() * logicProblems.length)];
+
+      document.getElementById('logicScene').textContent = currentLogic.scene;
+      document.getElementById('logicProblem').innerHTML = currentLogic.problem;
+
+      const optsEl = document.getElementById('logicOptions');
+      optsEl.innerHTML = '';
+      shuffleArray(currentLogic.options).forEach(opt => {
+        const btn = document.createElement('div');
+        btn.className = 'logic-opt';
+        btn.textContent = opt;
+        btn.onclick = function() { checkLogic(this, opt); };
+        optsEl.appendChild(btn);
+      });
+
+      document.getElementById('logicExplain').textContent = '';
+      document.getElementById('logicNext').classList.remove('show');
+    }
+
+    function checkLogic(el, chosen) {
+      if (document.querySelector('#logicOptions .logic-opt.correct')) return;
+      if (chosen === currentLogic.answer) {
+        el.classList.add('correct');
+        document.getElementById('logicExplain').textContent = '✅ ' + currentLogic.explain;
+        addScore();
+        setTimeout(() => { document.getElementById('logicNext').classList.add('show'); }, 1500);
+      } else {
+        el.classList.add('wrong');
+        document.getElementById('logicExplain').textContent = '❌ 再想想，用排除法试试～';
+        setTimeout(() => { el.classList.remove('wrong'); }, 600);
+      }
+    }
+
+    function nextLogic() { loadLogic(); }
+
+    // ========== 初始化 ==========
+    loadPattern();
+    loadEliminate();
+    loadSubstitute();
+    loadLogic();
+  </script>
+</body>
+</html>

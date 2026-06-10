@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>搭配中的学问</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #E65100; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 通用 */
+    .explore-area { text-align: center; padding: 20px 16px; }
+    .item-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
+    .item-card {
+      width: 72px; height: 72px; border-radius: 16px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; font-size: 32px; cursor: pointer;
+      border: 3px solid #E5E5EA; background: white; transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .item-card:active { transform: scale(0.92); }
+    .item-card.selected { border-color: #E65100; background: #FFF3E0; box-shadow: 0 0 0 3px rgba(230,81,0,0.2); }
+    .item-card .item-label { font-size: 11px; font-weight: 600; margin-top: 2px; color: #6E6E73; }
+    .result-box {
+      margin: 20px auto; padding: 16px; background: #FFF8E1; border-radius: 16px;
+      min-height: 60px; font-size: 18px; font-weight: 600; color: #E65100;
+      border: 2px dashed #FFB74D; max-width: 340px;
+    }
+    .result-box .combo-tag {
+      display: inline-block; background: white; border-radius: 12px; padding: 6px 14px;
+      margin: 4px; font-size: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .count-display {
+      font-size: 22px; font-weight: 700; color: #E65100; margin: 12px 0;
+    }
+    .hint-text { font-size: 14px; color: #9E9E9E; margin-top: 8px; }
+
+    /* 模式2: 连线 */
+    .connect-area { text-align: center; padding: 16px; }
+    .connect-container {
+      display: flex; justify-content: space-around; align-items: flex-start;
+      margin: 20px 0; position: relative; min-height: 260px;
+    }
+    .connect-col { display: flex; flex-direction: column; gap: 16px; z-index: 2; }
+    .connect-item {
+      width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 28px; cursor: pointer; border: 3px solid #E5E5EA;
+      background: white; transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .connect-item:active { transform: scale(0.9); }
+    .connect-item.active { border-color: #E65100; background: #FFF3E0; }
+    .connect-item.matched { border-color: #34C759; background: #E8F5E9; }
+    .connect-svg {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 1;
+    }
+    .connect-svg line { stroke: #E65100; stroke-width: 3; stroke-linecap: round; opacity: 0.6; }
+
+    /* 模式3: 数字排列 */
+    .digits-area { text-align: center; padding: 20px 16px; }
+    .digit-slots { display: flex; gap: 8px; justify-content: center; margin: 20px 0; }
+    .digit-slot {
+      width: 56px; height: 68px; border: 3px solid #E5E5EA; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; font-weight: 700; color: #E65100; background: white;
+      transition: all 0.2s ease;
+    }
+    .digit-slot.filled { border-color: #E65100; background: #FFF3E0; }
+    .digit-slot.locked { border-color: #34C759; background: #E8F5E9; color: #34C759; }
+    .digit-pool { display: flex; gap: 10px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+    .digit-btn {
+      width: 52px; height: 52px; border-radius: 50%; border: none;
+      font-size: 24px; font-weight: 700; cursor: pointer; color: white;
+      transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .digit-btn:active { transform: scale(0.9); }
+    .digit-btn.used { opacity: 0.3; pointer-events: none; }
+    .found-numbers {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 16px 0;
+    }
+    .found-num {
+      background: white; border-radius: 10px; padding: 6px 14px; font-size: 18px;
+      font-weight: 700; color: #E65100; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border: 2px solid #FFB74D;
+    }
+
+    /* 模式4: 闯关 */
+    .quiz-area { text-align: center; padding: 20px 16px; }
+    .quiz-question {
+      font-size: 18px; font-weight: 600; line-height: 1.6;
+      margin: 16px 0; padding: 16px; background: #FFF8E1; border-radius: 12px;
+      text-align: left;
+    }
+    .quiz-options { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+    .quiz-opt {
+      padding: 14px 20px; border: 2px solid #E5E5EA; border-radius: 14px;
+      font-size: 17px; font-weight: 600; cursor: pointer; background: white;
+      text-align: left; transition: all 0.2s ease;
+    }
+    .quiz-opt:active { transform: scale(0.97); }
+    .quiz-opt.correct { border-color: #34C759; background: #E8F5E9; color: #34C759; }
+    .quiz-opt.wrong { border-color: #FF3B30; background: #FFEBEE; color: #FF3B30; }
+    .quiz-feedback { font-size: 20px; font-weight: 700; margin: 12px 0; min-height: 32px; }
+
+    /* 分数 */
+    .score-display { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px; font-size: 18px; font-weight: 600; }
+    .score-stars { font-size: 24px; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <button class="nav-btn nav-back" onclick="location.href='../../index.html'" aria-label="返回">←</button>
+      <span class="nav-title">🧩 搭配中的学问</span>
+      <div style="width:56px"></div>
+    </nav>
+
+    <div class="score-display">
+      <span>⭐ 得分</span>
+      <span id="total-score" style="color:#E65100">0</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="outfit">👔 搭配衣服</button>
+      <button class="mode-tab" data-mode="connect">🔗 连连看</button>
+      <button class="mode-tab" data-mode="digits">🔢 组数字</button>
+      <button class="mode-tab" data-mode="quiz">🏆 闯关</button>
+    </div>
+
+    <!-- 模式1: 搭配衣服 -->
+    <div class="mode-content active" id="mode-outfit">
+      <div class="card">
+        <p class="page-subtitle">选一件上衣和一件下装，看看有多少种搭配</p>
+        <div class="explore-area">
+          <div style="font-size:15px;font-weight:600;color:#6E6E73;margin-bottom:8px;">👆 选一件上衣</div>
+          <div class="item-row" id="tops-row"></div>
+          <div style="font-size:15px;font-weight:600;color:#6E6E73;margin:12px 0 8px;">👆 选一件下装</div>
+          <div class="item-row" id="bottoms-row"></div>
+          <div class="result-box" id="outfit-result">
+            <span class="hint-text">各选一件，看看能搭配出多少种？</span>
+          </div>
+          <div class="count-display" id="outfit-count"></div>
+          <div class="action-bar">
+            <button class="btn btn-primary" id="btn-outfit-next">🎲 换一组</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 连连看 -->
+    <div class="mode-content" id="mode-connect">
+      <div class="card">
+        <p class="page-subtitle">点击左右两项连线，找出所有搭配</p>
+        <div class="connect-area">
+          <div class="connect-container" id="connect-container">
+            <svg class="connect-svg" id="connect-svg"></svg>
+            <div class="connect-col" id="connect-left"></div>
+            <div class="connect-col" id="connect-right"></div>
+          </div>
+          <div class="count-display" id="connect-count">已连 0 / ? 条</div>
+          <div class="quiz-feedback" id="connect-feedback"></div>
+          <div class="action-bar">
+            <button class="btn btn-primary" id="btn-connect-next">🎲 换一组</button>
+            <button class="btn btn-warning" id="btn-connect-clear">🗑️ 清除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 组数字 -->
+    <div class="mode-content" id="mode-digits">
+      <div class="card">
+        <p class="page-subtitle">用给出的数字卡片，组成不同的数</p>
+        <div class="digits-area">
+          <div style="font-size:16px;font-weight:600;color:#6E6E73;margin-bottom:8px;" id="digits-prompt"></div>
+          <div class="digit-slots" id="digit-slots"></div>
+          <div class="digit-pool" id="digit-pool"></div>
+          <div class="action-bar" style="margin-bottom:12px;">
+            <button class="btn btn-primary" id="btn-digit-submit">✅ 确认</button>
+            <button class="btn btn-warning" id="btn-digit-clear">🔄 重选</button>
+          </div>
+          <div class="found-numbers" id="found-numbers"></div>
+          <div class="count-display" id="digits-count"></div>
+          <div class="quiz-feedback" id="digits-feedback"></div>
+          <div class="action-bar">
+            <button class="btn btn-primary" id="btn-digits-next">🎲 换一题</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 闯关 -->
+    <div class="mode-content" id="mode-quiz">
+      <div class="card">
+        <p class="page-subtitle">搭配问题闯关，答对得分！</p>
+        <div class="quiz-area">
+          <div class="quiz-question" id="quiz-question"></div>
+          <div class="quiz-options" id="quiz-options"></div>
+          <div class="quiz-feedback" id="quiz-feedback"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+  (function() {
+    'use strict';
+
+    let totalScore = 0;
+    const starsEl = document.getElementById('stars-display');
+    const scoreEl = document.getElementById('total-score');
+
+    function addScore(n) {
+      totalScore += n;
+      scoreEl.textContent = totalScore;
+      const stars = Math.min(Math.floor(totalScore / 10), 10);
+      starsEl.textContent = '⭐'.repeat(stars);
+    }
+
+    // ===== Tab 切换 =====
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('mode-' + this.dataset.mode).classList.add('active');
+      });
+    });
+
+    // ===== 数据 =====
+    const TOPS = [
+      { emoji: '👕', name: 'T恤' }, { emoji: '👔', name: '衬衫' },
+      { emoji: '🧥', name: '外套' }, { emoji: '👚', name: '毛衣' },
+      { emoji: '🦺', name: '马甲' }, { emoji: '👘', name: '卫衣' }
+    ];
+    const BOTTOMS = [
+      { emoji: '👖', name: '牛仔裤' }, { emoji: '🩳', name: '短裤' },
+      { emoji: '👗', name: '裙子' }, { emoji: '🩲', name: '运动裤' },
+      { emoji: '🧦', name: '打底裤' }, { emoji: '👔', name: '西裤' }
+    ];
+    const CONNECT_PAIRS = [
+      { left: [{e:'🍎',n:'苹果'},{e:'🍌',n:'香蕉'},{e:'🍊',n:'橘子'}], right: [{e:'🥛',n:'牛奶'},{e:'🧃',n:'果汁'}] },
+      { left: [{e:'🐱',n:'小猫'},{e:'🐶',n:'小狗'},{e:'🐰',n:'兔子'}], right: [{e:'🏠',n:'房子'},{e:'🌳',n:'大树'}] },
+      { left: [{e:'🔴',n:'红色'},{e:'🔵',n:'蓝色'},{e:'🟢',n:'绿色'}], right: [{e:'⭕',n:'圆形'},{e:'🔺',n:'三角'}] },
+      { left: [{e:'📕',n:'语文'},{e:'📗',n:'数学'},{e:'📘',n:'英语'}], right: [{e:'⚽',n:'足球'},{e:'🏀',n:'篮球'}] },
+      { left: [{e:'🍞',n:'面包'},{e:'🥚',n:'鸡蛋'},{e:'🥪',n:'三明治'}], right: [{e:'☕',n:'牛奶'},{e:'🧃',n:'果汁'},{e:'🍵',n:'豆浆'}] }
+    ];
+    const DIGIT_PROBLEMS = [
+      { digits: [1, 2], slots: 2, desc: '用 1、2 能组成哪些不同的两位数？' },
+      { digits: [1, 2, 3], slots: 2, desc: '用 1、2、3 能组成哪些不同的两位数？（数字不重复）' },
+      { digits: [0, 1, 2], slots: 2, desc: '用 0、1、2 能组成哪些不同的两位数？（十位不能是0）' },
+      { digits: [1, 2, 3], slots: 3, desc: '用 1、2、3 能组成哪些不同的三位数？' },
+      { digits: [0, 1, 2, 3], slots: 2, desc: '用 0、1、2、3 能组成哪些不同的两位数？（十位不能是0）' }
+    ];
+
+    // ===== 模式1: 搭配衣服 =====
+    let outfitState = { tops: [], bottoms: [], selTop: -1, selBot: -1, found: new Set() };
+
+    function initOutfit() {
+      const topCount = 2 + Math.floor(Math.random() * 2); // 2-3
+      const botCount = 2 + Math.floor(Math.random() * 2);
+      const shuffledTops = [...TOPS].sort(() => Math.random() - 0.5).slice(0, topCount);
+      const shuffledBots = [...BOTTOMS].sort(() => Math.random() - 0.5).slice(0, botCount);
+      outfitState = { tops: shuffledTops, bottoms: shuffledBots, selTop: -1, selBot: -1, found: new Set() };
+      renderOutfit();
+    }
+
+    function renderOutfit() {
+      const topsRow = document.getElementById('tops-row');
+      const botsRow = document.getElementById('bottoms-row');
+      topsRow.innerHTML = '';
+      botsRow.innerHTML = '';
+      outfitState.tops.forEach((t, i) => {
+        const div = document.createElement('div');
+        div.className = 'item-card' + (i === outfitState.selTop ? ' selected' : '');
+        div.innerHTML = `<span>${t.emoji}</span><span class="item-label">${t.name}</span>`;
+        div.addEventListener('click', () => selectOutfitTop(i));
+        topsRow.appendChild(div);
+      });
+      outfitState.bottoms.forEach((b, i) => {
+        const div = document.createElement('div');
+        div.className = 'item-card' + (i === outfitState.selBot ? ' selected' : '');
+        div.innerHTML = `<span>${b.emoji}</span><span class="item-label">${b.name}</span>`;
+        div.addEventListener('click', () => selectOutfitBot(i));
+        botsRow.appendChild(div);
+      });
+      updateOutfitResult();
+    }
+
+    function selectOutfitTop(i) {
+      outfitState.selTop = i;
+      renderOutfit();
+      tryAddOutfit();
+    }
+    function selectOutfitBot(i) {
+      outfitState.selBot = i;
+      renderOutfit();
+      tryAddOutfit();
+    }
+    function tryAddOutfit() {
+      if (outfitState.selTop >= 0 && outfitState.selBot >= 0) {
+        const key = outfitState.selTop + '-' + outfitState.selBot;
+        if (!outfitState.found.has(key)) {
+          outfitState.found.add(key);
+          addScore(2);
+        }
+        updateOutfitResult();
+        // Auto reset selection after short delay
+        setTimeout(() => {
+          outfitState.selTop = -1;
+          outfitState.selBot = -1;
+          renderOutfit();
+        }, 600);
+      }
+    }
+    function updateOutfitResult() {
+      const box = document.getElementById('outfit-result');
+      const total = outfitState.tops.length * outfitState.bottoms.length;
+      if (outfitState.found.size === 0) {
+        box.innerHTML = '<span class="hint-text">各选一件，看看能搭配出多少种？</span>';
+      } else {
+        let html = '';
+        outfitState.found.forEach(key => {
+          const [ti, bi] = key.split('-').map(Number);
+          html += `<span class="combo-tag">${outfitState.tops[ti].emoji}+${outfitState.bottoms[bi].emoji}</span>`;
+        });
+        box.innerHTML = html;
+      }
+      const countEl = document.getElementById('outfit-count');
+      countEl.textContent = `已发现 ${outfitState.found.size} / ${total} 种搭配`;
+      if (outfitState.found.size === total && total > 0) {
+        countEl.textContent += ' 🎉 全部找到！';
+        countEl.innerHTML += `<br><span style="font-size:15px;color:#34C759;">${outfitState.tops.length} × ${outfitState.bottoms.length} = ${total}</span>`;
+      }
+    }
+
+    document.getElementById('btn-outfit-next').addEventListener('click', initOutfit);
+
+    // ===== 模式2: 连连看 =====
+    let connState = { pairs: [], leftSel: -1, lines: [], total: 0 };
+
+    function initConnect() {
+      const pIdx = Math.floor(Math.random() * CONNECT_PAIRS.length);
+      const p = CONNECT_PAIRS[pIdx];
+      connState = { pairs: p, leftSel: -1, lines: [], total: p.left.length * p.right.length };
+      renderConnect();
+    }
+
+    function renderConnect() {
+      const leftCol = document.getElementById('connect-left');
+      const rightCol = document.getElementById('connect-right');
+      leftCol.innerHTML = '';
+      rightCol.innerHTML = '';
+      connState.pairs.left.forEach((item, i) => {
+        const div = document.createElement('div');
+        div.className = 'connect-item';
+        div.dataset.side = 'left';
+        div.dataset.idx = i;
+        div.innerHTML = `<span>${item.e}</span>`;
+        div.title = item.n;
+        div.addEventListener('click', () => onConnectClick('left', i, div));
+        leftCol.appendChild(div);
+      });
+      connState.pairs.right.forEach((item, i) => {
+        const div = document.createElement('div');
+        div.className = 'connect-item';
+        div.dataset.side = 'right';
+        div.dataset.idx = i;
+        div.innerHTML = `<span>${item.e}</span>`;
+        div.title = item.n;
+        div.addEventListener('click', () => onConnectClick('right', i, div));
+        rightCol.appendChild(div);
+      });
+      document.getElementById('connect-count').textContent = `已连 ${connState.lines.length} / ${connState.total} 条`;
+      document.getElementById('connect-feedback').textContent = '';
+      drawConnectLines();
+    }
+
+    function onConnectClick(side, idx, el) {
+      if (side === 'left') {
+        document.querySelectorAll('#connect-left .connect-item').forEach(e => e.classList.remove('active'));
+        el.classList.add('active');
+        connState.leftSel = idx;
+      } else if (connState.leftSel >= 0) {
+        // Check if line already exists
+        const exists = connState.lines.some(l => l.l === connState.leftSel && l.r === idx);
+        if (!exists) {
+          connState.lines.push({ l: connState.leftSel, r: idx });
+          addScore(2);
+          const fb = document.getElementById('connect-feedback');
+          fb.textContent = '✅ 连上了！';
+          fb.style.color = '#34C759';
+          setTimeout(() => { fb.textContent = ''; }, 800);
+        }
+        document.querySelectorAll('#connect-left .connect-item').forEach(e => e.classList.remove('active'));
+        connState.leftSel = -1;
+        document.getElementById('connect-count').textContent = `已连 ${connState.lines.length} / ${connState.total} 条`;
+        if (connState.lines.length === connState.total) {
+          const fb = document.getElementById('connect-feedback');
+          fb.textContent = '🎉 全部连完！';
+          fb.style.color = '#E65100';
+        }
+        drawConnectLines();
+      }
+    }
+
+    function drawConnectLines() {
+      const svg = document.getElementById('connect-svg');
+      const container = document.getElementById('connect-container');
+      svg.innerHTML = '';
+      const cRect = container.getBoundingClientRect();
+      const leftItems = document.querySelectorAll('#connect-left .connect-item');
+      const rightItems = document.querySelectorAll('#connect-right .connect-item');
+      connState.lines.forEach(line => {
+        const lEl = leftItems[line.l];
+        const rEl = rightItems[line.r];
+        if (!lEl || !rEl) return;
+        const lRect = lEl.getBoundingClientRect();
+        const rRect = rEl.getBoundingClientRect();
+        const x1 = lRect.left + lRect.width - cRect.left;
+        const y1 = lRect.top + lRect.height / 2 - cRect.top;
+        const x2 = rRect.left - cRect.left;
+        const y2 = rRect.top + rRect.height / 2 - cRect.top;
+        const svgLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        svgLine.setAttribute('x1', x1);
+        svgLine.setAttribute('y1', y1);
+        svgLine.setAttribute('x2', x2);
+        svgLine.setAttribute('y2', y2);
+        svg.appendChild(svgLine);
+      });
+    }
+
+    document.getElementById('btn-connect-next').addEventListener('click', initConnect);
+    document.getElementById('btn-connect-clear').addEventListener('click', () => {
+      connState.lines = [];
+      document.getElementById('connect-count').textContent = `已连 0 / ${connState.total} 条`;
+      document.getElementById('connect-feedback').textContent = '';
+      drawConnectLines();
+    });
+
+    // ===== 模式3: 组数字 =====
+    let digitState = { problem: null, current: [], found: new Set() };
+
+    function initDigits() {
+      const pIdx = Math.floor(Math.random() * DIGIT_PROBLEMS.length);
+      digitState = { problem: DIGIT_PROBLEMS[pIdx], current: [], found: new Set() };
+      renderDigits();
+    }
+
+    function renderDigits() {
+      const p = digitState.problem;
+      document.getElementById('digits-prompt').textContent = p.desc;
+      const slotsDiv = document.getElementById('digit-slots');
+      slotsDiv.innerHTML = '';
+      for (let i = 0; i < p.slots; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'digit-slot';
+        if (digitState.current[i] !== undefined) {
+          slot.textContent = digitState.current[i];
+          slot.classList.add('filled');
+        }
+        slotsDiv.appendChild(slot);
+      }
+      const pool = document.getElementById('digit-pool');
+      pool.innerHTML = '';
+      const colors = ['#E65100', '#FF9800', '#4CAF50', '#2196F3', '#9C27B0', '#F44336'];
+      p.digits.forEach((d, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'digit-btn';
+        btn.textContent = d;
+        btn.style.background = colors[i % colors.length];
+        if (digitState.current.filter(x => x === d && digitState.current.indexOf(x) === i).length > 0) {
+          // Simple used check
+        }
+        btn.addEventListener('click', () => addDigit(d));
+        pool.appendChild(btn);
+      });
+      // Update found display
+      const foundDiv = document.getElementById('found-numbers');
+      foundDiv.innerHTML = '';
+      digitState.found.forEach(num => {
+        const span = document.createElement('span');
+        span.className = 'found-num';
+        span.textContent = num;
+        foundDiv.appendChild(span);
+      });
+      document.getElementById('digits-count').textContent = `已找到 ${digitState.found.size} 个`;
+      document.getElementById('digits-feedback').textContent = '';
+    }
+
+    function addDigit(d) {
+      if (digitState.current.length < digitState.problem.slots) {
+        digitState.current.push(d);
+        renderDigits();
+      }
+    }
+
+    document.getElementById('btn-digit-clear').addEventListener('click', () => {
+      digitState.current = [];
+      renderDigits();
+    });
+
+    document.getElementById('btn-digit-submit').addEventListener('click', () => {
+      const p = digitState.problem;
+      if (digitState.current.length !== p.slots) {
+        document.getElementById('digits-feedback').textContent = '⚠️ 还没选满哦！';
+        document.getElementById('digits-feedback').style.color = '#FF9500';
+        return;
+      }
+      const num = parseInt(digitState.current.join(''));
+      // Validate: no leading zero for multi-digit
+      if (p.slots > 1 && digitState.current[0] === 0) {
+        document.getElementById('digits-feedback').textContent = '⚠️ 最高位不能是0哦！';
+        document.getElementById('digits-feedback').style.color = '#FF3B30';
+        digitState.current = [];
+        renderDigits();
+        return;
+      }
+      // Check digits used are from the pool (no repeats beyond availability)
+      const usedCounts = {};
+      digitState.current.forEach(d => { usedCounts[d] = (usedCounts[d] || 0) + 1; });
+      const poolCounts = {};
+      p.digits.forEach(d => { poolCounts[d] = (poolCounts[d] || 0) + 1; });
+      let valid = true;
+      for (const d in usedCounts) {
+        if ((usedCounts[d] || 0) > (poolCounts[d] || 0)) { valid = false; break; }
+      }
+      if (!valid) {
+        document.getElementById('digits-feedback').textContent = '⚠️ 每张卡片只能用一次！';
+        document.getElementById('digits-feedback').style.color = '#FF3B30';
+        digitState.current = [];
+        renderDigits();
+        return;
+      }
+      if (digitState.found.has(num)) {
+        document.getElementById('digits-feedback').textContent = '🔄 这个已经找到了，试试别的！';
+        document.getElementById('digits-feedback').style.color = '#FF9500';
+        digitState.current = [];
+        renderDigits();
+        return;
+      }
+      digitState.found.add(num);
+      addScore(3);
+      document.getElementById('digits-feedback').textContent = '✅ 正确！';
+      document.getElementById('digits-feedback').style.color = '#34C759';
+      digitState.current = [];
+      // Calculate total possible
+      const totalPossible = calcTotalPermutations(p);
+      document.getElementById('digits-count').textContent = `已找到 ${digitState.found.size} / ${totalPossible} 个`;
+      if (digitState.found.size === totalPossible) {
+        document.getElementById('digits-feedback').textContent = '🎉 全部找到！太厉害了！';
+      }
+      renderDigits();
+    });
+
+    function calcTotalPermutations(p) {
+      // Count valid permutations
+      let count = 0;
+      const perms = getPermutations(p.digits, p.slots);
+      perms.forEach(perm => {
+        if (p.slots > 1 && perm[0] === 0) return;
+        count++;
+      });
+      return count;
+    }
+
+    function getPermutations(arr, k) {
+      if (k === 1) return arr.map(d => [d]);
+      const result = [];
+      arr.forEach((d, i) => {
+        const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
+        const subPerms = getPermutations(rest, k - 1);
+        subPerms.forEach(sp => {
+          // Check no duplicate usage
+          result.push([d, ...sp]);
+        });
+      });
+      // Deduplicate
+      const seen = new Set();
+      return result.filter(perm => {
+        const key = perm.join(',');
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    document.getElementById('btn-digits-next').addEventListener('click', initDigits);
+
+    // ===== 模式4: 闯关 =====
+    let quizState = { answer: 0, answered: false };
+
+    function generateQuiz() {
+      const templates = [
+        () => {
+          const tops = 2 + Math.floor(Math.random() * 3);
+          const bots = 2 + Math.floor(Math.random() * 3);
+          const answer = tops * bots;
+          const wrong = new Set();
+          while (wrong.size < 3) {
+            const w = answer + (Math.floor(Math.random() * 5) - 2);
+            if (w !== answer && w > 0) wrong.add(w);
+          }
+          const opts = shuffle([answer, ...wrong]);
+          return {
+            q: `小明有 ${tops} 件上衣和 ${bots} 件裤子，每件上衣都可以搭配每件裤子。一共有多少种不同的穿法？`,
+            opts: opts.map(String),
+            answer: String(answer)
+          };
+        },
+        () => {
+          const n = 2 + Math.floor(Math.random() * 3);
+          const items = ['苹果', '香蕉', '橘子', '葡萄', '草莓'].slice(0, n);
+          const drinks = 2 + Math.floor(Math.random() * 2);
+          const drinkItems = ['牛奶', '果汁', '豆浆', '可乐'].slice(0, drinks);
+          const answer = n * drinks;
+          const wrong = new Set();
+          while (wrong.size < 3) {
+            const w = answer + (Math.floor(Math.random() * 5) - 2);
+            if (w !== answer && w > 0) wrong.add(w);
+          }
+          const opts = shuffle([answer, ...wrong]);
+          return {
+            q: `有 ${n} 种水果（${items.join('、')}）和 ${drinks} 种饮料（${drinkItems.join('、')}），每种水果搭配一种饮料，有多少种搭配方法？`,
+            opts: opts.map(String),
+            answer: String(answer)
+          };
+        },
+        () => {
+          const digits = [1, 2, 3].slice(0, 2 + Math.floor(Math.random() * 2));
+          const slots = 2;
+          const perms = getPermutations(digits, slots).filter(p => p[0] !== 0);
+          const answer = perms.length;
+          const wrong = new Set();
+          while (wrong.size < 3) {
+            const w = answer + (Math.floor(Math.random() * 4) - 2);
+            if (w !== answer && w > 0) wrong.add(w);
+          }
+          const opts = shuffle([answer, ...wrong]);
+          return {
+            q: `用数字 ${digits.join('、')} 可以组成多少个没有重复数字的两位数？`,
+            opts: opts.map(String),
+            answer: String(answer)
+          };
+        },
+        () => {
+          const paths = [
+            { from: '家', to: '学校', mid: '公园', a: 2 + Math.floor(Math.random() * 2), b: 2 + Math.floor(Math.random() * 2) },
+            { from: '家', to: '图书馆', mid: '超市', a: 2 + Math.floor(Math.random() * 2), b: 2 + Math.floor(Math.random() * 2) },
+          ];
+          const p = paths[Math.floor(Math.random() * paths.length)];
+          const answer = p.a * p.b;
+          const wrong = new Set();
+          while (wrong.size < 3) {
+            const w = answer + (Math.floor(Math.random() * 5) - 2);
+            if (w !== answer && w > 0) wrong.add(w);
+          }
+          const opts = shuffle([answer, ...wrong]);
+          return {
+            q: `从${p.from}到${p.mid}有 ${p.a} 条路，从${p.mid}到${p.to}有 ${p.b} 条路。从${p.from}经过${p.mid}到${p.to}，共有多少种走法？`,
+            opts: opts.map(String),
+            answer: String(answer)
+          };
+        },
+        () => {
+          const people = 2 + Math.floor(Math.random() * 3);
+          const names = ['小明', '小红', '小刚', '小丽', '小强'].slice(0, people);
+          // Pick 2 as leader and vice
+          const answer = people * (people - 1);
+          const wrong = new Set();
+          while (wrong.size < 3) {
+            const w = answer + (Math.floor(Math.random() * 5) - 2);
+            if (w !== answer && w > 0) wrong.add(w);
+          }
+          const opts = shuffle([answer, ...wrong]);
+          return {
+            q: `${people} 个人（${names.join('、')}）中选 1 个组长和 1 个副组长（不能是同一个人），有多少种选法？`,
+            opts: opts.map(String),
+            answer: String(answer)
+          };
+        }
+      ];
+      return templates[Math.floor(Math.random() * templates.length)]();
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function renderQuiz() {
+      const quiz = generateQuiz();
+      quizState = { answer: quiz.answer, answered: false };
+      document.getElementById('quiz-question').textContent = quiz.q;
+      const optsDiv = document.getElementById('quiz-options');
+      optsDiv.innerHTML = '';
+      quiz.opts.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => {
+          if (quizState.answered) return;
+          quizState.answered = true;
+          if (opt === quizState.answer) {
+            btn.classList.add('correct');
+            document.getElementById('quiz-feedback').textContent = '✅ 答对啦！+5分';
+            document.getElementById('quiz-feedback').style.color = '#34C759';
+            addScore(5);
+          } else {
+            btn.classList.add('wrong');
+            document.getElementById('quiz-feedback').textContent = `❌ 答错啦，正确答案是 ${quizState.answer}`;
+            document.getElementById('quiz-feedback').style.color = '#FF3B30';
+            // Highlight correct
+            optsDiv.querySelectorAll('.quiz-opt').forEach(b => {
+              if (b.textContent === quizState.answer) b.classList.add('correct');
+            });
+          }
+          setTimeout(renderQuiz, 1500);
+        });
+        optsDiv.appendChild(btn);
+      });
+      document.getElementById('quiz-feedback').textContent = '';
+    }
+
+    // ===== 初始化 =====
+    initOutfit();
+    initConnect();
+    initDigits();
+    renderQuiz();
+
+    window.addEventListener('resize', drawConnectLines);
+  })();
+  </script>
+</body>
+</html>

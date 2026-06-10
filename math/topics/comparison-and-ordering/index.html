@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>比大小与排序</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #4A90D9; color: white; }
+
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* === 概念模式 === */
+    .concept-area { text-align: center; padding: 24px 16px; }
+    .concept-title { font-size: 20px; font-weight: 700; color: #1D1D1F; margin-bottom: 16px; }
+    .concept-visual {
+      display: flex; justify-content: center; align-items: center; gap: 24px;
+      margin: 24px 0; flex-wrap: wrap;
+    }
+    .number-box {
+      background: white; border-radius: 16px; padding: 24px 32px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08); min-width: 100px;
+      border-left: 4px solid #4A90D9;
+    }
+    .number-box .num { font-size: 48px; font-weight: 800; color: #4A90D9; }
+    .number-box .label { font-size: 14px; color: #6E6E73; margin-top: 8px; }
+    .symbol-box {
+      font-size: 56px; font-weight: 800; color: #FF6B6B;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .concept-explain {
+      background: rgba(74,144,217,0.08); border-radius: 12px; padding: 16px;
+      margin: 20px 0; font-size: 16px; line-height: 1.6; color: #1D1D1F;
+    }
+    .symbol-intro {
+      display: flex; justify-content: center; gap: 16px; margin: 20px 0; flex-wrap: wrap;
+    }
+    .symbol-card {
+      background: white; border-radius: 12px; padding: 16px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center;
+      border-left: 4px solid #FF6B6B;
+    }
+    .symbol-card .sym { font-size: 36px; font-weight: 800; color: #FF6B6B; }
+    .symbol-card .meaning { font-size: 14px; color: #6E6E73; margin-top: 4px; }
+    .symbol-card .example { font-size: 13px; color: #4A90D9; margin-top: 8px; font-weight: 600; }
+
+    /* === 比大小模式 === */
+    .compare-area { text-align: center; padding: 24px 16px; }
+    .compare-question {
+      font-size: 18px; font-weight: 600; color: #1D1D1F; margin-bottom: 20px;
+    }
+    .compare-numbers {
+      display: flex; justify-content: center; align-items: center; gap: 20px;
+      margin: 24px 0; flex-wrap: wrap;
+    }
+    .compare-num {
+      background: white; border-radius: 16px; padding: 20px 28px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08); min-width: 80px;
+      border-left: 4px solid #4A90D9;
+    }
+    .compare-num .num { font-size: 40px; font-weight: 800; color: #4A90D9; }
+    .compare-symbol-btns {
+      display: flex; justify-content: center; gap: 12px; margin: 24px 0; flex-wrap: wrap;
+    }
+    .symbol-btn {
+      width: 80px; height: 80px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 36px; font-weight: 800; cursor: pointer;
+      transition: all 0.2s ease; color: #FF6B6B;
+    }
+    .symbol-btn:active { transform: scale(0.95); }
+    .symbol-btn.correct {
+      background: #4CAF50; border-color: #4CAF50; color: white;
+      animation: correctPulse 0.5s ease;
+    }
+    .symbol-btn.wrong {
+      background: #FF5252; border-color: #FF5252; color: white;
+      animation: shake 0.5s ease;
+    }
+    @keyframes correctPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+    .feedback-msg {
+      font-size: 18px; font-weight: 700; margin-top: 16px; min-height: 28px;
+    }
+    .feedback-msg.correct { color: #4CAF50; }
+    .feedback-msg.wrong { color: #FF5252; }
+
+    /* === 排序模式 === */
+    .sort-area { padding: 24px 16px; }
+    .sort-question {
+      text-align: center; font-size: 18px; font-weight: 600; color: #1D1D1F; margin-bottom: 20px;
+    }
+    .sort-instruction {
+      text-align: center; font-size: 16px; color: #6E6E73; margin-bottom: 16px;
+    }
+    .sort-container {
+      display: flex; justify-content: center; gap: 12px; margin: 20px 0;
+      flex-wrap: wrap; min-height: 100px;
+    }
+    .sort-num {
+      background: white; border-radius: 12px; padding: 16px 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); min-width: 60px;
+      border-left: 4px solid #4A90D9; cursor: pointer;
+      transition: all 0.2s ease; font-size: 24px; font-weight: 700; color: #4A90D9;
+    }
+    .sort-num.selected {
+      background: #4A90D9; color: white; transform: translateY(-8px);
+      box-shadow: 0 8px 20px rgba(74,144,217,0.3);
+    }
+    .sort-num.placed {
+      opacity: 0.4; pointer-events: none;
+    }
+    .sort-answer {
+      display: flex; justify-content: center; gap: 8px; margin: 20px 0;
+      flex-wrap: wrap; min-height: 80px; align-items: center;
+    }
+    .answer-slot {
+      background: rgba(74,144,217,0.1); border: 2px dashed #4A90D9;
+      border-radius: 12px; padding: 12px 16px; min-width: 50px;
+      font-size: 20px; font-weight: 700; color: #4A90D9; text-align: center;
+    }
+    .answer-slot.filled {
+      background: #4A90D9; color: white; border-style: solid;
+    }
+    .sort-controls {
+      display: flex; justify-content: center; gap: 12px; margin: 20px 0;
+    }
+    .control-btn {
+      padding: 12px 24px; border: none; border-radius: 12px;
+      font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .control-btn.primary { background: #4A90D9; color: white; }
+    .control-btn.secondary { background: #E5E5EA; color: #1D1D1F; }
+    .control-btn:active { transform: scale(0.95); }
+
+    /* === 挑战模式 === */
+    .challenge-area { text-align: center; padding: 24px 16px; }
+    .challenge-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px;
+    }
+    .challenge-score {
+      font-size: 18px; font-weight: 700; color: #4A90D9;
+    }
+    .challenge-progress {
+      font-size: 16px; color: #6E6E73;
+    }
+    .challenge-question {
+      background: white; border-radius: 16px; padding: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin: 20px 0;
+    }
+    .challenge-type {
+      font-size: 14px; color: #6E6E73; margin-bottom: 12px;
+    }
+    .challenge-content {
+      font-size: 24px; font-weight: 700; color: #1D1D1F; margin: 16px 0;
+    }
+    .challenge-options {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 20px 0;
+    }
+    .option-btn {
+      padding: 16px; border: 2px solid #E5E5EA; background: white;
+      border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .option-btn:active { transform: scale(0.95); }
+    .option-btn.correct {
+      background: #4CAF50; border-color: #4CAF50; color: white;
+    }
+    .option-btn.wrong {
+      background: #FF5252; border-color: #FF5252; color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <!-- 导航栏 -->
+    <div class="nav-bar">
+      <a href="../../index.html" class="nav-back">← 返回</a>
+      <div class="nav-title">比大小与排序</div>
+      <div class="nav-spacer"></div>
+    </div>
+
+    <!-- 模式切换 -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="concept">💡 认识符号</button>
+      <button class="mode-tab" data-mode="compare">⚖️ 比大小</button>
+      <button class="mode-tab" data-mode="sort">📊 排序</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- 概念模式 -->
+    <div class="mode-content active" data-mode="concept">
+      <div class="concept-area">
+        <div class="concept-title">认识大于、小于和等于</div>
+        
+        <div class="symbol-intro">
+          <div class="symbol-card">
+            <div class="sym">&gt;</div>
+            <div class="meaning">大于</div>
+            <div class="example">5 &gt; 3</div>
+          </div>
+          <div class="symbol-card">
+            <div class="sym">&lt;</div>
+            <div class="meaning">小于</div>
+            <div class="example">2 &lt; 7</div>
+          </div>
+          <div class="symbol-card">
+            <div class="sym">=</div>
+            <div class="meaning">等于</div>
+            <div class="example">4 = 4</div>
+          </div>
+        </div>
+
+        <div class="concept-visual">
+          <div class="number-box">
+            <div class="num">8</div>
+            <div class="label">左边</div>
+          </div>
+          <div class="symbol-box">&gt;</div>
+          <div class="number-box">
+            <div class="num">3</div>
+            <div class="label">右边</div>
+          </div>
+        </div>
+
+        <div class="concept-explain">
+          <strong>记忆小窍门：</strong><br>
+          大口朝左是大于（&gt;），大口朝右是小于（&lt;），<br>
+          两条横线是等于（=）。<br><br>
+          就像鳄鱼嘴巴，总是朝着大的数张开！
+        </div>
+
+        <div class="concept-visual">
+          <div class="number-box">
+            <div class="num">6</div>
+            <div class="label">左边</div>
+          </div>
+          <div class="symbol-box">&lt;</div>
+          <div class="number-box">
+            <div class="num">9</div>
+            <div class="label">右边</div>
+          </div>
+        </div>
+
+        <div class="concept-explain">
+          <strong>比大小方法：</strong><br>
+          1️⃣ 先看位数，位数多的数大<br>
+          2️⃣ 位数相同，从最高位比起<br>
+          3️⃣ 最高位相同，比下一位<br>
+          4️⃣ 一直比到分出大小为止
+        </div>
+      </div>
+    </div>
+
+    <!-- 比大小模式 -->
+    <div class="mode-content" data-mode="compare">
+      <div class="compare-area">
+        <div class="compare-question">在○里填上 &gt;、&lt; 或 =</div>
+        
+        <div class="compare-numbers">
+          <div class="compare-num">
+            <div class="num" id="compare-left">5</div>
+          </div>
+          <div style="font-size: 36px; font-weight: 800; color: #6E6E73;">○</div>
+          <div class="compare-num">
+            <div class="num" id="compare-right">3</div>
+          </div>
+        </div>
+
+        <div class="compare-symbol-btns">
+          <button class="symbol-btn" data-symbol=">">&gt;</button>
+          <button class="symbol-btn" data-symbol="<">&lt;</button>
+          <button class="symbol-btn" data-symbol="=">=</button>
+        </div>
+
+        <div class="feedback-msg" id="compare-feedback"></div>
+
+        <div style="text-align: center; margin-top: 20px;">
+          <button class="control-btn primary" id="next-compare">下一题 →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 排序模式 -->
+    <div class="mode-content" data-mode="sort">
+      <div class="sort-area">
+        <div class="sort-question" id="sort-question">把下面的数从小到大排列</div>
+        <div class="sort-instruction">点击数字，按顺序放入下方框中</div>
+
+        <div class="sort-container" id="sort-numbers"></div>
+
+        <div class="sort-answer" id="sort-answer"></div>
+
+        <div class="sort-controls">
+          <button class="control-btn secondary" id="reset-sort">重新开始</button>
+          <button class="control-btn primary" id="check-sort">检查答案</button>
+        </div>
+
+        <div class="feedback-msg" id="sort-feedback" style="text-align: center;"></div>
+      </div>
+    </div>
+
+    <!-- 挑战模式 -->
+    <div class="mode-content" data-mode="challenge">
+      <div class="challenge-area">
+        <div class="challenge-header">
+          <div class="challenge-score">得分: <span id="challenge-score">0</span></div>
+          <div class="challenge-progress"><span id="challenge-current">1</span>/10</div>
+        </div>
+
+        <div class="challenge-question">
+          <div class="challenge-type" id="challenge-type">比大小</div>
+          <div class="challenge-content" id="challenge-content">7 ○ 5</div>
+        </div>
+
+        <div class="challenge-options" id="challenge-options"></div>
+
+        <div class="feedback-msg" id="challenge-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // 模式切换
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const mode = tab.dataset.mode;
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelector(`.mode-content[data-mode="${mode}"]`).classList.add('active');
+        
+        if (mode === 'compare') generateCompare();
+        if (mode === 'sort') generateSort();
+        if (mode === 'challenge') startChallenge();
+      });
+    });
+
+    // 比大小模式
+    let compareAnswer = '';
+    
+    function generateCompare() {
+      const left = Math.floor(Math.random() * 100) + 1;
+      const right = Math.floor(Math.random() * 100) + 1;
+      document.getElementById('compare-left').textContent = left;
+      document.getElementById('compare-right').textContent = right;
+      
+      if (left > right) compareAnswer = '>';
+      else if (left < right) compareAnswer = '<';
+      else compareAnswer = '=';
+      
+      document.querySelectorAll('.symbol-btn').forEach(btn => {
+        btn.classList.remove('correct', 'wrong');
+        btn.disabled = false;
+      });
+      document.getElementById('compare-feedback').textContent = '';
+      document.getElementById('compare-feedback').className = 'feedback-msg';
+    }
+
+    document.querySelectorAll('.symbol-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const symbol = btn.dataset.symbol;
+        const feedback = document.getElementById('compare-feedback');
+        
+        if (symbol === compareAnswer) {
+          btn.classList.add('correct');
+          feedback.textContent = '✓ 答对了！';
+          feedback.className = 'feedback-msg correct';
+          document.querySelectorAll('.symbol-btn').forEach(b => b.disabled = true);
+          setTimeout(() => generateCompare(), 1500);
+        } else {
+          btn.classList.add('wrong');
+          feedback.textContent = '✗ 再想想';
+          feedback.className = 'feedback-msg wrong';
+          setTimeout(() => btn.classList.remove('wrong'), 500);
+        }
+      });
+    });
+
+    document.getElementById('next-compare').addEventListener('click', generateCompare);
+
+    // 排序模式
+    let sortNumbers = [];
+    let sortAnswer = [];
+    let sortDirection = 'asc';
+
+    function generateSort() {
+      const count = Math.floor(Math.random() * 3) + 4; // 4-6个数
+      sortNumbers = [];
+      sortAnswer = [];
+      const usedNums = new Set();
+      
+      while (sortNumbers.length < count) {
+        const num = Math.floor(Math.random() * 100) + 1;
+        if (!usedNums.has(num)) {
+          usedNums.add(num);
+          sortNumbers.push(num);
+        }
+      }
+      
+      sortDirection = Math.random() < 0.5 ? 'asc' : 'desc';
+      const questionText = sortDirection === 'asc' ? 
+        '把下面的数从小到大排列' : '把下面的数从大到小排列';
+      document.getElementById('sort-question').textContent = questionText;
+      
+      renderSortNumbers();
+      renderSortAnswer();
+      document.getElementById('sort-feedback').textContent = '';
+      document.getElementById('sort-feedback').className = 'feedback-msg';
+    }
+
+    function renderSortNumbers() {
+      const container = document.getElementById('sort-numbers');
+      container.innerHTML = '';
+      sortNumbers.forEach((num, idx) => {
+        const div = document.createElement('div');
+        div.className = 'sort-num';
+        if (sortAnswer.includes(idx)) div.classList.add('placed');
+        div.textContent = num;
+        div.addEventListener('click', () => selectSortNumber(idx));
+        container.appendChild(div);
+      });
+    }
+
+    function renderSortAnswer() {
+      const container = document.getElementById('sort-answer');
+      container.innerHTML = '';
+      const count = sortNumbers.length;
+      
+      for (let i = 0; i < count; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'answer-slot';
+        if (i < sortAnswer.length) {
+          slot.classList.add('filled');
+          slot.textContent = sortNumbers[sortAnswer[i]];
+        }
+        container.appendChild(slot);
+        
+        if (i < count - 1) {
+          const comma = document.createElement('span');
+          comma.textContent = ',';
+          comma.style.cssText = 'font-size: 20px; font-weight: 700; color: #6E6E73;';
+          container.appendChild(comma);
+        }
+      }
+    }
+
+    function selectSortNumber(idx) {
+      if (sortAnswer.includes(idx)) return;
+      sortAnswer.push(idx);
+      renderSortNumbers();
+      renderSortAnswer();
+    }
+
+    document.getElementById('reset-sort').addEventListener('click', () => {
+      sortAnswer = [];
+      renderSortNumbers();
+      renderSortAnswer();
+      document.getElementById('sort-feedback').textContent = '';
+    });
+
+    document.getElementById('check-sort').addEventListener('click', () => {
+      if (sortAnswer.length !== sortNumbers.length) {
+        document.getElementById('sort-feedback').textContent = '请把全部数字都排进去哦！';
+        document.getElementById('sort-feedback').className = 'feedback-msg wrong';
+        return;
+      }
+      
+      const userNums = sortAnswer.map(idx => sortNumbers[idx]);
+      const correct = sortDirection === 'asc' ? 
+        [...sortNumbers].sort((a, b) => a - b) :
+        [...sortNumbers].sort((a, b) => b - a);
+      
+      const isCorrect = userNums.every((n, i) => n === correct[i]);
+      const feedback = document.getElementById('sort-feedback');
+      
+      if (isCorrect) {
+        feedback.textContent = '✓ 完全正确！';
+        feedback.className = 'feedback-msg correct';
+        setTimeout(generateSort, 1500);
+      } else {
+        feedback.textContent = '✗ 不对哦，再试试';
+        feedback.className = 'feedback-msg wrong';
+      }
+    });
+
+    // 挑战模式
+    let challengeScore = 0;
+    let challengeCurrent = 0;
+    let challengeAnswer = '';
+
+    function startChallenge() {
+      challengeScore = 0;
+      challengeCurrent = 0;
+      document.getElementById('challenge-score').textContent = '0';
+      document.getElementById('challenge-current').textContent = '1';
+      document.getElementById('challenge-feedback').textContent = '';
+      generateChallenge();
+    }
+
+    function generateChallenge() {
+      challengeCurrent++;
+      if (challengeCurrent > 10) {
+        showChallengeResult();
+        return;
+      }
+      
+      document.getElementById('challenge-current').textContent = challengeCurrent;
+      document.getElementById('challenge-feedback').textContent = '';
+      
+      const type = Math.random() < 0.6 ? 'compare' : 'sort';
+      
+      if (type === 'compare') {
+        generateCompareChallenge();
+      } else {
+        generateSortChallenge();
+      }
+    }
+
+    function generateCompareChallenge() {
+      document.getElementById('challenge-type').textContent = '比大小';
+      const left = Math.floor(Math.random() * 100) + 1;
+      const right = Math.floor(Math.random() * 100) + 1;
+      document.getElementById('challenge-content').textContent = `${left} ○ ${right}`;
+      
+      challengeAnswer = left > right ? '>' : left < right ? '<' : '=';
+      
+      const options = ['>', '<', '='];
+      renderChallengeOptions(options);
+    }
+
+    function generateSortChallenge() {
+      document.getElementById('challenge-type').textContent = '找最大/最小';
+      const count = Math.floor(Math.random() * 3) + 4;
+      const nums = [];
+      const usedNums = new Set();
+      
+      while (nums.length < count) {
+        const num = Math.floor(Math.random() * 100) + 1;
+        if (!usedNums.has(num)) {
+          usedNums.add(num);
+          nums.push(num);
+        }
+      }
+      
+      const askMin = Math.random() < 0.5;
+      const question = askMin ? '最小的数是？' : '最大的数是？';
+      document.getElementById('challenge-content').textContent = 
+        `${nums.join(', ')} 中${question}`;
+      
+      challengeAnswer = askMin ? Math.min(...nums).toString() : Math.max(...nums).toString();
+      
+      const options = [challengeAnswer];
+      while (options.length < 4) {
+        const wrong = nums[Math.floor(Math.random() * nums.length)].toString();
+        if (!options.includes(wrong)) options.push(wrong);
+      }
+      options.sort(() => Math.random() - 0.5);
+      
+      renderChallengeOptions(options);
+    }
+
+    function renderChallengeOptions(options) {
+      const container = document.getElementById('challenge-options');
+      container.innerHTML = '';
+      
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => checkChallengeAnswer(opt, btn));
+        container.appendChild(btn);
+      });
+    }
+
+    function checkChallengeAnswer(selected, btn) {
+      const feedback = document.getElementById('challenge-feedback');
+      const allBtns = document.querySelectorAll('.option-btn');
+      allBtns.forEach(b => b.disabled = true);
+      
+      if (selected === challengeAnswer) {
+        btn.classList.add('correct');
+        challengeScore++;
+        document.getElementById('challenge-score').textContent = challengeScore;
+        feedback.textContent = '✓ 答对了！';
+        feedback.className = 'feedback-msg correct';
+        setTimeout(generateChallenge, 1500);
+      } else {
+        btn.classList.add('wrong');
+        feedback.textContent = `✗ 正确答案是 ${challengeAnswer}`;
+        feedback.className = 'feedback-msg wrong';
+        setTimeout(generateChallenge, 2000);
+      }
+    }
+
+    function showChallengeResult() {
+      const container = document.querySelector('.challenge-area');
+      let message = '';
+      let emoji = '';
+      
+      if (challengeScore >= 9) {
+        message = '太棒了！你是比大小高手！';
+        emoji = '🏆';
+      } else if (challengeScore >= 7) {
+        message = '很不错！继续加油！';
+        emoji = '👍';
+      } else if (challengeScore >= 5) {
+        message = '还可以，多练习会更好！';
+        emoji = '💪';
+      } else {
+        message = '别灰心，再来一次！';
+        emoji = '🌟';
+      }
+      
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px;">
+          <div style="font-size: 80px; margin: 20px 0;">${emoji}</div>
+          <div style="font-size: 24px; font-weight: 700; color: #1D1D1F; margin: 20px 0;">
+            挑战完成！
+          </div>
+          <div style="font-size: 48px; font-weight: 800; color: #4A90D9; margin: 20px 0;">
+            ${challengeScore}/10
+          </div>
+          <div style="font-size: 20px; color: #6E6E73; margin: 20px 0;">
+            ${message}
+          </div>
+          <button class="control-btn primary" onclick="location.reload()" style="margin-top: 20px;">
+            再玩一次
+          </button>
+        </div>
+      `;
+    }
+
+    // 初始化
+    generateCompare();
+    generateSort();
+  </script>
+</body>
+</html>

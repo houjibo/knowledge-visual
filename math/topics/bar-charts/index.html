@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>条形统计图</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #4A90D9; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* === 模式1: 认识概念 === */
+    .concept-area { text-align: center; padding: 20px 16px; }
+    .concept-explain { font-size: 18px; font-weight: 600; color: #1D1D1F; margin: 12px 0; line-height: 1.8; }
+    .concept-sub { font-size: 15px; color: #6E6E73; line-height: 1.6; margin-bottom: 16px; }
+    .demo-chart {
+      background: white; border-radius: 16px; padding: 20px 16px; margin: 16px auto;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: 380px;
+    }
+    .demo-title { font-size: 16px; font-weight: 700; color: #4A90D9; margin-bottom: 16px; }
+    .demo-bars { display: flex; align-items: flex-end; gap: 20px; justify-content: center; height: 160px; padding: 0 8px; }
+    .demo-bar-group { display: flex; flex-direction: column; align-items: center; }
+    .demo-bar {
+      width: 44px; border-radius: 8px 8px 0 0; transition: height 0.6s ease;
+      display: flex; align-items: flex-start; justify-content: center;
+      font-size: 15px; font-weight: 700; color: white; padding-top: 4px; min-height: 4px;
+    }
+    .demo-label { font-size: 14px; color: #6E6E73; margin-top: 6px; font-weight: 600; }
+    .part-list { text-align: left; max-width: 360px; margin: 16px auto; }
+    .part-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+      background: white; border-radius: 12px; margin-bottom: 8px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04); cursor: pointer; transition: all 0.2s ease;
+    }
+    .part-item:active { transform: scale(0.97); }
+    .part-item.highlight { border: 2px solid #4A90D9; background: rgba(74,144,217,0.06); }
+    .part-icon { font-size: 28px; width: 36px; text-align: center; }
+    .part-text { font-size: 15px; color: #1D1D1F; line-height: 1.5; }
+    .part-text strong { color: #4A90D9; }
+
+    /* === 模式2: 读图练习 === */
+    .read-area { padding: 16px; text-align: center; }
+    .read-chart {
+      background: white; border-radius: 16px; padding: 20px 12px; margin: 12px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .read-title { font-size: 15px; font-weight: 700; color: #4A90D9; margin-bottom: 12px; }
+    .read-bars { display: flex; align-items: flex-end; gap: 14px; justify-content: center; height: 180px; padding: 0 4px; }
+    .read-bar-group { display: flex; flex-direction: column; align-items: center; }
+    .read-bar {
+      width: 40px; border-radius: 6px 6px 0 0;
+      display: flex; align-items: flex-start; justify-content: center;
+      font-size: 14px; font-weight: 700; color: white; padding-top: 4px; min-height: 4px;
+      transition: height 0.5s ease;
+    }
+    .read-label { font-size: 12px; color: #6E6E73; margin-top: 6px; font-weight: 600; }
+    .read-question { font-size: 20px; font-weight: 600; margin: 16px 0 12px; }
+    .read-options { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
+    .read-opt {
+      padding: 16px; border: 3px solid #9CA3AF; background: white; border-radius: 16px;
+      font-size: 20px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-align: center;
+    }
+    .read-opt:active { transform: scale(0.97); }
+    .read-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .read-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .read-feedback { text-align: center; font-size: 18px; font-weight: 600; margin: 12px 0; min-height: 36px; }
+    .read-score { font-size: 15px; color: #6E6E73; margin: 8px 0; }
+
+    /* === 模式3: 画图练习 === */
+    .draw-area { padding: 16px; text-align: center; }
+    .draw-task { font-size: 18px; font-weight: 600; margin: 12px 0; color: #1D1D1F; }
+    .draw-data { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 12px 0; }
+    .data-chip {
+      padding: 8px 14px; background: #E8F4FD; border-radius: 12px;
+      font-size: 15px; font-weight: 600; color: #4A90D9;
+    }
+    .draw-canvas {
+      background: white; border-radius: 16px; padding: 20px 12px; margin: 16px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .draw-grid { display: flex; align-items: flex-end; gap: 14px; justify-content: center; height: 200px; padding: 0 4px; position: relative; }
+    .draw-grid-line {
+      position: absolute; left: 0; right: 0; border-top: 1px dashed #E5E5EA;
+    }
+    .draw-grid-label {
+      position: absolute; left: 4px; font-size: 11px; color: #9CA3AF; transform: translateY(-50%);
+    }
+    .draw-bar-group { display: flex; flex-direction: column; align-items: center; z-index: 1; }
+    .draw-bar-wrap {
+      width: 44px; height: 180px; display: flex; flex-direction: column; justify-content: flex-end;
+      align-items: center; position: relative;
+    }
+    .draw-bar {
+      width: 44px; border-radius: 6px 6px 0 0; transition: height 0.3s ease;
+      display: flex; align-items: flex-start; justify-content: center;
+      font-size: 14px; font-weight: 700; color: white; padding-top: 4px; min-height: 0;
+    }
+    .draw-label { font-size: 12px; color: #6E6E73; margin-top: 6px; font-weight: 600; }
+    .draw-controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0; }
+    .draw-btn {
+      padding: 10px 18px; border: 2px solid #4A90D9; background: white; border-radius: 12px;
+      font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; color: #4A90D9;
+    }
+    .draw-btn:active { transform: scale(0.95); background: #E8F4FD; }
+    .draw-btn.selected { background: #4A90D9; color: white; }
+    .draw-check-btn {
+      padding: 14px 28px; border: none; background: #34C759; color: white;
+      border-radius: 16px; font-size: 18px; font-weight: 700; cursor: pointer;
+      margin: 12px auto; display: block; box-shadow: 0 4px 12px rgba(52,199,89,0.3);
+    }
+    .draw-check-btn:active { transform: scale(0.95); }
+    .draw-feedback { text-align: center; font-size: 18px; font-weight: 600; margin: 12px 0; min-height: 36px; }
+
+    /* === 模式4: 挑战模式 === */
+    .challenge-area { padding: 16px; text-align: center; }
+    .ch-score { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; }
+    .ch-score span { font-weight: 700; }
+    .ch-score .ch-c { color: #34C759; }
+    .ch-score .ch-w { color: #FF3B30; }
+    .ch-streak { font-size: 15px; color: #FF9500; font-weight: 700; min-height: 24px; margin: 4px 0; }
+    .ch-start-btn {
+      padding: 16px 32px; border: none; background: #4A90D9; color: white;
+      border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer;
+      margin: 16px auto; display: block; box-shadow: 0 4px 12px rgba(74,144,217,0.3);
+    }
+    .ch-start-btn:active { transform: scale(0.95); }
+    .ch-running { display: none; }
+    .ch-chart {
+      background: white; border-radius: 16px; padding: 16px 8px; margin: 12px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .ch-bars { display: flex; align-items: flex-end; gap: 12px; justify-content: center; height: 160px; }
+    .ch-bar-group { display: flex; flex-direction: column; align-items: center; }
+    .ch-bar {
+      width: 36px; border-radius: 6px 6px 0 0;
+      display: flex; align-items: flex-start; justify-content: center;
+      font-size: 13px; font-weight: 700; color: white; padding-top: 4px; min-height: 4px;
+    }
+    .ch-bar-label { font-size: 11px; color: #6E6E73; margin-top: 4px; font-weight: 600; }
+    .ch-problem { font-size: 20px; font-weight: 600; margin: 12px 0; }
+    .ch-opts { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
+    .ch-opt {
+      padding: 14px; border: 3px solid #9CA3AF; background: white; border-radius: 16px;
+      font-size: 20px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-align: center;
+    }
+    .ch-opt:active { transform: scale(0.97); }
+    .ch-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .ch-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <!-- 导航栏 -->
+    <div class="nav-bar">
+      <a href="../../index.html" class="nav-back">← 返回</a>
+      <span class="nav-title">条形统计图</span>
+      <span class="nav-grade">G2</span>
+    </div>
+
+    <!-- 模式切换 -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="concept">📖 认识</button>
+      <button class="mode-tab" data-mode="read">🔍 读图</button>
+      <button class="mode-tab" data-mode="draw">✏️ 画图</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- 模式1: 认识概念 -->
+    <div class="mode-content active" id="mode-concept">
+      <div class="concept-area">
+        <div class="concept-explain">📊 什么是条形统计图？</div>
+        <div class="concept-sub">用<strong>长条的长短</strong>来表示数量的多少，<br>一眼就能看出谁多谁少！</div>
+
+        <div class="demo-chart">
+          <div class="demo-title">🍎 二年级一班最喜欢的水果</div>
+          <div class="demo-bars" id="demo-bars"></div>
+        </div>
+
+        <div class="concept-explain" style="font-size:16px;">📌 条形统计图的组成</div>
+        <div class="part-list">
+          <div class="part-item" data-part="title">
+            <div class="part-icon">📝</div>
+            <div class="part-text"><strong>标题</strong>：说明统计的内容</div>
+          </div>
+          <div class="part-item" data-part="bars">
+            <div class="part-icon">📊</div>
+            <div class="part-text"><strong>长条</strong>：用高度表示数量</div>
+          </div>
+          <div class="part-item" data-part="labels">
+            <div class="part-icon">🏷️</div>
+            <div class="part-text"><strong>标签</strong>：每个长条代表什么</div>
+          </div>
+          <div class="part-item" data-part="numbers">
+            <div class="part-icon">🔢</div>
+            <div class="part-text"><strong>数值</strong>：长条上的数字</div>
+          </div>
+        </div>
+
+        <div class="concept-explain" style="font-size:16px;">💡 小技巧</div>
+        <div class="concept-sub" style="text-align:left; max-width:360px; margin:0 auto;">
+          ✅ 长条越<strong>高</strong>，数量越<strong>多</strong><br>
+          ✅ 长条越<strong>矮</strong>，数量越<strong>少</strong><br>
+          ✅ 长条一样<strong>高</strong>，数量就<strong>一样多</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 读图练习 -->
+    <div class="mode-content" id="mode-read">
+      <div class="read-area">
+        <div class="read-score">第 <span id="read-num">1</span> 题 · 答对 <span id="read-correct" style="color:#34C759;font-weight:700;">0</span> 题</div>
+        <div class="read-chart">
+          <div class="read-title" id="read-title"></div>
+          <div class="read-bars" id="read-bars"></div>
+        </div>
+        <div class="read-question" id="read-question"></div>
+        <div class="read-options" id="read-options"></div>
+        <div class="read-feedback" id="read-feedback"></div>
+      </div>
+    </div>
+
+    <!-- 模式3: 画图练习 -->
+    <div class="mode-content" id="mode-draw">
+      <div class="draw-area">
+        <div class="draw-task" id="draw-task">根据下面的数据，画出条形统计图</div>
+        <div class="draw-data" id="draw-data"></div>
+        <div class="draw-canvas">
+          <div class="draw-grid" id="draw-grid"></div>
+        </div>
+        <div style="font-size:14px;color:#6E6E73;margin:8px 0;">👆 点击每个类别下方的按钮调整高度</div>
+        <div class="draw-controls" id="draw-controls"></div>
+        <button class="draw-check-btn" id="btn-draw-check">✅ 检查答案</button>
+        <div class="draw-feedback" id="draw-feedback"></div>
+        <button class="draw-check-btn" id="btn-draw-next" style="display:none;background:#4A90D9;box-shadow:0 4px 12px rgba(74,144,217,0.3);">👉 下一题</button>
+      </div>
+    </div>
+
+    <!-- 模式4: 挑战模式 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="challenge-area">
+        <div class="ch-score">
+          <span class="ch-c">✅ <span id="ch-correct">0</span></span>
+          <span class="ch-w">❌ <span id="ch-wrong">0</span></span>
+        </div>
+        <div class="ch-streak" id="ch-streak"></div>
+        <button class="ch-start-btn" id="btn-start-challenge">🚀 开始挑战</button>
+        <div class="ch-running" id="ch-running">
+          <div class="ch-chart">
+            <div class="ch-bars" id="ch-bars"></div>
+          </div>
+          <div class="ch-problem" id="ch-problem"></div>
+          <div class="ch-opts" id="ch-opts"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // ===== 工具函数 =====
+    function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    const COLORS = ['#4A90D9', '#34C759', '#FF9500', '#AF52DE', '#FF3B30', '#5AC8FA', '#FFCC00', '#FF2D55'];
+    const FRUITS = ['🍎苹果', '🍌香蕉', '🍊橘子', '🍇葡萄', '🍓草莓', '🍑桃子', '🍒樱桃', '🥝猕猴桃'];
+    const ANIMALS = ['🐶小狗', '🐱小猫', '🐰兔子', '🐢乌龟', '🐟金鱼', '🐹仓鼠', '🦜鹦鹉', '🐸青蛙'];
+    const SPORTS = ['⚽足球', '🏀篮球', '🏓乒乓球', '🏸羽毛球', '🎾网球', '🏊游泳', '🏃跑步', '🤸体操'];
+    const COLORS_CN = ['红色', '蓝色', '绿色', '黄色', '紫色', '橙色', '粉色', '白色'];
+
+    const DATASETS = [
+      { title: '最喜欢的水果', items: FRUITS, unit: '人' },
+      { title: '最喜欢的动物', items: ANIMALS, unit: '人' },
+      { title: '最喜欢的运动', items: SPORTS, unit: '人' },
+      { title: '最喜欢的颜色', items: COLORS_CN, unit: '人' }
+    ];
+
+    // ===== 模式切换 =====
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        if (tab.dataset.mode === 'read') initReadMode();
+        if (tab.dataset.mode === 'draw') initDrawMode();
+      });
+    });
+
+    // ===== 模式1: 认识概念 =====
+    (function initConcept() {
+      const bars = document.getElementById('demo-bars');
+      const data = [
+        { label: '苹果', value: 8, color: COLORS[0], emoji: '🍎' },
+        { label: '香蕉', value: 5, color: COLORS[1], emoji: '🍌' },
+        { label: '橘子', value: 6, color: COLORS[2], emoji: '🍊' },
+        { label: '葡萄', value: 3, color: COLORS[3], emoji: '🍇' }
+      ];
+      const maxVal = Math.max(...data.map(d => d.value));
+      bars.innerHTML = '';
+      data.forEach((d, i) => {
+        const group = document.createElement('div');
+        group.className = 'demo-bar-group';
+        const bar = document.createElement('div');
+        bar.className = 'demo-bar';
+        bar.style.background = d.color;
+        bar.style.height = '0px';
+        bar.textContent = d.value;
+        const lbl = document.createElement('div');
+        lbl.className = 'demo-label';
+        lbl.textContent = d.emoji + d.label;
+        group.appendChild(bar);
+        group.appendChild(lbl);
+        bars.appendChild(group);
+        setTimeout(() => { bar.style.height = (d.value / maxVal * 140) + 'px'; }, 200 + i * 150);
+      });
+
+      // 点击组成部分高亮
+      document.querySelectorAll('.part-item').forEach(item => {
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.part-item').forEach(p => p.classList.remove('highlight'));
+          item.classList.add('highlight');
+          const part = item.dataset.part;
+          const demoChart = document.querySelector('.demo-chart');
+          demoChart.style.transition = 'all 0.3s ease';
+          if (part === 'title') {
+            document.querySelector('.demo-title').style.background = '#E8F4FD';
+            document.querySelector('.demo-title').style.borderRadius = '8px';
+            document.querySelector('.demo-title').style.padding = '8px';
+          } else {
+            document.querySelector('.demo-title').style.background = '';
+          }
+          if (part === 'bars') {
+            document.querySelectorAll('.demo-bar').forEach(b => b.style.boxShadow = '0 0 12px rgba(74,144,217,0.5)');
+          } else {
+            document.querySelectorAll('.demo-bar').forEach(b => b.style.boxShadow = '');
+          }
+          if (part === 'labels') {
+            document.querySelectorAll('.demo-label').forEach(l => { l.style.color = '#4A90D9'; l.style.fontWeight = '800'; });
+          } else {
+            document.querySelectorAll('.demo-label').forEach(l => { l.style.color = ''; l.style.fontWeight = ''; });
+          }
+          if (part === 'numbers') {
+            document.querySelectorAll('.demo-bar').forEach(b => { b.style.fontSize = '20px'; });
+            setTimeout(() => { document.querySelectorAll('.demo-bar').forEach(b => { b.style.fontSize = ''; }); }, 1500);
+          }
+        });
+      });
+    })();
+
+    // ===== 模式2: 读图练习 =====
+    let readState = { num: 0, correct: 0, data: null, answered: false };
+
+    function generateReadData() {
+      const ds = DATASETS[randInt(0, DATASETS.length - 1)];
+      const count = randInt(3, 5);
+      const indices = shuffle([...Array(ds.items.length).keys()]).slice(0, count);
+      const items = indices.map(i => ds.items[i]);
+      const values = Array.from({ length: count }, () => randInt(2, 10));
+      return { title: ds.title, items, values, unit: ds.unit, count };
+    }
+
+    function renderReadChart(data) {
+      const barsEl = document.getElementById('read-bars');
+      document.getElementById('read-title').textContent = '📊 ' + data.title;
+      const maxVal = Math.max(...data.values);
+      barsEl.innerHTML = '';
+      data.items.forEach((item, i) => {
+        const group = document.createElement('div');
+        group.className = 'read-bar-group';
+        const bar = document.createElement('div');
+        bar.className = 'read-bar';
+        bar.style.background = COLORS[i % COLORS.length];
+        bar.style.height = '0px';
+        bar.textContent = data.values[i];
+        const lbl = document.createElement('div');
+        lbl.className = 'read-label';
+        lbl.textContent = item;
+        group.appendChild(bar);
+        group.appendChild(lbl);
+        barsEl.appendChild(group);
+        setTimeout(() => { bar.style.height = (data.values[i] / maxVal * 150) + 'px'; }, 100 + i * 100);
+      });
+    }
+
+    function generateReadQuestion(data) {
+      const qTypes = ['max', 'min', 'total', 'diff', 'read'];
+      const qType = qTypes[randInt(0, qTypes.length - 1)];
+      let question, correctAnswer, options;
+
+      if (qType === 'max') {
+        const maxI = data.values.indexOf(Math.max(...data.values));
+        question = `哪个最多？`;
+        correctAnswer = data.items[maxI];
+        options = data.items.slice();
+        if (options.length < 4) {
+          const extras = ['西瓜', '芒果', '菠萝', '梨子', '小狗', '小鸟', '画画', '唱歌'];
+          while (options.length < 4) options.push(extras[randInt(0, extras.length - 1)]);
+        }
+        options = shuffle(options).slice(0, 4);
+        if (!options.includes(correctAnswer)) options[randInt(0, 3)] = correctAnswer;
+      } else if (qType === 'min') {
+        const minI = data.values.indexOf(Math.min(...data.values));
+        question = `哪个最少？`;
+        correctAnswer = data.items[minI];
+        options = data.items.slice();
+        if (options.length < 4) {
+          const extras = ['西瓜', '芒果', '菠萝', '梨子', '小狗', '小鸟', '画画', '唱歌'];
+          while (options.length < 4) options.push(extras[randInt(0, extras.length - 1)]);
+        }
+        options = shuffle(options).slice(0, 4);
+        if (!options.includes(correctAnswer)) options[randInt(0, 3)] = correctAnswer;
+      } else if (qType === 'total') {
+        const total = data.values.reduce((a, b) => a + b, 0);
+        question = `一共调查了多少人？`;
+        correctAnswer = String(total);
+        options = [String(total), String(total + randInt(1, 3)), String(Math.max(0, total - randInt(1, 3))), String(total + randInt(4, 7))];
+        options = shuffle([...new Set(options)]).slice(0, 4);
+        if (!options.includes(correctAnswer)) options[randInt(0, 3)] = correctAnswer;
+      } else if (qType === 'diff') {
+        const aI = randInt(0, data.count - 1);
+        let bI = randInt(0, data.count - 2);
+        if (bI >= aI) bI++;
+        const diff = Math.abs(data.values[aI] - data.values[bI]);
+        question = `${data.items[aI]}比${data.items[bI]}多几人？`;
+        correctAnswer = String(diff);
+        options = [String(diff), String(diff + 1), String(Math.max(0, diff - 1)), String(diff + randInt(2, 4))];
+        options = shuffle([...new Set(options)]).slice(0, 4);
+        if (!options.includes(correctAnswer)) options[randInt(0, 3)] = correctAnswer;
+      } else {
+        const idx = randInt(0, data.count - 1);
+        question = `${data.items[idx]}有多少人？`;
+        const v = data.values[idx];
+        correctAnswer = String(v);
+        options = [String(v), String(v + 1), String(Math.max(0, v - 1)), String(v + randInt(2, 4))];
+        options = shuffle([...new Set(options)]).slice(0, 4);
+        if (!options.includes(correctAnswer)) options[randInt(0, 3)] = correctAnswer;
+      }
+      return { question, correctAnswer, options };
+    }
+
+    function initReadMode() {
+      readState.num = 0;
+      readState.correct = 0;
+      nextReadQuestion();
+    }
+
+    function nextReadQuestion() {
+      readState.num++;
+      readState.answered = false;
+      document.getElementById('read-num').textContent = readState.num;
+      document.getElementById('read-correct').textContent = readState.correct;
+      document.getElementById('read-feedback').textContent = '';
+      readState.data = generateReadData();
+      renderReadChart(readState.data);
+      const q = generateReadQuestion(readState.data);
+      readState.q = q;
+      setTimeout(() => {
+        document.getElementById('read-question').textContent = '❓ ' + q.question;
+        const optsEl = document.getElementById('read-options');
+        optsEl.innerHTML = '';
+        q.options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'read-opt';
+          btn.textContent = opt;
+          btn.addEventListener('click', () => {
+            if (readState.answered) return;
+            readState.answered = true;
+            document.querySelectorAll('.read-opt').forEach(b => b.style.pointerEvents = 'none');
+            if (opt === q.correctAnswer) {
+              btn.classList.add('correct');
+              document.getElementById('read-feedback').textContent = '🎉 答对了！';
+              document.getElementById('read-feedback').style.color = '#34C759';
+              readState.correct++;
+              if (typeof Sound !== 'undefined') Sound.play('correct');
+            } else {
+              btn.classList.add('wrong');
+              document.querySelectorAll('.read-opt').forEach(b => { if (b.textContent === q.correctAnswer) b.classList.add('correct'); });
+              document.getElementById('read-feedback').textContent = '❌ 正确答案是 ' + q.correctAnswer;
+              document.getElementById('read-feedback').style.color = '#FF3B30';
+              if (typeof Sound !== 'undefined') Sound.play('wrong');
+            }
+            document.getElementById('read-correct').textContent = readState.correct;
+            setTimeout(nextReadQuestion, 1500);
+          });
+          optsEl.appendChild(btn);
+        });
+      }, 600);
+    }
+
+    // ===== 模式3: 画图练习 =====
+    let drawState = { data: null, userValues: [], answered: false };
+
+    function generateDrawData() {
+      const ds = DATASETS[randInt(0, DATASETS.length - 1)];
+      const count = randInt(3, 4);
+      const indices = shuffle([...Array(ds.items.length).keys()]).slice(0, count);
+      const items = indices.map(i => ds.items[i]);
+      const values = Array.from({ length: count }, () => randInt(2, 9));
+      return { title: ds.title, items, values, unit: ds.unit, count };
+    }
+
+    function initDrawMode() {
+      nextDrawQuestion();
+    }
+
+    function nextDrawQuestion() {
+      drawState.answered = false;
+      drawState.data = generateDrawData();
+      drawState.userValues = new Array(drawState.data.count).fill(0);
+      document.getElementById('draw-feedback').textContent = '';
+      document.getElementById('btn-draw-check').style.display = 'block';
+      document.getElementById('btn-draw-next').style.display = 'none';
+
+      // 显示数据
+      const dataEl = document.getElementById('draw-data');
+      dataEl.innerHTML = '';
+      drawState.data.items.forEach((item, i) => {
+        const chip = document.createElement('div');
+        chip.className = 'data-chip';
+        chip.textContent = item + '：' + drawState.data.values[i] + drawState.data.unit;
+        dataEl.appendChild(chip);
+      });
+
+      // 画网格
+      const gridEl = document.getElementById('draw-grid');
+      gridEl.innerHTML = '';
+      for (let v = 2; v <= 10; v += 2) {
+        const line = document.createElement('div');
+        line.className = 'draw-grid-line';
+        line.style.bottom = (v / 10 * 180) + 'px';
+        gridEl.appendChild(line);
+        const lbl = document.createElement('div');
+        lbl.className = 'draw-grid-label';
+        lbl.textContent = v;
+        lbl.style.bottom = (v / 10 * 180) + 'px';
+        gridEl.appendChild(lbl);
+      }
+
+      // 画柱子
+      drawState.data.items.forEach((item, i) => {
+        const group = document.createElement('div');
+        group.className = 'draw-bar-group';
+        const wrap = document.createElement('div');
+        wrap.className = 'draw-bar-wrap';
+        const bar = document.createElement('div');
+        bar.className = 'draw-bar';
+        bar.id = 'draw-bar-' + i;
+        bar.style.background = COLORS[i % COLORS.length];
+        bar.style.height = '0px';
+        wrap.appendChild(bar);
+        group.appendChild(wrap);
+        const lbl = document.createElement('div');
+        lbl.className = 'draw-label';
+        lbl.textContent = item;
+        group.appendChild(lbl);
+        gridEl.appendChild(group);
+      });
+
+      // 控制按钮
+      const controlsEl = document.getElementById('draw-controls');
+      controlsEl.innerHTML = '';
+      drawState.data.items.forEach((item, i) => {
+        const wrap = document.createElement('div');
+        wrap.style.display = 'flex';
+        wrap.style.flexDirection = 'column';
+        wrap.style.alignItems = 'center';
+        wrap.style.gap = '4px';
+
+        const nameLbl = document.createElement('div');
+        nameLbl.style.fontSize = '12px';
+        nameLbl.style.color = '#6E6E73';
+        nameLbl.style.fontWeight = '600';
+        nameLbl.textContent = item;
+        wrap.appendChild(nameLbl);
+
+        const btnRow = document.createElement('div');
+        btnRow.style.display = 'flex';
+        btnRow.style.gap = '4px';
+
+        const minusBtn = document.createElement('button');
+        minusBtn.className = 'draw-btn';
+        minusBtn.textContent = '−';
+        minusBtn.style.padding = '8px 14px';
+        minusBtn.addEventListener('click', () => {
+          if (drawState.answered) return;
+          drawState.userValues[i] = Math.max(0, drawState.userValues[i] - 1);
+          updateDrawBar(i);
+        });
+
+        const valSpan = document.createElement('span');
+        valSpan.id = 'draw-val-' + i;
+        valSpan.style.fontSize = '18px';
+        valSpan.style.fontWeight = '700';
+        valSpan.style.color = COLORS[i % COLORS.length];
+        valSpan.style.minWidth = '28px';
+        valSpan.style.textAlign = 'center';
+        valSpan.textContent = '0';
+
+        const plusBtn = document.createElement('button');
+        plusBtn.className = 'draw-btn';
+        plusBtn.textContent = '+';
+        plusBtn.style.padding = '8px 14px';
+        plusBtn.addEventListener('click', () => {
+          if (drawState.answered) return;
+          drawState.userValues[i] = Math.min(10, drawState.userValues[i] + 1);
+          updateDrawBar(i);
+        });
+
+        btnRow.appendChild(minusBtn);
+        btnRow.appendChild(valSpan);
+        btnRow.appendChild(plusBtn);
+        wrap.appendChild(btnRow);
+        controlsEl.appendChild(wrap);
+      });
+    }
+
+    function updateDrawBar(i) {
+      const v = drawState.userValues[i];
+      document.getElementById('draw-val-' + i).textContent = v;
+      const bar = document.getElementById('draw-bar-' + i);
+      bar.style.height = (v / 10 * 180) + 'px';
+      bar.textContent = v > 0 ? v : '';
+    }
+
+    document.getElementById('btn-draw-check').addEventListener('click', () => {
+      if (drawState.answered) return;
+      drawState.answered = true;
+      const correct = drawState.data.values;
+      const user = drawState.userValues;
+      let allCorrect = true;
+      for (let i = 0; i < correct.length; i++) {
+        const bar = document.getElementById('draw-bar-' + i);
+        if (user[i] === correct[i]) {
+          bar.style.boxShadow = '0 0 12px rgba(52,199,89,0.5)';
+          bar.style.background = '#34C759';
+        } else {
+          bar.style.boxShadow = '0 0 12px rgba(255,59,48,0.5)';
+          bar.style.background = '#FF3B30';
+          allCorrect = false;
+        }
+      }
+      const fb = document.getElementById('draw-feedback');
+      if (allCorrect) {
+        fb.textContent = '🎉 完全正确！你画的条形统计图很棒！';
+        fb.style.color = '#34C759';
+        if (typeof Sound !== 'undefined') Sound.play('correct');
+      } else {
+        fb.textContent = '❌ 有些柱子高度不对，红色的是错的，再试试吧！';
+        fb.style.color = '#FF3B30';
+        if (typeof Sound !== 'undefined') Sound.play('wrong');
+      }
+      document.getElementById('btn-draw-check').style.display = 'none';
+      document.getElementById('btn-draw-next').style.display = 'block';
+    });
+
+    document.getElementById('btn-draw-next').addEventListener('click', () => {
+      nextDrawQuestion();
+    });
+
+    // ===== 模式4: 挑战模式 =====
+    let chState = { correct: 0, wrong: 0, streak: 0, running: false };
+
+    function startChallenge() {
+      chState = { correct: 0, wrong: 0, streak: 0, running: true };
+      document.getElementById('ch-correct').textContent = 0;
+      document.getElementById('ch-wrong').textContent = 0;
+      document.getElementById('ch-streak').textContent = '';
+      document.getElementById('btn-start-challenge').style.display = 'none';
+      document.getElementById('ch-running').style.display = 'block';
+      nextChallengeQuestion();
+    }
+
+    function nextChallengeQuestion() {
+      if (!chState.running) return;
+      const count = randInt(3, 5);
+      const ds = DATASETS[randInt(0, DATASETS.length - 1)];
+      const indices = shuffle([...Array(ds.items.length).keys()]).slice(0, count);
+      const items = indices.map(i => ds.items[i]);
+      const values = Array.from({ length: count }, () => randInt(2, 10));
+      const maxVal = Math.max(...values);
+
+      const barsEl = document.getElementById('ch-bars');
+      barsEl.innerHTML = '';
+      items.forEach((item, i) => {
+        const group = document.createElement('div');
+        group.className = 'ch-bar-group';
+        const bar = document.createElement('div');
+        bar.className = 'ch-bar';
+        bar.style.background = COLORS[i % COLORS.length];
+        bar.style.height = '0px';
+        bar.textContent = values[i];
+        const lbl = document.createElement('div');
+        lbl.className = 'ch-bar-label';
+        lbl.textContent = item;
+        group.appendChild(bar);
+        group.appendChild(lbl);
+        barsEl.appendChild(group);
+        setTimeout(() => { bar.style.height = (values[i] / maxVal * 130) + 'px'; }, 80 + i * 80);
+      });
+
+      // 生成问题
+      const qType = randInt(0, 4);
+      let question, correctAnswer, options;
+
+      if (qType === 0) {
+        const maxI = values.indexOf(maxVal);
+        question = '哪个最多？';
+        correctAnswer = items[maxI];
+        options = shuffle(items.slice()).slice(0, Math.min(4, count));
+        if (!options.includes(correctAnswer)) options[randInt(0, options.length - 1)] = correctAnswer;
+      } else if (qType === 1) {
+        const minI = values.indexOf(Math.min(...values));
+        question = '哪个最少？';
+        correctAnswer = items[minI];
+        options = shuffle(items.slice()).slice(0, Math.min(4, count));
+        if (!options.includes(correctAnswer)) options[randInt(0, options.length - 1)] = correctAnswer;
+      } else if (qType === 2) {
+        const total = values.reduce((a, b) => a + b, 0);
+        question = '一共多少个？';
+        correctAnswer = String(total);
+        options = shuffle([...new Set([String(total), String(total + 1), String(total - 1), String(total + randInt(2, 5)), String(total - randInt(2, 5))])]).slice(0, 4);
+        if (!options.includes(correctAnswer)) options[randInt(0, 3)] = correctAnswer;
+      } else if (qType === 3) {
+        const aI = randInt(0, count - 1);
+        let bI = randInt(0, count - 2);
+        if (bI >= aI) bI++;
+        const diff = Math.abs(values[aI] - values[bI]);
+        question = items[aI] + '比' + items[bI] + '多几个？';
+        correctAnswer = String(diff);
+        options = shuffle([...new Set([String(diff), String(diff + 1), String(Math.max(0, diff - 1)), String(diff + randInt(2, 4))])]).slice(0, 4);
+        if (!options.includes(correctAnswer)) options[randInt(0, 3)] = correctAnswer;
+      } else {
+        const idx = randInt(0, count - 1);
+        question = items[idx] + '有几个？';
+        const v = values[idx];
+        correctAnswer = String(v);
+        options = shuffle([...new Set([String(v), String(v + 1), String(Math.max(0, v - 1)), String(v + randInt(2, 3))])]).slice(0, 4);
+        if (!options.includes(correctAnswer)) options[randInt(0, 3)] = correctAnswer;
+      }
+
+      setTimeout(() => {
+        document.getElementById('ch-problem').textContent = '❓ ' + question;
+        const optsEl = document.getElementById('ch-opts');
+        optsEl.innerHTML = '';
+        shuffle(options).forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'ch-opt';
+          btn.textContent = opt;
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.ch-opt').forEach(b => b.style.pointerEvents = 'none');
+            if (opt === correctAnswer) {
+              btn.classList.add('correct');
+              chState.correct++;
+              chState.streak++;
+              if (typeof Sound !== 'undefined') Sound.play('correct');
+            } else {
+              btn.classList.add('wrong');
+              document.querySelectorAll('.ch-opt').forEach(b => { if (b.textContent === correctAnswer) b.classList.add('correct'); });
+              chState.wrong++;
+              chState.streak = 0;
+              if (typeof Sound !== 'undefined') Sound.play('wrong');
+            }
+            document.getElementById('ch-correct').textContent = chState.correct;
+            document.getElementById('ch-wrong').textContent = chState.wrong;
+            const streakEl = document.getElementById('ch-streak');
+            if (chState.streak >= 3) {
+              streakEl.textContent = '🔥 连对 ' + chState.streak + ' 题！';
+            } else {
+              streakEl.textContent = '';
+            }
+            setTimeout(nextChallengeQuestion, 1500);
+          });
+          optsEl.appendChild(btn);
+        });
+      }, 500);
+    }
+
+    document.getElementById('btn-start-challenge').addEventListener('click', startChallenge);
+  </script>
+</body>
+</html>
