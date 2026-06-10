@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>折线统计图</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #7B1FA2; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* === 模式1: 认识概念 === */
+    .concept-area { text-align: center; padding: 20px 16px; }
+    .concept-explain { font-size: 18px; font-weight: 600; color: #1D1D1F; margin: 12px 0; line-height: 1.8; }
+    .concept-sub { font-size: 15px; color: #6E6E73; line-height: 1.6; margin-bottom: 16px; }
+    .demo-chart {
+      background: white; border-radius: 16px; padding: 20px 16px; margin: 16px auto;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: 400px;
+    }
+    .demo-title { font-size: 16px; font-weight: 700; color: #7B1FA2; margin-bottom: 12px; }
+    .demo-svg { width: 100%; max-width: 360px; margin: 0 auto; display: block; }
+    .part-list { text-align: left; max-width: 380px; margin: 16px auto; }
+    .part-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+      background: white; border-radius: 12px; margin-bottom: 8px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04); cursor: pointer; transition: all 0.2s ease;
+    }
+    .part-item:active { transform: scale(0.97); }
+    .part-item.highlight { border: 2px solid #7B1FA2; background: rgba(123,31,162,0.06); }
+    .part-icon { font-size: 28px; width: 36px; text-align: center; }
+    .part-text { font-size: 15px; color: #1D1D1F; line-height: 1.5; }
+    .part-text strong { color: #7B1FA2; }
+    .compare-box {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+      margin: 16px auto; max-width: 400px;
+    }
+    .compare-card {
+      flex: 1; min-width: 160px; padding: 16px; background: white; border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center;
+    }
+    .compare-card .cc-icon { font-size: 36px; margin-bottom: 6px; }
+    .compare-card .cc-name { font-size: 15px; font-weight: 700; color: #7B1FA2; }
+    .compare-card .cc-desc { font-size: 13px; color: #6E6E73; margin-top: 4px; line-height: 1.4; }
+
+    /* === 模式2: 读图练习 === */
+    .read-area { padding: 16px; text-align: center; }
+    .read-chart {
+      background: white; border-radius: 16px; padding: 20px 12px; margin: 12px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .read-title { font-size: 15px; font-weight: 700; color: #7B1FA2; margin-bottom: 8px; }
+    .read-svg { width: 100%; max-width: 360px; margin: 0 auto; display: block; }
+    .read-question { font-size: 20px; font-weight: 600; margin: 16px 0 12px; }
+    .read-options { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
+    .read-opt {
+      padding: 16px; border: 3px solid #9CA3AF; background: white; border-radius: 16px;
+      font-size: 20px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-align: center;
+    }
+    .read-opt:active { transform: scale(0.97); }
+    .read-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .read-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .read-feedback { text-align: center; font-size: 18px; font-weight: 600; margin: 12px 0; min-height: 36px; }
+    .read-score { font-size: 15px; color: #6E6E73; margin: 8px 0; }
+
+    /* === 模式3: 趋势判断 === */
+    .trend-area { padding: 16px; text-align: center; }
+    .trend-card {
+      background: white; border-radius: 20px; padding: 20px 16px; margin: 12px auto;
+      max-width: 420px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .trend-svg { width: 100%; max-width: 340px; margin: 0 auto; display: block; }
+    .trend-question { font-size: 18px; font-weight: 600; margin: 16px 0 12px; color: #1D1D1F; }
+    .trend-opts { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
+    .trend-opt {
+      padding: 14px 24px; border: 3px solid #9CA3AF; background: white; border-radius: 16px;
+      font-size: 18px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+      min-width: 100px;
+    }
+    .trend-opt:active { transform: scale(0.95); }
+    .trend-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .trend-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .trend-feedback { text-align: center; font-size: 18px; font-weight: 600; margin: 12px 0; min-height: 36px; }
+    .trend-score { font-size: 15px; color: #6E6E73; margin: 8px 0; }
+
+    /* === 模式4: 挑战模式 === */
+    .challenge-area { padding: 16px; text-align: center; }
+    .ch-score { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; }
+    .ch-score span { font-weight: 700; }
+    .ch-score .ch-c { color: #34C759; }
+    .ch-score .ch-w { color: #FF3B30; }
+    .ch-streak { font-size: 15px; color: #FF9500; font-weight: 700; min-height: 24px; margin: 4px 0; }
+    .ch-start-btn {
+      padding: 16px 32px; border: none; background: #7B1FA2; color: white;
+      border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer;
+      margin: 16px auto; display: block; box-shadow: 0 4px 12px rgba(123,31,162,0.3);
+    }
+    .ch-start-btn:active { transform: scale(0.95); }
+    .ch-running { display: none; }
+    .ch-chart {
+      background: white; border-radius: 16px; padding: 16px 8px; margin: 12px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .ch-svg { width: 100%; max-width: 340px; margin: 0 auto; display: block; }
+    .ch-problem { font-size: 20px; font-weight: 600; margin: 12px 0; }
+    .ch-opts { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
+    .ch-opt {
+      padding: 14px; border: 3px solid #9CA3AF; background: white; border-radius: 16px;
+      font-size: 20px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-align: center;
+    }
+    .ch-opt:active { transform: scale(0.97); }
+    .ch-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .ch-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .ch-feedback { text-align: center; font-size: 18px; font-weight: 600; margin: 12px 0; min-height: 36px; }
+    .ch-next-btn {
+      padding: 12px 24px; border: none; background: #7B1FA2; color: white;
+      border-radius: 14px; font-size: 17px; font-weight: 600; cursor: pointer;
+      display: none; margin: 8px auto;
+    }
+    .ch-result { display: none; }
+    .ch-result-card {
+      background: white; border-radius: 20px; padding: 32px 24px; margin: 20px auto;
+      max-width: 360px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center;
+    }
+    .ch-result-icon { font-size: 64px; margin-bottom: 12px; }
+    .ch-result-text { font-size: 22px; font-weight: 700; color: #1D1D1F; margin-bottom: 8px; }
+    .ch-result-score { font-size: 17px; color: #6E6E73; }
+    .ch-retry-btn {
+      padding: 14px 28px; border: none; background: #7B1FA2; color: white;
+      border-radius: 16px; font-size: 18px; font-weight: 700; cursor: pointer;
+      margin-top: 16px; box-shadow: 0 4px 12px rgba(123,31,162,0.3);
+    }
+    .ch-retry-btn:active { transform: scale(0.95); }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <a href="../../index.html" class="nav-back">← 返回</a>
+      <span class="nav-title">折线统计图</span>
+    </nav>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="concept">📖 认识</button>
+      <button class="mode-tab" data-mode="read">📊 读图</button>
+      <button class="mode-tab" data-mode="trend">📈 趋势</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- ===== 模式1: 认识概念 ===== -->
+    <div class="mode-content active" id="mode-concept">
+      <div class="concept-area">
+        <div class="concept-explain">
+          折线统计图用<strong style="color:#7B1FA2">点和线段</strong><br>
+          表示数据的<strong style="color:#7B1FA2">变化趋势</strong> 📈
+        </div>
+        <div class="concept-sub">
+          不仅能看出数据的大小，还能一眼看出<br>
+          数据是在<strong style="color:#7B1FA2">上升↑</strong>还是<strong style="color:#FF3B30">下降↓</strong>
+        </div>
+
+        <div class="demo-chart">
+          <div class="demo-title">📊 小明一周气温变化</div>
+          <svg class="demo-svg" viewBox="0 0 360 220" id="demo-svg">
+            <!-- 坐标轴 -->
+            <line x1="50" y1="180" x2="340" y2="180" stroke="#9CA3AF" stroke-width="2"/>
+            <line x1="50" y1="20" x2="50" y2="180" stroke="#9CA3AF" stroke-width="2"/>
+            <!-- Y轴刻度 -->
+            <line x1="46" y1="140" x2="50" y2="140" stroke="#9CA3AF" stroke-width="1.5"/>
+            <text x="40" y="144" font-size="11" fill="#9CA3AF" text-anchor="end">10</text>
+            <line x1="46" y1="100" x2="50" y2="100" stroke="#9CA3AF" stroke-width="1.5"/>
+            <text x="40" y="104" font-size="11" fill="#9CA3AF" text-anchor="end">20</text>
+            <line x1="46" y1="60" x2="50" y2="60" stroke="#9CA3AF" stroke-width="1.5"/>
+            <text x="40" y="64" font-size="11" fill="#9CA3AF" text-anchor="end">30</text>
+            <line x1="46" y1="20" x2="50" y2="20" stroke="#9CA3AF" stroke-width="1.5"/>
+            <text x="40" y="24" font-size="11" fill="#9CA3AF" text-anchor="end">40</text>
+            <!-- 网格线 -->
+            <line x1="50" y1="140" x2="340" y2="140" stroke="#E5E5EA" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="50" y1="100" x2="340" y2="100" stroke="#E5E5EA" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="50" y1="60" x2="340" y2="60" stroke="#E5E5EA" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="50" y1="20" x2="340" y2="20" stroke="#E5E5EA" stroke-width="1" stroke-dasharray="4"/>
+            <!-- 数据: 周一18, 周二22, 周三28, 周四25, 周五32, 周六35, 周日30 -->
+            <!-- Y: val -> y = 180 - (val/40)*160 -->
+            <!-- 18->108, 22->92, 28->68, 25->80, 32->52, 35->40, 30->60 -->
+            <!-- X: 7点, 间距 = (340-50)/6 ≈ 48.3 -->
+            <polyline class="demo-line" points="74,108 122,92 170,68 218,80 266,52 314,40 340,60"
+              fill="none" stroke="#7B1FA2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- 数据点 -->
+            <circle class="demo-dot" cx="74" cy="108" r="6" fill="#7B1FA2"/>
+            <circle class="demo-dot" cx="122" cy="92" r="6" fill="#7B1FA2"/>
+            <circle class="demo-dot" cx="170" cy="68" r="6" fill="#7B1FA2"/>
+            <circle class="demo-dot" cx="218" cy="80" r="6" fill="#7B1FA2"/>
+            <circle class="demo-dot" cx="266" cy="52" r="6" fill="#7B1FA2"/>
+            <circle class="demo-dot" cx="314" cy="40" r="6" fill="#7B1FA2"/>
+            <circle class="demo-dot" cx="340" cy="60" r="6" fill="#7B1FA2"/>
+            <!-- 数据标签 -->
+            <text x="74" y="98" font-size="12" fill="#7B1FA2" text-anchor="middle" font-weight="700">18</text>
+            <text x="122" y="82" font-size="12" fill="#7B1FA2" text-anchor="middle" font-weight="700">22</text>
+            <text x="170" y="58" font-size="12" fill="#7B1FA2" text-anchor="middle" font-weight="700">28</text>
+            <text x="218" y="70" font-size="12" fill="#7B1FA2" text-anchor="middle" font-weight="700">25</text>
+            <text x="266" y="42" font-size="12" fill="#7B1FA2" text-anchor="middle" font-weight="700">32</text>
+            <text x="314" y="30" font-size="12" fill="#7B1FA2" text-anchor="middle" font-weight="700">35</text>
+            <text x="340" y="50" font-size="12" fill="#7B1FA2" text-anchor="middle" font-weight="700">30</text>
+            <!-- X轴标签 -->
+            <text x="74" y="198" font-size="12" fill="#6E6E73" text-anchor="middle">周一</text>
+            <text x="122" y="198" font-size="12" fill="#6E6E73" text-anchor="middle">周二</text>
+            <text x="170" y="198" font-size="12" fill="#6E6E73" text-anchor="middle">周三</text>
+            <text x="218" y="198" font-size="12" fill="#6E6E73" text-anchor="middle">周四</text>
+            <text x="266" y="198" font-size="12" fill="#6E6E73" text-anchor="middle">周五</text>
+            <text x="314" y="198" font-size="12" fill="#6E6E73" text-anchor="middle">周六</text>
+            <text x="340" y="198" font-size="12" fill="#6E6E73" text-anchor="middle">周日</text>
+            <!-- Y轴单位 -->
+            <text x="14" y="100" font-size="11" fill="#6E6E73" text-anchor="middle" transform="rotate(-90,14,100)">温度(°C)</text>
+          </svg>
+        </div>
+
+        <div class="part-list">
+          <div class="part-item" data-part="title">
+            <div class="part-icon">📌</div>
+            <div class="part-text"><strong>标题</strong>— 说明统计图的内容</div>
+          </div>
+          <div class="part-item" data-part="axis">
+            <div class="part-icon">📏</div>
+            <div class="part-text"><strong>横轴和纵轴</strong>— 横轴表示时间等类别，纵轴表示数量</div>
+          </div>
+          <div class="part-item" data-part="point">
+            <div class="part-icon">⭕</div>
+            <div class="part-text"><strong>数据点</strong>— 每个点代表一个数据，位置越高数量越大</div>
+          </div>
+          <div class="part-item" data-part="line">
+            <div class="part-icon">📈</div>
+            <div class="part-text"><strong>连线</strong>— 线段上升表示增长，下降表示减少</div>
+          </div>
+          <div class="part-item" data-part="trend">
+            <div class="part-icon">🔍</div>
+            <div class="part-text"><strong>趋势</strong>— 整体走势反映数据的变化规律</div>
+          </div>
+        </div>
+
+        <div style="font-size:17px;font-weight:600;color:#7B1FA2;margin:20px 0 12px;">折线统计图 vs 条形统计图</div>
+        <div class="compare-box">
+          <div class="compare-card">
+            <div class="cc-icon">📊</div>
+            <div class="cc-name">条形统计图</div>
+            <div class="cc-desc">用<strong>长条</strong>表示数量<br>方便<strong>比较大小</strong></div>
+          </div>
+          <div class="compare-card">
+            <div class="cc-icon">📈</div>
+            <div class="cc-name">折线统计图</div>
+            <div class="cc-desc">用<strong>折线</strong>表示数据<br>方便看出<strong>变化趋势</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 模式2: 读图练习 ===== -->
+    <div class="mode-content" id="mode-read">
+      <div class="read-area">
+        <div class="read-score">第 <span id="read-num">1</span> 题 · 答对 <span id="read-correct" style="color:#34C759;font-weight:700">0</span> 题</div>
+        <div class="read-chart">
+          <div class="read-title" id="read-title"></div>
+          <svg class="read-svg" viewBox="0 0 360 220" id="read-svg"></svg>
+        </div>
+        <div class="read-question" id="read-question"></div>
+        <div class="read-options" id="read-options"></div>
+        <div class="read-feedback" id="read-feedback"></div>
+      </div>
+    </div>
+
+    <!-- ===== 模式3: 趋势判断 ===== -->
+    <div class="mode-content" id="mode-trend">
+      <div class="trend-area">
+        <div class="trend-score">第 <span id="trend-num">1</span> 题 · 答对 <span id="trend-correct" style="color:#34C759;font-weight:700">0</span> 题</div>
+        <div class="trend-card">
+          <div class="read-title" id="trend-title"></div>
+          <svg class="trend-svg" viewBox="0 0 340 200" id="trend-svg"></svg>
+          <div class="trend-question" id="trend-question"></div>
+          <div class="trend-opts" id="trend-opts"></div>
+          <div class="trend-feedback" id="trend-feedback"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 模式4: 挑战模式 ===== -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="challenge-area">
+        <div class="ch-score">
+          <div>✅ <span class="ch-c" id="ch-c">0</span></div>
+          <div>❌ <span class="ch-w" id="ch-w">0</span></div>
+        </div>
+        <div class="ch-streak" id="ch-streak"></div>
+
+        <div id="ch-start">
+          <div style="font-size:48px;margin:20px 0;">🏆</div>
+          <div style="font-size:17px;color:#6E6E73;margin-bottom:16px;">综合挑战：读图 + 趋势 + 推理<br>无限题目，看看你能答对多少！</div>
+          <button class="ch-start-btn" id="ch-start-btn">开始挑战</button>
+        </div>
+
+        <div class="ch-running" id="ch-running">
+          <div class="ch-chart">
+            <svg class="ch-svg" viewBox="0 0 340 200" id="ch-svg"></svg>
+          </div>
+          <div class="ch-problem" id="ch-problem"></div>
+          <div class="ch-opts" id="ch-opts"></div>
+          <div class="ch-feedback" id="ch-feedback"></div>
+          <button class="ch-next-btn" id="ch-next-btn">下一题 →</button>
+        </div>
+
+        <div class="ch-result" id="ch-result">
+          <div class="ch-result-card">
+            <div class="ch-result-icon" id="ch-result-icon"></div>
+            <div class="ch-result-text" id="ch-result-text"></div>
+            <div class="ch-result-score" id="ch-result-score"></div>
+            <button class="ch-retry-btn" id="ch-retry-btn">再来一次</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+  (function() {
+    'use strict';
+
+    // ========== 工具函数 ==========
+    function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function shuffle(arr) { for (var i = arr.length - 1; i > 0; i--) { var j = rand(0, i); var t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; }
+    function pick(arr) { return arr[rand(0, arr.length - 1)]; }
+    function $(sel) { return document.querySelector(sel); }
+    function $$(sel) { return document.querySelectorAll(sel); }
+
+    // ========== 模式切换 ==========
+    var tabs = $$('.mode-tab');
+    var contents = $$('.mode-content');
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        contents.forEach(function(c) { c.classList.remove('active'); });
+        tab.classList.add('active');
+        var mode = tab.getAttribute('data-mode');
+        var el = document.getElementById('mode-' + mode);
+        if (el) el.classList.add('active');
+        // 切换模式时初始化
+        if (mode === 'read') initReadMode();
+        if (mode === 'trend') initTrendMode();
+      });
+    });
+
+    // ========== 数据生成 ==========
+    var chartThemes = [
+      { title: '某地一周平均气温', unit: '°C', yLabel: '温度(°C)', xLabels: ['周一','周二','周三','周四','周五','周六','周日'], min: 5, max: 40, step: 5 },
+      { title: '小明每月阅读书籍数', unit: '本', yLabel: '数量(本)', xLabels: ['1月','2月','3月','4月','5月','6月'], min: 1, max: 20, step: 2 },
+      { title: '商店一周矿泉水销量', unit: '箱', yLabel: '销量(箱)', xLabels: ['周一','周二','周三','周四','周五','周六','周日'], min: 10, max: 80, step: 10 },
+      { title: '城市月度降雨量', unit: 'mm', yLabel: '降雨(mm)', xLabels: ['4月','5月','6月','7月','8月','9月'], min: 20, max: 200, step: 20 },
+      { title: '小华6次跳绳成绩', unit: '个', yLabel: '个数(个)', xLabels: ['第1次','第2次','第3次','第4次','第5次','第6次'], min: 50, max: 200, step: 25 },
+      { title: '植物园每日游客数', unit: '人', yLabel: '人数(人)', xLabels: ['周一','周二','周三','周四','周五','周六','周日'], min: 100, max: 600, step: 50 },
+      { title: '某班6次测验平均分', unit: '分', yLabel: '分数(分)', xLabels: ['第1次','第2次','第3次','第4次','第5次','第6次'], min: 60, max: 100, step: 5 },
+      { title: '一周每日步数统计', unit: '步', yLabel: '步数(千步)', xLabels: ['周一','周二','周三','周四','周五','周六','周日'], min: 2, max: 15, step: 1 }
+    ];
+
+    function generateData(theme) {
+      var count = theme.xLabels.length;
+      var data = [];
+      for (var i = 0; i < count; i++) {
+        data.push(rand(Math.floor(theme.min / theme.step), Math.floor(theme.max / theme.step)) * theme.step);
+      }
+      return data;
+    }
+
+    function getYMax(theme, data) {
+      var maxVal = Math.max.apply(null, data);
+      var yMax = Math.ceil(maxVal / theme.step) * theme.step;
+      if (yMax === maxVal) yMax += theme.step;
+      return yMax;
+    }
+
+    // ========== 绘制折线图 SVG ==========
+    function drawLineChart(svgEl, theme, data, opts) {
+      opts = opts || {};
+      var w = opts.width || 360;
+      var h = opts.height || 220;
+      var padL = opts.padL || 50;
+      var padR = opts.padR || 20;
+      var padT = opts.padT || 20;
+      var padB = opts.padB || 40;
+      var chartW = w - padL - padR;
+      var chartH = h - padT - padB;
+      var yMax = getYMax(theme, data);
+      var count = data.length;
+      var gap = count > 1 ? chartW / (count - 1) : chartW;
+
+      var svg = '';
+      // 坐标轴
+      svg += '<line x1="'+padL+'" y1="'+(h-padB)+'" x2="'+(w-padR)+'" y2="'+(h-padB)+'" stroke="#9CA3AF" stroke-width="2"/>';
+      svg += '<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(h-padB)+'" stroke="#9CA3AF" stroke-width="2"/>';
+
+      // Y轴刻度和网格
+      var ySteps = Math.floor(yMax / theme.step);
+      for (var i = 0; i <= ySteps; i++) {
+        var val = i * theme.step;
+        var y = (h - padB) - (val / yMax) * chartH;
+        svg += '<line x1="'+(padL-4)+'" y1="'+y+'" x2="'+padL+'" y2="'+y+'" stroke="#9CA3AF" stroke-width="1.5"/>';
+        svg += '<text x="'+(padL-8)+'" y="'+(y+4)+'" font-size="11" fill="#9CA3AF" text-anchor="end">'+val+'</text>';
+        if (i > 0) {
+          svg += '<line x1="'+padL+'" y1="'+y+'" x2="'+(w-padR)+'" y2="'+y+'" stroke="#E5E5EA" stroke-width="1" stroke-dasharray="4"/>';
+        }
+      }
+
+      // 数据点坐标
+      var points = [];
+      for (var i = 0; i < count; i++) {
+        var x = padL + (count > 1 ? i * gap : chartW / 2);
+        var y = (h - padB) - (data[i] / yMax) * chartH;
+        points.push({x: x, y: y, val: data[i], label: theme.xLabels[i]});
+      }
+
+      // 折线
+      var linePoints = points.map(function(p) { return p.x+','+p.y; }).join(' ');
+      svg += '<polyline points="'+linePoints+'" fill="none" stroke="#7B1FA2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>';
+
+      // 数据点和标签
+      var showValues = opts.showValues !== false;
+      for (var i = 0; i < points.length; i++) {
+        var p = points[i];
+        var highlight = opts.highlight === i;
+        var color = highlight ? '#FF3B30' : '#7B1FA2';
+        var r = highlight ? 8 : 6;
+        svg += '<circle cx="'+p.x+'" cy="'+p.y+'" r="'+r+'" fill="'+color+'"/>';
+        if (showValues) {
+          svg += '<text x="'+p.x+'" y="'+(p.y - 10)+'" font-size="12" fill="'+color+'" text-anchor="middle" font-weight="700">'+p.val+'</text>';
+        }
+      }
+
+      // X轴标签
+      for (var i = 0; i < points.length; i++) {
+        var p = points[i];
+        svg += '<text x="'+p.x+'" y="'+(h-padB+18)+'" font-size="11" fill="#6E6E73" text-anchor="middle">'+p.label+'</text>';
+      }
+
+      // Y轴单位
+      svg += '<text x="14" y="'+(h/2)+'" font-size="11" fill="#6E6E73" text-anchor="middle" transform="rotate(-90,14,'+(h/2)+')">'+theme.yLabel+'</text>';
+
+      svgEl.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+      svgEl.innerHTML = svg;
+
+      return points;
+    }
+
+    // ========== 模式2: 读图练习 ==========
+    var readState = { num: 0, correct: 0, locked: false };
+
+    function initReadMode() {
+      readState.num = 0;
+      readState.correct = 0;
+      nextReadQuestion();
+    }
+
+    function nextReadQuestion() {
+      readState.num++;
+      readState.locked = false;
+      $('#read-num').textContent = readState.num;
+      $('#read-correct').textContent = readState.correct;
+      $('#read-feedback').textContent = '';
+
+      var theme = pick(chartThemes);
+      var data = generateData(theme);
+      $('#read-title').textContent = theme.title;
+
+      var svgEl = $('#read-svg');
+      var points = drawLineChart(svgEl, theme, data);
+
+      // 随机问题类型
+      var qTypes = ['max', 'min', 'value', 'diff', 'count_up'];
+      var qType = pick(qTypes);
+      var question = '';
+      var answer = '';
+      var options = [];
+
+      if (qType === 'max') {
+        var maxIdx = 0;
+        for (var i = 1; i < data.length; i++) { if (data[i] > data[maxIdx]) maxIdx = i; }
+        question = '哪一天的数值最大？';
+        answer = theme.xLabels[maxIdx];
+        options = [answer];
+        for (var i = 0; i < theme.xLabels.length && options.length < 4; i++) {
+          if (i !== maxIdx && options.indexOf(theme.xLabels[i]) === -1) options.push(theme.xLabels[i]);
+        }
+      } else if (qType === 'min') {
+        var minIdx = 0;
+        for (var i = 1; i < data.length; i++) { if (data[i] < data[minIdx]) minIdx = i; }
+        question = '哪一天的数值最小？';
+        answer = theme.xLabels[minIdx];
+        options = [answer];
+        for (var i = 0; i < theme.xLabels.length && options.length < 4; i++) {
+          if (i !== minIdx && options.indexOf(theme.xLabels[i]) === -1) options.push(theme.xLabels[i]);
+        }
+      } else if (qType === 'value') {
+        var idx = rand(0, data.length - 1);
+        question = theme.xLabels[idx] + '的数值是多少' + theme.unit + '？';
+        answer = '' + data[idx];
+        options = [answer];
+        while (options.length < 4) {
+          var fake = data[idx] + pick([-2,-1,1,2]) * theme.step;
+          if (fake >= 0 && options.indexOf('' + fake) === -1) options.push('' + fake);
+        }
+      } else if (qType === 'diff') {
+        var i1 = rand(0, data.length - 2);
+        var i2 = i1 + 1;
+        var diff = Math.abs(data[i2] - data[i1]);
+        question = theme.xLabels[i2] + '比' + theme.xLabels[i1] + '多/少多少' + theme.unit + '？';
+        answer = '' + diff;
+        options = [answer];
+        while (options.length < 4) {
+          var fake = diff + pick([-2,-1,1,2]) * theme.step;
+          if (fake > 0 && options.indexOf('' + fake) === -1) options.push('' + fake);
+        }
+      } else if (qType === 'count_up') {
+        var countUp = 0;
+        for (var i = 1; i < data.length; i++) { if (data[i] > data[i-1]) countUp++; }
+        question = '数据一共上升了几次？';
+        answer = '' + countUp;
+        options = [answer];
+        var alt = countUp + pick([-1,1,2]);
+        if (alt < 0) alt = countUp + 2;
+        options.push('' + alt);
+        alt = countUp + pick([-2,2,3]);
+        if (alt < 0 || options.indexOf(''+alt) !== -1) alt = Math.abs(countUp - 3);
+        if (options.indexOf(''+alt) === -1) options.push('' + alt);
+        while (options.length < 4) {
+          var r = rand(0, data.length - 1);
+          if (options.indexOf('' + r) === -1) options.push('' + r);
+        }
+      }
+
+      shuffle(options);
+      $('#read-question').textContent = question;
+
+      var optsEl = $('#read-options');
+      optsEl.innerHTML = '';
+      options.forEach(function(opt) {
+        var btn = document.createElement('button');
+        btn.className = 'read-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', function() {
+          if (readState.locked) return;
+          readState.locked = true;
+          if (opt === answer) {
+            btn.classList.add('correct');
+            readState.correct++;
+            $('#read-feedback').textContent = '✅ 答对了！';
+            $('#read-feedback').style.color = '#34C759';
+            setTimeout(nextReadQuestion, 1500);
+          } else {
+            btn.classList.add('wrong');
+            // 高亮正确答案
+            var allOpts = optsEl.querySelectorAll('.read-opt');
+            allOpts.forEach(function(b) { if (b.textContent === answer) b.classList.add('correct'); });
+            $('#read-feedback').textContent = '❌ 正确答案是 ' + answer;
+            $('#read-feedback').style.color = '#FF3B30';
+            setTimeout(nextReadQuestion, 2500);
+          }
+        });
+        optsEl.appendChild(btn);
+      });
+    }
+
+    // ========== 模式3: 趋势判断 ==========
+    var trendState = { num: 0, correct: 0, locked: false };
+
+    function initTrendMode() {
+      trendState.num = 0;
+      trendState.correct = 0;
+      nextTrendQuestion();
+    }
+
+    function nextTrendQuestion() {
+      trendState.num++;
+      trendState.locked = false;
+      $('#trend-num').textContent = trendState.num;
+      $('#trend-correct').textContent = trendState.correct;
+      $('#trend-feedback').textContent = '';
+
+      var theme = pick(chartThemes);
+      var data = generateData(theme);
+      $('#trend-title').textContent = theme.title;
+
+      var svgEl = $('#trend-svg');
+      var points = drawLineChart(svgEl, theme, data, { width: 340, height: 200, padB: 36 });
+
+      // 趋势问题类型
+      var qTypes = ['segment_trend', 'overall_trend', 'fastest', 'slowest', 'flat'];
+      var qType = pick(qTypes);
+      var question = '';
+      var answer = '';
+      var options = [];
+
+      if (qType === 'segment_trend') {
+        // 选相邻两个点问趋势
+        var idx = rand(0, data.length - 2);
+        var diff = data[idx + 1] - data[idx];
+        question = '从' + theme.xLabels[idx] + '到' + theme.xLabels[idx + 1] + '，数据怎样变化？';
+        if (diff > 0) {
+          answer = '上升';
+          options = ['上升', '下降', '不变'];
+        } else if (diff < 0) {
+          answer = '下降';
+          options = ['上升', '下降', '不变'];
+        } else {
+          answer = '不变';
+          options = ['上升', '下降', '不变'];
+        }
+      } else if (qType === 'overall_trend') {
+        // 前半段 vs 后半段
+        var mid = Math.floor(data.length / 2);
+        var firstHalf = 0, secondHalf = 0;
+        for (var i = 0; i < mid; i++) firstHalf += data[i];
+        for (var i = mid; i < data.length; i++) secondHalf += data[i];
+        firstHalf /= mid;
+        secondHalf /= (data.length - mid);
+        question = '整体来看，数据趋势是？';
+        var diff2 = secondHalf - firstHalf;
+        if (Math.abs(diff2) < theme.step) {
+          answer = '基本平稳';
+          options = ['整体上升', '整体下降', '基本平稳'];
+        } else if (diff2 > 0) {
+          answer = '整体上升';
+          options = ['整体上升', '整体下降', '基本平稳'];
+        } else {
+          answer = '整体下降';
+          options = ['整体上升', '整体下降', '基本平稳'];
+        }
+      } else if (qType === 'fastest') {
+        // 哪段上升最快
+        var maxDiff = -Infinity;
+        var maxIdx = 0;
+        for (var i = 1; i < data.length; i++) {
+          var d = data[i] - data[i-1];
+          if (d > maxDiff) { maxDiff = d; maxIdx = i; }
+        }
+        if (maxDiff <= 0) {
+          // 没有上升段，重新生成
+          data = generateData(theme);
+          points = drawLineChart(svgEl, theme, data, { width: 340, height: 200, padB: 36 });
+          maxDiff = -Infinity; maxIdx = 0;
+          for (var i = 1; i < data.length; i++) {
+            var d = data[i] - data[i-1];
+            if (d > maxDiff) { maxDiff = d; maxIdx = i; }
+          }
+        }
+        question = '哪一段上升最快？';
+        answer = theme.xLabels[maxIdx - 1] + '→' + theme.xLabels[maxIdx];
+        options = [answer];
+        for (var i = 1; i < data.length && options.length < 4; i++) {
+          var seg = theme.xLabels[i-1] + '→' + theme.xLabels[i];
+          if (seg !== answer) options.push(seg);
+        }
+      } else if (qType === 'slowest') {
+        // 哪段下降最多
+        var minDiff = Infinity;
+        var minIdx = 0;
+        for (var i = 1; i < data.length; i++) {
+          var d = data[i] - data[i-1];
+          if (d < minDiff) { minDiff = d; minIdx = i; }
+        }
+        if (minDiff >= 0) {
+          data = generateData(theme);
+          points = drawLineChart(svgEl, theme, data, { width: 340, height: 200, padB: 36 });
+          minDiff = Infinity; minIdx = 0;
+          for (var i = 1; i < data.length; i++) {
+            var d = data[i] - data[i-1];
+            if (d < minDiff) { minDiff = d; minIdx = i; }
+          }
+        }
+        question = '哪一段下降最多？';
+        answer = theme.xLabels[minIdx - 1] + '→' + theme.xLabels[minIdx];
+        options = [answer];
+        for (var i = 1; i < data.length && options.length < 4; i++) {
+          var seg = theme.xLabels[i-1] + '→' + theme.xLabels[i];
+          if (seg !== answer) options.push(seg);
+        }
+      } else if (qType === 'flat') {
+        // 哪段变化最小
+        var minChange = Infinity;
+        var flatIdx = 0;
+        for (var i = 1; i < data.length; i++) {
+          var d = Math.abs(data[i] - data[i-1]);
+          if (d < minChange) { minChange = d; flatIdx = i; }
+        }
+        question = '哪一段数据变化最小？';
+        answer = theme.xLabels[flatIdx - 1] + '→' + theme.xLabels[flatIdx];
+        options = [answer];
+        for (var i = 1; i < data.length && options.length < 4; i++) {
+          var seg = theme.xLabels[i-1] + '→' + theme.xLabels[i];
+          if (seg !== answer) options.push(seg);
+        }
+      }
+
+      shuffle(options);
+      $('#trend-question').textContent = question;
+
+      var optsEl = $('#trend-opts');
+      optsEl.innerHTML = '';
+      options.forEach(function(opt) {
+        var btn = document.createElement('button');
+        btn.className = 'trend-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', function() {
+          if (trendState.locked) return;
+          trendState.locked = true;
+          if (opt === answer) {
+            btn.classList.add('correct');
+            trendState.correct++;
+            $('#trend-feedback').textContent = '✅ 答对了！';
+            $('#trend-feedback').style.color = '#34C759';
+            setTimeout(nextTrendQuestion, 1500);
+          } else {
+            btn.classList.add('wrong');
+            var allOpts = optsEl.querySelectorAll('.trend-opt');
+            allOpts.forEach(function(b) { if (b.textContent === answer) b.classList.add('correct'); });
+            $('#trend-feedback').textContent = '❌ 正确答案是 ' + answer;
+            $('#trend-feedback').style.color = '#FF3B30';
+            setTimeout(nextTrendQuestion, 2500);
+          }
+        });
+        optsEl.appendChild(btn);
+      });
+    }
+
+    // ========== 模式4: 挑战模式 ==========
+    var chState = { correct: 0, wrong: 0, streak: 0, locked: false };
+
+    $('#ch-start-btn').addEventListener('click', function() {
+      chState = { correct: 0, wrong: 0, streak: 0, locked: false };
+      $('#ch-c').textContent = '0';
+      $('#ch-w').textContent = '0';
+      $('#ch-streak').textContent = '';
+      $('#ch-start').style.display = 'none';
+      $('#ch-running').style.display = 'block';
+      $('#ch-result').style.display = 'none';
+      nextChQuestion();
+    });
+
+    $('#ch-retry-btn').addEventListener('click', function() {
+      chState = { correct: 0, wrong: 0, streak: 0, locked: false };
+      $('#ch-c').textContent = '0';
+      $('#ch-w').textContent = '0';
+      $('#ch-streak').textContent = '';
+      $('#ch-start').style.display = 'none';
+      $('#ch-running').style.display = 'block';
+      $('#ch-result').style.display = 'none';
+      nextChQuestion();
+    });
+
+    $('#ch-next-btn').addEventListener('click', function() {
+      nextChQuestion();
+    });
+
+    function nextChQuestion() {
+      chState.locked = false;
+      $('#ch-feedback').textContent = '';
+      $('#ch-next-btn').style.display = 'none';
+
+      var theme = pick(chartThemes);
+      var data = generateData(theme);
+
+      var svgEl = $('#ch-svg');
+      var points = drawLineChart(svgEl, theme, data, { width: 340, height: 200, padB: 36 });
+
+      // 混合题型
+      var qTypes = ['value', 'max', 'min', 'diff', 'segment_trend', 'overall_trend'];
+      var qType = pick(qTypes);
+      var question = '';
+      var answer = '';
+      var options = [];
+
+      if (qType === 'value') {
+        var idx = rand(0, data.length - 1);
+        question = theme.xLabels[idx] + '的数值是多少' + theme.unit + '？';
+        answer = '' + data[idx];
+        options = [answer];
+        while (options.length < 4) {
+          var fake = data[idx] + pick([-2,-1,1,2]) * theme.step;
+          if (fake >= 0 && options.indexOf('' + fake) === -1) options.push('' + fake);
+        }
+      } else if (qType === 'max') {
+        var maxIdx = 0;
+        for (var i = 1; i < data.length; i++) { if (data[i] > data[maxIdx]) maxIdx = i; }
+        question = '数值最大的是？';
+        answer = theme.xLabels[maxIdx];
+        options = [answer];
+        for (var i = 0; i < theme.xLabels.length && options.length < 4; i++) {
+          if (i !== maxIdx && options.indexOf(theme.xLabels[i]) === -1) options.push(theme.xLabels[i]);
+        }
+      } else if (qType === 'min') {
+        var minIdx = 0;
+        for (var i = 1; i < data.length; i++) { if (data[i] < data[minIdx]) minIdx = i; }
+        question = '数值最小的是？';
+        answer = theme.xLabels[minIdx];
+        options = [answer];
+        for (var i = 0; i < theme.xLabels.length && options.length < 4; i++) {
+          if (i !== minIdx && options.indexOf(theme.xLabels[i]) === -1) options.push(theme.xLabels[i]);
+        }
+      } else if (qType === 'diff') {
+        var i1 = rand(0, data.length - 2);
+        var i2 = i1 + 1;
+        var diff = Math.abs(data[i2] - data[i1]);
+        question = theme.xLabels[i2] + '比' + theme.xLabels[i1] + '相差多少' + theme.unit + '？';
+        answer = '' + diff;
+        options = [answer];
+        while (options.length < 4) {
+          var fake = diff + pick([-2,-1,1,2]) * theme.step;
+          if (fake > 0 && options.indexOf('' + fake) === -1) options.push('' + fake);
+        }
+      } else if (qType === 'segment_trend') {
+        var idx = rand(0, data.length - 2);
+        var diff = data[idx + 1] - data[idx];
+        question = '从' + theme.xLabels[idx] + '到' + theme.xLabels[idx + 1] + '，数据怎样变化？';
+        if (diff > 0) { answer = '上升'; }
+        else if (diff < 0) { answer = '下降'; }
+        else { answer = '不变'; }
+        options = ['上升', '下降', '不变'];
+      } else if (qType === 'overall_trend') {
+        var mid = Math.floor(data.length / 2);
+        var firstHalf = 0, secondHalf = 0;
+        for (var i = 0; i < mid; i++) firstHalf += data[i];
+        for (var i = mid; i < data.length; i++) secondHalf += data[i];
+        firstHalf /= mid;
+        secondHalf /= (data.length - mid);
+        question = '整体来看，数据趋势是？';
+        var diff2 = secondHalf - firstHalf;
+        if (Math.abs(diff2) < theme.step) { answer = '基本平稳'; }
+        else if (diff2 > 0) { answer = '整体上升'; }
+        else { answer = '整体下降'; }
+        options = ['整体上升', '整体下降', '基本平稳'];
+      }
+
+      shuffle(options);
+      $('#ch-problem').textContent = question;
+
+      var optsEl = $('#ch-opts');
+      optsEl.innerHTML = '';
+      options.forEach(function(opt) {
+        var btn = document.createElement('button');
+        btn.className = 'ch-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', function() {
+          if (chState.locked) return;
+          chState.locked = true;
+          if (opt === answer) {
+            btn.classList.add('correct');
+            chState.correct++;
+            chState.streak++;
+            $('#ch-c').textContent = chState.correct;
+            if (chState.streak >= 3) {
+              $('#ch-streak').textContent = '🔥 连对 ' + chState.streak + ' 题！';
+            } else {
+              $('#ch-streak').textContent = '';
+            }
+            $('#ch-feedback').textContent = '✅ 正确！';
+            $('#ch-feedback').style.color = '#34C759';
+          } else {
+            btn.classList.add('wrong');
+            chState.wrong++;
+            chState.streak = 0;
+            $('#ch-w').textContent = chState.wrong;
+            $('#ch-streak').textContent = '';
+            var allOpts = optsEl.querySelectorAll('.ch-opt');
+            allOpts.forEach(function(b) { if (b.textContent === answer) b.classList.add('correct'); });
+            $('#ch-feedback').textContent = '❌ 正确答案：' + answer;
+            $('#ch-feedback').style.color = '#FF3B30';
+          }
+          $('#ch-next-btn').style.display = 'block';
+        });
+        optsEl.appendChild(btn);
+      });
+    }
+
+    // ========== 概念模式交互 ==========
+    var partItems = $$('.part-item');
+    partItems.forEach(function(item) {
+      item.addEventListener('click', function() {
+        partItems.forEach(function(p) { p.classList.remove('highlight'); });
+        item.classList.add('highlight');
+        var part = item.getAttribute('data-part');
+        // 高亮SVG对应部分
+        var demoSvg = $('#demo-svg');
+        // 移除旧高亮
+        var oldHL = demoSvg.querySelectorAll('.hl-overlay');
+        oldHL.forEach(function(el) { el.remove(); });
+
+        if (part === 'title') {
+          // 不做特殊高亮，概念已清晰
+        } else if (part === 'axis') {
+          // 高亮坐标轴 - 通过加粗实现
+        } else if (part === 'point') {
+          var dots = demoSvg.querySelectorAll('.demo-dot');
+          dots.forEach(function(dot) {
+            dot.setAttribute('r', '9');
+            setTimeout(function() { dot.setAttribute('r', '6'); }, 1200);
+          });
+        } else if (part === 'line') {
+          var line = demoSvg.querySelector('.demo-line');
+          if (line) {
+            line.setAttribute('stroke-width', '5');
+            line.setAttribute('stroke', '#FF9500');
+            setTimeout(function() { line.setAttribute('stroke-width', '3'); line.setAttribute('stroke', '#7B1FA2'); }, 1200);
+          }
+        }
+      });
+    });
+
+  })();
+  </script>
+</body>
+</html>
