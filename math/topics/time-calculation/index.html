@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>时间计算</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #1565C0; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 全局 */
+    .score-display { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px; font-size: 18px; font-weight: 600; }
+    .score-stars { font-size: 24px; }
+    .section-title { font-size: 22px; color: #1D1D1F; font-weight: 700; text-align: center; margin: 8px 0; }
+    .section-desc { font-size: 15px; color: #6E6E73; text-align: center; margin-bottom: 16px; }
+    .result-text { font-size: 22px; font-weight: 700; text-align: center; margin: 16px 0; min-height: 36px; }
+    .hint-box {
+      background: #E3F2FD; border-radius: 12px; padding: 14px 16px; margin: 12px 0;
+      font-size: 15px; color: #1565C0; border-left: 4px solid #1565C0; line-height: 1.6;
+    }
+
+    /* === 模式1: 认识时刻 === */
+    .clock-area { text-align: center; padding: 20px 16px; }
+    .clock-face {
+      width: 220px; height: 220px; margin: 16px auto; position: relative;
+      border-radius: 50%; background: white;
+      border: 6px solid #1565C0; box-shadow: 0 4px 20px rgba(21,101,192,0.15);
+    }
+    .clock-number {
+      position: absolute; font-size: 16px; font-weight: 700; color: #1D1D1F;
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    }
+    .clock-hand {
+      position: absolute; bottom: 50%; left: 50%; transform-origin: bottom center;
+      border-radius: 4px;
+    }
+    .hand-hour { width: 6px; height: 60px; background: #1D1D1F; margin-left: -3px; }
+    .hand-minute { width: 4px; height: 80px; background: #E53935; margin-left: -2px; }
+    .hand-second { width: 2px; height: 85px; background: #43A047; margin-left: -1px; }
+    .clock-center {
+      position: absolute; top: 50%; left: 50%; width: 12px; height: 12px;
+      background: #1D1D1F; border-radius: 50%; transform: translate(-50%, -50%); z-index: 5;
+    }
+    .time-display {
+      font-size: 48px; font-weight: 800; color: #1565C0; margin: 16px 0;
+      font-variant-numeric: tabular-nums; letter-spacing: 2px;
+    }
+    .time-display .time-sep { animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .clock-info { font-size: 18px; color: #6E6E73; margin: 8px 0; line-height: 1.6; }
+    .clock-nav { display: flex; justify-content: center; gap: 16px; margin: 16px 0; }
+    .clock-nav-btn {
+      min-width: 56px; min-height: 56px; border: 2px solid #9CA3AF; background: white;
+      border-radius: 14px; font-size: 22px; cursor: pointer; transition: all 0.2s ease;
+    }
+    .clock-nav-btn:active { transform: scale(0.9); }
+
+    /* === 模式2: 计算经过时间 === */
+    .elapsed-area { text-align: center; padding: 16px; }
+    .timeline-bar {
+      display: flex; align-items: center; justify-content: center; gap: 0;
+      margin: 20px 0; flex-wrap: nowrap; position: relative;
+    }
+    .time-point {
+      background: white; border-radius: 16px; padding: 14px 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08); text-align: center; min-width: 90px;
+      z-index: 2;
+    }
+    .time-point .tp-label { font-size: 12px; color: #6E6E73; margin-bottom: 4px; }
+    .time-point .tp-value { font-size: 28px; font-weight: 800; color: #1565C0; }
+    .time-point.unknown .tp-value { color: #E53935; font-size: 32px; }
+    .timeline-arrow {
+      flex: 1; height: 4px; background: linear-gradient(90deg, #1565C0, #43A047);
+      min-width: 40px; position: relative; display: flex; align-items: center; justify-content: center;
+    }
+    .timeline-arrow .arrow-label {
+      position: absolute; top: -28px; font-size: 16px; font-weight: 700;
+      color: #43A047; white-space: nowrap; background: #E8F5E9; padding: 2px 10px;
+      border-radius: 10px;
+    }
+    .timeline-arrow .arrow-label.unknown { color: #E53935; background: #FFEBEE; }
+    .elapsed-input-row {
+      display: flex; justify-content: center; align-items: center; gap: 6px; margin: 16px 0;
+      flex-wrap: wrap;
+    }
+    .time-input {
+      width: 64px; height: 56px; border: 3px solid #9CA3AF; border-radius: 14px;
+      font-size: 24px; font-weight: 700; text-align: center; outline: none;
+      transition: border-color 0.2s;
+    }
+    .time-input:focus { border-color: #1565C0; }
+    .time-unit-label { font-size: 16px; font-weight: 600; color: #6E6E73; }
+    .check-btn {
+      padding: 14px 28px; border: none; background: #1565C0; color: white;
+      border-radius: 14px; font-size: 18px; font-weight: 700; cursor: pointer;
+      margin: 8px; transition: all 0.2s ease;
+    }
+    .check-btn:active { transform: scale(0.95); }
+    .next-btn {
+      padding: 14px 28px; border: none; background: #43A047; color: white;
+      border-radius: 14px; font-size: 18px; font-weight: 700; cursor: pointer;
+      margin: 8px; display: none; transition: all 0.2s ease;
+    }
+    .next-btn:active { transform: scale(0.95); }
+    .feedback { font-size: 20px; font-weight: 700; margin: 12px 0; min-height: 32px; }
+
+    /* === 模式3: 推算时刻 === */
+    .deduce-area { text-align: center; padding: 16px; }
+    .deduce-visual {
+      display: flex; align-items: center; justify-content: center; gap: 0;
+      margin: 20px 0; flex-wrap: nowrap;
+    }
+    .deduce-box {
+      background: white; border-radius: 16px; padding: 14px 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08); text-align: center; min-width: 80px;
+    }
+    .deduce-box .db-label { font-size: 12px; color: #6E6E73; margin-bottom: 4px; }
+    .deduce-box .db-value { font-size: 24px; font-weight: 800; }
+    .deduce-box .db-value.start { color: #1565C0; }
+    .deduce-box .db-value.end { color: #E53935; }
+    .deduce-box .db-value.duration { color: #43A047; }
+    .deduce-box .db-value.unknown { color: #E53935; font-size: 28px; }
+    .deduce-arrow {
+      flex: 1; height: 4px; background: #43A047; min-width: 30px;
+      position: relative; display: flex; align-items: center; justify-content: center;
+    }
+    .deduce-arrow .da-label {
+      position: absolute; top: -26px; font-size: 14px; font-weight: 700;
+      color: #43A047; white-space: nowrap; background: #E8F5E9; padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* === 模式4: 限时挑战 === */
+    .challenge-area { text-align: center; padding: 16px; }
+    .challenge-score { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; font-weight: 600; }
+    .timer-bar { height: 8px; background: #E5E5EA; border-radius: 4px; overflow: hidden; margin: 12px 0; }
+    .timer-fill { height: 100%; background: linear-gradient(90deg, #43A047, #FF9800, #E53935); border-radius: 4px; transition: width 0.1s linear; }
+    .challenge-question { font-size: 20px; font-weight: 700; margin: 20px 0; line-height: 1.6; }
+    .challenge-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .challenge-opt {
+      padding: 18px 12px; border: 3px solid #9CA3AF; background: #F8F8FA;
+      border-radius: 16px; font-size: 18px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; text-align: center;
+    }
+    .challenge-opt:active { transform: scale(0.95); }
+    .challenge-opt.correct { border-color: #43A047; background: rgba(67,160,71,0.15); color: #43A047; }
+    .challenge-opt.wrong { border-color: #E53935; background: rgba(229,57,53,0.1); color: #E53935; }
+    .challenge-start-btn {
+      padding: 16px 32px; border: none; background: #1565C0; color: white;
+      border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer;
+      margin: 16px auto; display: block; box-shadow: 0 4px 12px rgba(21,101,192,0.3);
+    }
+    .challenge-start-btn:active { transform: scale(0.95); }
+    .challenge-running { display: none; }
+    .challenge-active .challenge-start-btn { display: none; }
+    .challenge-active .challenge-running { display: block; }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes bounce { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+    .bounce { animation: bounce 0.4s ease; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="breadcrumb">
+      <a href="../../index.html" class="breadcrumb-item">🏠 首页</a><span class="breadcrumb-sep">›</span><a href="../index.html" class="breadcrumb-item">📐 数学</a><span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">⏰ 时间计算</span>
+    </nav>
+    <div class="score-display"><span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span><span class="score-stars" id="stars-display"></span></div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="clock">🕐 认识时刻</button>
+      <button class="mode-tab" data-mode="elapsed">⏱️ 经过时间</button>
+      <button class="mode-tab" data-mode="deduce">🔮 推算时刻</button>
+      <button class="mode-tab" data-mode="challenge">🏆 限时挑战</button>
+    </div>
+
+    <!-- 模式1: 认识时刻 -->
+    <div class="mode-content active" id="mode-clock">
+      <div class="card">
+        <p class="page-subtitle">看钟表，认识不同时刻</p>
+        <div class="clock-area">
+          <div class="hint-box" id="clock-hint">
+            💡 时针指几就是几时，分针指几就是几个5分钟
+          </div>
+          <div class="clock-face" id="clock-face">
+            <div class="clock-center"></div>
+          </div>
+          <div class="time-display" id="time-display">12<span class="time-sep">:</span>00</div>
+          <div class="clock-info" id="clock-info"></div>
+          <div class="clock-nav">
+            <button class="clock-nav-btn" id="clock-prev">⬅️</button>
+            <span id="clock-counter" style="font-size:18px;font-weight:600;line-height:56px;color:#6E6E73"></span>
+            <button class="clock-nav-btn" id="clock-next">➡️</button>
+            <button class="clock-nav-btn" id="clock-random" style="font-size:16px">🎲</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 计算经过时间 -->
+    <div class="mode-content" id="mode-elapsed">
+      <div class="card">
+        <p class="page-subtitle">算一算，两个时刻之间经过了多长时间</p>
+        <div class="elapsed-area">
+          <div class="hint-box">
+            💡 经过时间 = 结束时刻 − 开始时刻<br>
+            不够减时，借1小时 = 60分钟
+          </div>
+          <div class="timeline-bar" id="timeline-bar"></div>
+          <div class="elapsed-input-row" id="elapsed-input-row"></div>
+          <div style="display:flex;justify-content:center;gap:8px">
+            <button class="check-btn" id="elapsed-check">✅ 检查答案</button>
+            <button class="next-btn" id="elapsed-next">➡️ 下一题</button>
+          </div>
+          <div class="feedback" id="elapsed-feedback"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 推算时刻 -->
+    <div class="mode-content" id="mode-deduce">
+      <div class="card">
+        <p class="page-subtitle">根据开始时间和经过时间，推算结束时间</p>
+        <div class="deduce-area">
+          <div class="hint-box">
+            💡 结束时刻 = 开始时刻 + 经过时间<br>
+            分钟超过60，要向小时进1
+          </div>
+          <div class="deduce-visual" id="deduce-visual"></div>
+          <div class="elapsed-input-row" id="deduce-input-row"></div>
+          <div style="display:flex;justify-content:center;gap:8px">
+            <button class="check-btn" id="deduce-check">✅ 检查答案</button>
+            <button class="next-btn" id="deduce-next">➡️ 下一题</button>
+          </div>
+          <div class="feedback" id="deduce-feedback"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 限时挑战 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="card">
+        <div class="challenge-area">
+          <div class="challenge-score">
+            <span>答对 <b id="ch-correct" style="color:#43A047">0</b></span>
+            <span>答错 <b id="ch-wrong" style="color:#E53935">0</b></span>
+          </div>
+          <div class="timer-bar"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+          <button class="challenge-start-btn" id="btn-start-challenge">🏆 开始挑战！</button>
+          <div class="challenge-running">
+            <div class="challenge-question" id="ch-question"></div>
+            <div class="challenge-options" id="ch-options"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+  (function() {
+    'use strict';
+
+    /* ===== 全局 ===== */
+    var streak = 0;
+    function updateStreak(correct) {
+      if (correct) { streak++; } else { streak = 0; }
+      var el = document.getElementById('streak');
+      if (el) el.textContent = streak;
+      var stars = document.getElementById('stars-display');
+      if (stars) {
+        var s = '';
+        for (var i = 0; i < Math.min(streak, 10); i++) s += '⭐';
+        stars.textContent = s;
+      }
+    }
+
+    /* ===== Tab 切换 ===== */
+    var tabs = document.querySelectorAll('.mode-tab');
+    var contents = document.querySelectorAll('.mode-content');
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var mode = this.getAttribute('data-mode');
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        contents.forEach(function(c) { c.classList.remove('active'); });
+        this.classList.add('active');
+        var target = document.getElementById('mode-' + mode);
+        if (target) target.classList.add('active');
+      });
+    });
+
+    /* ===== 工具 ===== */
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    function shuffle(arr) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+    function formatHM(h, m) { return pad2(h) + ':' + pad2(m); }
+    function timeToMin(h, m) { return h * 60 + m; }
+    function minToTime(total) {
+      var h = Math.floor(((total % 1440) + 1440) % 1440 / 60);
+      var m = ((total % 1440) + 1440) % 60;
+      return { h: h, m: m };
+    }
+    function fmtDuration(totalMin) {
+      if (totalMin < 0) totalMin = -totalMin;
+      var h = Math.floor(totalMin / 60);
+      var m = totalMin % 60;
+      if (h > 0 && m > 0) return h + '小时' + m + '分钟';
+      if (h > 0) return h + '小时';
+      return m + '分钟';
+    }
+
+    /* ===== 模式1: 认识时刻 ===== */
+    var clockExamples = [
+      { h: 7, m: 0, desc: '早上7时，起床啦！', period: '上午' },
+      { h: 8, m: 30, desc: '上午8时30分，开始上课', period: '上午' },
+      { h: 10, m: 15, desc: '上午10时15分，课间休息', period: '上午' },
+      { h: 12, m: 0, desc: '中午12时，吃午饭', period: '中午' },
+      { h: 14, m: 30, desc: '下午2时30分，下午课', period: '下午' },
+      { h: 16, m: 45, desc: '下午4时45分，放学了', period: '下午' },
+      { h: 18, m: 0, desc: '傍晚6时，吃晚饭', period: '傍晚' },
+      { h: 20, m: 0, desc: '晚上8时，写作业', period: '晚上' },
+      { h: 21, m: 30, desc: '晚上9时30分，该睡觉了', period: '晚上' },
+      { h: 3, m: 20, desc: '凌晨3时20分，夜深了', period: '凌晨' },
+      { h: 9, m: 5, desc: '上午9时05分，分针指1', period: '上午' },
+      { h: 5, m: 50, desc: '下午5时50分，快到6点了', period: '下午' },
+      { h: 11, m: 55, desc: '上午11时55分，快中午了', period: '上午' },
+      { h: 15, m: 40, desc: '下午3时40分，下午课', period: '下午' }
+    ];
+    var clockIdx = 0;
+
+    function renderClock(h, m) {
+      var face = document.getElementById('clock-face');
+      // 清除旧的指针
+      var oldHands = face.querySelectorAll('.clock-hand');
+      oldHands.forEach(function(el) { el.remove(); });
+
+      // 添加数字
+      if (!face.querySelector('.clock-number')) {
+        for (var i = 1; i <= 12; i++) {
+          var numEl = document.createElement('div');
+          numEl.className = 'clock-number';
+          numEl.textContent = i;
+          var angle = (i * 30 - 90) * Math.PI / 180;
+          var r = 88;
+          var cx = 110 + r * Math.cos(angle) - 14;
+          var cy = 110 + r * Math.sin(angle) - 14;
+          numEl.style.left = cx + 'px';
+          numEl.style.top = cy + 'px';
+          face.appendChild(numEl);
+        }
+      }
+
+      // 时针
+      var hourAngle = (h % 12) * 30 + m * 0.5;
+      var hourHand = document.createElement('div');
+      hourHand.className = 'clock-hand hand-hour';
+      hourHand.style.transform = 'rotate(' + hourAngle + 'deg)';
+      face.appendChild(hourHand);
+
+      // 分针
+      var minAngle = m * 6;
+      var minHand = document.createElement('div');
+      minHand.className = 'clock-hand hand-minute';
+      minHand.style.transform = 'rotate(' + minAngle + 'deg)';
+      face.appendChild(minHand);
+    }
+
+    function showClockExample() {
+      var ex = clockExamples[clockIdx];
+      renderClock(ex.h, ex.m);
+      document.getElementById('time-display').innerHTML =
+        pad2(ex.h) + '<span class="time-sep">:</span>' + pad2(ex.m);
+      document.getElementById('clock-info').innerHTML =
+        '<b>' + ex.period + '</b> ' + ex.desc;
+      var hint = '';
+      if (ex.m === 0) {
+        hint = '💡 分针指12，时针指' + (ex.h > 12 ? ex.h - 12 : ex.h) + '，所以是' + (ex.h > 12 ? ex.h - 12 : ex.h) + '时整';
+      } else if (ex.m < 30) {
+        hint = '💡 分针走过' + (ex.m / 5) + '小格 = ' + ex.m + '分钟，时针在' + (ex.h > 12 ? ex.h - 12 : ex.h) + '和' + ((ex.h > 12 ? ex.h - 12 : ex.h) + 1) + '之间';
+      } else if (ex.m === 30) {
+        hint = '💡 分针指6，是30分钟（半），时针在两个数中间';
+      } else {
+        hint = '💡 分针指' + Math.round(ex.m / 5) + '，是' + ex.m + '分钟，快到' + ((ex.h + 1) > 12 ? 1 : ex.h + 1) + '时了';
+      }
+      document.getElementById('clock-hint').innerHTML = hint;
+      document.getElementById('clock-counter').textContent = (clockIdx + 1) + ' / ' + clockExamples.length;
+    }
+
+    document.getElementById('clock-prev').addEventListener('click', function() {
+      clockIdx = (clockIdx - 1 + clockExamples.length) % clockExamples.length;
+      showClockExample();
+    });
+    document.getElementById('clock-next').addEventListener('click', function() {
+      clockIdx = (clockIdx + 1) % clockExamples.length;
+      showClockExample();
+    });
+    document.getElementById('clock-random').addEventListener('click', function() {
+      clockIdx = randInt(0, clockExamples.length - 1);
+      showClockExample();
+    });
+    showClockExample();
+
+    /* ===== 模式2: 计算经过时间 ===== */
+    var elapsedCur = null;
+    var elapsedAnswered = false;
+
+    function genElapsed() {
+      var type = randInt(0, 3);
+      var startH, startM, endH, endM, durMin;
+
+      if (type === 0) {
+        // 整小时
+        startH = randInt(6, 18);
+        startM = 0;
+        durMin = randInt(1, 5) * 60;
+      } else if (type === 1) {
+        // 整分钟
+        startH = randInt(7, 16);
+        startM = 0;
+        durMin = randInt(10, 120);
+      } else if (type === 2) {
+        // 有分钟，不跨小时
+        startH = randInt(7, 16);
+        startM = randInt(0, 30);
+        durMin = randInt(10, 50);
+      } else {
+        // 有分钟，跨小时
+        startH = randInt(7, 15);
+        startM = randInt(15, 50);
+        durMin = randInt(20, 120);
+      }
+
+      var startTotal = timeToMin(startH, startM);
+      var endTotal = startTotal + durMin;
+      var endTime = minToTime(endTotal);
+      endH = endTime.h;
+      endM = endTime.m;
+
+      var durH = Math.floor(durMin / 60);
+      var durM = durMin % 60;
+
+      return {
+        startH: startH, startM: startM,
+        endH: endH, endM: endM,
+        durH: durH, durM: durM,
+        durMin: durMin
+      };
+    }
+
+    function renderElapsed() {
+      elapsedAnswered = false;
+      var q = genElapsed();
+      elapsedCur = q;
+
+      var bar = document.getElementById('timeline-bar');
+      bar.innerHTML =
+        '<div class="time-point">' +
+          '<div class="tp-label">开始</div>' +
+          '<div class="tp-value">' + formatHM(q.startH, q.startM) + '</div>' +
+        '</div>' +
+        '<div class="timeline-arrow">' +
+          '<div class="arrow-label unknown">?分钟</div>' +
+        '</div>' +
+        '<div class="time-point">' +
+          '<div class="tp-label">结束</div>' +
+          '<div class="tp-value">' + formatHM(q.endH, q.endM) + '</div>' +
+        '</div>';
+
+      var inputRow = document.getElementById('elapsed-input-row');
+      inputRow.innerHTML =
+        '<input type="number" class="time-input" id="elapsed-h" placeholder="?" inputmode="numeric" style="width:56px">' +
+        '<span class="time-unit-label">小时</span>' +
+        '<input type="number" class="time-input" id="elapsed-m" placeholder="?" inputmode="numeric" style="width:56px">' +
+        '<span class="time-unit-label">分钟</span>';
+
+      document.getElementById('elapsed-feedback').textContent = '';
+      document.getElementById('elapsed-feedback').style.color = '';
+      document.getElementById('elapsed-check').style.display = '';
+      document.getElementById('elapsed-next').style.display = 'none';
+
+      var hInp = document.getElementById('elapsed-h');
+      if (hInp) { hInp.value = ''; hInp.focus(); }
+    }
+
+    document.getElementById('elapsed-check').addEventListener('click', function() {
+      if (elapsedAnswered || !elapsedCur) return;
+      elapsedAnswered = true;
+      var hVal = parseInt(document.getElementById('elapsed-h').value) || 0;
+      var mVal = parseInt(document.getElementById('elapsed-m').value) || 0;
+      var totalUser = hVal * 60 + mVal;
+      var fb = document.getElementById('elapsed-feedback');
+
+      if (totalUser === elapsedCur.durMin && (hVal > 0 || mVal > 0)) {
+        fb.textContent = '✅ 正确！经过了' + fmtDuration(elapsedCur.durMin);
+        fb.style.color = '#43A047';
+        updateStreak(true);
+      } else {
+        fb.textContent = '❌ 不对哦，正确答案是' + fmtDuration(elapsedCur.durMin);
+        fb.style.color = '#E53935';
+        updateStreak(false);
+      }
+      // 显示正确答案在箭头
+      var arrowLabel = document.querySelector('#timeline-bar .arrow-label');
+      if (arrowLabel) {
+        arrowLabel.textContent = fmtDuration(elapsedCur.durMin);
+        arrowLabel.classList.remove('unknown');
+        arrowLabel.style.color = '#43A047';
+        arrowLabel.style.background = '#E8F5E9';
+      }
+      document.getElementById('elapsed-check').style.display = 'none';
+      document.getElementById('elapsed-next').style.display = '';
+    });
+
+    document.getElementById('elapsed-next').addEventListener('click', function() {
+      renderElapsed();
+    });
+
+    // 答对后1.5秒自动下一题
+    var elapsedAutoTimer = null;
+    document.getElementById('elapsed-check').addEventListener('click', function() {
+      if (!elapsedAnswered) return;
+      var hVal = parseInt(document.getElementById('elapsed-h').value) || 0;
+      var mVal = parseInt(document.getElementById('elapsed-m').value) || 0;
+      var totalUser = hVal * 60 + mVal;
+      if (totalUser === elapsedCur.durMin && (hVal > 0 || mVal > 0)) {
+        clearTimeout(elapsedAutoTimer);
+        elapsedAutoTimer = setTimeout(function() { renderElapsed(); }, 1500);
+      }
+    });
+
+    renderElapsed();
+
+    /* ===== 模式3: 推算时刻 ===== */
+    var deduceCur = null;
+    var deduceAnswered = false;
+
+    function genDeduce() {
+      var type = randInt(0, 2);
+      var startH, startM, durH, durM;
+
+      if (type === 0) {
+        // 整小时
+        startH = randInt(6, 18);
+        startM = 0;
+        durH = randInt(1, 4);
+        durM = 0;
+      } else if (type === 1) {
+        // 整分钟
+        startH = randInt(7, 17);
+        startM = randInt(0, 30);
+        durH = 0;
+        durM = randInt(15, 90);
+      } else {
+        // 混合
+        startH = randInt(7, 16);
+        startM = randInt(0, 45);
+        durH = randInt(1, 3);
+        durM = randInt(5, 50);
+      }
+
+      var startTotal = timeToMin(startH, startM);
+      var durTotal = durH * 60 + durM;
+      var endTotal = startTotal + durTotal;
+      var endTime = minToTime(endTotal);
+
+      return {
+        startH: startH, startM: startM,
+        durH: durH, durM: durM,
+        endH: endTime.h, endM: endTime.m
+      };
+    }
+
+    function renderDeduce() {
+      deduceAnswered = false;
+      var q = genDeduce();
+      deduceCur = q;
+
+      var durText = '';
+      if (q.durH > 0) durText += q.durH + '小时';
+      if (q.durM > 0) durText += q.durM + '分钟';
+
+      var vis = document.getElementById('deduce-visual');
+      vis.innerHTML =
+        '<div class="deduce-box">' +
+          '<div class="db-label">开始</div>' +
+          '<div class="db-value start">' + formatHM(q.startH, q.startM) + '</div>' +
+        '</div>' +
+        '<div class="deduce-arrow">' +
+          '<div class="da-label">' + durText + '</div>' +
+        '</div>' +
+        '<div class="deduce-box">' +
+          '<div class="db-label">结束</div>' +
+          '<div class="db-value unknown">? : ?</div>' +
+        '</div>';
+
+      var inputRow = document.getElementById('deduce-input-row');
+      inputRow.innerHTML =
+        '<input type="number" class="time-input" id="deduce-h" placeholder="时" inputmode="numeric" style="width:56px" min="0" max="23">' +
+        '<span class="time-unit-label">:</span>' +
+        '<input type="number" class="time-input" id="deduce-m" placeholder="分" inputmode="numeric" style="width:56px" min="0" max="59">';
+
+      document.getElementById('deduce-feedback').textContent = '';
+      document.getElementById('deduce-feedback').style.color = '';
+      document.getElementById('deduce-check').style.display = '';
+      document.getElementById('deduce-next').style.display = 'none';
+
+      var hInp = document.getElementById('deduce-h');
+      if (hInp) { hInp.value = ''; hInp.focus(); }
+    }
+
+    document.getElementById('deduce-check').addEventListener('click', function() {
+      if (deduceAnswered || !deduceCur) return;
+      deduceAnswered = true;
+      var hVal = parseInt(document.getElementById('deduce-h').value);
+      var mVal = parseInt(document.getElementById('deduce-m').value);
+      var fb = document.getElementById('deduce-feedback');
+
+      if (!isNaN(hVal) && !isNaN(mVal) && hVal === deduceCur.endH && mVal === deduceCur.endM) {
+        fb.textContent = '✅ 正确！结束时刻是' + formatHM(deduceCur.endH, deduceCur.endM);
+        fb.style.color = '#43A047';
+        updateStreak(true);
+      } else {
+        fb.textContent = '❌ 不对哦，正确答案是' + formatHM(deduceCur.endH, deduceCur.endM);
+        fb.style.color = '#E53935';
+        updateStreak(false);
+      }
+      // 显示正确答案
+      var unknowns = document.querySelectorAll('#deduce-visual .db-value.unknown');
+      unknowns.forEach(function(el) {
+        el.textContent = formatHM(deduceCur.endH, deduceCur.endM);
+        el.classList.remove('unknown');
+        el.style.color = '#43A047';
+      });
+      document.getElementById('deduce-check').style.display = 'none';
+      document.getElementById('deduce-next').style.display = '';
+    });
+
+    document.getElementById('deduce-next').addEventListener('click', function() {
+      renderDeduce();
+    });
+
+    // 答对后1.5秒自动下一题
+    var deduceAutoTimer = null;
+    document.getElementById('deduce-check').addEventListener('click', function() {
+      if (!deduceAnswered) return;
+      var hVal = parseInt(document.getElementById('deduce-h').value);
+      var mVal = parseInt(document.getElementById('deduce-m').value);
+      if (!isNaN(hVal) && !isNaN(mVal) && hVal === deduceCur.endH && mVal === deduceCur.endM) {
+        clearTimeout(deduceAutoTimer);
+        deduceAutoTimer = setTimeout(function() { renderDeduce(); }, 1500);
+      }
+    });
+
+    renderDeduce();
+
+    /* ===== 模式4: 限时挑战 ===== */
+    var chTimer = null;
+    var chTimeLeft = 0;
+    var chCorrect = 0;
+    var chWrong = 0;
+    var chRunning = false;
+    var CH_TIME = 60;
+
+    function genChallenge() {
+      var type = randInt(0, 5);
+      var q, ans, opts;
+
+      if (type === 0) {
+        // 经过时间 - 整小时
+        var sh = randInt(6, 16);
+        var eh = randInt(sh + 1, sh + 5);
+        q = '从' + sh + ':00到' + eh + ':00，经过了？';
+        ans = (eh - sh) + '小时';
+        opts = genChOpts(ans, [
+          (eh - sh) + '小时',
+          (eh - sh + 1) + '小时',
+          (eh - sh - 1) + '小时',
+          (eh - sh) + '分钟'
+        ]);
+      } else if (type === 1) {
+        // 推算时刻 - 整小时
+        var start = randInt(7, 16);
+        var dur = randInt(1, 4);
+        q = start + ':00开始，过了' + dur + '小时，几时结束？';
+        ans = formatHM(start + dur, 0);
+        opts = genChOpts(ans, [
+          formatHM(start + dur, 0),
+          formatHM(start + dur + 1, 0),
+          formatHM(start + dur - 1, 0),
+          formatHM(start, dur * 10)
+        ]);
+      } else if (type === 2) {
+        // 经过分钟
+        var sh2 = randInt(8, 16);
+        var sm2 = 0;
+        var dm = randInt(15, 50);
+        var endT = minToTime(timeToMin(sh2, sm2) + dm);
+        q = sh2 + ':00开始，过了' + dm + '分钟，几时几分？';
+        ans = formatHM(endT.h, endT.m);
+        opts = genChOpts(ans, [
+          formatHM(endT.h, endT.m),
+          formatHM(endT.h, endT.m + 10),
+          formatHM(endT.h - 1, endT.m),
+          formatHM(endT.h, dm)
+        ]);
+      } else if (type === 3) {
+        // 比时间长短
+        var a = randInt(20, 90);
+        var b = randInt(20, 90);
+        q = fmtDuration(a) + ' ○ ' + fmtDuration(b) + '，○填？';
+        ans = a > b ? '>' : (a < b ? '<' : '=');
+        opts = ['>', '<', '=', '≥'];
+      } else if (type === 4) {
+        // 读钟面
+        var rh = randInt(1, 12);
+        var rm = randInt(0, 11) * 5;
+        if (rm === 60) rm = 0;
+        q = '时针指' + rh + '，分针指' + (rm / 5) + '，是几时几分？';
+        ans = formatHM(rh, rm);
+        var wrong1 = formatHM(rh, rm + 5 > 55 ? 0 : rm + 5);
+        var wrong2 = formatHM(rh + 1 > 12 ? 1 : rh + 1, rm);
+        var wrong3 = formatHM(rh, rm === 0 ? 30 : (rm < 30 ? 60 - rm : rm - 30));
+        opts = genChOpts(ans, [ans, wrong1, wrong2, wrong3]);
+      } else {
+        // 时间应用题
+        var scenarios = [
+          { act: '上课', start: [8, 0], dur: 40 },
+          { act: '看电影', start: [14, 30], dur: 120 },
+          { act: '跑步', start: [17, 0], dur: 30 },
+          { act: '写作业', start: [16, 0], dur: 60 },
+          { act: '吃饭', start: [12, 0], dur: 30 },
+          { act: '画画', start: [10, 15], dur: 45 }
+        ];
+        var sc = scenarios[randInt(0, scenarios.length - 1)];
+        var endT2 = minToTime(timeToMin(sc.start[0], sc.start[1]) + sc.dur);
+        q = '小明' + formatHM(sc.start[0], sc.start[1]) + '开始' + sc.act + '，' +
+            '过了' + fmtDuration(sc.dur) + '结束，几时结束？';
+        ans = formatHM(endT2.h, endT2.m);
+        var w1 = formatHM(endT2.h, endT2.m + 10);
+        var w2 = formatHM(endT2.h - 1, endT2.m);
+        var w3 = formatHM(endT2.h, sc.dur);
+        opts = genChOpts(ans, [ans, w1, w2, w3]);
+      }
+
+      return { question: q, answer: ans, options: opts };
+    }
+
+    function genChOpts(correct, pool) {
+      // 去重
+      var seen = {};
+      var unique = [];
+      pool.forEach(function(p) {
+        if (!seen[p]) { seen[p] = true; unique.push(p); }
+      });
+      if (unique.indexOf(correct) < 0) unique[0] = correct;
+      return shuffle(unique.slice(0, 4));
+    }
+
+    function startChallenge() {
+      chCorrect = 0;
+      chWrong = 0;
+      chRunning = true;
+      chTimeLeft = CH_TIME;
+      document.getElementById('ch-correct').textContent = 0;
+      document.getElementById('ch-wrong').textContent = 0;
+      document.getElementById('mode-challenge').querySelector('.challenge-area').classList.add('challenge-active');
+      nextChallenge();
+      if (chTimer) clearInterval(chTimer);
+      chTimer = setInterval(function() {
+        chTimeLeft--;
+        var pct = (chTimeLeft / CH_TIME) * 100;
+        document.getElementById('timer-fill').style.width = pct + '%';
+        if (chTimeLeft <= 0) {
+          clearInterval(chTimer);
+          chRunning = false;
+          document.getElementById('ch-question').textContent = '⏰ 时间到！答对 ' + chCorrect + ' 题';
+          document.getElementById('ch-options').innerHTML =
+            '<button class="challenge-opt" id="ch-restart" style="grid-column:span 2">🔄 再来一次</button>';
+          document.getElementById('ch-restart').addEventListener('click', function() {
+            document.getElementById('mode-challenge').querySelector('.challenge-area').classList.remove('challenge-active');
+            document.getElementById('timer-fill').style.width = '100%';
+          });
+        }
+      }, 1000);
+    }
+
+    var curCh = null;
+    function nextChallenge() {
+      curCh = genChallenge();
+      document.getElementById('ch-question').textContent = curCh.question;
+      var optsEl = document.getElementById('ch-options');
+      optsEl.innerHTML = '';
+      curCh.options.forEach(function(opt) {
+        var btn = document.createElement('button');
+        btn.className = 'challenge-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', function() {
+          if (!chRunning) return;
+          var isCorrect = String(opt) === String(curCh.answer);
+          if (isCorrect) {
+            btn.classList.add('correct');
+            chCorrect++;
+            document.getElementById('ch-correct').textContent = chCorrect;
+            updateStreak(true);
+          } else {
+            btn.classList.add('wrong');
+            chWrong++;
+            document.getElementById('ch-wrong').textContent = chWrong;
+            updateStreak(false);
+            var btns = optsEl.querySelectorAll('.challenge-opt');
+            btns.forEach(function(b) {
+              if (String(b.textContent) === String(curCh.answer)) b.classList.add('correct');
+            });
+          }
+          var btns = optsEl.querySelectorAll('.challenge-opt');
+          btns.forEach(function(b) { b.style.pointerEvents = 'none'; });
+          setTimeout(function() { if (chRunning) nextChallenge(); }, 1500);
+        });
+        optsEl.appendChild(btn);
+      });
+    }
+
+    document.getElementById('btn-start-challenge').addEventListener('click', startChallenge);
+
+  })();
+  </script>
+</body>
+</html>

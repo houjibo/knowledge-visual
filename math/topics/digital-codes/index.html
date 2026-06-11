@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>数字编码</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs {
+      display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mode-tab {
+      flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA;
+      border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-tab.active { background: #4A90D9; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 身份证模式 */
+    .idcard {
+      background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+      border-radius: 16px; padding: 20px; color: white; margin: 16px 0;
+      box-shadow: 0 4px 20px rgba(26,35,126,0.3);
+    }
+    .idcard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .idcard-title { font-size: 14px; opacity: 0.8; }
+    .idcard-flag { font-size: 12px; opacity: 0.6; }
+    .idcard-number { font-size: 22px; font-weight: 700; letter-spacing: 2px; margin-bottom: 12px; font-family: monospace; }
+    .idcard-info { display: flex; gap: 24px; font-size: 13px; opacity: 0.9; }
+    .idcard-info span { display: flex; flex-direction: column; gap: 2px; }
+    .idcard-info .label { font-size: 11px; opacity: 0.6; }
+
+    .digit-seg {
+      display: inline-block; padding: 4px 8px; margin: 2px; border-radius: 8px;
+      font-family: monospace; font-size: 18px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .digit-seg:hover { transform: scale(1.05); }
+    .digit-seg.addr { background: rgba(255,152,0,0.2); color: #FF9800; }
+    .digit-seg.birth { background: rgba(76,175,80,0.2); color: #4CAF50; }
+    .digit-seg.seq { background: rgba(33,150,243,0.2); color: #2196F3; }
+    .digit-seg.check { background: rgba(156,39,176,0.2); color: #9C27B0; }
+    .digit-seg.active { transform: scale(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+
+    .decode-panel {
+      background: rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-top: 16px;
+    }
+    .decode-panel h4 { font-size: 14px; margin-bottom: 8px; opacity: 0.8; }
+    .decode-info { font-size: 15px; line-height: 1.8; }
+
+    /* 邮编模式 */
+    .envelope {
+      background: #FFF8E1; border: 2px solid #FFD54F; border-radius: 16px;
+      padding: 24px; margin: 16px 0; position: relative;
+    }
+    .envelope::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40px;
+      background: linear-gradient(135deg, #FFD54F 25%, transparent 25%) -50px 0,
+                  linear-gradient(225deg, #FFD54F 25%, transparent 25%) -50px 0;
+      background-size: 100px 40px; background-color: #FFC107; border-radius: 14px 14px 0 0;
+    }
+    .postcode-boxes {
+      display: flex; gap: 8px; justify-content: center; margin: 32px 0 16px;
+    }
+    .postcode-box {
+      width: 44px; height: 56px; border: 3px solid #FF9800; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 800; color: #E65100; background: white;
+    }
+    .postcode-meaning {
+      display: grid; grid-template-columns: auto 1fr; gap: 8px 16px;
+      font-size: 14px; margin-top: 16px;
+    }
+    .postcode-meaning .pm-digit { font-weight: 700; color: #E65100; font-family: monospace; }
+    .postcode-meaning .pm-desc { color: #6E6E73; }
+
+    /* 电话区号模式 */
+    .phone-dial {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      max-width: 280px; margin: 16px auto;
+    }
+    .dial-btn {
+      aspect-ratio: 1; border: none; border-radius: 50%; font-size: 24px; font-weight: 700;
+      background: #E8EAF6; color: #3F51B5; cursor: pointer; transition: all 0.15s ease;
+    }
+    .dial-btn:active { transform: scale(0.9); background: #C5CAE9; }
+    .dial-display {
+      text-align: center; font-size: 32px; font-weight: 800; color: #3F51B5;
+      font-family: monospace; min-height: 48px; margin: 16px 0;
+    }
+
+    /* 条形码模式 */
+    .barcode-container { text-align: center; padding: 16px; }
+    .barcode {
+      display: flex; justify-content: center; align-items: end; height: 80px;
+      margin: 16px 0; gap: 1px;
+    }
+    .barcode-bar {
+      width: 3px; background: #1D1D1F; transition: height 0.3s ease;
+    }
+    .barcode-bar.space { background: transparent; }
+    .barcode-number {
+      font-size: 20px; font-weight: 700; font-family: monospace; letter-spacing: 4px;
+      color: #1D1D1F; margin-top: 8px;
+    }
+
+    /* 练习题模式 */
+    .quiz-area { padding: 16px; }
+    .quiz-question {
+      background: #E3F2FD; border-radius: 16px; padding: 20px; margin-bottom: 16px;
+      font-size: 16px; line-height: 1.6;
+    }
+    .quiz-code {
+      font-family: monospace; font-size: 20px; font-weight: 700; color: #1565C0;
+      letter-spacing: 2px; margin: 8px 0;
+    }
+    .quiz-options { display: flex; flex-direction: column; gap: 12px; }
+    .quiz-option {
+      padding: 16px 20px; border: 2px solid #E5E5EA; border-radius: 12px;
+      background: white; font-size: 16px; text-align: left; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .quiz-option:active { transform: scale(0.98); }
+    .quiz-option.correct {
+      border-color: #34C759; background: rgba(52,199,89,0.1); color: #34C759;
+    }
+    .quiz-option.wrong {
+      border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30;
+    }
+
+    .score-display {
+      display: flex; justify-content: center; align-items: center;
+      gap: 12px; padding: 12px; font-size: 18px; font-weight: 600;
+    }
+    .score-stars { font-size: 24px; }
+
+    .info-box {
+      background: #E8F5E9; border-left: 4px solid #4CAF50; border-radius: 8px;
+      padding: 16px; margin: 16px 0; font-size: 14px; line-height: 1.6;
+    }
+    .info-box h4 { color: #2E7D32; margin-bottom: 8px; }
+
+    @media (max-width: 480px) {
+      .idcard-number { font-size: 18px; }
+      .digit-seg { font-size: 15px; padding: 3px 6px; }
+      .postcode-box { width: 38px; height: 48px; font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="breadcrumb">
+      <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="../index.html" class="breadcrumb-item">📐 数学</a>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">🔐 数字编码</span>
+    </nav>
+
+    <div class="score-display">
+      <span>连续答对</span>
+      <span id="streak" style="color:#FF9500">0</span>
+      <span>次</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="idcard">🪪 身份证</button>
+      <button class="mode-tab" data-mode="postcode">📮 邮编</button>
+      <button class="mode-tab" data-mode="phone">📞 区号</button>
+      <button class="mode-tab" data-mode="barcode">📊 条形码</button>
+      <button class="mode-tab" data-mode="quiz">🎯 闯关</button>
+    </div>
+
+    <!-- 模式1: 身份证 -->
+    <div class="mode-content active" id="mode-idcard">
+      <div class="card">
+        <p class="page-subtitle">点击号码的不同部分，看看每段代表什么</p>
+        
+        <div class="idcard">
+          <div class="idcard-header">
+            <span class="idcard-title">中华人民共和国居民身份证</span>
+            <span class="idcard-flag">公民身份号码</span>
+          </div>
+          <div class="idcard-number" id="id-number">
+            <span class="digit-seg addr" data-part="addr">110101</span>
+            <span class="digit-seg birth" data-part="birth">19900101</span>
+            <span class="digit-seg seq" data-part="seq">123</span>
+            <span class="digit-seg check" data-part="check">X</span>
+          </div>
+          <div class="idcard-info">
+            <span><span class="label">姓名</span><span id="id-name">张三</span></span>
+            <span><span class="label">性别</span><span id="id-gender">男</span></span>
+            <span><span class="label">民族</span><span id="id-ethnicity">汉</span></span>
+            <span><span class="label">出生</span><span id="id-birth">1990-01-01</span></span>
+          </div>
+          <div class="decode-panel">
+            <h4>🔍 点击号码查看含义</h4>
+            <div class="decode-info" id="decode-info">
+              👆 点击上方号码的不同颜色部分，了解每段的含义
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <h4>💡 身份证号码小知识</h4>
+          <p>身份证号码共 <strong>18位</strong>，由四部分组成：</p>
+          <ul style="margin-top:8px;padding-left:20px;">
+            <li><span style="color:#FF9800;font-weight:700">前6位</span>：地址码（省市区）</li>
+            <li><span style="color:#4CAF50;font-weight:700">中间8位</span>：出生日期（年月日）</li>
+            <li><span style="color:#2196F3;font-weight:700">第15-17位</span>：顺序码（奇数男，偶数女）</li>
+            <li><span style="color:#9C27B0;font-weight:700">最后1位</span>：校验码（0-9或X）</li>
+          </ul>
+        </div>
+
+        <button class="btn btn-primary" id="btn-new-idcard" style="width:100%">🔄 换一个身份证</button>
+      </div>
+    </div>
+
+    <!-- 模式2: 邮编 -->
+    <div class="mode-content" id="mode-postcode">
+      <div class="card">
+        <p class="page-subtitle">邮政编码由6位数字组成，每一位都有特殊含义</p>
+        
+        <div class="envelope">
+          <div class="postcode-boxes" id="postcode-boxes">
+            <div class="postcode-box">1</div>
+            <div class="postcode-box">0</div>
+            <div class="postcode-box">0</div>
+            <div class="postcode-box">0</div>
+            <div class="postcode-box">0</div>
+            <div class="postcode-box">0</div>
+          </div>
+          <div style="text-align:center;margin-top:16px">
+            <div style="font-size:14px;color:#6E6E73">邮政编码</div>
+            <div style="font-size:24px;font-weight:800;color:#E65100;font-family:monospace" id="postcode-full">100000</div>
+          </div>
+        </div>
+
+        <div class="postcode-meaning" id="postcode-meaning">
+          <span class="pm-digit">第1-2位</span>
+          <span class="pm-desc">省/自治区/直辖市</span>
+          <span class="pm-digit">第3位</span>
+          <span class="pm-desc">邮区</span>
+          <span class="pm-digit">第4位</span>
+          <span class="pm-desc">县/市</span>
+          <span class="pm-digit">第5-6位</span>
+          <span class="pm-desc">投递局（所）</span>
+        </div>
+
+        <div class="info-box" style="margin-top:20px">
+          <h4>📮 常见城市邮编</h4>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px">
+            <div>🏛️ 北京：100000</div>
+            <div>🌆 上海：200000</div>
+            <div>🌸 广州：510000</div>
+            <div>🏙️ 深圳：518000</div>
+            <div>🐼 成都：610000</div>
+            <div>🌊 杭州：310000</div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-new-postcode" style="width:100%">🔄 换一个邮编</button>
+      </div>
+    </div>
+
+    <!-- 模式3: 电话区号 -->
+    <div class="mode-content" id="mode-phone">
+      <div class="card">
+        <p class="page-subtitle">不同城市有不同的电话区号</p>
+        
+        <div class="dial-display" id="dial-display">_ _ _</div>
+        
+        <div class="phone-dial" id="phone-dial">
+          <button class="dial-btn" data-digit="0">0</button>
+          <button class="dial-btn" data-digit="1">1</button>
+          <button class="dial-btn" data-digit="2">2</button>
+          <button class="dial-btn" data-digit="3">3</button>
+          <button class="dial-btn" data-digit="4">4</button>
+          <button class="dial-btn" data-digit="5">5</button>
+          <button class="dial-btn" data-digit="6">6</button>
+          <button class="dial-btn" data-digit="7">7</button>
+          <button class="dial-btn" data-digit="8">8</button>
+          <button class="dial-btn" data-digit="9">9</button>
+          <button class="dial-btn" style="font-size:16px" id="btn-clear-dial">清除</button>
+          <button class="dial-btn" style="font-size:16px" id="btn-check-area">查询</button>
+        </div>
+
+        <div id="area-result" style="text-align:center;margin-top:16px;min-height:60px">
+          <p style="color:#6E6E73;font-size:14px">输入3-4位区号，点击"查询"看看是哪个城市</p>
+        </div>
+
+        <div class="info-box" style="margin-top:16px">
+          <h4>📞 主要城市区号</h4>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;font-size:14px">
+            <div>🏛️ 北京：010</div>
+            <div>🌆 上海：021</div>
+            <div>🌸 广州：020</div>
+            <div>🏙️ 深圳：0755</div>
+            <div>🐼 成都：028</div>
+            <div>🌊 杭州：0571</div>
+            <div>🏔️ 重庆：023</div>
+            <div>🌹 南京：025</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 条形码 -->
+    <div class="mode-content" id="mode-barcode">
+      <div class="card">
+        <p class="page-subtitle">商品条形码包含国家和商品信息</p>
+        
+        <div class="barcode-container">
+          <div class="barcode" id="barcode-display"></div>
+          <div class="barcode-number" id="barcode-number">6901234567890</div>
+        </div>
+
+        <div style="margin-top:16px">
+          <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap">
+            <div style="text-align:center;padding:12px 20px;background:#E3F2FD;border-radius:12px">
+              <div style="font-size:12px;color:#6E6E73">前3位</div>
+              <div style="font-size:18px;font-weight:700;color:#1565C0">国家/地区</div>
+              <div style="font-size:14px;color:#1565C0" id="barcode-country">690-699 中国</div>
+            </div>
+            <div style="text-align:center;padding:12px 20px;background:#E8F5E9;border-radius:12px">
+              <div style="font-size:12px;color:#6E6E73">中间</div>
+              <div style="font-size:18px;font-weight:700;color:#2E7D32">厂商</div>
+              <div style="font-size:14px;color:#2E7D32">4-8位</div>
+            </div>
+            <div style="text-align:center;padding:12px 20px;background:#FFF3E0;border-radius:12px">
+              <div style="font-size:12px;color:#6E6E73">后面</div>
+              <div style="font-size:18px;font-weight:700;color:#E65100">商品</div>
+              <div style="font-size:14px;color:#E65100">9-12位</div>
+            </div>
+            <div style="text-align:center;padding:12px 20px;background:#F3E5F5;border-radius:12px">
+              <div style="font-size:12px;color:#6E6E73">最后</div>
+              <div style="font-size:18px;font-weight:700;color:#7B1FA2">校验</div>
+              <div style="font-size:14px;color:#7B1FA2">第13位</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box" style="margin-top:20px">
+          <h4>📊 各国条形码前缀</h4>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;font-size:14px">
+            <div>🇨🇳 中国：690-699</div>
+            <div>🇺🇸 美国：00-13</div>
+            <div>🇯🇵 日本：45-49</div>
+            <div>🇬🇧 英国：50</div>
+            <div>🇩🇪 德国：40-44</div>
+            <div>🇫🇷 法国：30-37</div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-new-barcode" style="width:100%">🔄 生成新条形码</button>
+      </div>
+    </div>
+
+    <!-- 模式5: 闯关练习 -->
+    <div class="mode-content" id="mode-quiz">
+      <div class="card">
+        <p class="page-subtitle">看看你对数字编码了解多少！</p>
+        
+        <div class="quiz-area">
+          <div class="quiz-question" id="quiz-question">
+            <div>题目加载中...</div>
+          </div>
+          <div class="quiz-options" id="quiz-options"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/animation.js"></script>
+  <script src="../../assets/js/touch.js"></script>
+  <script>
+    // 连续答对
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      const starsEl = document.getElementById('stars-display');
+      starsEl.textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast(`🔥 连续 ${streak} 次正确！太棒了！`);
+    }
+
+    // 模式切换
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        Sound.play('click');
+      });
+    });
+
+    // === 模式1: 身份证 ===
+    const PROVINCES = {
+      '11': '北京', '12': '天津', '13': '河北', '14': '山西', '15': '内蒙古',
+      '21': '辽宁', '22': '吉林', '23': '黑龙江', '31': '上海', '32': '江苏',
+      '33': '浙江', '34': '安徽', '35': '福建', '36': '江西', '37': '山东',
+      '41': '河南', '42': '湖北', '43': '湖南', '44': '广东', '45': '广西',
+      '46': '海南', '50': '重庆', '51': '四川', '52': '贵州', '53': '云南',
+      '54': '西藏', '61': '陕西', '62': '甘肃', '63': '青海', '64': '宁夏',
+      '65': '新疆'
+    };
+    const SURNAMES = ['张','王','李','赵','刘','陈','杨','黄','周','吴','徐','孙','马','朱','胡','郭','何','林','罗','高'];
+    const NAMES = ['伟','芳','娜','秀英','敏','静','丽','强','磊','军','洋','勇','艳','杰','娟','涛','明','超','秀兰','霞','平','刚','桂英'];
+    const ETHNICITIES = ['汉','满','回','壮','维吾尔','苗','彝','土家','藏','蒙古'];
+
+    function generateIdCard() {
+      const provinceKeys = Object.keys(PROVINCES);
+      const provinceCode = provinceKeys[Math.floor(Math.random() * provinceKeys.length)];
+      const districtCode = String(Math.floor(Math.random() * 30) + 1).padStart(2, '0');
+      const addrCode = provinceCode + districtCode + String(Math.floor(Math.random() * 5) + 1).padStart(2, '0');
+      
+      const year = Math.floor(Math.random() * 40) + 1970;
+      const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+      const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+      const birthCode = year + month + day;
+      
+      const seqCode = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
+      const checkDigit = Math.random() > 0.9 ? 'X' : String(Math.floor(Math.random() * 10));
+      
+      const fullNumber = addrCode + birthCode + seqCode + checkDigit;
+      
+      const gender = parseInt(seqCode[2]) % 2 === 1 ? '男' : '女';
+      const surname = SURNAMES[Math.floor(Math.random() * SURNAMES.length)];
+      const name = surname + NAMES[Math.floor(Math.random() * NAMES.length)];
+      const ethnicity = ETHNICITIES[Math.floor(Math.random() * ETHNICITIES.length)];
+      
+      return {
+        number: fullNumber,
+        addrCode, birthCode, seqCode, checkDigit,
+        province: PROVINCES[provinceCode],
+        birth: `${year}-${month}-${day}`,
+        gender, name, ethnicity
+      };
+    }
+
+    let currentIdCard = null;
+    function renderIdCard() {
+      currentIdCard = generateIdCard();
+      const idNumberEl = document.getElementById('id-number');
+      idNumberEl.innerHTML = `
+        <span class="digit-seg addr" data-part="addr">${currentIdCard.addrCode}</span>
+        <span class="digit-seg birth" data-part="birth">${currentIdCard.birthCode}</span>
+        <span class="digit-seg seq" data-part="seq">${currentIdCard.seqCode}</span>
+        <span class="digit-seg check" data-part="check">${currentIdCard.checkDigit}</span>
+      `;
+      document.getElementById('id-name').textContent = currentIdCard.name;
+      document.getElementById('id-gender').textContent = currentIdCard.gender;
+      document.getElementById('id-ethnicity').textContent = currentIdCard.ethnicity;
+      document.getElementById('id-birth').textContent = currentIdCard.birth;
+      
+      document.getElementById('decode-info').innerHTML = '👆 点击上方号码的不同颜色部分，了解每段的含义';
+      
+      document.querySelectorAll('.digit-seg').forEach(seg => {
+        seg.addEventListener('click', () => {
+          document.querySelectorAll('.digit-seg').forEach(s => s.classList.remove('active'));
+          seg.classList.add('active');
+          const part = seg.dataset.part;
+          let info = '';
+          if (part === 'addr') {
+            info = `📍 <strong>地址码</strong>：${currentIdCard.addrCode}<br>表示 ${currentIdCard.province}（省/自治区/直辖市）`;
+          } else if (part === 'birth') {
+            info = `🎂 <strong>出生日期</strong>：${currentIdCard.birth}<br>这位公民出生于 ${currentIdCard.birth.replace(/-/g, '年').replace(/-/, '月')}日`;
+          } else if (part === 'seq') {
+            info = `🔢 <strong>顺序码</strong>：${currentIdCard.seqCode}<br>同一地址码区域内同年同同日出生的人的顺序编号<br>第17位（顺序码最后一位）：<strong>${parseInt(currentIdCard.seqCode[2]) % 2 === 1 ? '奇数 → 男性' : '偶数 → 女性'}</strong>`;
+          } else if (part === 'check') {
+            info = `✅ <strong>校验码</strong>：${currentIdCard.checkDigit}<br>用于检验身份证号码的正确性<br>通过前17位数字按特定公式计算得出<br>X 代表罗马数字 10`;
+          }
+          document.getElementById('decode-info').innerHTML = info;
+          Sound.play('click');
+        });
+      });
+    }
+    document.getElementById('btn-new-idcard').addEventListener('click', () => {
+      renderIdCard();
+      Sound.play('click');
+    });
+    renderIdCard();
+
+    // === 模式2: 邮编 ===
+    const POSTCODES = [
+      { code: '100000', city: '北京', desc: '北京市' },
+      { code: '200000', city: '上海', desc: '上海市' },
+      { code: '510000', city: '广州', desc: '广东省广州市' },
+      { code: '518000', city: '深圳', desc: '广东省深圳市' },
+      { code: '610000', city: '成都', desc: '四川省成都市' },
+      { code: '310000', city: '杭州', desc: '浙江省杭州市' },
+      { code: '210000', city: '南京', desc: '江苏省南京市' },
+      { code: '430000', city: '武汉', desc: '湖北省武汉市' },
+      { code: '710000', city: '西安', desc: '陕西省西安市' },
+      { code: '400000', city: '重庆', desc: '重庆市' }
+    ];
+
+    function renderPostcode() {
+      const pc = POSTCODES[Math.floor(Math.random() * POSTCODES.length)];
+      const boxes = document.querySelectorAll('.postcode-box');
+      boxes.forEach((box, i) => {
+        box.textContent = pc.code[i];
+      });
+      document.getElementById('postcode-full').textContent = pc.code;
+      
+      const meaningEl = document.getElementById('postcode-meaning');
+      meaningEl.innerHTML = `
+        <span class="pm-digit">${pc.code[0]}${pc.code[1]}</span>
+        <span class="pm-desc">省/自治区/直辖市 → ${pc.desc.split(/[省市]/)[0] || '北京'}</span>
+        <span class="pm-digit">${pc.code[2]}</span>
+        <span class="pm-desc">邮区 → ${pc.city}邮区</span>
+        <span class="pm-digit">${pc.code[3]}</span>
+        <span class="pm-desc">县/市 → ${pc.city}市</span>
+        <span class="pm-digit">${pc.code[4]}${pc.code[5]}</span>
+        <span class="pm-desc">投递局 → ${pc.city}某投递所</span>
+      `;
+    }
+    document.getElementById('btn-new-postcode').addEventListener('click', () => {
+      renderPostcode();
+      Sound.play('click');
+    });
+    renderPostcode();
+
+    // === 模式3: 电话区号 ===
+    const AREA_CODES = {
+      '010': '北京', '021': '上海', '020': '广州', '023': '重庆',
+      '022': '天津', '025': '南京', '028': '成都', '029': '西安',
+      '0571': '杭州', '0574': '宁波', '0755': '深圳', '0757': '佛山',
+      '0512': '苏州', '0591': '福州', '0592': '厦门', '0532': '青岛',
+      '0531': '济南', '0431': '长春', '0451': '哈尔滨', '024': '沈阳',
+      '0411': '大连', '0311': '石家庄', '0351': '太原', '0731': '长沙',
+      '0791': '南昌', '0871': '昆明', '0851': '贵阳', '0771': '南宁',
+      '0898': '海口', '0931': '兰州', '0951': '银川', '0971': '西宁',
+      '0891': '拉萨', '0991': '乌鲁木齐'
+    };
+
+    let dialInput = '';
+    document.querySelectorAll('.dial-btn[data-digit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (dialInput.length < 4) {
+          dialInput += btn.dataset.digit;
+          updateDialDisplay();
+          Sound.play('click');
+        }
+      });
+    });
+    document.getElementById('btn-clear-dial').addEventListener('click', () => {
+      dialInput = '';
+      updateDialDisplay();
+      document.getElementById('area-result').innerHTML = '<p style="color:#6E6E73;font-size:14px">输入3-4位区号，点击"查询"看看是哪个城市</p>';
+      Sound.play('click');
+    });
+    document.getElementById('btn-check-area').addEventListener('click', () => {
+      const resultEl = document.getElementById('area-result');
+      if (dialInput.length < 3) {
+        resultEl.innerHTML = '<p style="color:#FF3B30;font-size:14px">请至少输入3位区号</p>';
+        return;
+      }
+      const city = AREA_CODES[dialInput];
+      if (city) {
+        resultEl.innerHTML = `<p style="color:#34C759;font-size:18px;font-weight:700">🎉 ${city}</p><p style="color:#6E6E73;font-size:14px">区号 ${dialInput} 属于 ${city}</p>`;
+        Sound.play('correct');
+      } else {
+        resultEl.innerHTML = '<p style="color:#FF9500;font-size:14px">暂时没有找到这个区号对应的城市，试试其他的？</p>';
+        Sound.play('click');
+      }
+    });
+
+    function updateDialDisplay() {
+      const display = document.getElementById('dial-display');
+      let displayText = dialInput.padEnd(4, '_').split('').join(' ');
+      display.textContent = displayText;
+    }
+    updateDialDisplay();
+
+    // === 模式4: 条形码 ===
+    const COUNTRY_CODES = {
+      '690': '中国', '691': '中国', '692': '中国', '693': '中国', '694': '中国', '695': '中国',
+      '000': '美国', '012': '美国', '450': '日本', '457': '日本',
+      '500': '英国', '400': '德国', '410': '德国', '300': '法国', '310': '法国'
+    };
+
+    function generateBarcode() {
+      const countryKeys = Object.keys(COUNTRY_CODES);
+      const countryCode = countryKeys[Math.floor(Math.random() * countryKeys.length)];
+      const manufacturer = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+      const product = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+      const check = String(Math.floor(Math.random() * 10));
+      return countryCode + manufacturer + product + check;
+    }
+
+    function renderBarcode() {
+      const code = generateBarcode();
+      document.getElementById('barcode-number').textContent = code;
+      
+      const barcodeEl = document.getElementById('barcode-display');
+      barcodeEl.innerHTML = '';
+      
+      for (let i = 0; i < 60; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'barcode-bar';
+        const height = 40 + Math.random() * 40;
+        bar.style.height = height + 'px';
+        if (i % 3 === 2) bar.classList.add('space');
+        barcodeEl.appendChild(bar);
+      }
+      
+      const countryName = COUNTRY_CODES[code.substring(0, 3)] || '未知';
+      document.getElementById('barcode-country').textContent = `${code.substring(0, 3)} ${countryName}`;
+    }
+    document.getElementById('btn-new-barcode').addEventListener('click', () => {
+      renderBarcode();
+      Sound.play('click');
+    });
+    renderBarcode();
+
+    // === 模式5: 闯关练习 ===
+    function generateQuiz() {
+      const quizTypes = [
+        () => {
+          const id = generateIdCard();
+          return {
+            question: `这个身份证号码的出生日期是哪一天？<div class="quiz-code">${id.number}</div>`,
+            options: [id.birth, '1999-01-01', '2000-12-31', '1985-06-15'],
+            correct: 0
+          };
+        },
+        () => {
+          const id = generateIdCard();
+          return {
+            question: `这个身份证号码属于哪个省？<div class="quiz-code">${id.number}</div>`,
+            options: [id.province, '上海', '广东', '四川'],
+            correct: 0
+          };
+        },
+        () => {
+          const id = generateIdCard();
+          const isMale = parseInt(id.seqCode[2]) % 2 === 1;
+          return {
+            question: `这个身份证号码的主人是男性还是女性？<div class="quiz-code">${id.number}</div>`,
+            options: [isMale ? '男' : '女', isMale ? '女' : '男', '无法判断', '男女都可能'],
+            correct: 0
+          };
+        },
+        () => {
+          const pc = POSTCODES[Math.floor(Math.random() * POSTCODES.length)];
+          return {
+            question: `${pc.city}的邮政编码是多少？`,
+            options: [pc.code, '100000', '200000', '510000'],
+            correct: 0
+          };
+        },
+        () => {
+          const codes = Object.entries(AREA_CODES);
+          const [code, city] = codes[Math.floor(Math.random() * codes.length)];
+          const wrongOptions = Object.values(AREA_CODES).filter(c => c !== city).sort(() => Math.random() - 0.5).slice(0, 3);
+          return {
+            question: `电话区号 ${code} 属于哪个城市？`,
+            options: [city, ...wrongOptions],
+            correct: 0
+          };
+        },
+        () => {
+          return {
+            question: '中国商品的条形码前缀是多少？',
+            options: ['690-699', '00-13', '45-49', '50'],
+            correct: 0
+          };
+        },
+        () => {
+          return {
+            question: '中华人民共和国居民身份证号码共有多少位？',
+            options: ['18位', '15位', '20位', '16位'],
+            correct: 0
+          };
+        },
+        () => {
+          return {
+            question: '邮政编码由几位数字组成？',
+            options: ['6位', '4位', '8位', '10位'],
+            correct: 0
+          };
+        }
+      ];
+
+      const quizType = quizTypes[Math.floor(Math.random() * quizTypes.length)];
+      const quiz = quizType();
+      
+      const questionEl = document.getElementById('quiz-question');
+      questionEl.innerHTML = quiz.question;
+      
+      const optionsEl = document.getElementById('quiz-options');
+      optionsEl.innerHTML = '';
+      
+      const shuffledOptions = quiz.options.map((opt, i) => ({ opt, isCorrect: i === quiz.correct }))
+        .sort(() => Math.random() - 0.5);
+      
+      shuffledOptions.forEach((item, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option';
+        btn.textContent = item.opt;
+        btn.addEventListener('click', () => {
+          if (item.isCorrect) {
+            btn.classList.add('correct');
+            streak++;
+            Sound.play('correct');
+            showToast('🎉 答对了！');
+            updateStreak();
+            setTimeout(generateQuiz, 1500);
+          } else {
+            btn.classList.add('wrong');
+            Animator.shake(btn);
+            streak = 0;
+            Sound.play('wrong');
+            updateStreak();
+            showToast('💪 再想想哦');
+          }
+        });
+        optionsEl.appendChild(btn);
+      });
+    }
+    generateQuiz();
+  </script>
+</body>
+</html>
