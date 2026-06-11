@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>复式统计表</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #1565C0; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    .section-title { font-size: 22px; color: #1D1D1F; font-weight: 700; text-align: center; margin: 8px 0; }
+    .section-desc { font-size: 15px; color: #6E6E73; text-align: center; margin-bottom: 16px; }
+    .score-bar { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; font-weight: 600; }
+    .feedback { font-size: 20px; font-weight: 700; text-align: center; margin: 12px 0; min-height: 32px; }
+    .feedback.correct-fb { color: #34C759; }
+    .feedback.wrong-fb { color: #FF3B30; }
+
+    /* === 模式1: 认识复式统计表 === */
+    .learn-card {
+      background: white; border-radius: 20px; padding: 24px 16px; margin: 16px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .learn-card h4 { font-size: 18px; color: #1565C0; margin-bottom: 12px; text-align: center; }
+    .compare-row { display: flex; gap: 12px; margin: 16px 0; flex-wrap: wrap; justify-content: center; }
+    .compare-box { flex: 1; min-width: 140px; max-width: 180px; }
+    .compare-box h5 { font-size: 14px; color: #6E6E73; text-align: center; margin-bottom: 8px; }
+    .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .mini-table th, .mini-table td { border: 1.5px solid #E5E5EA; padding: 8px 6px; text-align: center; }
+    .mini-table th { background: #F5F5F5; font-weight: 600; color: #1D1D1F; }
+    .mini-table td { color: #6E6E73; }
+    .arrow-down { text-align: center; font-size: 32px; color: #1565C0; margin: 12px 0; }
+    .compound-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0; }
+    .compound-table th, .compound-table td { border: 2px solid #1565C0; padding: 10px 8px; text-align: center; }
+    .compound-table th { background: #E3F2FD; font-weight: 700; color: #1565C0; }
+    .compound-table .header-cell { background: #BBDEFB; }
+    .compound-table td { background: white; color: #1D1D1F; font-weight: 600; }
+    .compound-table .highlight-cell { background: #FFF8E1; color: #F57F17; }
+    .tip-box {
+      font-size: 14px; color: #6E6E73; background: rgba(21,101,192,0.06);
+      padding: 12px 16px; border-radius: 12px; margin: 12px 0; line-height: 1.6;
+    }
+    .tip-box strong { color: #1565C0; }
+
+    /* === 模式2: 读表练习 === */
+    .read-area { text-align: center; padding: 16px; }
+    .read-table-wrap { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+    .read-table { width: 100%; min-width: 320px; border-collapse: collapse; font-size: 14px; }
+    .read-table th, .read-table td { border: 2px solid #1565C0; padding: 10px 8px; text-align: center; }
+    .read-table th { background: #E3F2FD; font-weight: 700; color: #1565C0; }
+    .read-table .header-cell { background: #BBDEFB; }
+    .read-table td { background: white; color: #1D1D1F; font-weight: 600; }
+    .read-question { font-size: 18px; font-weight: 600; color: #1D1D1F; margin: 16px 0; line-height: 1.6; }
+    .read-question .highlight-num { color: #1565C0; font-weight: 700; }
+    .read-options { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+    .read-opt {
+      padding: 14px 28px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 22px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; min-width: 80px;
+    }
+    .read-opt:active { transform: scale(0.9); }
+    .read-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.12); color: #34C759; }
+    .read-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); color: #FF3B30; }
+
+    /* === 模式3: 填表练习 === */
+    .fill-area { text-align: center; padding: 16px; }
+    .fill-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0; }
+    .fill-table th, .fill-table td { border: 2px solid #1565C0; padding: 10px 8px; text-align: center; }
+    .fill-table th { background: #E3F2FD; font-weight: 700; color: #1565C0; }
+    .fill-table .header-cell { background: #BBDEFB; }
+    .fill-table td { background: white; color: #1D1D1F; font-weight: 600; }
+    .fill-table .blank-cell { background: #FFF8E1; min-width: 60px; }
+    .fill-input {
+      width: 56px; height: 36px; border: 2px solid #1565C0; border-radius: 8px;
+      text-align: center; font-size: 18px; font-weight: 700; color: #1565C0;
+      background: white; outline: none;
+    }
+    .fill-input:focus { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,0.2); }
+    .fill-input.correct { border-color: #34C759; background: #E8F5E9; color: #34C759; }
+    .fill-input.wrong { border-color: #FF3B30; background: #FFEBEE; color: #FF3B30; }
+    .fill-context { font-size: 16px; color: #6E6E73; margin: 12px 0; line-height: 1.6; }
+    .fill-context strong { color: #1565C0; }
+    .check-btn {
+      display: block; margin: 16px auto; padding: 14px 32px; border: none;
+      background: #1565C0; color: white; border-radius: 12px; font-size: 18px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .check-btn:active { transform: scale(0.92); }
+    .next-btn {
+      display: block; margin: 16px auto; padding: 14px 32px; border: none;
+      background: #1565C0; color: white; border-radius: 12px; font-size: 18px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .next-btn:active { transform: scale(0.92); }
+
+    /* === 模式4: 制表练习 === */
+    .make-area { text-align: center; padding: 16px; }
+    .make-data { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 16px 0; }
+    .data-chip {
+      padding: 8px 14px; background: white; border: 2px solid #E5E5EA;
+      border-radius: 12px; font-size: 14px; color: #1D1D1F; font-weight: 600;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .data-chip .chip-label { color: #6E6E73; font-size: 12px; }
+    .make-question { font-size: 17px; font-weight: 600; color: #1D1D1F; margin: 16px 0; line-height: 1.6; }
+    .make-options { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+    .make-opt {
+      padding: 12px 20px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; text-align: left; line-height: 1.5; max-width: 340px;
+    }
+    .make-opt:active { transform: scale(0.95); }
+    .make-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.12); }
+    .make-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.08); }
+    .make-opt table { border-collapse: collapse; margin-top: 8px; width: 100%; }
+    .make-opt table th, .make-opt table td { border: 1.5px solid #ccc; padding: 6px 8px; text-align: center; font-size: 13px; }
+    .make-opt table th { background: #f5f5f5; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <a href="../../index.html" class="nav-back">← 返回</a>
+      <span class="nav-title">复式统计表</span>
+    </nav>
+
+    <div class="section-title">📊 复式统计表</div>
+    <div class="section-desc">三年级 · 学会把多组数据整理在一张表里</div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="learn">📖 认识</button>
+      <button class="mode-tab" data-mode="read">🔍 读表</button>
+      <button class="mode-tab" data-mode="fill">✏️ 填表</button>
+      <button class="mode-tab" data-mode="make">🏗️ 制表</button>
+    </div>
+
+    <!-- 模式1: 认识复式统计表 -->
+    <div class="mode-content active" id="mode-learn">
+      <div class="learn-card">
+        <h4>🤔 为什么需要复式统计表？</h4>
+        <p style="font-size:15px;color:#6E6E73;line-height:1.6;text-align:center;margin:8px 0;">
+          如果要比较<strong style="color:#1565C0;">两个班级</strong>的成绩，<br>
+          用两张单独的统计表不太方便比较……
+        </p>
+        <div class="compare-row">
+          <div class="compare-box">
+            <h5>三(1)班</h5>
+            <table class="mini-table">
+              <tr><th>成绩</th><th>人数</th></tr>
+              <tr><td>优秀</td><td>15</td></tr>
+              <tr><td>良好</td><td>20</td></tr>
+              <tr><td>及格</td><td>8</td></tr>
+            </table>
+          </div>
+          <div class="compare-box">
+            <h5>三(2)班</h5>
+            <table class="mini-table">
+              <tr><th>成绩</th><th>人数</th></tr>
+              <tr><td>优秀</td><td>12</td></tr>
+              <tr><td>良好</td><td>22</td></tr>
+              <tr><td>及格</td><td>9</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="arrow-down">⬇️ 合在一起 ⬇️</div>
+        <div style="overflow-x:auto;">
+          <table class="compound-table">
+            <tr>
+              <th class="header-cell" rowspan="2">成绩</th>
+              <th colspan="2">人数</th>
+            </tr>
+            <tr>
+              <th>三(1)班</th>
+              <th>三(2)班</th>
+            </tr>
+            <tr><td>优秀</td><td class="highlight-cell">15</td><td class="highlight-cell">12</td></tr>
+            <tr><td>良好</td><td class="highlight-cell">20</td><td class="highlight-cell">22</td></tr>
+            <tr><td>及格</td><td class="highlight-cell">8</td><td class="highlight-cell">9</td></tr>
+          </table>
+        </div>
+        <div class="tip-box">
+          <strong>💡 复式统计表的特点：</strong><br>
+          ① 把<strong>两组或两组以上</strong>的数据合并在一道题中<br>
+          ② 有<strong>表头</strong>（左上角空白格）说明行列含义<br>
+          ③ 方便<strong>对比</strong>不同类别的数据
+        </div>
+      </div>
+
+      <div class="learn-card">
+        <h4>📋 怎么读复式统计表？</h4>
+        <div style="overflow-x:auto;">
+          <table class="compound-table" id="learn-demo-table">
+            <tr>
+              <th class="header-cell" rowspan="2">水果</th>
+              <th colspan="2">喜欢的人数</th>
+            </tr>
+            <tr>
+              <th>男生</th>
+              <th>女生</th>
+            </tr>
+            <tr><td>苹果</td><td>8</td><td>6</td></tr>
+            <tr><td>香蕉</td><td>5</td><td>9</td></tr>
+            <tr><td>橘子</td><td>7</td><td>4</td></tr>
+          </table>
+        </div>
+        <div class="tip-box">
+          <strong>🔍 读表三步法：</strong><br>
+          ① 先看<strong>表头</strong>，弄清横行和竖行各表示什么<br>
+          ② 找到要查的<strong>行</strong>和<strong>列</strong><br>
+          ③ 行列交叉的格子就是<strong>对应的数据</strong>
+        </div>
+        <p style="font-size:15px;color:#6E6E73;line-height:1.8;text-align:center;margin:12px 0;">
+          例：男生喜欢苹果的有几人？<br>
+          找到"苹果"那行 → 找到"男生"那列 → 交叉处是 <strong style="color:#1565C0;font-size:20px;">8</strong> 人 ✅
+        </p>
+      </div>
+    </div>
+
+    <!-- 模式2: 读表练习 -->
+    <div class="mode-content" id="mode-read">
+      <div class="score-bar">
+        <span>✅ <span id="read-correct">0</span></span>
+        <span>❌ <span id="read-wrong">0</span></span>
+      </div>
+      <div class="read-area">
+        <div class="read-table-wrap">
+          <table class="read-table" id="read-table"></table>
+        </div>
+        <div class="read-question" id="read-question"></div>
+        <div class="read-options" id="read-options"></div>
+        <div class="feedback" id="read-feedback"></div>
+      </div>
+    </div>
+
+    <!-- 模式3: 填表练习 -->
+    <div class="mode-content" id="mode-fill">
+      <div class="score-bar">
+        <span>✅ <span id="fill-correct">0</span></span>
+        <span>❌ <span id="fill-wrong">0</span></span>
+      </div>
+      <div class="fill-area">
+        <div class="fill-context" id="fill-context"></div>
+        <div style="overflow-x:auto;">
+          <table class="fill-table" id="fill-table"></table>
+        </div>
+        <button class="check-btn" id="fill-check">✅ 检查答案</button>
+        <div class="feedback" id="fill-feedback"></div>
+        <button class="next-btn" id="fill-next" style="display:none;">下一题 →</button>
+      </div>
+    </div>
+
+    <!-- 模式4: 制表练习 -->
+    <div class="mode-content" id="mode-make">
+      <div class="score-bar">
+        <span>✅ <span id="make-correct">0</span></span>
+        <span>❌ <span id="make-wrong">0</span></span>
+      </div>
+      <div class="make-area">
+        <div class="make-question" id="make-question"></div>
+        <div class="make-data" id="make-data"></div>
+        <div class="make-options" id="make-options"></div>
+        <div class="feedback" id="make-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // === 工具函数 ===
+    function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // === 模式切换 ===
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+      });
+    });
+
+    // === 数据生成器 ===
+    const SCENARIOS = [
+      {
+        name: '水果喜好调查',
+        rows: ['苹果', '香蕉', '橘子', '葡萄'],
+        cols: ['男生', '女生'],
+        rowLabel: '水果',
+        colLabel: '喜欢的人数',
+        unit: '人'
+      },
+      {
+        name: '运动会报名',
+        rows: ['跑步', '跳远', '跳绳', '投掷'],
+        cols: ['三年级', '四年级'],
+        rowLabel: '项目',
+        colLabel: '报名人数',
+        unit: '人'
+      },
+      {
+        name: '图书借阅统计',
+        rows: ['故事书', '科普书', '漫画书', '绘本'],
+        cols: ['周一', '周二'],
+        rowLabel: '图书种类',
+        colLabel: '借阅本数',
+        unit: '本'
+      },
+      {
+        name: '天气记录',
+        rows: ['晴天', '多云', '阴天', '雨天'],
+        cols: ['三月', '四月'],
+        rowLabel: '天气',
+        colLabel: '天数',
+        unit: '天'
+      },
+      {
+        name: '课外兴趣班',
+        rows: ['画画', '钢琴', '舞蹈', '书法'],
+        cols: ['男生', '女生'],
+        rowLabel: '兴趣班',
+        colLabel: '参加人数',
+        unit: '人'
+      },
+      {
+        name: '午餐选择',
+        rows: ['米饭', '面条', '饺子', '馒头'],
+        cols: ['第一周', '第二周'],
+        rowLabel: '主食',
+        colLabel: '选择人数',
+        unit: '人'
+      }
+    ];
+
+    function genTableData(scenario) {
+      const data = {};
+      scenario.rows.forEach(r => {
+        data[r] = {};
+        scenario.cols.forEach(c => {
+          data[r][c] = randInt(3, 25);
+        });
+      });
+      return data;
+    }
+
+    function buildReadTable(scenario, data) {
+      let html = '<tr><th class="header-cell" rowspan="2">' + scenario.rowLabel + '</th><th colspan="' + scenario.cols.length + '">' + scenario.colLabel + '</th></tr>';
+      html += '<tr>';
+      scenario.cols.forEach(c => { html += '<th>' + c + '</th>'; });
+      html += '</tr>';
+      scenario.rows.forEach(r => {
+        html += '<tr><td>' + r + '</td>';
+        scenario.cols.forEach(c => { html += '<td>' + data[r][c] + '</td>'; });
+        html += '</tr>';
+      });
+      return html;
+    }
+
+    // === 模式2: 读表练习 ===
+    const readState = { correct: 0, wrong: 0, locked: false };
+
+    function newReadQuestion() {
+      readState.locked = false;
+      const sc = SCENARIOS[randInt(0, SCENARIOS.length - 1)];
+      const data = genTableData(sc);
+      document.getElementById('read-table').innerHTML = buildReadTable(sc, data);
+
+      // 随机生成问题类型
+      const qType = randInt(0, 2);
+      let question, answer, options;
+
+      if (qType === 0) {
+        // 查具体值
+        const row = sc.rows[randInt(0, sc.rows.length - 1)];
+        const col = sc.cols[randInt(0, sc.cols.length - 1)];
+        answer = data[row][col];
+        question = row + '在' + col + '的数据是多少' + sc.unit + '？';
+        options = [answer];
+        while (options.length < 4) {
+          const fake = answer + randInt(-5, 5);
+          if (fake > 0 && !options.includes(fake)) options.push(fake);
+        }
+        options = shuffle(options);
+      } else if (qType === 1) {
+        // 比较大小
+        const row = sc.rows[randInt(0, sc.rows.length - 1)];
+        const c1 = sc.cols[0], c2 = sc.cols[1];
+        const v1 = data[row][c1], v2 = data[row][c2];
+        if (v1 > v2) {
+          answer = c1 + '多';
+          question = row + '这一行，' + c1 + '（' + v1 + sc.unit + '）和' + c2 + '（' + v2 + sc.unit + '）哪个更多？';
+        } else if (v2 > v1) {
+          answer = c2 + '多';
+          question = row + '这一行，' + c1 + '（' + v1 + sc.unit + '）和' + c2 + '（' + v2 + sc.unit + '）哪个更多？';
+        } else {
+          answer = '一样多';
+          question = row + '这一行，' + c1 + '（' + v1 + sc.unit + '）和' + c2 + '（' + v2 + sc.unit + '）哪个更多？';
+        }
+        options = shuffle([c1 + '多', c2 + '多', '一样多', '无法比较']);
+      } else {
+        // 求合计
+        const row = sc.rows[randInt(0, sc.rows.length - 1)];
+        let total = 0;
+        sc.cols.forEach(c => { total += data[row][c]; });
+        answer = total;
+        question = row + '一共有多少' + sc.unit + '？（所有列合计）';
+        options = [total];
+        while (options.length < 4) {
+          const fake = total + randInt(-6, 6);
+          if (fake > 0 && !options.includes(fake)) options.push(fake);
+        }
+        options = shuffle(options);
+      }
+
+      document.getElementById('read-question').textContent = question;
+      const container = document.getElementById('read-options');
+      container.innerHTML = '';
+      document.getElementById('read-feedback').textContent = '';
+      document.getElementById('read-feedback').className = 'feedback';
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'read-opt';
+        btn.textContent = typeof opt === 'number' ? opt + sc.unit : opt;
+        btn.dataset.value = typeof opt === 'number' ? String(opt) : opt;
+        const ansStr = typeof answer === 'number' ? String(answer) : answer;
+        btn.addEventListener('click', () => {
+          if (readState.locked) return;
+          readState.locked = true;
+          const fb = document.getElementById('read-feedback');
+          if (btn.dataset.value === ansStr) {
+            btn.classList.add('correct');
+            fb.textContent = '✅ 正确！';
+            fb.className = 'feedback correct-fb';
+            readState.correct++;
+            document.getElementById('read-correct').textContent = readState.correct;
+            setTimeout(newReadQuestion, 1500);
+          } else {
+            btn.classList.add('wrong');
+            fb.textContent = '❌ 正确答案：' + (typeof answer === 'number' ? answer + sc.unit : answer);
+            fb.className = 'feedback wrong-fb';
+            readState.wrong++;
+            document.getElementById('read-wrong').textContent = readState.wrong;
+            container.querySelectorAll('.read-opt').forEach(b => {
+              if (b.dataset.value === ansStr) b.classList.add('correct');
+            });
+            setTimeout(newReadQuestion, 2500);
+          }
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    // === 模式3: 填表练习 ===
+    const fillState = { correct: 0, wrong: 0, answers: [] };
+
+    function newFillQuestion() {
+      const sc = SCENARIOS[randInt(0, SCENARIOS.length - 1)];
+      const data = genTableData(sc);
+
+      // 随机选1-2个空格
+      const blanks = [];
+      const allCells = [];
+      sc.rows.forEach(r => {
+        sc.cols.forEach(c => {
+          allCells.push({ row: r, col: c, val: data[r][c] });
+        });
+      });
+      const shuffled = shuffle([...allCells]);
+      const numBlanks = randInt(1, 2);
+      for (let i = 0; i < numBlanks && i < shuffled.length; i++) {
+        blanks.push(shuffled[i]);
+      }
+
+      // 生成上下文提示
+      let contextParts = [];
+      blanks.forEach(b => {
+        contextParts.push('"' + b.row + '"在"' + b.col + '"的数据是 <strong>' + b.val + sc.unit + '</strong>');
+      });
+
+      // 额外给一些已知数据作为提示
+      const hints = allCells.filter(c => !blanks.find(b => b.row === c.row && b.col === c.col));
+      const hintSample = shuffle(hints).slice(0, Math.min(3, hints.length));
+      hintSample.forEach(h => {
+        contextParts.push('"' + h.row + '"在"' + h.col + '"是 <strong>' + h.val + sc.unit + '</strong>');
+      });
+
+      document.getElementById('fill-context').innerHTML = '📋 ' + sc.name + '：' + contextParts.join('；') + '。请把表格中的空格填上正确的数。';
+
+      // 构建表格
+      let html = '<tr><th class="header-cell" rowspan="2">' + sc.rowLabel + '</th><th colspan="' + sc.cols.length + '">' + sc.colLabel + '</th></tr>';
+      html += '<tr>';
+      sc.cols.forEach(c => { html += '<th>' + c + '</th>'; });
+      html += '</tr>';
+
+      fillState.answers = [];
+      sc.rows.forEach(r => {
+        html += '<tr><td>' + r + '</td>';
+        sc.cols.forEach(c => {
+          const isBlank = blanks.find(b => b.row === r && b.col === c);
+          if (isBlank) {
+            const id = 'fill-' + blanks.indexOf(isBlank);
+            html += '<td class="blank-cell"><input type="number" class="fill-input" id="' + id + '" data-answer="' + isBlank.val + '"></td>';
+            fillState.answers.push({ id, val: isBlank.val });
+          } else {
+            html += '<td>' + data[r][c] + '</td>';
+          }
+        });
+        html += '</tr>';
+      });
+
+      document.getElementById('fill-table').innerHTML = html;
+      document.getElementById('fill-feedback').textContent = '';
+      document.getElementById('fill-feedback').className = 'feedback';
+      document.getElementById('fill-next').style.display = 'none';
+      document.getElementById('fill-check').style.display = 'block';
+
+      // 绑定检查按钮
+      document.getElementById('fill-check').onclick = () => {
+        let allCorrect = true;
+        fillState.answers.forEach(a => {
+          const input = document.getElementById(a.id);
+          const userVal = parseInt(input.value);
+          if (userVal === a.val) {
+            input.classList.add('correct');
+            input.classList.remove('wrong');
+          } else {
+            input.classList.add('wrong');
+            input.classList.remove('correct');
+            allCorrect = false;
+          }
+        });
+        const fb = document.getElementById('fill-feedback');
+        if (allCorrect) {
+          fb.textContent = '✅ 全部正确！太棒了！';
+          fb.className = 'feedback correct-fb';
+          fillState.correct++;
+          document.getElementById('fill-correct').textContent = fillState.correct;
+          document.getElementById('fill-next').style.display = 'block';
+          document.getElementById('fill-check').style.display = 'none';
+          setTimeout(newFillQuestion, 1500);
+        } else {
+          fb.textContent = '❌ 有些填错了，再检查一下吧！';
+          fb.className = 'feedback wrong-fb';
+          fillState.wrong++;
+          document.getElementById('fill-wrong').textContent = fillState.wrong;
+        }
+      };
+
+      document.getElementById('fill-next').onclick = newFillQuestion;
+    }
+
+    // === 模式4: 制表练习 ===
+    const makeState = { correct: 0, wrong: 0, locked: false };
+
+    function newMakeQuestion() {
+      makeState.locked = false;
+      document.getElementById('make-feedback').textContent = '';
+      document.getElementById('make-feedback').className = 'feedback';
+
+      const sc = SCENARIOS[randInt(0, SCENARIOS.length - 1)];
+      const data = genTableData(sc);
+
+      // 展示原始数据
+      let dataChips = '';
+      sc.rows.forEach(r => {
+        sc.cols.forEach(c => {
+          dataChips += '<div class="data-chip"><span class="chip-label">' + r + ' · ' + c + '</span><br><strong>' + data[r][c] + sc.unit + '</strong></div>';
+        });
+      });
+      document.getElementById('make-data').innerHTML = dataChips;
+
+      document.getElementById('make-question').innerHTML = '📝 下面哪种表格正确整理了上面的数据？';
+
+      // 生成4个选项，1个正确3个错误
+      const correctHtml = buildOptionTable(sc, data);
+
+      // 错误选项：行列标签互换
+      const wrong1Html = buildWrongTable1(sc, data);
+      // 错误选项：数据错位
+      const wrong2Html = buildWrongTable2(sc, data);
+      // 错误选项：缺少列
+      const wrong3Html = buildWrongTable3(sc, data);
+
+      const opts = shuffle([
+        { html: correctHtml, correct: true },
+        { html: wrong1Html, correct: false },
+        { html: wrong2Html, correct: false },
+        { html: wrong3Html, correct: false }
+      ]);
+
+      const container = document.getElementById('make-options');
+      container.innerHTML = '';
+      opts.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'make-opt';
+        btn.innerHTML = opt.html;
+        btn.addEventListener('click', () => {
+          if (makeState.locked) return;
+          makeState.locked = true;
+          const fb = document.getElementById('make-feedback');
+          if (opt.correct) {
+            btn.classList.add('correct');
+            fb.textContent = '✅ 正确！这张表完整、准确地整理了所有数据！';
+            fb.className = 'feedback correct-fb';
+            makeState.correct++;
+            document.getElementById('make-correct').textContent = makeState.correct;
+            setTimeout(newMakeQuestion, 1500);
+          } else {
+            btn.classList.add('wrong');
+            fb.textContent = '❌ 不对哦，仔细看看表头和数据是否对应正确。';
+            fb.className = 'feedback wrong-fb';
+            makeState.wrong++;
+            document.getElementById('make-wrong').textContent = makeState.wrong;
+            container.querySelectorAll('.make-opt').forEach(b => {
+              if (b === container.children[opts.findIndex(o => o.correct)]) b.classList.add('correct');
+            });
+            setTimeout(newMakeQuestion, 2500);
+          }
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function buildOptionTable(sc, data) {
+      let html = '✅ 正确的复式统计表<table><tr><th rowspan="2">' + sc.rowLabel + '</th><th colspan="' + sc.cols.length + '">' + sc.colLabel + '</th></tr><tr>';
+      sc.cols.forEach(c => { html += '<th>' + c + '</th>'; });
+      html += '</tr>';
+      sc.rows.forEach(r => {
+        html += '<tr><td>' + r + '</td>';
+        sc.cols.forEach(c => { html += '<td>' + data[r][c] + '</td>'; });
+        html += '</tr>';
+      });
+      html += '</table>';
+      return html;
+    }
+
+    function buildWrongTable1(sc, data) {
+      // 行列标签互换
+      let html = '❌ 行列标签反了<table><tr><th rowspan="2">' + sc.colLabel + '</th><th colspan="' + sc.rows.length + '">' + sc.rowLabel + '</th></tr><tr>';
+      sc.rows.forEach(r => { html += '<th>' + r + '</th>'; });
+      html += '</tr>';
+      sc.cols.forEach(c => {
+        html += '<tr><td>' + c + '</td>';
+        sc.rows.forEach(r => { html += '<td>' + data[r][c] + '</td>'; });
+        html += '</tr>';
+      });
+      html += '</table>';
+      return html;
+    }
+
+    function buildWrongTable2(sc, data) {
+      // 数据错位（第一行数据移到第二行）
+      const shiftedRows = [...sc.rows];
+      shiftedRows.push(shiftedRows.shift());
+      let html = '❌ 数据位置错了<table><tr><th rowspan="2">' + sc.rowLabel + '</th><th colspan="' + sc.cols.length + '">' + sc.colLabel + '</th></tr><tr>';
+      sc.cols.forEach(c => { html += '<th>' + c + '</th>'; });
+      html += '</tr>';
+      shiftedRows.forEach(r => {
+        html += '<tr><td>' + r + '</td>';
+        sc.cols.forEach(c => { html += '<td>' + data[r][c] + '</td>'; });
+        html += '</tr>';
+      });
+      html += '</table>';
+      return html;
+    }
+
+    function buildWrongTable3(sc, data) {
+      // 少一列
+      const missingCol = sc.cols[sc.cols.length - 1];
+      const keptCols = sc.cols.slice(0, -1);
+      let html = '❌ 少了一列<table><tr><th rowspan="2">' + sc.rowLabel + '</th><th colspan="' + keptCols.length + '">' + sc.colLabel + '</th></tr><tr>';
+      keptCols.forEach(c => { html += '<th>' + c + '</th>'; });
+      html += '</tr>';
+      sc.rows.forEach(r => {
+        html += '<tr><td>' + r + '</td>';
+        keptCols.forEach(c => { html += '<td>' + data[r][c] + '</td>'; });
+        html += '</tr>';
+      });
+      html += '</table>';
+      return html;
+    }
+
+    // === 初始化 ===
+    newReadQuestion();
+    newFillQuestion();
+    newMakeQuestion();
+  </script>
+</body>
+</html>
