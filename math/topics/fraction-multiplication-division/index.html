@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>分数乘除法</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs {
+      display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;
+      padding: 4px; -webkit-overflow-scrolling: touch;
+    }
+    .mode-tab {
+      flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA;
+      border-radius: 20px; font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; color: #1D1D1F;
+    }
+    .mode-tab.active { background: #FF9800; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 通用 */
+    .area { text-align: center; padding: 24px 16px; }
+    .section-title { font-size: 20px; font-weight: 700; color: #1D1D1F; margin: 16px 0 12px; }
+    .explain { font-size: 15px; color: #6E6E73; line-height: 1.7; margin: 12px 0; text-align: left; }
+    .explain b { color: #1D1D1F; }
+    .frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 4px; font-size: 18px; }
+    .frac .num { border-bottom: 2px solid #1D1D1F; padding: 0 6px 2px; }
+    .frac .den { padding: 2px 6px 0; }
+    .frac-lg { font-size: 24px; }
+    .frac-lg .num { border-bottom-width: 2.5px; }
+
+    .btn { display: inline-block; padding: 12px 28px; border: none; border-radius: 14px; font-size: 17px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
+    .btn-primary { background: #FF9800; color: white; }
+    .btn-primary:active { transform: scale(0.96); }
+    .btn-next { background: #4CAF50; color: white; margin-top: 16px; }
+
+    .feedback { font-size: 18px; font-weight: 700; margin: 16px 0; min-height: 28px; }
+    .feedback.correct { color: #4CAF50; }
+    .feedback.wrong { color: #F44336; }
+
+    /* 模式1: 图解探索 */
+    .visual-box {
+      display: inline-block; background: #FFF8E1; border-radius: 16px;
+      padding: 20px; margin: 12px 0;
+    }
+    .grid-wrap {
+      display: inline-grid; gap: 2px; margin: 12px auto;
+    }
+    .grid-cell {
+      width: 36px; height: 36px; border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.1); transition: all 0.3s ease;
+    }
+    .cell-empty { background: #F5F5F5; }
+    .cell-a { background: #FFCC80; }
+    .cell-b { background: #81D4FA; }
+    .cell-ab { background: #FF9800; }
+    .visual-label { font-size: 15px; color: #6E6E73; margin-top: 8px; }
+    .visual-formula { font-size: 18px; font-weight: 700; color: #1D1D1F; margin: 12px 0; }
+    .nav-btns { display: flex; justify-content: center; gap: 12px; margin-top: 16px; }
+    .nav-btn { padding: 10px 24px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
+    .nav-prev { background: #E5E5EA; color: #1D1D1F; }
+    .nav-next { background: #FF9800; color: white; }
+
+    /* 模式2: 口算练习 */
+    .quiz-card {
+      background: white; border-radius: 20px; padding: 28px 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin: 16px 0;
+    }
+    .quiz-question { font-size: 28px; font-weight: 800; color: #1D1D1F; margin: 16px 0; }
+    .quiz-options { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+    .quiz-opt {
+      padding: 14px 20px; border: 2.5px solid #E5E5EA; border-radius: 14px;
+      background: white; font-size: 18px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; text-align: center;
+    }
+    .quiz-opt:active { transform: scale(0.97); }
+    .quiz-opt.selected-correct { border-color: #4CAF50; background: #E8F5E9; color: #2E7D32; }
+    .quiz-opt.selected-wrong { border-color: #F44336; background: #FFEBEE; color: #C62828; }
+    .quiz-opt.show-correct { border-color: #4CAF50; background: #E8F5E9; }
+    .score-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F5F5F5; border-radius: 12px; margin-bottom: 16px; }
+    .score-text { font-size: 16px; font-weight: 700; color: #1D1D1F; }
+    .streak-text { font-size: 14px; color: #FF9800; font-weight: 600; }
+
+    /* 模式3: 规则学习 */
+    .rule-card {
+      background: linear-gradient(135deg, #FFF8E1, #FFECB3); border-radius: 20px;
+      padding: 24px 20px; margin: 16px 0; text-align: left;
+    }
+    .rule-title { font-size: 18px; font-weight: 700; color: #E65100; margin-bottom: 12px; }
+    .rule-body { font-size: 16px; color: #1D1D1F; line-height: 1.8; }
+    .rule-body .highlight { background: #FFCC80; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+    .example-box {
+      background: white; border-radius: 14px; padding: 16px; margin: 12px 0;
+      border-left: 4px solid #FF9800;
+    }
+    .example-label { font-size: 13px; color: #FF9800; font-weight: 700; margin-bottom: 8px; }
+    .step { display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; font-size: 15px; color: #1D1D1F; line-height: 1.6; }
+    .step-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: #FF9800; color: white; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+
+    /* 模式4: 挑战模式 */
+    .challenge-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .timer { font-size: 20px; font-weight: 800; color: #F44336; }
+    .challenge-input {
+      width: 120px; height: 50px; border: 3px solid #E5E5EA; border-radius: 14px;
+      font-size: 24px; font-weight: 700; text-align: center; outline: none;
+      transition: border-color 0.2s;
+    }
+    .challenge-input:focus { border-color: #FF9800; }
+    .challenge-input.correct { border-color: #4CAF50; background: #E8F5E9; }
+    .challenge-input.wrong { border-color: #F44336; background: #FFEBEE; }
+    .result-card {
+      background: linear-gradient(135deg, #FF9800, #FFB74D); border-radius: 20px;
+      padding: 32px 20px; color: white; text-align: center; margin: 20px 0;
+    }
+    .result-score { font-size: 48px; font-weight: 800; }
+    .result-label { font-size: 16px; opacity: 0.9; margin-top: 8px; }
+
+    /* 模式5: 应用题 */
+    .app-problem {
+      background: white; border-radius: 20px; padding: 24px 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin: 16px 0; text-align: left;
+    }
+    .app-story { font-size: 16px; color: #1D1D1F; line-height: 1.8; margin-bottom: 16px; padding: 16px; background: #FFF8E1; border-radius: 12px; }
+    .app-story .emoji { font-size: 24px; }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <a href="../../index.html" class="nav-btn">← 返回</a>
+      <span class="nav-title">分数乘除法</span>
+      <span class="nav-spacer"></span>
+    </nav>
+
+    <div style="text-align:center;padding:20px 0 8px;">
+      <div style="font-size:48px;">✖️</div>
+      <h1 style="font-size:24px;font-weight:800;color:#1D1D1F;margin:8px 0 4px;">分数乘除法</h1>
+      <p style="font-size:14px;color:#6E6E73;">五年级 · 分数乘法、分数除法、倒数、混合运算</p>
+    </div>
+
+    <div class="mode-tabs" id="modeTabs">
+      <button class="mode-tab active" data-mode="visual">🎨 图解</button>
+      <button class="mode-tab" data-mode="rules">📖 规则</button>
+      <button class="mode-tab" data-mode="quiz">✏️ 口算</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+      <button class="mode-tab" data-mode="apply">📝 应用</button>
+    </div>
+
+    <!-- ===== 模式1: 图解探索 ===== -->
+    <div class="mode-content active" id="mode-visual">
+      <div class="area">
+        <div class="section-title" id="visualTitle">分数乘法 · 看图理解</div>
+        <div class="explain" id="visualExplain"></div>
+        <div class="visual-box" id="visualBox"></div>
+        <div class="visual-formula" id="visualFormula"></div>
+        <div class="nav-btns">
+          <button class="nav-btn nav-prev" id="visPrev">◀ 上一个</button>
+          <button class="nav-btn nav-next" id="visNext">下一个 ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 模式2: 规则学习 ===== -->
+    <div class="mode-content" id="mode-rules">
+      <div class="area">
+        <div class="section-title">📖 运算规则</div>
+
+        <div class="rule-card">
+          <div class="rule-title">🔶 分数 × 整数</div>
+          <div class="rule-body">
+            分子和整数<span class="highlight">相乘</span>，分母<span class="highlight">不变</span>，结果能约分的要约分。
+          </div>
+          <div class="example-box">
+            <div class="example-label">例题</div>
+            <div class="step"><span class="step-num">1</span><span><span class="frac frac-lg"><span class="num">2</span><span class="den">5</span></span> × 3 = <span class="frac frac-lg"><span class="num">2×3</span><span class="den">5</span></span> = <span class="frac frac-lg"><span class="num">6</span><span class="den">5</span></span></span></div>
+          </div>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-title">🔶 分数 × 分数</div>
+          <div class="rule-body">
+            分子<span class="highlight">乘分子</span>，分母<span class="highlight">乘分母</span>，能约分<span class="highlight">先约分</span>再乘。
+          </div>
+          <div class="example-box">
+            <div class="example-label">例题</div>
+            <div class="step"><span class="step-num">1</span><span><span class="frac frac-lg"><span class="num">2</span><span class="den">3</span></span> × <span class="frac frac-lg"><span class="num">4</span><span class="den">5</span></span> = <span class="frac frac-lg"><span class="num">2×4</span><span class="den">3×5</span></span> = <span class="frac frac-lg"><span class="num">8</span><span class="den">15</span></span></span></div>
+          </div>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-title">🔷 分数 ÷ 整数</div>
+          <div class="rule-body">
+            除以一个整数（0除外）= <span class="highlight">乘以这个整数的倒数</span>。分母乘整数，分子不变。
+          </div>
+          <div class="example-box">
+            <div class="example-label">例题</div>
+            <div class="step"><span class="step-num">1</span><span><span class="frac frac-lg"><span class="num">4</span><span class="den">5</span></span> ÷ 2 = <span class="frac frac-lg"><span class="num">4</span><span class="den">5</span></span> × <span class="frac frac-lg"><span class="num">1</span><span class="den">2</span></span> = <span class="frac frac-lg"><span class="num">4</span><span class="den">10</span></span> = <span class="frac frac-lg"><span class="num">2</span><span class="den">5</span></span></span></div>
+          </div>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-title">🔷 分数 ÷ 分数</div>
+          <div class="rule-body">
+            除以一个分数 = <span class="highlight">乘以它的倒数</span>（翻转除数，乘号变除号）。
+          </div>
+          <div class="example-box">
+            <div class="example-label">例题</div>
+            <div class="step"><span class="step-num">1</span><span><span class="frac frac-lg"><span class="num">3</span><span class="den">4</span></span> ÷ <span class="frac frac-lg"><span class="num">2</span><span class="den">5</span></span> = <span class="frac frac-lg"><span class="num">3</span><span class="den">4</span></span> × <span class="frac frac-lg"><span class="num">5</span><span class="den">2</span></span> = <span class="frac frac-lg"><span class="num">15</span><span class="den">8</span></span></span></div>
+          </div>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-title">💡 什么是倒数？</div>
+          <div class="rule-body">
+            两个数<span class="highlight">乘积为1</span>，它们互为倒数。<br>
+            · <span class="frac"><span class="num">a</span><span class="den">b</span></span> 的倒数 = <span class="frac"><span class="num">b</span><span class="den">a</span></span><br>
+            · 整数的倒数：3 的倒数 = <span class="frac"><span class="num">1</span><span class="den">3</span></span><br>
+            · 1的倒数是1，0没有倒数
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 模式3: 口算练习 ===== -->
+    <div class="mode-content" id="mode-quiz">
+      <div class="area">
+        <div class="score-bar">
+          <span class="score-text" id="quizScore">✅ 0 / 0</span>
+          <span class="streak-text" id="quizStreak">🔥 连对 0</span>
+        </div>
+        <div class="quiz-card">
+          <div class="quiz-question" id="quizQuestion"></div>
+          <div class="quiz-options" id="quizOptions"></div>
+          <div class="feedback" id="quizFeedback"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 模式4: 限时挑战 ===== -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="area">
+        <div id="challengeStart" style="display:none;">
+          <div class="section-title">🏆 60秒限时挑战</div>
+          <div class="explain" style="text-align:center;">
+            在60秒内尽可能多答对分数乘除法题目！<br>
+            输入答案格式：<b>分子/分母</b>（如 3/4）<br>
+            整数直接输入数字（如 2）
+          </div>
+          <button class="btn btn-primary" id="startChallenge" style="margin-top:20px;">开始挑战 ⏱️</button>
+        </div>
+        <div id="challengePlay" style="display:none;">
+          <div class="challenge-header">
+            <span class="score-text" id="chScore">✅ 0</span>
+            <span class="timer" id="chTimer">⏱️ 60</span>
+          </div>
+          <div class="quiz-card">
+            <div class="quiz-question" id="chQuestion"></div>
+            <div style="display:flex;justify-content:center;gap:12px;align-items:center;margin:16px 0;">
+              <span style="font-size:20px;font-weight:700;">=</span>
+              <input type="text" class="challenge-input" id="chInput" placeholder="?" autocomplete="off">
+            </div>
+            <div class="feedback" id="chFeedback"></div>
+          </div>
+        </div>
+        <div id="challengeResult" style="display:none;">
+          <div class="result-card">
+            <div style="font-size:48px;margin-bottom:8px;">🏆</div>
+            <div class="result-score" id="chFinalScore">0</div>
+            <div class="result-label">题答对</div>
+          </div>
+          <button class="btn btn-primary" id="retryChallenge" style="margin-top:16px;">再来一次 🔄</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 模式5: 应用题 ===== -->
+    <div class="mode-content" id="mode-apply">
+      <div class="area">
+        <div class="score-bar">
+          <span class="score-text" id="appScore">✅ 0 / 0</span>
+          <span class="streak-text" id="appStreak">🔥 连对 0</span>
+        </div>
+        <div class="app-problem">
+          <div class="app-story" id="appStory"></div>
+          <div class="quiz-question" id="appQuestion" style="font-size:22px;"></div>
+          <div class="quiz-options" id="appOptions"></div>
+          <div class="feedback" id="appFeedback"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+  (function() {
+    'use strict';
+
+    /* ===== 工具函数 ===== */
+    function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; }
+    function simplify(n, d) { if (d === 0) return [n, d]; const g = gcd(n, d) || 1; return [n / g, d / g]; }
+    function randInt(lo, hi) { return lo + Math.floor(Math.random() * (hi - lo + 1)); }
+    function fracHTML(n, d, lg) { return '<span class="frac' + (lg ? ' frac-lg' : '') + '"><span class="num">' + n + '</span><span class="den">' + d + '</span></span>'; }
+    function fracStr(n, d) { const s = simplify(n, d); return s[1] === 1 ? '' + s[0] : s[0] + '/' + s[1]; }
+
+    /* ===== Tab 切换 ===== */
+    const tabs = document.querySelectorAll('.mode-tab');
+    const modes = document.querySelectorAll('.mode-content');
+    tabs.forEach(t => t.addEventListener('click', function() {
+      tabs.forEach(x => x.classList.remove('active'));
+      modes.forEach(x => x.classList.remove('active'));
+      this.classList.add('active');
+      document.getElementById('mode-' + this.dataset.mode).classList.add('active');
+    }));
+
+    /* ===== 模式1: 图解 ===== */
+    const visualExamples = [
+      {
+        title: '分数 × 整数：\u00B2⁄₅ × 3',
+        explain: '把 \u00B2⁄₅ 取 3 份，就是 3 个 \u00B2⁄₅ 相加。',
+        build: function(box) {
+          box.innerHTML = '';
+          for (let i = 0; i < 3; i++) {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;gap:2px;margin:4px 0;';
+            for (let j = 0; j < 5; j++) {
+              const c = document.createElement('div');
+              c.className = 'grid-cell ' + (j < 2 ? 'cell-a' : 'cell-empty');
+              c.style.width = '32px'; c.style.height = '32px';
+              row.appendChild(c);
+            }
+            const label = document.createElement('span');
+            label.textContent = ' = \u00B2⁄₅';
+            label.style.cssText = 'font-size:16px;font-weight:700;margin-left:8px;';
+            row.appendChild(label);
+            box.appendChild(row);
+          }
+        },
+        formula: '\u00B2⁄₅ × 3 = \u00B2⁄₅ + \u00B2⁄₅ + \u00B2⁄₅ = ⁶⁄₅'
+      },
+      {
+        title: '分数 × 分数：\u00B9⁄₂ × \u00B9⁄₂',
+        explain: '把一个正方形先横着取 \u00B9⁄₂（蓝色），再竖着取 \u00B9⁄₂（橙色），重叠部分（深色）就是答案。',
+        build: function(box) {
+          box.innerHTML = '';
+          const grid = document.createElement('div');
+          grid.className = 'grid-wrap';
+          grid.style.cssText = 'grid-template-columns:repeat(2,56px);grid-template-rows:repeat(2,56px);';
+          const cells = ['cell-ab', 'cell-b', 'cell-a', 'cell-empty'];
+          cells.forEach(cls => {
+            const c = document.createElement('div');
+            c.className = 'grid-cell ' + cls;
+            c.style.width = '56px'; c.style.height = '56px';
+            grid.appendChild(c);
+          });
+          box.appendChild(grid);
+          const lbl = document.createElement('div');
+          lbl.className = 'visual-label';
+          lbl.innerHTML = '🟧 横取½ &nbsp; 🟦 竖取½ &nbsp; <b style="color:#FF9800;">🟧 重叠=¼</b>';
+          box.appendChild(lbl);
+        },
+        formula: '\u00B9⁄₂ × \u00B9⁄₂ = \u00B9⁄₄'
+      },
+      {
+        title: '分数 ÷ 整数：\u00B4⁄₅ ÷ 2',
+        explain: '把 \u2074⁄₅ 平均分成 2 份，每份是多少？把分子 4 除以 2 = 2，分母不变。',
+        build: function(box) {
+          box.innerHTML = '';
+          const wrap = document.createElement('div');
+          wrap.style.cssText = 'display:flex;gap:20px;justify-content:center;';
+          // 左边: 原始
+          const left = document.createElement('div');
+          left.innerHTML = '<div style="font-size:13px;color:#6E6E73;margin-bottom:6px;">原始 \u2074⁄₅</div>';
+          const g1 = document.createElement('div');
+          g1.style.cssText = 'display:flex;gap:2px;';
+          for (let j = 0; j < 5; j++) {
+            const c = document.createElement('div');
+            c.className = 'grid-cell ' + (j < 4 ? 'cell-a' : 'cell-empty');
+            c.style.width = '28px'; c.style.height = '28px';
+            g1.appendChild(c);
+          }
+          left.appendChild(g1);
+          wrap.appendChild(left);
+          // 右边: 分2份
+          const right = document.createElement('div');
+          right.innerHTML = '<div style="font-size:13px;color:#6E6E73;margin-bottom:6px;">平均分成2份</div>';
+          const g2 = document.createElement('div');
+          g2.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+          for (let r = 0; r < 2; r++) {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;gap:2px;';
+            for (let j = 0; j < 5; j++) {
+              const c = document.createElement('div');
+              c.className = 'grid-cell ' + (j < 2 ? (r === 0 ? 'cell-a' : 'cell-b') : 'cell-empty');
+              c.style.width = '28px'; c.style.height = '28px';
+              row.appendChild(c);
+            }
+            const lbl = document.createElement('span');
+            lbl.textContent = ' = \u00B2⁄₅';
+            lbl.style.cssText = 'font-size:14px;font-weight:700;margin-left:6px;';
+            row.appendChild(lbl);
+            g2.appendChild(row);
+          }
+          right.appendChild(g2);
+          wrap.appendChild(right);
+          box.appendChild(wrap);
+        },
+        formula: '\u2074⁄₅ ÷ 2 = \u2074⁄₅ × \u00B9⁄₂ = \u00B2⁄₅'
+      },
+      {
+        title: '分数 ÷ 分数：\u00B3⁄₄ ÷ \u00B9⁄₂',
+        explain: '除以 \u00B9⁄₂ = 乘以 2（\u00B9⁄₂ 的倒数）。看：\u00B3⁄₄ 里面有几个 \u00B9⁄₂ ？',
+        build: function(box) {
+          box.innerHTML = '';
+          const grid = document.createElement('div');
+          grid.className = 'grid-wrap';
+          grid.style.cssText = 'grid-template-columns:repeat(4,48px);grid-template-rows:repeat(1,48px);';
+          // 3/4 = 3 cells filled out of 4
+          for (let j = 0; j < 4; j++) {
+            const c = document.createElement('div');
+            c.className = 'grid-cell ' + (j < 3 ? 'cell-a' : 'cell-empty');
+            c.style.width = '48px'; c.style.height = '48px';
+            grid.appendChild(c);
+          }
+          box.appendChild(grid);
+          const lbl = document.createElement('div');
+          lbl.className = 'visual-label';
+          lbl.innerHTML = '🟧 \u00B3⁄₄ 里面有 <b style="color:#FF9800;">1.5 个</b> \u00B9⁄₂';
+          box.appendChild(lbl);
+        },
+        formula: '\u00B3⁄₄ ÷ \u00B9⁄₂ = \u00B3⁄₄ × \u00B2⁄₁ = \u00B3⁄₂ = 1\u00B9⁄₂'
+      },
+      {
+        title: '倒数的关系',
+        explain: '两个数乘积为1，它们互为倒数。分子分母交换位置就是求倒数！',
+        build: function(box) {
+          box.innerHTML = '';
+          const pairs = [['2', '5', '5', '2'], ['3', '7', '7', '3'], ['1', '4', '4', '1']];
+          pairs.forEach(p => {
+            const row = document.createElement('div');
+            row.style.cssText = 'margin:10px 0;font-size:18px;font-weight:700;color:#1D1D1F;';
+            row.innerHTML = fracHTML(parseInt(p[0]), parseInt(p[1])) + ' × ' + fracHTML(parseInt(p[2]), parseInt(p[3])) + ' = 1 &nbsp; ✅';
+            box.appendChild(row);
+          });
+        },
+        formula: '\u00B2⁄₅ 和 \u2075⁄₂ 互为倒数 · \u00B3⁄₇ 和 \u2077⁄₃ 互为倒数'
+      }
+    ];
+    let visIdx = 0;
+    function showVisual() {
+      const ex = visualExamples[visIdx];
+      document.getElementById('visualTitle').textContent = ex.title;
+      document.getElementById('visualExplain').innerHTML = ex.explain;
+      ex.build(document.getElementById('visualBox'));
+      document.getElementById('visualFormula').innerHTML = ex.formula;
+    }
+    document.getElementById('visPrev').addEventListener('click', function() { visIdx = (visIdx - 1 + visualExamples.length) % visualExamples.length; showVisual(); });
+    document.getElementById('visNext').addEventListener('click', function() { visIdx = (visIdx + 1) % visualExamples.length; showVisual(); });
+    showVisual();
+
+    /* ===== 模式3: 口算练习 ===== */
+    let quizCorrect = 0, quizTotal = 0, quizStreak = 0;
+    let currentAnswer = '';
+
+    function genQuiz() {
+      const type = randInt(0, 4);
+      let n1, d1, n2, d2, ansN, ansD, question;
+
+      if (type === 0) {
+        // 分数 × 整数
+        n1 = randInt(1, 7); d1 = randInt(2, 9);
+        n2 = randInt(2, 6); d2 = 1;
+        ansN = n1 * n2; ansD = d1;
+        question = fracHTML(n1, d1, true) + ' × ' + n2;
+      } else if (type === 1) {
+        // 分数 × 分数
+        n1 = randInt(1, 5); d1 = randInt(2, 8);
+        n2 = randInt(1, 5); d2 = randInt(2, 8);
+        ansN = n1 * n2; ansD = d1 * d2;
+        question = fracHTML(n1, d1, true) + ' × ' + fracHTML(n2, d2, true);
+      } else if (type === 2) {
+        // 分数 ÷ 整数
+        n2 = randInt(2, 5);
+        d2 = 1;
+        ansD = randInt(2, 8) * n2;
+        n1 = randInt(1, 5) * n2;
+        d1 = ansD;
+        ansN = n1; ansD = d1 * n2;
+        // simplify: actually n1/(d1*n2)
+        // Let me redo: fraction / integer
+        n1 = randInt(1, 7); d1 = randInt(2, 8);
+        n2 = randInt(2, 5);
+        ansN = n1; ansD = d1 * n2;
+        question = fracHTML(n1, d1, true) + ' ÷ ' + n2;
+      } else if (type === 3) {
+        // 分数 ÷ 分数
+        n1 = randInt(1, 5); d1 = randInt(2, 7);
+        // divisor: make its reciprocal clean
+        n2 = randInt(1, 5); d2 = randInt(2, 7);
+        // a/b ÷ c/d = a/b × d/c = (a*d)/(b*c)
+        ansN = n1 * d2; ansD = d1 * n2;
+        question = fracHTML(n1, d1, true) + ' ÷ ' + fracHTML(n2, d2, true);
+      } else {
+        // 求倒数
+        n1 = randInt(1, 8); d1 = randInt(2, 9);
+        if (n1 === d1) d1 = n1 + 1;
+        ansN = d1; ansD = n1;
+        question = fracHTML(n1, d1, true) + ' 的倒数是？';
+      }
+
+      const [sn, sd] = simplify(ansN, ansD);
+      currentAnswer = fracStr(ansN, ansD);
+
+      // Generate options
+      const opts = [currentAnswer];
+      const wrongSet = new Set();
+      wrongSet.add(currentAnswer);
+
+      // plausible wrong answers
+      const wrongs = [
+        fracStr(ansN + 1, ansD),
+        fracStr(ansN, ansD + 1),
+        fracStr(ansN * 2, ansD),
+        fracStr(ansN, ansD * 2),
+        fracStr(ansD, ansN),
+        fracStr(ansN + ansD, ansD),
+        fracStr(sn + 1, sd),
+        fracStr(sn, sd + 1),
+      ];
+      wrongs.forEach(w => { if (w !== currentAnswer) wrongSet.add(w); });
+      const wrongArr = Array.from(wrongSet).filter(w => w !== currentAnswer);
+      while (opts.length < 4 && wrongArr.length > 0) {
+        const idx = randInt(0, wrongArr.length - 1);
+        opts.push(wrongArr[idx]);
+        wrongArr.splice(idx, 1);
+      }
+      // fill remaining
+      let fill = 1;
+      while (opts.length < 4) { opts.push(fracStr(sn + fill, sd + fill + 1); fill++; }
+
+      // shuffle
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = randInt(0, i);
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+
+      document.getElementById('quizQuestion').innerHTML = question + ' = ？';
+      const optDiv = document.getElementById('quizOptions');
+      optDiv.innerHTML = '';
+      document.getElementById('quizFeedback').textContent = '';
+      document.getElementById('quizFeedback').className = 'feedback';
+
+      opts.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', function() {
+          if (this.classList.contains('selected-correct') || this.classList.contains('selected-wrong')) return;
+          quizTotal++;
+          const allBtns = optDiv.querySelectorAll('.quiz-opt');
+          if (opt === currentAnswer) {
+            btn.classList.add('selected-correct');
+            quizCorrect++; quizStreak++;
+            document.getElementById('quizFeedback').textContent = '✅ 答对了！太棒了！';
+            document.getElementById('quizFeedback').className = 'feedback correct';
+          } else {
+            btn.classList.add('selected-wrong');
+            quizStreak = 0;
+            allBtns.forEach(b => { if (b.textContent === currentAnswer) b.classList.add('show-correct'); });
+            document.getElementById('quizFeedback').textContent = '❌ 正确答案是 ' + currentAnswer;
+            document.getElementById('quizFeedback').className = 'feedback wrong';
+          }
+          document.getElementById('quizScore').textContent = '✅ ' + quizCorrect + ' / ' + quizTotal;
+          document.getElementById('quizStreak').textContent = '🔥 连对 ' + quizStreak;
+          setTimeout(genQuiz, 1500);
+        });
+        optDiv.appendChild(btn);
+      });
+    }
+    genQuiz();
+
+    /* ===== 模式4: 限时挑战 ===== */
+    let chTimer = null, chTimeLeft = 60, chCorrectCount = 0;
+
+    function showChallengeStart() {
+      document.getElementById('challengeStart').style.display = '';
+      document.getElementById('challengePlay').style.display = 'none';
+      document.getElementById('challengeResult').style.display = 'none';
+    }
+    showChallengeStart();
+
+    function genChallengeQ() {
+      const type = randInt(0, 3);
+      let n1, d1, n2, d2, ansN, ansD, question;
+      if (type <= 1) {
+        n1 = randInt(1, 6); d1 = randInt(2, 8);
+        n2 = randInt(1, 5); d2 = randInt(2, 8);
+        ansN = n1 * n2; ansD = d1 * d2;
+        question = fracHTML(n1, d1, true) + ' × ' + fracHTML(n2, d2, true);
+      } else {
+        n1 = randInt(1, 6); d1 = randInt(2, 8);
+        n2 = randInt(1, 5); d2 = randInt(2, 8);
+        ansN = n1 * d2; ansD = d1 * n2;
+        question = fracHTML(n1, d1, true) + ' ÷ ' + fracHTML(n2, d2, true);
+      }
+      currentAnswer = fracStr(ansN, ansD);
+      document.getElementById('chQuestion').innerHTML = question + ' = ？';
+      document.getElementById('chInput').value = '';
+      document.getElementById('chInput').className = 'challenge-input';
+      document.getElementById('chFeedback').textContent = '';
+      document.getElementById('chInput').focus();
+    }
+
+    document.getElementById('startChallenge').addEventListener('click', function() {
+      document.getElementById('challengeStart').style.display = 'none';
+      document.getElementById('challengePlay').style.display = '';
+      chTimeLeft = 60; chCorrectCount = 0;
+      document.getElementById('chScore').textContent = '✅ 0';
+      document.getElementById('chTimer').textContent = '⏱️ 60';
+      genChallengeQ();
+      chTimer = setInterval(function() {
+        chTimeLeft--;
+        document.getElementById('chTimer').textContent = '⏱️ ' + chTimeLeft;
+        if (chTimeLeft <= 10) document.getElementById('chTimer').style.color = '#F44336';
+        if (chTimeLeft <= 0) {
+          clearInterval(chTimer);
+          document.getElementById('challengePlay').style.display = 'none';
+          document.getElementById('challengeResult').style.display = '';
+          document.getElementById('chFinalScore').textContent = chCorrectCount;
+        }
+      }, 1000);
+    });
+
+    document.getElementById('chInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        const val = this.value.trim().replace(/\s/g, '');
+        if (!val) return;
+        if (val === currentAnswer) {
+          this.className = 'challenge-input correct';
+          chCorrectCount++;
+          document.getElementById('chScore').textContent = '✅ ' + chCorrectCount;
+          document.getElementById('chFeedback').textContent = '✅';
+          document.getElementById('chFeedback').className = 'feedback correct';
+          setTimeout(genChallengeQ, 400);
+        } else {
+          this.className = 'challenge-input wrong';
+          document.getElementById('chFeedback').textContent = '❌ 是 ' + currentAnswer;
+          document.getElementById('chFeedback').className = 'feedback wrong';
+          setTimeout(genChallengeQ, 800);
+        }
+      }
+    });
+
+    document.getElementById('retryChallenge').addEventListener('click', showChallengeStart);
+
+    /* ===== 模式5: 应用题 ===== */
+    let appCorrect = 0, appTotal = 0, appStreak = 0;
+
+    const appTemplates = [
+      function() {
+        const n = randInt(1, 5), d = randInt(n + 1, 9);
+        const times = randInt(2, 5);
+        const ansN = n * times, ansD = d;
+        const [sn, sd] = simplify(ansN, ansD);
+        const story = '<span class="emoji">🍰</span> 一块蛋糕的 ' + fracStr(n, d) + ' 分给 ' + times + ' 位小朋友，每位分到同样大小的一份。一共分出了多大的蛋糕？';
+        const q = fracStr(n, d) + ' × ' + times + ' = ？';
+        const opts = [fracStr(sn, sd), fracStr(n, d * times), fracStr(n * times + 1, d), fracStr(n + times, d)];
+        return { story, q, answer: fracStr(sn, sd), opts };
+      },
+      function() {
+        const n1 = randInt(1, 4), d1 = randInt(2, 7);
+        const n2 = randInt(1, 4), d2 = randInt(2, 7);
+        const ansN = n1 * n2, ansD = d1 * d2;
+        const [sn, sd] = simplify(ansN, ansD);
+        const items = ['操场', '花园', '菜地', '鱼塘'];
+        const item = items[randInt(0, 3)];
+        const story = '<span class="emoji">🏫</span> 学校' + item + '的长是 ' + fracStr(n1, d1) + ' 千米，宽是 ' + fracStr(n2, d2) + ' 千米。这块' + item + '的面积是多少平方千米？';
+        const q = fracStr(n1, d1) + ' × ' + fracStr(n2, d2) + ' = ？';
+        const opts = [fracStr(sn, sd), fracStr(n1 + n2, d1 + d2), fracStr(ansN + 1, ansD), fracStr(ansD, ansN)];
+        return { story, q, answer: fracStr(sn, sd), opts };
+      },
+      function() {
+        const d1 = randInt(2, 8);
+        const n1 = randInt(1, d1 - 1);
+        const divisor = randInt(2, 4);
+        const ansN = n1, ansD = d1 * divisor;
+        const [sn, sd] = simplify(ansN, ansD);
+        const story = '<span class="emoji">🧃</span> 一瓶果汁有 ' + fracStr(n1, d1) + ' 升，平均倒入 ' + divisor + ' 个杯子里，每杯倒多少升？';
+        const q = fracStr(n1, d1) + ' ÷ ' + divisor + ' = ？';
+        const opts = [fracStr(sn, sd), fracStr(n1 * divisor, d1), fracStr(n1, d1), fracStr(sn + 1, sd)];
+        return { story, q, answer: fracStr(sn, sd), opts };
+      },
+      function() {
+        const n1 = randInt(1, 5), d1 = randInt(2, 7);
+        const n2 = randInt(1, 4), d2 = randInt(2, 6);
+        const ansN = n1 * d2, ansD = d1 * n2;
+        const [sn, sd] = simplify(ansN, ansD);
+        const story = '<span class="emoji">🏃</span> 小明跑 ' + fracStr(n1, d1) + ' 千米用了 ' + fracStr(n2, d2) + ' 小时。他每小时跑多少千米？（速度 = 路程 ÷ 时间）';
+        const q = fracStr(n1, d1) + ' ÷ ' + fracStr(n2, d2) + ' = ？';
+        const opts = [fracStr(sn, sd), fracStr(n1 * n2, d1 * d2), fracStr(ansD, ansN), fracStr(n1 + n2, d1 + d2)];
+        return { story, q, answer: fracStr(sn, sd), opts };
+      },
+      function() {
+        const whole = randInt(2, 6);
+        const n = randInt(1, 5), d = randInt(2, 7);
+        const ansN = whole * n, ansD = d;
+        const [sn, sd] = simplify(ansN, ansD);
+        const fruits = ['🍎 苹果', '🍊 橘子', '🍌 香蕉', '🍇 葡萄'];
+        const fruit = fruits[randInt(0, 3)];
+        const story = '<span class="emoji">🛒</span> 妈妈买了 ' + whole + ' 千克 ' + fruit + '，吃了其中的 ' + fracStr(n, d) + '。吃了多少千克？';
+        const q = whole + ' × ' + fracStr(n, d) + ' = ？';
+        const opts = [fracStr(sn, sd), fracStr(n, d * whole), fracStr(whole * n + 1, d), fracStr(whole + n, d)];
+        return { story, q, answer: fracStr(sn, sd), opts };
+      }
+    ];
+
+    function genApp() {
+      const tpl = appTemplates[randInt(0, appTemplates.length - 1)];
+      const data = tpl();
+      document.getElementById('appStory').innerHTML = data.story;
+      document.getElementById('appQuestion').textContent = data.q;
+      const optDiv = document.getElementById('appOptions');
+      optDiv.innerHTML = '';
+      document.getElementById('appFeedback').textContent = '';
+      document.getElementById('appFeedback').className = 'feedback';
+
+      // shuffle options
+      const opts = data.opts.slice();
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = randInt(0, i);
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+
+      opts.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', function() {
+          if (this.classList.contains('selected-correct') || this.classList.contains('selected-wrong')) return;
+          appTotal++;
+          const allBtns = optDiv.querySelectorAll('.quiz-opt');
+          if (opt === data.answer) {
+            btn.classList.add('selected-correct');
+            appCorrect++; appStreak++;
+            document.getElementById('appFeedback').textContent = '✅ 答对了！';
+            document.getElementById('appFeedback').className = 'feedback correct';
+          } else {
+            btn.classList.add('selected-wrong');
+            appStreak = 0;
+            allBtns.forEach(b => { if (b.textContent === data.answer) b.classList.add('show-correct'); });
+            document.getElementById('appFeedback').textContent = '❌ 正确答案是 ' + data.answer;
+            document.getElementById('appFeedback').className = 'feedback wrong';
+          }
+          document.getElementById('appScore').textContent = '✅ ' + appCorrect + ' / ' + appTotal;
+          document.getElementById('appStreak').textContent = '🔥 连对 ' + appStreak;
+          setTimeout(genApp, 1500);
+        });
+        optDiv.appendChild(btn);
+      });
+    }
+    genApp();
+
+  })();
+  </script>
+</body>
+</html>
