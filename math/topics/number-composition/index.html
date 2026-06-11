@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>数的组成</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #1565C0; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    .section-title { font-size: 22px; color: #1D1D1F; font-weight: 700; text-align: center; margin: 8px 0; }
+    .section-desc { font-size: 15px; color: #6E6E73; text-align: center; margin-bottom: 16px; }
+    .score-bar { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; font-weight: 600; }
+    .result-text { font-size: 22px; font-weight: 700; text-align: center; margin: 16px 0; min-height: 36px; }
+    .next-btn { display: block; margin: 16px auto; padding: 14px 32px; border: none; background: #1565C0; color: white; border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .next-btn:active { transform: scale(0.92); }
+
+    /* ===== 模式1: 分一分 ===== */
+    .decomp-area { text-align: center; padding: 20px 16px; }
+    .decomp-visual {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin: 20px 0; flex-wrap: wrap;
+    }
+    .decomp-group {
+      display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;
+      min-height: 56px; padding: 12px; background: rgba(21,101,192,0.05);
+      border-radius: 16px; min-width: 80px; border: 2px dashed #90CAF9;
+    }
+    .decomp-group.left-group { border-color: #E53935; background: rgba(229,57,53,0.05); }
+    .decomp-group.right-group { border-color: #43A047; background: rgba(67,160,71,0.05); }
+    .decomp-obj { font-size: 32px; animation: popIn 0.3s ease both; }
+    .decomp-op { font-size: 48px; font-weight: 700; color: #1565C0; }
+    .decomp-num { font-size: 56px; font-weight: 800; color: #1565C0; min-width: 60px; text-align: center; }
+    .decomp-controls { display: flex; justify-content: center; gap: 16px; margin: 20px 0; flex-wrap: wrap; }
+    .decomp-btn {
+      padding: 12px 24px; border: none; border-radius: 12px;
+      font-size: 18px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .decomp-btn:active { transform: scale(0.92); }
+    .decomp-btn.plus { background: #E53935; color: white; }
+    .decomp-btn.minus { background: #43A047; color: white; }
+    .decomp-btn.new-num { background: #1565C0; color: white; }
+    .decomp-label { font-size: 14px; color: #6E6E73; margin-top: 8px; }
+
+    /* ===== 模式2: 凑数 ===== */
+    .make-area { text-align: center; padding: 20px 16px; }
+    .make-problem {
+      font-size: 36px; font-weight: 800; color: #1565C0; margin: 20px 0;
+      display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+    }
+    .make-known {
+      background: #E3F2FD; padding: 8px 20px; border-radius: 12px; color: #1565C0;
+    }
+    .make-blank {
+      background: white; border: 3px dashed #1565C0; padding: 8px 20px;
+      border-radius: 12px; min-width: 60px; color: #FF9500; font-size: 32px;
+    }
+    .make-blank.filled { border-style: solid; border-color: #34C759; color: #34C759; background: #E8F5E9; }
+    .make-options { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 24px 0; }
+    .make-opt {
+      width: 64px; height: 64px; border-radius: 50%; border: 3px solid #90CAF9;
+      background: white; font-size: 28px; font-weight: 700; color: #1565C0;
+      cursor: pointer; transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .make-opt:active { transform: scale(0.9); }
+    .make-opt.correct { border-color: #34C759; background: #E8F5E9; color: #34C759; }
+    .make-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .make-visual { margin: 16px 0; }
+    .make-bar {
+      display: flex; justify-content: center; gap: 4px; margin: 8px 0;
+      max-width: 320px; margin-left: auto; margin-right: auto;
+    }
+    .make-block {
+      width: 28px; height: 28px; border-radius: 6px; transition: all 0.3s ease;
+    }
+    .make-block.a { background: #E53935; }
+    .make-block.b { background: #43A047; }
+    .make-block.empty { background: #E5E5EA; border: 1px dashed #BDBDBD; }
+
+    /* ===== 模式3: 选择题 ===== */
+    .quiz-area { text-align: center; padding: 16px; }
+    .quiz-question {
+      font-size: 20px; font-weight: 600; color: #1D1D1F; margin: 16px 0;
+      background: white; padding: 20px; border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); line-height: 1.6;
+    }
+    .quiz-question .q-num { font-size: 36px; font-weight: 800; color: #1565C0; }
+    .quiz-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 400px; margin: 20px auto; }
+    .quiz-opt {
+      padding: 20px; border: 3px solid #E5E5EA; background: white; border-radius: 16px;
+      font-size: 24px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+      color: #1D1D1F;
+    }
+    .quiz-opt:active { transform: scale(0.95); }
+    .quiz-opt.correct { border-color: #34C759; background: #E8F5E9; color: #34C759; }
+    .quiz-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+
+    /* ===== 模式4: 挑战 ===== */
+    .challenge-area { text-align: center; padding: 16px; }
+    .ch-header {
+      display: flex; justify-content: center; gap: 20px; margin: 12px 0;
+      font-size: 16px; font-weight: 600;
+    }
+    .ch-problem {
+      font-size: 28px; font-weight: 700; color: #1D1D1F; margin: 20px 0;
+      min-height: 44px; background: white; padding: 16px; border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .ch-options { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 20px 0; }
+    .ch-opt {
+      padding: 16px 24px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 22px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; min-width: 80px; color: #1D1D1F;
+    }
+    .ch-opt:active { transform: scale(0.9); }
+    .ch-opt.correct { border-color: #34C759; background: #E8F5E9; color: #34C759; }
+    .ch-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .ch-start-btn {
+      display: block; margin: 20px auto; padding: 16px 32px; border: none;
+      background: #1565C0; color: white; border-radius: 16px; font-size: 20px;
+      font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(21,101,192,0.3);
+    }
+    .ch-start-btn:active { transform: scale(0.95); }
+
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="breadcrumb">
+      <a href="../../index.html" class="breadcrumb-item">🏠 首页</a><span class="breadcrumb-sep">›</span><a href="../index.html" class="breadcrumb-item">📐 数学</a><span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">🧩 数的组成</span>
+    </nav>
+
+    <div class="score-bar"><span>⭐ 得分：</span><span id="score">0</span></div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="decomp">🎨 分一分</button>
+      <button class="mode-tab" data-mode="make">🔢 凑数</button>
+      <button class="mode-tab" data-mode="quiz">🎯 选择题</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
+    </div>
+
+    <!-- 模式1: 分一分 -->
+    <div class="mode-content active" id="mode-decomp">
+      <div class="decomp-area">
+        <div class="section-title">🎨 分一分</div>
+        <div class="section-desc">把一个数分成两部分，看看有多少种分法！</div>
+        <div class="decomp-visual" id="decompVisual">
+          <div class="decomp-group left-group" id="leftGroup"></div>
+          <div class="decomp-op">+</div>
+          <div class="decomp-group right-group" id="rightGroup"></div>
+          <div class="decomp-op">=</div>
+          <div class="decomp-num" id="decompTotal">5</div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:32px;margin:12px 0;">
+          <div><span id="leftNum" style="font-size:36px;font-weight:800;color:#E53935;">0</span><div class="decomp-label">左边</div></div>
+          <div><span id="rightNum" style="font-size:36px;font-weight:800;color:#43A047;">5</span><div class="decomp-label">右边</div></div>
+        </div>
+        <div class="decomp-controls">
+          <button class="decomp-btn plus" id="decompPlus">➕ 左边加1</button>
+          <button class="decomp-btn minus" id="decompMinus">➖ 左边减1</button>
+        </div>
+        <button class="decomp-btn new-num" id="decompNew" style="margin-top:12px;">🎲 换一个数</button>
+        <div class="result-text" id="decompResult"></div>
+      </div>
+    </div>
+
+    <!-- 模式2: 凑数 -->
+    <div class="mode-content" id="mode-make">
+      <div class="make-area">
+        <div class="section-title">🔢 凑数</div>
+        <div class="section-desc">找到缺少的数，凑成目标数！</div>
+        <div class="make-visual" id="makeVisual"></div>
+        <div class="make-problem" id="makeProblem"></div>
+        <div class="make-options" id="makeOptions"></div>
+        <div class="result-text" id="makeResult"></div>
+      </div>
+    </div>
+
+    <!-- 模式3: 选择题 -->
+    <div class="mode-content" id="mode-quiz">
+      <div class="quiz-area">
+        <div class="section-title">🎯 选择题</div>
+        <div class="section-desc">选出正确的答案</div>
+        <div class="quiz-question" id="quizQuestion"></div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div class="result-text" id="quizResult"></div>
+      </div>
+    </div>
+
+    <!-- 模式4: 挑战 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="challenge-area">
+        <div class="section-title">🏆 限时挑战</div>
+        <div class="section-desc">60秒内答对多少题？</div>
+        <div class="ch-header">
+          <span>⏱️ <span id="chTime">60</span>秒</span>
+          <span>✅ <span id="chCorrect">0</span></span>
+          <span>❌ <span id="chWrong">0</span></span>
+        </div>
+        <div class="ch-problem" id="chProblem">准备好了吗？</div>
+        <div class="ch-options" id="chOptions"></div>
+        <button class="ch-start-btn" id="chStart">🚀 开始挑战！</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // === 全局 ===
+    var score = 0;
+    function updateScore(add) {
+      score += add;
+      document.getElementById('score').textContent = score;
+    }
+    function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+    function shuffle(arr) {
+      for (var i = arr.length - 1; i > 0; i--) {
+        var j = randInt(0, i);
+        var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+      }
+      return arr;
+    }
+
+    // === Tab 切换 ===
+    document.querySelectorAll('.mode-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.mode-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.mode-content').forEach(function(c) { c.classList.remove('active'); });
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        if (typeof Sound !== 'undefined') Sound.play('click');
+      });
+    });
+
+    // === 水果 emoji 池 ===
+    var fruits = ['🍎','🍊','🍋','🍇','🍓','🍑','🍒','🥝','🍌','🍐'];
+    function randFruit() { return fruits[randInt(0, fruits.length - 1)]; }
+
+    // =============================================
+    // 模式1: 分一分
+    // =============================================
+    (function() {
+      var total = 5, leftVal = 0;
+      var fruit = randFruit();
+
+      function render() {
+        var rightVal = total - leftVal;
+        document.getElementById('decompTotal').textContent = total;
+        document.getElementById('leftNum').textContent = leftVal;
+        document.getElementById('rightNum').textContent = rightVal;
+
+        var lg = document.getElementById('leftGroup');
+        var rg = document.getElementById('rightGroup');
+        lg.innerHTML = '';
+        rg.innerHTML = '';
+
+        for (var i = 0; i < leftVal; i++) {
+          var s = document.createElement('span');
+          s.className = 'decomp-obj';
+          s.textContent = fruit;
+          s.style.animationDelay = (i * 0.05) + 's';
+          lg.appendChild(s);
+        }
+        for (var j = 0; j < rightVal; j++) {
+          var s2 = document.createElement('span');
+          s2.className = 'decomp-obj';
+          s2.textContent = fruit;
+          s2.style.animationDelay = (j * 0.05) + 's';
+          rg.appendChild(s2);
+        }
+
+        // 显示分法数
+        if (leftVal >= 0 && leftVal <= total) {
+          document.getElementById('decompResult').textContent = total + ' 可以分成 ' + leftVal + ' 和 ' + rightVal;
+          document.getElementById('decompResult').style.color = '#1565C0';
+        }
+      }
+
+      document.getElementById('decompPlus').addEventListener('click', function() {
+        if (leftVal < total) {
+          leftVal++;
+          if (typeof Sound !== 'undefined') Sound.play('click');
+          render();
+          updateScore(1);
+        } else {
+          document.getElementById('decompResult').textContent = '左边已经是最多了！';
+          document.getElementById('decompResult').style.color = '#FF9500';
+        }
+      });
+
+      document.getElementById('decompMinus').addEventListener('click', function() {
+        if (leftVal > 0) {
+          leftVal--;
+          if (typeof Sound !== 'undefined') Sound.play('click');
+          render();
+        } else {
+          document.getElementById('decompResult').textContent = '左边已经是0了！';
+          document.getElementById('decompResult').style.color = '#FF9500';
+        }
+      });
+
+      document.getElementById('decompNew').addEventListener('click', function() {
+        total = randInt(2, 10);
+        leftVal = 0;
+        fruit = randFruit();
+        if (typeof Sound !== 'undefined') Sound.play('click');
+        render();
+      });
+
+      render();
+    })();
+
+    // =============================================
+    // 模式2: 凑数
+    // =============================================
+    (function() {
+      var target, known, answer;
+
+      function newMake() {
+        target = randInt(3, 10);
+        known = randInt(1, target - 1);
+        answer = target - known;
+
+        var fruit = randFruit();
+        // 可视化
+        var vis = document.getElementById('makeVisual');
+        vis.innerHTML = '';
+        var bar = document.createElement('div');
+        bar.className = 'make-bar';
+        for (var i = 0; i < target; i++) {
+          var b = document.createElement('div');
+          b.className = 'make-block ' + (i < known ? 'a' : (i < target ? 'empty' : ''));
+          bar.appendChild(b);
+        }
+        vis.appendChild(bar);
+
+        // 问题
+        var prob = document.getElementById('makeProblem');
+        prob.innerHTML = '<span class="make-known">' + known + '</span>' +
+          '<span style="font-size:28px;color:#6E6E73;"> + </span>' +
+          '<span class="make-blank" id="makeBlank">?</span>' +
+          '<span style="font-size:28px;color:#6E6E73;"> = </span>' +
+          '<span class="make-known">' + target + '</span>';
+
+        // 选项
+        var opts = [answer];
+        while (opts.length < 4) {
+          var w = randInt(1, target);
+          if (opts.indexOf(w) === -1) opts.push(w);
+        }
+        shuffle(opts);
+        var optsEl = document.getElementById('makeOptions');
+        optsEl.innerHTML = '';
+        opts.forEach(function(opt) {
+          var btn = document.createElement('button');
+          btn.className = 'make-opt';
+          btn.textContent = opt;
+          btn.addEventListener('click', function() { checkMake(opt, btn); });
+          optsEl.appendChild(btn);
+        });
+
+        document.getElementById('makeResult').textContent = '';
+      }
+
+      function checkMake(ans, btn) {
+        var blank = document.getElementById('makeBlank');
+        if (ans === answer) {
+          btn.classList.add('correct');
+          blank.textContent = answer;
+          blank.classList.add('filled');
+          document.getElementById('makeResult').textContent = '✅ 正确！' + known + ' + ' + answer + ' = ' + target;
+          document.getElementById('makeResult').style.color = '#34C759';
+          if (typeof Sound !== 'undefined') Sound.play('correct');
+          updateScore(2);
+          setTimeout(newMake, 1500);
+        } else {
+          btn.classList.add('wrong');
+          document.getElementById('makeResult').textContent = '❌ 再想想！';
+          document.getElementById('makeResult').style.color = '#FF3B30';
+          if (typeof Sound !== 'undefined') Sound.play('wrong');
+          setTimeout(function() { btn.classList.remove('wrong'); }, 600);
+        }
+      }
+
+      newMake();
+    })();
+
+    // =============================================
+    // 模式3: 选择题
+    // =============================================
+    (function() {
+      var curAns;
+
+      var quizTypes = [
+        // 类型1: X可以分成A和?
+        function() {
+          var total = randInt(3, 10);
+          var part = randInt(1, total - 1);
+          var ans = total - part;
+          var q = '<span class="q-num">' + total + '</span> 可以分成 <span class="q-num">' + part + '</span> 和几？';
+          var opts = [ans];
+          while (opts.length < 4) {
+            var w = randInt(1, total);
+            if (opts.indexOf(w) === -1 && w !== ans) opts.push(w);
+          }
+          shuffle(opts);
+          return { q: q, ans: ans, opts: opts };
+        },
+        // 类型2: A和B组成几?
+        function() {
+          var a = randInt(1, 9), b = randInt(1, 10 - a);
+          var ans = a + b;
+          var q = '<span class="q-num">' + a + '</span> 和 <span class="q-num">' + b + '</span> 组成几？';
+          var opts = [ans];
+          while (opts.length < 4) {
+            var w = randInt(Math.max(2, ans - 3), Math.min(18, ans + 3));
+            if (opts.indexOf(w) === -1 && w !== ans) opts.push(w);
+          }
+          shuffle(opts);
+          return { q: q, ans: ans, opts: opts };
+        },
+        // 类型3: 几可以分成A和B?
+        function() {
+          var a = randInt(1, 9), b = randInt(1, 10 - a);
+          var total = a + b;
+          var q = '几可以分成 <span class="q-num">' + a + '</span> 和 <span class="q-num">' + b + '</span>？';
+          var opts = [total];
+          while (opts.length < 4) {
+            var w = randInt(Math.max(2, total - 3), Math.min(18, total + 3));
+            if (opts.indexOf(w) === -1 && w !== total) opts.push(w);
+          }
+          shuffle(opts);
+          return { q: q, ans: total, opts: opts };
+        },
+        // 类型4: 比X少1的数可以分成?
+        function() {
+          var total = randInt(4, 10);
+          var part = randInt(1, total - 1);
+          var ans = total - part;
+          var q = '<span class="q-num">' + total + '</span> 分成 <span class="q-num">' + part + '</span> 和几？';
+          var opts = [ans];
+          while (opts.length < 4) {
+            var w = randInt(1, total);
+            if (opts.indexOf(w) === -1 && w !== ans) opts.push(w);
+          }
+          shuffle(opts);
+          return { q: q, ans: ans, opts: opts };
+        }
+      ];
+
+      function newQuiz() {
+        var typeIdx = randInt(0, quizTypes.length - 1);
+        var data = quizTypes[typeIdx]();
+        curAns = data.ans;
+
+        document.getElementById('quizQuestion').innerHTML = data.q;
+        var optsEl = document.getElementById('quizOptions');
+        optsEl.innerHTML = '';
+        data.opts.forEach(function(opt) {
+          var btn = document.createElement('button');
+          btn.className = 'quiz-opt';
+          btn.textContent = opt;
+          btn.addEventListener('click', function() { checkQuiz(opt, btn); });
+          optsEl.appendChild(btn);
+        });
+        document.getElementById('quizResult').textContent = '';
+      }
+
+      function checkQuiz(ans, btn) {
+        if (ans === curAns) {
+          btn.classList.add('correct');
+          document.getElementById('quizResult').textContent = '✅ 答对了！';
+          document.getElementById('quizResult').style.color = '#34C759';
+          if (typeof Sound !== 'undefined') Sound.play('correct');
+          updateScore(2);
+          setTimeout(newQuiz, 1500);
+        } else {
+          btn.classList.add('wrong');
+          document.getElementById('quizResult').textContent = '❌ 再想想！';
+          document.getElementById('quizResult').style.color = '#FF3B30';
+          if (typeof Sound !== 'undefined') Sound.play('wrong');
+          setTimeout(function() { btn.classList.remove('wrong'); }, 600);
+        }
+      }
+
+      newQuiz();
+    })();
+
+    // =============================================
+    // 模式4: 挑战模式
+    // =============================================
+    (function() {
+      var chTime, chCorrect, chWrong, chRunning, chTimer, chCurAns;
+
+      function newChallenge() {
+        var type = randInt(1, 3);
+        var optsEl = document.getElementById('chOptions');
+        optsEl.innerHTML = '';
+
+        if (type === 1) {
+          // X分成A和?
+          var total = randInt(3, 10);
+          var part = randInt(1, total - 1);
+          chCurAns = total - part;
+          document.getElementById('chProblem').textContent = total + ' 分成 ' + part + ' 和 ?';
+        } else if (type === 2) {
+          // A和B组成?
+          var a = randInt(1, 9), b = randInt(1, 10 - a);
+          chCurAns = a + b;
+          document.getElementById('chProblem').textContent = a + ' 和 ' + b + ' 组成 ?';
+        } else {
+          // ?分成A和B
+          var a2 = randInt(1, 9), b2 = randInt(1, 10 - a2);
+          chCurAns = a2 + b2;
+          document.getElementById('chProblem').textContent = '? 分成 ' + a2 + ' 和 ' + b2;
+        }
+
+        var opts = [chCurAns];
+        while (opts.length < 4) {
+          var w = randInt(1, 10);
+          if (opts.indexOf(w) === -1) opts.push(w);
+        }
+        shuffle(opts);
+        opts.forEach(function(opt) {
+          var btn = document.createElement('button');
+          btn.className = 'ch-opt';
+          btn.textContent = opt;
+          btn.addEventListener('click', function() { checkCh(opt, btn); });
+          optsEl.appendChild(btn);
+        });
+      }
+
+      function checkCh(ans, btn) {
+        if (!chRunning) return;
+        if (ans === chCurAns) {
+          btn.classList.add('correct');
+          chCorrect++;
+          document.getElementById('chCorrect').textContent = chCorrect;
+          if (typeof Sound !== 'undefined') Sound.play('correct');
+          setTimeout(newChallenge, 800);
+        } else {
+          btn.classList.add('wrong');
+          chWrong++;
+          document.getElementById('chWrong').textContent = chWrong;
+          if (typeof Sound !== 'undefined') Sound.play('wrong');
+          setTimeout(function() { btn.classList.remove('wrong'); }, 600);
+        }
+      }
+
+      function startChallenge() {
+        chTime = 60; chCorrect = 0; chWrong = 0; chRunning = true;
+        document.getElementById('chCorrect').textContent = 0;
+        document.getElementById('chWrong').textContent = 0;
+        document.getElementById('chTime').textContent = 60;
+        document.getElementById('chStart').style.display = 'none';
+        newChallenge();
+        if (chTimer) clearInterval(chTimer);
+        chTimer = setInterval(function() {
+          chTime--;
+          document.getElementById('chTime').textContent = chTime;
+          if (chTime <= 0) {
+            clearInterval(chTimer);
+            chRunning = false;
+            document.getElementById('chProblem').textContent = '⏰ 时间到！答对 ' + chCorrect + ' 题';
+            document.getElementById('chOptions').innerHTML = '';
+            document.getElementById('chStart').style.display = 'block';
+            document.getElementById('chStart').textContent = '再来一次！';
+            updateScore(chCorrect * 2);
+          }
+        }, 1000);
+      }
+
+      document.getElementById('chStart').addEventListener('click', function() {
+        if (typeof Sound !== 'undefined') Sound.play('click');
+        startChallenge();
+      });
+    })();
+  </script>
+</body>
+</html>
