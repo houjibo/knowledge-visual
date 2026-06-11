@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>几个和第几</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #FF9800; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 通用样式 */
+    .section { text-align: center; padding: 24px 16px; }
+    .section-title { font-size: 22px; font-weight: 700; color: #1D1D1F; margin: 12px 0; }
+    .section-desc { font-size: 16px; color: #6E6E73; line-height: 1.6; margin: 8px 0; }
+    .visual-box {
+      background: white; border-radius: 20px; padding: 24px; margin: 20px auto;
+      max-width: 500px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .items-row {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 16px 0;
+    }
+    .item-card {
+      width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;
+      font-size: 36px; background: #FFF3E0; border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: relative;
+    }
+    .item-card .pos-num {
+      position: absolute; top: -8px; right: -8px; width: 24px; height: 24px;
+      background: #FF9800; color: white; border-radius: 50%; font-size: 14px;
+      font-weight: 700; display: flex; align-items: center; justify-content: center;
+    }
+    .item-card.highlighted {
+      background: rgba(255,152,0,0.3); border: 3px solid #FF9800;
+      transform: scale(1.1);
+    }
+    .options-grid { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+    .option-btn {
+      padding: 14px 28px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 14px; font-size: 18px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; min-width: 80px;
+    }
+    .option-btn:active { transform: scale(0.95); }
+    .option-btn.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .option-btn.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .feedback { font-size: 18px; font-weight: 600; margin: 12px 0; min-height: 28px; }
+    .feedback.correct { color: #34C759; }
+    .feedback.wrong { color: #FF3B30; }
+    .score-display { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; font-weight: 600; }
+
+    /* 模式1: 认识概念 */
+    .concept-card {
+      background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+      border-radius: 20px; padding: 24px; margin: 16px auto; max-width: 400px;
+    }
+    .concept-title { font-size: 20px; font-weight: 700; color: #E65100; margin-bottom: 12px; }
+    .concept-text { font-size: 16px; color: #1D1D1F; line-height: 1.8; text-align: left; }
+    .concept-example {
+      background: white; border-radius: 16px; padding: 16px; margin-top: 16px;
+      border-left: 4px solid #FF9800;
+    }
+    .concept-example .label { font-size: 14px; color: #FF9800; font-weight: 600; margin-bottom: 8px; }
+    .concept-example .content { font-size: 16px; color: #1D1D1F; }
+
+    /* 模式3: 圈一圈 */
+    .circle-instruction { font-size: 18px; font-weight: 600; color: #1D1D1F; margin: 16px 0; }
+    .circle-items {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 20px 0;
+    }
+    .circle-item {
+      width: 70px; height: 70px; display: flex; align-items: center; justify-content: center;
+      font-size: 40px; background: white; border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer;
+      transition: all 0.2s ease; border: 3px solid transparent;
+    }
+    .circle-item:active { transform: scale(0.9); }
+    .circle-item.selected { border-color: #FF9800; background: rgba(255,152,0,0.1); }
+    .circle-item.highlighted { border-color: #34C759; background: rgba(52,199,89,0.15); }
+    .action-buttons { display: flex; gap: 12px; justify-content: center; margin: 20px 0; }
+    .action-btn {
+      padding: 12px 24px; border: none; border-radius: 14px; font-size: 16px;
+      font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+    }
+    .action-btn:active { transform: scale(0.95); }
+    .action-btn.primary { background: #FF9800; color: white; box-shadow: 0 4px 12px rgba(255,152,0,0.3); }
+    .action-btn.secondary { background: #E5E5EA; color: #1D1D1F; }
+
+    /* 模式4: 填一填 */
+    .fill-question { font-size: 18px; font-weight: 600; color: #1D1D1F; margin: 16px 0; line-height: 1.6; }
+    .fill-input-group { display: flex; gap: 12px; justify-content: center; align-items: center; margin: 20px 0; }
+    .fill-input {
+      width: 80px; height: 60px; border: 3px solid #E5E5EA; border-radius: 14px;
+      font-size: 24px; font-weight: 700; text-align: center; color: #FF9800;
+      outline: none; transition: all 0.2s ease;
+    }
+    .fill-input:focus { border-color: #FF9800; }
+    .fill-input.correct { border-color: #34C759; background: rgba(52,199,89,0.1); }
+    .fill-input.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .fill-unit { font-size: 18px; font-weight: 600; color: #6E6E73; }
+    .check-btn {
+      padding: 14px 32px; border: none; border-radius: 14px; font-size: 17px;
+      font-weight: 700; cursor: pointer; background: #FF9800; color: white;
+      box-shadow: 0 4px 12px rgba(255,152,0,0.3); transition: all 0.2s ease;
+    }
+    .check-btn:active { transform: scale(0.95); }
+    .check-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="breadcrumb">
+      <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="../index.html" class="breadcrumb-item">📐 数学</a>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">几个和第几</span>
+    </nav>
+
+    <div class="nav-bar">
+      <a href="../../index.html" class="nav-back">← 返回</a>
+      <div class="nav-title">几个和第几</div>
+      <div class="nav-spacer"></div>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="learn">📖 认识</button>
+      <button class="mode-tab" data-mode="choose">🎯 选择</button>
+      <button class="mode-tab" data-mode="circle">⭕ 圈画</button>
+      <button class="mode-tab" data-mode="fill">✏️ 填空</button>
+    </div>
+
+    <!-- 模式1: 认识概念 -->
+    <div class="mode-content active" data-mode="learn">
+      <div class="section">
+        <div class="section-title">🤔 "几个"和"第几"有什么不同？</div>
+        <div class="section-desc">一个是数总数，一个是数位置</div>
+
+        <div class="concept-card">
+          <div class="concept-title">📊 几个 = 总数</div>
+          <div class="concept-text">
+            <strong>"几个"</strong>问的是<b>一共有多少个</b>。<br>
+            比如：一排有<b>5个</b>苹果 🍎🍎🍎🍎🍎
+          </div>
+        </div>
+
+        <div class="concept-card">
+          <div class="concept-title">📍 第几 = 位置</div>
+          <div class="concept-text">
+            <strong>"第几"</strong>问的是<b>排在哪个位置</b>。<br>
+            要从左往右数：第1、第2、第3……
+          </div>
+          <div class="concept-example">
+            <div class="label">👀 举个例子</div>
+            <div class="content">
+              🍎🍎🍎🍎🍎<br>
+              一共有 <b>5个</b>苹果。<br>
+              红苹果排在第 <b>3</b> 个。
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-box">
+          <div style="font-size:16px;color:#6E6E73;margin-bottom:12px;">数一数，填一填：</div>
+          <div class="items-row" id="learnItems"></div>
+          <div style="margin-top:20px;font-size:16px;color:#1D1D1F;">
+            一共有 <input type="number" id="learnTotal" style="width:60px;height:36px;border:2px solid #FF9800;border-radius:8px;font-size:18px;font-weight:700;text-align:center;color:#FF9800;outline:none;"> 个水果
+          </div>
+          <div style="margin-top:12px;font-size:16px;color:#1D1D1F;">
+            🍌 排在第 <input type="number" id="learnPos" style="width:60px;height:36px;border:2px solid #FF9800;border-radius:8px;font-size:18px;font-weight:700;text-align:center;color:#FF9800;outline:none;"> 个
+          </div>
+          <button class="action-btn primary" style="margin-top:20px;" onclick="checkLearn()">✓ 检查答案</button>
+          <div class="feedback" id="learnFeedback"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 选择答案 -->
+    <div class="mode-content" data-mode="choose">
+      <div class="section">
+        <div class="section-title">🎯 选择正确答案</div>
+        <div class="score-display">
+          <span>✅ 正确: <span id="chooseCorrect">0</span></span>
+          <span>📝 题目: <span id="chooseCount">0</span></span>
+        </div>
+
+        <div class="visual-box">
+          <div class="items-row" id="chooseItems"></div>
+          <div class="fill-question" id="chooseQuestion"></div>
+          <div class="options-grid" id="chooseOptions"></div>
+          <div class="feedback" id="chooseFeedback"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 圈一圈 -->
+    <div class="mode-content" data-mode="circle">
+      <div class="section">
+        <div class="section-title">⭕ 圈出正确答案</div>
+        <div class="score-display">
+          <span>✅ 正确: <span id="circleCorrect">0</span></span>
+          <span>📝 题目: <span id="circleCount">0</span></span>
+        </div>
+
+        <div class="visual-box">
+          <div class="circle-instruction" id="circleInstruction"></div>
+          <div class="circle-items" id="circleItems"></div>
+          <div class="action-buttons">
+            <button class="action-btn secondary" onclick="clearCircle()">🔄 清除</button>
+            <button class="action-btn primary" onclick="checkCircle()">✓ 检查</button>
+          </div>
+          <div class="feedback" id="circleFeedback"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 填一填 -->
+    <div class="mode-content" data-mode="fill">
+      <div class="section">
+        <div class="section-title">✏️ 填入正确答案</div>
+        <div class="score-display">
+          <span>✅ 正确: <span id="fillCorrect">0</span></span>
+          <span>📝 题目: <span id="fillCount">0</span></span>
+        </div>
+
+        <div class="visual-box">
+          <div class="items-row" id="fillItems"></div>
+          <div class="fill-question" id="fillQuestion"></div>
+          <div class="fill-input-group" id="fillInputGroup"></div>
+          <button class="check-btn" id="fillCheckBtn" onclick="checkFill()">检查答案</button>
+          <div class="feedback" id="fillFeedback"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // 水果表情池
+    const FRUITS = ['🍎', '🍌', '🍊', '🍇', '🍓', '🍑', '🍒', '🥝', '🍋', '🍉'];
+
+    // 生成随机题目数据
+    function generateData() {
+      const count = Math.floor(Math.random() * 5) + 4; // 4-8个
+      const fruits = [];
+      const used = new Set();
+      for (let i = 0; i < count; i++) {
+        let idx;
+        do { idx = Math.floor(Math.random() * FRUITS.length); } while (used.has(idx) && used.size < FRUITS.length);
+        used.add(idx);
+        fruits.push(FRUITS[idx]);
+      }
+      return fruits;
+    }
+
+    // 模式1: 认识概念
+    let learnData = [];
+    function initLearn() {
+      learnData = generateData();
+      const container = document.getElementById('learnItems');
+      container.innerHTML = '';
+      learnData.forEach((fruit, i) => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.innerHTML = `${fruit}<span class="pos-num">${i + 1}</span>`;
+        container.appendChild(card);
+      });
+      document.getElementById('learnTotal').value = '';
+      document.getElementById('learnPos').value = '';
+      document.getElementById('learnFeedback').textContent = '';
+    }
+
+    function checkLearn() {
+      const total = parseInt(document.getElementById('learnTotal').value);
+      const pos = parseInt(document.getElementById('learnPos').value);
+      const fb = document.getElementById('learnFeedback');
+      const bananaIdx = learnData.indexOf('🍌');
+
+      let correct = true;
+      if (total !== learnData.length) {
+        correct = false;
+      }
+      if (bananaIdx === -1) {
+        // 如果没有香蕉，检查位置是否合理
+        if (pos < 1 || pos > learnData.length) correct = false;
+      } else {
+        if (pos !== bananaIdx + 1) correct = false;
+      }
+
+      if (total === learnData.length && (bananaIdx === -1 || pos === bananaIdx + 1)) {
+        fb.textContent = '✅ 完全正确！';
+        fb.className = 'feedback correct';
+        setTimeout(initLearn, 1500);
+      } else {
+        fb.textContent = '❌ 再数一数吧！';
+        fb.className = 'feedback wrong';
+      }
+    }
+
+    // 模式2: 选择答案
+    let chooseData = [];
+    let chooseAnswer = 0;
+    let chooseCorrect = 0;
+    let chooseCount = 0;
+
+    function initChoose() {
+      chooseData = generateData();
+      chooseAnswer = Math.floor(Math.random() * chooseData.length);
+      const container = document.getElementById('chooseItems');
+      container.innerHTML = '';
+      chooseData.forEach((fruit, i) => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.innerHTML = `${fruit}<span class="pos-num">${i + 1}</span>`;
+        container.appendChild(card);
+      });
+
+      const questionType = Math.random() < 0.5 ? 'pos' : 'total';
+      const qContainer = document.getElementById('chooseQuestion');
+      const optContainer = document.getElementById('chooseOptions');
+      optContainer.innerHTML = '';
+
+      if (questionType === 'pos') {
+        qContainer.textContent = `${chooseData[chooseAnswer]} 排在第几个？`;
+        const options = new Set([chooseAnswer + 1]);
+        while (options.size < 4) {
+          const opt = Math.floor(Math.random() * chooseData.length) + 1;
+          options.add(opt);
+        }
+        Array.from(options).sort((a, b) => a - b).forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'option-btn';
+          btn.textContent = `第${opt}个`;
+          btn.onclick = () => checkChoose(btn, opt === chooseAnswer + 1);
+          optContainer.appendChild(btn);
+        });
+      } else {
+        qContainer.textContent = `一共有多少个水果？`;
+        const options = new Set([chooseData.length]);
+        while (options.size < 4) {
+          const opt = Math.floor(Math.random() * 6) + 3;
+          options.add(opt);
+        }
+        Array.from(options).sort((a, b) => a - b).forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'option-btn';
+          btn.textContent = `${opt}个`;
+          btn.onclick = () => checkChoose(btn, opt === chooseData.length);
+          optContainer.appendChild(btn);
+        });
+      }
+      document.getElementById('chooseFeedback').textContent = '';
+    }
+
+    function checkChoose(btn, isCorrect) {
+      chooseCount++;
+      document.getElementById('chooseCount').textContent = chooseCount;
+      const allBtns = document.querySelectorAll('#chooseOptions .option-btn');
+      allBtns.forEach(b => b.disabled = true);
+
+      if (isCorrect) {
+        chooseCorrect++;
+        document.getElementById('chooseCorrect').textContent = chooseCorrect;
+        btn.classList.add('correct');
+        document.getElementById('chooseFeedback').textContent = '✅ 答对了！';
+        document.getElementById('chooseFeedback').className = 'feedback correct';
+        setTimeout(initChoose, 1500);
+      } else {
+        btn.classList.add('wrong');
+        document.getElementById('chooseFeedback').textContent = '❌ 答错了，再想想！';
+        document.getElementById('chooseFeedback').className = 'feedback wrong';
+      }
+    }
+
+    // 模式3: 圈一圈
+    let circleData = [];
+    let circleTarget = 0;
+    let circleSelected = new Set();
+    let circleCorrect = 0;
+    let circleCount = 0;
+
+    function initCircle() {
+      circleData = generateData();
+      circleTarget = Math.floor(Math.random() * circleData.length);
+      circleSelected.clear();
+      const container = document.getElementById('circleItems');
+      container.innerHTML = '';
+      circleData.forEach((fruit, i) => {
+        const item = document.createElement('div');
+        item.className = 'circle-item';
+        item.textContent = fruit;
+        item.onclick = () => toggleCircle(item, i);
+        container.appendChild(item);
+      });
+
+      const type = Math.random() < 0.5 ? 'pos' : 'count';
+      const instr = document.getElementById('circleInstruction');
+      if (type === 'pos') {
+        instr.textContent = `圈出第 ${circleTarget + 1} 个水果`;
+        item.dataset.type = 'pos';
+      } else {
+        const count = Math.floor(Math.random() * 3) + 2;
+        instr.textContent = `圈出前 ${count} 个水果`;
+        item.dataset.type = 'count';
+        item.dataset.count = count;
+      }
+      document.getElementById('circleFeedback').textContent = '';
+    }
+
+    function toggleCircle(item, idx) {
+      if (circleSelected.has(idx)) {
+        circleSelected.delete(idx);
+        item.classList.remove('selected');
+      } else {
+        circleSelected.add(idx);
+        item.classList.add('selected');
+      }
+    }
+
+    function clearCircle() {
+      circleSelected.clear();
+      document.querySelectorAll('.circle-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      document.getElementById('circleFeedback').textContent = '';
+    }
+
+    function checkCircle() {
+      circleCount++;
+      document.getElementById('circleCount').textContent = circleCount;
+      const instr = document.getElementById('circleInstruction');
+      const fb = document.getElementById('circleFeedback');
+      const items = document.querySelectorAll('.circle-item');
+
+      let isCorrect = false;
+      if (instr.textContent.includes('第')) {
+        // 圈第几个
+        const target = circleTarget;
+        if (circleSelected.size === 1 && circleSelected.has(target)) {
+          isCorrect = true;
+          items[target].classList.add('highlighted');
+        }
+      } else {
+        // 圈前几个
+        const match = instr.textContent.match(/前 (\d+) 个/);
+        if (match) {
+          const count = parseInt(match[1]);
+          const expected = new Set(Array.from({length: count}, (_, i) => i));
+          if (circleSelected.size === count && [...circleSelected].every(i => expected.has(i))) {
+            isCorrect = true;
+            for (let i = 0; i < count; i++) {
+              items[i].classList.add('highlighted');
+            }
+          }
+        }
+      }
+
+      if (isCorrect) {
+        circleCorrect++;
+        document.getElementById('circleCorrect').textContent = circleCorrect;
+        fb.textContent = '✅ 圈对了！';
+        fb.className = 'feedback correct';
+        setTimeout(initCircle, 1500);
+      } else {
+        fb.textContent = '❌ 再想想，圈对了吗？';
+        fb.className = 'feedback wrong';
+      }
+    }
+
+    // 模式4: 填一填
+    let fillData = [];
+    let fillAnswer = 0;
+    let fillCorrect = 0;
+    let fillCount = 0;
+
+    function initFill() {
+      fillData = generateData();
+      const container = document.getElementById('fillItems');
+      container.innerHTML = '';
+      fillData.forEach((fruit, i) => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.innerHTML = `${fruit}<span class="pos-num">${i + 1}</span>`;
+        container.appendChild(card);
+      });
+
+      const type = Math.random() < 0.5 ? 'pos' : 'total';
+      const qContainer = document.getElementById('fillQuestion');
+      const inputGroup = document.getElementById('fillInputGroup');
+      inputGroup.innerHTML = '';
+
+      if (type === 'pos') {
+        fillAnswer = Math.floor(Math.random() * fillData.length) + 1;
+        qContainer.textContent = `${fillData[fillAnswer - 1]} 排在第几个？`;
+        inputGroup.innerHTML = `<span class="fill-unit">第</span><input type="number" class="fill-input" id="fillInput" min="1" max="${fillData.length}"><span class="fill-unit">个</span>`;
+      } else {
+        fillAnswer = fillData.length;
+        qContainer.textContent = `一共有多少个水果？`;
+        inputGroup.innerHTML = `<input type="number" class="fill-input" id="fillInput" min="1" max="10"><span class="fill-unit">个</span>`;
+      }
+
+      document.getElementById('fillInput').addEventListener('input', () => {
+        document.getElementById('fillCheckBtn').disabled = false;
+      });
+      document.getElementById('fillFeedback').textContent = '';
+      document.getElementById('fillCheckBtn').disabled = true;
+    }
+
+    function checkFill() {
+      fillCount++;
+      document.getElementById('fillCount').textContent = fillCount;
+      const input = document.getElementById('fillInput');
+      const value = parseInt(input.value);
+      const fb = document.getElementById('fillFeedback');
+
+      if (value === fillAnswer) {
+        fillCorrect++;
+        document.getElementById('fillCorrect').textContent = fillCorrect;
+        input.classList.add('correct');
+        fb.textContent = '✅ 答对了！';
+        fb.className = 'feedback correct';
+        setTimeout(initFill, 1500);
+      } else {
+        input.classList.add('wrong');
+        fb.textContent = '❌ 答错了，再数一数！';
+        fb.className = 'feedback wrong';
+      }
+    }
+
+    // 模式切换
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelector(`.mode-content[data-mode="${tab.dataset.mode}"]`).classList.add('active');
+      });
+    });
+
+    // 初始化
+    initLearn();
+    initChoose();
+    initCircle();
+    initFill();
+  </script>
+</body>
+</html>
