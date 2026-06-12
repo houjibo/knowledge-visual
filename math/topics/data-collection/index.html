@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>数据收集与整理</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #1976D2; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    .nav-bar {
+      display: flex; align-items: center; padding: 12px 16px; margin-bottom: 8px;
+    }
+    .nav-back {
+      display: flex; align-items: center; gap: 6px;
+      text-decoration: none; color: #1976D2; font-weight: 600; font-size: 15px;
+    }
+    .nav-title { flex: 1; text-align: center; font-size: 17px; font-weight: 700; color: #1D1D1F; }
+
+    /* 模式1: 故事引入 */
+    .story-area { text-align: center; padding: 24px 16px; }
+    .story-box {
+      background: white; border-radius: 20px; padding: 24px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin: 16px 0;
+      border-left: 4px solid #1976D2; text-align: left;
+    }
+    .story-title { font-size: 20px; font-weight: 700; color: #1976D2; margin-bottom: 12px; text-align: center; }
+    .story-text { font-size: 17px; line-height: 2; color: #1D1D1F; }
+    .story-text .hl { color: #1976D2; font-weight: 700; }
+    .story-question {
+      background: #E3F2FD; border-radius: 16px; padding: 16px 20px;
+      margin: 16px 0; font-size: 17px; font-weight: 600; color: #1976D2;
+      text-align: center; line-height: 1.6;
+    }
+    .method-cards { display: grid; gap: 16px; margin: 20px 0; }
+    .method-card {
+      background: white; border-radius: 16px; padding: 16px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); text-align: center;
+    }
+    .method-card .method-emoji { font-size: 40px; margin-bottom: 8px; }
+    .method-card .method-name { font-size: 18px; font-weight: 700; color: #1976D2; margin-bottom: 6px; }
+    .method-card .method-desc { font-size: 15px; color: #6E6E73; line-height: 1.6; }
+    .method-card .method-example {
+      background: #E3F2FD; border-radius: 10px; padding: 8px 12px;
+      margin-top: 10px; font-size: 15px; font-weight: 700; color: #1976D2;
+    }
+
+    /* 模式2: 互动记录 */
+    .record-area { text-align: center; padding: 24px 16px; }
+    .record-panel {
+      background: white; border-radius: 20px; padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin: 16px 0;
+    }
+    .record-question { font-size: 20px; font-weight: 700; color: #1D1D1F; margin-bottom: 16px; }
+    .record-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 16px 0; }
+    .record-option {
+      padding: 16px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 18px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; min-height: 60px;
+    }
+    .record-option:active { transform: scale(0.95); }
+    .record-option.selected { border-color: #1976D2; background: #E3F2FD; color: #1976D2; }
+    .record-option.correct { border-color: #4CAF50; background: #E8F5E9; color: #2E7D32; }
+    .record-option.wrong { border-color: #F44336; background: #FFEBEE; color: #C62828; }
+    .record-progress { display: flex; justify-content: center; gap: 8px; margin: 16px 0; }
+    .progress-dot { width: 12px; height: 12px; border-radius: 50%; background: #E5E5EA; }
+    .progress-dot.done { background: #4CAF50; }
+    .progress-dot.current { background: #1976D2; transform: scale(1.3); }
+    .record-feedback { font-size: 18px; font-weight: 700; margin: 16px 0; min-height: 28px; }
+    .feedback-correct { color: #2E7D32; }
+    .feedback-wrong { color: #C62828; }
+
+    /* 模式3: 分类统计 */
+    .classify-area { text-align: center; padding: 24px 16px; }
+    .classify-panel {
+      background: white; border-radius: 20px; padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin: 16px 0;
+    }
+    .classify-instruction { font-size: 17px; font-weight: 600; color: #1D1D1F; margin-bottom: 16px; }
+    .classify-items { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 16px 0; min-height: 120px; }
+    .classify-item {
+      font-size: 32px; width: 60px; height: 60px;
+      display: flex; align-items: center; justify-content: center;
+      background: #F5F5F5; border-radius: 12px; cursor: pointer;
+      transition: all 0.2s ease; border: 2px solid transparent;
+    }
+    .classify-item:active { transform: scale(0.9); }
+    .classify-item.selected { border-color: #1976D2; background: #E3F2FD; }
+    .classify-item.counted { opacity: 0.3; pointer-events: none; }
+    .classify-buckets { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin: 20px 0; }
+    .classify-bucket {
+      padding: 16px; border: 3px dashed #E5E5EA; border-radius: 16px;
+      min-height: 100px; cursor: pointer; transition: all 0.2s ease;
+    }
+    .classify-bucket.active { border-color: #1976D2; background: #E3F2FD; }
+    .classify-bucket .bucket-label { font-size: 16px; font-weight: 700; color: #1976D2; margin-bottom: 8px; }
+    .classify-bucket .bucket-count { font-size: 24px; font-weight: 700; color: #1D1D1F; }
+    .classify-bucket .bucket-items { font-size: 20px; margin-top: 8px; word-wrap: break-word; }
+    .classify-check-btn {
+      padding: 14px 32px; border: none; background: #1976D2; color: white;
+      border-radius: 16px; font-size: 18px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(25,118,210,0.3); transition: all 0.2s ease;
+      margin: 16px 0;
+    }
+    .classify-check-btn:active { transform: scale(0.95); }
+    .classify-result { font-size: 18px; font-weight: 700; margin: 16px 0; min-height: 28px; }
+
+    /* 模式4: 练习挑战 */
+    .quiz-area { text-align: center; padding: 24px 16px; }
+    .quiz-panel {
+      background: white; border-radius: 20px; padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin: 16px 0;
+    }
+    .quiz-question { font-size: 18px; font-weight: 700; color: #1D1D1F; margin: 16px 0; line-height: 1.6; text-align: left; }
+    .quiz-options { display: grid; gap: 12px; margin: 16px 0; }
+    .quiz-option {
+      padding: 16px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; font-size: 17px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; text-align: left;
+    }
+    .quiz-option:active { transform: scale(0.98); }
+    .quiz-option.selected { border-color: #1976D2; background: #E3F2FD; }
+    .quiz-option.correct { border-color: #4CAF50; background: #E8F5E9; color: #2E7D32; }
+    .quiz-option.wrong { border-color: #F44336; background: #FFEBEE; color: #C62828; }
+    .quiz-score { font-size: 18px; font-weight: 700; color: #1976D2; margin: 16px 0; }
+    .quiz-next-btn {
+      padding: 12px 28px; border: none; background: #1976D2; color: white;
+      border-radius: 16px; font-size: 17px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(25,118,210,0.3); transition: all 0.2s ease;
+      margin: 16px 0; display: none;
+    }
+    .quiz-next-btn:active { transform: scale(0.95); }
+    .quiz-next-btn.visible { display: inline-block; }
+
+    .story-visual {
+      display: flex; justify-content: center; gap: 16px; margin: 24px 0; flex-wrap: wrap;
+    }
+    .visual-child {
+      display: flex; flex-direction: column; align-items: center;
+      background: white; border-radius: 16px; padding: 12px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .visual-child .child-icon { font-size: 36px; margin-bottom: 8px; }
+    .visual-child .child-votes { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+    .visual-child .vote-mark { font-size: 14px; font-weight: 700; color: #1976D2; }
+    .visual-child .child-total { font-size: 16px; font-weight: 700; color: #1D1D1F; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="nav-bar">
+    <a href="../../index.html" class="nav-back">← 返回</a>
+    <div class="nav-title">📋 数据收集与整理</div>
+    <div style="width: 60px;"></div>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="story">📖 故事引入</button>
+    <button class="mode-tab" data-mode="record">✏️ 互动记录</button>
+    <button class="mode-tab" data-mode="classify">🗂️ 分类统计</button>
+    <button class="mode-tab" data-mode="quiz">🎯 练习挑战</button>
+  </div>
+
+  <!-- 模式1: 故事引入 -->
+  <div class="mode-content active" data-mode="story">
+    <div class="story-area">
+      <div class="story-box">
+        <div class="story-title">🏫 班级最喜欢的水果</div>
+        <div class="story-text">
+          班主任李老师说："同学们，六一儿童节要到了，我想给大家买水果，但不知道买什么好。"
+          <br><br>
+          小明说："买<span class="hl">苹果</span>吧！"
+          <br>
+          小红说："不对不对，应该买<span class="hl">香蕉</span>！"
+          <br>
+          小刚说："我觉得<span class="hl">橘子</span>最好！"
+          <br><br>
+          李老师笑着说："大家说得都有道理，可是我怎么知道<span class="hl">全班同学最喜欢吃什么水果</span>呢？"
+          <br><br>
+          聪明的小美举手说："老师，我们可以<span class="hl">调查</span>！让每个同学说出自己最喜欢的水果，然后<span class="hl">记录下来</span>，最后<span class="hl">统计</span>哪种水果最受欢迎！"
+        </div>
+      </div>
+
+      <div class="story-question">
+        💡 小美说的三步是什么？<br>
+        ① 调查收集数据 → ② 记录整理数据 → ③ 分析得出结论
+      </div>
+
+      <div class="story-visual">
+        <div class="visual-child">
+          <div class="child-icon">🍎</div>
+          <div class="child-votes">
+            <span class="vote-mark">正</span><span class="vote-mark">正</span><span class="vote-mark">丅</span>
+          </div>
+          <div class="child-total">13票</div>
+        </div>
+        <div class="visual-child">
+          <div class="child-icon">🍌</div>
+          <div class="child-votes">
+            <span class="vote-mark">正</span><span class="vote-mark">正</span><span class="vote-mark">正</span>
+          </div>
+          <div class="child-total">15票</div>
+        </div>
+        <div class="visual-child">
+          <div class="child-icon">🍊</div>
+          <div class="child-votes">
+            <span class="vote-mark">正</span><span class="vote-mark">丅</span>
+          </div>
+          <div class="child-total">8票</div>
+        </div>
+      </div>
+
+      <div class="story-box">
+        <div class="story-title">📝 收集数据的方法</div>
+        <div class="method-cards">
+          <div class="method-card">
+            <div class="method-emoji">🗳️</div>
+            <div class="method-name">投票法</div>
+            <div class="method-desc">每人投一票，选最喜欢的</div>
+            <div class="method-example">例：选班长、选水果</div>
+          </div>
+          <div class="method-card">
+            <div class="method-emoji">✋</div>
+            <div class="method-name">举手法</div>
+            <div class="method-desc">老师问，同意的举手，数一数</div>
+            <div class="method-example">例：喜欢春游的举手</div>
+          </div>
+          <div class="method-card">
+            <div class="method-emoji">📋</div>
+            <div class="method-name">记录法</div>
+            <div class="method-desc">一个一个问，用"正"字记录</div>
+            <div class="method-example">例：调查最喜欢的运动</div>
+          </div>
+          <div class="method-card">
+            <div class="method-emoji">📏</div>
+            <div class="method-name">测量法</div>
+            <div class="method-desc">用工具量，记录数据</div>
+            <div class="method-example">例：量身高、称体重</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="story-box">
+        <div class="story-title">📊 整理数据的方法</div>
+        <div class="story-text">
+          收集完数据后，我们要<span class="hl">整理</span>数据，让数据更清楚：
+          <br><br>
+          <span class="hl">① 画"正"字记录</span>：一个"正"字代表5，方便计数
+          <br><br>
+          <span class="hl">② 制作统计表</span>：把数据填进表格，一目了然
+          <br><br>
+          <span class="hl">③ 画统计图</span>：用条形图、饼图展示，更直观
+          <br><br>
+          最后，看数据<span class="hl">回答问题</span>：哪种最多？哪种最少？多多少？
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模式2: 互动记录 -->
+  <div class="mode-content" data-mode="record">
+    <div class="record-area">
+      <div class="record-panel">
+        <div class="record-question" id="recordQuestion">加载中...</div>
+        <div class="record-options" id="recordOptions"></div>
+        <div class="record-progress" id="recordProgress"></div>
+        <div class="record-feedback" id="recordFeedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模式3: 分类统计 -->
+  <div class="mode-content" data-mode="classify">
+    <div class="classify-area">
+      <div class="classify-panel">
+        <div class="classify-instruction" id="classifyInstruction">把下面的物品分分类吧！</div>
+        <div class="classify-items" id="classifyItems"></div>
+        <div class="classify-buckets" id="classifyBuckets"></div>
+        <button class="classify-check-btn" id="classifyCheckBtn">✅ 检查答案</button>
+        <div class="classify-result" id="classifyResult"></div>
+        <button class="classify-check-btn" id="classifyNextBtn" style="display:none; background:#4CAF50;">👉 下一题</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模式4: 练习挑战 -->
+  <div class="mode-content" data-mode="quiz">
+    <div class="quiz-area">
+      <div class="quiz-panel">
+        <div class="quiz-score" id="quizScore">得分：0</div>
+        <div class="quiz-question" id="quizQuestion">加载中...</div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div class="record-feedback" id="quizFeedback"></div>
+        <button class="quiz-next-btn" id="quizNextBtn">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // 模式切换
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        const mode = this.dataset.mode;
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.querySelector(`.mode-content[data-mode="${mode}"]`).classList.add('active');
+        if (mode === 'record') initRecord();
+        if (mode === 'classify') initClassify();
+        if (mode === 'quiz') initQuiz();
+      });
+    });
+
+    // ========== 模式2: 互动记录 ==========
+    const recordScenarios = [
+      {
+        q: '调查同学们最喜欢的季节，下面哪种记录方式最好？',
+        opts: ['随便记在手上', '用"正"字记录在纸上', '记在脑子里', '告诉同桌就行'],
+        correct: 1,
+        explain: '用"正"字记录在纸上最清楚，一个"正"字代表5票，方便统计！'
+      },
+      {
+        q: '一个"正"字代表几票？',
+        opts: ['3票', '4票', '5票', '10票'],
+        correct: 2,
+        explain: '"正"字有5画，所以一个"正"字代表5票！'
+      },
+      {
+        q: '调查全班同学的身高，应该用什么方法收集数据？',
+        opts: ['投票', '举手', '测量', '猜一猜'],
+        correct: 2,
+        explain: '身高需要用尺子测量，这是测量法！'
+      },
+      {
+        q: '下面哪种不是收集数据的好方法？',
+        opts: ['做问卷调查', '逐个询问记录', '随便写几个数', '实地观察记录'],
+        correct: 2,
+        explain: '数据要真实，不能随便编造！要实事求是地收集和记录。'
+      },
+      {
+        q: '收集完数据后，下一步应该做什么？',
+        opts: ['直接扔掉', '整理和分析数据', '再收集一遍', '什么都不做'],
+        correct: 1,
+        explain: '收集完数据后要整理和分析，才能得出结论！'
+      },
+      {
+        q: '统计同学们最喜欢的颜色，最合适用什么记录？',
+        opts: ['画表格用"正"字记录', '只记住第一名', '写一长串名字', '不用记录'],
+        correct: 0,
+        explain: '画表格用"正"字记录最清楚，一眼就能看出每种颜色有多少人喜欢！'
+      },
+      {
+        q: '老师想知道同学们每天花多少时间写作业，最好的方法是：',
+        opts: ['猜一猜', '问几个同学就行', '调查每个同学并记录', '不用知道'],
+        correct: 2,
+        explain: '要调查每个同学并记录，数据才完整准确！'
+      },
+      {
+        q: '下面哪种说法是对的？',
+        opts: ['数据可以随便改', '数据要真实准确', '数据不重要', '只需要大概的数'],
+        correct: 1,
+        explain: '数据必须真实准确，不能随意修改，这样得出的结论才可靠！'
+      }
+    ];
+
+    let recordIdx = 0;
+    let recordAnswered = false;
+
+    function initRecord() {
+      recordIdx = Math.floor(Math.random() * recordScenarios.length);
+      recordAnswered = false;
+      showRecordQuestion();
+    }
+
+    function showRecordQuestion() {
+      const s = recordScenarios[recordIdx];
+      document.getElementById('recordQuestion').textContent = s.q;
+      document.getElementById('recordFeedback').textContent = '';
+      document.getElementById('recordFeedback').className = 'record-feedback';
+      recordAnswered = false;
+
+      const optsEl = document.getElementById('recordOptions');
+      optsEl.innerHTML = '';
+      s.opts.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'record-option';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => handleRecordAnswer(i, btn));
+        optsEl.appendChild(btn);
+      });
+
+      // 进度点
+      const progEl = document.getElementById('recordProgress');
+      progEl.innerHTML = '';
+      for (let i = 0; i < recordScenarios.length; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'progress-dot';
+        if (i < recordIdx) dot.classList.add('done');
+        if (i === recordIdx) dot.classList.add('current');
+        progEl.appendChild(dot);
+      }
+    }
+
+    function handleRecordAnswer(idx, btn) {
+      if (recordAnswered) return;
+      recordAnswered = true;
+
+      const s = recordScenarios[recordIdx];
+      const allBtns = document.querySelectorAll('#recordOptions .record-option');
+      const fbEl = document.getElementById('recordFeedback');
+
+      if (idx === s.correct) {
+        btn.classList.add('correct');
+        fbEl.textContent = '✅ 正确！' + s.explain;
+        fbEl.className = 'record-feedback feedback-correct';
+      } else {
+        btn.classList.add('wrong');
+        allBtns[s.correct].classList.add('correct');
+        fbEl.textContent = '❌ 不对哦。' + s.explain;
+        fbEl.className = 'record-feedback feedback-wrong';
+      }
+
+      setTimeout(() => {
+        recordIdx = (recordIdx + 1) % recordScenarios.length;
+        if (recordIdx === 0) {
+          // 打乱顺序
+          recordScenarios.sort(() => Math.random() - 0.5);
+        }
+        showRecordQuestion();
+      }, 1500);
+    }
+
+    // ========== 模式3: 分类统计 ==========
+    const classifySets = [
+      {
+        instruction: '把下面的图形分分类！按形状分。',
+        items: ['🔴', '🔵', '🟡', '🔴', '🔵', '🟡', '🔴', '🔵'],
+        buckets: [
+          { label: '红色', accept: ['🔴'] },
+          { label: '蓝色', accept: ['🔵'] },
+          { label: '黄色', accept: ['🟡'] }
+        ]
+      },
+      {
+        instruction: '把下面的动物分分类！按类型分。',
+        items: ['🐶', '🐱', '🐦', '🐶', '🐱', '🐦', '🐶', '🐱'],
+        buckets: [
+          { label: '哺乳动物', accept: ['🐶', '🐱'] },
+          { label: '鸟类', accept: ['🐦'] }
+        ]
+      },
+      {
+        instruction: '把下面的水果分分类！',
+        items: ['🍎', '🍌', '🍇', '🍎', '🍌', '🍇', '🍎', '🍌'],
+        buckets: [
+          { label: '苹果', accept: ['🍎'] },
+          { label: '香蕉', accept: ['🍌'] },
+          { label: '葡萄', accept: ['🍇'] }
+        ]
+      },
+      {
+        instruction: '把下面的交通工具分分类！',
+        items: ['🚗', '🚌', '✈️', '🚗', '🚌', '✈️', '🚗', '🚌'],
+        buckets: [
+          { label: '陆地', accept: ['🚗', '🚌'] },
+          { label: '空中', accept: ['✈️'] }
+        ]
+      }
+    ];
+
+    let classifyIdx = 0;
+    let selectedItem = null;
+    let classifyCounts = {};
+
+    function initClassify() {
+      classifyIdx = Math.floor(Math.random() * classifySets.length);
+      selectedItem = null;
+      classifyCounts = {};
+      showClassifySet();
+    }
+
+    function showClassifySet() {
+      const s = classifySets[classifyIdx];
+      document.getElementById('classifyInstruction').textContent = s.instruction;
+      document.getElementById('classifyResult').textContent = '';
+      document.getElementById('classifyNextBtn').style.display = 'none';
+      document.getElementById('classifyCheckBtn').style.display = 'inline-block';
+      selectedItem = null;
+      classifyCounts = {};
+
+      const itemsEl = document.getElementById('classifyItems');
+      itemsEl.innerHTML = '';
+      s.items.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'classify-item';
+        el.textContent = item;
+        el.dataset.idx = i;
+        el.addEventListener('click', () => selectClassifyItem(i, el));
+        itemsEl.appendChild(el);
+      });
+
+      const bucketsEl = document.getElementById('classifyBuckets');
+      bucketsEl.innerHTML = '';
+      s.buckets.forEach((bucket, i) => {
+        classifyCounts[i] = 0;
+        const el = document.createElement('div');
+        el.className = 'classify-bucket';
+        el.innerHTML = `<div class="bucket-label">${bucket.label}</div><div class="bucket-count" id="bucketCount${i}">0</div><div class="bucket-items" id="bucketItems${i}"></div>`;
+        el.addEventListener('click', () => placeInBucket(i));
+        bucketsEl.appendChild(el);
+      });
+    }
+
+    function selectClassifyItem(idx, el) {
+      document.querySelectorAll('.classify-item').forEach(item => item.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedItem = idx;
+    }
+
+    function placeInBucket(bucketIdx) {
+      if (selectedItem === null) return;
+      const s = classifySets[classifyIdx];
+      const item = s.items[selectedItem];
+      const bucket = s.buckets[bucketIdx];
+
+      if (bucket.accept.includes(item)) {
+        // 正确分类
+        const itemEls = document.querySelectorAll('.classify-item');
+        itemEls[selectedItem].classList.remove('selected');
+        itemEls[selectedItem].classList.add('counted');
+        classifyCounts[bucketIdx]++;
+        document.getElementById(`bucketCount${bucketIdx}`).textContent = classifyCounts[bucketIdx];
+        const itemsEl = document.getElementById(`bucketItems${bucketIdx}`);
+        itemsEl.textContent += item;
+        selectedItem = null;
+      } else {
+        // 错误分类 - 提示
+        const bucketEls = document.querySelectorAll('.classify-bucket');
+        bucketEls[bucketIdx].classList.add('active');
+        setTimeout(() => bucketEls[bucketIdx].classList.remove('active'), 500);
+      }
+    }
+
+    document.getElementById('classifyCheckBtn').addEventListener('click', () => {
+      const s = classifySets[classifyIdx];
+      const totalClassified = Object.values(classifyCounts).reduce((a, b) => a + b, 0);
+      const totalItems = s.items.length;
+
+      if (totalClassified === totalItems) {
+        document.getElementById('classifyResult').textContent = '🎉 太棒了！全部分完啦！';
+        document.getElementById('classifyResult').style.color = '#2E7D32';
+      } else {
+        document.getElementById('classifyResult').textContent = `还有 ${totalItems - totalClassified} 个没分类哦，继续加油！`;
+        document.getElementById('classifyResult').style.color = '#E65100';
+      }
+      document.getElementById('classifyNextBtn').style.display = 'inline-block';
+    });
+
+    document.getElementById('classifyNextBtn').addEventListener('click', () => {
+      classifyIdx = (classifyIdx + 1) % classifySets.length;
+      showClassifySet();
+    });
+
+    // ========== 模式4: 练习挑战 ==========
+    const quizQuestions = [
+      {
+        q: '小明调查了10个同学最喜欢的运动，结果如下：\n🏀 篮球：正正\n⚽ 足球：正\n🏓 乒乓球：丅\n\n喜欢篮球的有几人？',
+        opts: ['5人', '10人', '2人', '7人'],
+        correct: 1,
+        explain: '两个"正"字 = 5 + 5 = 10人！'
+      },
+      {
+        q: '下面哪种做法是正确的？',
+        opts: ['调查时可以猜测数据', '调查时要如实记录每个数据', '只记录自己喜欢的数据', '数据不重要，随便写'],
+        correct: 1,
+        explain: '数据必须真实准确，要如实记录！'
+      },
+      {
+        q: '统计同学们最喜欢的学科，用"正"字记录，"正正丅"表示几票？',
+        opts: ['10票', '12票', '13票', '15票'],
+        correct: 2,
+        explain: '"正正丅" = 5 + 5 + 3 = 13票！'
+      },
+      {
+        q: '数据收集完成后，我们应该做什么？',
+        opts: ['把数据扔掉', '整理和分析数据', '再收集一遍', '不用管了'],
+        correct: 1,
+        explain: '收集完数据后要整理和分析，才能得出结论！'
+      },
+      {
+        q: '要统计全班同学最喜欢的水果，最合适的方法是：',
+        opts: ['自己猜', '问老师', '逐个调查并记录', '看别班的情况'],
+        correct: 2,
+        explain: '要逐个调查并记录，才能得到准确的数据！'
+      },
+      {
+        q: '一个"正"字有几画？',
+        opts: ['3画', '4画', '5画', '6画'],
+        correct: 2,
+        explain: '"正"字有5画：横、竖、横、撇、捺，所以代表5！'
+      },
+      {
+        q: '调查同学们的身高，应该用什么方法？',
+        opts: ['投票法', '测量法', '猜想法', '询问法'],
+        correct: 1,
+        explain: '身高需要用尺子测量，这是测量法！'
+      },
+      {
+        q: '统计表的作用是：',
+        opts: ['让数据更乱', '让数据更清楚整齐', '没有用', '让数据更难看'],
+        correct: 1,
+        explain: '统计表让数据更清楚整齐，方便比较和分析！'
+      }
+    ];
+
+    let quizIdx = 0;
+    let quizScore = 0;
+    let quizAnswered = false;
+
+    function initQuiz() {
+      quizIdx = Math.floor(Math.random() * quizQuestions.length);
+      quizScore = 0;
+      quizAnswered = false;
+      showQuizQuestion();
+    }
+
+    function showQuizQuestion() {
+      const q = quizQuestions[quizIdx];
+      document.getElementById('quizQuestion').textContent = q.q;
+      document.getElementById('quizScore').textContent = `得分：${quizScore}`;
+      document.getElementById('quizFeedback').textContent = '';
+      document.getElementById('quizFeedback').className = 'record-feedback';
+      document.getElementById('quizNextBtn').classList.remove('visible');
+      quizAnswered = false;
+
+      const optsEl = document.getElementById('quizOptions');
+      optsEl.innerHTML = '';
+      q.opts.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => handleQuizAnswer(i, btn));
+        optsEl.appendChild(btn);
+      });
+    }
+
+    function handleQuizAnswer(idx, btn) {
+      if (quizAnswered) return;
+      quizAnswered = true;
+
+      const q = quizQuestions[quizIdx];
+      const allBtns = document.querySelectorAll('#quizOptions .quiz-option');
+      const fbEl = document.getElementById('quizFeedback');
+
+      if (idx === q.correct) {
+        btn.classList.add('correct');
+        quizScore++;
+        fbEl.textContent = '✅ 正确！' + q.explain;
+        fbEl.className = 'record-feedback feedback-correct';
+      } else {
+        btn.classList.add('wrong');
+        allBtns[q.correct].classList.add('correct');
+        fbEl.textContent = '❌ 不对哦。' + q.explain;
+        fbEl.className = 'record-feedback feedback-wrong';
+      }
+
+      document.getElementById('quizScore').textContent = `得分：${quizScore}`;
+      document.getElementById('quizNextBtn').classList.add('visible');
+
+      setTimeout(() => {
+        quizIdx = (quizIdx + 1) % quizQuestions.length;
+        if (quizIdx === 0) {
+          quizQuestions.sort(() => Math.random() - 0.5);
+        }
+        showQuizQuestion();
+      }, 1500);
+    }
+
+    document.getElementById('quizNextBtn').addEventListener('click', () => {
+      quizIdx = (quizIdx + 1) % quizQuestions.length;
+      if (quizIdx === 0) {
+        quizQuestions.sort(() => Math.random() - 0.5);
+      }
+      showQuizQuestion();
+    });
+
+    // 初始化
+    initRecord();
+  </script>
+</body>
+</html>
