@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>复式统计图</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #5C6BC0; color: white; }
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    .section-title { font-size: 22px; color: #1D1D1F; font-weight: 700; text-align: center; margin: 8px 0; }
+    .section-desc { font-size: 15px; color: #6E6E73; text-align: center; margin-bottom: 16px; }
+    .score-bar { display: flex; justify-content: center; gap: 20px; margin: 12px 0; font-size: 16px; font-weight: 600; }
+    .result-text { font-size: 22px; font-weight: 700; text-align: center; margin: 16px 0; min-height: 36px; }
+
+    /* 模式1: 概念学习 */
+    .concept-card {
+      background: white; border-radius: 20px; padding: 24px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin: 16px 0;
+    }
+    .concept-card h3 { font-size: 20px; color: #5C6BC0; margin-bottom: 12px; }
+    .concept-card p { font-size: 15px; color: #333; line-height: 1.8; margin-bottom: 8px; }
+    .concept-highlight { background: #E8EAF6; padding: 16px; border-radius: 12px; margin: 12px 0; border-left: 4px solid #5C6BC0; }
+    .concept-highlight .label { font-size: 13px; color: #5C6BC0; font-weight: 700; margin-bottom: 6px; }
+
+    .compare-table {
+      width: 100%; border-collapse: collapse; margin: 16px 0;
+      background: white; border-radius: 12px; overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .compare-table th { background: #E8EAF6; color: #5C6BC0; padding: 10px 8px; font-size: 14px; font-weight: 700; }
+    .compare-table td { padding: 8px; text-align: center; font-size: 14px; font-weight: 600; border-top: 1px solid #E0E0E0; color: #333; }
+    .compare-table .row-label { background: #F5F5F5; color: #5C6BC0; font-weight: 700; }
+
+    .legend-demo {
+      display: flex; gap: 16px; justify-content: center; margin: 12px 0;
+      padding: 10px; background: #F5F5F5; border-radius: 12px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
+    .legend-color { width: 20px; height: 14px; border-radius: 3px; }
+
+    .mini-chart {
+      display: flex; align-items: flex-end; gap: 6px; justify-content: center;
+      height: 120px; padding: 8px; margin: 12px 0;
+    }
+    .mini-group { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .mini-bars { display: flex; gap: 3px; align-items: flex-end; }
+    .mini-bar { width: 18px; border-radius: 4px 4px 0 0; transition: height 0.5s ease; }
+    .mini-label { font-size: 11px; color: #6E6E73; margin-top: 4px; font-weight: 600; }
+
+    /* 模式2: 读图练习 */
+    .read-area { text-align: center; padding: 16px; }
+    .read-chart {
+      background: white; border-radius: 16px; padding: 20px 12px; margin: 12px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .read-title { font-size: 15px; font-weight: 700; color: #5C6BC0; margin-bottom: 8px; }
+    .read-bars { display: flex; align-items: flex-end; gap: 16px; justify-content: center; height: 160px; padding: 0 4px; }
+    .read-group { display: flex; flex-direction: column; align-items: center; }
+    .read-pair { display: flex; gap: 4px; align-items: flex-end; }
+    .read-bar {
+      width: 22px; border-radius: 4px 4px 0 0;
+      display: flex; align-items: flex-start; justify-content: center;
+      font-size: 11px; font-weight: 700; color: white; padding-top: 2px; min-height: 4px;
+      transition: height 0.5s ease;
+    }
+    .read-label { font-size: 12px; color: #6E6E73; margin-top: 6px; font-weight: 600; }
+    .read-question { font-size: 18px; font-weight: 600; margin: 16px 0 12px; }
+    .read-options { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
+    .read-opt {
+      padding: 14px; border: 3px solid #9CA3AF; background: white; border-radius: 16px;
+      font-size: 18px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-align: center;
+    }
+    .read-opt:active { transform: scale(0.97); }
+    .read-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .read-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .read-feedback { text-align: center; font-size: 18px; font-weight: 600; margin: 12px 0; min-height: 36px; }
+    .read-score { font-size: 15px; color: #6E6E73; margin: 8px 0; }
+
+    /* 模式3: 数据分析 */
+    .analysis-area { text-align: center; padding: 16px; }
+    .analysis-chart {
+      background: white; border-radius: 16px; padding: 20px 12px; margin: 12px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .analysis-table {
+      width: 100%; max-width: 400px; margin: 12px auto; border-collapse: collapse;
+      background: white; border-radius: 12px; overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .analysis-table th { background: #E8EAF6; color: #5C6BC0; padding: 10px; font-size: 14px; }
+    .analysis-table td { padding: 8px 10px; font-size: 15px; font-weight: 600; text-align: center; border-top: 1px solid #E0E0E0; }
+    .analysis-question { font-size: 18px; font-weight: 600; margin: 16px 0 12px; color: #1D1D1F; }
+    .analysis-options { display: flex; flex-direction: column; gap: 10px; max-width: 340px; margin: 0 auto; }
+    .analysis-opt {
+      padding: 14px 16px; border: 3px solid #9CA3AF; background: white; border-radius: 16px;
+      font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-align: left;
+    }
+    .analysis-opt:active { transform: scale(0.97); }
+    .analysis-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .analysis-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .analysis-feedback { text-align: center; font-size: 18px; font-weight: 600; margin: 12px 0; min-height: 36px; }
+    .analysis-score { font-size: 15px; color: #6E6E73; margin: 8px 0; }
+
+    /* 模式4: 挑战模式 */
+    .challenge-area { text-align: center; padding: 16px; }
+    .ch-start-btn {
+      display: block; margin: 24px auto; padding: 16px 40px; border: none;
+      background: #5C6BC0; color: white; border-radius: 16px; font-size: 20px;
+      font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+    }
+    .ch-start-btn:active { transform: scale(0.95); }
+    .ch-data {
+      background: white; border-radius: 16px; padding: 16px; margin: 12px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .ch-question { font-size: 18px; font-weight: 600; margin: 16px 0 12px; }
+    .ch-options { display: flex; flex-direction: column; gap: 10px; max-width: 340px; margin: 0 auto; }
+    .ch-opt {
+      padding: 14px; border: 3px solid #9CA3AF; background: white; border-radius: 16px;
+      font-size: 18px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-align: center;
+    }
+    .ch-opt:active { transform: scale(0.97); }
+    .ch-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .ch-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .ch-feedback { text-align: center; font-size: 18px; font-weight: 600; margin: 12px 0; min-height: 36px; }
+    .ch-score { font-size: 15px; color: #6E6E73; margin: 8px 0; }
+    .ch-streak { font-size: 16px; color: #FF9800; font-weight: 700; min-height: 24px; }
+
+    .next-btn {
+      display: block; margin: 16px auto; padding: 14px 32px; border: none;
+      background: #5C6BC0; color: white; border-radius: 12px; font-size: 18px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .next-btn:active { transform: scale(0.92); }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="nav-bar">
+      <a href="../../index.html" class="back-btn">← 返回</a>
+      <span class="nav-title">复式统计图</span>
+    </nav>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="learn">📖 概念学习</button>
+      <button class="mode-tab" data-mode="read">📊 读图练习</button>
+      <button class="mode-tab" data-mode="analysis">🔍 数据分析</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战模式</button>
+    </div>
+
+    <!-- 模式1: 概念学习 -->
+    <div class="mode-content active" id="mode-learn">
+      <div class="section-title">📖 什么是复式统计图？</div>
+      <div class="section-desc">用两种或以上的颜色/样式，在同一张图中比较两组数据</div>
+
+      <div class="concept-card">
+        <h3>🤔 为什么需要复式统计图？</h3>
+        <p>四年级同学喜欢不同运动的人数，男生和女生可能不一样。如果画两张图，比较起来不方便。</p>
+        <p><strong>复式统计图</strong>可以把两组数据画在同一张图上，用不同颜色区分，方便比较！</p>
+      </div>
+
+      <div class="concept-card">
+        <h3>📊 复式条形统计图</h3>
+        <div class="concept-highlight">
+          <div class="label">关键特征</div>
+          <p>• 每个类别有<strong>两根（或多根）</strong>并排的柱子</p>
+          <p>• 不同颜色代表不同组别</p>
+          <p>• 必须有<strong>图例</strong>说明颜色含义</p>
+        </div>
+
+        <div class="legend-demo">
+          <div class="legend-item"><div class="legend-color" style="background:#5C6BC0;"></div>男生</div>
+          <div class="legend-item"><div class="legend-color" style="background:#FF7043;"></div>女生</div>
+        </div>
+
+        <div class="mini-chart" id="demo-bar-chart"></div>
+
+        <div class="concept-highlight">
+          <div class="label">读图技巧</div>
+          <p>1. 先看<strong>图例</strong>，弄清颜色含义</p>
+          <p>2. 比较同一类别中不同颜色的柱子高度</p>
+          <p>3. 可以求差值、总和、倍数关系</p>
+        </div>
+      </div>
+
+      <div class="concept-card">
+        <h3>📈 复式折线统计图</h3>
+        <div class="concept-highlight">
+          <div class="label">关键特征</div>
+          <p>• 有<strong>两条（或多条）</strong>折线</p>
+          <p>• 不同线型（实线/虚线）或颜色区分</p>
+          <p>• 能看出两组数据的<strong>变化趋势</strong></p>
+        </div>
+
+        <div class="legend-demo">
+          <div class="legend-item"><div class="legend-color" style="background:#5C6BC0; height:3px; width:24px;"></div>北京</div>
+          <div class="legend-item"><div class="legend-color" style="background:#FF7043; height:3px; width:24px;"></div>上海</div>
+        </div>
+
+        <div class="concept-highlight">
+          <div class="label">应用场景</div>
+          <p>• 比较两个城市每月气温变化</p>
+          <p>• 比较两个班每学期成绩变化</p>
+          <p>• 比较两种商品每月销量变化</p>
+        </div>
+      </div>
+
+      <div class="concept-card">
+        <h3>⚡ 复式 vs 单式</h3>
+        <table class="compare-table">
+          <tr><th></th><th>单式统计图</th><th>复式统计图</th></tr>
+          <tr><td class="row-label">组数</td><td>1组数据</td><td>2组或以上</td></tr>
+          <tr><td class="row-label">颜色</td><td>1种颜色</td><td>多种颜色</td></tr>
+          <tr><td class="row-label">图例</td><td>不需要</td><td>必须有</td></tr>
+          <tr><td class="row-label">作用</td><td>看一组数据</td><td>方便比较</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 模式2: 读图练习 -->
+    <div class="mode-content" id="mode-read">
+      <div class="section-title">📊 读图练习</div>
+      <div class="section-desc">看复式条形图，回答问题</div>
+      <div class="score-bar">
+        <span>✅ <span id="rd-correct">0</span></span>
+        <span>❌ <span id="rd-wrong">0</span></span>
+      </div>
+      <div class="read-area">
+        <div class="read-chart">
+          <div class="read-title" id="rd-chart-title"></div>
+          <div class="legend-demo" id="rd-legend"></div>
+          <div class="read-bars" id="rd-bars"></div>
+        </div>
+        <div class="read-question" id="rd-question"></div>
+        <div class="read-options" id="rd-options"></div>
+        <div class="read-feedback" id="rd-feedback"></div>
+      </div>
+    </div>
+
+    <!-- 模式3: 数据分析 -->
+    <div class="mode-content" id="mode-analysis">
+      <div class="section-title">🔍 数据分析</div>
+      <div class="section-desc">根据统计表中的数据进行分析推理</div>
+      <div class="score-bar">
+        <span>✅ <span id="an-correct">0</span></span>
+        <span>❌ <span id="an-wrong">0</span></span>
+      </div>
+      <div class="analysis-area">
+        <div class="analysis-chart">
+          <div class="read-title" id="an-title"></div>
+          <div class="legend-demo" id="an-legend"></div>
+          <table class="analysis-table" id="an-table"></table>
+        </div>
+        <div class="analysis-question" id="an-question"></div>
+        <div class="analysis-options" id="an-options"></div>
+        <div class="analysis-feedback" id="an-feedback"></div>
+      </div>
+    </div>
+
+    <!-- 模式4: 挑战模式 -->
+    <div class="mode-content" id="mode-challenge">
+      <div class="section-title">🏆 挑战模式</div>
+      <div class="section-desc">综合题目，看你能连对几题！</div>
+      <div class="ch-score">
+        <span>✅ <span id="ch-correct">0</span></span> &nbsp;
+        <span>❌ <span id="ch-wrong">0</span></span>
+      </div>
+      <div class="ch-streak" id="ch-streak"></div>
+      <div class="challenge-area" id="ch-area">
+        <button class="ch-start-btn" id="btn-start-challenge">开始挑战 🚀</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // === Tab switching ===
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        const mode = tab.dataset.mode;
+        document.getElementById('mode-' + mode).classList.add('active');
+        if (mode === 'read' && !rdInited) { initReadMode(); rdInited = true; }
+        if (mode === 'analysis' && !anInited) { initAnalysisMode(); anInited = true; }
+      });
+    });
+
+    // === Helpers ===
+    function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+    function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = randInt(0, i); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+
+    // === Demo bar chart (concept mode) ===
+    (function() {
+      const categories = ['足球', '篮球', '游泳', '跑步'];
+      const boys = [12, 15, 8, 10];
+      const girls = [5, 8, 12, 9];
+      const maxVal = 18;
+      const chartEl = document.getElementById('demo-bar-chart');
+      categories.forEach((cat, i) => {
+        const group = document.createElement('div');
+        group.className = 'mini-group';
+        const barsDiv = document.createElement('div');
+        barsDiv.className = 'mini-bars';
+        const bBar = document.createElement('div');
+        bBar.className = 'mini-bar';
+        bBar.style.background = '#5C6BC0';
+        bBar.style.height = '0px';
+        bBar.title = '男生: ' + boys[i];
+        const gBar = document.createElement('div');
+        gBar.className = 'mini-bar';
+        gBar.style.background = '#FF7043';
+        gBar.style.height = '0px';
+        gBar.title = '女生: ' + girls[i];
+        barsDiv.appendChild(bBar);
+        barsDiv.appendChild(gBar);
+        const label = document.createElement('div');
+        label.className = 'mini-label';
+        label.textContent = cat;
+        group.appendChild(barsDiv);
+        group.appendChild(label);
+        chartEl.appendChild(group);
+        setTimeout(() => {
+          bBar.style.height = (boys[i] / maxVal * 100) + 'px';
+          gBar.style.height = (girls[i] / maxVal * 100) + 'px';
+        }, 200 + i * 100);
+      });
+    })();
+
+    // === Mode 2: Read Chart ===
+    let rdInited = false;
+    const rdState = { correct: 0, wrong: 0 };
+    const RD_SCENARIOS = [
+      { title: '四年级同学最喜欢的运动', cats: ['足球','篮球','游泳','跑步'], g1name: '男生', g2name: '女生', color1: '#5C6BC0', color2: '#FF7043' },
+      { title: '三年级各班借阅图书数', cats: ['一班','二班','三班','四班'], g1name: '故事书', g2name: '科普书', color1: '#26A69A', color2: '#AB47BC' },
+      { title: '水果店两天的销量', cats: ['苹果','香蕉','橘子','葡萄'], g1name: '上午', g2name: '下午', color1: '#42A5F5', color2: '#EF5350' },
+      { title: '两个城市第一季度气温', cats: ['1月','2月','3月'], g1name: '哈尔滨', g2name: '广州', color1: '#5C6BC0', color2: '#FF7043' },
+      { title: '学校兴趣班报名人数', cats: ['绘画','书法','舞蹈','音乐'], g1name: '三年级', g2name: '四年级', color1: '#66BB6A', color2: '#FFA726' }
+    ];
+
+    function genReadData() {
+      const sc = RD_SCENARIOS[randInt(0, RD_SCENARIOS.length - 1)];
+      const vals1 = sc.cats.map(() => randInt(3, 20));
+      const vals2 = sc.cats.map(() => randInt(3, 20));
+      return { ...sc, vals1, vals2 };
+    }
+
+    function renderReadChart(data) {
+      const maxVal = Math.max(...data.vals1, ...data.vals2, 1);
+      document.getElementById('rd-chart-title').textContent = data.title;
+      document.getElementById('rd-legend').innerHTML =
+        '<div class="legend-item"><div class="legend-color" style="background:' + data.color1 + '"></div>' + data.g1name + '</div>' +
+        '<div class="legend-item"><div class="legend-color" style="background:' + data.color2 + '"></div>' + data.g2name + '</div>';
+      const barsEl = document.getElementById('rd-bars');
+      barsEl.innerHTML = '';
+      data.cats.forEach((cat, i) => {
+        const group = document.createElement('div');
+        group.className = 'read-group';
+        const pair = document.createElement('div');
+        pair.className = 'read-pair';
+        const b1 = document.createElement('div');
+        b1.className = 'read-bar';
+        b1.style.background = data.color1;
+        b1.style.height = '0px';
+        b1.textContent = data.vals1[i];
+        const b2 = document.createElement('div');
+        b2.className = 'read-bar';
+        b2.style.background = data.color2;
+        b2.style.height = '0px';
+        b2.textContent = data.vals2[i];
+        pair.appendChild(b1);
+        pair.appendChild(b2);
+        const label = document.createElement('div');
+        label.className = 'read-label';
+        label.textContent = cat;
+        group.appendChild(pair);
+        group.appendChild(label);
+        barsEl.appendChild(group);
+        setTimeout(() => {
+          b1.style.height = (data.vals1[i] / maxVal * 140) + 'px';
+          b2.style.height = (data.vals2[i] / maxVal * 140) + 'px';
+        }, 100 + i * 80);
+      });
+    }
+
+    function genReadQuestion(data) {
+      const idx = randInt(0, data.cats.length - 1);
+      const cat = data.cats[idx];
+      const v1 = data.vals1[idx];
+      const v2 = data.vals2[idx];
+      const types = ['which_more', 'total', 'diff', 'value'];
+      const type = types[randInt(0, types.length - 1)];
+      let question, correct, options;
+
+      if (type === 'which_more') {
+        const diff = Math.abs(v1 - v2);
+        const who = v1 > v2 ? data.g1name : (v2 > v1 ? data.g2name : '一样多');
+        if (v1 === v2) {
+          question = cat + '这一项，' + data.g1name + '和' + data.g2name + '的数量关系是？';
+          correct = '一样多';
+          options = shuffle([correct, data.g1name + '多', data.g2name + '多', '无法比较']);
+        } else {
+          question = cat + '这一项，' + data.g1name + '比' + data.g2name + '多多少？';
+          correct = String(diff);
+          const wrongs = [String(diff + 1), String(Math.max(0, diff - 1)), String(diff + randInt(2, 4))];
+          options = shuffle([correct, ...wrongs]);
+        }
+      } else if (type === 'total') {
+        const total = v1 + v2;
+        question = cat + '这一项，两组一共有多少？';
+        correct = String(total);
+        options = shuffle([correct, String(total + 1), String(total - 1), String(total + randInt(2, 5))]);
+      } else if (type === 'diff') {
+        const sumAll1 = data.vals1.reduce((a, b) => a + b, 0);
+        const sumAll2 = data.vals2.reduce((a, b) => a + b, 0);
+        const diff = Math.abs(sumAll1 - sumAll2);
+        const who = sumAll1 > sumAll2 ? data.g1name : data.g2name;
+        question = data.g1name + '和' + data.g2name + '的总量相差多少？';
+        correct = String(diff);
+        options = shuffle([correct, String(diff + 1), String(Math.max(0, diff - 1)), String(diff + randInt(2, 5))]);
+      } else {
+        question = cat + '中，' + data.g1name + '的数量是多少？';
+        correct = String(v1);
+        options = shuffle([correct, String(v2), String(v1 + 1), String(Math.max(0, v1 - 1))]);
+      }
+      if (!options.includes(correct)) options[0] = correct;
+      options = shuffle([...new Set(options)]);
+      while (options.length < 4) options.push(String(randInt(1, 30)));
+      options = shuffle([...new Set(options)].slice(0, 4));
+      if (!options.includes(correct)) options[randInt(0, 3)] = correct;
+      return { question, correct, options };
+    }
+
+    let rdData = null;
+    function nextReadQuestion() {
+      if (!rdData) rdData = genReadData();
+      const q = genReadQuestion(rdData);
+      document.getElementById('rd-question').textContent = '❓ ' + q.question;
+      document.getElementById('rd-feedback').textContent = '';
+      const optsEl = document.getElementById('rd-options');
+      optsEl.innerHTML = '';
+      shuffle(q.options).forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'read-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.read-opt').forEach(b => b.style.pointerEvents = 'none');
+          if (opt === q.correct) {
+            btn.classList.add('correct');
+            rdState.correct++;
+            document.getElementById('rd-feedback').textContent = '✅ 答对了！';
+            if (typeof Sound !== 'undefined') Sound.play('correct');
+          } else {
+            btn.classList.add('wrong');
+            rdState.wrong++;
+            document.querySelectorAll('.read-opt').forEach(b => { if (b.textContent === q.correct) b.classList.add('correct'); });
+            document.getElementById('rd-feedback').textContent = '❌ 正确答案：' + q.correct;
+            if (typeof Sound !== 'undefined') Sound.play('wrong');
+          }
+          document.getElementById('rd-correct').textContent = rdState.correct;
+          document.getElementById('rd-wrong').textContent = rdState.wrong;
+          setTimeout(() => { rdData = genReadData(); renderReadChart(rdData); nextReadQuestion(); }, 1500);
+        });
+        optsEl.appendChild(btn);
+      });
+    }
+
+    function initReadMode() {
+      rdData = genReadData();
+      renderReadChart(rdData);
+      nextReadQuestion();
+    }
+
+    // === Mode 3: Data Analysis ===
+    let anInited = false;
+    const anState = { correct: 0, wrong: 0 };
+    const AN_SCENARIOS = [
+      { title: '商店一周卖出矿泉水数量（箱）', cats: ['周一','周二','周三','周四','周五','周六','周日'], g1name: '小卖部', g2name: '超市' },
+      { title: '两个班期末考试成绩（优秀人数）', cats: ['第一单元','第二单元','第三单元','第四单元'], g1name: '甲班', g2name: '乙班' },
+      { title: '甲乙两人每天阅读页数', cats: ['周一','周二','周三','周四','周五'], g1name: '小明', g2name: '小红' }
+    ];
+
+    function genAnalysisData() {
+      const sc = AN_SCENARIOS[randInt(0, AN_SCENARIOS.length - 1)];
+      const v1 = sc.cats.map(() => randInt(5, 30));
+      const v2 = sc.cats.map(() => randInt(5, 30));
+      return { ...sc, v1, v2 };
+    }
+
+    function renderAnalysisTable(data) {
+      document.getElementById('an-title').textContent = data.title;
+      document.getElementById('an-legend').innerHTML =
+        '<div class="legend-item"><div class="legend-color" style="background:#5C6BC0"></div>' + data.g1name + '</div>' +
+        '<div class="legend-item"><div class="legend-color" style="background:#FF7043"></div>' + data.g2name + '</div>';
+      const tableEl = document.getElementById('an-table');
+      let html = '<tr><th></th>';
+      data.cats.forEach(c => html += '<th>' + c + '</th>');
+      html += '</tr><tr><td style="background:#E8EAF6;color:#5C6BC0;font-weight:700">' + data.g1name + '</td>';
+      data.v1.forEach(v => html += '<td>' + v + '</td>');
+      html += '</tr><tr><td style="background:#FBE9E7;color:#FF7043;font-weight:700">' + data.g2name + '</td>';
+      data.v2.forEach(v => html += '<td>' + v + '</td>');
+      html += '</tr>';
+      tableEl.innerHTML = html;
+    }
+
+    function genAnalysisQuestion(data) {
+      const types = ['max_diff', 'trend', 'sum_compare', 'which_most'];
+      const type = types[randInt(0, types.length - 1)];
+      let question, correct, options;
+
+      if (type === 'max_diff') {
+        let maxDiff = -1, maxCat = '';
+        data.cats.forEach((c, i) => {
+          const d = Math.abs(data.v1[i] - data.v2[i]);
+          if (d > maxDiff) { maxDiff = d; maxCat = c; }
+        });
+        question = '哪一天两组数据相差最多？';
+        correct = maxCat;
+        const wrongCats = shuffle(data.cats.filter(c => c !== maxCat)).slice(0, 3);
+        options = shuffle([correct, ...wrongCats]);
+      } else if (type === 'trend') {
+        const sum1 = data.v1.reduce((a, b) => a + b, 0);
+        const sum2 = data.v2.reduce((a, b) => a + b, 0);
+        const who = sum1 > sum2 ? data.g1name : (sum2 > sum1 ? data.g2name : '一样多');
+        question = '总体来看，谁的总量更多？';
+        correct = who;
+        const other = who === data.g1name ? data.g2name : data.g1name;
+        options = shuffle([correct, other, '一样多', '无法判断']);
+      } else if (type === 'sum_compare') {
+        const sum1 = data.v1.reduce((a, b) => a + b, 0);
+        const sum2 = data.v2.reduce((a, b) => a + b, 0);
+        const diff = Math.abs(sum1 - sum2);
+        question = data.g1name + '和' + data.g2name + '的总量差多少？';
+        correct = String(diff);
+        options = shuffle([correct, String(diff + 2), String(Math.max(0, diff - 2)), String(diff + randInt(3, 6))]);
+      } else {
+        const allVals = [...data.v1, ...data.v2];
+        const maxV = Math.max(...allVals);
+        const isG1 = data.v1.includes(maxV);
+        const idx = isG1 ? data.v1.indexOf(maxV) : data.v2.indexOf(maxV);
+        question = '哪个类别中出现了最大值 ' + maxV + '？';
+        correct = data.cats[idx];
+        const wrongCats = shuffle(data.cats.filter(c => c !== data.cats[idx])).slice(0, 3);
+        options = shuffle([correct, ...wrongCats]);
+      }
+
+      if (!options.includes(correct)) options[0] = correct;
+      options = shuffle([...new Set(options)].slice(0, 4));
+      if (!options.includes(correct)) options[randInt(0, 3)] = correct;
+      return { question, correct, options };
+    }
+
+    let anData = null;
+    function nextAnalysisQuestion() {
+      if (!anData) anData = genAnalysisData();
+      const q = genAnalysisQuestion(anData);
+      document.getElementById('an-question').textContent = '❓ ' + q.question;
+      document.getElementById('an-feedback').textContent = '';
+      const optsEl = document.getElementById('an-options');
+      optsEl.innerHTML = '';
+      shuffle(q.options).forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'analysis-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.analysis-opt').forEach(b => b.style.pointerEvents = 'none');
+          if (opt === q.correct) {
+            btn.classList.add('correct');
+            anState.correct++;
+            document.getElementById('an-feedback').textContent = '✅ 答对了！';
+            if (typeof Sound !== 'undefined') Sound.play('correct');
+          } else {
+            btn.classList.add('wrong');
+            anState.wrong++;
+            document.querySelectorAll('.analysis-opt').forEach(b => { if (b.textContent === q.correct) b.classList.add('correct'); });
+            document.getElementById('an-feedback').textContent = '❌ 正确答案：' + q.correct;
+            if (typeof Sound !== 'undefined') Sound.play('wrong');
+          }
+          document.getElementById('an-correct').textContent = anState.correct;
+          document.getElementById('an-wrong').textContent = anState.wrong;
+          setTimeout(() => { anData = genAnalysisData(); renderAnalysisTable(anData); nextAnalysisQuestion(); }, 1500);
+        });
+        optsEl.appendChild(btn);
+      });
+    }
+
+    function initAnalysisMode() {
+      anData = genAnalysisData();
+      renderAnalysisTable(anData);
+      nextAnalysisQuestion();
+    }
+
+    // === Mode 4: Challenge ===
+    const chState = { correct: 0, wrong: 0, streak: 0 };
+
+    document.getElementById('btn-start-challenge').addEventListener('click', () => {
+      chState.correct = 0; chState.wrong = 0; chState.streak = 0;
+      document.getElementById('ch-correct').textContent = 0;
+      document.getElementById('ch-wrong').textContent = 0;
+      document.getElementById('ch-streak').textContent = '';
+      document.getElementById('btn-start-challenge').style.display = 'none';
+      startChallenge();
+    });
+
+    function startChallenge() {
+      const area = document.getElementById('ch-area');
+      // Generate random compound chart data
+      const cats = ['足球','篮球','跑步','游泳'];
+      const g1 = cats.map(() => randInt(3, 18));
+      const g2 = cats.map(() => randInt(3, 18));
+      const g1name = ['男生','上午','甲班','一班'][randInt(0,3)];
+      const g2name = ['女生','下午','乙班','二班'][randInt(0,3)];
+
+      // Show data table
+      let html = '<div class="ch-data"><div class="read-title">图表数据</div>';
+      html += '<div class="legend-demo"><div class="legend-item"><div class="legend-color" style="background:#5C6BC0"></div>' + g1name + '</div>';
+      html += '<div class="legend-item"><div class="legend-color" style="background:#FF7043"></div>' + g2name + '</div></div>';
+      html += '<table class="analysis-table"><tr><th></th>';
+      cats.forEach(c => html += '<th>' + c + '</th>');
+      html += '</tr><tr><td style="background:#E8EAF6;color:#5C6BC0;font-weight:700">' + g1name + '</td>';
+      g1.forEach(v => html += '<td>' + v + '</td>');
+      html += '</tr><tr><td style="background:#FBE9E7;color:#FF7043;font-weight:700">' + g2name + '</td>';
+      g2.forEach(v => html += '<td>' + v + '</td>');
+      html += '</tr></table></div>';
+
+      // Generate question
+      const qTypes = ['compare', 'sum', 'diff', 'maxmin'];
+      const qt = qTypes[randInt(0, qTypes.length - 1)];
+      let question, correct, options;
+      const idx = randInt(0, cats.length - 1);
+
+      if (qt === 'compare') {
+        const d = Math.abs(g1[idx] - g2[idx]);
+        question = cats[idx] + '中，' + g1name + '比' + g2name + '多（或少）多少？';
+        correct = String(d);
+        options = shuffle([correct, String(d+1), String(Math.max(0,d-1)), String(d+randInt(2,4))]);
+      } else if (qt === 'sum') {
+        const s = g1[idx] + g2[idx];
+        question = cats[idx] + '两项合计是多少？';
+        correct = String(s);
+        options = shuffle([correct, String(s+1), String(s-1), String(s+randInt(2,5))]);
+      } else if (qt === 'diff') {
+        const s1 = g1.reduce((a,b)=>a+b,0);
+        const s2 = g2.reduce((a,b)=>a+b,0);
+        const d = Math.abs(s1-s2);
+        question = g1name + '总计比' + g2name + '总计多（或少）多少？';
+        correct = String(d);
+        options = shuffle([correct, String(d+2), String(Math.max(0,d-2)), String(d+randInt(3,6))]);
+      } else {
+        const all = [...g1,...g2];
+        const mx = Math.max(...all);
+        question = '所有数据中，最大值是多少？';
+        correct = String(mx);
+        options = shuffle([correct, String(mx-1), String(mx+1), String(mx-randInt(2,4))]);
+      }
+      if (!options.includes(correct)) options[0] = correct;
+      options = shuffle([...new Set(options)].slice(0,4));
+      if (!options.includes(correct)) options[randInt(0,3)] = correct;
+
+      html += '<div class="ch-question">❓ ' + question + '</div>';
+      html += '<div class="choptions" id="ch-opts" style="display:flex;flex-direction:column;gap:10px;max-width:340px;margin:0 auto;"></div>';
+      html += '<div class="ch-feedback" id="ch-feedback"></div>';
+      area.innerHTML = html;
+
+      const optsEl = document.getElementById('ch-opts');
+      shuffle(options).forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'ch-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.ch-opt').forEach(b => b.style.pointerEvents = 'none');
+          if (opt === correct) {
+            btn.classList.add('correct');
+            chState.correct++;
+            chState.streak++;
+            document.getElementById('ch-feedback').textContent = '✅ 答对了！';
+            if (typeof Sound !== 'undefined') Sound.play('correct');
+          } else {
+            btn.classList.add('wrong');
+            chState.wrong++;
+            chState.streak = 0;
+            document.querySelectorAll('.ch-opt').forEach(b => { if (b.textContent === correct) b.classList.add('correct'); });
+            document.getElementById('ch-feedback').textContent = '❌ 正确答案：' + correct;
+            if (typeof Sound !== 'undefined') Sound.play('wrong');
+          }
+          document.getElementById('ch-correct').textContent = chState.correct;
+          document.getElementById('ch-wrong').textContent = chState.wrong;
+          const streakEl = document.getElementById('ch-streak');
+          if (chState.streak >= 3) {
+            streakEl.textContent = '🔥 连对 ' + chState.streak + ' 题！';
+          } else {
+            streakEl.textContent = '';
+          }
+          setTimeout(startChallenge, 1500);
+        });
+        optsEl.appendChild(btn);
+      });
+    }
+  </script>
+</body>
+</html>

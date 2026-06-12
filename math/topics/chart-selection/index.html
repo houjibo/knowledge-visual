@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>统计图表的选择</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #FF9800; color: white; }
+
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 连续答对 */
+    .score-display { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px; font-size: 18px; font-weight: 600; }
+    .score-stars { font-size: 24px; }
+    .diff-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; background: rgba(255,152,0,0.15); color: #FF9800; }
+
+    /* === 模式1: 图表认识 === */
+    .chart-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+    .chart-card {
+      background: white; border-radius: 16px; padding: 16px 8px; text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer;
+      border: 3px solid transparent; transition: all 0.2s;
+    }
+    .chart-card:active { transform: scale(0.95); }
+    .chart-card.selected { border-color: #FF9800; background: #FFF3E0; }
+    .chart-card .card-icon { font-size: 36px; }
+    .chart-card .card-name { font-size: 14px; font-weight: 600; margin-top: 4px; }
+    .chart-card .card-desc { font-size: 12px; color: #6E6E73; margin-top: 4px; }
+
+    .chart-detail {
+      margin: 16px 0; padding: 20px; background: #FFF8E1; border-radius: 16px;
+      display: none;
+    }
+    .chart-detail.show { display: block; animation: fadeInUp 0.3s ease; }
+    .detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .detail-header h3 { font-size: 20px; margin: 0; }
+    .detail-section { margin: 12px 0; }
+    .detail-section h4 { font-size: 16px; color: #FF9800; margin: 8px 0; }
+    .detail-section p, .detail-section li { font-size: 15px; line-height: 1.6; color: #333; }
+    .detail-section ul { padding-left: 20px; margin: 8px 0; }
+
+    /* === 模式2: 场景匹配 === */
+    .match-area { text-align: center; padding: 24px 16px; }
+    .scenario-icon { font-size: 80px; margin: 16px 0; }
+    .scenario-text { font-size: 22px; font-weight: 700; margin: 16px 0; color: #1D1D1F; }
+    .scenario-hint { font-size: 16px; color: #6E6E73; margin: 8px 0; min-height: 24px; }
+    .chart-opts { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+    .chart-opt {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 16px 24px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 16px; cursor: pointer; transition: all 0.2s;
+      min-width: 100px;
+    }
+    .chart-opt:active { transform: scale(0.92); }
+    .chart-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); }
+    .chart-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); }
+    .match-feedback { font-size: 24px; font-weight: 700; margin: 16px 0; min-height: 36px; }
+    .match-score { font-size: 16px; color: #6E6E73; margin: 8px 0; }
+
+    /* === 模式3: 数据选图 === */
+    .quiz-area { text-align: center; padding: 24px 16px; }
+    .data-display {
+      background: white; border-radius: 16px; padding: 16px; margin: 16px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .data-display table { width: 100%; border-collapse: collapse; }
+    .data-display th, .data-display td { padding: 8px 12px; border: 1px solid #E5E5EA; text-align: center; }
+    .data-display th { background: #FFF3E0; color: #FF9800; font-weight: 600; }
+    .data-question { font-size: 18px; font-weight: 600; margin: 16px 0; color: #1D1D1F; }
+    .quiz-opts { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+    .quiz-opt {
+      padding: 12px 20px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quiz-opt:active { transform: scale(0.92); }
+    .quiz-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .quiz-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .quiz-feedback { font-size: 20px; font-weight: 700; margin: 16px 0; min-height: 36px; }
+
+    /* === 模式4: 模拟制图 === */
+    .create-area { text-align: center; padding: 24px 16px; }
+    .create-tabs { display: flex; gap: 8px; justify-content: center; margin: 16px 0; }
+    .create-tab {
+      padding: 8px 16px; border: 2px solid #FF9800; background: white;
+      border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .create-tab.active { background: #FF9800; color: white; }
+    .create-input { margin: 16px 0; }
+    .input-row { display: flex; gap: 8px; justify-content: center; margin: 8px 0; }
+    .input-row input {
+      padding: 10px 12px; border: 2px solid #E5E5EA; border-radius: 10px;
+      font-size: 16px; width: 100px; text-align: center;
+    }
+    .input-row input:focus { border-color: #FF9800; outline: none; }
+    .chart-preview {
+      margin: 20px 0; padding: 20px; background: white; border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); min-height: 200px;
+    }
+    .chart-insight {
+      margin: 16px 0; padding: 16px; background: #FFF8E1; border-radius: 12px;
+      text-align: left; font-size: 15px; line-height: 1.6;
+    }
+    .chart-insight h4 { color: #FF9800; margin: 8px 0; }
+
+    /* 图表样式 */
+    .demo-bar, .preview-bar { display: flex; align-items: flex-end; justify-content: center; gap: 16px; height: 160px; margin: 16px 0; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; }
+    .bar-fill { width: 40px; border-radius: 6px 6px 0 0; transition: height 0.5s ease; }
+    .bar-label { font-size: 12px; color: #6E6E73; margin-top: 4px; }
+    .bar-value { font-size: 14px; font-weight: 700; color: #333; }
+
+    @media (max-width: 480px) {
+      .chart-cards { grid-template-columns: repeat(2, 1fr); }
+      .chart-opt { min-width: 80px; padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="breadcrumb">
+      <a href="../../index.html" class="breadcrumb-item">🏠 首页</a><span class="breadcrumb-sep">›</span><a href="../index.html" class="breadcrumb-item">📐 数学</a><span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">📊 统计图表的选择</span>
+    </nav>
+
+    <div class="score-display">
+      <span class="diff-badge">📊 四年级</span>
+      <span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <!-- 模式切换 -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="learn">📖 认识</button>
+      <button class="mode-tab" data-mode="match">🎯 匹配</button>
+      <button class="mode-tab" data-mode="quiz">❓ 选择</button>
+      <button class="mode-tab" data-mode="create">✏️ 制图</button>
+    </div>
+
+    <!-- 模式1: 图表认识 -->
+    <div class="mode-content active" id="mode-learn">
+      <div class="card">
+        <p class="page-subtitle">点击卡片，了解每种统计图的特点</p>
+        <div class="chart-cards" id="chart-cards"></div>
+        <div class="chart-detail" id="chart-detail"></div>
+      </div>
+    </div>
+
+    <!-- 模式2: 场景匹配 -->
+    <div class="mode-content" id="mode-match">
+      <div class="card">
+        <p class="page-subtitle">这个场景应该用哪种统计图？</p>
+        <div class="match-area">
+          <div class="scenario-icon" id="scenario-icon">📊</div>
+          <div class="scenario-text" id="scenario-text"></div>
+          <div class="scenario-hint" id="scenario-hint"></div>
+          <div class="chart-opts" id="chart-opts"></div>
+          <div class="match-feedback" id="match-feedback"></div>
+          <div class="match-score" id="match-score">已答 0 题，答对 0 题</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 数据选图 -->
+    <div class="mode-content" id="mode-quiz">
+      <div class="card">
+        <p class="page-subtitle">根据数据特点，选择最合适的统计图</p>
+        <div class="quiz-area">
+          <div class="data-display" id="data-display"></div>
+          <div class="data-question" id="data-question"></div>
+          <div class="quiz-opts" id="quiz-opts"></div>
+          <div class="quiz-feedback" id="quiz-feedback"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 模拟制图 -->
+    <div class="mode-content" id="mode-create">
+      <div class="card">
+        <p class="page-subtitle">选择图表类型，输入数据，看看生成的图表</p>
+        <div class="create-area">
+          <div class="create-tabs" id="create-tabs">
+            <button class="create-tab active" data-type="bar">📊 条形图</button>
+            <button class="create-tab" data-type="line">📈 折线图</button>
+            <button class="create-tab" data-type="pie">🥧 扇形图</button>
+          </div>
+          <div class="create-input" id="create-input">
+            <div class="input-row">
+              <input type="text" class="data-name" placeholder="名称" data-idx="0">
+              <input type="number" class="data-val" placeholder="数值" data-idx="0" min="0">
+            </div>
+            <div class="input-row">
+              <input type="text" class="data-name" placeholder="名称" data-idx="1">
+              <input type="number" class="data-val" placeholder="数值" data-idx="1" min="0">
+            </div>
+            <div class="input-row">
+              <input type="text" class="data-name" placeholder="名称" data-idx="2">
+              <input type="number" class="data-val" placeholder="数值" data-idx="2" min="0">
+            </div>
+            <div class="input-row">
+              <input type="text" class="data-name" placeholder="名称" data-idx="3">
+              <input type="number" class="data-val" placeholder="数值" data-idx="3" min="0">
+            </div>
+          </div>
+          <div class="action-bar">
+            <button class="btn btn-primary" id="btn-generate">🎨 生成图表</button>
+            <button class="btn btn-warning" id="btn-clear-input">🗑️ 清空</button>
+          </div>
+          <div class="chart-preview" id="chart-preview"></div>
+          <div class="chart-insight" id="chart-insight"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script>
+    // 模式切换
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        Sound.play('click');
+      });
+    });
+
+    // 连续答对
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast(`🔥 连续 ${streak} 次！太厉害了！`);
+    }
+
+    // === 图表数据 ===
+    const chartTypes = [
+      {
+        id: 'bar',
+        name: '条形统计图',
+        icon: '📊',
+        color: '#4A90D9',
+        features: ['用长条表示数量多少', '能清楚看出各种数量的多少', '便于比较数据大小'],
+        useCase: '比较不同类别的数量',
+        example: '各班人数、各种水果销量',
+        demo: { labels: ['一班', '二班', '三班'], values: [45, 42, 48] }
+      },
+      {
+        id: 'line',
+        name: '折线统计图',
+        icon: '📈',
+        color: '#34C759',
+        features: ['用折线表示数量变化', '能看出数量的增减变化', '反映事物的发展趋势'],
+        useCase: '显示数据随时间的变化',
+        example: '气温变化、身高增长、股价走势',
+        demo: { labels: ['周一', '周二', '周三', '周四', '周五'], values: [22, 25, 23, 28, 26] }
+      },
+      {
+        id: 'pie',
+        name: '扇形统计图',
+        icon: '🥧',
+        color: '#FF9500',
+        features: ['用扇形表示各部分占比', '能看出各部分与整体的关系', '所有扇形之和为100%'],
+        useCase: '显示各部分占总体的比例',
+        example: '班级男女比例、支出构成',
+        demo: { labels: ['男生', '女生'], values: [55, 45] }
+      }
+    ];
+
+    // === 模式1: 图表认识 ===
+    (() => {
+      const container = document.getElementById('chart-cards');
+      const detail = document.getElementById('chart-detail');
+
+      chartTypes.forEach((ct, idx) => {
+        const card = document.createElement('div');
+        card.className = 'chart-card';
+        card.dataset.idx = idx;
+        card.innerHTML = `
+          <div class="card-icon">${ct.icon}</div>
+          <div class="card-name">${ct.name}</div>
+          <div class="card-desc">${ct.useCase}</div>
+        `;
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.chart-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          Sound.play('click');
+          detail.classList.add('show');
+          showDetail(ct);
+        });
+        container.appendChild(card);
+      });
+
+      function showDetail(ct) {
+        detail.innerHTML = `
+          <div class="detail-header" style="background:${ct.color}20;">
+            <span style="font-size:36px;">${ct.icon}</span>
+            <h3 style="color:${ct.color};">${ct.name}</h3>
+          </div>
+          <div class="detail-section">
+            <h4>✨ 主要特点</h4>
+            <ul>${ct.features.map(f => `<li>${f}</li>`).join('')}</ul>
+          </div>
+          <div class="detail-section">
+            <h4>🎯 适用场景</h4>
+            <p>${ct.useCase}</p>
+          </div>
+          <div class="detail-section">
+            <h4>📝 举例</h4>
+            <p>${ct.example}</p>
+          </div>
+          <div class="detail-section">
+            <h4>📊 示例图</h4>
+            <div id="demo-chart"></div>
+          </div>
+        `;
+        drawDemoChart(ct);
+      }
+
+      function drawDemoChart(ct) {
+        const demo = ct.demo;
+        const container = document.getElementById('demo-chart');
+        if (ct.id === 'bar') {
+          const max = Math.max(...demo.values);
+          container.innerHTML = `
+            <div class="demo-bar">
+              ${demo.labels.map((l, i) => `
+                <div class="bar-col">
+                  <div class="bar-fill" style="height:${(demo.values[i]/max)*120}px;background:${ct.color};"></div>
+                  <div class="bar-label">${l}</div>
+                  <div class="bar-value">${demo.values[i]}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } else if (ct.id === 'line') {
+          const max = Math.max(...demo.values);
+          const points = demo.values.map((v, i) => `${i * 60 + 20},${140 - (v/max)*120}`).join(' ');
+          container.innerHTML = `
+            <svg viewBox="0 0 300 160" style="width:100%;max-width:300px;">
+              <polyline points="${points}" fill="none" stroke="${ct.color}" stroke-width="3"/>
+              ${demo.values.map((v, i) => `<circle cx="${i*60+20}" cy="${140-(v/max)*120}" r="5" fill="${ct.color}"/>`).join('')}
+              ${demo.labels.map((l, i) => `<text x="${i*60+20}" y="155" text-anchor="middle" font-size="11">${l}</text>`).join('')}
+            </svg>
+          `;
+        } else {
+          let cumPct = 0;
+          const total = demo.values.reduce((a, b) => a + b, 0);
+          const slices = demo.values.map((v, i) => {
+            const pct = v / total;
+            const start = cumPct;
+            cumPct += pct;
+            return { start, end: cumPct, pct, label: demo.labels[i], value: v };
+          });
+          const paths = slices.map((s, i) => {
+            const a1 = s.start * 2 * Math.PI - Math.PI / 2;
+            const a2 = s.end * 2 * Math.PI - Math.PI / 2;
+            const x1 = 80 + 60 * Math.cos(a1);
+            const y1 = 80 + 60 * Math.sin(a1);
+            const x2 = 80 + 60 * Math.cos(a2);
+            const y2 = 80 + 60 * Math.sin(a2);
+            const large = s.pct > 0.5 ? 1 : 0;
+            const colors = ['#4A90D9', '#FF9500', '#34C759', '#AF52DE'];
+            return `<path d="M80,80 L${x1},${y1} A60,60 0 ${large},1 ${x2},${y2} Z" fill="${colors[i]}"/>`;
+          }).join('');
+          container.innerHTML = `
+            <svg viewBox="0 0 160 160" style="width:160px;">
+              ${paths}
+            </svg>
+            <div style="display:flex;gap:12px;justify-content:center;margin-top:8px;">
+              ${slices.map((s, i) => `<span style="font-size:13px;">${demo.labels[i]} ${(s.pct*100).toFixed(0)}%</span>`).join('')}
+            </div>
+          `;
+        }
+      }
+
+      // 默认显示第一个
+      showDetail(chartTypes[0]);
+    })();
+
+    // === 模式2: 场景匹配 ===
+    (() => {
+      const scenarios = [
+        { icon: '🌡️', text: '记录一周气温变化情况', answer: 'line', hint: '气温随时间变化，要看趋势' },
+        { icon: '🍎', text: '比较各种水果的销量', answer: 'bar', hint: '比较不同类别的数量' },
+        { icon: '👨‍👩‍👧‍👦', text: '展示班级男女生比例', answer: 'pie', hint: '看各部分占总数的比例' },
+        { icon: '📚', text: '比较各班借阅图书数量', answer: 'bar', hint: '比较不同班级的数量' },
+        { icon: '🌱', text: '记录植物每月生长高度', answer: 'line', hint: '看随时间的变化趋势' },
+        { icon: '💰', text: '展示家庭各项支出占比', answer: 'pie', hint: '各部分占总支出的比例' },
+        { icon: '🏃', text: '记录小明每天跑步距离', answer: 'line', hint: '看每天的变化情况' },
+        { icon: '🎂', text: '比较同学们最喜欢的生日礼物', answer: 'bar', hint: '比较不同类别的人数' },
+        { icon: '🍕', text: '展示披萨各配料占总量的比例', answer: 'pie', hint: '各部分占整体的比例' },
+        { icon: '📈', text: '记录股票每日收盘价', answer: 'line', hint: '看价格随时间的波动' },
+        { icon: '🏫', text: '比较各年级学生人数', answer: 'bar', hint: '比较不同年级的人数' },
+        { icon: '🥧', text: '展示一天时间分配占比', answer: 'pie', hint: '各活动占全天时间的比例' },
+      ];
+
+      let currentScenario;
+      let totalQ = 0, correctQ = 0;
+
+      function newScenario() {
+        currentScenario = Random.pick(scenarios);
+        document.getElementById('scenario-icon').textContent = currentScenario.icon;
+        document.getElementById('scenario-text').textContent = currentScenario.text;
+        document.getElementById('scenario-hint').textContent = '';
+        document.getElementById('match-feedback').textContent = '';
+
+        const opts = document.getElementById('chart-opts');
+        const shuffled = Random.shuffle([...chartTypes]);
+        opts.innerHTML = shuffled.map(ct => `
+          <button class="chart-opt" data-id="${ct.id}">
+            <span style="font-size:32px;">${ct.icon}</span>
+            <span style="font-size:14px;font-weight:600;">${ct.name}</span>
+          </button>
+        `).join('');
+
+        document.querySelectorAll('.chart-opt').forEach(btn => {
+          btn.addEventListener('click', () => {
+            if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+            totalQ++;
+            if (btn.dataset.id === currentScenario.answer) {
+              btn.classList.add('correct');
+              correctQ++;
+              streak++;
+              Sound.play('correct');
+              celebrate();
+              document.getElementById('match-feedback').textContent = '🎉 答对了！';
+              document.getElementById('match-feedback').style.color = '#34C759';
+              document.getElementById('scenario-hint').textContent = currentScenario.hint;
+              setTimeout(newScenario, 1500);
+            } else {
+              btn.classList.add('wrong');
+              streak = 0;
+              Sound.play('wrong');
+              Animator.shake(btn);
+              document.getElementById('match-feedback').textContent = '❌ 再想想看...';
+              document.getElementById('match-feedback').style.color = '#FF3B30';
+              // 高亮正确答案
+              document.querySelectorAll('.chart-opt').forEach(b => {
+                if (b.dataset.id === currentScenario.answer) b.classList.add('correct');
+              });
+              document.getElementById('scenario-hint').textContent = currentScenario.hint;
+              setTimeout(newScenario, 2000);
+            }
+            updateStreak();
+            document.getElementById('match-score').textContent = `已答 ${totalQ} 题，答对 ${correctQ} 题`;
+          });
+        });
+      }
+
+      newScenario();
+    })();
+
+    // === 模式3: 数据选图 ===
+    (() => {
+      const datasets = [
+        {
+          display: '<table><tr><th>月份</th><th>1月</th><th>2月</th><th>3月</th><th>4月</th></tr><tr><td>气温℃</td><td>5</td><td>8</td><td>12</td><td>18</td></tr></table>',
+          question: '要显示气温随月份的变化趋势，应选哪种图？',
+          answer: 'line',
+          explanation: '数据随时间变化，用折线图最能体现趋势'
+        },
+        {
+          display: '<table><tr><th>水果</th><th>苹果</th><th>香蕉</th><th>橙子</th><th>葡萄</th></tr><tr><td>销量/kg</td><td>50</td><td>35</td><td>28</td><td>42</td></tr></table>',
+          question: '要比较各种水果的销量多少，应选哪种图？',
+          answer: 'bar',
+          explanation: '比较不同类别的数量，用条形图最直观'
+        },
+        {
+          display: '<p style="font-size:18px;text-align:center;">男生占 60%<br>女生占 40%</p>',
+          question: '要展示班级男女生占全班的比例，应选哪种图？',
+          answer: 'pie',
+          explanation: '显示各部分占总体的比例，用扇形图最合适'
+        },
+        {
+          display: '<table><tr><th>年级</th><th>一年级</th><th>二年级</th><th>三年级</th></tr><tr><td>人数</td><td>120</td><td>115</td><td>128</td></tr></table>',
+          question: '要比较各年级人数多少，应选哪种图？',
+          answer: 'bar',
+          explanation: '比较不同年级的人数，用条形图最清楚'
+        },
+        {
+          display: '<table><tr><th>时间</th><th>早上</th><th>中午</th><th>晚上</th></tr><tr><td>活动占比</td><td>25%</td><td>35%</td><td>40%</td></tr></table>',
+          question: '要显示一天各时段活动占全天比例，应选哪种图？',
+          answer: 'pie',
+          explanation: '显示各时段占全天的比例，用扇形图最合适'
+        },
+        {
+          display: '<table><tr><th>星期</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr><tr><td>销量</td><td>20</td><td>25</td><td>22</td><td>30</td><td>28</td></tr></table>',
+          question: '要展示一周销量的变化趋势，应选哪种图？',
+          answer: 'line',
+          explanation: '看数据随时间的变化，用折线图最合适'
+        },
+      ];
+
+      let currentData;
+
+      function newQuiz() {
+        currentData = Random.pick(datasets);
+        document.getElementById('data-display').innerHTML = currentData.display;
+        document.getElementById('data-question').textContent = currentData.question;
+        document.getElementById('quiz-feedback').textContent = '';
+
+        const opts = document.getElementById('quiz-opts');
+        const shuffled = Random.shuffle([...chartTypes]);
+        opts.innerHTML = shuffled.map(ct => `
+          <button class="quiz-opt" data-id="${ct.id}">${ct.icon} ${ct.name}</button>
+        `).join('');
+
+        document.querySelectorAll('.quiz-opt').forEach(btn => {
+          btn.addEventListener('click', () => {
+            if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+            if (btn.dataset.id === currentData.answer) {
+              btn.classList.add('correct');
+              streak++;
+              Sound.play('correct');
+              celebrate();
+              document.getElementById('quiz-feedback').innerHTML = `🎉 答对了！<br><small>${currentData.explanation}</small>`;
+              document.getElementById('quiz-feedback').style.color = '#34C759';
+              updateStreak();
+              setTimeout(newQuiz, 1500);
+            } else {
+              btn.classList.add('wrong');
+              streak = 0;
+              Sound.play('wrong');
+              Animator.shake(btn);
+              document.getElementById('quiz-feedback').innerHTML = `❌ 不对哦<br><small>${currentData.explanation}</small>`;
+              document.getElementById('quiz-feedback').style.color = '#FF3B30';
+              updateStreak();
+              document.querySelectorAll('.quiz-opt').forEach(b => {
+                if (b.dataset.id === currentData.answer) b.classList.add('correct');
+              });
+              setTimeout(newQuiz, 2500);
+            }
+          });
+        });
+      }
+
+      newQuiz();
+    })();
+
+    // === 模式4: 模拟制图 ===
+    (() => {
+      let currentType = 'bar';
+      const colors = { bar: '#4A90D9', line: '#34C759', pie: '#FF9500' };
+      const pieColors = ['#4A90D9', '#FF9500', '#34C759', '#AF52DE'];
+
+      document.querySelectorAll('.create-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.create-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentType = tab.dataset.type;
+          Sound.play('click');
+        });
+      });
+
+      document.getElementById('btn-clear-input').addEventListener('click', () => {
+        document.querySelectorAll('.data-name').forEach(i => i.value = '');
+        document.querySelectorAll('.data-val').forEach(i => i.value = '');
+        document.getElementById('chart-preview').innerHTML = '';
+        document.getElementById('chart-insight').innerHTML = '';
+        Sound.play('click');
+      });
+
+      document.getElementById('btn-generate').addEventListener('click', () => {
+        const names = [...document.querySelectorAll('.data-name')].map(i => i.value.trim());
+        const vals = [...document.querySelectorAll('.data-val')].map(i => parseFloat(i.value) || 0);
+
+        // 过滤空数据
+        const validIdx = names.map((n, i) => (n && vals[i] > 0) ? i : -1).filter(i => i >= 0);
+        if (validIdx.length < 2) {
+          showToast('请至少输入2组有效数据！');
+          return;
+        }
+
+        const labels = validIdx.map(i => names[i]);
+        const values = validIdx.map(i => vals[i]);
+        const total = values.reduce((a, b) => a + b, 0);
+
+        const preview = document.getElementById('chart-preview');
+        const insight = document.getElementById('chart-insight');
+
+        if (currentType === 'bar') {
+          const max = Math.max(...values);
+          preview.innerHTML = `
+            <div class="preview-bar">
+              ${labels.map((l, i) => `
+                <div class="bar-col">
+                  <div class="bar-fill" style="height:${(values[i]/max)*140}px;background:${colors.bar};"></div>
+                  <div class="bar-label">${l}</div>
+                  <div class="bar-value">${values[i]}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+          insight.innerHTML = `
+            <div class="insight-box">
+              <h4>📊 条形图分析</h4>
+              <p>• 最大值：<strong>${labels[values.indexOf(Math.max(...values))]}</strong>（${Math.max(...values)}）</p>
+              <p>• 最小值：<strong>${labels[values.indexOf(Math.min(...values))]}</strong>（${Math.min(...values)}）</p>
+              <p>• 总和：${total}</p>
+              <p>• 这种图适合：<strong>比较各类数据的多少</strong></p>
+            </div>
+          `;
+        } else if (currentType === 'line') {
+          const max = Math.max(...values);
+          const w = 280, h = 140;
+          const points = values.map((v, i) => `${i * (w / (values.length - 1)) + 10},${h - (v / max) * (h - 20) - 10}`).join(' ');
+          preview.innerHTML = `
+            <svg viewBox="0 0 ${w} ${h + 20}" style="width:100%;max-width:${w}px;">
+              <polyline points="${points}" fill="none" stroke="${colors.line}" stroke-width="3"/>
+              ${values.map((v, i) => {
+                const x = i * (w / (values.length - 1)) + 10;
+                const y = h - (v / max) * (h - 20) - 10;
+                return `<circle cx="${x}" cy="${y}" r="5" fill="${colors.line}"/>
+                        <text x="${x}" y="${y - 10}" text-anchor="middle" font-size="11" fill="#333">${v}</text>`;
+              }).join('')}
+              ${labels.map((l, i) => `<text x="${i * (w / (labels.length - 1)) + 10}" y="${h + 15}" text-anchor="middle" font-size="11">${l}</text>`).join('')}
+            </svg>
+          `;
+          const diff = values[values.length - 1] - values[0];
+          insight.innerHTML = `
+            <div class="insight-box">
+              <h4>📈 折线图分析</h4>
+              <p>• 起始值：${values[0]}，结束值：${values[values.length - 1]}</p>
+              <p>• 变化：${diff > 0 ? '↑ 上升' : diff < 0 ? '↓ 下降' : '→ 持平'} ${Math.abs(diff)}</p>
+              <p>• 最大值：${Math.max(...values)}，最小值：${Math.min(...values)}</p>
+              <p>• 这种图适合：<strong>显示数据的变化趋势</strong></p>
+            </div>
+          `;
+        } else {
+          let cumPct = 0;
+          const slices = values.map((v, i) => {
+            const pct = v / total;
+            const start = cumPct;
+            cumPct += pct;
+            return { start, end: cumPct, pct, label: labels[i], value: v };
+          });
+          const paths = slices.map((s, i) => {
+            const a1 = s.start * 2 * Math.PI - Math.PI / 2;
+            const a2 = s.end * 2 * Math.PI - Math.PI / 2;
+            const x1 = 80 + 70 * Math.cos(a1);
+            const y1 = 80 + 70 * Math.sin(a1);
+            const x2 = 80 + 70 * Math.cos(a2);
+            const y2 = 80 + 70 * Math.sin(a2);
+            const large = s.pct > 0.5 ? 1 : 0;
+            return `<path d="M80,80 L${x1},${y1} A70,70 0 ${large},1 ${x2},${y2} Z" fill="${pieColors[i]}"/>`;
+          }).join('');
+          preview.innerHTML = `
+            <svg viewBox="0 0 160 160" style="width:160px;">
+              ${paths}
+            </svg>
+            <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
+              ${slices.map((s, i) => `<span style="font-size:13px;"><span style="display:inline-block;width:12px;height:12px;background:${pieColors[i]};border-radius:3px;"></span> ${s.label} ${(s.pct * 100).toFixed(1)}%</span>`).join('')}
+            </div>
+          `;
+          const maxSlice = slices.reduce((a, b) => a.pct > b.pct ? a : b);
+          insight.innerHTML = `
+            <div class="insight-box">
+              <h4>🥧 扇形图分析</h4>
+              <p>• 占比最大：<strong>${maxSlice.label}</strong>（${(maxSlice.pct * 100).toFixed(1)}%）</p>
+              <p>• 总和：${total}</p>
+              <p>• 这种图适合：<strong>显示各部分占总体的比例</strong></p>
+            </div>
+          `;
+        }
+
+        Sound.play('correct');
+        showToast('🎨 图表生成成功！');
+      });
+    })();
+  </script>
+</body>
+</html>
