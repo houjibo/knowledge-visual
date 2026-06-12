@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>测量长度</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
+    .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .mode-tab.active { background: #00897B; color: white; }
+
+    .mode-content { display: none; }
+    .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    /* 连续答对 */
+    .score-display { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px; font-size: 18px; font-weight: 600; }
+    .score-stars { font-size: 24px; }
+    .diff-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; background: rgba(0,137,123,0.15); color: #00897B; }
+
+    /* === 模式1: 认识尺子 === */
+    .ruler-explore { text-align: center; padding: 24px 16px; }
+    .ruler-display {
+      position: relative; width: 100%; max-width: 360px; margin: 20px auto;
+      background: linear-gradient(180deg, #FFF9C4 0%, #FFF59D 100%);
+      border: 3px solid #FBC02D; border-radius: 8px; padding: 8px 0;
+    }
+    .ruler-svg { width: 100%; height: 80px; }
+    .ruler-info {
+      margin: 16px auto; max-width: 340px; padding: 16px;
+      background: #E0F2F1; border-radius: 16px; font-size: 16px; color: #00695C;
+      line-height: 1.8;
+    }
+    .ruler-tips {
+      display: grid; gap: 12px; max-width: 360px; margin: 16px auto;
+    }
+    .ruler-tip {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+      background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      font-size: 15px;
+    }
+    .ruler-tip .tip-icon { font-size: 28px; }
+
+    /* === 模式2: 测量练习 === */
+    .measure-area { text-align: center; padding: 24px 16px; }
+    .measure-object {
+      display: flex; flex-direction: column; align-items: center;
+      margin: 20px 0;
+    }
+    .measure-icon { font-size: 80px; margin: 8px 0; }
+    .measure-line {
+      position: relative; width: 100%; max-width: 300px; height: 40px;
+      margin: 16px auto; background: #E0E0E0; border-radius: 8px;
+      display: flex; align-items: center;
+    }
+    .measure-fill {
+      height: 100%; background: linear-gradient(90deg, #00897B 0%, #4DB6AC 100%);
+      border-radius: 8px; transition: width 0.3s ease;
+    }
+    .measure-question { font-size: 20px; font-weight: 700; margin: 16px 0; color: #1D1D1F; }
+    .measure-input-area {
+      display: flex; align-items: center; justify-content: center; gap: 12px; margin: 16px 0;
+    }
+    .measure-input {
+      width: 100px; height: 56px; border: 3px solid #E5E5EA; border-radius: 14px;
+      font-size: 28px; font-weight: 700; text-align: center; outline: none;
+      transition: border-color 0.2s;
+    }
+    .measure-input:focus { border-color: #00897B; }
+    .measure-unit { font-size: 24px; font-weight: 600; color: #6E6E73; }
+    .measure-feedback { font-size: 22px; font-weight: 700; margin: 16px 0; min-height: 36px; }
+    .measure-score { font-size: 16px; color: #6E6E73; margin: 8px 0; }
+
+    /* === 模式3: 比较长度 === */
+    .compare-area { text-align: center; padding: 24px 16px; }
+    .compare-question { font-size: 20px; font-weight: 700; margin: 16px 0; }
+    .compare-items {
+      display: flex; justify-content: center; align-items: center; gap: 24px;
+      margin: 24px 0; flex-wrap: wrap;
+    }
+    .compare-item {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 16px; background: white; border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08); min-width: 120px;
+    }
+    .compare-item .item-icon { font-size: 48px; margin-bottom: 8px; }
+    .compare-item .item-line {
+      width: 100px; height: 20px; background: linear-gradient(90deg, #00897B 0%, #4DB6AC 100%);
+      border-radius: 4px; margin: 8px 0;
+    }
+    .compare-item .item-label { font-size: 14px; color: #6E6E73; font-weight: 600; }
+    .compare-vs { font-size: 32px; font-weight: 800; color: #00897B; }
+    .compare-btns {
+      display: flex; gap: 16px; justify-content: center; margin: 20px 0;
+    }
+    .compare-btn {
+      width: 80px; height: 80px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 50%; font-size: 32px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .compare-btn:active { transform: scale(0.9); }
+    .compare-btn.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .compare-btn.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .compare-feedback { font-size: 20px; font-weight: 700; margin: 16px 0; min-height: 36px; }
+    .compare-score { font-size: 16px; color: #6E6E73; margin: 8px 0; }
+
+    /* === 模式4: 估测练习 === */
+    .estimate-area { text-align: center; padding: 24px 16px; }
+    .estimate-icon { font-size: 80px; margin: 16px 0; }
+    .estimate-question { font-size: 20px; font-weight: 700; margin: 16px 0; }
+    .estimate-options {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+      max-width: 320px; margin: 20px auto;
+    }
+    .estimate-opt {
+      padding: 16px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 14px; font-size: 18px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .estimate-opt:active { transform: scale(0.95); }
+    .estimate-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .estimate-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .estimate-feedback { font-size: 20px; font-weight: 700; margin: 16px 0; min-height: 36px; }
+    .estimate-score { font-size: 16px; color: #6E6E73; margin: 8px 0; }
+
+    /* === 模式5: 画线段 === */
+    .draw-area { text-align: center; padding: 24px 16px; }
+    .draw-question { font-size: 20px; font-weight: 700; margin: 16px 0; }
+    .draw-canvas-wrap {
+      position: relative; width: 100%; max-width: 360px; margin: 20px auto;
+      background: white; border: 2px solid #E0E0E0; border-radius: 12px;
+      overflow: hidden;
+    }
+    .draw-canvas { width: 100%; height: 200px; touch-action: none; }
+    .draw-ruler {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 40px;
+      background: linear-gradient(180deg, #FFF9C4 0%, #FFF59D 100%);
+      border-top: 2px solid #FBC02D;
+    }
+    .draw-controls {
+      display: flex; gap: 12px; justify-content: center; margin: 16px 0;
+    }
+    .draw-btn {
+      padding: 12px 24px; border: none; border-radius: 12px;
+      font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .draw-btn:active { transform: scale(0.95); }
+    .draw-btn.clear { background: #EF5350; color: white; }
+    .draw-btn.check { background: #00897B; color: white; }
+    .draw-feedback { font-size: 18px; font-weight: 700; margin: 16px 0; min-height: 36px; }
+
+    @media (max-width: 480px) {
+      .compare-items { flex-direction: column; }
+      .compare-vs { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <nav class="breadcrumb">
+      <a href="../../index.html" class="breadcrumb-item">🏠 首页</a><span class="breadcrumb-sep">›</span><a href="../index.html" class="breadcrumb-item">📐 数学</a><span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">📏 测量长度</span>
+    </nav>
+
+    <div class="score-display">
+      <span class="diff-badge">📏 二年级</span>
+      <span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span>
+      <span class="score-stars" id="stars-display"></span>
+    </div>
+
+    <!-- 模式切换 -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="ruler">📏 认识尺子</button>
+      <button class="mode-tab" data-mode="measure">✏️ 测量</button>
+      <button class="mode-tab" data-mode="compare">⚖️ 比较</button>
+      <button class="mode-tab" data-mode="estimate">🎯 估测</button>
+      <button class="mode-tab" data-mode="draw">📐 画线段</button>
+    </div>
+
+    <!-- 模式1: 认识尺子 -->
+    <div class="mode-content active" id="mode-ruler">
+      <div class="card">
+        <p class="page-subtitle">认识直尺，学习如何正确测量长度</p>
+        <div class="ruler-explore">
+          <h3 style="font-size:20px;color:#00897B;margin-bottom:12px;">📏 直尺的样子</h3>
+          <div class="ruler-display">
+            <svg class="ruler-svg" viewBox="0 0 360 80">
+              <!-- 尺子刻度 -->
+              <line x1="0" y1="60" x2="360" y2="60" stroke="#FBC02D" stroke-width="2"/>
+              <!-- 厘米刻度 -->
+              <g id="cm-marks"></g>
+              <!-- 数字 -->
+              <g id="cm-numbers" font-size="14" fill="#F57F17" font-weight="600"></g>
+            </svg>
+          </div>
+          <div class="ruler-info">
+            💡 <strong>直尺</strong>是测量长度的工具。<br>
+            • 尺子上有<strong>刻度</strong>，从 <strong>0</strong> 开始<br>
+            • 每一大格是 <strong>1 厘米</strong>（cm）<br>
+            • 每一小格是 <strong>1 毫米</strong>（mm）<br>
+            • 1 厘米 = 10 毫米
+          </div>
+          <h3 style="font-size:18px;color:#00897B;margin:24px 0 12px;">📝 测量小技巧</h3>
+          <div class="ruler-tips" id="ruler-tips"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式2: 测量练习 -->
+    <div class="mode-content" id="mode-measure">
+      <div class="card">
+        <p class="page-subtitle">读一读，这个物体有多长？</p>
+        <div class="measure-area">
+          <div class="measure-object">
+            <div class="measure-icon" id="measure-icon">🖍️</div>
+            <div class="measure-line">
+              <div class="measure-fill" id="measure-fill" style="width: 50%;"></div>
+            </div>
+          </div>
+          <div class="measure-question" id="measure-question">这支蜡笔大约有多长？</div>
+          <div class="measure-input-area">
+            <input type="number" class="measure-input" id="measure-input" placeholder="?" min="1" max="30">
+            <span class="measure-unit">厘米</span>
+          </div>
+          <div class="measure-feedback" id="measure-feedback"></div>
+          <div class="measure-score" id="measure-score">已答 0 题，答对 0 题</div>
+          <div class="action-bar">
+            <button class="btn btn-primary btn-large" id="btn-check-measure">✅ 提交答案</button>
+            <button class="btn btn-warning" id="btn-new-measure">🎲 换一题</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式3: 比较长度 -->
+    <div class="mode-content" id="mode-compare">
+      <div class="card">
+        <p class="page-subtitle">比一比，哪个更长？</p>
+        <div class="compare-area">
+          <div class="compare-question" id="compare-question">哪个更长？</div>
+          <div class="compare-items" id="compare-items"></div>
+          <div class="compare-btns">
+            <button class="compare-btn" id="btn-left" data-answer="left">＜</button>
+            <button class="compare-btn" id="btn-equal" data-answer="equal">＝</button>
+            <button class="compare-btn" id="btn-right" data-answer="right">＞</button>
+          </div>
+          <div class="compare-feedback" id="compare-feedback"></div>
+          <div class="compare-score" id="compare-score">已答 0 题，答对 0 题</div>
+          <div class="action-bar">
+            <button class="btn btn-primary btn-large" id="btn-new-compare">🎲 换一题</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式4: 估测练习 -->
+    <div class="mode-content" id="mode-estimate">
+      <div class="card">
+        <p class="page-subtitle">估一估，这个物体大约有多长？</p>
+        <div class="estimate-area">
+          <div class="estimate-icon" id="estimate-icon">📱</div>
+          <div class="estimate-question" id="estimate-question">一部手机大约有多长？</div>
+          <div class="estimate-options" id="estimate-options"></div>
+          <div class="estimate-feedback" id="estimate-feedback"></div>
+          <div class="estimate-score" id="estimate-score">已答 0 题，答对 0 题</div>
+          <div class="action-bar">
+            <button class="btn btn-primary btn-large" id="btn-new-estimate">🎲 换一题</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式5: 画线段 -->
+    <div class="mode-content" id="mode-draw">
+      <div class="card">
+        <p class="page-subtitle">用手指画一条指定长度的线段</p>
+        <div class="draw-area">
+          <div class="draw-question" id="draw-question">请画一条 <strong>5 厘米</strong> 的线段</div>
+          <div class="draw-canvas-wrap">
+            <canvas class="draw-canvas" id="draw-canvas"></canvas>
+            <div class="draw-ruler"></div>
+          </div>
+          <p style="font-size:14px;color:#6E6E73;margin:8px 0;">提示：尺子上每大格 = 1 厘米</p>
+          <div class="draw-controls">
+            <button class="draw-btn clear" id="btn-clear-draw">🗑️ 清除</button>
+            <button class="draw-btn check" id="btn-check-draw">✅ 检查</button>
+          </div>
+          <div class="draw-feedback" id="draw-feedback"></div>
+          <div class="action-bar">
+            <button class="btn btn-primary btn-large" id="btn-new-draw">🎲 换一题</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/common.js"></script>
+  <script src="../../assets/js/animation.js"></script>
+  <script src="../../assets/js/touch.js"></script>
+  <script>
+    // 返回按钮（如果有nav-back元素则绑定事件）
+    const navBack = document.querySelector('.nav-back');
+    if (navBack) navBack.addEventListener('click', () => window.location.href = '../index.html');
+
+    // 连续答对
+    let streak = 0;
+    function updateStreak() {
+      document.getElementById('streak').textContent = streak;
+      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
+      if (streak >= 5) showToast(`🔥 连续 ${streak} 次！太厉害了！`);
+    }
+
+    // 模式切换
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        Sound.play('click');
+      });
+    });
+
+    // === 模式1: 认识尺子 ===
+    (() => {
+      // 绘制尺子刻度
+      const cmMarks = document.getElementById('cm-marks');
+      const cmNumbers = document.getElementById('cm-numbers');
+      for (let i = 0; i <= 10; i++) {
+        const x = i * 36;
+        // 厘米刻度线
+        const mark = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        mark.setAttribute('x1', x);
+        mark.setAttribute('y1', 40);
+        mark.setAttribute('x2', x);
+        mark.setAttribute('y2', 60);
+        mark.setAttribute('stroke', '#F57F17');
+        mark.setAttribute('stroke-width', '2');
+        cmMarks.appendChild(mark);
+        
+        // 数字
+        const num = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        num.setAttribute('x', x);
+        num.setAttribute('y', 30);
+        num.setAttribute('text-anchor', 'middle');
+        num.textContent = i;
+        cmNumbers.appendChild(num);
+        
+        // 毫米刻度（每厘米内9个小格）
+        if (i < 10) {
+          for (let j = 1; j < 10; j++) {
+            const mx = x + j * 3.6;
+            const mmark = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            mmark.setAttribute('x1', mx);
+            mmark.setAttribute('y1', 52);
+            mmark.setAttribute('x2', mx);
+            mmark.setAttribute('y2', 60);
+            mmark.setAttribute('stroke', '#FBC02D');
+            mmark.setAttribute('stroke-width', '1');
+            cmMarks.appendChild(mmark);
+          }
+        }
+      }
+
+      // 测量技巧
+      const tips = [
+        { icon: '👆', text: '把物体的一端对准尺子的 <strong>0 刻度</strong>' },
+        { icon: '📏', text: '物体要沿着尺子的 <strong>直边</strong> 放好' },
+        { icon: '👀', text: '看物体另一端对准的 <strong>数字</strong> 就是长度' },
+        { icon: '✋', text: '用手按住尺子，防止滑动' },
+        { icon: '🔍', text: '如果不够整厘米，看最接近的 <strong>小格</strong>' },
+      ];
+      const tipsEl = document.getElementById('ruler-tips');
+      tipsEl.innerHTML = '';
+      tips.forEach(t => {
+        tipsEl.innerHTML += `<div class="ruler-tip"><span class="tip-icon">${t.icon}</span><span>${t.text}</span></div>`;
+      });
+    })();
+
+    // === 模式2: 测量练习 ===
+    (() => {
+      const objects = [
+        { icon: '🖍️', name: '蜡笔', answer: 8, range: [6, 10] },
+        { icon: '📏', name: '橡皮', answer: 5, range: [3, 7] },
+        { icon: '✏️', name: '铅笔', answer: 18, range: [15, 20] },
+        { icon: '📱', name: '手机', answer: 15, range: [12, 18] },
+        { icon: '📒', name: '笔记本', answer: 25, range: [20, 30] },
+        { icon: '🖐️', name: '手掌宽', answer: 8, range: [6, 10] },
+        { icon: '👣', name: '脚长', answer: 22, range: [18, 26] },
+        { icon: '🥒', name: '黄瓜', answer: 20, range: [15, 25] },
+        { icon: '🍌', name: '香蕉', answer: 18, range: [15, 22] },
+        { icon: '🖍️', name: '粉笔', answer: 8, range: [6, 10] },
+      ];
+
+      let currentObj;
+      let totalQ = 0;
+      let correctQ = 0;
+
+      function newMeasure() {
+        currentObj = Random.pick(objects);
+        document.getElementById('measure-icon').textContent = currentObj.icon;
+        document.getElementById('measure-question').textContent = `这支${currentObj.name}大约有多长？`;
+        document.getElementById('measure-input').value = '';
+        document.getElementById('measure-feedback').textContent = '';
+        
+        // 随机生成一个视觉长度（用于显示）
+        const visualLen = Random.pick(currentObj.range);
+        const pct = Math.min(100, (visualLen / 30) * 100);
+        document.getElementById('measure-fill').style.width = pct + '%';
+      }
+
+      document.getElementById('measure-input').addEventListener('input', function() {
+        if (this.value.length > 2) this.value = this.value.slice(0, 2);
+      });
+
+      document.getElementById('btn-check-measure').addEventListener('click', () => {
+        const input = parseInt(document.getElementById('measure-input').value);
+        if (isNaN(input) || input <= 0) {
+          showToast('请输入一个数字！');
+          return;
+        }
+
+        totalQ++;
+        const diff = Math.abs(input - currentObj.answer);
+        let feedback, color;
+        
+        if (diff <= 1) {
+          feedback = '🎉 答对了！测量真准！';
+          color = '#34C759';
+          correctQ++;
+          streak++; Sound.play('correct'); celebrate();
+          setTimeout(newMeasure, 1500);
+        } else if (diff <= 3) {
+          feedback = `👍 接近了！正确答案是 ${currentObj.answer} 厘米`;
+          color = '#FF9500';
+          correctQ++;
+          streak++; Sound.play('correct');
+          setTimeout(newMeasure, 2000);
+        } else {
+          feedback = `💪 再试试！正确答案是 ${currentObj.answer} 厘米`;
+          color = '#FF3B30';
+          streak = 0; Sound.play('wrong');
+          setTimeout(newMeasure, 2500);
+        }
+        
+        updateStreak();
+        document.getElementById('measure-feedback').textContent = feedback;
+        document.getElementById('measure-feedback').style.color = color;
+        document.getElementById('measure-score').textContent = `已答 ${totalQ} 题，答对 ${correctQ} 题`;
+      });
+
+      document.getElementById('btn-new-measure').addEventListener('click', () => { newMeasure(); Sound.play('click'); });
+      newMeasure();
+    })();
+
+    // === 模式3: 比较长度 ===
+    (() => {
+      const items = [
+        { icon: '🖍️', name: '蜡笔', length: 8 },
+        { icon: '✏️', name: '铅笔', length: 18 },
+        { icon: '📏', name: '橡皮', length: 5 },
+        { icon: '📱', name: '手机', length: 15 },
+        { icon: '📒', name: '笔记本', length: 25 },
+        { icon: '🥒', name: '黄瓜', length: 20 },
+        { icon: '🍌', name: '香蕉', length: 18 },
+        { icon: '🖐️', name: '手掌', length: 8 },
+        { icon: '👣', name: '脚长', length: 22 },
+        { icon: '🪥', name: '牙刷', length: 16 },
+      ];
+
+      let leftItem, rightItem, correctAnswer;
+      let totalQ = 0;
+      let correctQ = 0;
+
+      function newCompare() {
+        // 随机选两个不同的物品
+        const shuffled = Random.shuffle([...items]);
+        leftItem = shuffled[0];
+        rightItem = shuffled[1];
+        
+        // 确保长度不同
+        while (leftItem.length === rightItem.length) {
+          rightItem = Random.pick(items);
+        }
+
+        if (leftItem.length > rightItem.length) {
+          correctAnswer = 'left';
+        } else {
+          correctAnswer = 'right';
+        }
+
+        document.getElementById('compare-question').textContent = '哪个更长？';
+        document.getElementById('compare-feedback').textContent = '';
+        
+        const compareItems = document.getElementById('compare-items');
+        compareItems.innerHTML = `
+          <div class="compare-item">
+            <div class="item-icon">${leftItem.icon}</div>
+            <div class="item-line" style="width: ${leftItem.length * 4}px;"></div>
+            <div class="item-label">${leftItem.name}</div>
+          </div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-item">
+            <div class="item-icon">${rightItem.icon}</div>
+            <div class="item-line" style="width: ${rightItem.length * 4}px;"></div>
+            <div class="item-label">${rightItem.name}</div>
+          </div>
+        `;
+
+        // 重置按钮状态
+        document.querySelectorAll('.compare-btn').forEach(btn => {
+          btn.classList.remove('correct', 'wrong');
+        });
+      }
+
+      document.querySelectorAll('.compare-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+          
+          totalQ++;
+          const answer = btn.dataset.answer;
+          
+          if (answer === correctAnswer) {
+            btn.classList.add('correct');
+            streak++; Sound.play('correct'); celebrate();
+            updateStreak();
+            correctQ++;
+            document.getElementById('compare-feedback').textContent = '🎉 答对了！';
+            document.getElementById('compare-feedback').style.color = '#34C759';
+            setTimeout(newCompare, 1500);
+          } else {
+            btn.classList.add('wrong');
+            Animator.shake(btn);
+            streak = 0; Sound.play('wrong'); updateStreak();
+            const correctName = correctAnswer === 'left' ? leftItem.name : rightItem.name;
+            document.getElementById('compare-feedback').textContent = `不对哦，${correctName}更长！`;
+            document.getElementById('compare-feedback').style.color = '#FF3B30';
+            // 显示正确答案
+            document.querySelector(`[data-answer="${correctAnswer}"]`).classList.add('correct');
+            setTimeout(newCompare, 2000);
+          }
+          
+          document.getElementById('compare-score').textContent = `已答 ${totalQ} 题，答对 ${correctQ} 题`;
+        });
+      });
+
+      document.getElementById('btn-new-compare').addEventListener('click', () => { newCompare(); Sound.play('click'); });
+      newCompare();
+    })();
+
+    // === 模式4: 估测练习 ===
+    (() => {
+      const questions = [
+        { icon: '📱', question: '一部手机大约有多长？', answer: 15, unit: '厘米', options: [5, 15, 30, 50] },
+        { icon: '🚪', question: '一扇门大约有多高？', answer: 2, unit: '米', options: [1, 2, 5, 10] },
+        { icon: '📏', name: '橡皮', question: '一块橡皮大约有多长？', answer: 5, unit: '厘米', options: [2, 5, 10, 20] },
+        { icon: '🚌', question: '一辆公交车大约有多长？', answer: 10, unit: '米', options: [5, 10, 20, 50] },
+        { icon: '✏️', question: '一支铅笔大约有多长？', answer: 18, unit: '厘米', options: [10, 18, 30, 50] },
+        { icon: '📺', question: '一台电视大约有多宽？', answer: 1, unit: '米', options: [50, 1, 2, 5] },
+        { icon: '🖐️', question: '一拃（张开的大拇指到中指）大约有多长？', answer: 15, unit: '厘米', options: [5, 15, 30, 50] },
+        { icon: '👣', question: '一步大约有多长？', answer: 50, unit: '厘米', options: [20, 50, 100, 200] },
+        { icon: '📐', question: '一把学生尺子有多长？', answer: 20, unit: '厘米', options: [10, 20, 50, 100] },
+        { icon: '🏫', question: '一间教室大约有多长？', answer: 10, unit: '米', options: [5, 10, 20, 50] },
+      ];
+
+      let currentQ;
+      let totalQ = 0;
+      let correctQ = 0;
+
+      function newEstimate() {
+        currentQ = Random.pick(questions);
+        document.getElementById('estimate-icon').textContent = currentQ.icon;
+        document.getElementById('estimate-question').textContent = currentQ.question;
+        document.getElementById('estimate-feedback').textContent = '';
+        
+        const optionsEl = document.getElementById('estimate-options');
+        const shuffled = Random.shuffle(currentQ.options);
+        optionsEl.innerHTML = shuffled.map(opt => 
+          `<button class="estimate-opt" data-val="${opt}">${opt} ${currentQ.unit}</button>`
+        ).join('');
+        
+        // 绑定点击事件
+        document.querySelectorAll('.estimate-opt').forEach(btn => {
+          btn.addEventListener('click', () => {
+            if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+            
+            totalQ++;
+            const val = parseInt(btn.dataset.val);
+            
+            if (val === currentQ.answer) {
+              btn.classList.add('correct');
+              streak++; Sound.play('correct'); celebrate();
+              updateStreak();
+              correctQ++;
+              document.getElementById('estimate-feedback').textContent = '🎉 估得真准！';
+              document.getElementById('estimate-feedback').style.color = '#34C759';
+              setTimeout(newEstimate, 1500);
+            } else {
+              btn.classList.add('wrong');
+              Animator.shake(btn);
+              streak = 0; Sound.play('wrong'); updateStreak();
+              document.getElementById('estimate-feedback').textContent = `不对哦，大约是 ${currentQ.answer} ${currentQ.unit}`;
+              document.getElementById('estimate-feedback').style.color = '#FF3B30';
+              // 显示正确答案
+              document.querySelectorAll('.estimate-opt').forEach(b => {
+                if (parseInt(b.dataset.val) === currentQ.answer) b.classList.add('correct');
+              });
+              setTimeout(newEstimate, 2000);
+            }
+            
+            document.getElementById('estimate-score').textContent = `已答 ${totalQ} 题，答对 ${correctQ} 题`;
+          });
+        });
+      }
+
+      document.getElementById('btn-new-estimate').addEventListener('click', () => { newEstimate(); Sound.play('click'); });
+      newEstimate();
+    })();
+
+    // === 模式5: 画线段 ===
+    (() => {
+      const canvas = document.getElementById('draw-canvas');
+      const ctx = canvas.getContext('2d');
+      let targetLength = 5;
+      let isDrawing = false;
+      let startX = 0;
+      let endX = 0;
+      let drawnLength = 0;
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        drawRuler();
+      }
+
+      function drawRuler() {
+        // 在canvas上画参考刻度
+        ctx.clearRect(0, 0, canvas.width, canvas.height - 40);
+        
+        // 画底部参考线（每厘米一格，假设36px = 1cm）
+        const pxPerCm = 36;
+        ctx.strokeStyle = '#E0E0E0';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 10; i++) {
+          const x = 20 + i * pxPerCm;
+          ctx.beginPath();
+          ctx.moveTo(x, canvas.height - 50);
+          ctx.lineTo(x, canvas.height - 40);
+          ctx.stroke();
+          
+          // 数字
+          ctx.fillStyle = '#6E6E73';
+          ctx.font = '12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(i, x, canvas.height - 55);
+        }
+      }
+
+      function drawLine() {
+        drawRuler();
+        if (drawnLength > 0) {
+          ctx.strokeStyle = '#00897B';
+          ctx.lineWidth = 4;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(startX, canvas.height / 2);
+          ctx.lineTo(endX, canvas.height / 2);
+          ctx.stroke();
+          
+          // 显示当前长度
+          const cm = (drawnLength / 36).toFixed(1);
+          ctx.fillStyle = '#00897B';
+          ctx.font = 'bold 18px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(`${cm} 厘米`, canvas.width / 2, 30);
+        }
+      }
+
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches ? e.touches[0] : e;
+        return touch.clientX - rect.left;
+      }
+
+      canvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
+        startX = getPos(e);
+        endX = startX;
+        drawnLength = 0;
+      });
+
+      canvas.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
+        endX = getPos(e);
+        drawnLength = Math.abs(endX - startX);
+        drawLine();
+      });
+
+      canvas.addEventListener('mouseup', () => {
+        isDrawing = false;
+      });
+
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isDrawing = true;
+        startX = getPos(e);
+        endX = startX;
+        drawnLength = 0;
+      });
+
+      canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (!isDrawing) return;
+        endX = getPos(e);
+        drawnLength = Math.abs(endX - startX);
+        drawLine();
+      });
+
+      canvas.addEventListener('touchend', () => {
+        isDrawing = false;
+      });
+
+      function newDraw() {
+        targetLength = Random.pick([3, 4, 5, 6, 7, 8]);
+        document.getElementById('draw-question').innerHTML = `请画一条 <strong>${targetLength} 厘米</strong> 的线段`;
+        document.getElementById('draw-feedback').textContent = '';
+        drawnLength = 0;
+        drawRuler();
+      }
+
+      document.getElementById('btn-clear-draw').addEventListener('click', () => {
+        drawnLength = 0;
+        drawRuler();
+        Sound.play('click');
+      });
+
+      document.getElementById('btn-check-draw').addEventListener('click', () => {
+        if (drawnLength === 0) {
+          showToast('请先画一条线段！');
+          return;
+        }
+        
+        const drawnCm = drawnLength / 36;
+        const diff = Math.abs(drawnCm - targetLength);
+        let feedback, color;
+        
+        if (diff <= 0.5) {
+          feedback = `🎉 太准了！你画了 ${drawnCm.toFixed(1)} 厘米！`;
+          color = '#34C759';
+          streak++; Sound.play('correct'); celebrate();
+        } else if (diff <= 1.5) {
+          feedback = `👍 不错！你画了 ${drawnCm.toFixed(1)} 厘米，接近了！`;
+          color = '#FF9500';
+          streak++; Sound.play('correct');
+        } else {
+          feedback = `💪 你画了 ${drawnCm.toFixed(1)} 厘米，再练练！`;
+          color = '#FF3B30';
+          streak = 0; Sound.play('wrong');
+        }
+        
+        updateStreak();
+        document.getElementById('draw-feedback').textContent = feedback;
+        document.getElementById('draw-feedback').style.color = color;
+      });
+
+      document.getElementById('btn-new-draw').addEventListener('click', () => { newDraw(); Sound.play('click'); });
+      
+      // 初始化
+      resizeCanvas();
+      newDraw();
+      window.addEventListener('resize', resizeCanvas);
+    })();
+  </script>
+</body>
+</html>
