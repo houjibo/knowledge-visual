@@ -1,0 +1,205 @@
+# 交互风险线索
+
+> 自动生成：`python3 scripts/interaction_risks.py --output docs/assessments/interaction-risks.md`。
+> 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
+> div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
+
+含候选 div 控件的页面：115；含内联 while 的页面：75。同一页面可能出现在两类中。
+
+核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
+
+## 候选 div 控件
+
+- [chemistry/high/02-periodic.html](../../chemistry/high/02-periodic.html)：105 行（tab）、106 行（tab）、107 行（tab）
+- [chemistry/high/12-experiment.html](../../chemistry/high/12-experiment.html)：123 行（tab）、124 行（tab）、125 行（tab）、126 行（tab）
+- [chemistry/high/chemical-bond.html](../../chemistry/high/chemical-bond.html)：88 行（tab）、89 行（tab）、90 行（tab）、91 行（tab）、104 行（mode-btn）、105 行（mode-btn）、106 行（mode-btn）、143 行（mode-btn）、144 行（mode-btn）、145 行（mode-btn）、219 行（mode-btn）、220 行（mode-btn）、221 行（mode-btn）、222 行（mode-btn）
+- [chemistry/high/electrochemistry.html](../../chemistry/high/electrochemistry.html)：62 行（tab）、63 行（tab）、64 行（tab）、65 行（tab）
+- [chemistry/high/ion-equilibrium.html](../../chemistry/high/ion-equilibrium.html)：79 行（tab）、80 行（tab）、81 行（tab）、82 行（tab）
+- [chemistry/high/nonmetals.html](../../chemistry/high/nonmetals.html)：133 行（tab）、134 行（tab）、135 行（tab）、136 行（tab）、274 行（mode-btn）、275 行（mode-btn）
+- [chemistry/high/organic.html](../../chemistry/high/organic.html)：103 行（tab）、104 行（tab）、105 行（tab）、106 行（tab）
+- [chemistry/high/reaction-rate.html](../../chemistry/high/reaction-rate.html)：105 行（tab）、106 行（tab）、107 行（tab）、108 行（tab）、109 行（tab）
+- [chemistry/high/redox.html](../../chemistry/high/redox.html)：100 行（tab）、101 行（tab）、102 行（tab）、103 行（tab）、104 行（tab）
+- [chemistry/middle/04-atom-element.html](../../chemistry/middle/04-atom-element.html)：84 行（tab）、85 行（tab）、86 行（tab）、87 行（tab）、88 行（tab）
+- [chemistry/middle/05-formula.html](../../chemistry/middle/05-formula.html)：247 行（tab）、248 行（tab）、249 行（tab）、250 行（tab）
+- [chemistry/middle/06-equation.html](../../chemistry/middle/06-equation.html)：76 行（tab）、77 行（tab）、78 行（tab）
+- [chemistry/uni/04-structure.html](../../chemistry/uni/04-structure.html)：92 行（tab）、93 行（tab）、94 行（tab）、121 行（mode-btn）、122 行（mode-btn）、123 行（mode-btn）、124 行（mode-btn）、125 行（mode-btn）、126 行（mode-btn）、127 行（mode-btn）、166 行（mode-btn）、167 行（mode-btn）、168 行（mode-btn）、169 行（mode-btn）、202 行（mode-btn）、203 行（mode-btn）、204 行（mode-btn）、205 行（mode-btn）
+- [chemistry/uni/05-crystal.html](../../chemistry/uni/05-crystal.html)：70 行（tab）、71 行（tab）、72 行（tab）、73 行（tab）
+- [chemistry/uni/06-acid-base.html](../../chemistry/uni/06-acid-base.html)：100 行（tab）、101 行（tab）、102 行（tab）、103 行（tab）、117 行（mode-btn）、118 行（mode-btn）、119 行（mode-btn）
+- [chemistry/uni/07-titration.html](../../chemistry/uni/07-titration.html)：104 行（tab）、105 行（tab）、106 行（tab）、107 行（tab）、129 行（mode-btn）、130 行（mode-btn）、131 行（mode-btn）
+- [chemistry/uni/08-organic-mechanism.html](../../chemistry/uni/08-organic-mechanism.html)：100 行（tab）、101 行（tab）、102 行（tab）、129 行（mode-btn）、130 行（mode-btn）、131 行（mode-btn）、132 行（mode-btn）、169 行（mode-btn）、170 行（mode-btn）、171 行（mode-btn）、172 行（mode-btn）、205 行（mode-btn）、206 行（mode-btn）、207 行（mode-btn）、208 行（mode-btn）
+- [chemistry/uni/09-spectroscopy.html](../../chemistry/uni/09-spectroscopy.html)：110 行（tab）、111 行（tab）、112 行（tab）、113 行（tab）、127 行（mode-btn）、128 行（mode-btn）、129 行（mode-btn）、203 行（mode-btn）、204 行（mode-btn）、205 行（mode-btn）、276 行（mode-btn）、277 行（mode-btn）、278 行（mode-btn）
+- [chemistry/uni/10-coordination.html](../../chemistry/uni/10-coordination.html)：95 行（tab）、96 行（tab）、97 行（tab）、98 行（tab）
+- [chemistry/uni/applied-electrochem.html](../../chemistry/uni/applied-electrochem.html)：94 行（tab）、95 行（tab）、96 行（tab）、97 行（tab）、98 行（tab）
+- [chemistry/uni/colloid.html](../../chemistry/uni/colloid.html)：105 行（tab）、106 行（tab）、107 行（tab）
+- [chemistry/uni/electrochem.html](../../chemistry/uni/electrochem.html)：106 行（tab）、107 行（tab）、108 行（tab）
+- [chemistry/uni/equilibrium.html](../../chemistry/uni/equilibrium.html)：159 行（mode-btn）、160 行（mode-btn）、161 行（mode-btn）、192 行（mode-btn）、193 行（mode-btn）、225 行（mode-btn）、226 行（mode-btn）
+- [chemistry/uni/kinetics.html](../../chemistry/uni/kinetics.html)：68 行（tab）、69 行（tab）、70 行（tab）、71 行（tab）
+- [chemistry/uni/phase-equilibrium.html](../../chemistry/uni/phase-equilibrium.html)：104 行（tab）、105 行（tab）、106 行（tab）
+- [chemistry/uni/polymer.html](../../chemistry/uni/polymer.html)：90 行（tab）、91 行（tab）、92 行（tab）、93 行（tab）、94 行（tab）
+- [chemistry/uni/quantum-chemistry.html](../../chemistry/uni/quantum-chemistry.html)：97 行（tab）、98 行（tab）、99 行（tab）、100 行（tab）
+- [chemistry/uni/stereochemistry.html](../../chemistry/uni/stereochemistry.html)：94 行（tab）、95 行（tab）、96 行（tab）、97 行（tab）、125 行（mode-btn）、126 行（mode-btn）、127 行（mode-btn）、160 行（mode-btn）、161 行（mode-btn）、162 行（mode-btn）、195 行（mode-btn）、196 行（mode-btn）、197 行（mode-btn）、198 行（mode-btn）
+- [chemistry/uni/thermodynamics.html](../../chemistry/uni/thermodynamics.html)：97 行（tab）、98 行（tab）、99 行（tab）、100 行（tab）、163 行（mode-btn）、164 行（mode-btn）、165 行（mode-btn）、166 行（mode-btn）
+- [math/high/complex-numbers.html](../../math/high/complex-numbers.html)：192 行（tab）、193 行（tab）、194 行（tab）
+- [math/high/conic-sections.html](../../math/high/conic-sections.html)：68 行（tab）、69 行（tab）、70 行（tab）、71 行（tab）、72 行（tab）、91 行（mode-btn）、92 行（mode-btn）、93 行（mode-btn）
+- [math/high/counting.html](../../math/high/counting.html)：368 行（tab）、369 行（tab）、370 行（tab）、371 行（tab）、372 行（tab）
+- [math/high/derivative.html](../../math/high/derivative.html)：72 行（tab）、73 行（tab）、74 行（tab）、75 行（tab）
+- [math/high/function.html](../../math/high/function.html)：281 行（tab）、282 行（tab）、283 行（tab）、284 行（tab）
+- [math/high/inequality.html](../../math/high/inequality.html)：74 行（tab）、75 行（tab）、76 行（tab）、77 行（tab）
+- [math/high/probability.html](../../math/high/probability.html)：325 行（tab）、326 行（tab）、327 行（tab）、328 行（tab）、329 行（tab）
+- [math/high/random-variables.html](../../math/high/random-variables.html)：119 行（tab）、120 行（tab）、121 行（tab）
+- [math/high/sets.html](../../math/high/sets.html)：250 行（tab）、251 行（tab）、252 行（tab）、253 行（tab）
+- [math/high/solid-geometry.html](../../math/high/solid-geometry.html)：129 行（tab）、130 行（tab）、131 行（tab）、132 行（tab）
+- [math/high/statistics.html](../../math/high/statistics.html)：309 行（tab）、310 行（tab）、311 行（tab）、312 行（tab）
+- [math/middle/circle.html](../../math/middle/circle.html)：95 行（tab）、96 行（tab）、97 行（tab）、98 行（tab）
+- [math/middle/coordinate-plane.html](../../math/middle/coordinate-plane.html)：108 行（tab）、109 行（tab）、110 行（tab）
+- [math/middle/data-analysis.html](../../math/middle/data-analysis.html)：119 行（tab）、120 行（tab）、121 行（tab）
+- [math/middle/data-statistics.html](../../math/middle/data-statistics.html)：111 行（tab）、112 行（tab）、113 行（tab）
+- [math/middle/inequalities.html](../../math/middle/inequalities.html)：120 行（tab）、121 行（tab）、122 行（tab）
+- [math/middle/intersecting-parallel-lines.html](../../math/middle/intersecting-parallel-lines.html)：117 行（tab）、118 行（tab）、119 行（tab）
+- [math/middle/linear-equations-2var.html](../../math/middle/linear-equations-2var.html)：112 行（tab）、113 行（tab）、114 行（tab）
+- [math/middle/probability-intro.html](../../math/middle/probability-intro.html)：118 行（tab）、119 行（tab）、120 行（tab）
+- [math/middle/pythagorean-theorem.html](../../math/middle/pythagorean-theorem.html)：197 行（tab）、198 行（tab）、199 行（tab）、200 行（tab）
+- [math/uni/combinatorics.html](../../math/uni/combinatorics.html)：79 行（tab）、80 行（tab）、81 行（tab）、82 行（tab）、83 行（tab）
+- [math/uni/complex-analysis.html](../../math/uni/complex-analysis.html)：107 行（tab）、108 行（tab）、109 行（tab）
+- [math/uni/derivative.html](../../math/uni/derivative.html)：108 行（tab）、109 行（tab）、110 行（tab）、111 行（tab）、112 行（tab）
+- [math/uni/discrete-math.html](../../math/uni/discrete-math.html)：73 行（tab）、74 行（tab）、75 行（tab）、76 行（tab）、77 行（tab）、78 行（tab）
+- [math/uni/eigenvalues.html](../../math/uni/eigenvalues.html)：113 行（tab）、114 行（tab）、115 行（tab）、116 行（tab）
+- [math/uni/fourier-analysis.html](../../math/uni/fourier-analysis.html)：110 行（tab）、111 行（tab）、112 行（tab）
+- [math/uni/game-theory.html](../../math/uni/game-theory.html)：79 行（tab）、80 行（tab）、81 行（tab）、82 行（tab）、83 行（tab）
+- [math/uni/group-theory.html](../../math/uni/group-theory.html)：167 行（tab）、168 行（tab）、169 行（tab）、170 行（tab）
+- [math/uni/integral-transform.html](../../math/uni/integral-transform.html)：72 行（tab）、73 行（tab）、74 行（tab）、75 行（tab）、76 行（tab）
+- [math/uni/integral.html](../../math/uni/integral.html)：75 行（tab）、76 行（tab）、77 行（tab）、78 行（tab）、79 行（tab）
+- [math/uni/limit.html](../../math/uni/limit.html)：99 行（tab）、100 行（tab）、101 行（tab）、102 行（tab）
+- [math/uni/linear-systems.html](../../math/uni/linear-systems.html)：117 行（tab）、118 行（tab）、119 行（tab）、120 行（tab）、189 行（mode-btn）、190 行（mode-btn）、191 行（mode-btn）、192 行（mode-btn）、229 行（mode-btn）、230 行（mode-btn）、231 行（mode-btn）、232 行（mode-btn）
+- [math/uni/logic-set.html](../../math/uni/logic-set.html)：84 行（tab）、85 行（tab）、86 行（tab）、87 行（tab）、88 行（tab）
+- [math/uni/matrix.html](../../math/uni/matrix.html)：100 行（tab）、101 行（tab）、102 行（tab）、103 行（tab）
+- [math/uni/multivariable.html](../../math/uni/multivariable.html)：107 行（tab）、108 行（tab）、109 行（tab）、110 行（tab）、111 行（tab）
+- [math/uni/number-theory.html](../../math/uni/number-theory.html)：80 行（tab）、81 行（tab）、82 行（tab）、83 行（tab）、84 行（tab）
+- [math/uni/numerical-methods.html](../../math/uni/numerical-methods.html)：78 行（tab）、79 行（tab）、80 行（tab）、81 行（tab）
+- [math/uni/ode.html](../../math/uni/ode.html)：75 行（tab）、76 行（tab）、77 行（tab）、78 行（tab）、79 行（tab）、80 行（tab）
+- [math/uni/pde.html](../../math/uni/pde.html)：67 行（tab）、68 行（tab）、69 行（tab）、70 行（tab）、71 行（tab）
+- [math/uni/probability.html](../../math/uni/probability.html)：173 行（tab）、174 行（tab）、175 行（tab）、176 行（tab）
+- [math/uni/random-variable.html](../../math/uni/random-variable.html)：252 行（tab）、253 行（tab）、254 行（tab）、255 行（tab）
+- [math/uni/series.html](../../math/uni/series.html)：188 行（tab）、189 行（tab）、190 行（tab）、191 行（tab）
+- [math/uni/statistics.html](../../math/uni/statistics.html)：195 行（tab）、196 行（tab）、197 行（tab）、198 行（tab）
+- [math/uni/stochastic-process.html](../../math/uni/stochastic-process.html)：191 行（tab）、192 行（tab）、193 行（tab）、194 行（tab）
+- [math/uni/topology.html](../../math/uni/topology.html)：90 行（tab）、91 行（tab）、92 行（tab）、93 行（tab）
+- [math/uni/vector-calculus.html](../../math/uni/vector-calculus.html)：97 行（tab）、98 行（tab）、99 行（tab）
+- [physics/high/electrostatic-field.html](../../physics/high/electrostatic-field.html)：178 行（tab）、179 行（tab）、180 行（tab）、181 行（tab）
+- [physics/high/gravitation.html](../../physics/high/gravitation.html)：193 行（tab）、194 行（tab）、195 行（tab）、196 行（tab）
+- [physics/high/interactions.html](../../physics/high/interactions.html)：73 行（tab）、74 行（tab）、75 行（tab）、76 行（tab）、77 行（tab）
+- [physics/high/magnetic-field.html](../../physics/high/magnetic-field.html)：202 行（tab）、203 行（tab）、204 行（tab）、205 行（tab）、206 行（tab）
+- [physics/high/mechanical-energy.html](../../physics/high/mechanical-energy.html)：199 行（tab）、200 行（tab）、201 行（tab）、202 行（tab）
+- [physics/high/modern-physics.html](../../physics/high/modern-physics.html)：72 行（tab）、73 行（tab）、74 行（tab）、75 行（tab）、76 行（tab）
+- [physics/high/momentum.html](../../physics/high/momentum.html)：203 行（tab）、204 行（tab）、205 行（tab）、206 行（tab）
+- [physics/high/motion.html](../../physics/high/motion.html)：71 行（tab）、72 行（tab）、73 行（tab）、74 行（tab）、75 行（tab）
+- [physics/middle/buoyancy.html](../../physics/middle/buoyancy.html)：86 行（tab）、87 行（tab）、88 行（tab）、89 行（tab）、90 行（tab）
+- [physics/middle/force.html](../../physics/middle/force.html)：117 行（tab）、118 行（tab）、119 行（tab）、120 行（tab）、121 行（tab）、172 行（mode-btn）、173 行（mode-btn）、174 行（mode-btn）、226 行（mode-btn）、227 行（mode-btn）、228 行（mode-btn）、281 行（mode-btn）、282 行（mode-btn）、283 行（mode-btn）、342 行（mode-btn）、343 行（mode-btn）、344 行（mode-btn）
+- [physics/middle/lens.html](../../physics/middle/lens.html)：90 行（tab）、91 行（tab）、92 行（tab）、93 行（tab）
+- [physics/middle/mass-density.html](../../physics/middle/mass-density.html)：104 行（tab）、105 行（tab）、106 行（tab）、285 行（quiz-opt）、286 行（quiz-opt）、287 行（quiz-opt）、288 行（quiz-opt）
+- [physics/middle/motion-force.html](../../physics/middle/motion-force.html)：111 行（tab）、112 行（tab）、113 行（tab）、114 行（tab）、145 行（mode-btn）、146 行（mode-btn）、187 行（mode-btn）、188 行（mode-btn）、189 行（mode-btn）、237 行（mode-btn）、238 行（mode-btn）、239 行（mode-btn）
+- [physics/middle/pressure.html](../../physics/middle/pressure.html)：72 行（tab）、73 行（tab）、74 行（tab）、75 行（tab）、76 行（tab）
+- [physics/middle/simple-machines.html](../../physics/middle/simple-machines.html)：72 行（tab）、73 行（tab）、74 行（tab）、75 行（tab）、76 行（tab）
+- [physics/middle/sound.html](../../physics/middle/sound.html)：84 行（tab）、85 行（tab）、86 行（tab）、104 行（mode-btn）、105 行（mode-btn）、106 行（mode-btn）、107 行（mode-btn）、168 行（mode-btn）、169 行（mode-btn）、170 行（mode-btn）
+- [physics/middle/state-change.html](../../physics/middle/state-change.html)：119 行（tab）、120 行（tab）、121 行（tab）、122 行（tab）
+- [physics/middle/work-energy.html](../../physics/middle/work-energy.html)：73 行（tab）、74 行（tab）、75 行（tab）、76 行（tab）、77 行（tab）、78 行（tab）
+- [physics/uni/08-wave-optics.html](../../physics/uni/08-wave-optics.html)：88 行（tab）、89 行（tab）、90 行（tab）、91 行（tab）、92 行（tab）
+- [physics/uni/doppler.html](../../physics/uni/doppler.html)：103 行（tab）、104 行（tab）、105 行（tab）
+- [physics/uni/electrostatic-field.html](../../physics/uni/electrostatic-field.html)：234 行（tab）、235 行（tab）、236 行（tab）、237 行（tab）、238 行（tab）
+- [physics/uni/em-induction.html](../../physics/uni/em-induction.html)：151 行（tab）、152 行（tab）、153 行（tab）、154 行（tab）
+- [physics/uni/entropy.html](../../physics/uni/entropy.html)：88 行（tab）、89 行（tab）、90 行（tab）、91 行（tab）、92 行（tab）
+- [physics/uni/fluid-mechanics.html](../../physics/uni/fluid-mechanics.html)：104 行（tab）、105 行（tab）、106 行（tab）
+- [physics/uni/laser-physics.html](../../physics/uni/laser-physics.html)：97 行（tab）、98 行（tab）、99 行（tab）
+- [physics/uni/mechanics.html](../../physics/uni/mechanics.html)：84 行（tab）、85 行（tab）、86 行（tab）、87 行（tab）、88 行（tab）
+- [physics/uni/nuclear.html](../../physics/uni/nuclear.html)：134 行（tab）、135 行（tab）、136 行（tab）
+- [physics/uni/phase-transitions.html](../../physics/uni/phase-transitions.html)：104 行（tab）、105 行（tab）、106 行（tab）
+- [physics/uni/photoelectric.html](../../physics/uni/photoelectric.html)：104 行（tab）、105 行（tab）、106 行（tab）
+- [physics/uni/quantum.html](../../physics/uni/quantum.html)：212 行（tab）、213 行（tab）、214 行（tab）、215 行（tab）、216 行（tab）、217 行（tab）
+- [physics/uni/relativity.html](../../physics/uni/relativity.html)：163 行（tab）、164 行（tab）、165 行（tab）、166 行（tab）、167 行（tab）、168 行（tab）
+- [physics/uni/rlc-circuit.html](../../physics/uni/rlc-circuit.html)：97 行（tab）、98 行（tab）、99 行（tab）
+- [physics/uni/steady-magnetic.html](../../physics/uni/steady-magnetic.html)：89 行（tab）、90 行（tab）、91 行（tab）、92 行（tab）、109 行（mode-btn）、110 行（mode-btn）、111 行（mode-btn）、112 行（mode-btn）、181 行（mode-btn）、182 行（mode-btn）、183 行（mode-btn）、227 行（mode-btn）、228 行（mode-btn）、229 行（mode-btn）、230 行（mode-btn）
+- [physics/uni/thermodynamics.html](../../physics/uni/thermodynamics.html)：89 行（tab）、90 行（tab）、91 行（tab）、92 行（tab）、93 行（tab）
+- [physics/uni/vibration-wave.html](../../physics/uni/vibration-wave.html)：238 行（tab）、239 行（tab）、240 行（tab）、241 行（tab）、242 行（tab）
+- [science/chemistry.html](../../science/chemistry.html)：90 行（tab）、91 行（tab）、92 行（tab）
+- [science/electricity.html](../../science/electricity.html)：152 行（tab）、153 行（tab）、154 行（tab）
+- [science/magnets.html](../../science/magnets.html)：105 行（tab）、106 行（tab）、107 行（tab）、108 行（tab）、109 行（tab）、180 行（mode-btn）、181 行（mode-btn）、182 行（mode-btn）、219 行（mode-btn）、220 行（mode-btn）、221 行（mode-btn）、253 行（mode-btn）、254 行（mode-btn）、255 行（mode-btn）、284 行（quiz-opt）、285 行（quiz-opt）、286 行（quiz-opt）、287 行（quiz-opt）
+- [science/matter-changes.html](../../science/matter-changes.html)：106 行（tab）、107 行（tab）、108 行（tab）、109 行（tab）、133 行（mode-btn）、134 行（mode-btn）、135 行（mode-btn）、247 行（mode-btn）、248 行（mode-btn）
+- [science/sound.html](../../science/sound.html)：191 行（tab）、192 行（tab）、193 行（tab）、194 行（tab）
+
+## 内联 while 循环
+
+- [chemistry/uni/polymer.html](../../chemistry/uni/polymer.html)：699 行
+- [math/high/solid-geometry.html](../../math/high/solid-geometry.html)：512 行、518 行
+- [math/middle/quadratic-equation.html](../../math/middle/quadratic-equation.html)：599 行
+- [math/topics/20-within-addition-subtraction/index.html](../../math/topics/20-within-addition-subtraction/index.html)：306 行、316 行、546 行、653 行
+- [math/topics/24h-time/index.html](../../math/topics/24h-time/index.html)：412 行、423 行、527 行、536 行、581 行
+- [math/topics/abacus/index.html](../../math/topics/abacus/index.html)：587 行
+- [math/topics/addition/index.html](../../math/topics/addition/index.html)：346 行
+- [math/topics/addition-subtraction-within-100/index.html](../../math/topics/addition-subtraction-within-100/index.html)：800 行
+- [math/topics/addition-subtraction-within-10000/index.html](../../math/topics/addition-subtraction-within-10000/index.html)：485 行、578 行
+- [math/topics/angle-measurement/index.html](../../math/topics/angle-measurement/index.html)：323 行、548 行
+- [math/topics/area-units/index.html](../../math/topics/area-units/index.html)：451 行、628 行
+- [math/topics/arithmetic-laws/index.html](../../math/topics/arithmetic-laws/index.html)：376 行
+- [math/topics/bar-charts/index.html](../../math/topics/bar-charts/index.html)：406 行、417 行
+- [math/topics/chicken-rabbit/index.html](../../math/topics/chicken-rabbit/index.html)：462 行
+- [math/topics/circle/index.html](../../math/topics/circle/index.html)：393 行
+- [math/topics/comparison-and-ordering/index.html](../../math/topics/comparison-and-ordering/index.html)：238 行、328 行、334 行、381 行、393 行、419 行
+- [math/topics/compound-charts/index.html](../../math/topics/compound-charts/index.html)：434 行
+- [math/topics/compound-statistical-tables/index.html](../../math/topics/compound-statistical-tables/index.html)：388 行、417 行
+- [math/topics/decimal-addition-subtraction/index.html](../../math/topics/decimal-addition-subtraction/index.html)：423 行、462 行、673 行、698 行
+- [math/topics/decimal-multiplication-division/index.html](../../math/topics/decimal-multiplication-division/index.html)：579 行
+- [math/topics/direct-inverse-proportion/index.html](../../math/topics/direct-inverse-proportion/index.html)：552 行
+- [math/topics/estimation/index.html](../../math/topics/estimation/index.html)：285 行、290 行、295 行、325 行、425 行、516 行、547 行、563 行
+- [math/topics/figure-movement/index.html](../../math/topics/figure-movement/index.html)：513 行
+- [math/topics/fraction-multiplication-division/index.html](../../math/topics/fraction-multiplication-division/index.html)：300 行、532 行、539 行
+- [math/topics/fraction-operations/index.html](../../math/topics/fraction-operations/index.html)：365 行
+- [math/topics/hectares-and-square-kilometers/index.html](../../math/topics/hectares-and-square-kilometers/index.html)：459 行
+- [math/topics/hours-minutes-seconds/index.html](../../math/topics/hours-minutes-seconds/index.html)：569 行、651 行、753 行
+- [math/topics/intro-to-division/index.html](../../math/topics/intro-to-division/index.html)：255 行、357 行、382 行
+- [math/topics/large-numbers/index.html](../../math/topics/large-numbers/index.html)：505 行
+- [math/topics/length-measurement/index.html](../../math/topics/length-measurement/index.html)：482 行
+- [math/topics/letters-represent-numbers/index.html](../../math/topics/letters-represent-numbers/index.html)：242 行
+- [math/topics/line-segments/index.html](../../math/topics/line-segments/index.html)：377 行
+- [math/topics/logical-reasoning/index.html](../../math/topics/logical-reasoning/index.html)：230 行
+- [math/topics/measurements/index.html](../../math/topics/measurements/index.html)：412 行
+- [math/topics/money/index.html](../../math/topics/money/index.html)：537 行、552 行、562 行
+- [math/topics/multi-digit-multiplication/index.html](../../math/topics/multi-digit-multiplication/index.html)：736 行
+- [math/topics/multiplication/index.html](../../math/topics/multiplication/index.html)：540 行
+- [math/topics/multiplication-intro/index.html](../../math/topics/multiplication-intro/index.html)：337 行、420 行、503 行
+- [math/topics/multiplication-tables/index.html](../../math/topics/multiplication-tables/index.html)：342 行、401 行
+- [math/topics/negative-numbers/index.html](../../math/topics/negative-numbers/index.html)：336 行、373 行
+- [math/topics/numbers-and-shapes/index.html](../../math/topics/numbers-and-shapes/index.html)：247 行
+- [math/topics/numbers-within-100/index.html](../../math/topics/numbers-within-100/index.html)：490 行
+- [math/topics/numbers-within-10000/index.html](../../math/topics/numbers-within-10000/index.html)：597 行、610 行、625 行、640 行、656 行
+- [math/topics/oral-calculation/index.html](../../math/topics/oral-calculation/index.html)：413 行
+- [math/topics/ordered-pairs/index.html](../../math/topics/ordered-pairs/index.html)：504 行、516 行
+- [math/topics/ordinal-numbers/index.html](../../math/topics/ordinal-numbers/index.html)：253 行、330 行、344 行
+- [math/topics/pattern-sequences/index.html](../../math/topics/pattern-sequences/index.html)：332 行、445 行、523 行、655 行、681 行
+- [math/topics/percentage-applications/index.html](../../math/topics/percentage-applications/index.html)：256 行
+- [math/topics/perimeter/index.html](../../math/topics/perimeter/index.html)：555 行、608 行、729 行、817 行
+- [math/topics/pie-charts/index.html](../../math/topics/pie-charts/index.html)：363 行
+- [math/topics/plane-shapes/index.html](../../math/topics/plane-shapes/index.html)：387 行、393 行、644 行
+- [math/topics/position-and-direction/index.html](../../math/topics/position-and-direction/index.html)：359 行、365 行、405 行、483 行、509 行、653 行、674 行
+- [math/topics/prime-composite/index.html](../../math/topics/prime-composite/index.html)：457 行
+- [math/topics/quadrilaterals/index.html](../../math/topics/quadrilaterals/index.html)：414 行
+- [math/topics/ratio-and-proportion/index.html](../../math/topics/ratio-and-proportion/index.html)：233 行、595 行
+- [math/topics/ratio-applications/index.html](../../math/topics/ratio-applications/index.html)：469 行
+- [math/topics/rounding-numbers/index.html](../../math/topics/rounding-numbers/index.html)：340 行、358 行、376 行、516 行、529 行、542 行
+- [math/topics/set-overlap/index.html](../../math/topics/set-overlap/index.html)：231 行
+- [math/topics/shapes-and-position/index.html](../../math/topics/shapes-and-position/index.html)：326 行
+- [math/topics/simple-reasoning/index.html](../../math/topics/simple-reasoning/index.html)：431 行
+- [math/topics/solid-shapes/index.html](../../math/topics/solid-shapes/index.html)：454 行
+- [math/topics/subtraction/index.html](../../math/topics/subtraction/index.html)：401 行
+- [math/topics/telling-time/index.html](../../math/topics/telling-time/index.html)：499 行
+- [math/topics/time-and-date/index.html](../../math/topics/time-and-date/index.html)：394 行、554 行、561 行
+- [math/topics/tree-planting/index.html](../../math/topics/tree-planting/index.html)：631 行、748 行
+- [math/topics/triangles/index.html](../../math/topics/triangles/index.html)：734 行、863 行
+- [math/topics/understanding-zero/index.html](../../math/topics/understanding-zero/index.html)：389 行
+- [math/uni/discrete-math.html](../../math/uni/discrete-math.html)：386 行、530 行
+- [math/uni/group-theory.html](../../math/uni/group-theory.html)：655 行
+- [math/uni/limit.html](../../math/uni/limit.html)：385 行
+- [math/uni/number-theory.html](../../math/uni/number-theory.html)：213 行、220 行、274 行、506 行、521 行
+- [math/uni/statistics.html](../../math/uni/statistics.html)：379 行、380 行
+- [math/uni/stochastic-process.html](../../math/uni/stochastic-process.html)：533 行、652 行、653 行
+- [physics/high/constant-current.html](../../physics/high/constant-current.html)：545 行
+- [physics/uni/thermodynamics.html](../../physics/uni/thermodynamics.html)：323 行
