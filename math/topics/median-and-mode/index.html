@@ -288,14 +288,18 @@
       return data;
     }
     function generateDataWithMode(count, minVal, maxVal, modeVal, modeCount) {
-      const data = [];
-      for (let i = 0; i < modeCount; i++) data.push(modeVal);
-      while (data.length < count) {
-        let v = randInt(minVal, maxVal);
-        if (v === modeVal && data.filter(x => x === v).length >= modeCount - 1) continue;
-        data.push(v);
+      // 其他数各出现一次，确保指定值是唯一众数且不需要随机重试。
+      const others = Array.from({length: maxVal - minVal + 1}, (_, i) => minVal + i)
+        .filter(value => value !== modeVal);
+      return shuffle([...Array(modeCount).fill(modeVal), ...shuffle(others).slice(0, count - modeCount)]);
+    }
+    function makeNumberOptions(answer, candidates = []) {
+      const unique = [...new Set(candidates.filter(value => value > 0 && value !== answer))];
+      for (let offset = 1; unique.length < 3; offset++) {
+        const value = answer + offset;
+        if (!unique.includes(value)) unique.push(value);
       }
-      return shuffle(data);
+      return shuffle([answer, ...shuffle(unique).slice(0, 3)]);
     }
     function findMedian(arr) {
       const sorted = [...arr].sort((a, b) => a - b);
@@ -333,18 +337,8 @@
       const sorted = [...data].sort((a, b) => a - b);
       const median = findMedian(data);
 
-      // 生成选项
-      const options = new Set([median]);
-      while (options.size < 4) {
-        let fake;
-        if (Math.random() < 0.5) {
-          fake = sorted[randInt(0, sorted.length - 1)];
-        } else {
-          fake = median + randInt(-5, 5);
-        }
-        if (fake !== median && fake > 0) options.add(fake);
-      }
-      const opts = shuffle([...options]);
+      // 有限候选集覆盖重复数据与边界值。
+      const opts = makeNumberOptions(median, sorted);
 
       area.innerHTML = `
         <div class="question-text">请找出这组数据的中位数</div>
@@ -367,7 +361,7 @@
       area.querySelectorAll('.opt-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const val = parseFloat(btn.dataset.val);
-          area.querySelectorAll('.opt-btn').forEach(b => b.style.pointerEvents = 'none');
+          area.querySelectorAll('.opt-btn').forEach(b => { b.disabled = true; });
           if (val === median) {
             btn.classList.add('correct');
             medianCorrect++;
@@ -401,18 +395,7 @@
       data.forEach(x => freq[x] = (freq[x] || 0) + 1);
       const maxFreq = Math.max(...Object.values(freq));
 
-      // 生成选项
-      const options = new Set([modeVal]);
-      const uniqueVals = Object.keys(freq).map(Number);
-      while (options.size < 4 && uniqueVals.length > 0) {
-        const idx = randInt(0, uniqueVals.length - 1);
-        if (uniqueVals[idx] !== modeVal) options.add(uniqueVals[idx]);
-      }
-      while (options.size < 4) {
-        const fake = randInt(1, 20);
-        if (fake !== modeVal) options.add(fake);
-      }
-      const opts = shuffle([...options]);
+      const opts = makeNumberOptions(modeVal, Object.keys(freq).map(Number));
 
       // 频率表
       const freqEntries = Object.entries(freq).sort((a, b) => b[1] - a[1]);
@@ -442,7 +425,7 @@
       area.querySelectorAll('.opt-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const val = parseFloat(btn.dataset.val);
-          area.querySelectorAll('.opt-btn').forEach(b => b.style.pointerEvents = 'none');
+          area.querySelectorAll('.opt-btn').forEach(b => { b.disabled = true; });
           if (val === modeVal) {
             btn.classList.add('correct');
             modeCorrect++;
@@ -497,12 +480,7 @@
         const count = randInt(5, 7);
         const data = generateData(count, 1, 30);
         const median = findMedian(data);
-        const options = new Set([median]);
-        while (options.size < 4) {
-          const fake = median + randInt(-5, 5);
-          if (fake !== median && fake > 0) options.add(fake);
-        }
-        const opts = shuffle([...options]);
+        const opts = makeNumberOptions(median, data);
         challengeQ = { answer: median };
         qDiv.innerHTML = `
           <div class="challenge-problem">找中位数 👇</div>
@@ -516,13 +494,7 @@
         const modeVal = randInt(1, 15);
         const modeCount = randInt(2, 3);
         const data = generateDataWithMode(count, 1, 15, modeVal, modeCount);
-        const options = new Set([modeVal]);
-        const uniqueVals = [...new Set(data)];
-        while (options.size < 4) {
-          const fake = randInt(1, 15);
-          if (fake !== modeVal) options.add(fake);
-        }
-        const opts = shuffle([...options]);
+        const opts = makeNumberOptions(modeVal, data);
         challengeQ = { answer: modeVal };
         qDiv.innerHTML = `
           <div class="challenge-problem">找众数 🔥 👇</div>
@@ -535,7 +507,7 @@
       qDiv.querySelectorAll('.opt-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const val = parseFloat(btn.dataset.val);
-          qDiv.querySelectorAll('.opt-btn').forEach(b => b.style.pointerEvents = 'none');
+          qDiv.querySelectorAll('.opt-btn').forEach(b => { b.disabled = true; });
           if (val === challengeQ.answer) {
             btn.classList.add('correct');
             challengeScore++;
