@@ -1,0 +1,20 @@
+# function-domain-visual-consistency Specification
+
+## Purpose
+TBD - created by archiving change function-domain-visual-consistency. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 定义域示例图像与坐标一致
+
+函数定义域探索器 SHALL 在统一坐标系绘制各示例，并在无定义或不可见区域断开曲线；示例 SHALL 可通过键盘选择。
+
+#### Scenario: 倒数函数
+
+- **WHEN** 选择 1/x
+- **THEN** 曲线的两支分别位于第一和第三象限，且不会跨越 x=0
+
+#### Scenario: 根号、平方、对数和绝对值
+
+- **WHEN** 选择其他示例
+- **THEN** 代表点按同一坐标映射绘制，定义域说明和选中状态同步更新

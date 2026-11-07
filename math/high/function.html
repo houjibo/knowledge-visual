@@ -76,7 +76,7 @@ body {
   border-radius: 12px;
   margin: 10px 0;
 }
-canvas { display: block; margin: 0 auto; border-radius: 12px; }
+canvas { display: block; margin: 0 auto; border-radius: 12px; max-width: 100%; height: auto; }
 .btn {
   display: inline-block;
   padding: 8px 18px;
@@ -269,7 +269,8 @@ canvas { display: block; margin: 0 auto; border-radius: 12px; }
   margin: 12px 0;
 }
 .tab { font-family: inherit; color: inherit; }
-.tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
+.domain-item { font: inherit; color: inherit; text-align: left; }
+.domain-item:focus-visible, .tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
 </style>
 </head>
 <body>
@@ -303,6 +304,7 @@ canvas { display: block; margin: 0 auto; border-radius: 12px; }
     <h3>🔍 定义域探索器</h3>
     <p class="info-text">点击不同函数，查看其定义域和值域的确定方法：</p>
     <div class="domain-explorer" id="domainExplorer"></div>
+    <p class="info-text">图中 x、y 均显示 −5 至 5；横纵方向比例不同。</p>
     <div class="domain-canvas-wrap">
       <canvas id="domainCanvas" width="340" height="220"></canvas>
     </div>
@@ -418,51 +420,57 @@ document.querySelectorAll('.tab').forEach(tab => {
 
 // ===== Panel 1: Domain Explorer =====
 const funcExamples = [
-  { label: 'f(x) = 1/x', domain: 'x ≠ 0', range: 'y ≠ 0', explain: '分母不能为0，所以 x ≠ 0。值域也不含0。', draw: (ctx, w, h) => { drawAxis(ctx, w, h); ctx.strokeStyle='#00d2ff'; ctx.lineWidth=2; for(let x=-5;x<=5;x+=0.01){ if(Math.abs(x)<0.1) continue; let px=(x+5)/10*w, py=h/2-1/(x)*h/10; if(x<0)ctx.moveTo(px,py); else{ ctx.beginPath(); } ctx.lineTo(px,py); } ctx.stroke(); drawDomainHole(ctx,w,h,0); }},
-  { label: 'f(x) = √x', domain: 'x ≥ 0', range: 'y ≥ 0', explain: '根号下必须非负，所以 x ≥ 0。值域也是 y ≥ 0。', draw: (ctx, w, h) => { drawAxis(ctx, w, h); ctx.strokeStyle='#38ef7d'; ctx.lineWidth=2.5; ctx.beginPath(); for(let x=0;x<=5;x+=0.05){ let px=x/5.5*w, py=h/2-Math.sqrt(x)/2.5*h/2; ctx.lineTo(px,py); } ctx.stroke(); }},
-  { label: 'f(x) = x²', domain: 'R（全体实数）', range: 'y ≥ 0', explain: 'x² 对任何实数都有意义，定义域为 R。值域为 y ≥ 0。', draw: (ctx, w, h) => { drawAxis(ctx, w, h); ctx.strokeStyle='#ffd200'; ctx.lineWidth=2.5; ctx.beginPath(); for(let x=-3;x<=3;x+=0.05){ let px=(x+3)/6*w, py=h*0.85-x*x/9*h*0.7; ctx.lineTo(px,py); } ctx.stroke(); }},
-  { label: 'f(x) = ln(x)', domain: 'x > 0', range: 'R', explain: '对数函数要求真数 > 0，定义域 (0,+∞)。值域为 R。', draw: (ctx, w, h) => { drawAxis(ctx, w, h); ctx.strokeStyle='#ff6b6b'; ctx.lineWidth=2.5; ctx.beginPath(); for(let x=0.05;x<=5;x+=0.05){ let px=x/5.5*w, py=h/2-Math.log(x)/3*h/2; if(py<0||py>h) continue; ctx.lineTo(px,py); } ctx.stroke(); }},
-  { label: 'f(x) = |x|', domain: 'R', range: 'y ≥ 0', explain: '绝对值对所有实数有意义。值域 y ≥ 0。偶函数！', draw: (ctx, w, h) => { drawAxis(ctx, w, h); ctx.strokeStyle='#667eea'; ctx.lineWidth=2.5; ctx.beginPath(); for(let x=-3;x<=3;x+=0.05){ let px=(x+3)/6*w, py=h*0.85-Math.abs(x)/3*h*0.7; ctx.lineTo(px,py); } ctx.stroke(); }}
+  { label: 'f(x) = 1/x', domain: 'x ≠ 0', explain: '分母不能为 0，所以 x ≠ 0。值域也不含 0。', color: '#00d2ff', f: x => x === 0 ? NaN : 1/x },
+  { label: 'f(x) = √x', domain: 'x ≥ 0', explain: '根号下必须非负，所以 x ≥ 0。值域也是 y ≥ 0。', color: '#38ef7d', f: x => x < 0 ? NaN : Math.sqrt(x) },
+  { label: 'f(x) = x²', domain: 'R（全体实数）', explain: 'x² 对任何实数都有意义，定义域为 R。值域为 y ≥ 0。', color: '#ffd200', f: x => x*x },
+  { label: 'f(x) = ln(x)', domain: 'x > 0', explain: '对数函数要求真数 > 0，定义域 (0,+∞)。值域为 R。', color: '#ff6b6b', f: x => x <= 0 ? NaN : Math.log(x) },
+  { label: 'f(x) = |x|', domain: 'R', explain: '绝对值对所有实数有意义。值域 y ≥ 0。偶函数！', color: '#667eea', f: x => Math.abs(x) }
 ];
 
 let activeDomain = 0;
 
-function drawAxis(ctx, w, h) {
-  ctx.clearRect(0,0,w,h);
-  ctx.strokeStyle='rgba(255,255,255,0.15)';
-  ctx.lineWidth=1;
-  // x axis
-  ctx.beginPath(); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
-  // y axis
-  ctx.beginPath(); ctx.moveTo(w/2,0); ctx.lineTo(w/2,h); ctx.stroke();
-}
-
-function drawDomainHole(ctx, w, h, x) {
-  let px = (x+5)/10*w;
-  ctx.beginPath();
-  ctx.arc(px, h/2, 5, 0, Math.PI*2);
-  ctx.strokeStyle='#f45c43';
-  ctx.lineWidth=2;
-  ctx.stroke();
-}
-
 function renderDomainExplorer() {
   const container = document.getElementById('domainExplorer');
-  container.innerHTML = '';
-  funcExamples.forEach((f, i) => {
-    const div = document.createElement('div');
-    div.className = 'domain-item' + (i === activeDomain ? ' active' : '');
-    div.innerHTML = `<span class="func-label">${f.label}</span><span class="func-domain">定义域: ${f.domain}</span>`;
-    div.onclick = () => { activeDomain = i; renderDomainExplorer(); drawDomainGraph(); };
-    container.appendChild(div);
+  if (!container.hasChildNodes()) {
+    funcExamples.forEach((f, i) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'domain-item';
+      button.innerHTML = `<span class="func-label">${f.label}</span><span class="func-domain">定义域: ${f.domain}</span>`;
+      button.onclick = () => { activeDomain = i; renderDomainExplorer(); drawDomainGraph(); };
+      container.appendChild(button);
+    });
+  }
+  container.querySelectorAll('.domain-item').forEach((button, i) => {
+    button.classList.toggle('active', i === activeDomain);
+    button.setAttribute('aria-pressed', String(i === activeDomain));
   });
-  document.getElementById('domainExplain').innerHTML = funcExamples[activeDomain].explain;
+  document.getElementById('domainExplain').textContent = funcExamples[activeDomain].explain;
 }
 
 function drawDomainGraph() {
   const canvas = document.getElementById('domainCanvas');
   const ctx = canvas.getContext('2d');
-  funcExamples[activeDomain].draw(ctx, canvas.width, canvas.height);
+  const w = canvas.width, h = canvas.height;
+  const example = funcExamples[activeDomain];
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke();
+  ctx.strokeStyle = example.color;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  let started = false;
+  for (let px = 0; px <= w; px++) {
+    const x = (px - w/2) / (w/10);
+    const y = example.f(x);
+    if (!Number.isFinite(y) || y < -5 || y > 5) { started = false; continue; }
+    const py = h/2 - y * (h/10);
+    if (!started) { ctx.moveTo(px, py); started = true; }
+    else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
 }
 
 renderDomainExplorer();
