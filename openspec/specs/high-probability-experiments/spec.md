@@ -1,0 +1,20 @@
+# high-probability-experiments Specification
+
+## Purpose
+TBD - created by archiving change high-probability-experiment-integrity. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 重置终止该实验待执行的批量操作
+硬币、骰子和摸球实验 SHALL 在重置时取消该实验尚未执行的批量任务；摸球配置变化 SHALL 也取消批量并清空旧样本。
+
+#### Scenario: 批量运行中更改球数
+- **WHEN** 学习者开始批量摸球后调整球数
+- **THEN** 旧批次取消且计数清零，不再写入新一轮实验
+
+### Requirement: 骰子目标重新匹配历史结果
+改变目标和 SHALL 保留已掷样本，按历史分布更新命中次数、频率、理论值及柱状图。
+
+#### Scenario: 查看已出现的点数和
+- **WHEN** 学习者将目标设为历史结果中出现过的和
+- **THEN** 命中次数等于该和的出现次数

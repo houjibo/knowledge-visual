@@ -322,11 +322,11 @@ canvas {
 </div>
 
 <div class="tabs">
-  <div class="tab active" data-panel="p1">① 随机事件</div>
-  <div class="tab" data-panel="p2">② 古典概型</div>
-  <div class="tab" data-panel="p3">③ 几何概型</div>
-  <div class="tab" data-panel="p4">④ 模拟实验</div>
-  <div class="tab" data-panel="p5">⑤ 练习</div>
+  <button type="button" class="tab active" data-panel="p1" aria-pressed="true">① 随机事件</button>
+  <button type="button" class="tab" data-panel="p2" aria-pressed="false">② 古典概型</button>
+  <button type="button" class="tab" data-panel="p3" aria-pressed="false">③ 几何概型</button>
+  <button type="button" class="tab" data-panel="p4" aria-pressed="false">④ 模拟实验</button>
+  <button type="button" class="tab" data-panel="p5" aria-pressed="false">⑤ 练习</button>
 </div>
 
 <!-- Panel 1: 随机事件与概率 -->
@@ -367,7 +367,7 @@ canvas {
       </div>
       <div class="stat-item">
         <div class="label">正面频率</div>
-        <div class="value" id="coinFreq">0%</div>
+        <div class="value" id="coinFreq">—</div>
       </div>
     </div>
     <canvas id="coinChart" width="780" height="200"></canvas>
@@ -398,7 +398,7 @@ canvas {
       <button class="btn btn-secondary" onclick="resetDice()">🔄 重置</button>
     </div>
     <div class="slider-group">
-      <label>目标点数之和：</label>
+      <label for="diceTarget">目标点数之和：</label>
       <input type="range" min="2" max="12" value="7" id="diceTarget" oninput="updateDiceTarget()">
       <span class="val" id="diceTargetVal">7</span>
     </div>
@@ -413,7 +413,7 @@ canvas {
       </div>
       <div class="stat-item">
         <div class="label">实验频率</div>
-        <div class="value" id="diceFreq">0%</div>
+        <div class="value" id="diceFreq">—</div>
       </div>
       <div class="stat-item">
         <div class="label">理论概率</div>
@@ -502,15 +502,16 @@ canvas {
     <h3>🎁 摸球实验</h3>
     <p style="color:#8899aa;font-size:14px;margin-bottom:10px;">袋中有红球和白球，有放回地摸球，统计摸到红球的频率：</p>
     <div class="slider-group">
-      <label>红球数量：</label>
-      <input type="range" min="1" max="9" value="3" id="redBalls" oninput="updateBag()">
+      <label for="redBalls">红球数量：</label>
+      <input type="range" min="1" max="9" value="3" id="redBalls" oninput="updateBag(true)">
       <span class="val" id="redBallsVal">3</span>
     </div>
     <div class="slider-group">
-      <label>白球数量：</label>
-      <input type="range" min="1" max="9" value="7" id="whiteBalls" oninput="updateBag()">
+      <label for="whiteBalls">白球数量：</label>
+      <input type="range" min="1" max="9" value="7" id="whiteBalls" oninput="updateBag(true)">
       <span class="val" id="whiteBallsVal">7</span>
     </div>
+    <p id="bagStatus" role="status" aria-live="polite">调整球数会清空本轮记录并取消正在进行的批量摸球。</p>
     <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:12px 0;" id="bagDisplay"></div>
     <div class="controls">
       <button class="btn btn-primary" onclick="drawBall()">🎱 摸一次</button>
@@ -529,7 +530,7 @@ canvas {
       </div>
       <div class="stat-item">
         <div class="label">实验频率</div>
-        <div class="value" id="bagFreq">0%</div>
+        <div class="value" id="bagFreq">—</div>
       </div>
       <div class="stat-item">
         <div class="label">理论概率</div>
@@ -558,12 +559,28 @@ canvas {
 // ===== Tab switching =====
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
     document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
     t.classList.add('active');
+    t.setAttribute('aria-pressed', 'true');
     document.getElementById(t.dataset.panel).classList.add('active');
   });
 });
+
+// 批量任务可在重置或重新配置实验时取消；已执行的任务从集合移除。
+function createBatch() {
+  const pending = new Set();
+  return {
+    schedule(count, delay, action) {
+      for (let i = 0; i < count; i++) {
+        const timer = setTimeout(() => { pending.delete(timer); action(); }, i * delay);
+        pending.add(timer);
+      }
+    },
+    cancel() { for (const timer of pending) clearTimeout(timer); pending.clear(); }
+  };
+}
+const coinBatch = createBatch(), diceBatch = createBatch(), bagBatch = createBatch();
 
 // ===== Panel 1: Coin Flip =====
 let coinState = { total: 0, heads: 0, history: [] };
@@ -584,10 +601,11 @@ function flipCoin() {
   drawCoinChart();
 }
 
-function flipCoins10() { for (let i = 0; i < 10; i++) setTimeout(() => flipCoin(), i * 50); }
-function flipCoins100() { for (let i = 0; i < 100; i++) setTimeout(() => flipCoin(), i * 10); }
+function flipCoins10() { coinBatch.schedule(10, 50, flipCoin); }
+function flipCoins100() { coinBatch.schedule(100, 10, flipCoin); }
 
 function resetCoin() {
+  coinBatch.cancel();
   coinState = { total: 0, heads: 0, history: [] };
   document.getElementById('coinDisplay').innerHTML = '<div class="coin heads">正</div>';
   updateCoinStats();
@@ -600,7 +618,7 @@ function updateCoinStats() {
   document.getElementById('coinTotal').textContent = total;
   document.getElementById('coinHeads').textContent = heads;
   document.getElementById('coinTails').textContent = total - heads;
-  document.getElementById('coinFreq').textContent = total > 0 ? (heads / total * 100).toFixed(1) + '%' : '0%';
+  document.getElementById('coinFreq').textContent = total > 0 ? (heads / total * 100).toFixed(1) + '%' : '—';
 }
 
 function drawCoinGuide() {
@@ -686,9 +704,10 @@ function rollDice() {
   drawDiceHist();
 }
 
-function rollDiceMulti(n) { for (let i = 0; i < n; i++) setTimeout(() => rollDice(), i * 30); }
+function rollDiceMulti(n) { diceBatch.schedule(n, 30, rollDice); }
 
 function resetDice() {
+  diceBatch.cancel();
   diceState = { total: 0, hits: 0, target: diceState.target, sums: new Array(13).fill(0) };
   document.getElementById('diceDisplay').innerHTML = '<div class="dice">?</div><div class="dice">?</div>';
   updateDiceStats();
@@ -699,15 +718,16 @@ function updateDiceTarget() {
   const target = parseInt(document.getElementById('diceTarget').value);
   document.getElementById('diceTargetVal').textContent = target;
   diceState.target = target;
-  diceState.hits = 0;
+  diceState.hits = diceState.sums[target];
   updateDiceStats();
+  drawDiceHist();
 }
 
 function updateDiceStats() {
   const { total, hits, target, sums } = diceState;
   document.getElementById('diceTotal').textContent = total;
   document.getElementById('diceHit').textContent = hits;
-  document.getElementById('diceFreq').textContent = total > 0 ? (hits / total * 100).toFixed(1) + '%' : '0%';
+  document.getElementById('diceFreq').textContent = total > 0 ? (hits / total * 100).toFixed(1) + '%' : '—';
   
   // Theory probability
   const ways = [0,0,1,2,3,4,5,6,5,4,3,2,1];
@@ -735,6 +755,7 @@ function drawDiceHist() {
   }
 }
 
+updateDiceStats();
 drawDiceHist();
 
 // ===== Panel 3: Geometric Probability - Pi =====
@@ -895,7 +916,7 @@ let bagState = { total: 0, red: 0, history: [], redCount: 3, whiteCount: 7 };
 const bagChart = document.getElementById('bagChart');
 const bagCtx = bagChart.getContext('2d');
 
-function updateBag() {
+function updateBag(changed = false) {
   const red = parseInt(document.getElementById('redBalls').value);
   const white = parseInt(document.getElementById('whiteBalls').value);
   document.getElementById('redBallsVal').textContent = red;
@@ -915,7 +936,7 @@ function updateBag() {
   
   const theory = red / (red + white);
   document.getElementById('bagTheory').textContent = (theory * 100).toFixed(1) + '%';
-  resetBag();
+  resetBag(changed ? '球数已改变：已清空本轮记录，并取消正在进行的批量摸球。' : '调整球数会清空本轮记录并取消正在进行的批量摸球。');
 }
 
 function drawBall() {
@@ -931,9 +952,11 @@ function drawBall() {
   drawBagChart();
 }
 
-function drawBallMulti(n) { for (let i = 0; i < n; i++) setTimeout(() => drawBall(), i * 20); }
+function drawBallMulti(n) { bagBatch.schedule(n, 20, drawBall); }
 
-function resetBag() {
+function resetBag(message = '已清空本轮记录并取消正在进行的批量摸球，球数保持不变。') {
+  bagBatch.cancel();
+  document.getElementById('bagStatus').textContent = message;
   bagState.total = 0;
   bagState.red = 0;
   bagState.history = [];
@@ -946,7 +969,7 @@ function updateBagStats() {
   const { total, red, redCount, whiteCount } = bagState;
   document.getElementById('bagTotal').textContent = total;
   document.getElementById('bagRed').textContent = red;
-  document.getElementById('bagFreq').textContent = total > 0 ? (red / total * 100).toFixed(1) + '%' : '0%';
+  document.getElementById('bagFreq').textContent = total > 0 ? (red / total * 100).toFixed(1) + '%' : '—';
   const theory = redCount / (redCount + whiteCount);
   document.getElementById('bagTheory').textContent = (theory * 100).toFixed(1) + '%';
 }
@@ -1033,7 +1056,7 @@ let quizData = [
   },
   {
     q: '从1,2,3,4,5中任取2个数，两数之和为偶数的概率是？',
-    opts: ['2/5', '3/10', '4/10', '1/2'],
+    opts: ['1/5', '3/10', '4/10', '1/2'],
     ans: 2,
     explain: '总C(5,2)=10种。和为偶需两奇或两偶：C(3,2)+C(2,2)=3+1=4种，P=4/10'
   },

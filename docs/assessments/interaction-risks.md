@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：106；含内联 while 的页面：75。同一页面可能出现在两类中。
+含候选 div 控件的页面：105；含内联 while 的页面：75。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -44,7 +44,6 @@
 - [math/high/derivative.html](../../math/high/derivative.html)：72 行（tab）、73 行（tab）、74 行（tab）、75 行（tab）
 - [math/high/function.html](../../math/high/function.html)：281 行（tab）、282 行（tab）、283 行（tab）、284 行（tab）
 - [math/high/inequality.html](../../math/high/inequality.html)：74 行（tab）、75 行（tab）、76 行（tab）、77 行（tab）
-- [math/high/probability.html](../../math/high/probability.html)：325 行（tab）、326 行（tab）、327 行（tab）、328 行（tab）、329 行（tab）
 - [math/high/sets.html](../../math/high/sets.html)：250 行（tab）、251 行（tab）、252 行（tab）、253 行（tab）
 - [math/high/solid-geometry.html](../../math/high/solid-geometry.html)：129 行（tab）、130 行（tab）、131 行（tab）、132 行（tab）
 - [math/high/statistics.html](../../math/high/statistics.html)：309 行（tab）、310 行（tab）、311 行（tab）、312 行（tab）

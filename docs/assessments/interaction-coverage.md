@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：66；尚未登记：250。
+主题总数：316；已登记部分交互证据：67；尚未登记：249。
 
 ## 已登记部分交互证据
 
@@ -23,6 +23,8 @@
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [化学平衡 · 大学化学互动可视化](../../chemistry/uni/equilibrium.html)
   - 综合练习逐题得分、重试及完成；未覆盖平衡和相图模拟。 [equilibrium-quiz.spec.js](../../tests/browser/equilibrium-quiz.spec.js)
+- [概率 - 高中数学互动可视化](../../math/high/probability.html)
+  - 受控时钟和随机数验证硬币、骰子、摸球批量取消；骰子目标历史统计和柱状图、摸球换配置及一道练习；其他实验、完整题目与无障碍未全面验收。 [high-probability-experiment.spec.js](../../tests/browser/high-probability-experiment.spec.js)
 - [随机变量及其分布 · 高中数学互动可视化](../../math/high/random-variables.html)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
 - [平面直角坐标系 · 初中数学互动可视化](../../math/middle/coordinate-plane.html)
@@ -198,7 +200,6 @@
 - [函数 - 互动可视化](../../math/high/function.html)
 - [不等式 · 性质、解集与均值不等式互动可视化](../../math/high/inequality.html)
 - [直线与圆 - 高中数学](../../math/high/line-circle.html)
-- [概率 - 高中数学互动可视化](../../math/high/probability.html)
 - [数列 - 高中数学](../../math/high/sequence.html)
 - [集合 - 互动可视化](../../math/high/sets.html)
 - [立体几何初步 · 空间几何体互动可视化](../../math/high/solid-geometry.html)
