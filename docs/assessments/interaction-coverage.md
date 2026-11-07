@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：102；尚未登记：214。
+主题总数：316；已登记部分交互证据：103；尚未登记：213。
 
 ## 已登记部分交互证据
 
@@ -60,6 +60,8 @@
 - [面积与周长](../../math/topics/area-and-perimeter/index.html)
   - 六类挑战、重复提交、相等面积、独立连对及保存恢复；其他模式和完整无障碍尚未全面验收。 [area-perimeter-practice-reliability.spec.js](../../tests/browser/area-perimeter-practice-reliability.spec.js)
   - 概念切换、矩形与正方形网格边界、长宽约束及控件名称；真机和完整无障碍未全面验收。 [area-perimeter-visual-consistency.spec.js](../../tests/browser/area-perimeter-visual-consistency.spec.js)
+- [认识面积单位](../../math/topics/area-units/index.html)
+  - 数格、换算、估测及挑战的随机边界、单次计分与进度保存恢复；全部题目内容和无障碍尚未全面核验。 [area-units-learning-reliability.spec.js](../../tests/browser/area-units-learning-reliability.spec.js)
 - [年月日的认识](../../math/topics/calendar-units/index.html)
   - 十二个月北半球气象季节、世纪闰年与输入校验、日期计数口径、作答计数及进度保存失败恢复；历史历法和整页无障碍未全面验收。 [calendar-learning-accuracy.spec.js](../../tests/browser/calendar-learning-accuracy.spec.js)
 - [比大小与排序](../../math/topics/comparison-and-ordering/index.html)
@@ -339,7 +341,6 @@
 - [认识算盘](../../math/topics/abacus/index.html)
 - [100以内加减法](../../math/topics/addition-subtraction-within-100/index.html)
 - [万以内加减法](../../math/topics/addition-subtraction-within-10000/index.html)
-- [认识面积单位](../../math/topics/area-units/index.html)
 - [运算律](../../math/topics/arithmetic-laws/index.html)
 - [平均数](../../math/topics/average/index.html)
 - [轴对称图形](../../math/topics/axis-symmetry/index.html)

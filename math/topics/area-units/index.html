@@ -257,7 +257,7 @@
         <div id="grid-container"></div>
         <div class="grid-question" id="grid-question">涂色部分的面积是多少？</div>
         <div class="grid-input-row">
-          <input type="number" class="grid-input" id="grid-answer" placeholder="?" inputmode="numeric">
+          <input type="number" class="grid-input" id="grid-answer" aria-label="方格面积答案" placeholder="?" inputmode="numeric">
           <span class="grid-unit">平方厘米</span>
         </div>
         <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
@@ -280,6 +280,7 @@
         <div class="convert-problem" id="convert-problem"></div>
         <div class="convert-hint" id="convert-hint"></div>
         <div class="convert-options" id="convert-options"></div>
+        <button class="btn btn-secondary" id="btn-next-convert" hidden>下一题</button>
       </div>
     </div>
 
@@ -298,6 +299,7 @@
           <div class="estimate-name" id="est-name"></div>
           <div class="estimate-prompt" id="est-prompt"></div>
           <div class="estimate-options" id="est-options"></div>
+          <button class="btn btn-secondary" id="btn-next-estimate" hidden>下一题</button>
         </div>
       </div>
     </div>
@@ -313,12 +315,13 @@
       </div>
       <div class="convert-area">
         <div class="convert-problem" id="ch-problem" style="min-height:60px;"></div>
-        <div class="convert-hint" id="ch-hint"></div>
+        <div class="convert-hint" id="ch-hint" role="status" aria-live="polite"></div>
         <div class="convert-options" id="ch-options"></div>
         <div id="ch-input-row" style="display:none;text-align:center;margin-top:12px;">
-          <input type="number" class="grid-input" id="ch-answer" placeholder="?" inputmode="numeric" style="width:120px;">
+          <input type="number" class="grid-input" id="ch-answer" aria-label="挑战答案" placeholder="?" inputmode="numeric" style="width:120px;">
           <button class="btn btn-primary" id="btn-ch-check" style="margin-left:8px;">✔️ 检查</button>
         </div>
+        <button class="btn btn-secondary" id="btn-next-challenge" hidden>下一题</button>
       </div>
     </div>
 
@@ -359,9 +362,10 @@
     });
 
     // === 模式2: 方格计数 ===
-    let countAnswer = 0, countScore = 0, countRound = 0;
+    let countAnswer = 0, countScore = 0, countRound = 0, gridSolved = false;
     function newGrid() {
       countRound++;
+      gridSolved = false;
       const rows = 3 + Math.floor(Math.random() * 4); // 3-6
       const cols = 3 + Math.floor(Math.random() * 4);
       const container = $('#grid-container');
@@ -371,6 +375,10 @@
       grid.style.gridTemplateColumns = `repeat(${cols}, 28px)`;
       // 随机生成形状：简单矩形或不规则形状
       const isRect = Math.random() < 0.5;
+      const rectR = Math.floor(Math.random() * rows);
+      const rectC = Math.floor(Math.random() * cols);
+      const rectH = 1 + Math.floor(Math.random() * (rows - rectR));
+      const rectW = 1 + Math.floor(Math.random() * (cols - rectC));
       let filled = 0;
       const cells = [];
       for (let r = 0; r < rows; r++) {
@@ -379,10 +387,6 @@
           cell.className = 'grid-cell';
           let shouldFill;
           if (isRect) {
-            const rectR = Math.floor(Math.random() * rows);
-            const rectC = Math.floor(Math.random() * cols);
-            const rectH = 1 + Math.floor(Math.random() * (rows - rectR));
-            const rectW = 1 + Math.floor(Math.random() * (cols - rectC));
             shouldFill = r >= rectR && r < rectR + rectH && c >= rectC && c < rectC + rectW;
           } else {
             shouldFill = Math.random() < 0.55;
@@ -400,19 +404,21 @@
       container.appendChild(grid);
       $('#grid-answer').value = '';
       $('#grid-answer').className = 'grid-input';
-      $('#grid-answer').focus();
       $('#count-progress-text').textContent = `第 ${countRound} 题`;
       $('#count-progress').style.width = Math.min(100, countRound * 10) + '%';
     }
     function checkGrid() {
-      const val = parseInt($('#grid-answer').value);
-      if (isNaN(val)) { showToast('请输入数字'); return; }
+      if (gridSolved) return;
+      const input = $('#grid-answer').value;
+      const val = Number(input);
+      if (input.trim() === '' || !Number.isInteger(val)) { showToast('请输入数字'); return; }
       if (val === countAnswer) {
+        gridSolved = true;
         $('#grid-answer').className = 'grid-input correct';
         countScore++; playSound('correct'); celebrate();
         $('#count-score').textContent = `✅${countScore}`;
         showToast(`🎉 答对了！面积是 ${countAnswer} 平方厘米`);
-        setTimeout(() => { newGrid(); }, 1500);
+
       } else {
         $('#grid-answer').className = 'grid-input wrong';
         playSound('wrong');
@@ -447,14 +453,10 @@
       $('#convert-problem').innerHTML = `${fromVal} ${pair.from} = <span class="blank">?</span> ${pair.to}`;
       $('#convert-hint').textContent = `💡 提示：1 ${pair.from === '平方厘米' || (pair.from === '平方分米' && pair.to === '平方米') ? pair.to.replace('平方','') : pair.from.replace('平方','')}进率是 100`;
       // 生成选项
-      const opts = new Set([convAnswer]);
-      while (opts.size < 4) {
-        const delta = Math.floor(Math.random() * 3) + 1;
-        const wrong = Math.random() < 0.5 ? convAnswer * (pair.dir === 'big' ? (10/delta) : (delta*10)) : convAnswer + delta * 10;
-        if (wrong > 0 && wrong !== convAnswer && Number.isInteger(wrong)) opts.add(wrong);
-        else opts.add(convAnswer + (Math.random() < 0.5 ? 1 : -1) * (Math.floor(Math.random() * 50) + 10));
-      }
+      const opts = new Set([convAnswer, convAnswer * 10, convAnswer + 10]);
+      for (let offset = 1; opts.size < 4; offset++) opts.add(convAnswer + offset);
       const arr = Array.from(opts).sort(() => Math.random() - 0.5);
+      $('#btn-next-convert').hidden = true;
       const container = $('#convert-options');
       container.innerHTML = '';
       arr.forEach(v => {
@@ -474,8 +476,8 @@
         convScore++; playSound('correct'); celebrate();
         $('#conv-score').textContent = `✅${convScore}`;
         showToast(`🎉 答对了！`);
-        $$('.convert-opt').forEach(b => b.style.pointerEvents = 'none');
-        setTimeout(newConvert, 1500);
+        $$('#convert-options .convert-opt').forEach(b => { b.disabled = true; });
+        $('#btn-next-convert').hidden = false;
       } else {
         btn.classList.add('wrong');
         playSound('wrong');
@@ -483,6 +485,7 @@
         setTimeout(() => btn.classList.remove('wrong'), 500);
       }
     }
+    $('#btn-next-convert').addEventListener('click', newConvert);
     newConvert();
 
     // === 模式4: 估测挑战 ===
@@ -503,6 +506,7 @@
     let estIdx = 0, estScore = 0, estRound = 0;
     function newEstimate() {
       estRound++;
+      $('#btn-next-estimate').hidden = true;
       const item = estimateItems[estIdx % estimateItems.length];
       estIdx++;
       $('#est-obj').textContent = item.obj;
@@ -527,8 +531,8 @@
         estScore++; playSound('correct'); celebrate();
         $('#est-score').textContent = `✅${estScore}`;
         showToast(`🎉 ${item.explain}`);
-        $$('.estimate-opt').forEach(b => b.style.pointerEvents = 'none');
-        setTimeout(newEstimate, 1500);
+        $$('#est-options .estimate-opt').forEach(b => { b.disabled = true; });
+        $('#btn-next-estimate').hidden = false;
       } else {
         btn.classList.add('wrong');
         playSound('wrong');
@@ -540,17 +544,20 @@
     }
     // 打乱顺序
     estimateItems.sort(() => Math.random() - 0.5);
+    $('#btn-next-estimate').addEventListener('click', newEstimate);
     newEstimate();
 
     // === 模式5: 挑战 ===
     let chStreak = 0, chBest = 0, chRound = 0, chAnswer = null, chType = '';
-    chBest = parseInt(localStorage.getItem('areaUnitsChBest') || '0');
+    try { chBest = parseInt(localStorage.getItem('areaUnitsChBest') || '0', 10) || 0; } catch (_) { chBest = 0; }
     $('#ch-best').textContent = `🏅 最高 ${chBest}`;
 
     const chTypes = ['convert', 'unit-pick', 'compare', 'count', 'real-life'];
 
     function newChallenge() {
       chRound++;
+      $('#btn-next-challenge').hidden = true;
+      $('#btn-ch-check').disabled = false;
       chType = chTypes[Math.floor(Math.random() * chTypes.length)];
       $('#ch-hint').textContent = '';
       $('#ch-options').innerHTML = '';
@@ -610,7 +617,6 @@
         chAnswer = it.a;
         $('#ch-problem').innerHTML = it.q;
         $('#ch-input-row').style.display = 'block';
-        setTimeout(() => $('#ch-answer').focus(), 100);
       }
       $('#ch-streak').textContent = `🔥 连对 ${chStreak}`;
       $('#ch-progress').style.width = Math.min(100, chStreak * 10) + '%';
@@ -632,6 +638,7 @@
           if (wrong !== answer && wrong > 0) opts.add(wrong);
           if (opts.size < 4) opts.add(answer * (Math.random() < 0.5 ? 10 : 0.1));
         }
+        for (let offset = 1; opts.size < 4; offset++) opts.add(answer + offset);
         opts = Array.from(opts).filter(v => Number.isFinite(v) && v > 0).slice(0, 4);
         if (!opts.includes(answer)) opts[0] = answer;
       }
@@ -646,13 +653,15 @@
     }
 
     function checkChallenge(btn, val) {
-      if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+      if (btn.disabled) return;
+      $$('#ch-options .convert-opt').forEach(b => { b.disabled = true; });
+      $('#btn-next-challenge').hidden = false;
       if (val === chAnswer) {
         btn.classList.add('correct');
         chStreak++;
         if (chStreak > chBest) {
           chBest = chStreak;
-          localStorage.setItem('areaUnitsChBest', String(chBest));
+          try { localStorage.setItem('areaUnitsChBest', String(chBest)); } catch (_) { showToast('最高连对未保存'); }
           $('#ch-best').textContent = `🏅 最高 ${chBest}`;
         }
         if (chStreak >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('area-units')) {
@@ -660,28 +669,31 @@
         }
         playSound('correct'); celebrate();
         showToast(`🎉 连对 ${chStreak} 题！`);
-        $$('#ch-options .convert-opt').forEach(b => b.style.pointerEvents = 'none');
-        setTimeout(newChallenge, 1200);
+        $('#ch-hint').textContent = '答对了！';
       } else {
         btn.classList.add('wrong');
         playSound('wrong');
         showToast(`答错了，正确答案是 ${chAnswer}`);
         chStreak = 0;
-        setTimeout(() => { newChallenge(); }, 1800);
+        $('#ch-hint').textContent = `正确答案是 ${chAnswer}`;
       }
       $('#ch-streak').textContent = `🔥 连对 ${chStreak}`;
       $('#ch-progress').style.width = Math.min(100, chStreak * 10) + '%';
     }
 
     $('#btn-ch-check').addEventListener('click', () => {
-      const val = parseInt($('#ch-answer').value);
-      if (isNaN(val)) { showToast('请输入数字'); return; }
+      if ($('#btn-ch-check').disabled) return;
+      const input = $('#ch-answer').value;
+      const val = Number(input);
+      if (input.trim() === '' || !Number.isInteger(val)) { showToast('请输入整数'); return; }
+      $('#btn-ch-check').disabled = true;
+      $('#btn-next-challenge').hidden = false;
       if (val === chAnswer) {
         $('#ch-answer').className = 'grid-input correct';
         chStreak++;
         if (chStreak > chBest) {
           chBest = chStreak;
-          localStorage.setItem('areaUnitsChBest', String(chBest));
+          try { localStorage.setItem('areaUnitsChBest', String(chBest)); } catch (_) { showToast('最高连对未保存'); }
           $('#ch-best').textContent = `🏅 最高 ${chBest}`;
         }
         if (chStreak >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('area-units')) {
@@ -689,17 +701,18 @@
         }
         playSound('correct'); celebrate();
         showToast(`🎉 连对 ${chStreak} 题！`);
-        setTimeout(newChallenge, 1200);
+        $('#ch-hint').textContent = '答对了！';
       } else {
         $('#ch-answer').className = 'grid-input wrong';
         playSound('wrong');
         showToast(`答错了，正确答案是 ${chAnswer}`);
         chStreak = 0;
-        setTimeout(() => { newChallenge(); }, 1800);
+        $('#ch-hint').textContent = `正确答案是 ${chAnswer}`;
       }
       $('#ch-streak').textContent = `🔥 连对 ${chStreak}`;
       $('#ch-progress').style.width = Math.min(100, chStreak * 10) + '%';
     });
+    $('#btn-next-challenge').addEventListener('click', newChallenge);
     $('#ch-answer').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btn-ch-check').click(); });
 
     // 切换到挑战 tab 时初始化
