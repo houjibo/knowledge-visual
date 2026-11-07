@@ -160,6 +160,7 @@
 - [扇形统计图](../../math/topics/sector-statistics/index.html)
   - 扇形图滑块、估算提示及部分随机题目；未覆盖整页。 [pie-chart.spec.js](../../tests/browser/pie-chart.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
 - [简单推理](../../math/topics/simple-reasoning/index.html)
+  - 桌面和移动视口验证四类活动完成、重复提交、表格锁定、刷新目录与保存失败重试；真实设备及整页无障碍尚未全面验收。 [simple-reasoning-learning-completion.spec.js](../../tests/browser/simple-reasoning-learning-completion.spec.js)
   - 桌面及移动视口验证固定随机值、排除法线索唯一性和键盘、代换全部数值组合及两道修正逻辑题；其他题目、进度和真实设备尚未全面验收。 [simple-reasoning-question-correctness.spec.js](../../tests/browser/simple-reasoning-question-correctness.spec.js)
 - [立体图形的认识](../../math/topics/solid-shapes/index.html)
   - 五类题目及各图形代表性参数的唯一计分、边界说明、键盘分类、题池与完成记录；不代表所有几何内容已评审。 [solid-shapes-learning.spec.js](../../tests/browser/solid-shapes-learning.spec.js)

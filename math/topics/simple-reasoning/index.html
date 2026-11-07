@@ -150,6 +150,7 @@
       <span class="score-stars">⭐</span>
       <span id="scoreText">答对 0 题</span>
     </div>
+    <p id="learningProgress" role="status" aria-live="polite" style="text-align:center;margin:12px;line-height:1.6"></p>
 
     <!-- 模式1: 找规律 -->
     <div class="mode-content active" id="mode-pattern">
@@ -200,10 +201,28 @@
   <script>
     // ========== 全局状态 ==========
     let score = 0;
-    function addScore() {
+    const learningActivities = new Set();
+    let progressSaved = PageProgress.isDone('simple-reasoning');
+    let completionAttempted = false;
+    function renderLearningProgress() {
+      const status = document.getElementById('learningProgress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      const names = [['pattern','找规律'], ['eliminate','排除法'], ['substitute','等量代换'], ['logic','逻辑挑战']];
+      status.textContent = `本次完成 ${learningActivities.size}/4：` + names.map(([id, name]) => `${learningActivities.has(id) ? '✓' : '○'} ${name}`).join('、') + '。每种练习答对一题；未完成的进度仅保留在当前页面。';
+    }
+    function addScore(activity) {
       score++;
       document.getElementById('scoreText').textContent = '答对 ' + score + ' 题';
+      learningActivities.add(activity);
+      if (learningActivities.size === 4 && !progressSaved && !completionAttempted) {
+        completionAttempted = true;
+        progressSaved = PageProgress.markDone('simple-reasoning');
+      }
+      renderLearningProgress();
     }
+    document.addEventListener('math-progress-saved', () => { if (completionAttempted) { progressSaved = true; renderLearningProgress(); } });
+    renderLearningProgress();
 
     // ========== Tab 切换 ==========
     document.querySelectorAll('.mode-tab').forEach(tab => {
@@ -277,8 +296,8 @@
         document.getElementById('patternFeedback').textContent = '✅ 正确！' + currentPattern.hint;
         document.getElementById('patternFeedback').className = 'eliminate-feedback correct';
         document.querySelector('.pattern-item.blank').textContent = currentPattern.answer;
-        addScore();
-        setTimeout(() => { document.getElementById('patternNext').classList.add('show'); }, 800);
+        addScore('pattern');
+        document.getElementById('patternNext').classList.add('show');
       } else {
         el.classList.add('wrong');
         document.getElementById('patternFeedback').textContent = '❌ 再想想看～';
@@ -364,6 +383,7 @@
     }
 
     function toggleEliminateCell(name, item) {
+      if (document.getElementById('eliminateNext').classList.contains('show')) return;
       const cellId = `ec-${name}-${item}`;
       const cell = document.getElementById(cellId);
       const key = name + '-' + item;
@@ -401,7 +421,7 @@
       if (allCorrect) {
         fb.textContent = '✅ 完全正确！你真是个推理小能手！';
         fb.className = 'eliminate-feedback correct';
-        addScore();
+        addScore('eliminate');
         document.getElementById('eliminateNext').classList.add('show');
       } else {
         fb.textContent = '❌ 还不太对，再试试用排除法推理～';
@@ -467,8 +487,8 @@
         el.classList.add('correct');
         document.getElementById('substituteFeedback').textContent = `✅ 正确！1个${s.f2}=${s.ratio}个${s.f1}=${s.val2}，所以${s.questionCount}个${s.f2}=${s.answer}`;
         document.getElementById('substituteFeedback').className = 'eliminate-feedback correct';
-        addScore();
-        setTimeout(() => { document.getElementById('substituteNext').classList.add('show'); }, 1500);
+        addScore('substitute');
+        document.getElementById('substituteNext').classList.add('show');
       } else {
         el.classList.add('wrong');
         document.getElementById('substituteFeedback').textContent = '❌ 再想想，先算1个等于多少～';
@@ -560,8 +580,8 @@
       if (chosen === currentLogic.answer) {
         el.classList.add('correct');
         document.getElementById('logicExplain').textContent = '✅ ' + currentLogic.explain;
-        addScore();
-        setTimeout(() => { document.getElementById('logicNext').classList.add('show'); }, 1500);
+        addScore('logic');
+        document.getElementById('logicNext').classList.add('show');
       } else {
         el.classList.add('wrong');
         document.getElementById('logicExplain').textContent = '❌ 再想想，用排除法试试～';
