@@ -1,0 +1,20 @@
+# material-properties-and-safety Specification
+
+## Purpose
+TBD - created by archiving change material-properties-and-safety. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 材料性质按具体条件表达
+页面 SHALL 将材料性质说明限定于示例和条件，不将无依据星级当作各类材料的实测比较。
+
+#### Scenario: 查看材料示例
+- **WHEN** 学习者选择某类材料
+- **THEN** 页面同步显示具体实例、定性性质及同类材料可能不同的说明
+
+### Requirement: 安全和漂浮练习避免绝对结论
+页面 SHALL 说明绝缘及隔热并非任何情况下都安全，漂浮题 SHALL 给出足以比较的条件。
+
+#### Scenario: 判断漂浮
+- **WHEN** 学习者回答均匀物块漂浮题
+- **THEN** 题目给出物块和水的密度，反馈依据密度比较解释
