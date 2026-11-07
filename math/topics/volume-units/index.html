@@ -125,6 +125,7 @@
   </nav>
 
   <div class="page-container">
+    <p id="learningProgress" role="status" aria-live="polite"></p>
     <div class="mode-tabs" id="modeTabs">
       <button class="mode-tab active" data-mode="learn">📦 认识体积</button>
       <button class="mode-tab" data-mode="build">🧱 搭一搭</button>
@@ -203,7 +204,7 @@
         <div class="unit-card">
           <div class="unit-icon">💧</div>
           <div class="unit-name">毫升</div>
-          <div class="unit-alias">mL · 一小勺水</div>
+          <div class="unit-alias">mL · 约五分之一茶匙</div>
         </div>
         <div class="unit-card">
           <div class="unit-icon">🥤</div>
@@ -215,7 +216,7 @@
       <div class="tip-box">
         💡 <strong>小秘密：</strong>1 立方分米 = 1 升！<br>
         1 立方厘米 = 1 毫升！<br>
-        体积单位和容积单位是一一对应的哦～
+        这些等式可以帮助我们在体积单位和容积单位之间换算。
       </div>
     </div>
 
@@ -250,11 +251,11 @@
         <div class="convert-visual" id="convertVisual"></div>
         <div class="convert-question" id="convertQuestion"></div>
         <div class="convert-input-row">
-          <input type="number" class="convert-input" id="convertInput" placeholder="?" inputmode="decimal">
+          <input type="number" class="convert-input" id="convertInput" aria-label="换算答案" placeholder="?" inputmode="decimal">
           <span class="convert-unit-label" id="convertToUnit"></span>
         </div>
         <button class="convert-submit" id="btnConvertCheck">✅ 提交</button>
-        <div class="convert-result" id="convertResult"></div>
+        <div class="convert-result" id="convertResult" role="status" aria-live="polite"></div>
         <button class="next-btn" id="btnNextConvert" style="display:none;">下一题 →</button>
 
         <div class="tip-box" style="margin-top:20px;">
@@ -273,7 +274,7 @@
       <div class="estimate-area">
         <div class="estimate-score">
           <span>⭐ 得分: <span id="estScore">0</span></span>
-          <span>📝 第 <span id="estRound">1</span>/8 题</span>
+          <span>📝 第 <span id="estRound">1</span>/<span id="estTotal"></span> 题</span>
         </div>
         <div class="estimate-object" id="estEmoji">🥤</div>
         <div class="estimate-name" id="estName">一瓶矿泉水</div>
@@ -294,7 +295,7 @@
         <div class="timer-bar"><div class="timer-fill" id="chTimerBar" style="width:100%"></div></div>
         <div class="challenge-problem" id="chProblem"></div>
         <div class="challenge-options" id="chOptions"></div>
-        <div id="chFeedback" style="font-size:20px;font-weight:700;min-height:36px;margin:8px 0;"></div>
+        <div id="chFeedback" role="status" aria-live="polite" style="font-size:20px;font-weight:700;min-height:36px;margin:8px 0;"></div>
         <button class="next-btn" id="btnStartCh">🏆 开始挑战</button>
       </div>
     </div>
@@ -305,13 +306,24 @@
   (function() {
     // ===== 进度追踪 =====
     let totalCorrect = 0;
+    let progressSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('volume-units');
+    let completionAttempted = false;
+    function showLearningProgress() {
+      const status = document.getElementById('learningProgress');
+      if (progressSaved) status.textContent = '✓ 本主题已完成';
+      else if (completionAttempted) status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。';
+      else status.textContent = `换算、估测或挑战共答对 ${totalCorrect}/8 题可完成本主题。未达标时刷新会清空本次计数。`;
+    }
     function bumpTotalCorrect() {
       totalCorrect++;
-      if (totalCorrect >= 8 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('volume-units')) {
-        PageProgress.markDone('volume-units');
-        showToast('🎉「体积与容积单位」知识地图已点亮！');
+      if (totalCorrect >= 8 && !progressSaved && !completionAttempted) {
+        completionAttempted = true;
+        progressSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('volume-units');
       }
+      showLearningProgress();
     }
+    document.addEventListener('math-progress-saved', () => { if (completionAttempted) { progressSaved = true; showLearningProgress(); } });
+    showLearningProgress();
 
     // ===== Mode Tabs =====
     const tabs = document.querySelectorAll('.mode-tab');
@@ -470,17 +482,20 @@
       document.getElementById('convertInput').value = '';
       document.getElementById('convertResult').textContent = '';
       document.getElementById('convertResult').style.color = '';
+      document.getElementById('btnConvertCheck').disabled = false;
       document.getElementById('btnConvertCheck').style.display = '';
       document.getElementById('btnNextConvert').style.display = 'none';
       document.getElementById('convertVisual').innerHTML = '<div style="font-size:48px;">' + p.visual + '</div>';
-      document.getElementById('convertInput').focus();
     }
 
     document.getElementById('btnConvertCheck').addEventListener('click', () => {
-      const val = parseFloat(document.getElementById('convertInput').value);
-      if (isNaN(val)) return;
+      if (document.getElementById('btnConvertCheck').disabled) return;
+      const raw = document.getElementById('convertInput').value;
+      const val = Number(raw);
+      if (raw.trim() === '' || !Number.isFinite(val)) { document.getElementById('convertResult').textContent = '请输入数字'; return; }
+      document.getElementById('btnConvertCheck').disabled = true;
       const res = document.getElementById('convertResult');
-      if (Math.abs(val - convertAnswer) < 0.01) {
+      if (val === convertAnswer) {
         res.textContent = '✅ 正确！';
         res.style.color = '#34C759';
         convertTotal.correct++;
@@ -506,18 +521,20 @@
       { emoji: '🎲', name: '一颗骰子', hint: '体积大约是多少？', options: ['1 立方分米', '1 立方米', '1 立方厘米', '1 升'], answer: 2 },
       { emoji: '📦', name: '一个粉笔盒', hint: '体积大约是多少？', options: ['1 立方厘米', '1 立方分米', '1 立方米', '1 毫升'], answer: 1 },
       { emoji: '🏠', name: '一间教室的空间', hint: '体积大约是多少？', options: ['200 立方分米', '200 立方厘米', '200 立方米', '200 升'], answer: 2 },
-      { emoji: '💧', name: '一滴水', hint: '大约有多少？', options: ['1 升', '1 毫升', '1 立方分米', '1 立方米'], answer: 1 },
+      { emoji: '🥄', name: '一平茶匙水', hint: '假设一茶匙约 5 毫升，大约有多少？', options: ['5 升', '5 毫升', '5 立方分米', '5 立方米'], answer: 1 },
       { emoji: '🧃', name: '一盒果汁', hint: '大约有多少？', options: ['250 升', '250 毫升', '250 立方米', '250 立方分米'], answer: 1 },
       { emoji: '🛁', name: '一浴缸水', hint: '大约有多少？', options: ['150 毫升', '150 立方厘米', '150 升', '150 立方米'], answer: 2 },
       { emoji: '🍼', name: '一瓶婴儿奶瓶', hint: '大约有多少？', options: ['240 升', '240 毫升', '240 立方米', '240 立方分米'], answer: 1 },
       { emoji: '🚿', name: '洗一次澡用水', hint: '大约有多少？', options: ['5 毫升', '50 升', '5 立方米', '500 立方分米'], answer: 1 },
     ];
+    document.getElementById('estTotal').textContent = estProblems.length;
     let estIdx = 0;
     let estScoreVal = 0;
     let estAnswered = false;
 
     function showEst() {
       if (estIdx >= estProblems.length) {
+        document.getElementById('btnNextEst').style.display = 'none';
         document.getElementById('estEmoji').textContent = '🎉';
         document.getElementById('estName').textContent = '估测结束！';
         document.getElementById('estHint').textContent = '最终得分: ' + estScoreVal + '/' + estProblems.length;
@@ -555,6 +572,7 @@
             document.getElementById('estFeedback').textContent = '❌ 正确答案已标绿';
             document.getElementById('estFeedback').style.color = '#FF3B30';
           }
+          Array.from(optsEl.children).forEach(button => { button.disabled = true; });
           document.getElementById('btnNextEst').style.display = '';
         });
         optsEl.appendChild(btn);
@@ -573,17 +591,18 @@
       { q: '一个水杯能装 300 毫升水，一天喝 8 杯，共喝了多少升水？', opts: ['2400 升', '24 升', '2.4 升', '0.24 升'], answer: 2 },
       { q: '长方体体积公式是？', opts: ['长+宽+高', '长×宽×高', '长×宽', '(长+宽)×高'], answer: 1 },
       { q: '2.5 立方分米 = ? 毫升', opts: ['25 毫升', '250 毫升', '2500 毫升', '25000 毫升'], answer: 2 },
-      { q: '一个正方体盒子棱长 10cm，容积是多少升？', opts: ['100 升', '10 升', '1 升', '0.1 升'], answer: 2 },
+      { q: '一个正方体盒子的内部棱长 10cm，容积是多少升？', opts: ['100 升', '10 升', '1 升', '0.1 升'], answer: 2 },
       { q: '5 立方米 20 立方分米 = ? 立方分米', opts: ['520', '5020', '5200', '50020'], answer: 1 },
       { q: '一瓶饮料 500mL，几瓶正好是 2 升？', opts: ['2 瓶', '3 瓶', '4 瓶', '5 瓶'], answer: 2 },
     ];
-    let chIdx = 0, chScoreVal = 0, chTimer = 60, chInterval = null, chActive = false;
+    let chIdx = 0, chScoreVal = 0, chTimer = 60, chInterval = null, chAdvance = null, chActive = false, chAnswered = false;
 
     function showChProblem() {
       if (chIdx >= chProblems.length || !chActive) {
         endChallenge();
         return;
       }
+      chAnswered = false;
       const p = chProblems[chIdx];
       document.getElementById('chProblem').textContent = p.q;
       document.getElementById('chFeedback').textContent = '';
@@ -594,7 +613,9 @@
         btn.className = 'challenge-opt';
         btn.textContent = ['A', 'B', 'C', 'D'][i] + '. ' + opt;
         btn.addEventListener('click', () => {
-          if (!chActive) return;
+          if (!chActive || chAnswered) return;
+          chAnswered = true;
+          Array.from(optsEl.children).forEach(button => { button.disabled = true; });
           if (i === p.answer) {
             btn.classList.add('correct');
             chScoreVal += 10;
@@ -608,7 +629,7 @@
             document.getElementById('chFeedback').textContent = '❌';
             document.getElementById('chFeedback').style.color = '#FF3B30';
           }
-          setTimeout(() => { chIdx++; showChProblem(); }, 800);
+          chAdvance = setTimeout(() => { chIdx++; showChProblem(); }, 800);
         });
         optsEl.appendChild(btn);
       });
@@ -633,6 +654,7 @@
     function endChallenge() {
       chActive = false;
       clearInterval(chInterval);
+      clearTimeout(chAdvance);
       document.getElementById('chProblem').textContent = '⏱️ 挑战结束！';
       document.getElementById('chOptions').innerHTML = '';
       document.getElementById('chFeedback').textContent = '🎉 得分: ' + chScoreVal + ' 分！' + (chScoreVal >= 60 ? ' 🌟 太棒了！' : ' 💪 继续加油！');
