@@ -202,6 +202,7 @@
   - 模式、推拉和实验按钮键盘操作，五题重测及进度保存失败；画布拖拽物理模型和完整无障碍未验收。 [forces-learning.spec.js](../../tests/browser/forces-learning.spec.js)
 - [我们的身体 · 小学科学互动可视化](../../science/human-body.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
+  - 呼吸阶段缩放、循环方向示意、暂停和分步；不表示真实解剖比例或其他人体内容已全面核验。 [human-body-breathing-circulation.spec.js](../../tests/browser/human-body-breathing-circulation.spec.js)、[science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [光的世界 · 小学科学互动可视化](../../science/light.html)
   - 点光源遮挡、反射与折射画布路径、键盘滑块、九题重试和保存失败；扩展光源及完整无障碍未验收。 [light-ray.spec.js](../../tests/browser/light-ray.spec.js)
 - [生物世界 · 小学科学互动可视化](../../science/living-things.html)

@@ -127,7 +127,7 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="bodyCanvas" width="720" height="460"></canvas>
+          <canvas id="bodyCanvas" width="720" height="460" role="img"></canvas>
           <div class="legend">
             <span id="legendLabel">食物之旅：口腔→食道→胃→小肠→大肠</span>
           </div>
@@ -136,19 +136,26 @@
       <div class="panel">
         <h3>选择系统</h3>
         <div class="demo-btns" id="sysBtns">
-          <button class="demo-btn active" data-sys="digest">🍚 消化系统</button>
-          <button class="demo-btn" data-sys="breath">🫁 呼吸系统</button>
-          <button class="demo-btn" data-sys="blood">❤️ 血液循环</button>
+          <button class="demo-btn active" data-sys="digest" aria-pressed="true">🍚 消化系统</button>
+          <button class="demo-btn" data-sys="breath" aria-pressed="false">🫁 呼吸系统</button>
+          <button class="demo-btn" data-sys="blood" aria-pressed="false">❤️ 血液循环</button>
         </div>
         <div class="slider-row">
-          <label>动画速度</label>
+          <label for="sliderSpd">示意速度（档位）</label>
           <input type="range" id="sliderSpd" min="1" max="10" step="1" value="4">
           <span class="val" id="valSpd">4</span>
         </div>
+        <div class="demo-btns">
+          <button type="button" class="demo-btn" id="bodyPause">暂停动画</button>
+          <button type="button" class="demo-btn" id="bodyStep">推进四分之一周期</button>
+          <button type="button" class="demo-btn" id="bodyReset">重新开始</button>
+        </div>
+        <p>动画速度和图形大小仅为示意，不代表实际呼吸频率、器官比例或血液流速。</p>
         <div class="info-grid">
           <div id="infoSys">当前系统<br><b>消化系统</b></div>
           <div id="infoKey">关键器官<br><b>小肠（吸收营养）</b></div>
         </div>
+        <div class="concept-card" id="bodyDescription" aria-live="polite"></div>
         <div class="equation">消化：<b>口腔→食道→胃→小肠→大肠</b><br>呼吸：<b>鼻腔→气管→肺</b>（吸进氧气，呼出二氧化碳）</div>
         <div class="concept-card">
           <div class="title">消化系统：食物的旅行</div>
@@ -156,7 +163,7 @@
         </div>
         <div class="concept-card">
           <div class="title">呼吸与循环</div>
-          肺是气体交换的场所：吸气时胸腔<b>扩大</b>，呼气时缩小。心脏是"泵"，推动血液把<b>氧气和营养</b>送到全身，把二氧化碳等废物带走。运动后心跳加快，是为了更快输送氧气。
+          肺是气体交换的场所：吸气时胸腔<b>扩大</b>，呼气时缩小。心脏将氧较少的血液泵往肺，血液在肺中进行气体交换后回到心脏，再由心脏泵向全身。图中的红、蓝是含氧量的示意色，不是血液真实颜色。运动后心跳加快，是为了更快输送氧气。
         </div>
         <div class="concept-card warn">
           <div class="title">⚠️ 易错点</div>
@@ -171,7 +178,7 @@
     <div class="practice-item">
       <h4>1️⃣ 小明平静时心跳每分钟 75 次，跑步后每分钟 120 次。运动后每分钟多跳多少次？</h4>
       <div class="calc-row">
-        <input type="number" id="a1" placeholder="? 次" step="any">
+        <input type="number" id="a1" aria-label="心跳每分钟增加次数" placeholder="? 次" step="any">
         <button data-check="a1">提交</button>
       </div>
       <div class="practice-fb" id="fb-a1"></div>
@@ -179,7 +186,7 @@
     <div class="practice-item">
       <h4>2️⃣ 人的小肠长约 6 米，大约是食道（约 0.25 米）的多少倍？</h4>
       <div class="calc-row">
-        <input type="number" id="a2" placeholder="? 倍" step="any">
+        <input type="number" id="a2" aria-label="小肠长度是食道几倍" placeholder="? 倍" step="any">
         <button data-check="a2">提交</button>
       </div>
       <div class="practice-fb" id="fb-a2"></div>
@@ -187,7 +194,7 @@
     <div class="practice-item">
       <h4>3️⃣ 平静时每分钟呼吸约 16 次，每次吸入约 500 mL 空气。1 分钟大约吸入多少毫升空气？</h4>
       <div class="calc-row">
-        <input type="number" id="a3" placeholder="? mL" step="any">
+        <input type="number" id="a3" aria-label="一分钟吸入空气毫升数" placeholder="? mL" step="any">
         <button data-check="a3">提交</button>
       </div>
       <div class="practice-fb" id="fb-a3"></div>
@@ -244,13 +251,15 @@ let sys = 'digest';
 const sSpd = document.getElementById('sliderSpd');
 const SYS_INFO = {
   digest: { name: '消化系统', key: '小肠（吸收营养）', legend: '食物之旅：口腔→食道→胃→小肠→大肠' },
-  breath: { name: '呼吸系统', key: '肺（气体交换）', legend: '吸气 O₂ 进入肺 → 呼气 CO₂ 排出' },
-  blood: { name: '血液循环', key: '心脏（泵）', legend: '心脏泵血：氧气营养送全身，废物带走' }
+  breath: { name: '呼吸系统', key: '肺（气体交换）', legend: '吸入空气、呼出空气；肺内进行气体交换' },
+  blood: { name: '血液循环', key: '心脏（泵）', legend: '心脏→肺→心脏→全身→心脏（示意）' }
 };
 document.querySelectorAll('#sysBtns .demo-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('#sysBtns .demo-btn').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('#sysBtns .demo-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
   b.classList.add('active');
+  b.setAttribute('aria-pressed', 'true');
   sys = b.dataset.sys;
+  animT = 0;
   const I = SYS_INFO[sys];
   document.getElementById('infoSys').innerHTML = `当前系统<br><b>${I.name}</b>`;
   document.getElementById('infoKey').innerHTML = `关键器官<br><b>${I.key}</b>`;
@@ -267,6 +276,13 @@ const DIGEST_PATH = [
   { x: 320, y: 360, label: '大肠', icon: '➰', desc: '吸收水分，形成粪便' }
 ];
 let animT = 0, lastT = performance.now();
+let playing = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+const pause = document.getElementById('bodyPause');
+function updatePause() { pause.textContent = playing ? '暂停动画' : '继续动画'; }
+pause.addEventListener('click', () => { playing = !playing; updatePause(); });
+document.getElementById('bodyStep').addEventListener('click', () => { animT = (animT + 0.25) % 1; });
+document.getElementById('bodyReset').addEventListener('click', () => { animT = 0; });
+updatePause();
 function easeIO(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
 function pathPos(path, t) {
   const seg = Math.min(path.length - 2, Math.floor(t * (path.length - 1)));
@@ -304,15 +320,18 @@ function drawDigest() {
   ctx.fillStyle = '#7dd3fc'; ctx.font = 'bold 13px sans-serif';
   ctx.fillText(`食物正在：${cur.label}`, 60, 420);
 }
+function breathPhase(time) {
+  const t = ((time % 1) + 1) % 1;
+  return { inhale: t < 0.5, expansion: t < 0.5 ? t * 2 : 2 - t * 2 };
+}
 function drawBreath() {
-  const t = animT % 1;
-  const inhale = t < 0.5;
-  const k = inhale ? t * 2 : (t - 0.5) * 2;  // 0..1
+  const {inhale, expansion} = breathPhase(animT);
+  const k = inhale ? expansion : 1 - expansion;
   // 躯干
   ctx.fillStyle = 'rgba(255,255,255,0.04)';
   ctx.beginPath(); ctx.roundRect(260, 60, 200, 340, 60); ctx.fill();
   // 肺（随呼吸缩放）
-  const lungR = 40 + k * 22;
+  const lungR = 40 + expansion * 22;
   [[300, '#f472b6'], [420, '#f472b6']].forEach(([x]) => {
     ctx.fillStyle = inhale ? `rgba(244,114,182,${0.55 + k * 0.4})` : `rgba(244,114,182,${0.95 - k * 0.4})`;
     ctx.beginPath(); ctx.ellipse(x, 200, lungR * 0.75, lungR, 0, 0, Math.PI * 2); ctx.fill();
@@ -341,41 +360,51 @@ function drawBreath() {
   ctx.fillText(inhale ? '吸气：胸腔扩大，O₂ 进入肺' : '呼气：胸腔缩小，CO₂ 排出', 180, 420);
 }
 function drawBlood() {
-  const t = animT % 1;
-  // 心脏
-  const beat = 1 + 0.12 * Math.abs(Math.sin(animT * Math.PI * 4));
-  ctx.fillStyle = '#ef4444';
-  ctx.beginPath(); ctx.arc(360, 180, 46 * beat, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#fff'; ctx.font = 'bold 15px sans-serif';
-  ctx.fillText('心脏', 340, 185);
-  // 血管环
-  ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 10; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.ellipse(360, 240, 190, 150, 0, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = '#f87171';
-  ctx.beginPath(); ctx.ellipse(360, 240, 190, 150, 0, -Math.PI * 0.75, Math.PI * 0.25); ctx.stroke();
-  // 流动血细胞
-  for (let i = 0; i < 6; i++) {
-    const a = t * Math.PI * 2 + i * Math.PI / 3;
-    const x = 360 + Math.cos(a) * 190, y = 240 + Math.sin(a) * 150;
-    ctx.fillStyle = i % 2 ? '#fca5a5' : '#93c5fd';
-    ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill();
+  // 仅示意肺循环与体循环的方向和相对含氧量，不对应解剖比例。
+  const nodes = [{y: 80, text: '肺：气体交换'}, {y: 230, text: '心脏：泵血'}, {y: 380, text: '全身：输送氧和营养'}];
+  ctx.font = 'bold 16px sans-serif';
+  for (const node of nodes) {
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath(); ctx.roundRect(250, node.y - 25, 220, 50, 14); ctx.fill();
+    ctx.fillStyle = '#e2e8f0'; ctx.textAlign = 'center'; ctx.fillText(node.text, 360, node.y + 5);
   }
-  ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 15px sans-serif';
-  ctx.fillText('红：含氧血（送往全身）', 480, 130);
-  ctx.fillText('蓝：缺氧血（回到心脏）', 480, 160);
-  ctx.fillStyle = '#94a3b8'; ctx.font = '13px sans-serif';
-  ctx.fillText('心脏像泵，把氧气和营养送到全身', 220, 420);
+  // 两段分别接入心脏，避免画成绕过心脏的直通血管。
+  const segments = [
+    {x: 210, start: 80, end: 230, edge: 250, color: '#f87171'},
+    {x: 180, start: 230, end: 380, edge: 250, color: '#f87171'},
+    {x: 510, start: 380, end: 230, edge: 470, color: '#60a5fa'},
+    {x: 540, start: 230, end: 80, edge: 470, color: '#60a5fa'}
+  ];
+  for (const segment of segments) {
+    const {x, start, end, edge, color} = segment;
+    const direction = Math.sign(end - start), y = (start + end) / 2;
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(edge, start); ctx.lineTo(x, start); ctx.lineTo(x, end); ctx.lineTo(edge, end); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, y + direction * 10); ctx.lineTo(x - 8, y - direction * 6); ctx.lineTo(x + 8, y - direction * 6); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.arc(x, start + (end - start) * (animT % 1), 6, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#fca5a5'; ctx.fillText('红：氧较多（示意色）', 95, 235);
+  ctx.fillStyle = '#93c5fd'; ctx.fillText('蓝：氧较少（示意色）', 625, 235);
+  ctx.fillStyle = '#cbd5e1'; ctx.fillText('方向示意，未画出心脏各腔与血管细节', 360, 435);
+  ctx.textAlign = 'left';
 }
+
 function draw() {
   const now = performance.now();
   const dt = Math.min(0.05, (now - lastT) / 1000);
   lastT = now;
   if (mode === 'learn') {
-    animT += dt * (+sSpd.value) * 0.12;
+    if (playing) animT += dt * (+sSpd.value) * 0.12;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (sys === 'digest') drawDigest();
     else if (sys === 'breath') drawBreath();
     else drawBlood();
+    const phase = sys === 'breath' ? (breathPhase(animT).inhale ? '吸气：肺逐渐扩张' : '呼气：肺逐渐缩小') :
+      sys === 'blood' ? '血液循环示意：心脏到肺再回心脏，心脏到全身再回心脏' : '消化路径示意：口腔到食道、胃、小肠和大肠';
+    const description = document.getElementById('bodyDescription');
+    if (description.textContent !== phase) description.textContent = phase;
+    canvas.setAttribute('aria-label', phase + '；图形和速度不按真实比例');
   }
   requestAnimationFrame(draw);
 }
