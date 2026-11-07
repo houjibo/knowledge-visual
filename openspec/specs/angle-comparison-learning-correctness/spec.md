@@ -1,0 +1,20 @@
+# angle-comparison-learning-correctness Specification
+
+## Purpose
+TBD - created by archiving change angle-comparison-learning-correctness. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 角的比较答案与图形一致
+比较题 SHALL 按两条射线的夹角给出正确答案，并支持完成后重新进入。
+
+#### Scenario: 比较并重玩
+- **WHEN** 学习者完成五道比较题并再次进入模式
+- **THEN** 判分与实际夹角一致，图形与题目重新显示且计数重置
+
+### Requirement: 找角与比较可用键盘操作
+找角与比较选项 SHALL 可通过键盘操作，并提供明确结果反馈。
+
+#### Scenario: 找到所有物品
+- **WHEN** 学习者通过键盘找到全部有角的示例
+- **THEN** 页面显示完成，并允许重置后再次操作
