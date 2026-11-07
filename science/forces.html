@@ -121,7 +121,7 @@
       <canvas id="canvas" width="700" height="560" role="img" aria-label="力的作用示意图"></canvas>
       <div class="legend">
         <span class="l-push">推力 →</span>
-        <span class="l-pull">拉力 ←</span>
+        <span class="l-pull">拉力 →</span>
         <span class="l-force">力的方向</span>
         <span class="l-effect">力的效果</span>
       </div>
@@ -174,33 +174,34 @@
       <div class="section" id="section-pushpull">
         <h3>👐 推力和拉力</h3>
         <div class="concept-box">
-          <span class="hl">推力</span>：用力把物体<span class="hl">推开</span>或<span class="hl">向前移动</span>。<br/>
-          <span class="hl2">拉力</span>：用力把物体<span class="hl2">拉近</span>或<span class="hl2">向后移动</span>。
+          <span class="hl">推力</span>：用力把物体<span class="hl">推开</span>。<br/>
+          <span class="hl2">拉力</span>：用力把物体<span class="hl2">拉近</span>。方向取决于施力的具体情况。
         </div>
 
         <div class="mode-switch">
           <button type="button" class="mode-btn active" data-mode="push" aria-pressed="true">推箱子 →</button>
-          <button type="button" class="mode-btn" data-mode="pull" aria-pressed="false">拉弹簧 ←</button>
+          <button type="button" class="mode-btn" data-mode="pull" aria-pressed="false">拉弹簧 →</button>
           <button type="button" class="mode-btn" data-mode="both" aria-pressed="false">推拉对比</button>
         </div>
 
         <div class="slider-row">
-          <label for="forceSlider">推拉力大小：</label>
+          <label for="forceSlider">推拉力度档位：</label>
           <input type="range" id="forceSlider" min="1" max="10" value="5" />
-          <span class="val" id="forceVal">5 N</span>
+          <span class="val" id="forceVal">5 档</span>
         </div>
 
         <div class="info-grid">
           <div>
             <b>📦 推箱子</b><br/>
-            向右拖拽鼠标，推动箱子向右移动。力越大，箱子移动越快！
+            拖拽箱子，或者使用示范按钮推动箱子。示范按钮的档位越高，箱子起步越快。
           </div>
           <div>
             <b>🧲 拉弹簧</b><br/>
-            向左拖拽鼠标，拉伸弹簧。力越大，弹簧伸得越长！
+            向右拖拽弹簧右端可以拉伸，向左拖拽可以压缩；也可用示范按钮拉伸。
           </div>
         </div>
 
+        <p>箭头表示施加在物体上的推力或拉力。本动画和档位仅作示意，不是实际测量；真实运动和变形还与质量、摩擦及材料等有关。</p>
         <div class="steps">
           <div class="step active">
             <span class="sn">💡</span>
@@ -229,19 +230,19 @@
         </div>
 
         <div class="slider-row">
-          <label for="effectSlider">实验力大小：</label>
+          <label for="effectSlider">实验力度档位：</label>
           <input type="range" id="effectSlider" min="1" max="10" value="5" />
-          <span class="val" id="effectVal">5 N</span>
+          <span class="val" id="effectVal">5 档</span>
         </div>
 
         <div class="info-grid">
           <div>
             <b>🎨 形变</b><br/>
-            点击并拖拽物体，观察它如何变形。力越大，形变越明显！
+            拖拽物体，或用示范按钮观察形变。档位仅用于动画示意。
           </div>
           <div>
             <b>⚽ 运动</b><br/>
-            点击发射小球，调整力的大小和方向，看它如何运动！
+            点击发射小球，调整力度档位，看示意运动如何变化。
           </div>
         </div>
 
@@ -370,13 +371,13 @@ document.querySelectorAll('.experiment-btn').forEach(btn => {
 // Sliders
 document.getElementById('forceSlider').addEventListener('input', (e) => {
   forceMagnitude = parseInt(e.target.value);
-  document.getElementById('forceVal').textContent = forceMagnitude + ' N';
+  document.getElementById('forceVal').textContent = forceMagnitude + ' 档';
   draw();
 });
 
 document.getElementById('effectSlider').addEventListener('input', (e) => {
   effectForce = parseInt(e.target.value);
-  document.getElementById('effectVal').textContent = effectForce + ' N';
+  document.getElementById('effectVal').textContent = effectForce + ' 档';
   draw();
 });
 
@@ -390,6 +391,7 @@ let apple = { x: 350, y: 100, vy: 0, falling: false };
 
 let mouseX = 0, mouseY = 0, isDragging = false;
 let manualSpringStretch = 0;
+let springDragging = false, springDragStartX = 0, springDragStartStretch = 0;
 const canvasAction = document.getElementById('canvasAction');
 const actionStatus = document.getElementById('actionStatus');
 function updateCanvasAction() {
@@ -437,6 +439,14 @@ canvas.addEventListener('mousedown', (e) => {
       ball.dragging = true;
     }
   } else if (currentSection === 'pushpull') {
+    if (currentMode !== 'push') {
+      const springX = currentMode === 'both' ? 430 : 350;
+      if (Math.abs(mouseX - (springX + 100 + manualSpringStretch)) < 35 && Math.abs(mouseY - 280) < 35) {
+        springDragging = true;
+        springDragStartX = mouseX;
+        springDragStartStretch = manualSpringStretch;
+      }
+    }
     if (currentMode === 'push' || currentMode === 'both') {
       const dx = mouseX - box.x;
       const dy = mouseY - (box.y + box.h/2);
@@ -467,6 +477,9 @@ canvas.addEventListener('mousemove', (e) => {
   mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
 
   if (isDragging) {
+    if (springDragging) {
+      manualSpringStretch = Math.max(-80, Math.min(100, springDragStartStretch + mouseX - springDragStartX));
+    }
     if (ball.dragging) {
       ball.vx = (mouseX - ball.x) * 0.3;
       ball.vy = (mouseY - ball.y) * 0.3;
@@ -481,8 +494,10 @@ canvas.addEventListener('mousemove', (e) => {
   }
 });
 
-canvas.addEventListener('mouseup', () => {
+window.addEventListener('mouseup', () => {
   isDragging = false;
+  if (springDragging) manualSpringStretch = 0;
+  springDragging = false;
   ball.dragging = false;
   box.dragging = false;
   deformObj.dragging = false;
@@ -595,7 +610,9 @@ function drawPushPull() {
     // Force arrow
     if (box.dragging && Math.abs(box.vx) > 0.1) {
       const arrowLen = forceMagnitude * 10;
-      drawArrow(box.x - 30, box.y + box.h/2, box.x - 30 + arrowLen, box.y + box.h/2, '#3b82f6', `推力 ${forceMagnitude}N`);
+      const direction = Math.sign(box.vx);
+      const startX = direction > 0 ? box.x - 30 : box.x + box.w + 30;
+      drawArrow(startX, box.y + box.h/2, startX + direction * arrowLen, box.y + box.h/2, '#3b82f6', `推力示意`);
     }
     
     // Update box position
@@ -617,11 +634,11 @@ function drawPushPull() {
   
   if (currentMode === 'pull' || currentMode === 'both') {
     // Draw spring
-    const springX = currentMode === 'both' ? 500 : 350;
+    const springX = currentMode === 'both' ? 430 : 350;
     const springY = currentMode === 'both' ? 280 : 280;
     const coils = 10;
     const coilWidth = 30;
-    const stretch = isDragging ? (mouseX - springX) * 0.3 : manualSpringStretch;
+    const stretch = manualSpringStretch;
     
     ctx.strokeStyle = '#10b981';
     ctx.lineWidth = 4;
@@ -642,9 +659,10 @@ function drawPushPull() {
     ctx.fillRect(springX + 100 + stretch, springY - 20, 10, 40);
     
     // Force arrow
-    if ((isDragging || manualSpringStretch) && Math.abs(stretch) > 5) {
-      const arrowLen = forceMagnitude * 8;
-      drawArrow(springX + 110 + stretch, springY, springX + 110 + stretch - arrowLen, springY, '#10b981', `拉力 ${forceMagnitude}N`);
+    if (Math.abs(stretch) > 5) {
+      const tip = springX + 110 + stretch;
+      const arrowLen = Math.min(forceMagnitude * 8, stretch > 0 ? canvas.width - tip - 5 : tip - 5);
+      drawArrow(tip, springY, tip + Math.sign(stretch) * arrowLen, springY, '#10b981', stretch > 0 ? '拉力示意' : '推力示意');
     }
     
     // Label
@@ -693,7 +711,7 @@ function drawEffect() {
     
     // Force arrows
     if (deformObj.dragging && (Math.abs(deformObj.deformX) > 5 || Math.abs(deformObj.deformY) > 5)) {
-      drawArrow(deformObj.x, deformObj.y - 80, deformObj.x, deformObj.y - 40, '#ef4444', `${effectForce}N`);
+      drawArrow(deformObj.x, deformObj.y - 80, deformObj.x, deformObj.y - 40, '#ef4444', '作用力示意');
     }
     
     // Reset on double click
@@ -768,7 +786,7 @@ function drawEffect() {
     // Force indicator
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
     ctx.font = '16px "PingFang SC", sans-serif';
-    ctx.fillText(`发射力：${effectForce}N`, 200, 100);
+    ctx.fillText(`发射力度：${effectForce} 档（示意）`, 200, 100);
     
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.font = '14px "PingFang SC", sans-serif';

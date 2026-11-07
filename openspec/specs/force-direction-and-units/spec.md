@@ -1,0 +1,24 @@
+# force-direction-and-units Specification
+
+## Purpose
+TBD - created by archiving change force-direction-and-units. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 力的示意须标明含义和限制
+页面 SHALL 使用无单位档位表明未标定的动画，并标明箭头代表施加于物体的力。
+
+#### Scenario: 调整示意
+- **WHEN** 学习者调整力度滑块
+- **THEN** 页面显示无单位的档位，不显示未经测量的牛顿值
+
+### Requirement: 弹簧操作与力方向一致
+页面 SHALL 从弹簧右端响应拖动，区分伸长和压缩时施加力的方向。
+
+#### Scenario: 拉伸和压缩弹簧
+- **WHEN** 学习者将弹簧右端向右或向左拖动
+- **THEN** 弹簧分别伸长或压缩，施加的力分别向右或向左，松开后恢复
+
+#### Scenario: 从其他位置拖动
+- **WHEN** 学习者在弹簧右端之外拖动
+- **THEN** 弹簧不改变长度
