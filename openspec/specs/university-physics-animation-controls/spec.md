@@ -1,0 +1,17 @@
+# university-physics-animation-controls Specification
+
+## Purpose
+TBD - created by archiving change university-physics-animation-controls. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 可控制大学物理动画
+流体、光电和多普勒主题 SHALL 提供可通过键盘操作的动画暂停和继续控件，并尊重系统减少动态效果偏好。
+
+#### Scenario: 暂停后调整参数
+- **WHEN** 学习者暂停动画并调整参数
+- **THEN** 数值与画面更新，但动画状态保持静止直到重新播放
+
+#### Scenario: 系统请求减少动态效果
+- **WHEN** 页面在减少动态效果偏好下打开
+- **THEN** 动画初始暂停，学习者仍可主动播放

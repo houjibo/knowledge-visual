@@ -83,6 +83,9 @@
   .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
   .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
   footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .animation-controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 0 0 16px; color: #cbd5e1; }
+  #animation-toggle { padding: 8px 16px; min-height: 40px; color: #f8fafc; background: #334155; border: 1px solid #94a3b8; border-radius: 8px; cursor: pointer; }
+  #animation-toggle:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -107,6 +110,11 @@
     <button type="button" class="tab active" data-mode="learn" aria-pressed="true" aria-controls="sec-learn">📖 学习</button>
     <button type="button" class="tab" data-mode="practice" aria-pressed="false" aria-controls="sec-practice">🧪 练习</button>
     <button type="button" class="tab" data-mode="quiz" aria-pressed="false" aria-controls="sec-quiz">🎯 测验</button>
+  </div>
+
+  <div class="animation-controls">
+    <button type="button" id="animation-toggle">暂停动画</button>
+    <span id="animation-status" aria-live="polite"></span>
   </div>
 
   <!-- ==================== 学习模式 ==================== -->
@@ -243,6 +251,26 @@
 /* ============================================================
  * 模式切换
  * ============================================================ */
+const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+let animationPlaying = !motionPreference.matches;
+let animationTime = 0;
+let animationUserSet = false;
+const animationToggle = document.getElementById('animation-toggle');
+const animationStatus = document.getElementById('animation-status');
+function updateAnimationControl() {
+  animationToggle.textContent = animationPlaying ? '暂停动画' : '继续动画';
+  animationStatus.textContent = animationPlaying ? '动画播放中' : '动画已暂停';
+}
+animationToggle.addEventListener('click', () => {
+  animationUserSet = true;
+  animationPlaying = !animationPlaying;
+  updateAnimationControl();
+  draw();
+});
+motionPreference.addEventListener('change', event => {
+  if (!animationUserSet) { animationPlaying = !event.matches; updateAnimationControl(); draw(); }
+});
+updateAnimationControl();
 const tabs = document.querySelectorAll('.tab');
 const sections = {
   learn: document.getElementById('sec-learn'),
@@ -340,7 +368,7 @@ function drawScene(ctx, W, H, vs, vo, f0, showLabels) {
   const d = doppler(vs, vo, f0);
   ctx.clearRect(0, 0, W, H);
 
-  const t = Date.now() / 1000;
+  const t = animationTime / 1000;
   const v = 340; // 声速
 
   // 波源位置（从左向右运动）
@@ -454,7 +482,9 @@ function draw() {
   else if (mode === 'practice') drawScene(practiceCtx, 700, 420, +pvs.value, +pvo.value, +pf0.value, true);
   else drawQuizScene(quizCtx, 700, 420);
 }
-setInterval(draw, 50);
+setInterval(() => {
+  if (animationPlaying) { animationTime += 50; draw(true); }
+}, 50);
 
 /* ============================================================
  * 测验模式

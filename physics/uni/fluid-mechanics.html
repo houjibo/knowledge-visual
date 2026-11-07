@@ -84,6 +84,9 @@
   .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
   .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
   footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .animation-controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 0 0 16px; color: #cbd5e1; }
+  #animation-toggle { padding: 8px 16px; min-height: 40px; color: #f8fafc; background: #334155; border: 1px solid #94a3b8; border-radius: 8px; cursor: pointer; }
+  #animation-toggle:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -108,6 +111,11 @@
     <button type="button" class="tab active" data-mode="learn" aria-pressed="true" aria-controls="sec-learn">📖 学习</button>
     <button type="button" class="tab" data-mode="practice" aria-pressed="false" aria-controls="sec-practice">🧪 练习</button>
     <button type="button" class="tab" data-mode="quiz" aria-pressed="false" aria-controls="sec-quiz">🎯 测验</button>
+  </div>
+
+  <div class="animation-controls">
+    <button type="button" id="animation-toggle">暂停动画</button>
+    <span id="animation-status" aria-live="polite"></span>
   </div>
 
   <!-- ==================== 学习模式 ==================== -->
@@ -240,6 +248,26 @@
 /* ============================================================
  * 通用：模式切换
  * ============================================================ */
+const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+let animationPlaying = !motionPreference.matches;
+let animationTime = 0;
+let animationUserSet = false;
+const animationToggle = document.getElementById('animation-toggle');
+const animationStatus = document.getElementById('animation-status');
+function updateAnimationControl() {
+  animationToggle.textContent = animationPlaying ? '暂停动画' : '继续动画';
+  animationStatus.textContent = animationPlaying ? '动画播放中' : '动画已暂停';
+}
+animationToggle.addEventListener('click', () => {
+  animationUserSet = true;
+  animationPlaying = !animationPlaying;
+  updateAnimationControl();
+  draw();
+});
+motionPreference.addEventListener('change', event => {
+  if (!animationUserSet) { animationPlaying = !event.matches; updateAnimationControl(); draw(); }
+});
+updateAnimationControl();
 const tabs = document.querySelectorAll('.tab');
 const sections = {
   learn: document.getElementById('sec-learn'),
@@ -330,7 +358,7 @@ updPractice();
 /* ============================================================
  * Canvas 绘制：文丘里管
  * ============================================================ */
-function drawPipe(ctx, W, H, r1, r2, v1, particles, showLabels) {
+function drawPipe(ctx, W, H, r1, r2, v1, particles, showLabels, advance = false) {
   const p = physics(r1, r2, v1);
   // 管子几何：左段粗管 0~0.35W，收缩段 0.35~0.55W，细管 0.55~1W
   const cx = W / 2, cy = H / 2;
@@ -380,7 +408,7 @@ function drawPipe(ctx, W, H, r1, r2, v1, particles, showLabels) {
       const k = (pt.x - x2) / (x3 - x2);
       v = v1 + (p.v2 - v1) * k;
     } else v = p.v2;
-    pt.x += v * 1.2;
+    if (advance) pt.x += v * 1.2;
     if (pt.x > x4) pt.x = x1;
     // y 插值：粗管 → 细管
     let R;
@@ -417,12 +445,14 @@ const learnCtx = document.getElementById('learnCanvas').getContext('2d');
 const practiceCtx = document.getElementById('practiceCanvas').getContext('2d');
 const quizCtx = document.getElementById('quizCanvas').getContext('2d');
 
-function draw() {
-  if (mode === 'learn') drawPipe(learnCtx, 700, 420, +r1El.value, +r2El.value, +v1El.value, particles, true);
-  else if (mode === 'practice') drawPipe(practiceCtx, 700, 420, +pr1.value, +pr2.value, +pv1.value, particles, true);
-  else drawQuizScene(quizCtx, 700, 420);
+function draw(advance = false) {
+  if (mode === 'learn') drawPipe(learnCtx, 700, 420, +r1El.value, +r2El.value, +v1El.value, particles, true, advance);
+  else if (mode === 'practice') drawPipe(practiceCtx, 700, 420, +pr1.value, +pr2.value, +pv1.value, particles, true, advance);
+  else drawQuizScene(quizCtx, 700, 420, advance);
 }
-setInterval(draw, 50);
+setInterval(() => {
+  if (animationPlaying) { animationTime += 50; draw(true); }
+}, 50);
 
 /* ============================================================
  * 测验模式
@@ -524,13 +554,13 @@ qRetry.addEventListener('click', () => {
   renderQuiz();
 });
 
-function drawQuizScene(ctx, W, H) {
+function drawQuizScene(ctx, W, H, advance = false) {
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = '#e2e8f0';
   ctx.font = 'bold 16px sans-serif';
   ctx.fillText(`🎯 第 ${quizIdx + 1}/${quizData.length} 题`, 30, 40);
   // 装饰：文丘里管示意
-  drawPipe(ctx, W, H - 100, 50, 20, 3, particles, false);
+  drawPipe(ctx, W, H - 100, 50, 20, 3, particles, false, advance);
 }
 
 if (typeof PageProgress !== 'undefined' && PageProgress.isDone('fluid-mechanics')) {
