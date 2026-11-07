@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：123；尚未登记：193。
+主题总数：316；已登记部分交互证据：124；尚未登记：192。
 
 ## 已登记部分交互证据
 
@@ -61,6 +61,8 @@
   - 固定随机边界、凑十破十的正确反馈和重复计分、十关完成及重启；未覆盖整页视觉内容。 [carry-borrow-practice.spec.js](../../tests/browser/carry-borrow-practice.spec.js)
 - [24时计时法](../../math/topics/24h-time/index.html)
   - 午夜、中午和晚间转换，固定随机值的唯一选项和配对、键盘配对及单次答题；时间线选择及换题；四项活动完成、知识地图、刷新和保存失败重试；整页无障碍未全面验收。 [time-conversion-reliability.spec.js](../../tests/browser/time-conversion-reliability.spec.js)
+- [认识算盘](../../math/topics/abacus/index.html)
+  - 桌面和移动视口验证 0–9 珠子间距与数值、键盘拨数、固定随机读数、单题计分及挑战重复提交；挑战切换模式的计时、完成记录与真实设备尚未全面验收。 [abacus-learning-interaction-reliability.spec.js](../../tests/browser/abacus-learning-interaction-reliability.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
   - 桌面与移动视口验证固定随机边界、数轴答错后点击、自由练习及加法挑战重复提交、保存失败重试；其他题型和真实设备尚未全面验收。 [basic-addition-subtraction-reliability.spec.js](../../tests/browser/basic-addition-subtraction-reliability.spec.js)
   - 从首页进入加法并获得练习正确、错误反馈；未覆盖全部学习模式。 [learning-paths.spec.js](../../tests/browser/learning-paths.spec.js)
@@ -404,7 +406,6 @@
 - [相似 - 初中数学九年级](../../math/middle/similarity.html)
 - [三角形与全等 - 初中数学八年级](../../math/middle/triangle-congruence.html)
 - [锐角三角函数 - 初中数学九年级](../../math/middle/trigonometric-functions.html)
-- [认识算盘](../../math/topics/abacus/index.html)
 - [100以内加减法](../../math/topics/addition-subtraction-within-100/index.html)
 - [万以内加减法](../../math/topics/addition-subtraction-within-10000/index.html)
 - [平均数](../../math/topics/average/index.html)

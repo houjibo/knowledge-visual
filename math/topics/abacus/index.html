@@ -253,10 +253,13 @@
         <div class="abacus-interactive" id="repAbacus">
           <svg viewBox="0 0 320 380" class="abacus-svg" id="repSvg"></svg>
         </div>
+        <p>也可以选择各档数字来拨珠：</p>
+        <div id="repDigitControls" style="display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:12px"></div>
 
         <div>
           <button class="reset-btn" id="repReset">🔄 清零</button>
           <button class="check-btn" id="repCheck">✅ 检查</button>
+          <button class="check-btn" id="repNext" hidden>下一题 →</button>
         </div>
         <div class="feedback" id="repFeedback"></div>
         <div class="score-bar" id="repScore">
@@ -278,6 +281,7 @@
 
         <div class="read-options" id="readOptions"></div>
         <div class="feedback" id="readFeedback"></div>
+        <button class="check-btn" id="readNext" hidden>下一题 →</button>
         <div class="score-bar" id="readScore">
           <span>⭐ 得分：<strong id="readScoreVal">0</strong></span>
           <span>📝 第 <strong id="readRound">1</strong> 题</span>
@@ -413,7 +417,7 @@
           const y = isActive ? (112 + u * 0) : (48 + u * 38);
           // 多颗active时紧挨梁
           const ay = isActive ? (130 - 20 - (s.upper - 1 - u) * 36) : (48 + u * 38);
-          const fy = isActive ? Math.max(ay, 50) : (48 + u * 38);
+          const fy = isActive ? Math.max(ay, 50) : (s.upper ? 48 : 48 + u * 38);
           const fill = isActive ? '#E53935' : '#D7CCC8';
           const extra = interactive ? ` class="bead" data-rod="${r}" data-type="upper" data-idx="${u}" style="cursor:pointer"` : '';
           html += `<ellipse cx="${xs[r]}" cy="${fy}" rx="13" ry="16" fill="${fill}" stroke="${isActive ? '#C62828' : '#BCAAA4'}" stroke-width="1.5"${extra}/>`;
@@ -422,7 +426,7 @@
         for (let l = 0; l < 4; l++) {
           const isActive = l < s.lower;
           const ay = 148 + l * 36;
-          const iy = 340 - l * 36;
+          const iy = 340 - (3 - l) * 36;
           const fy = isActive ? ay : iy;
           const fill = isActive ? '#43A047' : '#D7CCC8';
           const extra = interactive ? ` class="bead" data-rod="${r}" data-type="lower" data-idx="${l}" style="cursor:pointer"` : '';
@@ -430,6 +434,11 @@
         }
       }
       svgEl.innerHTML = html;
+      if (!interactive) {
+        const description = state.map((s, i) => `${posLabels[i]}位上珠${s.upper}颗、下珠${s.lower}颗靠梁`).join('，');
+        svgEl.setAttribute('role', 'img');
+        svgEl.setAttribute('aria-label', `算盘：${description}`);
+      }
     }
 
     /* ===== 算盘状态 ===== */
@@ -476,7 +485,21 @@
     let repState = emptyState();
     let repScore = 0;
     let repRound = 1;
-    let repTargetNum = 0;
+    let repTargetNum = 0, repLocked = false;
+    const repControls = document.getElementById('repDigitControls');
+    ['万','千','百','十','个'].forEach((name, rod) => {
+      const label = document.createElement('label');
+      label.textContent = `${name}位 `;
+      const select = document.createElement('select');
+      select.setAttribute('aria-label', `${name}位数字`);
+      for (let digit = 0; digit <= 9; digit++) select.add(new Option(String(digit), String(digit)));
+      select.addEventListener('change', () => {
+        const digit = Number(select.value);
+        repState[rod] = {upper: Math.floor(digit / 5), lower: digit % 5};
+        renderRepAbacus();
+      });
+      label.appendChild(select); repControls.appendChild(label);
+    });
 
     function genRepTarget() {
       // 根据轮次递增难度
@@ -502,6 +525,10 @@
 
     function renderRepAbacus() {
       drawSimpleAbacus(document.getElementById('repSvg'), repState, true, 'rep');
+      repControls.querySelectorAll('select').forEach((select, rod) => {
+        select.value = String(repState[rod].upper * 5 + repState[rod].lower);
+        select.disabled = repLocked;
+      });
       // 绑定点击事件
       document.querySelectorAll('#repSvg .bead').forEach(bead => {
         bead.addEventListener('click', handleRepBeadClick);
@@ -509,17 +536,14 @@
     }
 
     function handleRepBeadClick(e) {
+      if (repLocked) return;
       const rod = parseInt(e.target.dataset.rod);
       const type = e.target.dataset.type;
       const idx = parseInt(e.target.dataset.idx);
 
       if (type === 'upper') {
         // 点击上珠：如果此珠已active则取消（及之后的），否则激活
-        if (idx < repState[rod].upper) {
-          repState[rod].upper = idx; // 取消这颗及之后的
-        } else {
-          repState[rod].upper = idx + 1; // 激活到这颗
-        }
+        repState[rod].upper = repState[rod].upper ? 0 : 1;
       } else {
         if (idx < repState[rod].lower) {
           repState[rod].lower = idx;
@@ -531,6 +555,7 @@
     }
 
     document.getElementById('repReset').addEventListener('click', () => {
+      if (repLocked) return;
       repState = emptyState();
       renderRepAbacus();
       document.getElementById('repFeedback').textContent = '';
@@ -538,6 +563,7 @@
     });
 
     document.getElementById('repCheck').addEventListener('click', () => {
+      if (repLocked) return;
       const myNum = stateToNumber(repState);
       const fb = document.getElementById('repFeedback');
       if (myNum === repTargetNum) {
@@ -545,19 +571,25 @@
         fb.className = 'feedback correct-fb';
         repScore += 10;
         document.getElementById('repScoreVal').textContent = repScore;
-        setTimeout(() => {
-          repRound++;
-          document.getElementById('repRound').textContent = repRound;
-          repState = emptyState();
-          genRepTarget();
-          renderRepAbacus();
-          fb.textContent = '';
-          fb.className = 'feedback';
-        }, 1500);
+        repLocked = true;
+        renderRepAbacus();
+        document.getElementById('repNext').hidden = false;
       } else {
         fb.textContent = '❌ 不对哦，再试试！你拨的是 ' + myNum;
         fb.className = 'feedback wrong-fb';
       }
+    });
+    document.getElementById('repNext').addEventListener('click', () => {
+      repLocked = false;
+      document.getElementById('repNext').hidden = true;
+      repRound++;
+      document.getElementById('repRound').textContent = repRound;
+      repState = emptyState();
+      genRepTarget();
+      renderRepAbacus();
+      const fb = document.getElementById('repFeedback');
+      fb.textContent = '';
+      fb.className = 'feedback';
     });
 
     // 初始化
@@ -584,13 +616,7 @@
 
       // 生成选项
       const opts = [readAnswer];
-      while (opts.length < 4) {
-        let wrong;
-        const offset = Math.floor(Math.random() * 10) + 1;
-        wrong = readAnswer + (Math.random() > 0.5 ? offset : -offset);
-        if (wrong < 0) wrong = readAnswer + offset + 5;
-        if (!opts.includes(wrong) && wrong !== readAnswer) opts.push(wrong);
-      }
+      for (let offset = 1; opts.length < 4; offset++) opts.push(readAnswer + offset);
       // 打乱
       for (let i = opts.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -599,6 +625,7 @@
       const container = document.getElementById('readOptions');
       container.innerHTML = '';
       readLocked = false;
+      document.getElementById('readNext').hidden = true;
       opts.forEach(val => {
         const btn = document.createElement('button');
         btn.className = 'read-opt';
@@ -620,11 +647,6 @@
         fb.className = 'feedback correct-fb';
         readScore += 10;
         document.getElementById('readScoreVal').textContent = readScore;
-        setTimeout(() => {
-          readRound++;
-          document.getElementById('readRound').textContent = readRound;
-          genReadQuestion();
-        }, 1500);
       } else {
         btn.classList.add('wrong');
         fb.textContent = '❌ 不对，正确答案是 ' + readAnswer;
@@ -633,13 +655,14 @@
         document.querySelectorAll('.read-opt').forEach(b => {
           if (parseInt(b.textContent) === readAnswer) b.classList.add('correct');
         });
-        setTimeout(() => {
-          readRound++;
-          document.getElementById('readRound').textContent = readRound;
-          genReadQuestion();
-        }, 2500);
       }
+      document.getElementById('readNext').hidden = false;
     }
+    document.getElementById('readNext').addEventListener('click', () => {
+      readRound++;
+      document.getElementById('readRound').textContent = readRound;
+      genReadQuestion();
+    });
 
     genReadQuestion();
 
@@ -649,9 +672,10 @@
     let chalCorrectCount = 0;
     let chalWrongCount = 0;
     let chalAnswer = 0;
-    let chalActive = false;
+    let chalActive = false, chalLocked = false, chalNextTimer = null;
 
     function genChalQuestion() {
+      chalLocked = false;
       const max = chalCorrectCount < 3 ? 9 : (chalCorrectCount < 7 ? 99 : 999);
       chalAnswer = Math.floor(Math.random() * (max + 1));
       if (chalAnswer === 0) chalAnswer = Math.floor(Math.random() * max) + 1;
@@ -664,6 +688,7 @@
     }
 
     function startChallenge() {
+      clearInterval(chalTimer); clearTimeout(chalNextTimer);
       chalTimeLeft = 60;
       chalCorrectCount = 0;
       chalWrongCount = 0;
@@ -687,6 +712,7 @@
 
     function endChallenge() {
       clearInterval(chalTimer);
+      clearTimeout(chalNextTimer);
       chalActive = false;
       document.getElementById('challengeWrap').classList.remove('challenge-active');
       document.getElementById('chalRunning').style.display = 'none';
@@ -707,10 +733,11 @@
     document.getElementById('chalRestart').addEventListener('click', startChallenge);
 
     function handleChalSubmit() {
-      if (!chalActive) return;
+      if (!chalActive || chalLocked) return;
       const val = parseInt(document.getElementById('chalInput').value);
       const res = document.getElementById('chalResult');
       if (isNaN(val)) return;
+      chalLocked = true;
 
       if (val === chalAnswer) {
         chalCorrectCount++;
@@ -723,7 +750,7 @@
         res.textContent = '❌ 是 ' + chalAnswer;
         res.className = 'challenge-result feedback wrong-fb';
       }
-      setTimeout(() => {
+      chalNextTimer = setTimeout(() => {
         if (chalActive) genChalQuestion();
       }, 800);
     }
