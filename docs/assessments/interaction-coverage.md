@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：58；尚未登记：258。
+主题总数：316；已登记部分交互证据：59；尚未登记：257。
 
 ## 已登记部分交互证据
 
@@ -23,6 +23,8 @@
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [化学平衡 · 大学化学互动可视化](../../chemistry/uni/equilibrium.html)
   - 综合练习逐题得分、重试及完成；未覆盖平衡和相图模拟。 [equilibrium-quiz.spec.js](../../tests/browser/equilibrium-quiz.spec.js)
+- [平面直角坐标系 · 初中数学互动可视化](../../math/middle/coordinate-plane.html)
+  - 滑块、鼠标和触摸的坐标同步，原点及第二象限、原点对称画布位置，测验回看计分、刷新和存储失败；其他对称方式与完整无障碍未全面验收。 [coordinate-plane.spec.js](../../tests/browser/coordinate-plane.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
   - 从首页进入加法并获得练习正确、错误反馈；未覆盖全部学习模式。 [learning-paths.spec.js](../../tests/browser/learning-paths.spec.js)
 - [圆柱与圆锥](../../math/topics/cylinder-and-cone/index.html)
@@ -193,7 +195,6 @@
 - [平面向量 - 高中数学](../../math/high/vectors.html)
 - [轴对称 - 初中数学八年级](../../math/middle/axial-symmetry.html)
 - [圆的进阶 - 互动可视化](../../math/middle/circle.html)
-- [平面直角坐标系 · 初中数学互动可视化](../../math/middle/coordinate-plane.html)
 - [数据的分析 · 初中数学互动可视化](../../math/middle/data-analysis.html)
 - [数据的收集整理与分析 · 初中数学互动可视化](../../math/middle/data-statistics.html)
 - [分式 - 初中数学可视化](../../math/middle/fractions.html)

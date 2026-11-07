@@ -51,7 +51,7 @@
   .quiz { margin-top: 14px; padding: 14px; background: rgba(52,211,153,0.08); border-radius: 12px; border: 1px solid rgba(52,211,153,0.3); }
   .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
   .quiz-opts { display: grid; gap: 6px; }
-  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt { color: #e2e8f0; text-align: left; width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
   .quiz-opt:hover { background: rgba(255,255,255,0.1); }
   .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
   .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
@@ -105,9 +105,9 @@
   </header>
 
   <div class="tabs">
-    <div class="tab active" data-mode="learn">📖 学习</div>
-    <div class="tab" data-mode="practice">🧪 练习</div>
-    <div class="tab" data-mode="quiz">🎯 测验</div>
+    <button type="button" class="tab active" data-mode="learn" aria-pressed="true">📖 学习</button>
+    <button type="button" class="tab" data-mode="practice" aria-pressed="false">🧪 练习</button>
+    <button type="button" class="tab" data-mode="quiz" aria-pressed="false">🎯 测验</button>
   </div>
 
   <!-- ==================== 学习模式 ==================== -->
@@ -115,7 +115,7 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="planeCanvas" width="720" height="560"></canvas>
+          <canvas id="planeCanvas" width="720" height="560" role="img"></canvas>
           <div class="legend">
             <span>🖱️ 点击或拖动放置点 P</span>
             <span>坐标取最近整数格点</span>
@@ -124,6 +124,11 @@
       </div>
       <div class="panel">
         <h3>点 P 的坐标信息</h3>
+        <div class="point-controls">
+          <label for="pointX">横坐标 x</label> <input type="range" id="pointX" min="-8" max="8" step="1" value="3">
+          <label for="pointY">纵坐标 y</label> <input type="range" id="pointY" min="-8" max="8" step="1" value="2">
+        </div>
+        <p>可拖动画布上的点，或使用滑块和方向键调整整数坐标。</p>
         <div class="info-grid">
           <div>坐标<br><b id="infoCoord">P (3, 2)</b></div>
           <div>位置<br><b id="infoQuad">第一象限</b></div>
@@ -132,11 +137,12 @@
         </div>
         <h3 style="margin-top:14px">对称点演示</h3>
         <div class="sym-btns">
-          <button class="sym-btn" data-sym="x">关于 x 轴</button>
-          <button class="sym-btn" data-sym="y">关于 y 轴</button>
-          <button class="sym-btn" data-sym="o">关于原点</button>
-          <button class="sym-btn active" data-sym="none">关闭</button>
+          <button class="sym-btn" data-sym="x" aria-pressed="false">关于 x 轴</button>
+          <button class="sym-btn" data-sym="y" aria-pressed="false">关于 y 轴</button>
+          <button class="sym-btn" data-sym="o" aria-pressed="false">关于原点</button>
+          <button class="sym-btn active" data-sym="none" aria-pressed="true">关闭</button>
         </div>
+        <div role="status" id="symResult"></div>
         <div class="equation" id="symEq">对称点规律：<br><b>(a, b) → (a, −b)</b>　关于 x 轴</div>
         <div class="concept-card">
           <div class="title">象限符号规律</div>
@@ -223,8 +229,9 @@ const sections = {
   quiz: document.getElementById('sec-quiz')
 };
 tabs.forEach(t => t.addEventListener('click', () => {
-  tabs.forEach(x => x.classList.remove('active'));
+  tabs.forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
   t.classList.add('active');
+  t.setAttribute('aria-pressed', 'true');
   mode = t.dataset.mode;
   Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
   draw();
@@ -244,7 +251,7 @@ const SYM_INFO = {
   x:    { text: '对称点规律：<br><b>(a, b) → (a, −b)</b>　关于 x 轴', fn: p => ({ x: p.x, y: -p.y }), color: '#60a5fa', label: 'P′（关于 x 轴对称）' },
   y:    { text: '对称点规律：<br><b>(a, b) → (−a, b)</b>　关于 y 轴', fn: p => ({ x: -p.x, y: p.y }), color: '#f472b6', label: 'P′（关于 y 轴对称）' },
   o:    { text: '对称点规律：<br><b>(a, b) → (−a, −b)</b>　关于原点', fn: p => ({ x: -p.x, y: -p.y }), color: '#fbbf24', label: 'P′（关于原点对称）' },
-  none: { text: '对称点规律：<br><b>(a, b) → (a, −b)</b>　关于 x 轴', fn: p => p, color: '#fff', label: '' }
+  none: { text: '选择一种对称方式，观察对称点及其坐标。', fn: p => p, color: '#fff', label: '' }
 };
 
 function geom() {
@@ -280,6 +287,12 @@ function updInfo() {
   document.getElementById('infoDx').textContent = Math.abs(point.y);
   document.getElementById('infoDy').textContent = Math.abs(point.x);
   document.getElementById('symEq').innerHTML = SYM_INFO[symMode].text;
+  document.getElementById('pointX').value = point.x;
+  document.getElementById('pointY').value = point.y;
+  const reflected = SYM_INFO[symMode].fn(point);
+  const symmetry = symMode === 'none' ? '未显示对称点' : `${SYM_INFO[symMode].label}坐标为 (${reflected.x}, ${reflected.y})`;
+  document.getElementById('symResult').textContent = symmetry;
+  canvas.setAttribute('aria-label', `坐标系中 P (${point.x}, ${point.y})，${quadrantText(point)}；${symmetry}。`);
 }
 
 function drawGrid() {
@@ -386,9 +399,15 @@ canvas.addEventListener('touchstart', e => { e.preventDefault(); dragging = true
 canvas.addEventListener('touchmove', e => { e.preventDefault(); if (dragging) placePoint(e); }, { passive: false });
 canvas.addEventListener('touchend', () => dragging = false);
 
+for (const axis of ['x', 'y']) {
+  document.getElementById(axis === 'x' ? 'pointX' : 'pointY').addEventListener('input', e => {
+    point[axis] = Number(e.target.value); updInfo(); draw();
+  });
+}
 document.querySelectorAll('.sym-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.sym-btn').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.sym-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
   b.classList.add('active');
+  b.setAttribute('aria-pressed', 'true');
   symMode = b.dataset.sym;
   updInfo(); draw();
 }));
@@ -409,7 +428,7 @@ document.querySelectorAll('.practice-item').forEach(item => {
   item.querySelectorAll('.quiz-opt').forEach(opt => {
     opt.addEventListener('click', () => {
       const ok = opt.dataset.ok === '1';
-      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.disabled = true; });
       opt.classList.add(ok ? 'correct' : 'wrong');
       fb.style.color = ok ? '#10b981' : '#ef4444';
       fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
@@ -437,7 +456,7 @@ const QUIZ = [
     opts: ['第一象限', '第二象限', '第四象限', '第三象限'],
     ans: 1, ex: '第四象限 a > 0、b < 0，则 (b, a) 符号为 (−, +)，在第二象限。' }
 ];
-let qi = 0, qScore = 0, qAnswered = false;
+let qi = 0, answers = Array(QUIZ.length).fill(null);
 const quizQ = document.getElementById('quizQ');
 const quizOpts = document.getElementById('quizOpts');
 const quizFb = document.getElementById('quizFb');
@@ -447,23 +466,21 @@ const btnPrev = document.getElementById('quizPrev');
 const btnNext = document.getElementById('quizNext');
 
 function renderQ() {
-  const q = QUIZ[qi];
-  qAnswered = false;
+  const q = QUIZ[qi], selected = answers[qi];
   quizQ.textContent = `第${qi + 1}题 / 共${QUIZ.length}题：${q.q}`;
-  quizFb.textContent = '';
+  quizFb.textContent = selected === null ? '' : (selected === q.ans ? '✅ ' : '❌ ') + q.ex;
   quizOpts.innerHTML = '';
   q.opts.forEach((o, i) => {
-    const d = document.createElement('div');
-    d.className = 'quiz-opt';
-    d.textContent = o;
+    const d = document.createElement('button');
+    d.type = 'button'; d.className = 'quiz-opt'; d.textContent = o;
+    if (selected !== null) {
+      d.disabled = true;
+      if (i === q.ans) d.classList.add('correct');
+      if (i === selected && selected !== q.ans) d.classList.add('wrong');
+    }
     d.addEventListener('click', () => {
-      if (qAnswered) return;
-      qAnswered = true;
-      const ok = i === q.ans;
-      if (ok) qScore++;
-      quizOpts.children[q.ans].classList.add('correct');
-      if (!ok) d.classList.add('wrong');
-      quizFb.textContent = (ok ? '✅ ' : '❌ ') + q.ex;
+      if (answers[qi] !== null) return;
+      answers[qi] = i; renderQ();
     });
     quizOpts.appendChild(d);
   });
@@ -472,23 +489,25 @@ function renderQ() {
   btnNext.textContent = qi === QUIZ.length - 1 ? '查看成绩' : '下一题';
 }
 function finishQuiz() {
-  const pass = qScore >= Math.ceil(QUIZ.length * 0.8);
+  const score = answers.reduce((n, answer, index) => n + (answer === QUIZ[index].ans ? 1 : 0), 0);
+  const pass = score >= Math.ceil(QUIZ.length * 0.8);
   quizQ.textContent = '测验完成！';
-  quizOpts.innerHTML = '';
-  quizFb.textContent = '';
+  quizOpts.innerHTML = ''; quizFb.textContent = '';
   quizResult.classList.remove('hidden');
-  quizResult.innerHTML = `得分：<b>${qScore} / ${QUIZ.length}</b>　${pass ? '🎉 通关！' : '继续加油，再试一次！'}`;
-  btnNext.disabled = true;
+  quizResult.innerHTML = `得分：<b>${score} / ${QUIZ.length}</b>　${pass ? '🎉 通关！' : '继续加油，再试一次！'}`;
+  btnNext.disabled = true; btnPrev.disabled = true;
   if (pass && typeof PageProgress !== 'undefined') {
-    PageProgress.markDone('coordinate-plane');
-    document.getElementById('done-mark').textContent = '✓ 已完成';
+    const saved = PageProgress.markDone('coordinate-plane');
+    document.getElementById('done-mark').textContent = saved ? '✓ 已完成' : '本次通关，进度未保存';
   }
 }
+document.addEventListener('math-progress-saved', () => {
+  if (PageProgress.isDone('coordinate-plane')) document.getElementById('done-mark').textContent = '✓ 已完成';
+});
 btnStart.addEventListener('click', () => {
-  qi = 0; qScore = 0;
+  qi = 0; answers = Array(QUIZ.length).fill(null);
   quizResult.classList.add('hidden');
-  btnStart.textContent = '重新答题';
-  renderQ();
+  btnStart.textContent = '重新答题'; renderQ();
 });
 btnPrev.addEventListener('click', () => { if (qi > 0) { qi--; renderQ(); } });
 btnNext.addEventListener('click', () => {

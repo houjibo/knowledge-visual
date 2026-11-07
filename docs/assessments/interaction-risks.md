@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：114；含内联 while 的页面：75。同一页面可能出现在两类中。
+含候选 div 控件的页面：113；含内联 while 的页面：75。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -50,7 +50,6 @@
 - [math/high/solid-geometry.html](../../math/high/solid-geometry.html)：129 行（tab）、130 行（tab）、131 行（tab）、132 行（tab）
 - [math/high/statistics.html](../../math/high/statistics.html)：309 行（tab）、310 行（tab）、311 行（tab）、312 行（tab）
 - [math/middle/circle.html](../../math/middle/circle.html)：95 行（tab）、96 行（tab）、97 行（tab）、98 行（tab）
-- [math/middle/coordinate-plane.html](../../math/middle/coordinate-plane.html)：108 行（tab）、109 行（tab）、110 行（tab）
 - [math/middle/data-analysis.html](../../math/middle/data-analysis.html)：119 行（tab）、120 行（tab）、121 行（tab）
 - [math/middle/data-statistics.html](../../math/middle/data-statistics.html)：111 行（tab）、112 行（tab）、113 行（tab）
 - [math/middle/inequalities.html](../../math/middle/inequalities.html)：120 行（tab）、121 行（tab）、122 行（tab）
