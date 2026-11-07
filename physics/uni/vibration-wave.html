@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>振动与波 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #6366f1;
+    --shm: #3b82f6;
+    --damped: #10b981;
+    --forced: #f59e0b;
+    --resonance: #ef4444;
+    --wave: #8b5cf6;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { 
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); 
+    color: var(--light); 
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; 
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  
+  /* Header */
+  header {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
+    border-radius: 20px;
+    margin-bottom: 30px;
+    border: 1px solid var(--border);
+  }
+  header h1 {
+    font-size: 2.5em;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+  }
+  header .subtitle {
+    font-size: 1.1em;
+    opacity: 0.8;
+  }
+  
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tab {
+    padding: 12px 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.95em;
+  }
+  .tab:hover { transform: translateY(-2px); border-color: var(--primary); }
+  .tab.active { 
+    background: linear-gradient(135deg, var(--primary), var(--wave));
+    border-color: transparent;
+    font-weight: 600;
+  }
+  
+  /* Sections */
+  .section {
+    display: none;
+    background: var(--card);
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid var(--border);
+    animation: fadeIn 0.4s ease;
+  }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  
+  .section h2 {
+    font-size: 1.5em;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  /* Formula */
+  .formula {
+    background: rgba(0,0,0,0.4);
+    padding: 15px 25px;
+    border-radius: 12px;
+    font-family: "Courier New", monospace;
+    font-size: 1.1em;
+    text-align: center;
+    margin: 15px 0;
+    border-left: 4px solid var(--primary);
+    overflow-x: auto;
+  }
+  .formula .var { color: #fbbf24; }
+  .formula .op { color: #94a3b8; }
+  
+  /* Canvas */
+  .canvas-wrap {
+    background: rgba(0,0,0,0.3);
+    border-radius: 15px;
+    padding: 15px;
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+  }
+  canvas {
+    border-radius: 10px;
+    max-width: 100%;
+  }
+  
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 20px 0;
+    padding: 20px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 15px;
+  }
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+  }
+  .control-group label {
+    font-size: 0.85em;
+    opacity: 0.8;
+    text-align: center;
+  }
+  input[type="range"] {
+    width: 140px;
+    cursor: pointer;
+    accent-color: var(--primary);
+  }
+  .value {
+    font-weight: bold;
+    color: #fbbf24;
+    font-size: 0.95em;
+  }
+  
+  /* Buttons */
+  .btn {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--primary), var(--wave));
+    border: none;
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: all 0.3s;
+  }
+  .btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(99,102,241,0.4); }
+  .btn:active { transform: scale(0.98); }
+  .btn-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 15px 0; }
+  
+  /* Info */
+  .info {
+    line-height: 1.8;
+    font-size: 0.95em;
+    margin: 15px 0;
+  }
+  .info .hl { color: #fbbf24; font-weight: 600; }
+  .info .warn { color: #ef4444; font-weight: 600; }
+  
+  /* Phase cards */
+  .phase-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+  }
+  .phase-card {
+    background: rgba(0,0,0,0.3);
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+  .phase-card .icon { font-size: 2em; margin-bottom: 10px; }
+  .phase-card .name { font-weight: 600; margin-bottom: 5px; }
+  .phase-card .phase { font-size: 0.85em; opacity: 0.7; }
+  
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 15px 0;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+  }
+  .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    header h1 { font-size: 1.8em; }
+    .section { padding: 20px; }
+    .controls { gap: 15px; }
+    .control-group { min-width: 100px; }
+    input[type="range"] { width: 100px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🌊 振动与波</h1>
+    <div class="subtitle">大学物理 · 互动可视化 <span id="done-mark" style="margin-left:8px;color:#10b981;font-weight:600;"></span></div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(0)">📐 简谐振动</div>
+    <div class="tab" onclick="switchTab(1)">🔄 阻尼与受迫</div>
+    <div class="tab" onclick="switchTab(2)">📊 相位关系</div>
+    <div class="tab" onclick="switchTab(3)">⚠️ 共振现象</div>
+    <div class="tab" onclick="switchTab(4)">🌊 波动传播</div>
+  </div>
+
+  <!-- 简谐振动 -->
+  <div class="section active" id="sec-0">
+    <h2>📐 简谐振动 (SHM)</h2>
+    <div class="formula">
+      <span class="var">x</span>(<span class="var">t</span>) <span class="op">=</span> <span class="var">A</span> · cos(<span class="var">ω</span><span class="var">t</span> + <span class="var">φ</span>)
+    </div>
+    <div class="info">
+      <p>简谐振动是最基本的振动形式。物体在<span class="hl">线性回复力</span> F = -kx 作用下做周期性运动。</p>
+      <p>三个基本参数：<span class="hl">振幅 A</span>（最大位移）、<span class="hl">角频率 ω</span>（振动快慢）、<span class="hl">初相 φ</span>（起始相位）</p>
+    </div>
+    
+    <div class="controls">
+      <div class="control-group">
+        <label>振幅 A</label>
+        <input type="range" id="shm-amp" min="20" max="100" value="60">
+        <span class="value" id="shm-amp-v">60</span>
+      </div>
+      <div class="control-group">
+        <label>角频率 ω</label>
+        <input type="range" id="shm-omega" min="1" max="8" value="3" step="0.5">
+        <span class="value" id="shm-omega-v">3.0</span>
+      </div>
+      <div class="control-group">
+        <label>初相 φ</label>
+        <input type="range" id="shm-phi" min="0" max="360" value="0">
+        <span class="value" id="shm-phi-v">0°</span>
+      </div>
+    </div>
+    
+    <div class="btn-group">
+      <button class="btn" onclick="shm.reset()">🔄 重置</button>
+      <button class="btn" onclick="shm.togglePause()">⏸️ 暂停/继续</button>
+    </div>
+
+    <div class="canvas-wrap"><canvas id="shm-canvas" width="800" height="380"></canvas></div>
+    
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>位移 x</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>速度 v</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>加速度 a</div>
+    </div>
+  </div>
+
+  <!-- 阻尼与受迫 -->
+  <div class="section" id="sec-1">
+    <h2>🔄 阻尼振动与受迫振动</h2>
+    <div class="formula">
+      阻尼: <span class="var">x</span> = <span class="var">A₀</span>·e<sup>-βt</sup>·cos(<span class="var">ω'</span>t)<br>
+      受迫: m·<span class="var">x''</span> + c·<span class="var">x'</span> + k·<span class="var">x</span> = <span class="var">F₀</span>·cos(<span class="var">ωt</span>)
+    </div>
+    <div class="info">
+      <p><span class="hl">阻尼振动</span>：由于阻力存在，振幅随时间指数衰减。阻尼越大，衰减越快。</p>
+      <p><span class="hl">受迫振动</span>：在周期性外力驱动下的振动，稳态时以驱动力频率振动。</p>
+    </div>
+    
+    <div class="controls">
+      <div class="control-group">
+        <label>阻尼系数 β</label>
+        <input type="range" id="damp-beta" min="0" max="0.5" value="0.08" step="0.01">
+        <span class="value" id="damp-beta-v">0.08</span>
+      </div>
+      <div class="control-group">
+        <label>驱动频率 ω</label>
+        <input type="range" id="drive-omega" min="0.5" max="6" value="2" step="0.1">
+        <span class="value" id="drive-omega-v">2.0</span>
+      </div>
+      <div class="control-group">
+        <label>固有频率 ω₀</label>
+        <input type="range" id="natural-omega" min="1" max="5" value="3" step="0.1">
+        <span class="value" id="natural-omega-v">3.0</span>
+      </div>
+    </div>
+    
+    <div class="btn-group">
+      <button class="btn" onclick="damped.mode='damped';damped.reset()">📉 阻尼振动</button>
+      <button class="btn" onclick="damped.mode='forced';damped.reset()">🔄 受迫振动</button>
+      <button class="btn" onclick="damped.reset()">🔄 重置</button>
+    </div>
+
+    <div class="canvas-wrap"><canvas id="damped-canvas" width="800" height="350"></canvas></div>
+  </div>
+
+  <!-- 相位关系 -->
+  <div class="section" id="sec-2">
+    <h2>📊 相位关系可视化</h2>
+    <div class="formula">
+      <span class="var">x</span> = A·cos(<span class="var">ωt</span>) &nbsp;&nbsp;
+      <span class="var">v</span> = -Aω·sin(<span class="var">ωt</span>) = Aω·cos(<span class="var">ωt</span> + π/2)<br>
+      <span class="var">a</span> = -Aω²·cos(<span class="var">ωt</span>) = Aω²·cos(<span class="var">ωt</span> + π)
+    </div>
+    <div class="info">
+      <p>在简谐振动中，<span class="hl">速度超前位移 π/2</span>，<span class="hl">加速度与位移反相</span>（相差 π）。</p>
+      <p>这意味着：位移最大时速度为零，平衡位置时速度最大。</p>
+    </div>
+    
+    <div class="phase-cards">
+      <div class="phase-card">
+        <div class="icon">📍</div>
+        <div class="name">位移 x</div>
+        <div class="phase">相位 = 0</div>
+      </div>
+      <div class="phase-card">
+        <div class="icon">🏃</div>
+        <div class="name">速度 v</div>
+        <div class="phase">超前 π/2</div>
+      </div>
+      <div class="phase-card">
+        <div class="icon">⚡</div>
+        <div class="name">加速度 a</div>
+        <div class="phase">超前 π (反相)</div>
+      </div>
+    </div>
+    
+    <div class="controls">
+      <div class="control-group">
+        <label>角频率 ω</label>
+        <input type="range" id="phase-omega" min="1" max="5" value="2" step="0.5">
+        <span class="value" id="phase-omega-v">2.0</span>
+      </div>
+    </div>
+
+    <div class="canvas-wrap"><canvas id="phase-canvas" width="800" height="420"></canvas></div>
+  </div>
+
+  <!-- 共振现象 -->
+  <div class="section" id="sec-3">
+    <h2>⚠️ 共振现象演示</h2>
+    <div class="formula">
+      共振条件: <span class="var">ω</span> = <span class="var">ω₀</span><br>
+      共振振幅: <span class="var">A<sub>max</sub></span> = <span class="var">F₀</span> / (2mβω₀)
+    </div>
+    <div class="info">
+      <p>当<span class="hl">驱动力频率等于系统固有频率</span>时，振幅达到最大值，即发生<span class="hl">共振</span>。</p>
+      <p class="warn">⚠️ 共振可导致结构破坏！军队过桥要便步，避免整齐步伐引发共振。</p>
+    </div>
+    
+    <div class="controls">
+      <div class="control-group">
+        <label>频率比 ω/ω₀</label>
+        <input type="range" id="res-ratio" min="0.2" max="3" value="1" step="0.05">
+        <span class="value" id="res-ratio-v">1.00</span>
+      </div>
+      <div class="control-group">
+        <label>阻尼 β</label>
+        <input type="range" id="res-damp" min="0.02" max="0.3" value="0.05" step="0.01">
+        <span class="value" id="res-damp-v">0.05</span>
+      </div>
+    </div>
+    
+    <div class="btn-group">
+      <button class="btn" onclick="resonance.setRatio(0.5)">ω/ω₀=0.5</button>
+      <button class="btn" onclick="resonance.setRatio(1.0)">ω/ω₀=1.0 ⚠️</button>
+      <button class="btn" onclick="resonance.setRatio(2.0)">ω/ω₀=2.0</button>
+    </div>
+
+    <div class="canvas-wrap"><canvas id="resonance-canvas" width="800" height="400"></canvas></div>
+  </div>
+
+  <!-- 波动传播 -->
+  <div class="section" id="sec-4">
+    <h2>🌊 波动传播</h2>
+    <div class="formula">
+      <span class="var">y</span>(<span class="var">x</span>, <span class="var">t</span>) <span class="op">=</span> <span class="var">A</span> · cos(<span class="var">kx</span> - <span class="var">ωt</span>)<br>
+      <span class="var">v</span> = <span class="var">λ</span> · <span class="var">f</span> = <span class="var">ω</span> / <span class="var">k</span>
+    </div>
+    <div class="info">
+      <p>波动是振动在介质中的传播。<span class="hl">横波</span>质点振动方向垂直于波传播方向，<span class="hl">纵波</span>质点振动方向平行于波传播方向。</p>
+      <p>关键参数：<span class="hl">波长 λ</span>（一个完整波形的长度）、<span class="hl">波速 v</span>、<span class="hl">频率 f</span></p>
+    </div>
+    
+    <div class="controls">
+      <div class="control-group">
+        <label>振幅 A</label>
+        <input type="range" id="wave-amp" min="20" max="80" value="50">
+        <span class="value" id="wave-amp-v">50</span>
+      </div>
+      <div class="control-group">
+        <label>波长 λ</label>
+        <input type="range" id="wave-lambda" min="50" max="200" value="100">
+        <span class="value" id="wave-lambda-v">100</span>
+      </div>
+      <div class="control-group">
+        <label>波速 v</label>
+        <input type="range" id="wave-speed" min="1" max="5" value="2" step="0.5">
+        <span class="value" id="wave-speed-v">2.0</span>
+      </div>
+    </div>
+    
+    <div class="btn-group">
+      <button class="btn" onclick="wave.type='transverse'">🌊 横波</button>
+      <button class="btn" onclick="wave.type='longitudinal'">〰️ 纵波</button>
+      <button class="btn" onclick="wave.togglePause()">⏸️ 暂停</button>
+    </div>
+
+    <div class="canvas-wrap"><canvas id="wave-canvas" width="800" height="350"></canvas></div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// Tab switching
+function switchTab(i) {
+  document.querySelectorAll('.tab').forEach((t, idx) => t.classList.toggle('active', idx === i));
+  document.querySelectorAll('.section').forEach((s, idx) => s.classList.toggle('active', idx === i));
+}
+
+// Helper
+const getVal = id => parseFloat(document.getElementById(id).value);
+const setText = (id, v) => document.getElementById(id).textContent = v;
+
+// ============ 简谐振动 ============
+const shm = {
+  canvas: null, ctx: null,
+  t: 0, paused: false, trail: [],
+  init() {
+    this.canvas = document.getElementById('shm-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.animate();
+  },
+  reset() { this.t = 0; this.trail = []; },
+  togglePause() { this.paused = !this.paused; },
+  animate() {
+    if (!this.paused) this.t += 0.03;
+    const ctx = this.ctx, W = 800, H = 380;
+    const A = getVal('shm-amp'), ω = getVal('shm-omega'), φ = getVal('shm-phi') * Math.PI / 180;
+    setText('shm-amp-v', A);
+    setText('shm-omega-v', ω.toFixed(1));
+    setText('shm-phi-v', Math.round(φ * 180 / Math.PI) + '°');
+    
+    const x = A * Math.cos(ω * this.t + φ);
+    const v = -A * ω * Math.sin(ω * this.t + φ);
+    const a = -A * ω * ω * Math.cos(ω * this.t + φ);
+    
+    // Clear
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, W, H);
+    
+    // Spring-mass system (left side)
+    const springX = 80, massY = H / 2;
+    const massX = springX + 100 + x * 0.8;
+    
+    // Wall
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(30, massY - 40, 15, 80);
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.moveTo(30, massY - 40 + i * 16);
+      ctx.lineTo(20, massY - 30 + i * 16);
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    
+    // Spring
+    ctx.beginPath();
+    ctx.moveTo(45, massY);
+    const coils = 12;
+    for (let i = 0; i <= coils; i++) {
+      const px = 45 + (massX - 45 - 20) * i / coils;
+      const py = massY + (i % 2 === 0 ? -12 : 12);
+      ctx.lineTo(px, py);
+    }
+    ctx.lineTo(massX - 20, massY);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Mass
+    ctx.beginPath();
+    ctx.arc(massX, massY, 22, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(massX - 5, massY - 5, 5, massX, massY, 22);
+    grad.addColorStop(0, '#60a5fa');
+    grad.addColorStop(1, '#1d4ed8');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#93c5fd';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Equilibrium line
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(massX - x * 0.8, massY - 50);
+    ctx.lineTo(massX - x * 0.8, massY + 50);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Displacement arrow
+    if (Math.abs(x) > 5) {
+      ctx.beginPath();
+      ctx.moveTo(massX - x * 0.8, massY + 40);
+      ctx.lineTo(massX, massY + 40);
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      // Arrow head
+      ctx.beginPath();
+      ctx.moveTo(massX, massY + 40);
+      ctx.lineTo(massX - 8 * Math.sign(x), massY + 35);
+      ctx.lineTo(massX - 8 * Math.sign(x), massY + 45);
+      ctx.fillStyle = '#3b82f6';
+      ctx.fill();
+      ctx.fillStyle = '#3b82f6';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('x', (massX + massX - x * 0.8) / 2 - 5, massY + 58);
+    }
+    
+    // Waveform (right side)
+    this.trail.push({ t: this.t, x: x, v: v / ω, a: a / (ω * ω) });
+    if (this.trail.length > 250) this.trail.shift();
+    
+    const waveStartX = 280, waveEndX = W - 20;
+    const waveY = H / 2;
+    
+    // Axis
+    ctx.beginPath();
+    ctx.moveTo(waveStartX, waveY);
+    ctx.lineTo(waveEndX, waveY);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    // Draw trails
+    const colors = ['#3b82f6', '#10b981', '#ef4444'];
+    const scales = [1, 1, 1];
+    const labels = ['x', 'v', 'a'];
+    
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.strokeStyle = colors[i];
+      ctx.lineWidth = 2;
+      let first = true;
+      for (let j = 0; j < this.trail.length; j++) {
+        const pt = this.trail[j];
+        const px = waveEndX - (this.trail.length - 1 - j) * 2;
+        const py = waveY - (i === 0 ? pt.x : i === 1 ? pt.v : pt.a) * scales[i];
+        if (px < waveStartX) continue;
+        if (first) { ctx.moveTo(px, py); first = false; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+    
+    // Current values display
+    ctx.fillStyle = '#f1f5f9';
+    ctx.font = '14px sans-serif';
+    ctx.fillText(`t = ${this.t.toFixed(2)}s`, waveStartX + 10, 25);
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillText(`x = ${x.toFixed(1)}`, waveStartX + 10, 45);
+    ctx.fillStyle = '#10b981';
+    ctx.fillText(`v = ${(v).toFixed(1)}`, waveStartX + 120, 45);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText(`a = ${(a).toFixed(1)}`, waveStartX + 230, 45);
+    
+    requestAnimationFrame(() => this.animate());
+  }
+};
+
+// ============ 阻尼与受迫振动 ============
+const damped = {
+  canvas: null, ctx: null,
+  t: 0, mode: 'damped', trail: [],
+  init() {
+    this.canvas = document.getElementById('damped-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.animate();
+  },
+  reset() { this.t = 0; this.trail = []; },
+  animate() {
+    this.t += 0.03;
+    const ctx = this.ctx, W = 800, H = 350;
+    const β = getVal('damp-beta'), ωd = getVal('drive-omega'), ω0 = getVal('natural-omega');
+    setText('damp-beta-v', β.toFixed(2));
+    setText('drive-omega-v', ωd.toFixed(1));
+    setText('natural-omega-v', ω0.toFixed(1));
+    
+    let x;
+    if (this.mode === 'damped') {
+      x = 80 * Math.exp(-β * this.t) * Math.cos(ω0 * this.t);
+    } else {
+      // Forced vibration steady state
+      const den = Math.sqrt((ω0*ω0 - ωd*ωd)**2 + (2*β*ω0*ωd)**2);
+      const amp = 100 / Math.max(den, 0.1);
+      const phase = Math.atan2(2*β*ω0*ωd, ω0*ω0 - ωd*ωd);
+      x = amp * Math.cos(ωd * this.t - phase);
+    }
+    
+    this.trail.push({ t: this.t, x: x });
+    if (this.trail.length > 400) this.trail.shift();
+    
+    // Clear
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, W, H);
+    
+    const centerY = H / 2;
+    
+    // Axis
+    ctx.beginPath();
+    ctx.moveTo(50, centerY);
+    ctx.lineTo(W - 20, centerY);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    // Trail
+    ctx.beginPath();
+    ctx.strokeStyle = this.mode === 'damped' ? '#10b981' : '#f59e0b';
+    ctx.lineWidth = 2;
+    let first = true;
+    for (const pt of this.trail) {
+      const px = W - 20 - (this.t - pt.t) * 60;
+      const py = centerY - pt.x;
+      if (px < 50) continue;
+      if (first) { ctx.moveTo(px, py); first = false; }
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    
+    // Envelope for damped
+    if (this.mode === 'damped' && β > 0) {
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let px = 50; px < W - 20; px += 5) {
+        const t = this.t - (W - 20 - px) / 60;
+        const env = 80 * Math.exp(-β * t);
+        const py = centerY - env;
+        if (px === 50) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.beginPath();
+      for (let px = 50; px < W - 20; px += 5) {
+        const t = this.t - (W - 20 - px) / 60;
+        const env = 80 * Math.exp(-β * t);
+        const py = centerY + env;
+        if (px === 50) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    
+    // Labels
+    ctx.fillStyle = '#f1f5f9';
+    ctx.font = '14px sans-serif';
+    ctx.fillText(this.mode === 'damped' ? '📉 阻尼振动' : '🔄 受迫振动', 60, 30);
+    ctx.fillText(`当前位移: ${x.toFixed(1)}`, 60, 55);
+    
+    if (this.mode === 'damped') {
+      ctx.fillStyle = 'rgba(239,68,68,0.7)';
+      ctx.fillText('包络线: A₀·e^(-βt)', W - 180, 30);
+    }
+    
+    requestAnimationFrame(() => this.animate());
+  }
+};
+
+// ============ 相位关系 ============
+const phase = {
+  canvas: null, ctx: null,
+  t: 0,
+  init() {
+    this.canvas = document.getElementById('phase-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.animate();
+  },
+  animate() {
+    this.t += 0.03;
+    const ctx = this.ctx, W = 800, H = 420;
+    const ω = getVal('phase-omega');
+    setText('phase-omega-v', ω.toFixed(1));
+    
+    const A = 50;
+    const x = A * Math.cos(ω * this.t);
+    const v = -A * ω * Math.sin(ω * this.t);
+    const a = -A * ω * ω * Math.cos(ω * this.t);
+    
+    // Clear
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, W, H);
+    
+    // Three waveforms
+    const yBases = [80, 200, 320];
+    const colors = ['#3b82f6', '#10b981', '#ef4444'];
+    const labels = ['位移 x', '速度 v', '加速度 a'];
+    const values = [x, v / ω, a / (ω * ω)];
+    
+    for (let i = 0; i < 3; i++) {
+      const yBase = yBases[i];
+      
+      // Axis
+      ctx.beginPath();
+      ctx.moveTo(80, yBase);
+      ctx.lineTo(550, yBase);
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      
+      // Wave
+      ctx.beginPath();
+      ctx.strokeStyle = colors[i];
+      ctx.lineWidth = 2;
+      for (let j = 0; j < 200; j++) {
+        const tOffset = j * 0.05;
+        const t = this.t - tOffset;
+        let val;
+        if (i === 0) val = A * Math.cos(ω * t);
+        else if (i === 1) val = -A * Math.sin(ω * t);
+        else val = -A * Math.cos(ω * t);
+        const px = 80 + j * 2.35;
+        const py = yBase - val;
+        if (j === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      
+      // Current point
+      ctx.beginPath();
+      ctx.arc(80, yBase - values[i], 8, 0, Math.PI * 2);
+      ctx.fillStyle = colors[i];
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Label
+      ctx.fillStyle = colors[i];
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText(labels[i], 560, yBase + 5);
+    }
+    
+    // Rotating vector diagram
+    const cx = 680, cy = 200, r = 70;
+    
+    // Circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    // Cross
+    ctx.beginPath();
+    ctx.moveTo(cx - r - 10, cy);
+    ctx.lineTo(cx + r + 10, cy);
+    ctx.moveTo(cx, cy - r - 10);
+    ctx.lineTo(cx, cy + r + 10);
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.stroke();
+    
+    const angle = ω * this.t;
+    
+    // Displacement vector
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + r * Math.cos(angle), cy - r * Math.sin(angle));
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx + r * Math.cos(angle), cy - r * Math.sin(angle), 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#3b82f6';
+    ctx.fill();
+    
+    // Velocity vector (90° ahead)
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + r * Math.cos(angle + Math.PI/2), cy - r * Math.sin(angle + Math.PI/2));
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx + r * Math.cos(angle + Math.PI/2), cy - r * Math.sin(angle + Math.PI/2), 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#10b981';
+    ctx.fill();
+    
+    // Acceleration vector (180° ahead)
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + r * Math.cos(angle + Math.PI), cy - r * Math.sin(angle + Math.PI));
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx + r * Math.cos(angle + Math.PI), cy - r * Math.sin(angle + Math.PI), 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#ef4444';
+    ctx.fill();
+    
+    // Labels
+    ctx.fillStyle = '#f1f5f9';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('旋转矢量图', cx - 35, cy + r + 25);
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillText('x', cx + r * Math.cos(angle) + 10, cy - r * Math.sin(angle));
+    ctx.fillStyle = '#10b981';
+    ctx.fillText('v', cx + r * Math.cos(angle + Math.PI/2) + 10, cy - r * Math.sin(angle + Math.PI/2));
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText('a', cx + r * Math.cos(angle + Math.PI) + 10, cy - r * Math.sin(angle + Math.PI));
+    
+    // Phase info
+    ctx.fillStyle = '#f1f5f9';
+    ctx.font = '13px sans-serif';
+    ctx.fillText(`ωt = ${(angle % (2 * Math.PI)).toFixed(2)} rad`, 600, 380);
+    ctx.fillText(`相位差: v 超前 x π/2`, 600, 400);
+    
+    requestAnimationFrame(() => this.animate());
+  }
+};
+
+// ============ 共振 ============
+const resonance = {
+  canvas: null, ctx: null,
+  t: 0, amplitude: 0,
+  init() {
+    this.canvas = document.getElementById('resonance-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.animate();
+  },
+  setRatio(r) {
+    document.getElementById('res-ratio').value = r;
+  },
+  animate() {
+    this.t += 0.03;
+    const ctx = this.ctx, W = 800, H = 400;
+    const ratio = getVal('res-ratio'), β = getVal('res-damp');
+    setText('res-ratio-v', ratio.toFixed(2));
+    setText('res-damp-v', β.toFixed(2));
+    
+    const ω0 = 3, ω = ratio * ω0, F0 = 100;
+    const den = Math.sqrt((ω0*ω0 - ω*ω)**2 + (2*β*ω0*ω)**2);
+    const targetAmp = F0 / Math.max(den, 0.1);
+    this.amplitude += (targetAmp - this.amplitude) * 0.05;
+    
+    // Clear
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, W, H);
+    
+    // Spring-mass system (left)
+    const centerY = 180;
+    const wallX = 40, massRestX = 180;
+    const displacement = this.amplitude * Math.cos(ω * this.t) * 0.5;
+    const massX = massRestX + displacement;
+    
+    // Wall
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(20, centerY - 40, 20, 80);
+    
+    // Spring
+    ctx.beginPath();
+    ctx.moveTo(40, centerY);
+    const coils = 10;
+    for (let i = 0; i <= coils * 2; i++) {
+      const px = 40 + (massX - 60) * i / (coils * 2);
+      const py = centerY + (i % 2 === 0 ? -10 : 10);
+      ctx.lineTo(px, py);
+    }
+    ctx.lineTo(massX - 20, centerY);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Mass
+    ctx.beginPath();
+    ctx.arc(massX, centerY, 25, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(massX - 5, centerY - 5, 5, massX, centerY, 25);
+    grad.addColorStop(0, '#fbbf24');
+    grad.addColorStop(1, '#b45309');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    
+    // Resonance warning
+    if (Math.abs(ratio - 1) < 0.15) {
+      ctx.fillStyle = `rgba(239,68,68,${0.5 + 0.5 * Math.sin(this.t * 10)})`;
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('⚠️ 共振!', 100, 60);
+    }
+    
+    // Response curve (right)
+    const curveX = 350, curveY = 50, curveW = 420, curveH = 300;
+    
+    // Axes
+    ctx.beginPath();
+    ctx.moveTo(curveX, curveY + curveH);
+    ctx.lineTo(curveX + curveW, curveY + curveH);
+    ctx.moveTo(curveX, curveY + curveH);
+    ctx.lineTo(curveX, curveY);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    // Curve
+    ctx.beginPath();
+    ctx.strokeStyle = '#8b5cf6';
+    ctx.lineWidth = 2;
+    for (let r = 0.1; r <= 3; r += 0.02) {
+      const w = r * ω0;
+      const d = Math.sqrt((ω0*ω0 - w*w)**2 + (2*β*ω0*w)**2);
+      const a = F0 / Math.max(d, 0.1);
+      const px = curveX + (r - 0.1) / 2.9 * curveW;
+      const py = curveY + curveH - Math.min(a / 50, 1) * curveH;
+      if (r === 0.1) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    
+    // Current position marker
+    const markerX = curveX + (ratio - 0.1) / 2.9 * curveW;
+    const markerY = curveY + curveH - Math.min(this.amplitude / 50, 1) * curveH;
+    ctx.beginPath();
+    ctx.arc(markerX, markerY, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#ef4444';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Vertical line
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(markerX, markerY);
+    ctx.lineTo(markerX, curveY + curveH);
+    ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Labels
+    ctx.fillStyle = '#f1f5f9';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('振幅-频率响应曲线', curveX + 100, curveY - 10);
+    ctx.fillText('ω/ω₀', curveX + curveW - 40, curveY + curveH + 20);
+    ctx.fillText('A', curveX - 20, curveY + 10);
+    ctx.fillText(`当前: ω/ω₀ = ${ratio.toFixed(2)}`, curveX + 10, curveY + 30);
+    ctx.fillText(`振幅 = ${this.amplitude.toFixed(1)}`, curveX + 10, curveY + 55);
+    
+    // Resonance peak marker
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('共振峰', curveX + curveW / 2 - 20, curveY + 30);
+    
+    requestAnimationFrame(() => this.animate());
+  }
+};
+
+// ============ 波动传播 ============
+const wave = {
+  canvas: null, ctx: null,
+  t: 0, paused: false, type: 'transverse',
+  init() {
+    this.canvas = document.getElementById('wave-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.animate();
+  },
+  togglePause() { this.paused = !this.paused; },
+  animate() {
+    if (!this.paused) this.t += 0.05;
+    const ctx = this.ctx, W = 800, H = 350;
+    const A = getVal('wave-amp'), λ = getVal('wave-lambda'), v = getVal('wave-speed');
+    setText('wave-amp-v', A);
+    setText('wave-lambda-v', λ);
+    setText('wave-speed-v', v.toFixed(1));
+    
+    const k = 2 * Math.PI / λ;
+    const ω = k * v;
+    
+    // Clear
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, W, H);
+    
+    const centerY = H / 2;
+    
+    if (this.type === 'transverse') {
+      // Transverse wave
+      ctx.beginPath();
+      ctx.strokeStyle = '#8b5cf6';
+      ctx.lineWidth = 3;
+      for (let x = 0; x < W; x++) {
+        const y = centerY - A * Math.sin(k * x - ω * this.t);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      
+      // Particles
+      for (let x = 20; x < W; x += 40) {
+        const y = centerY - A * Math.sin(k * x - ω * this.t);
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#c4b5fd';
+        ctx.fill();
+        // Velocity arrow
+        const vy = A * ω * Math.cos(k * x - ω * this.t) * 0.3;
+        if (Math.abs(vy) > 3) {
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x, y - vy);
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+      
+      // Wavelength marker
+      const x1 = 100, x2 = x1 + λ;
+      if (x2 < W - 50) {
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(x1, centerY + A + 30);
+        ctx.lineTo(x2, centerY + A + 30);
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = '14px sans-serif';
+        ctx.fillText(`λ = ${λ.toFixed(0)}`, (x1 + x2) / 2 - 20, centerY + A + 50);
+      }
+    } else {
+      // Longitudinal wave
+      const particles = 30;
+      const spacing = (W - 100) / particles;
+      
+      for (let i = 0; i < particles; i++) {
+        const restX = 50 + i * spacing;
+        const displacement = A * 0.5 * Math.sin(k * restX - ω * this.t);
+        const x = restX + displacement;
+        
+        // Density visualization
+        const compression = -A * 0.5 * k * Math.cos(k * restX - ω * this.t);
+        const density = Math.max(0.3, Math.min(1, 1 + compression * 0.02));
+        
+        ctx.beginPath();
+        ctx.arc(x, centerY, 8 * density, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(139, 92, 246, ${density})`;
+        ctx.fill();
+        
+        // Connection lines
+        if (i > 0) {
+          const prevRestX = 50 + (i - 1) * spacing;
+          const prevDisplacement = A * 0.5 * Math.sin(k * prevRestX - ω * this.t);
+          const prevX = prevRestX + prevDisplacement;
+          ctx.beginPath();
+          ctx.moveTo(prevX, centerY);
+          ctx.lineTo(x, centerY);
+          ctx.strokeStyle = 'rgba(139, 92, 246, 0.3)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+      
+      // Labels
+      ctx.fillStyle = '#f1f5f9';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('密部', 200, centerY + 60);
+      ctx.fillText('疏部', 350, centerY + 60);
+    }
+    
+    // Info
+    ctx.fillStyle = '#f1f5f9';
+    ctx.font = '14px sans-serif';
+    ctx.fillText(`波动类型: ${this.type === 'transverse' ? '横波' : '纵波'}`, 20, 30);
+    ctx.fillText(`波速 v = ${v.toFixed(1)}`, 20, 55);
+    ctx.fillText(`频率 f = ${(ω / (2 * Math.PI)).toFixed(2)} Hz`, 20, 80);
+    
+    requestAnimationFrame(() => this.animate());
+  }
+};
+
+// Initialize all
+shm.init();
+damped.init();
+phase.init();
+resonance.init();
+wave.init();
+
+// ========== Progress tracking (r123) ==========
+// 页面无 quiz，点亮条件：浏览全部 5 个 tab
+const __visitedTabs = new Set([0]);
+const __origSwitchTab = switchTab;
+switchTab = function(i) {
+  __origSwitchTab(i);
+  __visitedTabs.add(i);
+  if (__visitedTabs.size >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('vibration-wave')) {
+    PageProgress.markDone('vibration-wave');
+    const dm = document.getElementById('done-mark');
+    if (dm) dm.textContent = '✓ 已完成';
+  }
+};
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('vibration-wave')) {
+  const dm = document.getElementById('done-mark');
+  if (dm) dm.textContent = '✓ 已完成';
+}
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学物理"></script>
+</body>
+</html>

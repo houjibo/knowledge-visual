@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>有机反应机理 · 大学化学互动可视化</title>
+<style>
+  :root {
+    --primary: #10b981;
+    --accent: #f59e0b;
+    --nucleophile: #3b82f6;
+    --electrophile: #ef4444;
+    --leaving: #a78bfa;
+    --bond: #fbbf24;
+    --aromatic: #f472b6;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #064e3b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.3rem; background: linear-gradient(90deg, var(--nucleophile), var(--primary), var(--aromatic)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 0.95rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 11px 22px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 14px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(16,185,129,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .legend .l-nuc::before { background: var(--nucleophile); }
+  .legend .l-elec::before { background: var(--electrophile); }
+  .legend .l-lg::before { background: var(--leaving); }
+  .legend .l-bond::before { background: var(--bond); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 660px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 10px; color: #e2e8f0; }
+
+  .concept-box { font-size: 0.98rem; text-align: left; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 10px 0; line-height: 1.85; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--nucleophile); font-weight: 600; }
+  .concept-box .hl2 { color: var(--electrophile); font-weight: 600; }
+  .concept-box .hl3 { color: var(--leaving); font-weight: 600; }
+  .concept-box .hl4 { color: var(--aromatic); font-weight: 600; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 7px 14px; border-radius: 10px; background: rgba(16,185,129,0.1); border: 2px solid rgba(16,185,129,0.3); cursor: pointer; font-size: 13px; color: #6ee7b7; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .slider-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--accent); font-weight: 600; font-size: 12px; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 12px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; line-height: 1.5; }
+  .info-grid b { color: #fbbf24; }
+
+  .formula-box { padding: 12px; background: rgba(16,185,129,0.08); border-radius: 12px; margin: 10px 0; font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+
+  .play-btn { display: block; margin: 12px auto; padding: 10px 28px; border-radius: 12px; background: var(--primary); color: white; border: none; cursor: pointer; font-size: 15px; font-weight: 600; transition: all .2s; }
+  .play-btn:hover { transform: scale(1.05); box-shadow: 0 4px 20px rgba(16,185,129,.4); }
+
+  .step-indicator { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
+  .step-dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: all .3s; }
+  .step-dot.active { background: var(--primary); transform: scale(1.3); }
+  .step-dot.done { background: var(--accent); }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(16,185,129,0.1); border-radius: 14px; border: 2px solid rgba(16,185,129,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 13px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; color: #6ee7b7; min-height: 20px; line-height: 1.5; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 12px; }
+  .quiz-nav button { padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+
+  .section { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>有机反应机理 · 亲核取代与消除</h1>
+    <p>探索 SN1/SN2/E1/E2 反应机理、立体化学与合成路径 <span id="done-mark" style="display:none;margin-left:8px;padding:2px 8px;border-radius:999px;background:#34C759;color:#fff;font-size:12px;font-weight:700;vertical-align:middle;">✓ 已完成</span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-section="mechanism">反应机理</div>
+    <div class="tab" data-section="stereo">立体化学</div>
+    <div class="tab" data-section="synthesis">合成设计</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="canvas" width="700" height="600"></canvas>
+      <div class="legend">
+        <span class="l-nuc">亲核试剂</span>
+        <span class="l-elec">亲电中心</span>
+        <span class="l-lg">离去基团</span>
+        <span class="l-bond">化学键</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <!-- 反应机理 -->
+      <div class="section active" id="mechanism">
+        <h3>亲核取代与消除反应</h3>
+        <div class="concept-box">
+          <b>四大机理对比：</b><br>
+          • <span class="hl">SN2</span>：一步协同，构型翻转，二级动力学<br>
+          • <span class="hl2">SN1</span>：碳正离子中间体，外消旋化，一级动力学<br>
+          • <span class="hl3">E2</span>：反式共平面消除，Zaitsev 规则<br>
+          • <span class="hl4">E1</span>：碳正离子 → 消除，重排可能
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mech="sn2">S<sub>N</sub>2</div>
+          <div class="mode-btn" data-mech="sn1">S<sub>N</sub>1</div>
+          <div class="mode-btn" data-mech="e2">E2</div>
+          <div class="mode-btn" data-mech="e1">E1</div>
+        </div>
+
+        <div class="slider-row">
+          <label>反应进度</label>
+          <input type="range" id="rxnProgress" min="0" max="100" value="0" />
+          <span class="val" id="rxnProgressVal">0%</span>
+        </div>
+
+        <button class="play-btn" id="playBtn">▶ 播放反应动画</button>
+
+        <div class="step-indicator" id="stepDots"></div>
+
+        <div class="info-grid">
+          <div><b>机理类型：</b><span id="mechType">SN2</span></div>
+          <div><b>动力学：</b><span id="kinetics">二级</span></div>
+          <div><b>立体化学：</b><span id="stereochem">构型翻转</span></div>
+          <div><b>中间体：</b><span id="intermediate">无（过渡态）</span></div>
+        </div>
+
+        <div class="formula-box" id="mechFormula">
+          Nu⁻ + R-LG → [Nu···R···LG]⁺ → Nu-R + LG⁻
+        </div>
+      </div>
+
+      <!-- 立体化学 -->
+      <div class="section" id="stereo">
+        <h3>立体化学可视化</h3>
+        <div class="concept-box">
+          <b>手性与构型：</b><br>
+          • <span class="hl">R/S 标记法</span>：Cahn-Ingold-Prelog 规则<br>
+          • <span class="hl2">对映异构体</span>：互为镜像，不可重叠<br>
+          • <span class="hl3">非对映异构体</span>：多个手性中心，部分翻转<br>
+          • <span class="hl4">内消旋体</span>：有对称面，无旋光性
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-stereo="R">R 构型</div>
+          <div class="mode-btn" data-stereo="S">S 构型</div>
+          <div class="mode-btn" data-stereo="wedge">楔形式</div>
+          <div class="mode-btn" data-stereo="fischer">Fischer 投影</div>
+        </div>
+
+        <div class="slider-row">
+          <label>旋转角度</label>
+          <input type="range" id="stereoAngle" min="0" max="360" value="30" />
+          <span class="val" id="stereoAngleVal">30°</span>
+        </div>
+
+        <div class="info-grid">
+          <div><b>构型：</b><span id="configLabel">R</span></div>
+          <div><b>旋光性：</b><span id="opticalActivity">右旋 (+)</span></div>
+          <div><b>优先级：</b><span id="priorityOrder">OH > CH₃ > H</span></div>
+          <div><b>手性中心：</b><span id="chiralCount">1</span></div>
+        </div>
+
+        <div class="formula-box">
+          手性碳：连接 4 个不同基团的 sp³ 碳
+        </div>
+      </div>
+
+      <!-- 合成设计 -->
+      <div class="section" id="synthesis">
+        <h3>有机合成路径</h3>
+        <div class="concept-box">
+          <b>逆合成分析：</b><br>
+          • <span class="hl">目标分子</span> → 拆解为简单前体<br>
+          • <span class="hl2">官能团转化</span>：氧化、还原、取代<br>
+          • <span class="hl3">碳碳键形成</span>：格氏反应、Wittig 反应<br>
+          • <span class="hl4">保护基策略</span>：选择性反应的关键
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-synth="grignard">格氏反应</div>
+          <div class="mode-btn" data-synth="wittig">Wittig 反应</div>
+          <div class="mode-btn" data-synth="aldol">羟醛缩合</div>
+          <div class="mode-btn" data-synth="diels">Diels-Alder</div>
+        </div>
+
+        <div class="slider-row">
+          <label>反应步骤</label>
+          <input type="range" id="synthStep" min="1" max="4" value="1" />
+          <span class="val" id="synthStepVal">步骤 1</span>
+        </div>
+
+        <div class="info-grid">
+          <div><b>反应名称：</b><span id="synthName">格氏反应</span></div>
+          <div><b>产物类型：</b><span id="synthProduct">醇</span></div>
+          <div><b>关键试剂：</b><span id="synthReagent">RMgX</span></div>
+          <div><b>步骤数：</b><span id="synthSteps">2 步</span></div>
+        </div>
+
+        <div class="formula-box" id="synthFormula">
+          R-MgX + R'CHO → R-CH(OH)-R'
+        </div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">加载中...</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFeedback"></div>
+        <div class="quiz-nav">
+          <button id="prevQ">上一题</button>
+          <button id="nextQ">下一题</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const cx = W / 2, cy = H / 2;
+
+let currentSection = 'mechanism';
+let currentMech = 'sn2';
+let currentStereo = 'R';
+let currentSynth = 'grignard';
+let rxnProgress = 0;
+let stereoAngle = 30;
+let synthStep = 1;
+let animating = false;
+let animFrame = null;
+
+// 题库
+const quizData = [
+  {
+    q: "SN2 反应的立体化学结果是？",
+    opts: ["外消旋化", "构型翻转", "构型保持", "顺式加成"],
+    ans: 1,
+    explain: "SN2 反应中亲核试剂从背面进攻，导致构型翻转（Walden 翻转）"
+  },
+  {
+    q: "SN1 反应的速率决定步骤是？",
+    opts: ["亲核进攻", "离去基团离去", "碳正离子形成", "质子转移"],
+    ans: 2,
+    explain: "SN1 反应中，底物解离形成碳正离子是慢步骤（决速步）"
+  },
+  {
+    q: "E2 反应要求 H 和 LG 的几何关系是？",
+    opts: ["顺式共平面", "反式共平面", "垂直", "任意角度"],
+    ans: 1,
+    explain: "E2 反应要求 β-H 和离去基团处于反式共平面（anti-periplanar）位置"
+  },
+  {
+    q: "R 构型表示什么？",
+    opts: ["右旋", "左旋", "顺时针优先级排列", "逆时针优先级排列"],
+    ans: 2,
+    explain: "R（Rectus）表示按 CIP 规则，最小基团朝后时其余 3 个基团顺时针排列"
+  },
+  {
+    q: "格氏试剂 (RMgX) 与醛反应生成？",
+    opts: ["酮", "仲醇", "伯醇", "羧酸"],
+    ans: 1,
+    explain: "格氏试剂与醛（甲醛除外）反应生成仲醇，与甲醛反应生成伯醇"
+  }
+];
+
+let currentQuiz = 0;
+
+// ===== 进度追踪（PageProgress） =====
+const SLUG = '08-organic-mechanism';
+const ALL_TABS = ['mechanism', 'stereo', 'synthesis'];
+const visitedTabs = new Set(['mechanism']);
+let quizFirstTryCorrect = new Set();
+let quizTriedCurrent = false;
+
+function maybeMarkDone() {
+  const tabsOk = ALL_TABS.every(t => visitedTabs.has(t));
+  const quizOk = quizFirstTryCorrect.size === quizData.length;
+  if (tabsOk && quizOk && !PageProgress.isDone(SLUG)) {
+    PageProgress.markDone(SLUG);
+    const m = document.getElementById('done-mark');
+    if (m) m.style.display = 'inline-block';
+  }
+}
+
+function loadQuiz() {
+  const q = quizData[currentQuiz];
+  quizTriedCurrent = false;
+  document.getElementById('quizQ').textContent = q.q;
+  const optsDiv = document.getElementById('quizOpts');
+  optsDiv.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.onclick = () => checkAnswer(i);
+    optsDiv.appendChild(div);
+  });
+  document.getElementById('quizFeedback').textContent = '';
+  document.getElementById('prevQ').disabled = currentQuiz === 0;
+  document.getElementById('nextQ').disabled = currentQuiz === quizData.length - 1;
+}
+
+function checkAnswer(idx) {
+  const q = quizData[currentQuiz];
+  if (!quizTriedCurrent && idx === q.ans) {
+    quizFirstTryCorrect.add(currentQuiz);
+  }
+  quizTriedCurrent = true;
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach((opt, i) => {
+    opt.classList.remove('correct', 'wrong');
+    if (i === q.ans) opt.classList.add('correct');
+    else if (i === idx && idx !== q.ans) opt.classList.add('wrong');
+  });
+  document.getElementById('quizFeedback').textContent = q.explain;
+  maybeMarkDone();
+}
+
+document.getElementById('prevQ').onclick = () => { if (currentQuiz > 0) { currentQuiz--; loadQuiz(); } };
+document.getElementById('nextQ').onclick = () => { if (currentQuiz < quizData.length - 1) { currentQuiz++; loadQuiz(); } };
+
+// Tab 切换
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentSection = tab.dataset.section;
+    visitedTabs.add(currentSection);
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(currentSection).classList.add('active');
+    draw();
+    maybeMarkDone();
+  };
+});
+
+// 机理选择
+document.querySelectorAll('[data-mech]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('[data-mech]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMech = btn.dataset.mech;
+    rxnProgress = 0;
+    document.getElementById('rxnProgress').value = 0;
+    document.getElementById('rxnProgressVal').textContent = '0%';
+    updateMechInfo();
+    draw();
+  };
+});
+
+// 立体化学选择
+document.querySelectorAll('[data-stereo]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('[data-stereo]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentStereo = btn.dataset.stereo;
+    updateStereoInfo();
+    draw();
+  };
+});
+
+// 合成选择
+document.querySelectorAll('[data-synth]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('[data-synth]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSynth = btn.dataset.synth;
+    synthStep = 1;
+    document.getElementById('synthStep').value = 1;
+    document.getElementById('synthStepVal').textContent = '步骤 1';
+    updateSynthInfo();
+    draw();
+  };
+});
+
+// 滑块
+document.getElementById('rxnProgress').oninput = (e) => {
+  rxnProgress = e.target.value;
+  document.getElementById('rxnProgressVal').textContent = rxnProgress + '%';
+  draw();
+};
+
+document.getElementById('stereoAngle').oninput = (e) => {
+  stereoAngle = e.target.value;
+  document.getElementById('stereoAngleVal').textContent = stereoAngle + '°';
+  draw();
+};
+
+document.getElementById('synthStep').oninput = (e) => {
+  synthStep = e.target.value;
+  document.getElementById('synthStepVal').textContent = '步骤 ' + synthStep;
+  draw();
+};
+
+// 播放按钮
+document.getElementById('playBtn').onclick = () => {
+  if (animating) {
+    animating = false;
+    cancelAnimationFrame(animFrame);
+    document.getElementById('playBtn').textContent = '▶ 播放反应动画';
+    return;
+  }
+  animating = true;
+  rxnProgress = 0;
+  document.getElementById('playBtn').textContent = '⏸ 暂停';
+  animateReaction();
+};
+
+function animateReaction() {
+  if (!animating) return;
+  rxnProgress = Math.min(100, parseInt(rxnProgress) + 1);
+  document.getElementById('rxnProgress').value = rxnProgress;
+  document.getElementById('rxnProgressVal').textContent = rxnProgress + '%';
+  draw();
+  if (rxnProgress < 100) {
+    animFrame = requestAnimationFrame(animateReaction);
+  } else {
+    animating = false;
+    document.getElementById('playBtn').textContent = '▶ 重播';
+  }
+}
+
+function updateMechInfo() {
+  const info = {
+    'sn2': { type: 'SN2', kin: '二级', stereo: '构型翻转', inter: '无（过渡态）', formula: 'Nu⁻ + R-LG → [Nu···R···LG]⁺ → Nu-R + LG⁻' },
+    'sn1': { type: 'SN1', kin: '一级', stereo: '外消旋化', inter: '碳正离子', formula: 'R-LG → R⁺ + LG⁻ → Nu-R' },
+    'e2': { type: 'E2', kin: '二级', stereo: '反式消除', inter: '无（过渡态）', formula: 'B:⁻ + H-C-C-LG → B-H + C=C + LG⁻' },
+    'e1': { type: 'E1', kin: '一级', stereo: 'Zaitsev 产物', inter: '碳正离子', formula: 'R-LG → R⁺ → C=C + H⁺' }
+  };
+  const i = info[currentMech];
+  document.getElementById('mechType').textContent = i.type;
+  document.getElementById('kinetics').textContent = i.kin;
+  document.getElementById('stereochem').textContent = i.stereo;
+  document.getElementById('intermediate').textContent = i.inter;
+  document.getElementById('mechFormula').textContent = i.formula;
+}
+
+function updateStereoInfo() {
+  const info = {
+    'R': { config: 'R', optical: '右旋 (+)', priority: 'OH > CH₃ > H', count: 1 },
+    'S': { config: 'S', optical: '左旋 (-)', priority: 'OH > CH₃ > H', count: 1 },
+    'wedge': { config: '楔形式', optical: '3D 表示', priority: '实楔形=朝前', count: 1 },
+    'fischer': { config: 'Fischer', optical: '投影规则', priority: '横前竖后', count: 1 }
+  };
+  const i = info[currentStereo];
+  document.getElementById('configLabel').textContent = i.config;
+  document.getElementById('opticalActivity').textContent = i.optical;
+  document.getElementById('priorityOrder').textContent = i.priority;
+  document.getElementById('chiralCount').textContent = i.count;
+}
+
+function updateSynthInfo() {
+  const info = {
+    'grignard': { name: '格氏反应', product: '醇', reagent: 'RMgX', steps: '2 步', formula: 'R-MgX + R\'CHO → R-CH(OH)-R\'' },
+    'wittig': { name: 'Wittig 反应', product: '烯烃', reagent: 'Ph₃P=CHR', steps: '2 步', formula: 'R₂C=O + Ph₃P=CHR\' → R₂C=CHR\'' },
+    'aldol': { name: '羟醛缩合', product: 'β-羟基醛/酮', reagent: 'NaOH / 热', steps: '2 步', formula: '2 RCH₂CHO → RCH₂CH(OH)CH(R)CHO' },
+    'diels': { name: 'Diels-Alder', product: '环己烯', reagent: '共轭双烯 + 亲双烯体', steps: '1 步', formula: '双烯 + 亲双烯体 → 环己烯衍生物' }
+  };
+  const i = info[currentSynth];
+  document.getElementById('synthName').textContent = i.name;
+  document.getElementById('synthProduct').textContent = i.product;
+  document.getElementById('synthReagent').textContent = i.reagent;
+  document.getElementById('synthSteps').textContent = i.steps;
+  document.getElementById('synthFormula').textContent = i.formula;
+}
+
+// ===== 绘制函数 =====
+
+function drawAtom(x, y, label, color, radius) {
+  radius = radius || 18;
+  // 光晕
+  const glow = ctx.createRadialGradient(x, y, 0, x, y, radius * 2);
+  glow.addColorStop(0, color + '40');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(x, y, radius * 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  if (label) {
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x, y);
+  }
+}
+
+function drawBond(x1, y1, x2, y2, order, progress) {
+  progress = progress || 1;
+  const mx = x1 + (x2 - x1) * progress;
+  const my = y1 + (y2 - y1) * progress;
+
+  ctx.strokeStyle = 'rgba(251, 191, 36, 0.7)';
+  ctx.lineWidth = 3;
+
+  if (order === 1) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(mx, my);
+    ctx.stroke();
+  } else if (order === 2) {
+    const dx = (y2 - y1) * 0.04;
+    const dy = (x2 - x1) * 0.04;
+    ctx.beginPath(); ctx.moveTo(x1 + dx, y1 - dy); ctx.lineTo(mx + dx, my - dy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1 - dx, y1 + dy); ctx.lineTo(mx - dx, my + dy); ctx.stroke();
+  }
+}
+
+function drawArrow(x1, y1, x2, y2, color) {
+  const headLen = 12;
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  ctx.strokeStyle = color || '#6ee7b7';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = color || '#6ee7b7';
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+  ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawMechanism() {
+  ctx.clearRect(0, 0, W, H);
+  const p = rxnProgress / 100;
+
+  if (currentMech === 'sn2') {
+    // SN2: 一步协同，背面进攻
+    const nucX = 100 + p * 200;
+    const nucY = cy;
+    const cX = cx;
+    const cY = cy;
+    const lgX = cx + 150 - p * 200;
+    const lgY = cy;
+
+    // 反应坐标箭头
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillRect(80, cy + 80, W - 160, 4);
+
+    // 过渡态虚线
+    if (p > 0.3 && p < 0.7) {
+      ctx.strokeStyle = 'rgba(251,191,36,0.3)';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(nucX, nucY);
+      ctx.lineTo(lgX, lgY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 过渡态标记
+      ctx.fillStyle = 'rgba(251,191,36,0.6)';
+      ctx.font = '16px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('‡ 过渡态', cx, cy - 60);
+    }
+
+    // 键
+    if (p < 0.5) {
+      drawBond(cX, cY, lgX, lgY, 1, 1);
+    }
+    if (p > 0.5) {
+      drawBond(nucX, nucY, cX, cY, 1, 1);
+    }
+
+    // 原子
+    drawAtom(nucX, nucY, 'Nu', '#3b82f6', 22);
+    drawAtom(cX, cY, 'C', '#94a3b8', 20);
+    drawAtom(lgX, lgY, 'LG', '#a78bfa', 22);
+
+    // 背面进攻箭头
+    if (p < 0.3) {
+      drawArrow(nucX + 30, nucY, cX - 30, cY, '#3b82f6');
+    }
+
+    // 标注
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('S<sub>N</sub>2 反应坐标', cx, cy + 110);
+
+    // 能量曲线
+    drawEnergyCurve(p, 'sn2');
+
+  } else if (currentMech === 'sn1') {
+    // SN1: 两步，先解离再结合
+    const cX = cx;
+    const cY = cy - 30;
+
+    if (p < 0.5) {
+      // 第一步：解离
+      const t = p * 2;
+      const lgX = cx + 100 + t * 100;
+      const lgY = cy + 30;
+
+      drawBond(cX, cY, lgX - t * 80, lgY, 1, 1 - t);
+      drawAtom(cX, cY, 'C⁺', '#ef4444', 22);
+      drawAtom(lgX, lgY, 'LG⁻', '#a78bfa', 22);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('第一步：解离（慢）', cx, cy + 100);
+      ctx.fillText('形成碳正离子', cx, cy + 120);
+    } else {
+      // 第二步：亲核进攻
+      const t = (p - 0.5) * 2;
+      const nucX = 100 + t * 200;
+      const nucY = cy - 30;
+      const lgX = cx + 200;
+      const lgY = cy + 30;
+
+      if (t > 0.5) drawBond(nucX, nucY, cX, cY, 1, 1);
+
+      drawAtom(nucX, nucY, 'Nu', '#3b82f6', 22);
+      drawAtom(cX, cY, 'C', '#94a3b8', 20);
+      drawAtom(lgX, lgY, 'LG⁻', '#a78bfa', 18);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('第二步：亲核进攻（快）', cx, cy + 100);
+
+      // 外消旋化标记
+      ctx.fillStyle = 'rgba(251,191,36,0.5)';
+      ctx.fillText('→ 外消旋产物', cx, cy + 120);
+    }
+
+    drawEnergyCurve(p, 'sn1');
+
+  } else if (currentMech === 'e2') {
+    // E2: 反式共平面消除
+    const baseX = 100 + p * 150;
+    const baseY = cy - 80;
+    const c1X = cx - 60;
+    const c1Y = cy;
+    const c2X = cx + 60;
+    const c2Y = cy;
+    const lgX = cx + 200 - p * 100;
+    const lgY = cy + 60;
+    const hX = cx - 60 - p * 100;
+    const hY = cy - 60;
+
+    // 碳碳键
+    drawBond(c1X, c1Y, c2X, c2Y, p > 0.5 ? 2 : 1, 1);
+
+    // C-H 和 C-LG 键
+    if (p < 0.6) {
+      drawBond(c1X, c1Y, hX, hY, 1, 1);
+      drawBond(c2X, c2Y, lgX, lgY, 1, 1);
+    }
+
+    // 原子
+    drawAtom(baseX, baseY, 'B:', '#10b981', 22);
+    drawAtom(c1X, c1Y, 'C', '#94a3b8', 18);
+    drawAtom(c2X, c2Y, 'C', '#94a3b8', 18);
+    drawAtom(hX, hY, 'H', '#f1f5f9', 14);
+    drawAtom(lgX, lgY, 'LG', '#a78bfa', 20);
+
+    // 反式共平面标记
+    if (p < 0.3) {
+      ctx.strokeStyle = 'rgba(251,191,36,0.4)';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(hX, hY);
+      ctx.lineTo(lgX, lgY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('反式共平面', cx, cy + 100);
+    }
+
+    // 双键形成标记
+    if (p > 0.7) {
+      ctx.fillStyle = 'rgba(251,191,36,0.6)';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('C=C 双键形成', cx, cy + 100);
+    }
+
+    drawEnergyCurve(p, 'e2');
+
+  } else if (currentMech === 'e1') {
+    // E1: 先解离再消除
+    const c1X = cx - 60;
+    const c1Y = cy;
+    const c2X = cx + 60;
+    const c2Y = cy;
+
+    if (p < 0.4) {
+      // 第一步：LG 离去
+      const t = p / 0.4;
+      const lgX = cx + 150 + t * 80;
+      const lgY = cy + 40;
+      drawBond(c2X, c2Y, lgX - t * 60, lgY, 1, 1 - t);
+      drawAtom(c1X, c1Y, 'C', '#94a3b8', 18);
+      drawAtom(c2X, c2Y, 'C⁺', '#ef4444', 20);
+      drawAtom(lgX, lgY, 'LG⁻', '#a78bfa', 20);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('第一步：解离形成碳正离子', cx, cy + 100);
+    } else {
+      // 第二步：碱夺取 β-H，形成双键
+      const t = (p - 0.4) / 0.6;
+      const hX = c1X - 60 - t * 40;
+      const hY = c1Y - 50 - t * 30;
+      const baseX = hX - 40;
+      const baseY = hY - 30;
+
+      drawBond(c1X, c1Y, c2X, c2Y, t > 0.5 ? 2 : 1, 1);
+
+      if (t < 0.5) drawBond(c1X, c1Y, hX, hY, 1, 1);
+
+      drawAtom(baseX, baseY, 'B:', '#10b981', 20);
+      drawAtom(c1X, c1Y, 'C', '#94a3b8', 18);
+      drawAtom(c2X, c2Y, 'C', '#94a3b8', 18);
+      drawAtom(hX, hY, 'H', '#f1f5f9', 12);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('第二步：碱夺取 β-H，形成 C=C', cx, cy + 100);
+    }
+
+    drawEnergyCurve(p, 'e1');
+  }
+}
+
+function drawEnergyCurve(progress, type) {
+  const curveY = cy + 180;
+  const curveH = 80;
+  const startX = 100;
+  const endX = W - 100;
+
+  // 坐标轴
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(startX, curveY + 20);
+  ctx.lineTo(endX, curveY + 20);
+  ctx.moveTo(startX, curveY + 20);
+  ctx.lineTo(startX, curveY - curveH - 20);
+  ctx.stroke();
+
+  ctx.fillStyle = '#64748b';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('反应进程', (startX + endX) / 2, curveY + 40);
+  ctx.textAlign = 'right';
+  ctx.fillText('能量', startX - 10, curveY - curveH / 2);
+
+  // 能量曲线
+  ctx.strokeStyle = '#6ee7b7';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+
+  if (type === 'sn2') {
+    // 单峰
+    for (let x = startX; x <= endX; x++) {
+      const t = (x - startX) / (endX - startX);
+      const e = -curveH * 0.3 + curveH * 1.2 * Math.exp(-8 * (t - 0.5) * (t - 0.5));
+      const y = curveY - e;
+      if (x === startX) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+  } else if (type === 'sn1' || type === 'e1') {
+    // 双峰
+    for (let x = startX; x <= endX; x++) {
+      const t = (x - startX) / (endX - startX);
+      const e1 = curveH * 1.0 * Math.exp(-12 * (t - 0.3) * (t - 0.3));
+      const e2 = curveH * 0.7 * Math.exp(-12 * (t - 0.7) * (t - 0.7));
+      const valley = -curveH * 0.15 * Math.exp(-20 * (t - 0.5) * (t - 0.5));
+      const e = e1 + e2 + valley;
+      const y = curveY - e;
+      if (x === startX) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+  } else {
+    // E2 单峰
+    for (let x = startX; x <= endX; x++) {
+      const t = (x - startX) / (endX - startX);
+      const e = -curveH * 0.2 + curveH * 1.0 * Math.exp(-10 * (t - 0.5) * (t - 0.5));
+      const y = curveY - e;
+      if (x === startX) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+  }
+  ctx.stroke();
+
+  // 进度指示器
+  const progX = startX + progress * (endX - startX);
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(progX, curveY + 20, 5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawStereo() {
+  ctx.clearRect(0, 0, W, H);
+  const angle = stereoAngle * Math.PI / 180;
+
+  if (currentStereo === 'R' || currentStereo === 'S') {
+    // 3D 四面体表示
+    const r = 120;
+    const cosA = Math.cos(angle);
+    const sinA = Math.sin(angle);
+
+    // 中心碳
+    drawAtom(cx, cy, 'C', '#94a3b8', 20);
+
+    // 四个基团位置（四面体投影）
+    const groups = [
+      { label: 'OH', color: '#ef4444', baseAngle: -Math.PI / 2 },
+      { label: 'CH₃', color: '#3b82f6', baseAngle: Math.PI / 6 },
+      { label: 'H', color: '#f1f5f9', baseAngle: 5 * Math.PI / 6 },
+      { label: 'NH₂', color: '#a78bfa', baseAngle: Math.PI / 2 }
+    ];
+
+    // R/S 翻转排列
+    if (currentStereo === 'S') {
+      groups[1].baseAngle = 5 * Math.PI / 6;
+      groups[2].baseAngle = Math.PI / 6;
+    }
+
+    groups.forEach((g, i) => {
+      const a = g.baseAngle + angle;
+      const depth = (i === 3) ? 0.5 : 1; // 第4个基团朝后
+      const dist = r * (i === 3 ? 0.6 : 1);
+      const x = cx + Math.cos(a) * dist * cosA;
+      const y = cy + Math.sin(a) * dist;
+
+      // 虚线/实线键
+      if (i === 3) {
+        // 朝后的键 - 虚线
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else {
+        drawBond(cx, cy, x, y, 1, 1);
+      }
+
+      drawAtom(x, y, g.label, g.color, i === 2 ? 12 : 18);
+
+      // 优先级标记
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('#' + (i + 1), x, y - 25);
+    });
+
+    // R/S 标记
+    ctx.fillStyle = currentStereo === 'R' ? '#10b981' : '#ef4444';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(currentStereo, cx, cy + 180);
+
+    // 旋转方向箭头
+    ctx.strokeStyle = currentStereo === 'R' ? '#10b981' : '#ef4444';
+    ctx.lineWidth = 2;
+    const arrowR = 50;
+    const startA = -Math.PI / 3;
+    const endA = Math.PI / 3;
+    ctx.beginPath();
+    if (currentStereo === 'R') {
+      ctx.arc(cx, cy + 180, arrowR, startA, endA);
+    } else {
+      ctx.arc(cx, cy + 180, arrowR, Math.PI - startA, Math.PI - endA, true);
+    }
+    ctx.stroke();
+
+  } else if (currentStereo === 'wedge') {
+    // 楔形式
+    drawAtom(cx, cy, 'C', '#94a3b8', 20);
+
+    // 实楔形（朝前）
+    const wedgeX = cx - 80;
+    const wedgeY = cy - 60;
+    ctx.fillStyle = 'rgba(239,68,68,0.6)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(wedgeX - 10, wedgeY - 5);
+    ctx.lineTo(wedgeX + 10, wedgeY + 5);
+    ctx.closePath();
+    ctx.fill();
+    drawAtom(wedgeX, wedgeY, 'OH', '#ef4444', 18);
+
+    // 虚线楔形（朝后）
+    const dashX = cx + 80;
+    const dashY = cy - 60;
+    ctx.strokeStyle = 'rgba(241,245,249,0.4)';
+    ctx.setLineDash([3, 3]);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(dashX, dashY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    drawAtom(dashX, dashY, 'H', '#f1f5f9', 14);
+
+    // 平面键
+    const bx = cx;
+    const by = cy + 90;
+    drawBond(cx, cy, bx, by, 1, 1);
+    drawAtom(bx, by, 'CH₃', '#3b82f6', 18);
+
+    const dx = cx + 100;
+    const dy = cy + 40;
+    drawBond(cx, cy, dx, dy, 1, 1);
+    drawAtom(dx, dy, 'NH₂', '#a78bfa', 18);
+
+    // 标注
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('实楔形 = 朝前', cx - 80, cy + 160);
+    ctx.fillText('虚线 = 朝后', cx + 80, cy + 160);
+
+  } else if (currentStereo === 'fischer') {
+    // Fischer 投影
+    const size = 80;
+
+    // 十字线
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - size, cy); ctx.lineTo(cx + size, cy);
+    ctx.moveTo(cx, cy - size); ctx.lineTo(cx, cy + size);
+    ctx.stroke();
+
+    // 中心碳
+    drawAtom(cx, cy, 'C', '#94a3b8', 16);
+
+    // 横键（朝前）
+    drawAtom(cx - size, cy, 'OH', '#ef4444', 18);
+    drawAtom(cx + size, cy, 'NH₂', '#a78bfa', 18);
+
+    // 竖键（朝后）
+    drawAtom(cx, cy - size, 'CHO', '#3b82f6', 20);
+    drawAtom(cx, cy + size, 'CH₃', '#10b981', 20);
+
+    // 标注
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('横键朝前 ← →', cx, cy + size + 50);
+    ctx.fillText('竖键朝后 ↑ ↓', cx, cy - size - 30);
+
+    // 构型标记
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillText('Fischer 投影式', cx, cy + size + 80);
+  }
+}
+
+function drawSynthesis() {
+  ctx.clearRect(0, 0, W, H);
+
+  const step = parseInt(synthStep);
+
+  if (currentSynth === 'grignard') {
+    // 格氏反应步骤
+    if (step === 1) {
+      // 制备格氏试剂
+      drawAtom(150, cy, 'R', '#3b82f6', 25);
+      drawAtom(250, cy, 'Mg', '#94a3b8', 25);
+      drawBond(150, cy, 250, cy, 1, 1);
+      drawArrow(300, cy, 400, cy, '#6ee7b7');
+      drawAtom(450, cy, 'R', '#3b82f6', 25);
+      drawAtom(550, cy, 'MgX', '#a78bfa', 25);
+      drawBond(450, cy, 550, cy, 1, 1);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('步骤 1：制备格氏试剂', cx, cy + 100);
+      ctx.fillText('R-X + Mg → R-MgX', cx, cy + 130);
+    } else if (step === 2) {
+      // 亲核加成
+      drawAtom(100, cy - 40, 'R', '#3b82f6', 22);
+      drawAtom(200, cy - 40, 'MgX', '#a78bfa', 22);
+      drawBond(100, cy - 40, 200, cy - 40, 1, 1);
+
+      drawArrow(260, cy - 40, 340, cy - 40, '#6ee7b7');
+
+      drawAtom(400, cy - 40, 'C', '#94a3b8', 20);
+      drawAtom(400, cy - 120, 'O', '#ef4444', 18);
+      drawBond(400, cy - 40, 400, cy - 120, 2, 1);
+      drawAtom(480, cy - 40, "R'", '#10b981', 22);
+      drawAtom(320, cy - 40, 'H', '#f1f5f9', 14);
+      drawBond(400, cy - 40, 480, cy - 40, 1, 1);
+      drawBond(400, cy - 40, 320, cy - 40, 1, 1);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('步骤 2：亲核加成 → 水解 → 醇', cx, cy + 80);
+    } else {
+      // 最终产物
+      drawAtom(cx - 80, cy, 'R', '#3b82f6', 25);
+      drawAtom(cx, cy, 'C', '#94a3b8', 22);
+      drawAtom(cx, cy - 80, 'OH', '#ef4444', 22);
+      drawAtom(cx + 80, cy, "R'", '#10b981', 25);
+      drawAtom(cx, cy + 80, 'H', '#f1f5f9', 16);
+
+      drawBond(cx - 80, cy, cx, cy, 1, 1);
+      drawBond(cx, cy, cx + 80, cy, 1, 1);
+      drawBond(cx, cy, cx, cy - 80, 1, 1);
+      drawBond(cx, cy, cx, cy + 80, 1, 1);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('产物：仲醇', cx, cy + 140);
+    }
+
+  } else if (currentSynth === 'wittig') {
+    if (step === 1) {
+      drawAtom(150, cy, 'Ph₃P', '#a78bfa', 28);
+      drawAtom(300, cy, 'CHR', '#3b82f6', 25);
+      drawBond(150, cy, 300, cy, 1, 1);
+      drawArrow(360, cy, 430, cy, '#6ee7b7');
+      drawAtom(500, cy, 'Ph₃P=CHR', '#10b981', 28);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('步骤 1：制备 Wittig 试剂（叶立德）', cx, cy + 100);
+    } else {
+      drawAtom(120, cy - 40, 'R₂C', '#94a3b8', 25);
+      drawAtom(200, cy - 40, 'O', '#ef4444', 20);
+      drawBond(120, cy - 40, 200, cy - 40, 2, 1);
+
+      drawArrow(250, cy, 350, cy, '#6ee7b7');
+      ctx.fillStyle = '#6ee7b7';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('Ph₃P=CHR', 300, cy - 20);
+
+      drawAtom(450, cy, 'C', '#94a3b8', 22);
+      drawAtom(450, cy - 70, 'R', '#3b82f6', 20);
+      drawAtom(450, cy + 70, 'R', '#3b82f6', 20);
+      drawAtom(550, cy, 'C', '#94a3b8', 22);
+      drawAtom(550, cy - 70, 'H', '#f1f5f9', 14);
+      drawAtom(550, cy + 70, "R'", '#10b981', 20);
+      drawBond(450, cy, 550, cy, 2, 1);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('步骤 2：烯烃化 → C=C 产物', cx, cy + 130);
+    }
+
+  } else if (currentSynth === 'aldol') {
+    if (step <= 2) {
+      // 两分子醛
+      drawAtom(120, cy - 30, 'C', '#94a3b8', 20);
+      drawAtom(120, cy + 40, 'O', '#ef4444', 16);
+      drawBond(120, cy - 30, 120, cy + 40, 2, 1);
+      drawAtom(50, cy - 30, 'R', '#3b82f6', 20);
+      drawBond(50, cy - 30, 120, cy - 30, 1, 1);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('+', 220, cy);
+
+      drawAtom(320, cy - 30, 'C', '#94a3b8', 20);
+      drawAtom(320, cy + 40, 'O', '#ef4444', 16);
+      drawBond(320, cy - 30, 320, cy + 40, 2, 1);
+      drawAtom(250, cy - 30, 'R', '#3b82f6', 20);
+      drawBond(250, cy - 30, 320, cy - 30, 1, 1);
+
+      drawArrow(400, cy, 470, cy, '#6ee7b7');
+      ctx.fillStyle = '#6ee7b7';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('NaOH', 435, cy - 20);
+
+      drawAtom(550, cy, 'C', '#94a3b8', 22);
+      drawAtom(550, cy - 70, 'OH', '#ef4444', 18);
+      drawBond(550, cy, 550, cy - 70, 1, 1);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('步骤 ' + step + '：羟醛缩合', cx, cy + 120);
+    } else {
+      // β-羟基醛产物
+      drawAtom(200, cy, 'C', '#94a3b8', 20);
+      drawAtom(300, cy, 'C', '#94a3b8', 20);
+      drawAtom(300, cy - 70, 'OH', '#ef4444', 18);
+      drawAtom(400, cy, 'C', '#94a3b8', 20);
+      drawAtom(400, cy + 70, 'O', '#ef4444', 16);
+      drawBond(200, cy, 300, cy, 1, 1);
+      drawBond(300, cy, 400, cy, 1, 1);
+      drawBond(300, cy, 300, cy - 70, 1, 1);
+      drawBond(400, cy, 400, cy + 70, 2, 1);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('产物：β-羟基醛（酮）', cx, cy + 130);
+    }
+
+  } else if (currentSynth === 'diels') {
+    // Diels-Alder: 一步协同
+    if (step === 1) {
+      // 共轭双烯
+      for (let i = 0; i < 4; i++) {
+        const x = 120 + i * 60;
+        drawAtom(x, cy - 60, 'C', '#94a3b8', 18);
+      }
+      drawBond(120, cy - 60, 180, cy - 60, 2, 1);
+      drawBond(180, cy - 60, 240, cy - 60, 1, 1);
+      drawBond(240, cy - 60, 300, cy - 60, 2, 1);
+
+      ctx.fillStyle = '#3b82f6';
+      ctx.font = '13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('共轭双烯', 210, cy - 100);
+
+      // + 号
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '24px sans-serif';
+      ctx.fillText('+', 380, cy);
+
+      // 亲双烯体
+      drawAtom(450, cy - 30, 'C', '#94a3b8', 18);
+      drawAtom(510, cy - 30, 'C', '#94a3b8', 18);
+      drawBond(450, cy - 30, 510, cy - 30, 2, 1);
+      drawAtom(450, cy - 100, 'EWG', '#ef4444', 20);
+      drawAtom(510, cy - 100, 'EWG', '#ef4444', 20);
+      drawBond(450, cy - 30, 450, cy - 100, 1, 1);
+      drawBond(510, cy - 30, 510, cy - 100, 1, 1);
+
+      ctx.fillStyle = '#10b981';
+      ctx.font = '13px sans-serif';
+      ctx.fillText('亲双烯体', 480, cy + 30);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('[4+2] 环加成', cx, cy + 100);
+    } else {
+      // 环己烯产物
+      const r = 80;
+      for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3 - Math.PI / 6;
+        const x = cx + Math.cos(a) * r;
+        const y = cy + Math.sin(a) * r;
+        const nx = cx + Math.cos((i + 1) * Math.PI / 3 - Math.PI / 6) * r;
+        const ny = cy + Math.sin((i + 1) * Math.PI / 3 - Math.PI / 6) * r;
+        drawAtom(x, y, 'C', '#94a3b8', 18);
+        drawBond(x, y, nx, ny, (i === 0 || i === 3) ? 2 : 1, 1);
+      }
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('产物：环己烯衍生物', cx, cy + r + 60);
+      ctx.fillText('一步协同，立体专一', cx, cy + r + 90);
+    }
+  }
+}
+
+function draw() {
+  if (currentSection === 'mechanism') {
+    drawMechanism();
+  } else if (currentSection === 'stereo') {
+    drawStereo();
+  } else if (currentSection === 'synthesis') {
+    drawSynthesis();
+  }
+}
+
+// 初始化
+updateMechInfo();
+updateStereoInfo();
+updateSynthInfo();
+loadQuiz();
+draw();
+
+// 进入页面时若已完成则回填角标
+if (PageProgress.isDone(SLUG)) {
+  const m = document.getElementById('done-mark');
+  if (m) m.style.display = 'inline-block';
+}
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学化学"></script>
+</body>
+</html>

@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>化学实验 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #059669;
+    --accent: #8b5cf6;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --success: #10b981;
+    --glass: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.1);
+    --dark: #0f172a;
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    color: var(--light);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 {
+    font-size: 2.2rem;
+    background: linear-gradient(90deg, var(--success), var(--accent), var(--warn));
+    -webkit-background-clip: text; color: transparent;
+  }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab {
+    padding: 10px 18px; border-radius: 999px; background: var(--glass);
+    cursor: pointer; transition: all .25s; border: 1px solid var(--border);
+    font-size: 14px; user-select: none;
+  }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(5,150,105,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap {
+    background: rgba(15,23,42,0.7); border: 1px solid var(--border);
+    border-radius: 16px; padding: 14px; backdrop-filter: blur(10px);
+  }
+  canvas {
+    width: 100%; height: auto; display: block;
+    border-radius: 10px;
+    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  }
+  .panel {
+    background: rgba(15,23,42,0.7); border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px; backdrop-filter: blur(10px);
+  }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .btn {
+    padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer;
+    font-size: 14px; background: var(--primary); color: white;
+    transition: all .2s;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn.secondary { background: rgba(255,255,255,0.1); }
+  .btn-row { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .info-box {
+    background: rgba(255,255,255,0.04); border-radius: 10px;
+    padding: 14px; margin: 10px 0; border-left: 3px solid var(--primary);
+    line-height: 1.7; font-size: 14px;
+  }
+  .info-box.warn { border-color: var(--warn); background: rgba(245,158,11,0.06); }
+  .info-box.danger { border-color: var(--danger); background: rgba(239,68,68,0.06); }
+  .info-box .title { font-weight: 600; margin-bottom: 4px; }
+  .step-list { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+  .step-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 10px 12px; background: rgba(255,255,255,0.04);
+    border-radius: 10px; font-size: 14px; line-height: 1.6;
+    border: 1px solid transparent; transition: all .2s;
+  }
+  .step-item.active { background: rgba(5,150,105,0.15); border-color: var(--primary); }
+  .step-item.done { opacity: 0.6; }
+  .step-item .num {
+    flex: 0 0 24px; height: 24px; border-radius: 50%;
+    background: rgba(255,255,255,0.1); display: flex; align-items: center;
+    justify-content: center; font-size: 12px; font-weight: 600;
+  }
+  .step-item.active .num { background: var(--primary); }
+  .step-item.done .num { background: var(--success); }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt {
+    padding: 8px 12px; background: rgba(255,255,255,0.05);
+    border-radius: 8px; cursor: pointer; font-size: 13px;
+    transition: all .2s; border: 1px solid transparent;
+  }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; }
+  .quiz-nav button { padding: 6px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--accent); color: white; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .hidden { display: none; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🧪 化学实验 Interactive</h1>
+    <p>物质制备 · 性质验证 · 定量实验 · 实验设计</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="prep">🔥 物质制备</div>
+    <div class="tab" data-mode="property">🔍 性质验证</div>
+    <div class="tab" data-mode="quant">📏 定量实验</div>
+    <div class="tab" data-mode="design">🎨 实验设计</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="650" height="480"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>知识可视化 · 高中化学 · 化学实验</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
+const legend = document.getElementById('legend');
+
+let currentMode = 'prep';
+let animFrame = null;
+let time = 0;
+
+// ============ 进度追踪（r100 接入） ============
+// 4 个里程碑：走完制备 5 步、看完性质 5 个实验、跑完 1 次滴定、看 1 个实验设计方案
+const progressFlags = { prep: false, property: false, quant: false, design: false };
+function bumpProgress(key) {
+  if (progressFlags[key]) return;
+  progressFlags[key] = true;
+  const done = Object.values(progressFlags).filter(Boolean).length;
+  if (done >= 4 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('12-experiment')) {
+    PageProgress.markDone('12-experiment');
+    console.log('[progress] 化学实验 4/4 全达成，知识地图已点亮');
+  }
+}
+
+// ============ 模式切换 ============
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    time = 0;
+    setupMode();
+  });
+});
+
+// ============ 工具函数 ============
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawRoundRect(x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
+}
+
+// ============ 物质制备模式 ============
+let prepStep = 0;
+const prepSteps = [
+  { title: '检查装置气密性', desc: '关闭止水夹，向分液漏斗中加水，观察液面是否下降', icon: '🔍' },
+  { title: '加入药品', desc: '圆底烧瓶中加入MnO₂，分液漏斗中加入浓盐酸', icon: '💊' },
+  { title: '加热反应', desc: '点燃酒精灯，缓慢加热，控制反应速率', icon: '🔥' },
+  { title: '收集气体', desc: '用向上排空气法收集Cl₂（黄绿色气体）', icon: '🫧' },
+  { title: '尾气处理', desc: '用NaOH溶液吸收多余Cl₂，防止污染', icon: '♻️' }
+];
+
+function setupPrep() {
+  prepStep = 0;
+  panel.innerHTML = `
+    <h3>🔥 氯气制备实验</h3>
+    <div class="info-box">
+      <div class="title">📋 实验原理</div>
+      MnO₂ + 4HCl(浓) <span style="color:#fbbf24">→<sup>△</sup></span> MnCl₂ + Cl₂↑ + 2H₂O
+    </div>
+    <div class="info-box warn">
+      <div class="title">⚠️ 安全提示</div>
+      Cl₂有毒，必须在通风橱中进行，尾气用NaOH吸收
+    </div>
+    <div class="step-list" id="stepList"></div>
+    <div class="btn-row">
+      <button class="btn secondary" onclick="prevPrepStep()">◀ 上一步</button>
+      <button class="btn" onclick="nextPrepStep()">下一步 ▶</button>
+    </div>
+  `;
+  renderPrepSteps();
+  updatePrepLegend();
+}
+
+function renderPrepSteps() {
+  const list = document.getElementById('stepList');
+  if (!list) return;
+  list.innerHTML = prepSteps.map((s, i) => `
+    <div class="step-item ${i === prepStep ? 'active' : ''} ${i < prepStep ? 'done' : ''}">
+      <div class="num">${i < prepStep ? '✓' : i + 1}</div>
+      <div><b>${s.icon} ${s.title}</b><br><span style="color:#94a3b8;font-size:13px">${s.desc}</span></div>
+    </div>
+  `).join('');
+}
+
+function nextPrepStep() {
+  if (prepStep < prepSteps.length - 1) {
+    prepStep++;
+    renderPrepSteps();
+    if (prepStep === prepSteps.length - 1) bumpProgress('prep');
+  }
+}
+function prevPrepStep() { if (prepStep > 0) { prepStep--; renderPrepSteps(); } }
+
+function updatePrepLegend() {
+  legend.innerHTML = `
+    <span style="color:#94a3b8">🟢 反应物</span>
+    <span style="color:#fbbf24">🟡 生成物 Cl₂</span>
+    <span style="color:#ef4444">🔴 加热</span>
+    <span style="color:#8b5cf6">🟣 尾气处理</span>
+  `;
+}
+
+function drawPrep() {
+  clearCanvas();
+  const W = canvas.width, H = canvas.height;
+  
+  // 铁架台
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(80, 100, 8, 350);
+  ctx.fillRect(60, 440, 120, 10);
+  
+  // 酒精灯
+  if (prepStep >= 2) {
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.moveTo(250, 420);
+    ctx.lineTo(240, 450);
+    ctx.lineTo(260, 450);
+    ctx.closePath();
+    ctx.fill();
+    // 火焰
+    const flicker = Math.sin(time * 0.15) * 3;
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.ellipse(250, 410 + flicker, 12, 20, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.ellipse(250, 415 + flicker, 6, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = '#64748b';
+    ctx.beginPath();
+    ctx.moveTo(250, 420);
+    ctx.lineTo(240, 450);
+    ctx.lineTo(260, 450);
+    ctx.closePath();
+    ctx.fill();
+  }
+  
+  // 石棉网
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(200, 390, 100, 6);
+  
+  // 圆底烧瓶
+  ctx.fillStyle = prepStep >= 1 ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.1)';
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(250, 340, 50, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  
+  // MnO₂ 固体
+  if (prepStep >= 1) {
+    ctx.fillStyle = '#1e293b';
+    for (let i = 0; i < 8; i++) {
+      ctx.beginPath();
+      ctx.arc(230 + i * 6, 360 + Math.sin(i) * 5, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  
+  // 烧瓶颈
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = '#94a3b8';
+  ctx.fillRect(240, 270, 20, 30);
+  ctx.strokeRect(240, 270, 20, 30);
+  
+  // 分液漏斗
+  ctx.fillStyle = prepStep >= 1 ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.1)';
+  ctx.strokeStyle = '#94a3b8';
+  ctx.beginPath();
+  ctx.moveTo(180, 150);
+  ctx.lineTo(220, 150);
+  ctx.lineTo(210, 220);
+  ctx.lineTo(190, 220);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  
+  // 漏斗中的液体
+  if (prepStep >= 1) {
+    const liquidLevel = 220 - (prepStep >= 2 ? 30 : 0);
+    ctx.fillStyle = 'rgba(245,158,11,0.6)';
+    ctx.beginPath();
+    ctx.moveTo(185, liquidLevel);
+    ctx.lineTo(215, liquidLevel);
+    ctx.lineTo(210, 220);
+    ctx.lineTo(190, 220);
+    ctx.closePath();
+    ctx.fill();
+  }
+  
+  // 导管
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(260, 280);
+  ctx.lineTo(350, 280);
+  ctx.lineTo(350, 320);
+  ctx.stroke();
+  
+  // 集气瓶
+  ctx.fillStyle = prepStep >= 3 ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2;
+  drawRoundRect(320, 320, 60, 100, 5, 'rgba(255,255,255,0.05)', '#94a3b8');
+  
+  // Cl₂ 气体
+  if (prepStep >= 3) {
+    const gasProgress = Math.min(1, (time % 100) / 60);
+    ctx.fillStyle = `rgba(245,158,11,${0.2 + gasProgress * 0.3})`;
+    const gasH = gasProgress * 80;
+    ctx.fillRect(325, 415 - gasH, 50, gasH);
+    
+    // 气体分子
+    for (let i = 0; i < 6; i++) {
+      const gx = 330 + Math.random() * 40;
+      const gy = 415 - Math.random() * gasH;
+      ctx.fillStyle = 'rgba(245,158,11,0.6)';
+      ctx.beginPath();
+      ctx.arc(gx, gy, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  
+  // 尾气处理 - NaOH溶液
+  ctx.fillStyle = 'rgba(139,92,246,0.3)';
+  ctx.strokeStyle = '#94a3b8';
+  drawRoundRect(420, 340, 50, 80, 5, 'rgba(139,92,246,0.2)', '#94a3b8');
+  
+  // 导管到NaOH
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(380, 340);
+  ctx.lineTo(420, 340);
+  ctx.lineTo(420, 380);
+  ctx.stroke();
+  
+  // 气泡
+  if (prepStep >= 3) {
+    for (let i = 0; i < 3; i++) {
+      const by = 380 - ((time * 2 + i * 20) % 40);
+      ctx.fillStyle = 'rgba(245,158,11,0.4)';
+      ctx.beginPath();
+      ctx.arc(445, by, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  
+  // 标注
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  if (prepStep >= 1) ctx.fillText('MnO₂', 250, 380);
+  ctx.fillText('浓盐酸', 200, 145);
+  ctx.fillText('集气瓶', 350, 440);
+  ctx.fillText('NaOH', 445, 440);
+  
+  // 当前步骤高亮
+  ctx.fillStyle = 'rgba(5,150,105,0.9)';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`步骤 ${prepStep + 1}/5: ${prepSteps[prepStep].title}`, 20, 30);
+}
+
+// ============ 性质验证模式 ============
+let propertyExp = 0;
+const propertyExps = [
+  { name: 'Cl₂与Fe反应', eq: '2Fe + 3Cl₂ → 2FeCl₃', color1: '#94a3b8', color2: '#b45309', result: '棕褐色烟' },
+  { name: 'Cl₂与KI反应', eq: 'Cl₂ + 2KI → 2KCl + I₂', color1: '#fbbf24', color2: '#7c3aed', result: '溶液变紫' },
+  { name: 'Cl₂漂白性', eq: 'Cl₂ + H₂O → HCl + HClO', color1: '#fbbf24', color2: '#ef4444', result: '品红褪色' },
+  { name: 'Cl₂与NaOH', eq: 'Cl₂ + 2NaOH → NaCl + NaClO + H₂O', color1: '#fbbf24', color2: '#8b5cf6', result: '尾气吸收' }
+];
+
+function setupProperty() {
+  propertyExp = 0;
+  panel.innerHTML = `
+    <h3>🔍 氯气性质验证</h3>
+    <div class="info-box">
+      <div class="title">📋 实验目的</div>
+      验证Cl₂的氧化性、漂白性、与碱反应等性质
+    </div>
+    <div id="expInfo"></div>
+    <div class="btn-row">
+      <button class="btn secondary" onclick="prevPropertyExp()">◀ 上一个</button>
+      <button class="btn" onclick="nextPropertyExp()">下一个 ▶</button>
+    </div>
+    <div class="slider-row">
+      <label>反应速率</label>
+      <input type="range" min="1" max="10" value="5" oninput="updatePropertySpeed(this.value)">
+      <span class="val" id="speedVal">5x</span>
+    </div>
+  `;
+  updatePropertyInfo();
+  updatePropertyLegend();
+}
+
+let propertySpeed = 5;
+function updatePropertySpeed(v) {
+  propertySpeed = parseInt(v);
+  document.getElementById('speedVal').textContent = v + 'x';
+}
+
+function updatePropertyInfo() {
+  const exp = propertyExps[propertyExp];
+  document.getElementById('expInfo').innerHTML = `
+    <div class="info-box">
+      <div class="title">🧪 ${exp.name}</div>
+      <div style="font-family:serif;font-size:16px;text-align:center;margin:10px 0;color:#fbbf24">${exp.eq}</div>
+      <div style="color:#94a3b8;font-size:13px">现象: <b style="color:#10b981">${exp.result}</b></div>
+    </div>
+  `;
+}
+
+function nextPropertyExp() {
+  propertyExp = (propertyExp + 1) % propertyExps.length;
+  updatePropertyInfo();
+  updatePropertyLegend();
+  if (propertyExp === propertyExps.length - 1) bumpProgress('property');
+}
+function prevPropertyExp() { propertyExp = (propertyExp - 1 + propertyExps.length) % propertyExps.length; updatePropertyInfo(); updatePropertyLegend(); }
+
+function updatePropertyLegend() {
+  const exp = propertyExps[propertyExp];
+  legend.innerHTML = `
+    <span style="color:${exp.color1}">● 反应物</span>
+    <span style="color:${exp.color2}">● 生成物</span>
+    <span style="color:#10b981">● 实验现象</span>
+  `;
+}
+
+function drawProperty() {
+  clearCanvas();
+  const W = canvas.width, H = canvas.height;
+  const exp = propertyExps[propertyExp];
+  
+  // 试管
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2;
+  drawRoundRect(200, 150, 80, 200, 10, 'rgba(255,255,255,0.05)', '#94a3b8');
+  
+  // 溶液
+  const progress = Math.min(1, (time % 150) / (150 / propertySpeed));
+  
+  if (propertyExp === 0) {
+    // Fe + Cl₂
+    ctx.fillStyle = '#94a3b8';
+    for (let i = 0; i < 5; i++) {
+      ctx.fillRect(220 + i * 10, 320, 8, 20);
+    }
+    // 烟
+    if (progress > 0.3) {
+      const smokeAlpha = (progress - 0.3) * 0.8;
+      ctx.fillStyle = `rgba(180,83,9,${smokeAlpha})`;
+      for (let i = 0; i < 8; i++) {
+        const sx = 220 + Math.sin(time * 0.05 + i) * 20;
+        const sy = 200 + i * 15 - progress * 50;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 10 + i * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  } else if (propertyExp === 1) {
+    // KI -> I₂
+    ctx.fillStyle = `rgba(251,191,36,${1 - progress * 0.5})`;
+    ctx.fillRect(205, 250, 70, 95);
+    ctx.fillStyle = `rgba(124,58,237,${progress * 0.6})`;
+    ctx.fillRect(205, 250, 70, 95);
+  } else if (propertyExp === 2) {
+    // 漂白
+    const fadeAlpha = 1 - progress;
+    ctx.fillStyle = `rgba(239,68,68,${fadeAlpha * 0.6})`;
+    ctx.fillRect(205, 250, 70, 95);
+    if (progress > 0.5) {
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.fillRect(205, 250, 70, 95);
+    }
+  } else {
+    // NaOH吸收
+    ctx.fillStyle = 'rgba(139,92,246,0.4)';
+    ctx.fillRect(205, 250, 70, 95);
+    // 气泡
+    for (let i = 0; i < 5; i++) {
+      const by = 340 - ((time * propertySpeed + i * 30) % 90);
+      const bx = 220 + Math.sin(i * 2) * 15;
+      ctx.fillStyle = 'rgba(245,158,11,0.5)';
+      ctx.beginPath();
+      ctx.arc(bx, by, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  
+  // 标注
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(exp.name, 240, 130);
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`现象: ${exp.result}`, 240, 400);
+  
+  // 进度条
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.fillRect(100, 440, 300, 8);
+  ctx.fillStyle = '#10b981';
+  ctx.fillRect(100, 440, 300 * progress, 8);
+}
+
+// ============ 定量实验模式 ============
+let quantPhase = 0; // 0: 准备, 1: 滴定中, 2: 终点, 3: 计算
+let buretteLevel = 0;
+let indicatorColor = 0; // 0: 无色, 1: 浅粉, 2: 粉红
+
+function setupQuant() {
+  quantPhase = 0;
+  buretteLevel = 0;
+  indicatorColor = 0;
+  panel.innerHTML = `
+    <h3>📏 酸碱中和滴定</h3>
+    <div class="info-box">
+      <div class="title">📋 实验原理</div>
+      c(酸) × V(酸) = c(碱) × V(碱)<br>
+      用已知浓度的酸测定未知浓度的碱
+    </div>
+    <div class="info-box warn">
+      <div class="title">🎯 终点判断</div>
+      加入最后一滴酸，溶液由浅红色变为无色，且半分钟不恢复
+    </div>
+    <div id="quantData">
+      <div class="slider-row">
+        <label>酸浓度</label>
+        <input type="range" min="0.05" max="0.2" step="0.01" value="0.1" oninput="updateQuantData()">
+        <span class="val" id="acidConc">0.10 mol/L</span>
+      </div>
+      <div class="slider-row">
+        <label>碱体积</label>
+        <input type="range" min="10" max="30" step="1" value="20" oninput="updateQuantData()">
+        <span class="val" id="baseVol">20.0 mL</span>
+      </div>
+      <div class="slider-row">
+        <label>滴加速度</label>
+        <input type="range" min="1" max="5" value="2" id="dropSpeed">
+        <span class="val" id="dropSpeedVal">2滴/s</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="startTitration()">开始滴定</button>
+      <button class="btn secondary" onclick="resetTitration()">重置</button>
+    </div>
+    <div id="quantResult" class="info-box hidden"></div>
+  `;
+  updateQuantLegend();
+}
+
+let acidConc = 0.1, baseVol = 20;
+function updateQuantData() {
+  const sliders = panel.querySelectorAll('input[type=range]');
+  acidConc = parseFloat(sliders[0].value);
+  baseVol = parseFloat(sliders[1].value);
+  document.getElementById('acidConc').textContent = acidConc.toFixed(2) + ' mol/L';
+  document.getElementById('baseVol').textContent = baseVol.toFixed(1) + ' mL';
+  document.getElementById('dropSpeedVal').textContent = sliders[2].value + '滴/s';
+}
+
+function startTitration() {
+  if (quantPhase === 0) {
+    quantPhase = 1;
+    bumpProgress('quant');
+  }
+}
+
+function resetTitration() {
+  quantPhase = 0;
+  buretteLevel = 0;
+  indicatorColor = 0;
+  document.getElementById('quantResult').classList.add('hidden');
+}
+
+function updateQuantLegend() {
+  legend.innerHTML = `
+    <span style="color:#ef4444">● 标准酸 (HCl)</span>
+    <span style="color:#8b5cf6">● 待测碱 (NaOH)</span>
+    <span style="color:#fbbf24">● 酚酞指示剂</span>
+  `;
+}
+
+function drawQuant() {
+  clearCanvas();
+  const W = canvas.width, H = canvas.height;
+  
+  // 铁架台
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(150, 50, 6, 400);
+  ctx.fillRect(120, 440, 80, 8);
+  
+  // 滴定管
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2;
+  ctx.fillRect(170, 80, 20, 250);
+  ctx.strokeRect(170, 80, 20, 250);
+  
+  // 酸液面
+  const acidLevel = 80 + buretteLevel * 2;
+  ctx.fillStyle = 'rgba(239,68,68,0.5)';
+  ctx.fillRect(172, 80, 16, buretteLevel * 2);
+  
+  // 刻度
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 5; i++) {
+    const y = 80 + i * 50;
+    ctx.fillRect(165, y, 5, 1);
+    ctx.fillText((i * 10) + '', 160, y + 4);
+  }
+  
+  // 滴定管尖
+  ctx.fillStyle = '#94a3b8';
+  ctx.beginPath();
+  ctx.moveTo(170, 330);
+  ctx.lineTo(180, 330);
+  ctx.lineTo(177, 350);
+  ctx.lineTo(173, 350);
+  ctx.closePath();
+  ctx.fill();
+  
+  // 锥形瓶
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(250, 380);
+  ctx.lineTo(200, 450);
+  ctx.lineTo(300, 450);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  
+  // 碱溶液
+  const baseAlpha = 0.4 - indicatorColor * 0.1;
+  ctx.fillStyle = `rgba(139,92,246,${baseAlpha})`;
+  ctx.beginPath();
+  ctx.moveTo(255, 400);
+  ctx.lineTo(210, 445);
+  ctx.lineTo(290, 445);
+  ctx.closePath();
+  ctx.fill();
+  
+  // 指示剂颜色
+  if (indicatorColor > 0) {
+    const pinkAlpha = indicatorColor * 0.3;
+    ctx.fillStyle = `rgba(236,72,153,${pinkAlpha})`;
+    ctx.beginPath();
+    ctx.moveTo(255, 400);
+    ctx.lineTo(210, 445);
+    ctx.lineTo(290, 445);
+    ctx.closePath();
+    ctx.fill();
+  }
+  
+  // 滴落动画
+  if (quantPhase === 1) {
+    const dropY = 350 + (time * 3) % 50;
+    if (dropY < 400) {
+      ctx.fillStyle = 'rgba(239,68,68,0.7)';
+      ctx.beginPath();
+      ctx.arc(175, dropY, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // 更新进度
+    const speed = parseInt(document.getElementById('dropSpeed')?.value || 2);
+    buretteLevel = Math.min(100, buretteLevel + speed * 0.1);
+    
+    // 颜色变化
+    if (buretteLevel > 60) {
+      indicatorColor = Math.min(2, (buretteLevel - 60) / 20);
+    }
+    
+    // 终点判断
+    if (buretteLevel >= 80) {
+      quantPhase = 2;
+      showQuantResult();
+    }
+  }
+  
+  // 标注
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('HCl 标准液', 200, 100);
+  ctx.fillText('NaOH 待测液', 310, 420);
+  ctx.fillText('酚酞指示剂', 310, 440);
+  
+  // 体积读数
+  if (buretteLevel > 0) {
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 14px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`V = ${buretteLevel.toFixed(1)} mL`, 350, 200);
+  }
+}
+
+function showQuantResult() {
+  const result = document.getElementById('quantResult');
+  const baseConc = (acidConc * buretteLevel / baseVol).toFixed(4);
+  result.innerHTML = `
+    <div class="title">📊 计算结果</div>
+    <div style="font-family:monospace;font-size:14px;line-height:1.8">
+      V(酸) = ${buretteLevel.toFixed(2)} mL<br>
+      c(酸) = ${acidConc.toFixed(2)} mol/L<br>
+      V(碱) = ${baseVol.toFixed(1)} mL<br>
+      <b style="color:#10b981">c(碱) = ${baseConc} mol/L</b>
+    </div>
+  `;
+  result.classList.remove('hidden');
+}
+
+// ============ 实验设计模式 ============
+let designExp = null;
+const designTemplates = [
+  { name: '制备O₂', reagents: ['KClO₃', 'MnO₂'], apparatus: ['试管', '酒精灯', '集气瓶'], method: '排水集气法' },
+  { name: '制备CO₂', reagents: ['CaCO₃', 'HCl'], apparatus: ['锥形瓶', '长颈漏斗', '集气瓶'], method: '向上排空气法' },
+  { name: '制备H₂', reagents: ['Zn', 'H₂SO₄'], apparatus: ['试管', '集气瓶', '水槽'], method: '排水集气法' }
+];
+
+function setupDesign() {
+  designExp = null;
+  panel.innerHTML = `
+    <h3>🎨 实验设计工坊</h3>
+    <div class="info-box">
+      <div class="title">📋 设计要素</div>
+      选择目标产物，系统自动生成实验方案<br>
+      包括：药品选择、装置搭建、收集方法
+    </div>
+    <div class="btn-row">
+      ${designTemplates.map((t, i) => `<button class="btn secondary" onclick="selectDesign(${i})">${t.name}</button>`).join('')}
+    </div>
+    <div id="designPanel"></div>
+  `;
+  updateDesignLegend();
+}
+
+function selectDesign(idx) {
+  designExp = designTemplates[idx];
+  bumpProgress('design');
+  const t = designExp;
+  document.getElementById('designPanel').innerHTML = `
+    <div class="info-box">
+      <div class="title">🎯 目标: ${t.name}</div>
+    </div>
+    <div class="info-box">
+      <div class="title">💊 药品选择</div>
+      ${t.reagents.join(' + ')}
+    </div>
+    <div class="info-box">
+      <div class="title">🔧 装置选择</div>
+      ${t.apparatus.join('、')}
+    </div>
+    <div class="info-box warn">
+      <div class="title">📦 收集方法</div>
+      ${t.method}
+    </div>
+  `;
+}
+
+function updateDesignLegend() {
+  legend.innerHTML = `
+    <span style="color:#10b981">● 反应装置</span>
+    <span style="color:#fbbf24">● 收集装置</span>
+    <span style="color:#8b5cf6">● 尾气处理</span>
+  `;
+}
+
+function drawDesign() {
+  clearCanvas();
+  const W = canvas.width, H = canvas.height;
+  
+  if (!designExp) {
+    ctx.fillStyle = '#64748b';
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('← 选择目标产物开始设计', W/2, H/2);
+    return;
+  }
+  
+  const t = designExp;
+  
+  // 发生装置
+  ctx.fillStyle = 'rgba(16,185,129,0.2)';
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2;
+  drawRoundRect(100, 200, 150, 150, 10, 'rgba(16,185,129,0.2)', '#10b981');
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('发生装置', 175, 190);
+  
+  // 药品
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(t.reagents.join(' + '), 175, 280);
+  
+  // 导管
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(250, 275);
+  ctx.lineTo(350, 275);
+  ctx.stroke();
+  
+  // 收集装置
+  ctx.fillStyle = 'rgba(245,158,11,0.2)';
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  drawRoundRect(350, 200, 120, 150, 10, 'rgba(245,158,11,0.2)', '#fbbf24');
+  ctx.fillStyle = '#e2e8f0';
+  ctx.fillText('收集装置', 410, 190);
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(t.method, 410, 280);
+  
+  // 气体流动动画
+  const flowX = 250 + (time * 3) % 100;
+  if (flowX < 350) {
+    ctx.fillStyle = 'rgba(245,158,11,0.6)';
+    ctx.beginPath();
+    ctx.arc(flowX, 275, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // 尾气处理（如果需要）
+  if (t.name === '制备CO₂' || t.name === '制备H₂') {
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(470, 275);
+    ctx.lineTo(520, 275);
+    ctx.stroke();
+    
+    ctx.fillStyle = 'rgba(139,92,246,0.2)';
+    ctx.strokeStyle = '#8b5cf6';
+    drawRoundRect(520, 220, 80, 100, 10, 'rgba(139,92,246,0.2)', '#8b5cf6');
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillText('尾气处理', 560, 210);
+  }
+  
+  // 标题
+  ctx.fillStyle = '#10b981';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`实验设计: ${t.name}`, W/2, 50);
+}
+
+// ============ 主循环 ============
+function setupMode() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  if (currentMode === 'prep') setupPrep();
+  else if (currentMode === 'property') setupProperty();
+  else if (currentMode === 'quant') setupQuant();
+  else if (currentMode === 'design') setupDesign();
+  animate();
+}
+
+function animate() {
+  time++;
+  if (currentMode === 'prep') drawPrep();
+  else if (currentMode === 'property') drawProperty();
+  else if (currentMode === 'quant') drawQuant();
+  else if (currentMode === 'design') drawDesign();
+  animFrame = requestAnimationFrame(animate);
+}
+
+setupMode();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中化学"></script>
+</body>
+</html>

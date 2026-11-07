@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>量子化学基础 · 大学化学互动可视化</title>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --accent: #ec4899;
+    --orbital: #38bdf8;
+    --energy: #fbbf24;
+    --electron: #f472b6;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px;
+    font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #c4b5fd; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #8b5cf6, #ec4899, #38bdf8); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); color: white; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%); touch-action: none; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 13px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+  .legend .l-psi::before { background: var(--orbital); }
+  .legend .l-prob::before { background: var(--electron); }
+  .legend .l-energy::before { background: var(--energy); }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; color: #fde68a; }
+  .equation b { color: #c4b5fd; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+  .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .concept-card { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--primary); }
+  .concept-card h4 { color: #c4b5fd; font-size: 14px; margin-bottom: 6px; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .btn { padding: 10px 18px; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: var(--light); cursor: pointer; font-size: 14px; transition: all .2s; user-select: none; min-height: 40px; }
+  .btn.primary { background: var(--primary); border-color: var(--primary); font-weight: 600; }
+  .btn.primary:hover { box-shadow: 0 4px 16px rgba(139,92,246,0.4); }
+  .btn:not(.primary):hover { background: rgba(255,255,255,0.12); }
+  .quiz { margin-top: 12px; padding: 16px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 12px; line-height: 1.7; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.05); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 14px; color: #fbbf24; min-height: 22px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 12px; }
+  .quiz-nav button { padding: 8px 18px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; min-height: 40px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .hidden { display: none; }
+  .section { display: none; }
+  .section.active { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">⚗️ 化学</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">大学化学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">量子化学基础</span>
+  </nav>
+  <header>
+    <h1>⚛️ 量子化学基础</h1>
+    <p>薛定谔方程 · 变分法 · Hartree-Fock · DFT<span id="done-mark" style="color:#10b981;font-weight:700;margin-left:8px;font-size:14px;"></span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="0">📦 一维势箱</div>
+    <div class="tab" data-tab="1">⚛️ 氢原子轨道</div>
+    <div class="tab" data-tab="2">🧮 变分法与 HF</div>
+    <div class="tab" data-tab="3">📝 知识测验</div>
+  </div>
+
+  <!-- ===== Tab 0: 一维势箱 ===== -->
+  <div class="section active" id="sec-0">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="boxCanvas" width="640" height="480"></canvas>
+        <div class="legend">
+          <span class="l-psi">波函数 ψ(x)</span>
+          <span class="l-prob">概率密度 |ψ|²</span>
+          <span class="l-energy">能级 Eₙ</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📖 一维势箱模型</h3>
+        <div class="equation">
+          <b>Ĥψ = Eψ</b><br/>
+          -(<b>ħ²/2m</b>)·d²ψ/dx² = E·ψ<br/>
+          ψₙ(x) = √(2/L)·sin(nπx/L)<br/>
+          Eₙ = n²h²/(8mL²) · n = 1,2,3,…
+        </div>
+        <div class="slider-row">
+          <label>量子数 n</label>
+          <input type="range" id="sliderN" min="1" max="6" step="1" value="1" />
+          <div class="val" id="valN">n = 1</div>
+        </div>
+        <div class="slider-row">
+          <label>箱长 L (nm)</label>
+          <input type="range" id="sliderL" min="5" max="30" step="1" value="10" />
+          <div class="val" id="valL">1.0 nm</div>
+        </div>
+        <div class="info-grid">
+          <div><b>能量量子化</b><br/>只有特定能量允许存在</div>
+          <div><b>零点能</b><br/>n=1 时 E ≠ 0，微观粒子不能静止</div>
+          <div><b>节点数</b><br/>ψₙ 有 n-1 个内部节点</div>
+          <div><b>德布罗意</b><br/>λ = 2L/n，对应箱内整数半波长</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Tab 1: 氢原子轨道 ===== -->
+  <div class="section" id="sec-1">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="hydrogenCanvas" width="640" height="480"></canvas>
+        <div class="legend">
+          <span class="l-psi">|ψ|² 概率密度（亮度=密度）</span>
+          <span class="l-energy">原子核</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>⚛️ 氢原子波函数</h3>
+        <div class="equation">
+          ψ<sub>nlm</sub>(r,θ,φ) = R<sub>nl</sub>(r) · Y<sub>lm</sub>(θ,φ)<br/>
+          E<sub>n</sub> = -13.6 eV / n²
+        </div>
+        <div class="slider-row">
+          <label>主量子数 n</label>
+          <input type="range" id="sliderHN" min="1" max="4" step="1" value="2" />
+          <div class="val" id="valHN">n = 2</div>
+        </div>
+        <div class="slider-row">
+          <label>角量子数 l</label>
+          <input type="range" id="sliderHL" min="0" max="3" step="1" value="1" />
+          <div class="val" id="valHL">l = 1 (p)</div>
+        </div>
+        <div class="slider-row">
+          <label>磁量子数 m</label>
+          <input type="range" id="sliderHM" min="-3" max="3" step="1" value="0" />
+          <div class="val" id="valHM">m = 0</div>
+        </div>
+        <div class="info-grid">
+          <div><b>n</b>：决定能量与轨道大小</div>
+          <div><b>l</b>：决定角动量与形状（s/p/d/f）</div>
+          <div><b>m</b>：决定轨道取向，-l ≤ m ≤ l</div>
+          <div><b>简并度</b>：n² 个轨道能量相同</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Tab 2: 变分法与 Hartree-Fock ===== -->
+  <div class="section" id="sec-2">
+    <div class="panel" style="max-width:100%;">
+      <h3>🧮 量子化学计算方法</h3>
+      <div class="equation">
+        变分原理：E[ψ<sub>trial</sub>] = ⟨ψ|Ĥ|ψ⟩/⟨ψ|ψ⟩ ≥ E₀<br/>
+        Hartree-Fock：Ψ = (1/√N!) · det[φᵢ(rⱼ)]，单 Slater 行列式<br/>
+        DFT：E[ρ] = T[ρ] + V<sub>ext</sub>[ρ] + J[ρ] + E<sub>xc</sub>[ρ]
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>📐 变分法</h4>
+          用含参数的试探波函数 ψ(c₁,c₂,…)，对参数求极小：∂E/∂cᵢ = 0。所得能量总是真实基态能量的<b>上界</b>。常用试探函数：高斯型、Slater 型轨道。
+        </div>
+        <div class="concept-card">
+          <h4>🔁 Hartree-Fock 自洽场</h4>
+          多电子波函数近似为 Slater 行列式，每个电子在其他电子产生的平均场中运动。迭代求解 Fock 方程直到<b>自洽</b>。忽略电子相关能，误差 ~1%。
+        </div>
+        <div class="concept-card">
+          <h4>🌐 密度泛函理论 DFT</h4>
+          用<b>电子密度 ρ(r)</b>代替 3N 维波函数，能量是 ρ 的泛函。Kohn-Sham 方程将多体问题转化为单体问题。交换相关泛函 LDA/GGA/hybrid (B3LYP)。
+        </div>
+        <div class="concept-card">
+          <h4>🎯 基组</h4>
+          分子轨道展开为原子轨道基函数的线性组合。常用基组：STO-3G（最小基）、6-31G*（劈裂价层）、cc-pVTZ（极化一致）。基组越大，结果越精确但计算越慢。
+        </div>
+        <div class="concept-card">
+          <h4>⚡ 后 HF 方法</h4>
+          考虑电子相关：MP2（二阶微扰）、CI（组态相互作用）、CCSD(T)（耦合簇，"黄金标准"）。精度高但标度大：HF ~ N⁴，CCSD(T) ~ N⁷。
+        </div>
+        <div class="concept-card">
+          <h4>📊 应用</h4>
+          几何优化、过渡态搜索、振动频率、反应能、光谱预测。Gaussian、ORCA、VASP、Q-Chem 等软件实现。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Tab 3: Quiz ===== -->
+  <div class="section" id="sec-3">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="quizCanvas" width="640" height="480"></canvas>
+      </div>
+      <div class="panel">
+        <h3>📝 知识测验（4 题 · 3/4 通过）</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="qText"></div>
+          <div class="quiz-opts" id="qOpts"></div>
+          <div class="quiz-feedback" id="qFeedback"></div>
+          <div class="quiz-nav">
+            <button id="qPrev">← 上一题</button>
+            <button id="qNext">下一题 →</button>
+            <button id="qSubmit" class="primary">提交答案</button>
+            <button id="qRetry" class="hidden">重新挑战</button>
+          </div>
+          <div id="qResult" style="margin-top:12px;padding:12px;border-radius:10px;font-size:14px;line-height:1.6;" class="hidden"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;text-align:center;font-size:13px;color:#64748b;">
+    💡 测验得分 ≥ 3/4 自动标记本知识点为已完成
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ===== Tab switching =====
+  const tabs = document.querySelectorAll('.tab');
+  const secs = document.querySelectorAll('.section');
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    secs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('sec-' + t.dataset.tab).classList.add('active');
+    requestAnimationFrame(() => { drawBox(); drawHydrogen(); drawQuizScene(); });
+  }));
+
+  // ===== Tab 0: Particle in a Box =====
+  const boxCanvas = document.getElementById('boxCanvas');
+  const boxCtx = boxCanvas.getContext('2d');
+  const sliderN = document.getElementById('sliderN');
+  const sliderL = document.getElementById('sliderL');
+  const valN = document.getElementById('valN');
+  const valL = document.getElementById('valL');
+
+  sliderN.addEventListener('input', drawBox);
+  sliderL.addEventListener('input', drawBox);
+
+  function drawBox() {
+    const W = boxCanvas.width, H = boxCanvas.height;
+    const n = parseInt(sliderN.value);
+    const L = parseInt(sliderL.value); // 0.1 nm units, so L_nm = L/10
+    valN.textContent = 'n = ' + n;
+    valL.textContent = (L / 10).toFixed(1) + ' nm';
+
+    boxCtx.clearRect(0, 0, W, H);
+    const padX = 60, padY = 50;
+    const boxW = W - 2 * padX, boxH = H - 2 * padY - 60;
+
+    // Walls
+    boxCtx.strokeStyle = '#fbbf24';
+    boxCtx.lineWidth = 4;
+    boxCtx.beginPath();
+    boxCtx.moveTo(padX, padY); boxCtx.lineTo(padX, padY + boxH);
+    boxCtx.moveTo(padX + boxW, padY); boxCtx.lineTo(padX + boxW, padY + boxH);
+    boxCtx.stroke();
+    boxCtx.lineWidth = 1;
+
+    // Potential floor
+    boxCtx.strokeStyle = '#94a3b8';
+    boxCtx.setLineDash([4, 4]);
+    boxCtx.beginPath();
+    boxCtx.moveTo(padX, padY + boxH); boxCtx.lineTo(padX + boxW, padY + boxH);
+    boxCtx.stroke();
+    boxCtx.setLineDash([]);
+
+    // Wavefunction & probability
+    const midY = padY + boxH / 2;
+    const amp = boxH * 0.32;
+    const N = 200;
+
+    // |psi|^2 filled
+    boxCtx.fillStyle = 'rgba(244,114,182,0.18)';
+    boxCtx.beginPath();
+    boxCtx.moveTo(padX, midY);
+    for (let i = 0; i <= N; i++) {
+      const x = padX + (i / N) * boxW;
+      const t = (i / N) * Math.PI * n;
+      const psi = Math.sqrt(2 / L) * Math.sin(t);
+      boxCtx.lineTo(x, midY - psi * psi * amp * 3);
+    }
+    boxCtx.lineTo(padX + boxW, midY);
+    boxCtx.closePath();
+    boxCtx.fill();
+
+    // psi
+    boxCtx.strokeStyle = '#38bdf8';
+    boxCtx.lineWidth = 2.5;
+    boxCtx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const x = padX + (i / N) * boxW;
+      const t = (i / N) * Math.PI * n;
+      const psi = Math.sin(t);
+      const y = midY - psi * amp;
+      if (i === 0) boxCtx.moveTo(x, y); else boxCtx.lineTo(x, y);
+    }
+    boxCtx.stroke();
+
+    // |psi|^2 outline
+    boxCtx.strokeStyle = '#f472b6';
+    boxCtx.lineWidth = 1.5;
+    boxCtx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const x = padX + (i / N) * boxW;
+      const t = (i / N) * Math.PI * n;
+      const psi = Math.sin(t);
+      const y = midY - psi * psi * amp * 3;
+      if (i === 0) boxCtx.moveTo(x, y); else boxCtx.lineTo(x, y);
+    }
+    boxCtx.stroke();
+
+    // Energy level annotation
+    const E = (n * n * 0.376) / (L * L / 100); // eV (electron in box)
+    boxCtx.fillStyle = '#fbbf24';
+    boxCtx.font = 'bold 14px sans-serif';
+    boxCtx.textAlign = 'left';
+    boxCtx.fillText('E' + n + ' = ' + E.toFixed(3) + ' eV', padX + 6, padY + 20);
+
+    boxCtx.fillStyle = '#cbd5e1';
+    boxCtx.font = '13px sans-serif';
+    boxCtx.fillText('ψ' + n + '(x) = √(2/L)·sin(' + n + 'πx/L)', padX, H - 30);
+    boxCtx.fillText('节点数：' + (n - 1), W - padX - 90, H - 30);
+  }
+  drawBox();
+
+  // ===== Tab 1: Hydrogen orbital =====
+  const hCanvas = document.getElementById('hydrogenCanvas');
+  const hCtx = hCanvas.getContext('2d');
+  const sHN = document.getElementById('sliderHN');
+  const sHL = document.getElementById('sliderHL');
+  const sHM = document.getElementById('sliderHM');
+  const vHN = document.getElementById('valHN');
+  const vHL = document.getElementById('valHL');
+  const vHM = document.getElementById('valHM');
+  const lNames = ['s', 'p', 'd', 'f'];
+
+  [sHN, sHL, sHM].forEach(s => s.addEventListener('input', () => {
+    const n = parseInt(sHN.value), l = parseInt(sHL.value);
+    if (l >= n) { sHL.value = n - 1; }
+    const l2 = parseInt(sHL.value);
+    if (Math.abs(parseInt(sHM.value)) > l2) sHM.value = 0;
+    sHM.min = -l2; sHM.max = l2;
+    drawHydrogen();
+  }));
+
+  // Radial R_nl (up to constants) — hydrogen-like, a0=1
+  function R(n, l, r) {
+    if (n === 1 && l === 0) return 2 * Math.exp(-r);
+    if (n === 2 && l === 0) return (1 / (2 * Math.sqrt(2))) * (2 - r) * Math.exp(-r / 2);
+    if (n === 2 && l === 1) return (1 / (2 * Math.sqrt(6))) * r * Math.exp(-r / 2);
+    if (n === 3 && l === 0) return (2 / (81 * Math.sqrt(3))) * (27 - 18 * r + 2 * r * r) * Math.exp(-r / 3);
+    if (n === 3 && l === 1) return (4 / (81 * Math.sqrt(6))) * (6 - r) * r * Math.exp(-r / 3);
+    if (n === 3 && l === 2) return (4 / (81 * Math.sqrt(30))) * r * r * Math.exp(-r / 3);
+    if (n === 4 && l === 0) return (1/768)*(192 - 144*r + 24*r*r - r*r*r)*Math.exp(-r/4);
+    if (n === 4 && l === 1) return (Math.sqrt(5)/(256*Math.sqrt(3)))*(80 - 20*r + r*r)*r*Math.exp(-r/4);
+    if (n === 4 && l === 2) return (1/(256*Math.sqrt(5)))*(12 - r)*r*r*Math.exp(-r/4);
+    if (n === 4 && l === 3) return (1/(256*Math.sqrt(35)))*r*r*r*Math.exp(-r/4);
+    return 0;
+  }
+  // Legendre-ish angular parts (real combination, x-z plane slice)
+  function Y(l, m, theta) {
+    const c = Math.cos(theta);
+    const am = Math.abs(m);
+    if (l === 0) return 1;
+    if (l === 1) return am === 0 ? c : Math.sin(theta);
+    if (l === 2) {
+      if (am === 0) return 0.5 * (3 * c * c - 1);
+      if (am === 1) return Math.sin(theta) * c;
+      return Math.sin(theta) * Math.sin(theta);
+    }
+    if (l === 3) {
+      if (am === 0) return 0.5 * (5 * c * c * c - 3 * c);
+      if (am === 1) return Math.sin(theta) * (5 * c * c - 1);
+      if (am === 2) return Math.sin(theta) * Math.sin(theta) * c;
+      return Math.sin(theta) * Math.sin(theta) * Math.sin(theta);
+    }
+    return 1;
+  }
+
+  function drawHydrogen() {
+    const W = hCanvas.width, H = hCanvas.height;
+    const n = parseInt(sHN.value), l = parseInt(sHL.value), m = parseInt(sHM.value);
+    vHN.textContent = 'n = ' + n;
+    vHL.textContent = 'l = ' + l + ' (' + lNames[l] + ')';
+    vHM.textContent = 'm = ' + m;
+
+    hCtx.clearRect(0, 0, W, H);
+    const cx = W / 2, cy = H / 2;
+    const scale = Math.min(W, H) / (n * n * 6 + 40);
+    const rMax = n * n * 3 + 10;
+    const gridN = 120;
+
+    const img = hCtx.createImageData(gridN, gridN);
+    let maxP = 1e-9;
+    const P = new Float32Array(gridN * gridN);
+    for (let iy = 0; iy < gridN; iy++) {
+      for (let ix = 0; ix < gridN; ix++) {
+        const x = (ix / gridN - 0.5) * 2 * rMax;
+        const z = (iy / gridN - 0.5) * 2 * rMax;
+        const r = Math.sqrt(x * x + z * z);
+        if (r < 0.01) continue;
+        const theta = Math.acos(z / r);
+        const Rv = R(n, l, r);
+        const Yv = Y(l, m, theta);
+        const p = Rv * Rv * Yv * Yv * Math.exp(-r * 0.05);
+        P[iy * gridN + ix] = p;
+        if (p > maxP) maxP = p;
+      }
+    }
+    for (let i = 0; i < P.length; i++) {
+      const v = Math.sqrt(P[i] / maxP); // sqrt for visibility
+      const idx = i * 4;
+      // cyan-pink gradient
+      img.data[idx]     = Math.floor(56 + v * 200);
+      img.data[idx + 1] = Math.floor(100 + v * 120);
+      img.data[idx + 2] = Math.floor(200 + v * 55);
+      img.data[idx + 3] = Math.floor(v * 255);
+    }
+    // Draw scaled up
+    const tmp = document.createElement('canvas');
+    tmp.width = gridN; tmp.height = gridN;
+    tmp.getContext('2d').putImageData(img, 0, 0);
+    hCtx.imageSmoothingEnabled = true;
+    hCtx.drawImage(tmp, cx - rMax * scale, cy - rMax * scale, 2 * rMax * scale, 2 * rMax * scale);
+
+    // Nucleus
+    hCtx.fillStyle = '#fbbf24';
+    hCtx.beginPath();
+    hCtx.arc(cx, cy, 6, 0, Math.PI * 2);
+    hCtx.fill();
+    hCtx.strokeStyle = '#fff';
+    hCtx.lineWidth = 1.5;
+    hCtx.stroke();
+
+    // Label
+    const E = -13.6 / (n * n);
+    hCtx.fillStyle = '#fde68a';
+    hCtx.font = 'bold 14px sans-serif';
+    hCtx.textAlign = 'left';
+    hCtx.fillText('轨道：' + n + lNames[l] + (l === 0 ? '' : ' (m=' + m + ')'), 14, 24);
+    hCtx.fillText('E = ' + E.toFixed(2) + ' eV', 14, 44);
+    hCtx.fillStyle = '#94a3b8';
+    hCtx.font = '12px sans-serif';
+    hCtx.fillText('x-z 截面 · 亮度 ∝ |ψ|²', 14, H - 14);
+  }
+  drawHydrogen();
+
+  // ===== Tab 3: Quiz =====
+  const quizData = [
+    {
+      q: '一维势箱中粒子的零点能（基态能量）为什么不为零？',
+      opts: ['由于海森堡不确定性原理，位置受限意味着动量不确定，不可能静止',
+             '因为容器壁会振动给粒子能量',
+             '因为温度总是大于绝对零度',
+             '零点能实际上等于零，只是测量误差'],
+      ans: 0
+    },
+    {
+      q: '氢原子轨道 ψ_nlm 中，磁量子数 m 决定了：',
+      opts: ['轨道的能量', '轨道的形状', '轨道在空间中的取向', '电子的自旋方向'],
+      ans: 2
+    },
+    {
+      q: '变分原理指出：对任意归一化试探函数 ψ，期望值 ⟨ψ|Ĥ|ψ⟩ 总是：',
+      opts: ['等于基态能量 E₀', '大于或等于基态能量 E₀', '小于基态能量 E₀', '与基态能量无关'],
+      ans: 1
+    },
+    {
+      q: '密度泛函理论（DFT）相比 Hartree-Fock 的核心改进是：',
+      opts: ['使用更复杂的 Slater 行列式',
+             '用电子密度 ρ(r) 取代多体波函数，包含交换相关效应',
+             '完全忽略电子之间的相互作用',
+             '只能处理单电子原子'],
+      ans: 1
+    }
+  ];
+  let quizIdx = 0, quizSubmitted = false;
+  const quizAnswers = new Array(quizData.length).fill(-1);
+  const qText = document.getElementById('qText');
+  const qOpts = document.getElementById('qOpts');
+  const qFeedback = document.getElementById('qFeedback');
+  const qPrev = document.getElementById('qPrev');
+  const qNext = document.getElementById('qNext');
+  const qSubmit = document.getElementById('qSubmit');
+  const qRetry = document.getElementById('qRetry');
+  const qResult = document.getElementById('qResult');
+  const quizCanvas = document.getElementById('quizCanvas');
+  const qCtx = quizCanvas.getContext('2d');
+
+  function renderQuiz() {
+    const Q = quizData[quizIdx];
+    qText.textContent = '第 ' + (quizIdx + 1) + '/' + quizData.length + ' 题：' + Q.q;
+    qOpts.innerHTML = '';
+    Q.opts.forEach((op, i) => {
+      const div = document.createElement('div');
+      div.className = 'quiz-opt';
+      if (quizSubmitted) {
+        if (i === Q.ans) div.classList.add('correct');
+        else if (quizAnswers[quizIdx] === i) div.classList.add('wrong');
+      } else if (quizAnswers[quizIdx] === i) {
+        div.style.borderColor = '#8b5cf6';
+        div.style.background = 'rgba(139,92,246,0.18)';
+      }
+      div.textContent = String.fromCharCode(65 + i) + '. ' + op;
+      if (!quizSubmitted) {
+        div.addEventListener('click', () => {
+          quizAnswers[quizIdx] = i;
+          qFeedback.textContent = '已选择 ' + String.fromCharCode(65 + i);
+          renderQuiz();
+        });
+      }
+      qOpts.appendChild(div);
+    });
+    if (quizSubmitted) {
+      qFeedback.textContent = quizAnswers[quizIdx] === Q.ans ? '✓ 回答正确' : '✗ 正确答案：' + String.fromCharCode(65 + Q.ans);
+    }
+    qPrev.disabled = quizIdx === 0;
+    qNext.disabled = quizIdx === quizData.length - 1;
+    drawQuizScene();
+  }
+  qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+  qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+  qSubmit.addEventListener('click', () => {
+    if (quizAnswers.includes(-1)) {
+      qFeedback.textContent = '⚠️ 请先完成所有题目再提交';
+      return;
+    }
+    quizSubmitted = true;
+    let score = 0;
+    quizData.forEach((Q, i) => { if (quizAnswers[i] === Q.ans) score++; });
+    const pass = score >= 3;
+    qResult.classList.remove('hidden');
+    qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+    qResult.textContent = pass
+      ? '🎉 得分 ' + score + '/4，合格！本知识点已标记完成'
+      : '😅 得分 ' + score + '/4，未达到 3/4，请复习后重试';
+    if (pass && typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('quantum-chemistry');
+      document.getElementById('done-mark').textContent = '✓ 已完成';
+    }
+    qRetry.classList.remove('hidden');
+    qSubmit.classList.add('hidden');
+    renderQuiz();
+  });
+  qRetry.addEventListener('click', () => {
+    quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
+    qResult.classList.add('hidden');
+    qRetry.classList.add('hidden');
+    qSubmit.classList.remove('hidden');
+    qFeedback.textContent = '';
+    renderQuiz();
+  });
+
+  function drawQuizScene() {
+    if (!qCtx) return;
+    const W = quizCanvas.width, H = quizCanvas.height;
+    qCtx.clearRect(0, 0, W, H);
+    qCtx.fillStyle = '#c4b5fd';
+    qCtx.font = 'bold 20px sans-serif';
+    qCtx.textAlign = 'center';
+    qCtx.fillText('🎯 量子化学挑战', W / 2, 60);
+    // Simple atom deco
+    const cx = W / 2, cy = H / 2 + 40;
+    qCtx.strokeStyle = 'rgba(139,92,246,0.4)';
+    qCtx.lineWidth = 2;
+    for (let k = 0; k < 3; k++) {
+      qCtx.beginPath();
+      qCtx.ellipse(cx, cy, 120, 40, (Math.PI / 3) * k, 0, Math.PI * 2);
+      qCtx.stroke();
+    }
+    qCtx.fillStyle = '#fbbf24';
+    qCtx.beginPath();
+    qCtx.arc(cx, cy, 14, 0, Math.PI * 2);
+    qCtx.fill();
+    qCtx.fillStyle = '#94a3b8';
+    qCtx.font = '14px sans-serif';
+    qCtx.fillText('第 ' + (quizIdx + 1) + '/' + quizData.length + ' 题', W / 2, H - 40);
+  }
+
+  if (typeof PageProgress !== 'undefined' && PageProgress.isDone('quantum-chemistry')) {
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+  renderQuiz();
+})();
+</script>
+</body>
+</html>

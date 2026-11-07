@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>应用电化学 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #f59e0b;
+    --li: #a78bfa;
+    --fuel: #06b6d4;
+    --electrolysis: #10b981;
+    --corrosion: #ef4444;
+    --electron: #fbbf24;
+    --ion: #60a5fa;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1f2937 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .back { display:inline-block; margin-bottom: 12px; color: #fcd34d; text-decoration: none; font-size: 14px; }
+  .back:hover { color: #fde68a; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--li), var(--fuel), var(--electrolysis), var(--corrosion)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); color: #1f2937; font-weight: 700; box-shadow: 0 4px 20px rgba(245,158,11,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); touch-action: manipulation; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); max-height: 560px; overflow-y: auto; }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #fbbf24; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .btn-row { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: #e2e8f0; cursor: pointer; font-size: 13px; transition: all .2s; min-height: 36px; }
+  .btn:hover { background: rgba(255,255,255,0.12); }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: #1f2937; font-weight: 700; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.li { border-color: var(--li); }
+  .concept-card.fuel { border-color: var(--fuel); }
+  .concept-card.ele { border-color: var(--electrolysis); }
+  .concept-card.cor { border-color: var(--corrosion); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.li .title { color: var(--li); }
+  .concept-card.fuel .title { color: var(--fuel); }
+  .concept-card.ele .title { color: var(--electrolysis); }
+  .concept-card.cor .title { color: var(--corrosion); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; font-size: 12px; color: #94a3b8; justify-content: center; }
+  .legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .legend .l-li::before { background: var(--li); }
+  .legend .l-e::before { background: var(--electron); }
+  .legend .l-ion::before { background: var(--ion); }
+  .legend .l-fuel::before { background: var(--fuel); }
+  .legend .l-cor::before { background: var(--corrosion); }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(245,158,11,0.08); border-radius: 12px; border: 1px solid rgba(245,158,11,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; line-height: 1.5; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #1f2937; font-weight: 700; min-height: 36px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back" href="index.html">← 返回大学化学</a>
+  <header>
+    <h1>🔋 应用电化学</h1>
+    <p>锂离子电池 · 氢氧燃料电池 · 工业电解 · 金属腐蚀与防护</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="liion">🔋 锂离子电池</div>
+    <div class="tab" data-mode="fuelcell">💧 氢氧燃料电池</div>
+    <div class="tab" data-mode="electrolysis">⚗️ 工业电解</div>
+    <div class="tab" data-mode="corrosion">🛡️ 腐蚀与防护</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="600" height="450"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>知识可视化 · 大学化学 · 应用电化学</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
+const legendEl = document.getElementById('legend');
+
+let mode = 'liion';
+let animId = null;
+let time = 0;
+
+// ── Tab switching ──
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    initMode();
+  });
+});
+
+function initMode() {
+  if (animId) cancelAnimationFrame(animId);
+  if (mode === 'liion') initLiIon();
+  else if (mode === 'fuelcell') initFuelCell();
+  else if (mode === 'electrolysis') initElectrolysis();
+  else if (mode === 'corrosion') initCorrosion();
+  else if (mode === 'quiz') initQuiz();
+}
+
+function startLoop(draw) {
+  function frame() {
+    time += 1;
+    draw();
+    animId = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+// ═══════════════════════════════════════════════
+// MODE 1: 锂离子电池（摇椅式）
+// ═══════════════════════════════════════════════
+let liCharge = 0.5;      // 0=完全放电(Li 全在正极), 1=完全充电(Li 全在负极)
+let liCharging = true;   // 动画方向
+let liSpeed = 0.003;
+let liAuto = true;
+const LI_PARTICLES = 24;
+let liParticles = [];
+
+function initLiIon() {
+  legendEl.innerHTML = `
+    <span class="l-li">Li⁺ 离子</span>
+    <span class="l-e">电子 (外电路)</span>`;
+  panel.innerHTML = `
+    <h3>🔋 摇椅式锂离子电池</h3>
+    <div class="concept-card li">
+      <div class="title">放电（供电）</div>
+      负极：LiC₆ → C₆ + Li⁺ + e⁻ (氧化)<br>
+      正极：CoO₂ + Li⁺ + e⁻ → LiCoO₂ (还原)<br>
+      Li⁺ 经电解液迁移到正极；电子走外电路。
+    </div>
+    <div class="concept-card li">
+      <div class="title">充电（储能）</div>
+      外加电压逆转上述过程，Li⁺ 从正极"摇"回负极并嵌入石墨层间。
+    </div>
+    <div class="equation">
+      总反应：LiCoO₂ + 6C <b>⇌</b> Li₁₋ₓCoO₂ + LiₓC₆
+    </div>
+    <div class="slider-row">
+      <label>荷电状态 SOC</label>
+      <input type="range" id="socSlider" min="0" max="100" value="${Math.round(liCharge*100)}">
+      <span class="val" id="socVal">${Math.round(liCharge*100)}%</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="liToggle">${liAuto ? '⏸ 暂停' : '▶ 播放'}</button>
+      <button class="btn" id="liChargeBtn">⚡ 充电</button>
+      <button class="btn" id="liDischargeBtn">🔌 放电</button>
+    </div>
+    <div class="info-grid">
+      <div>正极材料<br><b>LiCoO₂ / NCM / LFP</b></div>
+      <div>负极材料<br><b>石墨 / 硅碳</b></div>
+      <div>能量密度<br><b>~250 Wh/kg</b></div>
+      <div>标称电压<br><b>3.7 V</b></div>
+    </div>`;
+
+  // init particles across the cell
+  liParticles = [];
+  for (let i = 0; i < LI_PARTICLES; i++) {
+    liParticles.push({
+      seed: i / LI_PARTICLES,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  document.getElementById('socSlider').addEventListener('input', e => {
+    liCharge = e.target.value / 100;
+    liAuto = false;
+    document.getElementById('liToggle').textContent = '▶ 播放';
+    document.getElementById('socVal').textContent = e.target.value + '%';
+  });
+  document.getElementById('liToggle').addEventListener('click', e => {
+    liAuto = !liAuto;
+    e.target.textContent = liAuto ? '⏸ 暂停' : '▶ 播放';
+  });
+  document.getElementById('liChargeBtn').addEventListener('click', () => { liAuto = false; liCharging = true; stepLi(0.005); });
+  document.getElementById('liDischargeBtn').addEventListener('click', () => { liAuto = false; liCharging = false; stepLi(0.005); });
+
+  startLoop(drawLiIon);
+}
+
+function stepLi(dt) {
+  liCharge += liCharging ? dt : -dt;
+  if (liCharge >= 1) { liCharge = 1; liCharging = false; }
+  if (liCharge <= 0) { liCharge = 0; liCharging = true; }
+  document.getElementById('socSlider').value = Math.round(liCharge*100);
+  document.getElementById('socVal').textContent = Math.round(liCharge*100) + '%';
+}
+
+function drawLiIon() {
+  if (liAuto) stepLi(liSpeed);
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Battery shell
+  const cellX = 60, cellY = 90, cellW = 480, cellH = 240;
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(cellX, cellY, cellW, cellH);
+
+  // Cathode (right, LiCoO2)
+  const cathW = 60;
+  ctx.fillStyle = '#4c1d95';
+  ctx.fillRect(cellX + cellW - cathW, cellY, cathW, cellH);
+  ctx.fillStyle = '#e9d5ff';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.save();
+  ctx.translate(cellX + cellW - cathW/2, cellY + cellH/2);
+  ctx.rotate(Math.PI/2);
+  ctx.textAlign = 'center';
+  ctx.fillText('正极 LiCoO₂', 0, 5);
+  ctx.restore();
+
+  // Anode (left, graphite)
+  const anW = 60;
+  ctx.fillStyle = '#1f2937';
+  ctx.fillRect(cellX, cellY, anW, cellH);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.save();
+  ctx.translate(cellX + anW/2, cellY + cellH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign = 'center';
+  ctx.fillText('负极 石墨 C₆', 0, 5);
+  ctx.restore();
+
+  // Graphite layer lines (anode)
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 8; i++) {
+    ctx.beginPath();
+    ctx.moveTo(cellX + 5, cellY + i * cellH / 8);
+    ctx.lineTo(cellX + anW - 5, cellY + i * cellH / 8);
+    ctx.stroke();
+  }
+  // Layered oxide (cathode)
+  for (let i = 1; i < 8; i++) {
+    ctx.beginPath();
+    ctx.moveTo(cellX + cellW - cathW + 5, cellY + i * cellH / 8);
+    ctx.lineTo(cellX + cellW - 5, cellY + i * cellH / 8);
+    ctx.stroke();
+  }
+
+  // Separator (dashed middle)
+  ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+  ctx.setLineDash([4,4]);
+  ctx.beginPath();
+  ctx.moveTo(cellX + cellW/2, cellY);
+  ctx.lineTo(cellX + cellW/2, cellY + cellH);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('隔膜 / 电解液', cellX + cellW/2, cellY - 6);
+
+  // Li+ particles: charge=1 → all in anode (left); charge=0 → all in cathode (right)
+  const usableW = cellW - cathW - anW - 20;
+  liParticles.forEach(p => {
+    // particle x position blends from cathode side (x_high) to anode side (x_low)
+    const xAnode = cellX + anW + 10 + (p.seed * 0.7 + 0.05) * usableW * liCharge;
+    const xCath  = cellX + cellW - cathW - 10 - (p.seed * 0.7 + 0.05) * usableW * (1 - liCharge);
+    // During animation, draw particle migrating
+    const targetX = liCharge * xAnode + (1 - liCharge) * xCath;
+    const y = cellY + 20 + p.seed * (cellH - 40) + Math.sin(time * 0.05 + p.phase) * 2;
+    ctx.fillStyle = '#a78bfa';
+    ctx.beginPath();
+    ctx.arc(targetX, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('+', targetX, y + 3);
+  });
+
+  // Electron flow on external circuit (top)
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cellX + anW/2, cellY);
+  ctx.lineTo(cellX + anW/2, cellY - 40);
+  ctx.lineTo(cellX + cellW - cathW/2, cellY - 40);
+  ctx.lineTo(cellX + cellW - cathW/2, cellY);
+  ctx.stroke();
+
+  // Load/charger icon at top center
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(cellX + cellW/2 - 30, cellY - 55, 60, 30);
+  ctx.strokeStyle = '#fbbf24';
+  ctx.strokeRect(cellX + cellW/2 - 30, cellY - 55, 60, 30);
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(liCharging ? '⚡ 充电器' : '💡 负载', cellX + cellW/2, cellY - 35);
+
+  // Electron flow dots
+  if (!liAuto || true) {
+    const dir = liCharging ? -1 : 1;  // charging: e- from cathode→anode (right→left); discharging reverse
+    for (let i = 0; i < 6; i++) {
+      const t = ((time * 0.01 + i / 6) % 1);
+      const xTop = dir === 1
+        ? cellX + anW/2 + t * (cellW - cathW/2 - anW/2 - cellX + cellX)
+        : cellX + cellW - cathW/2 - t * (cellW - cathW/2 - anW/2 - cellX + cellX);
+      // simpler: just move along the top wire
+      const xWire = dir === 1
+        ? (cellX + anW/2) + t * ((cellX + cellW - cathW/2) - (cellX + anW/2))
+        : (cellX + cellW - cathW/2) - t * ((cellX + cellW - cathW/2) - (cellX + anW/2));
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(xWire, cellY - 40, 4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillText('−', xWire, cellY - 37);
+    }
+  }
+
+  // Voltage / SOC display
+  const voltage = 3.0 + liCharge * 1.2; // 3.0~4.2 V
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 18px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${voltage.toFixed(2)} V`, cellX + cellW/2, cellY + cellH + 40);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '13px sans-serif';
+  ctx.fillText(`SOC ${Math.round(liCharge*100)}%  ${liCharging ? '充电中 ⚡' : '放电中 🔌'}`, cellX + cellW/2, cellY + cellH + 62);
+
+  // Direction arrow for Li+ flux
+  ctx.fillStyle = 'rgba(167,139,250,0.6)';
+  const arrowY = cellY + cellH + 15;
+  ctx.font = '12px sans-serif';
+  ctx.fillText(liCharging ? '← Li⁺ 向负极迁移' : 'Li⁺ 向正极迁移 →', cellX + cellW/2, arrowY);
+}
+
+// ═══════════════════════════════════════════════
+// MODE 2: 氢氧燃料电池 (PEMFC)
+// ═══════════════════════════════════════════════
+let fcFlow = 0.5;        // H2 flow 0-1
+let fcParticles = [];
+
+function initFuelCell() {
+  legendEl.innerHTML = `
+    <span class="l-fuel">H₂ / H⁺</span>
+    <span class="l-e">电子 (外电路)</span>
+    <span class="l-ion">O₂ / H₂O</span>`;
+  panel.innerHTML = `
+    <h3>💧 质子交换膜燃料电池 (PEMFC)</h3>
+    <div class="concept-card fuel">
+      <div class="title">阳极 (氧化)</div>
+      H₂ → 2H⁺ + 2e⁻ &nbsp;&nbsp; E° = 0 V
+    </div>
+    <div class="concept-card fuel">
+      <div class="title">阴极 (还原)</div>
+      ½O₂ + 2H⁺ + 2e⁻ → H₂O &nbsp;&nbsp; E° = +1.23 V
+    </div>
+    <div class="equation">
+      总反应：2H₂ + O₂ → 2H₂O &nbsp;&nbsp; <b>E°<sub>cell</sub> = 1.23 V</b>
+    </div>
+    <div class="slider-row">
+      <label>H₂ 流量</label>
+      <input type="range" id="fcSlider" min="10" max="100" value="${Math.round(fcFlow*100)}">
+      <span class="val" id="fcVal">${Math.round(fcFlow*100)}%</span>
+    </div>
+    <div class="info-grid">
+      <div>电解质<br><b>PEM 膜 (Nafion)</b></div>
+      <div>工作温度<br><b>60–80 °C</b></div>
+      <div>理论效率<br><b>~83%</b></div>
+      <div>实际效率<br><b>50–60%</b></div>
+      <div>排放物<br><b>仅 H₂O</b></div>
+      <div>应用<br><b>Mirai / 重卡</b></div>
+    </div>
+    <div class="concept-card fuel">
+      <div class="title">关键部件</div>
+      · 双极板：分隔气体、导电<br>
+      · 催化剂：Pt/C（阴极 ORR 是瓶颈）<br>
+      · 质子交换膜：只允许 H⁺ 通过
+    </div>`;
+  document.getElementById('fcSlider').addEventListener('input', e => {
+    fcFlow = e.target.value / 100;
+    document.getElementById('fcVal').textContent = e.target.value + '%';
+  });
+
+  fcParticles = [];
+  for (let i = 0; i < 30; i++) {
+    fcParticles.push({ type: 'H2', t: Math.random() });
+  }
+  for (let i = 0; i < 15; i++) {
+    fcParticles.push({ type: 'O2', t: Math.random() });
+  }
+
+  startLoop(drawFuelCell);
+}
+
+function drawFuelCell() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Cell layout: anode | PEM | cathode
+  const cellY = 130, cellH = 200;
+  const anX = 80, anW = 100;
+  const pemX = anX + anW + 40, pemW = 30;
+  const caX = pemX + pemW + 40, caW = 100;
+
+  // Anode channel (H2)
+  ctx.fillStyle = '#1e3a8a';
+  ctx.fillRect(anX, cellY, anW, cellH);
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('阳极 H₂', anX + anW/2, cellY - 10);
+
+  // PEM
+  ctx.fillStyle = '#fef3c7';
+  ctx.fillRect(pemX, cellY, pemW, cellH);
+  ctx.fillStyle = '#92400e';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.save();
+  ctx.translate(pemX + pemW/2, cellY + cellH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign = 'center';
+  ctx.fillText('PEM 膜', 0, 4);
+  ctx.restore();
+
+  // Cathode channel (O2)
+  ctx.fillStyle = '#7c2d12';
+  ctx.fillRect(caX, cellY, caW, cellH);
+  ctx.fillStyle = '#fdba74';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('阴极 O₂', caX + caW/2, cellY - 10);
+
+  // External circuit (top)
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(anX + anW/2, cellY);
+  ctx.lineTo(anX + anW/2, cellY - 60);
+  ctx.lineTo(caX + caW/2, cellY - 60);
+  ctx.lineTo(caX + caW/2, cellY);
+  ctx.stroke();
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect((anX+anW/2+caX+caW/2)/2 - 35, cellY - 75, 70, 30);
+  ctx.strokeStyle = '#fbbf24';
+  ctx.strokeRect((anX+anW/2+caX+caW/2)/2 - 35, cellY - 75, 70, 30);
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('💡 负载', (anX+anW/2+caX+caW/2)/2, cellY - 55);
+
+  // Electron dots flowing on wire (anode → cathode)
+  for (let i = 0; i < 8; i++) {
+    const t = ((time * 0.008 * fcFlow * 2 + i / 8) % 1);
+    const x = (anX + anW/2) + t * ((caX + caW/2) - (anX + anW/2));
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(x, cellY - 60, 4, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Particles inside cell
+  fcParticles.forEach(p => {
+    if (p.type === 'H2') {
+      p.t += 0.005 * fcFlow * 2;
+      if (p.t > 1) p.t = 0;
+      // H2 enters left bottom, drifts right toward PEM, gets converted to H+ crossing PEM, then to cathode where forms H2O
+      const stage = p.t;
+      let x, y, color, label;
+      if (stage < 0.4) {
+        // H2 in anode channel
+        const s = stage / 0.4;
+        x = anX + 15 + s * (anW - 30 + 40);
+        y = cellY + 30 + (p.t * 977 % 1) * (cellH - 60);
+        color = '#60a5fa'; label = 'H₂';
+      } else if (stage < 0.6) {
+        // H+ crossing PEM
+        const s = (stage - 0.4) / 0.2;
+        x = pemX - 10 + s * (pemW + 20);
+        y = cellY + 30 + (p.t * 977 % 1) * (cellH - 60);
+        color = '#a78bfa'; label = 'H⁺';
+      } else {
+        // H2O in cathode, drifts down/out
+        const s = (stage - 0.6) / 0.4;
+        x = caX + 15 + s * (caW - 30);
+        y = cellY + 30 + ((p.t * 977 % 1) + s * 0.3) * (cellH - 60);
+        if (y > cellY + cellH - 10) y = cellY + cellH - 10;
+        color = '#34d399'; label = 'H₂O';
+      }
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 7px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, x, y + 2.5);
+    } else {
+      // O2 enters from top of cathode
+      p.t += 0.004 * fcFlow * 2;
+      if (p.t > 1) p.t = 0;
+      const y = cellY + p.t * cellH;
+      const x = caX + 20 + ((p.t * 1313) % 1) * (caW - 40);
+      ctx.fillStyle = '#fb923c';
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 7px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('O', x, y + 2.5);
+    }
+  });
+
+  // Voltage / power display
+  const voltage = 0.6 + fcFlow * 0.4; // typical 0.6-1.0V per cell
+  const current = fcFlow * 10;
+  ctx.fillStyle = '#06b6d4';
+  ctx.font = 'bold 16px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`V = ${voltage.toFixed(2)} V   I = ${current.toFixed(1)} A   P = ${(voltage*current).toFixed(1)} W`, W/2, cellY + cellH + 35);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('(单电池输出；电堆通常串联 300–400 节)', W/2, cellY + cellH + 55);
+}
+
+// ═══════════════════════════════════════════════
+// MODE 3: 工业电解 (氯碱工业 / 电解铝 / 电镀)
+// ═══════════════════════════════════════════════
+let elType = 'chloralkali'; // chloralkali | aluminum | plating
+let elCurrent = 5;          // A
+
+function initElectrolysis() {
+  legendEl.innerHTML = `
+    <span class="l-ion">阳离子</span>
+    <span class="l-cor">阴离子</span>
+    <span class="l-e">电子</span>`;
+  panel.innerHTML = `
+    <h3>⚗️ 工业电解三大应用</h3>
+    <div class="btn-row">
+      <button class="btn primary" data-el="chloralkali">氯碱工业</button>
+      <button class="btn" data-el="aluminum">电解铝</button>
+      <button class="btn" data-el="plating">电镀铜</button>
+    </div>
+    <div class="concept-card ele" id="elInfo"></div>
+    <div class="slider-row">
+      <label>电流 I</label>
+      <input type="range" id="elSlider" min="1" max="10" value="${elCurrent}">
+      <span class="val" id="elVal">${elCurrent} A</span>
+    </div>
+    <div class="equation" id="elEq"></div>
+    <div class="info-grid" id="elData"></div>
+    <div class="concept-card ele">
+      <div class="title">法拉第定律</div>
+      m = (M · I · t) / (n · F)，F = 96485 C/mol<br>
+      通 1 mol 电子可沉积 1 mol Ag、½ mol Cu、⅓ mol Al。
+    </div>`;
+
+  document.querySelectorAll('[data-el]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      elType = btn.dataset.el;
+      document.querySelectorAll('[data-el]').forEach(b => b.classList.remove('primary'));
+      btn.classList.add('primary');
+      updateElInfo();
+    });
+  });
+  document.getElementById('elSlider').addEventListener('input', e => {
+    elCurrent = parseInt(e.target.value);
+    document.getElementById('elVal').textContent = elCurrent + ' A';
+  });
+  updateElInfo();
+  startLoop(drawElectrolysis);
+}
+
+function updateElInfo() {
+  const info = document.getElementById('elInfo');
+  const eq = document.getElementById('elEq');
+  const data = document.getElementById('elData');
+  if (elType === 'chloralkali') {
+    info.innerHTML = `<div class="title">氯碱工业 (电解饱和食盐水)</div>
+      阳极：2Cl⁻ → Cl₂↑ + 2e⁻<br>
+      阴极：2H₂O + 2e⁻ → H₂↑ + 2OH⁻<br>
+      产物：Cl₂、H₂、NaOH（烧碱）`;
+    eq.innerHTML = `2NaCl + 2H₂O <b>→电解→</b> Cl₂↑ + H₂↑ + 2NaOH`;
+    data.innerHTML = `
+      <div>年产能<br><b>~7000 万吨 NaOH</b></div>
+      <div>膜法槽压<br><b>~3.0–3.5 V</b></div>
+      <div>能耗<br><b>~2200 kWh/t</b></div>
+      <div>离子膜<br><b>只允许 Na⁺ 通过</b></div>`;
+  } else if (elType === 'aluminum') {
+    info.innerHTML = `<div class="title">霍尔-埃鲁法电解铝</div>
+      阴极：Al³⁺ + 3e⁻ → Al (液态)<br>
+      阳极：C + O²⁻ → CO₂↑ + 2e⁻（碳阳极消耗）<br>
+      电解质：冰晶石 Na₃AlF₆ 降低 Al₂O₃ 熔点`;
+    eq.innerHTML = `2Al₂O₃ + 3C <b>→电解→</b> 4Al + 3CO₂↑`;
+    data.innerHTML = `
+      <div>槽温<br><b>~950 °C</b></div>
+      <div>槽压<br><b>~4.5 V</b></div>
+      <div>能耗<br><b>~13500 kWh/t</b></div>
+      <div>电流<br><b>300–600 kA</b></div>`;
+  } else {
+    info.innerHTML = `<div class="title">电镀铜 (阴极保护/装饰)</div>
+      阳极：Cu(粗) → Cu²⁺ + 2e⁻<br>
+      阴极：Cu²⁺ + 2e⁻ → Cu(精) 沉积在工件上<br>
+      电解液：CuSO₄ + H₂SO₄`;
+    eq.innerHTML = `Cu(阳极) <b>→</b> Cu(阴极) &nbsp;&nbsp; 溶液中 Cu²⁺ 浓度近似不变`;
+    data.innerHTML = `
+      <div>镀层厚度<br><b>5–25 μm</b></div>
+      <div>槽压<br><b>~0.3 V</b></div>
+      <div>电流效率<br><b>~95%</b></div>
+      <div>应用<br><b>PCB / 装饰</b></div>`;
+  }
+}
+
+function drawElectrolysis() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Electrolytic cell
+  const cellX = 100, cellY = 130, cellW = 400, cellH = 220;
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(cellX, cellY, cellW, cellH);
+
+  // Electrolyte (liquid)
+  ctx.fillStyle = 'rgba(96,165,250,0.15)';
+  ctx.fillRect(cellX + 3, cellY + 40, cellW - 6, cellH - 43);
+
+  // Anode (+, left) and Cathode (-, right)
+  const anX = cellX + 60, caX = cellX + cellW - 60;
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(anX - 12, cellY - 30, 24, cellH + 30);
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillRect(caX - 12, cellY - 30, 24, cellH + 30);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('+', anX, cellY - 40);
+  ctx.fillText('−', caX, cellY - 40);
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('阳极', anX, cellY + cellH + 20);
+  ctx.fillText('阴极', caX, cellY + cellH + 20);
+
+  // Battery symbol on top
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(anX, cellY - 30); ctx.lineTo(anX, cellY - 60);
+  ctx.lineTo(caX, cellY - 60); ctx.lineTo(caX, cellY - 30);
+  ctx.stroke();
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('直流电源', (anX+caX)/2, cellY - 65);
+
+  // Electron dots (from anode to cathode externally)
+  for (let i = 0; i < 6; i++) {
+    const t = ((time * 0.005 * elCurrent / 5 + i / 6) % 1);
+    const x = anX + t * (caX - anX);
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(x, cellY - 60, 4, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Ions in electrolyte
+  const numIons = 12;
+  for (let i = 0; i < numIons; i++) {
+    const seed = i * 7919 % 100 / 100;
+    const t = (time * 0.004 * elCurrent / 5 + seed) % 1;
+    // cations: drift to cathode (right, blue electrode)
+    const catX = anX + 20 + t * (caX - anX - 40);
+    const catY = cellY + 60 + (seed * 0.8) * (cellH - 100);
+    ctx.fillStyle = '#60a5fa';
+    ctx.beginPath();
+    ctx.arc(catX, catY, 5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.fillText('+', catX, catY + 3);
+    // anions: drift to anode (left, red electrode)
+    const anX2 = caX - 20 - t * (caX - anX - 40);
+    const anY2 = cellY + 60 + ((1 - seed) * 0.8) * (cellH - 100);
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(anX2, anY2, 5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillText('−', anX2, anY2 + 3);
+  }
+
+  // Bubbles at electrodes (Cl2/H2 at anode/cathode for chloralkali)
+  for (let i = 0; i < 6; i++) {
+    const t = (time * 0.01 + i / 6) % 1;
+    const bx1 = anX + (i % 2 === 0 ? -5 : 5);
+    const by1 = cellY + cellH - 20 - t * (cellH - 50);
+    ctx.fillStyle = 'rgba(16,185,129,0.5)';
+    ctx.beginPath();
+    ctx.arc(bx1, by1, 4 + t * 3, 0, Math.PI*2);
+    ctx.fill();
+    const bx2 = caX + (i % 2 === 0 ? -5 : 5);
+    const by2 = cellY + cellH - 20 - t * (cellH - 50);
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.beginPath();
+    ctx.arc(bx2, by2, 3 + t * 2, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Product / production display
+  let productText = '';
+  let mPerHour = 0;
+  if (elType === 'chloralkali') {
+    // 1A·1h = 3600 C → 3600/96485 = 0.0373 mol e- → 0.0373 mol Cl2 (70.9 g/mol → 2.65 g)
+    mPerHour = elCurrent * 3600 / 96485 * 0.5 * 70.9;
+    productText = `理论 Cl₂ 产量 ≈ ${mPerHour.toFixed(2)} g/h`;
+  } else if (elType === 'aluminum') {
+    mPerHour = elCurrent * 3600 / 96485 / 3 * 27;
+    productText = `理论 Al 产量 ≈ ${mPerHour.toFixed(2)} g/h`;
+  } else {
+    mPerHour = elCurrent * 3600 / 96485 / 2 * 63.5;
+    productText = `理论 Cu 镀层 ≈ ${mPerHour.toFixed(2)} g/h`;
+  }
+  ctx.fillStyle = '#10b981';
+  ctx.font = 'bold 15px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(productText, W/2, cellY + cellH + 50);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`I = ${elCurrent} A · t = 1 h · 法拉第定律 m = M·I·t/(n·F)`, W/2, cellY + cellH + 70);
+}
+
+// ═══════════════════════════════════════════════
+// MODE 4: 腐蚀与防护
+// ═══════════════════════════════════════════════
+let corEnv = 'dry';        // dry | wet | salt
+let corProtect = 'none';   // none | paint | sacrificial | impressed
+let corTime = 0;           // 0-1 progress
+
+function initCorrosion() {
+  legendEl.innerHTML = `
+    <span class="l-cor">Fe²⁺ / 锈蚀</span>
+    <span class="l-e">电子流</span>
+    <span class="l-ion">O₂ / H₂O</span>`;
+  panel.innerHTML = `
+    <h3>🛡️ 金属腐蚀与防护</h3>
+    <div class="concept-card cor">
+      <div class="title">吸氧腐蚀 (中性/弱酸性)</div>
+      负极 (Fe)：Fe − 2e⁻ → Fe²⁺<br>
+      正极 (C)：O₂ + 2H₂O + 4e⁻ → 4OH⁻<br>
+      总：2Fe + O₂ + 2H₂O → 2Fe(OH)₂ → 进一步氧化成 Fe₂O₃·xH₂O（铁锈）
+    </div>
+    <div class="slider-row">
+      <label>环境</label>
+      <select id="envSel" style="flex:1;padding:8px;background:#1e293b;color:#e2e8f0;border:1px solid var(--border);border-radius:6px;">
+        <option value="dry">干燥空气</option>
+        <option value="wet" selected>潮湿空气</option>
+        <option value="salt">盐雾（海边/道路洒盐）</option>
+      </select>
+    </div>
+    <div class="slider-row">
+      <label>防护措施</label>
+      <select id="protSel" style="flex:1;padding:8px;background:#1e293b;color:#e2e8f0;border:1px solid var(--border);border-radius:6px;">
+        <option value="none" selected>无</option>
+        <option value="paint">涂层/油漆</option>
+        <option value="sacrificial">牺牲阳极 (Zn/Mg)</option>
+        <option value="impressed">外加电流阴极保护</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="corReset">↺ 重置</button>
+    </div>
+    <div class="concept-card cor" id="corExplain"></div>
+    <div class="info-grid">
+      <div>全球损失<br><b>~GDP 3%/年</b></div>
+      <div>中国 2014<br><b>~2.1 万亿元</b></div>
+    </div>`;
+
+  document.getElementById('envSel').addEventListener('change', e => { corEnv = e.target.value; corTime = 0; updateCorExplain(); });
+  document.getElementById('protSel').addEventListener('change', e => { corProtect = e.target.value; corTime = 0; updateCorExplain(); });
+  document.getElementById('corReset').addEventListener('click', () => { corTime = 0; });
+  updateCorExplain();
+  startLoop(drawCorrosion);
+}
+
+function updateCorExplain() {
+  const el = document.getElementById('corExplain');
+  let txt = '';
+  if (corProtect === 'none') {
+    txt = `<div class="title">无防护</div>`;
+    if (corEnv === 'dry') txt += '干燥条件下化学腐蚀缓慢，主要生成致密氧化膜。';
+    else if (corEnv === 'wet') txt += '水膜 + 溶解 O₂ → 吸氧腐蚀，Fe 表面形成无数微小原电池。';
+    else txt += 'Cl⁻ 破坏氧化膜 + 提高导电性 → 腐蚀速率 5–10 倍！';
+  } else if (corProtect === 'paint') {
+    txt = `<div class="title">涂层保护</div>物理隔绝 O₂ 和 H₂O，但划痕处会局部加速腐蚀（小阳极大阴极）。`;
+  } else if (corProtect === 'sacrificial') {
+    txt = `<div class="title">牺牲阳极</div>Zn (E° = −0.76 V) 比 Fe (−0.44 V) 活泼，作为阳极被消耗；Fe 成为阴极受保护。应用：船体、热水器镁棒、管道。`;
+  } else {
+    txt = `<div class="title">外加电流阴极保护</div>用直流电源将被保护金属接到负极（阴极），强行注入电子抑制 Fe 溶解。应用：埋地管道、储罐、桥梁。`;
+  }
+  el.innerHTML = txt;
+}
+
+function drawCorrosion() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Environment → corrosion rate
+  let rate = 0;
+  if (corEnv === 'dry') rate = 0.0005;
+  else if (corEnv === 'wet') rate = 0.003;
+  else rate = 0.01;
+  // Protection reduces rate
+  if (corProtect === 'paint') rate *= 0.1;
+  else if (corProtect === 'sacrificial') rate *= 0.05;
+  else if (corProtect === 'impressed') rate *= 0.02;
+
+  corTime = Math.min(1, corTime + rate);
+
+  // Draw an iron bar
+  const barX = 80, barY = 200, barW = 280, barH = 60;
+  // uncorroded part
+  ctx.fillStyle = '#9ca3af';
+  ctx.fillRect(barX, barY, barW, barH);
+  // corroded layer grows
+  const corDepth = corTime * 30;
+  ctx.fillStyle = '#b91c1c';
+  ctx.fillRect(barX, barY, barW, corDepth);
+  ctx.fillRect(barX, barY + barH - corDepth, barW, corDepth);
+  // rust spots
+  for (let i = 0; i < 20; i++) {
+    const rx = barX + ((i * 3571) % 100 / 100) * barW;
+    const ry = barY + ((i * 7919) % 100 / 100) * barH;
+    const rSize = corTime * 8 + 2;
+    ctx.fillStyle = 'rgba(153,27,27,0.7)';
+    ctx.beginPath();
+    ctx.arc(rx, ry, rSize, 0, Math.PI*2);
+    ctx.fill();
+  }
+  // paint layer if protected
+  if (corProtect === 'paint') {
+    ctx.fillStyle = 'rgba(59,130,246,0.4)';
+    ctx.fillRect(barX - 4, barY - 4, barW + 8, 8);
+    ctx.fillRect(barX - 4, barY + barH - 4, barW + 8, 8);
+    ctx.fillStyle = '#93c5fd';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🎨 油漆涂层', barX + barW/2, barY - 12);
+  }
+  // sacrificial anode
+  if (corProtect === 'sacrificial') {
+    const saX = barX + barW + 30, saY = barY;
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(saX, saY, 30, barH);
+    // sacrificial anode corrodes
+    const saCor = corTime * 25;
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(saX, saY, 30, saCor);
+    ctx.fillRect(saX, saY + barH - saCor, 30, saCor);
+    // wire connecting
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(barX + barW, barY + barH/2);
+    ctx.lineTo(saX, saY + barH/2);
+    ctx.stroke();
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Zn 牺牲阳极', saX + 15, saY - 12);
+    // electron flow Zn→Fe
+    for (let i = 0; i < 4; i++) {
+      const t = ((time * 0.01 + i / 4) % 1);
+      const ex = saX - t * (saX - barX - barW);
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(ex, saY + barH/2, 3, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+  // impressed current
+  if (corProtect === 'impressed') {
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(barX + barW/2, barY);
+    ctx.lineTo(barX + barW/2, barY - 60);
+    ctx.lineTo(barX + barW + 60, barY - 60);
+    ctx.stroke();
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('⎓ 直流电源 (Fe 接负极)', barX + barW/2 + 40, barY - 70);
+    // electron flow into Fe
+    for (let i = 0; i < 5; i++) {
+      const t = ((time * 0.015 + i / 5) % 1);
+      const ex = barX + barW + 60 - t * (barW/2 + 60);
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(ex, barY - 60, 4, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  // Water droplets if wet/salt
+  if (corEnv !== 'dry') {
+    for (let i = 0; i < 10; i++) {
+      const dx = barX + ((i * 1337) % 100 / 100) * barW;
+      const dy = barY + ((i * 2467) % 100 / 100) * barH;
+      ctx.fillStyle = 'rgba(96,165,250,0.5)';
+      ctx.beginPath();
+      ctx.arc(dx, dy, 3, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+  if (corEnv === 'salt') {
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🧂 Cl⁻ 环境', barX + barW/2, barY + barH + 25);
+  }
+
+  // Labels
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('铁件 (Fe)', barX, barY - 12);
+
+  // Corrosion percentage
+  const pct = Math.round(corTime * 100);
+  ctx.fillStyle = pct > 60 ? '#ef4444' : (pct > 30 ? '#f59e0b' : '#10b981');
+  ctx.font = 'bold 24px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`腐蚀程度: ${pct}%`, W/2, barY + barH + 60);
+
+  // Progress bar
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(barX, barY + barH + 80, barW, 12);
+  ctx.fillStyle = pct > 60 ? '#ef4444' : (pct > 30 ? '#f59e0b' : '#10b981');
+  ctx.fillRect(barX, barY + barH + 80, barW * corTime, 12);
+
+  // Rate info
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  const rateDesc = {
+    'dry-none': '干燥环境 · 极慢',
+    'wet-none': '潮湿环境 · 中等（吸氧腐蚀）',
+    'salt-none': '盐雾环境 · 极快！',
+  };
+  const key = corEnv + '-' + corProtect;
+  let desc = rateDesc[key] || {
+    'dry-paint': '干燥 + 涂层 → 几乎不腐蚀',
+    'wet-paint': '潮湿 + 涂层 → 显著减缓（但划痕处仍会锈）',
+    'salt-paint': '盐雾 + 涂层 → 涂层损伤处快速局部腐蚀',
+    'dry-sacrificial': '干燥 + 牺牲阳极 → 几乎不腐蚀（但没必要）',
+    'wet-sacrificial': '潮湿 + 牺牲阳极 → Zn 代替 Fe 腐蚀，Fe 受保护',
+    'salt-sacrificial': '盐雾 + 牺牲阳极 → Zn 快速消耗，但 Fe 完好',
+    'dry-impressed': '干燥 + 外加电流 → 完全保护（过度设计）',
+    'wet-impressed': '潮湿 + 外加电流 → 完全保护（埋地管道常用）',
+    'salt-impressed': '盐雾 + 外加电流 → 完全保护（船舶/海洋平台）',
+  }[key] || '';
+  ctx.fillText(desc, W/2, barY + barH + 110);
+}
+
+// ═══════════════════════════════════════════════
+// MODE 5: 互动测验
+// ═══════════════════════════════════════════════
+const QUIZ = [
+  {
+    q: '锂离子电池放电时，Li⁺ 在电池内部的迁移方向是？',
+    opts: ['从正极迁移到负极', '从负极迁移到正极', '不迁移，只有电子移动', '随机扩散'],
+    ans: 1,
+    exp: '放电时负极氧化释放 Li⁺，Li⁺ 经电解液迁移到正极嵌入；电子走外电路，方向相反。'
+  },
+  {
+    q: 'PEM 燃料电池中，质子交换膜允许什么粒子通过？',
+    opts: ['电子', 'H₂ 分子', 'H⁺ 质子', 'O₂ 分子'],
+    ans: 2,
+    exp: 'PEM 膜只允许 H⁺ 通过；电子被迫走外电路，从而产生电流。'
+  },
+  {
+    q: '氢氧燃料电池的理论电动势 E° 约为？',
+    opts: ['0.40 V', '1.23 V', '2.00 V', '3.70 V'],
+    ans: 1,
+    exp: '阴极 O₂/H₂O 电对 E° = +1.23 V，阳极 H⁺/H₂ 为 0 V，所以 E°cell = 1.23 V。'
+  },
+  {
+    q: '氯碱工业电解饱和食盐水，阴极产物是？',
+    opts: ['Cl₂', 'NaOH 和 H₂', 'O₂', '金属钠'],
+    ans: 1,
+    exp: '阴极：2H₂O + 2e⁻ → H₂↑ + 2OH⁻，Na⁺ 留在溶液中形成 NaOH。Cl₂ 在阳极生成。'
+  },
+  {
+    q: '电解铝工业中，阳极会消耗的原因是？',
+    opts: ['阳极被 Al³⁺ 还原', '阳极碳与 O²⁻ 反应生成 CO₂', '阳极熔化', '阳极被电解液溶解'],
+    ans: 1,
+    exp: '阳极：C + 2O²⁻ → CO₂↑ + 4e⁻，碳电极被氧化消耗，需定期更换。'
+  },
+  {
+    q: '用 10 A 电流电解 CuSO₄ 溶液 1 小时，理论析出 Cu 的质量约为 (Cu: 64 g/mol)？',
+    opts: ['约 6 g', '约 12 g', '约 24 g', '约 48 g'],
+    ans: 1,
+    exp: 'Q = 10×3600 = 36000 C，n(e⁻) = 36000/96485 ≈ 0.373 mol，n(Cu) = 0.373/2 ≈ 0.187 mol，m = 0.187 × 64 ≈ 12 g。'
+  },
+  {
+    q: '牺牲阳极保护法中，常用作牺牲阳极的金属是？',
+    opts: ['Cu', 'Zn 或 Mg', 'Ag', 'Pb'],
+    ans: 1,
+    exp: 'Zn (E° = −0.76 V) 和 Mg (−2.37 V) 都比 Fe (−0.44 V) 活泼，作为阳极被氧化，Fe 作阴极受保护。'
+  },
+  {
+    q: '关于外加电流阴极保护，下列说法正确的是？',
+    opts: ['被保护金属接电源正极', '被保护金属接电源负极', '需要 Zn 块作为辅助', '只能用于干燥环境'],
+    ans: 1,
+    exp: '被保护金属接电源负极，成为阴极被强行注入电子，抑制其失电子溶解（氧化）。'
+  }
+];
+let quizIdx = 0, quizScore = 0, quizAnswered = false;
+
+function initQuiz() {
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  legendEl.innerHTML = '';
+  quizIdx = 0; quizScore = 0;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🎯 应用电化学测验', canvas.width/2, 80);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('共 8 题，答对 5 题以上即完成本知识点', canvas.width/2, 110);
+  ctx.fillText('点击右侧选项作答 →', canvas.width/2, 140);
+  renderQuiz();
+}
+
+function renderQuiz() {
+  if (quizIdx >= QUIZ.length) {
+    const pass = quizScore >= 5;
+    panel.innerHTML = `
+      <h3>🎯 测验完成！</h3>
+      <div class="quiz-result">
+        得分：<b style="font-size:1.5rem;color:${pass ? '#10b981' : '#ef4444'}">${quizScore} / ${QUIZ.length}</b><br>
+        ${pass ? '🎉 太棒了！已掌握应用电化学核心知识' : '💪 再复习一下前面几个模式，然后重试'}
+      </div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn primary" id="retryQuiz">↻ 重新测验</button>
+      </div>
+      <div class="concept-card ${pass ? 'ele' : 'cor'}" style="margin-top:14px;">
+        <div class="title">知识总结</div>
+        · 锂离子电池：摇椅机制，Li⁺ 在正负极间往返<br>
+        · 燃料电池：H₂ + O₂ → H₂O，E° = 1.23 V<br>
+        · 工业电解：氯碱 / 电解铝 / 电镀，法拉第定律计算产量<br>
+        · 腐蚀防护：涂层 / 牺牲阳极 / 外加电流
+      </div>`;
+    document.getElementById('retryQuiz').addEventListener('click', initQuiz);
+    if (pass && typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('applied-electrochem');
+    }
+    return;
+  }
+  const q = QUIZ[quizIdx];
+  quizAnswered = false;
+  panel.innerHTML = `
+    <h3>第 ${quizIdx + 1} / ${QUIZ.length} 题 <span style="float:right;color:#fbbf24;">得分 ${quizScore}</span></h3>
+    <div class="quiz">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-i="${i}">${String.fromCharCode(65+i)}. ${o}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="quizFb"></div>
+      <div class="quiz-nav">
+        <button id="nextQ" disabled>下一题 →</button>
+      </div>
+    </div>`;
+  panel.querySelectorAll('.quiz-opt').forEach(el => {
+    el.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const sel = parseInt(el.dataset.i);
+      if (sel === q.ans) {
+        el.classList.add('correct');
+        quizScore++;
+        document.getElementById('quizFb').innerHTML = '✅ 正确！' + q.exp;
+      } else {
+        el.classList.add('wrong');
+        panel.querySelector(`[data-i="${q.ans}"]`).classList.add('correct');
+        document.getElementById('quizFb').innerHTML = '❌ 错误。' + q.exp;
+      }
+      document.getElementById('nextQ').disabled = false;
+    });
+  });
+  document.getElementById('nextQ').addEventListener('click', () => {
+    quizIdx++;
+    renderQuiz();
+  });
+}
+
+// ── Boot ──
+initMode();
+</script>
+</body>
+</html>

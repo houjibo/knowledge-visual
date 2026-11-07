@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>质量与密度 · 初中物理互动可视化</title>
+<style>
+  :root {
+    --primary: #10b981;
+    --mass: #f59e0b;
+    --volume: #3b82f6;
+    --density: #ef4444;
+    --balance: #8b5cf6;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f2744 0%, #1a1a3e 50%, #0f2744 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1320px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.4rem; background: linear-gradient(90deg, var(--mass), var(--primary), var(--volume)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 1rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab { padding: 12px 24px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(16,185,129,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 16px; justify-content: center; font-size: 13px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .legend .l-mass::before { background: var(--mass); }
+  .legend .l-vol::before { background: var(--volume); }
+  .legend .l-density::before { background: var(--density); }
+  .legend .l-balance::before { background: var(--balance); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 700px; }
+  .panel h3 { font-size: 1.15rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .concept-box { font-size: 1.05rem; text-align: left; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 12px 0; line-height: 1.9; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--mass); font-weight: 600; }
+  .concept-box .hl2 { color: var(--volume); font-weight: 600; }
+  .concept-box .hl3 { color: var(--density); font-weight: 600; }
+  .concept-box .hl4 { color: var(--balance); font-weight: 600; }
+
+  .formula { display: inline-block; background: rgba(245,158,11,0.15); padding: 6px 14px; border-radius: 8px; font-family: "Times New Roman", serif; font-size: 1.15rem; color: #fbbf24; margin: 8px 0; font-style: italic; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--mass); font-weight: 600; font-size: 13px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 16px; border-radius: 10px; background: rgba(16,185,129,0.1); border: 2px solid rgba(16,185,129,0.3); cursor: pointer; font-size: 14px; color: #6ee7b7; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .data-display { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+  .data-item { text-align: center; padding: 12px 8px; background: rgba(255,255,255,0.05); border-radius: 10px; }
+  .data-item .label { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+  .data-item .value { font-size: 1.3rem; font-weight: 700; font-family: monospace; }
+  .data-item .unit { font-size: 11px; color: #64748b; margin-left: 2px; }
+  .data-item.mass .value { color: var(--mass); }
+  .data-item.vol .value { color: var(--volume); }
+  .data-item.density .value { color: var(--density); }
+
+  .quiz { margin-top: 16px; padding: 18px; background: rgba(16,185,129,0.1); border-radius: 14px; border: 2px solid rgba(16,185,129,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 10px; }
+  .quiz-opt { padding: 12px 16px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: var(--primary); color: #6ee7b7; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.2); border-color: #ef4444; color: #fca5a5; }
+
+  .balance-ctrl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .balance-ctrl button { padding: 10px; border-radius: 10px; border: 2px solid rgba(139,92,246,0.4); background: rgba(139,92,246,0.1); color: #c4b5fd; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .2s; }
+  .balance-ctrl button:hover { background: rgba(139,92,246,0.25); }
+  .balance-ctrl button:active { transform: scale(0.96); }
+
+  .status-bar { margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.05); border-radius: 10px; font-size: 13px; color: #cbd5e1; text-align: center; }
+  .status-bar .ok { color: #6ee7b7; font-weight: 600; }
+  .status-bar .warn { color: #fbbf24; font-weight: 600; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚖️ 质量与密度</h1>
+    <p>初中物理 · 八年级 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="concept">📖 质量概念</div>
+    <div class="tab" data-tab="balance">⚖️ 天平使用</div>
+    <div class="tab" data-tab="density">🧪 密度计算</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="720" height="520"></canvas>
+      <div class="legend">
+        <span class="l-mass">质量 (m)</span>
+        <span class="l-vol">体积 (V)</span>
+        <span class="l-density">密度 (ρ)</span>
+        <span class="l-balance">天平</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <!-- 质量概念 -->
+      <div id="panel-concept">
+        <h3>📖 什么是质量？</h3>
+        <div class="concept-box">
+          <b>质量</b>是物体所含<span class="hl">物质的多少</span>，用字母 <span class="hl">m</span> 表示。<br>
+          ✅ 质量是物体的<b>固有属性</b>，不随位置、形状、状态改变<br>
+          ✅ 国际单位：<span class="hl">千克 (kg)</span><br>
+          ✅ 常用单位：吨(t)、克(g)、毫克(mg)
+        </div>
+        <div class="formula">1 kg = 1000 g &nbsp;&nbsp; 1 t = 1000 kg</div>
+
+        <h3 style="margin-top:16px">🎮 互动：比较物体质量</h3>
+        <p style="font-size:13px;color:#94a3b8;margin:8px 0">拖动滑块选择不同物体，观察质量大小</p>
+
+        <div class="slider-row">
+          <label>物体选择</label>
+          <input type="range" id="objectSlider" min="0" max="5" step="1" value="0" />
+          <span class="val" id="objectName">鸡蛋</span>
+        </div>
+
+        <div class="data-display">
+          <div class="data-item mass">
+            <div class="label">质量</div>
+            <div class="value" id="massVal">50</div>
+            <div class="unit">g</div>
+          </div>
+          <div class="data-item vol">
+            <div class="label">约等于</div>
+            <div class="value" id="compareVal">1</div>
+            <div class="unit">个鸡蛋</div>
+          </div>
+          <div class="data-item density">
+            <div class="label">换算</div>
+            <div class="value" id="kgVal">0.05</div>
+            <div class="unit">kg</div>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div>🏀 <b>常见质量</b><br>鸡蛋 ≈ 50g<br>苹果 ≈ 150g<br>物理课本 ≈ 300g</div>
+          <div>🐘 <b>大质量</b><br>中学生 ≈ 50kg<br>大象 ≈ 5t<br>地球 ≈ 6×10²⁴kg</div>
+        </div>
+      </div>
+
+      <!-- 天平使用 -->
+      <div id="panel-balance" class="hidden">
+        <h3>⚖️ 托盘天平的使用</h3>
+        <div class="concept-box">
+          <b>使用步骤：</b><br>
+          ① <span class="hl4">放</span>：将天平放在<span class="hl">水平台面</span>上<br>
+          ② <span class="hl4">移</span>将游码移至<span class="hl">零刻度线</span><br>
+          ③ <span class="hl4">调</span>：调节<span class="hl">平衡螺母</span>，使指针指在分度盘中央<br>
+          ④ <span class="hl4">称</span>：左物右码，用镊子加减砝码<br>
+          ⑤ <span class="hl4">读</span>：物体质量 = 砝码质量 + 游码示数
+        </div>
+
+        <h3 style="margin-top:16px">🎮 互动：模拟天平称量</h3>
+        <p style="font-size:13px;color:#94a3b8;margin:8px 0">点击按钮添加砝码，使天平平衡</p>
+
+        <div class="data-display">
+          <div class="data-item mass">
+            <div class="label">目标质量</div>
+            <div class="value" id="targetMass">25.4</div>
+            <div class="unit">g</div>
+          </div>
+          <div class="data-item vol">
+            <div class="label">已加砝码</div>
+            <div class="value" id="addedMass">0</div>
+            <div class="unit">g</div>
+          </div>
+          <div class="data-item density">
+            <div class="label">游码</div>
+            <div class="value" id="riderVal">0.0</div>
+            <div class="unit">g</div>
+          </div>
+        </div>
+
+        <div class="balance-ctrl">
+          <button onclick="addWeight(100)">+100g</button>
+          <button onclick="addWeight(50)">+50g</button>
+          <button onclick="addWeight(20)">+20g</button>
+          <button onclick="addWeight(10)">+10g</button>
+          <button onclick="addWeight(5)">+5g</button>
+          <button onclick="removeWeight()">← 取下</button>
+        </div>
+
+        <div class="slider-row" style="margin-top:14px">
+          <label>游码位置</label>
+          <input type="range" id="riderSlider" min="0" max="50" step="1" value="0" />
+          <span class="val" id="riderSliderVal">0.0g</span>
+        </div>
+
+        <div class="status-bar" id="balanceStatus">
+          请添加砝码，使天平平衡 🎯
+        </div>
+
+        <button onclick="newBalanceTarget()" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;background:var(--balance);border:none;color:white;cursor:pointer;font-size:14px;font-weight:600">🔄 换一个目标</button>
+      </div>
+
+      <!-- 密度计算 -->
+      <div id="panel-density" class="hidden">
+        <h3>🧪 密度公式</h3>
+        <div class="concept-box">
+          <span class="hl3">密度</span>：某种物质<b>单位体积</b>的质量<br>
+          公式：<span class="formula">ρ = m / V</span><br><br>
+          ✅ 密度是物质的<span class="hl3">特性</span>，不同物质密度一般不同<br>
+          ✅ 单位：<span class="hl">kg/m³</span> 或 <span class="hl">g/cm³</span><br>
+          ✅ 水的密度：<span class="hl3">1.0×10³ kg/m³</span> = 1.0 g/cm³
+        </div>
+
+        <h3 style="margin-top:16px">🎮 互动：密度计算器</h3>
+        <p style="font-size:13px;color:#94a3b8;margin:8px 0">调节质量和体积，计算密度并判断物质</p>
+
+        <div class="slider-row">
+          <label>质量 (g)</label>
+          <input type="range" id="densityMass" min="1" max="500" step="1" value="100" />
+          <span class="val" id="dMassVal">100</span>
+        </div>
+        <div class="slider-row">
+          <label>体积 (cm³)</label>
+          <input type="range" id="densityVol" min="1" max="200" step="1" value="50" />
+          <span class="val" id="dVolVal">50</span>
+        </div>
+
+        <div class="data-display">
+          <div class="data-item mass">
+            <div class="label">质量</div>
+            <div class="value" id="dmOut">100</div>
+            <div class="unit">g</div>
+          </div>
+          <div class="data-item vol">
+            <div class="label">体积</div>
+            <div class="value" id="dvOut">50</div>
+            <div class="unit">cm³</div>
+          </div>
+          <div class="data-item density">
+            <div class="label">密度</div>
+            <div class="value" id="drOut">2.00</div>
+            <div class="unit">g/cm³</div>
+          </div>
+        </div>
+
+        <div class="status-bar" id="materialGuess">
+          🔍 可能是：<b style="color:#fbbf24">玻璃</b>（ρ≈2.0 g/cm³）
+        </div>
+
+        <div class="info-grid" style="margin-top:14px">
+          <div>📊 <b>常见密度 (g/cm³)</b><br>
+            酒精：0.8<br>
+            水：1.0<br>
+            玻璃：2.0~2.5<br>
+            铝：2.7
+          </div>
+          <div>🔬 <b>较大密度</b><br>
+            铁：7.9<br>
+            铜：8.9<br>
+            铅：11.3<br>
+            金：19.3
+          </div>
+        </div>
+
+        <div class="quiz" style="margin-top:16px">
+          <div class="quiz-q">💡 一块金属质量 54g，体积 20cm³，它是什么金属？</div>
+          <div class="quiz-opts">
+            <div class="quiz-opt" onclick="checkQuiz(this, false)">A. 铁（ρ=7.9）</div>
+            <div class="quiz-opt" onclick="checkQuiz(this, true)">B. 铝（ρ=2.7）</div>
+            <div class="quiz-opt" onclick="checkQuiz(this, false)">C. 铜（ρ=8.9）</div>
+            <div class="quiz-opt" onclick="checkQuiz(this, false)">D. 铅（ρ=11.3）</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+
+// ===== 进度追踪 =====
+let totalCorrect = 0;
+let massDensityDone = false;
+function bumpTotalCorrect() {
+  totalCorrect++;
+  if (!massDensityDone && totalCorrect >= 1 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('mass-density')) {
+    massDensityDone = true;
+    PageProgress.markDone('mass-density');
+    showMassDensityToast('🎉 「质量与密度」知识地图已点亮！');
+  }
+}
+function showMassDensityToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(16,185,129,.95);color:#fff;padding:12px 24px;border-radius:999px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// Tab switching
+let currentTab = 'concept';
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    ['concept', 'balance', 'density'].forEach(id => {
+      document.getElementById('panel-' + id).classList.toggle('hidden', id !== currentTab);
+    });
+    draw();
+  });
+});
+
+// === CONCEPT TAB ===
+const objects = [
+  { name: '鸡蛋', mass: 50, icon: '🥚' },
+  { name: '苹果', mass: 150, icon: '🍎' },
+  { name: '物理书', mass: 300, icon: '📕' },
+  { name: '中学生', mass: 50000, icon: '🧑' },
+  { name: '篮球', mass: 600, icon: '🏀' },
+  { name: '大象', mass: 5000000, icon: '🐘' }
+];
+
+const objectSlider = document.getElementById('objectSlider');
+objectSlider.addEventListener('input', () => {
+  const obj = objects[objectSlider.value];
+  document.getElementById('objectName').textContent = obj.icon + ' ' + obj.name;
+  document.getElementById('massVal').textContent = obj.mass >= 1000 ? (obj.mass/1000).toFixed(1) : obj.mass;
+  document.getElementById('massVal').parentElement.querySelector('.unit').textContent = obj.mass >= 1000 ? 'kg' : 'g';
+  document.getElementById('compareVal').textContent = Math.max(1, Math.round(obj.mass / 50));
+  document.getElementById('kgVal').textContent = (obj.mass / 1000).toFixed(obj.mass >= 1000 ? 0 : 3);
+  draw();
+});
+
+// === BALANCE TAB ===
+let targetMass = 25.4;
+let addedWeights = [];
+let riderPos = 0;
+
+const weights = [100, 50, 20, 10, 5];
+
+function newBalanceTarget() {
+  const targets = [12.5, 25.4, 37.8, 48.2, 63.5, 85.0, 107.3, 152.6];
+  targetMass = targets[Math.floor(Math.random() * targets.length)];
+  addedWeights = [];
+  riderPos = 0;
+  document.getElementById('riderSlider').value = 0;
+  updateBalanceUI();
+  draw();
+}
+
+function addWeight(w) {
+  const total = addedWeights.reduce((a, b) => a + b, 0);
+  if (total + w > targetMass + 5) {
+    document.getElementById('balanceStatus').innerHTML = '<span class="warn">⚠️ 超过太多了！试试更小的砝码</span>';
+    return;
+  }
+  addedWeights.push(w);
+  updateBalanceUI();
+  draw();
+}
+
+function removeWeight() {
+  if (addedWeights.length === 0) return;
+  addedWeights.pop();
+  updateBalanceUI();
+  draw();
+}
+
+document.getElementById('riderSlider').addEventListener('input', (e) => {
+  riderPos = parseFloat(e.target.value) / 10;
+  document.getElementById('riderSliderVal').textContent = riderPos.toFixed(1) + 'g';
+  updateBalanceUI();
+  draw();
+});
+
+function updateBalanceUI() {
+  const total = addedWeights.reduce((a, b) => a + b, 0);
+  document.getElementById('targetMass').textContent = targetMass.toFixed(1);
+  document.getElementById('addedMass').textContent = total;
+  document.getElementById('riderVal').textContent = riderPos.toFixed(1);
+
+  const measured = total + riderPos;
+  const diff = Math.abs(measured - targetMass);
+
+  if (diff < 0.05) {
+    document.getElementById('balanceStatus').innerHTML = '<span class="ok">✅ 完美平衡！物体质量 = ' + targetMass.toFixed(1) + 'g</span>';
+  } else if (diff < 1) {
+    document.getElementById('balanceStatus').innerHTML = '<span class="warn">🔶 接近了！差 ' + diff.toFixed(1) + 'g，调整游码试试</span>';
+  } else if (measured < targetMass) {
+    document.getElementById('balanceStatus').innerHTML = '还需要添加 ' + (targetMass - measured).toFixed(1) + 'g';
+  } else {
+    document.getElementById('balanceStatus').innerHTML = '<span class="warn">⚠️ 多了 ' + (measured - targetMass).toFixed(1) + 'g，取下一些砝码</span>';
+  }
+}
+
+// === DENSITY TAB ===
+const densityMass = document.getElementById('densityMass');
+const densityVol = document.getElementById('densityVol');
+
+const materials = [
+  { name: '酒精', density: 0.8, range: [0.75, 0.85] },
+  { name: '水', density: 1.0, range: [0.95, 1.05] },
+  { name: '玻璃', density: 2.2, range: [1.8, 2.6] },
+  { name: '铝', density: 2.7, range: [2.5, 2.9] },
+  { name: '铁', density: 7.9, range: [7.5, 8.2] },
+  { name: '铜', density: 8.9, range: [8.5, 9.3] },
+  { name: '铅', density: 11.3, range: [10.8, 11.8] },
+  { name: '金', density: 19.3, range: [18.5, 20.0] }
+];
+
+function updateDensity() {
+  const m = parseFloat(densityMass.value);
+  const v = parseFloat(densityVol.value);
+  const d = m / v;
+
+  document.getElementById('dMassVal').textContent = m;
+  document.getElementById('dVolVal').textContent = v;
+  document.getElementById('dmOut').textContent = m;
+  document.getElementById('dvOut').textContent = v;
+  document.getElementById('drOut').textContent = d.toFixed(2);
+
+  let guess = '未知物质';
+  for (const mat of materials) {
+    if (d >= mat.range[0] && d <= mat.range[1]) {
+      guess = mat.name + '（ρ≈' + mat.density + ' g/cm³）';
+      break;
+    }
+  }
+  if (d > 20) guess = '超重物质（超过常见金属）';
+  if (d < 0.7) guess = '可能是气体或轻质材料';
+
+  document.getElementById('materialGuess').innerHTML = '🔍 可能是：<b style="color:#fbbf24">' + guess + '</b>';
+  draw();
+}
+
+densityMass.addEventListener('input', updateDensity);
+densityVol.addEventListener('input', updateDensity);
+
+function checkQuiz(el, correct) {
+  document.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct', 'wrong'); });
+  el.classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) {
+    document.querySelectorAll('.quiz-opt')[1].classList.add('correct');
+  } else {
+    bumpTotalCorrect();
+  }
+}
+
+// === CANVAS DRAWING ===
+let animTime = 0;
+
+function draw() {
+  ctx.clearRect(0, 0, 720, 520);
+
+  if (currentTab === 'concept') drawConcept();
+  else if (currentTab === 'balance') drawBalance();
+  else if (currentTab === 'density') drawDensity();
+}
+
+function drawConcept() {
+  const idx = parseInt(objectSlider.value);
+  const obj = objects[idx];
+
+  // Background grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 720; i += 40) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 520); ctx.stroke();
+  }
+  for (let i = 0; i < 520; i += 40) {
+    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(720, i); ctx.stroke();
+  }
+
+  // Draw object
+  const cx = 360, cy = 240;
+  const size = Math.min(120, 30 + Math.log10(obj.mass + 1) * 25);
+
+  // Glow
+  const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 2);
+  grd.addColorStop(0, 'rgba(245,158,11,0.2)');
+  grd.addColorStop(1, 'rgba(245,158,11,0)');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Object circle
+  ctx.fillStyle = 'rgba(245,158,11,0.15)';
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Icon
+  ctx.font = size + 'px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(obj.icon, cx, cy);
+
+  // Label
+  ctx.font = 'bold 20px -apple-system, "PingFang SC"';
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText(obj.name, cx, cy + size + 30);
+
+  // Mass display
+  const massText = obj.mass >= 1000 ? (obj.mass/1000).toFixed(1) + ' kg' : obj.mass + ' g';
+  ctx.font = 'bold 28px monospace';
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('m = ' + massText, cx, cy + size + 65);
+
+  // Comparison bars
+  ctx.font = '13px -apple-system';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('质量对比（对数尺度）', cx, 40);
+
+  const barY = 60;
+  const barW = 500;
+  const barH = 16;
+  const barX = (720 - barW) / 2;
+
+  // Background bar
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillRect(barX, barY, barW, barH);
+
+  // Filled bar (log scale)
+  const logMin = Math.log10(1);
+  const logMax = Math.log10(10000000);
+  const logVal = Math.log10(obj.mass + 1);
+  const fillW = ((logVal - logMin) / (logMax - logMin)) * barW;
+
+  const barGrd = ctx.createLinearGradient(barX, 0, barX + fillW, 0);
+  barGrd.addColorStop(0, '#10b981');
+  barGrd.addColorStop(0.5, '#f59e0b');
+  barGrd.addColorStop(1, '#ef4444');
+  ctx.fillStyle = barGrd;
+  ctx.fillRect(barX, barY, fillW, barH);
+
+  // Scale labels
+  ctx.font = '11px monospace';
+  ctx.fillStyle = '#64748b';
+  ctx.textAlign = 'left';
+  ctx.fillText('1g', barX, barY + barH + 14);
+  ctx.textAlign = 'center';
+  ctx.fillText('1kg', barX + barW * 0.33, barY + barH + 14);
+  ctx.fillText('1t', barX + barW * 0.66, barY + barH + 14);
+  ctx.textAlign = 'right';
+  ctx.fillText('10000t', barX + barW, barY + barH + 14);
+
+  // Unit conversion
+  ctx.font = '14px -apple-system';
+  ctx.fillStyle = '#cbd5e1';
+  ctx.textAlign = 'center';
+  const kgText = (obj.mass / 1000).toFixed(obj.mass >= 1000 ? 1 : 4);
+  ctx.fillText(obj.mass + ' g = ' + kgText + ' kg', cx, 480);
+}
+
+function drawBalance() {
+  const cx = 360, cy = 300;
+
+  // Background
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  for (let i = 0; i < 720; i += 40) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 520); ctx.stroke();
+  }
+
+  // Table
+  ctx.fillStyle = 'rgba(139,92,246,0.1)';
+  ctx.fillRect(100, 380, 520, 20);
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(100, 380, 520, 20);
+
+  // Balance base
+  ctx.fillStyle = 'rgba(139,92,246,0.2)';
+  ctx.beginPath();
+  ctx.moveTo(cx - 30, 380);
+  ctx.lineTo(cx + 30, 380);
+  ctx.lineTo(cx + 10, 340);
+  ctx.lineTo(cx - 10, 340);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.stroke();
+
+  // Pivot
+  ctx.fillStyle = '#8b5cf6';
+  ctx.beginPath();
+  ctx.arc(cx, 330, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Calculate tilt
+  const total = addedWeights.reduce((a, b) => a + b, 0);
+  const measured = total + riderPos;
+  const diff = measured - targetMass;
+  const maxTilt = 15;
+  const tilt = Math.max(-maxTilt, Math.min(maxTilt, diff * 2));
+
+  // Beam
+  ctx.save();
+  ctx.translate(cx, 330);
+  ctx.rotate(tilt * Math.PI / 180);
+
+  ctx.strokeStyle = '#c4b5fd';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-180, 0);
+  ctx.lineTo(180, 0);
+  ctx.stroke();
+
+  // Left pan (object)
+  ctx.fillStyle = 'rgba(245,158,11,0.2)';
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(-160, 30, 50, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Object on left pan
+  ctx.font = '28px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('📦', -160, 10);
+  ctx.font = '12px -apple-system';
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText('?', -160, -10);
+
+  // Right pan (weights)
+  ctx.fillStyle = 'rgba(139,92,246,0.2)';
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(160, 30, 50, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Weights on right pan
+  if (addedWeights.length > 0) {
+    ctx.font = '14px monospace';
+    ctx.fillStyle = '#c4b5fd';
+    ctx.fillText(addedWeights.join('+') + 'g', 160, 5);
+  }
+
+  // Pointer
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0, 40);
+  ctx.stroke();
+
+  ctx.restore();
+
+  // Scale markings
+  ctx.font = '11px monospace';
+  ctx.fillStyle = '#64748b';
+  ctx.textAlign = 'center';
+  ctx.fillText('0', cx, 395);
+  ctx.fillText('-', cx - 40, 395);
+  ctx.fillText('+', cx + 40, 395);
+
+  // Rider scale
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillRect(200, 420, 320, 12);
+  const riderX = 200 + (riderPos / 5) * 320;
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(riderX - 3, 418, 6, 16);
+  ctx.font = '11px monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'left';
+  ctx.fillText('0g', 200, 448);
+  ctx.textAlign = 'right';
+  ctx.fillText('5g', 520, 448);
+  ctx.textAlign = 'center';
+  ctx.fillText('游码', 360, 460);
+
+  // Status
+  const statusDiff = Math.abs(measured - targetMass);
+  if (statusDiff < 0.05) {
+    ctx.font = 'bold 18px -apple-system';
+    ctx.fillStyle = '#6ee7b7';
+    ctx.fillText('✅ 平衡！', cx, 80);
+  } else {
+    ctx.font = '16px -apple-system';
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillText('目标: ' + targetMass.toFixed(1) + 'g', cx, 80);
+  }
+}
+
+function drawDensity() {
+  const m = parseFloat(densityMass.value);
+  const v = parseFloat(densityVol.value);
+  const d = m / v;
+
+  // Background
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  for (let i = 0; i < 720; i += 40) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 520); ctx.stroke();
+  }
+
+  // Title
+  ctx.font = 'bold 18px -apple-system';
+  ctx.fillStyle = '#ef4444';
+  ctx.textAlign = 'center';
+  ctx.fillText('ρ = m / V = ' + m + ' / ' + v + ' = ' + d.toFixed(2) + ' g/cm³', 360, 40);
+
+  // Draw block (volume visualization)
+  const blockSize = Math.min(200, 40 + v * 0.8);
+  const bx = 360 - blockSize/2;
+  const by = 100;
+
+  // 3D effect
+  const depth = 30;
+
+  // Top face
+  ctx.fillStyle = 'rgba(59,130,246,0.3)';
+  ctx.beginPath();
+  ctx.moveTo(bx, by);
+  ctx.lineTo(bx + depth, by - depth);
+  ctx.lineTo(bx + blockSize + depth, by - depth);
+  ctx.lineTo(bx + blockSize, by);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Right face
+  ctx.fillStyle = 'rgba(59,130,246,0.2)';
+  ctx.beginPath();
+  ctx.moveTo(bx + blockSize, by);
+  ctx.lineTo(bx + blockSize + depth, by - depth);
+  ctx.lineTo(bx + blockSize + depth, by + blockSize - depth);
+  ctx.lineTo(bx + blockSize, by + blockSize);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Front face
+  const blockGrd = ctx.createLinearGradient(bx, by, bx, by + blockSize);
+  blockGrd.addColorStop(0, 'rgba(59,130,246,0.4)');
+  blockGrd.addColorStop(1, 'rgba(59,130,246,0.15)');
+  ctx.fillStyle = blockGrd;
+  ctx.fillRect(bx, by, blockSize, blockSize);
+  ctx.strokeStyle = '#3b82f6';
+  ctx.strokeRect(bx, by, blockSize, blockSize);
+
+  // Volume label
+  ctx.font = 'bold 16px monospace';
+  ctx.fillStyle = '#60a5fa';
+  ctx.textAlign = 'center';
+  ctx.fillText('V = ' + v + ' cm³', 360, by + blockSize + 30);
+
+  // Mass indicator (color intensity based on density)
+  const intensity = Math.min(1, d / 10);
+  ctx.fillStyle = `rgba(239,68,68,${intensity})`;
+  ctx.fillRect(bx + 10, by + 10, blockSize - 20, blockSize - 20);
+
+  // Mass label
+  ctx.font = 'bold 16px monospace';
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText('m = ' + m + ' g', 360, by + blockSize/2);
+
+  // Density comparison bars
+  ctx.font = '14px -apple-system';
+  ctx.fillStyle = '#e2e8f0';
+  ctx.textAlign = 'left';
+  ctx.fillText('常见物质密度对比 (g/cm³)', 80, 380);
+
+  const barStartX = 80;
+  const barY = 400;
+  const barH = 18;
+  const maxBarW = 560;
+
+  const comparisons = [
+    { name: '酒精', d: 0.8, color: '#94a3b8' },
+    { name: '水', d: 1.0, color: '#3b82f6' },
+    { name: '当前', d: d, color: '#ef4444' },
+    { name: '铝', d: 2.7, color: '#9ca3af' },
+    { name: '铁', d: 7.9, color: '#6b7280' },
+    { name: '金', d: 19.3, color: '#fbbf24' }
+  ];
+
+  comparisons.forEach((item, i) => {
+    const y = barY + i * 24;
+    const w = Math.min(maxBarW, (item.d / 20) * maxBarW);
+
+    ctx.fillStyle = item.color + '40';
+    ctx.fillRect(barStartX + 60, y, w, barH);
+    ctx.strokeStyle = item.color;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(barStartX + 60, y, w, barH);
+
+    ctx.font = '12px -apple-system';
+    ctx.fillStyle = '#cbd5e1';
+    ctx.textAlign = 'right';
+    ctx.fillText(item.name, barStartX + 55, y + 13);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = item.color;
+    ctx.fillText(item.d.toFixed(1), barStartX + 65 + w, y + 13);
+  });
+}
+
+// Animation loop
+function animate() {
+  animTime += 0.02;
+  draw();
+  requestAnimationFrame(animate);
+}
+
+// Initialize
+updateDensity();
+updateBalanceUI();
+animate();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中物理"></script>
+</body>
+</html>

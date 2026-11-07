@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>内能 · 初中物理互动可视化</title>
+<style>
+  :root {
+    --primary: #f87171;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #3b0a0a 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #fca5a5; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #ef4444, #f87171, #fca5a5); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(248,113,113,.4); color: #3b0a0a; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .hidden { display: none !important; }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .stage > * { min-width: 0; }
+  @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #3d1515 0%, #0f172a 100%); touch-action: none; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #cbd5e1; flex-wrap: wrap; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #fca5a5; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--primary); min-height: 44px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fca5a5; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid var(--primary); line-height: 1.7; font-size: 14px; }
+  .concept-card.warn { border-color: #f59e0b; }
+  .concept-card .title { font-weight: 700; margin-bottom: 4px; color: var(--primary); }
+  .concept-card.warn .title { color: #f59e0b; }
+  .demo-btns { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .demo-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 44px; min-width: 44px; }
+  .demo-btn.active { background: var(--primary); border-color: var(--primary); color: #3b0a0a; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(248,113,113,0.08); border-radius: 12px; border: 1px solid rgba(248,113,113,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fca5a5; min-height: 18px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #3b0a0a; font-weight: 700; min-height: 44px; min-width: 44px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  .practice-item { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+  .practice-item h4 { color: #e2e8f0; margin-bottom: 10px; font-size: 15px; line-height: 1.6; }
+  .calc-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .calc-row input { width: 140px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: var(--light); font-size: 15px; min-height: 44px; }
+  .calc-row button { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; background: var(--primary); color: #3b0a0a; font-weight: 700; font-size: 14px; min-height: 44px; }
+  .practice-fb { margin-top: 8px; font-size: 13px; min-height: 18px; line-height: 1.6; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 28px; }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .container { padding: 10px 14px; }
+    .breadcrumb { padding: 6px 10px; font-size: 12px; margin-bottom: 8px; }
+    header { margin-bottom: 10px; }
+    header h1 { font-size: 1.5rem; }
+    header p { font-size: 12px; margin-top: 2px; }
+    .tabs { gap: 6px; margin-bottom: 10px; }
+    .tab { padding: 6px 14px; font-size: 12px; min-height: 36px; }
+    .canvas-wrap, .panel { padding: 10px; border-radius: 12px; }
+    .panel h3 { font-size: 1rem; margin-bottom: 8px; }
+    .equation { padding: 8px; font-size: 0.95rem; margin: 6px 0; }
+    .concept-card { padding: 10px; margin: 6px 0; font-size: 13px; }
+    .slider-row { margin: 6px 0; font-size: 13px; }
+  }
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    header h1 { font-size: 1.6rem; }
+    .tabs { gap: 6px; }
+    .tab { padding: 8px 12px; font-size: 13px; }
+    .slider-row { flex-wrap: wrap; }
+    .slider-row label { flex: 0 0 auto; }
+    .slider-row .val { flex: 0 0 auto; }
+    .slider-row input[type=range] { flex: 1 1 100%; order: 3; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">🔭 物理</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">初中</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">内能</span>
+    <span id="done-mark" style="margin-left:auto;color:#10b981;font-weight:600;"></span>
+  </nav>
+
+  <header>
+    <h1>🔥 内能</h1>
+    <p>分子热运动 · 内能的改变 · 比热容 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 探究</div>
+    <div class="tab" data-mode="practice">🧪 计算</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 探究模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div>
+        <div class="canvas-wrap">
+          <canvas id="heatCanvas" width="720" height="460"></canvas>
+          <div class="legend">
+            <span>温度越高，分子运动越剧烈</span>
+            <span>🟦 水 🟨 沙子</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>选择演示</h3>
+        <div class="demo-btns" id="demoBtns">
+          <button class="demo-btn active" data-demo="molecular">分子热运动</button>
+          <button class="demo-btn" data-demo="heat-capacity">比热容对比</button>
+        </div>
+        <div class="slider-row" id="rowTemp">
+          <label>温度</label>
+          <input type="range" id="sliderT" min="0" max="100" step="5" value="20">
+          <span class="val" id="valT">20 °C</span>
+        </div>
+        <div class="slider-row" id="rowTime" style="display:none">
+          <label>加热时间</label>
+          <input type="range" id="sliderHeat" min="0" max="10" step="0.5" value="0">
+          <span class="val" id="valHeat">0 min</span>
+        </div>
+        <div class="info-grid">
+          <div id="infoA">分子平均速率<br><b>较慢</b></div>
+          <div id="infoB">扩散快慢<br><b>慢</b></div>
+        </div>
+        <div class="equation">比热容：<b>Q = c · m · Δt</b><br><span style="font-size:0.85em;color:#94a3b8">水的比热容 c = 4.2 × 10³ J/(kg·°C)，是沙子的约 5 倍</span></div>
+        <div class="concept-card">
+          <div class="title">分子热运动与扩散</div>
+          一切物质的分子都在<b>不停地做无规则运动</b>。温度越高，分子运动越剧烈，扩散越快——所以叫「热运动」。墨水在热水中扩散更快就是这个道理。
+        </div>
+        <div class="concept-card">
+          <div class="title">内能及其改变</div>
+          物体内部<b>所有</b>分子热运动的动能与分子势能的总和叫内能。<b>任何温度下物体都有内能</b>。改变内能的两种方式：<b>做功</b>（如摩擦生热、压缩气体）和<b>热传递</b>（条件：存在温度差）。
+        </div>
+        <div class="concept-card warn">
+          <div class="title">⚠️ 易错点</div>
+          ① 0°C 的冰<b>也有</b>内能；② 温度高的物体内能不一定大（还与质量、状态有关）；③ 热量是过程量，只能说「吸收/放出热量」，不能说「含有热量」；④ 水比热容大 → 海边昼夜温差比沙漠小。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 计算模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="practice-item">
+      <h4>1️⃣ 质量为 2 kg 的水，温度从 20°C 升高到 70°C，吸收的热量是多少千焦？（c水 = 4.2×10³ J/(kg·°C)）</h4>
+      <div class="calc-row">
+        <input type="number" id="a1" placeholder="Q = ? kJ" step="any">
+        <button data-check="a1">提交</button>
+      </div>
+      <div class="practice-fb" id="fb-a1"></div>
+    </div>
+    <div class="practice-item">
+      <h4>2️⃣ 质量为 1 kg 的沙子，吸收 9.2×10³ J 热量后温度升高 10°C，沙子的比热容是多少 ×10³ J/(kg·°C)？</h4>
+      <div class="calc-row">
+        <input type="number" id="a2" placeholder="c = ? ×10³" step="any">
+        <button data-check="a2">提交</button>
+      </div>
+      <div class="practice-fb" id="fb-a2"></div>
+    </div>
+    <div class="practice-item">
+      <h4>3️⃣ 把 2 kg、20°C 的水烧开（100°C）需要吸收 6.72×10⁵ J 热量。若用这些热量加热 2 kg 沙子（c = 0.92×10³ J/(kg·°C)），沙子温度约升高多少 °C？</h4>
+      <div class="calc-row">
+        <input type="number" id="a3" placeholder="Δt = ? °C" step="any">
+        <button data-check="a3">提交</button>
+      </div>
+      <div class="practice-fb" id="fb-a3"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="panel">
+      <h3>🎯 内能 · 小测验（5 题，≥80% 通关）</h3>
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">点击「开始答题」</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFb"></div>
+        <div class="quiz-nav">
+          <button id="quizStart">开始答题</button>
+          <button id="quizPrev" disabled>上一题</button>
+          <button id="quizNext" disabled>下一题</button>
+        </div>
+        <div class="quiz-result hidden" id="quizResult"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>初中物理 · 内能 · 互动可视化 | 知识可视化全学科项目</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+let mode = 'learn';
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+}));
+
+/* ============================================================
+ * 探究模式
+ * ============================================================ */
+const canvas = document.getElementById('heatCanvas');
+const ctx = canvas.getContext('2d');
+const sliderT = document.getElementById('sliderT');
+const sliderHeat = document.getElementById('sliderHeat');
+let demo = 'molecular';
+let lastT = performance.now();
+
+/* 分子模拟 */
+const BOX = { x: 120, y: 50, w: 480, h: 330 };
+const N_P = 40;
+let particles = [];
+for (let i = 0; i < N_P; i++) {
+  particles.push({
+    x: BOX.x + 20 + Math.random() * (BOX.w - 40),
+    y: BOX.y + 20 + Math.random() * (BOX.h - 40),
+    vx: (Math.random() - 0.5), vy: (Math.random() - 0.5),
+    r: 6
+  });
+}
+
+document.querySelectorAll('.demo-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.demo-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  demo = b.dataset.demo;
+  document.getElementById('rowTemp').style.display = demo === 'molecular' ? 'flex' : 'none';
+  document.getElementById('rowTime').style.display = demo === 'heat-capacity' ? 'flex' : 'none';
+  updInfo();
+}));
+sliderT.addEventListener('input', updInfo);
+sliderHeat.addEventListener('input', updInfo);
+
+function tempState() {
+  const T = +sliderT.value;
+  const speedFactor = 0.5 + T / 40;   // 0°C→0.5, 100°C→3
+  return { T, speedFactor };
+}
+function heatState() {
+  const t = +sliderHeat.value;          // 加热 min
+  const cWater = 4.2, cSand = 0.92;     // ×10³
+  // 相同加热功率、相同质量：Δt ∝ 1/c
+  const dWater = t * 4;                  // 水升温 4°C/min
+  const dSand = dWater * cWater / cSand; // 沙子快 ~4.6 倍
+  return { t, dWater, dSand };
+}
+function updInfo() {
+  document.getElementById('valT').textContent = sliderT.value + ' °C';
+  document.getElementById('valHeat').textContent = sliderHeat.value + ' min';
+  const A = document.getElementById('infoA');
+  const B = document.getElementById('infoB');
+  if (demo === 'molecular') {
+    const s = tempState();
+    const level = s.T < 30 ? '较慢' : s.T < 70 ? '较快' : '剧烈';
+    A.innerHTML = `分子平均速率<br><b>${level}</b>`;
+    B.innerHTML = `扩散快慢<br><b>${s.T < 30 ? '慢' : s.T < 70 ? '较快' : '快'}</b>`;
+  } else {
+    const h = heatState();
+    A.innerHTML = `水温升高<br><b>${h.dWater.toFixed(1)} °C</b>`;
+    B.innerHTML = `沙温升高<br><b>${h.dSand.toFixed(1)} °C</b>`;
+  }
+}
+
+function drawMolecular(dt) {
+  const s = tempState();
+  // 容器
+  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
+  ctx.strokeRect(BOX.x, BOX.y, BOX.w, BOX.h);
+  ctx.fillStyle = 'rgba(148,163,184,0.06)';
+  ctx.fillRect(BOX.x, BOX.y, BOX.w, BOX.h);
+  // 温度底色
+  const heatAlpha = s.T / 100 * 0.18;
+  ctx.fillStyle = `rgba(239,68,68,${heatAlpha})`;
+  ctx.fillRect(BOX.x, BOX.y, BOX.w, BOX.h);
+  // 分子
+  particles.forEach(p => {
+    p.x += p.vx * s.speedFactor * dt * 60;
+    p.y += p.vy * s.speedFactor * dt * 60;
+    if (p.x < BOX.x + p.r) { p.x = BOX.x + p.r; p.vx = Math.abs(p.vx); }
+    if (p.x > BOX.x + BOX.w - p.r) { p.x = BOX.x + BOX.w - p.r; p.vx = -Math.abs(p.vx); }
+    if (p.y < BOX.y + p.r) { p.y = BOX.y + p.r; p.vy = Math.abs(p.vy); }
+    if (p.y > BOX.y + BOX.h - p.r) { p.y = BOX.y + BOX.h - p.r; p.vy = -Math.abs(p.vy); }
+    // 拖尾表示速率
+    ctx.strokeStyle = `rgba(248,113,113,${Math.min(0.6, s.speedFactor * 0.25)})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(p.x - p.vx * s.speedFactor * 8, p.y - p.vy * s.speedFactor * 8);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    ctx.fillStyle = '#f87171';
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.beginPath(); ctx.arc(p.x - 2, p.y - 2, 2, 0, Math.PI * 2); ctx.fill();
+  });
+  // 温度计
+  const tx = 660, ty = 90, th = 260;
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(tx - 10, ty, 20, th);
+  const fillH = th * s.T / 100;
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(tx - 10, ty + th - fillH, 20, fillH);
+  ctx.beginPath(); ctx.arc(tx, ty + th + 16, 18, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(`${s.T}°C`, tx - 22, ty + th + 50);
+  // 底部说明
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '14px sans-serif';
+  const level = s.T < 30 ? '温度较低：分子运动较慢' : s.T < 70 ? '温度升高：分子运动加快' : '高温：分子运动非常剧烈！';
+  ctx.fillText(level, 220, 420);
+}
+
+function drawHeatCapacity() {
+  const h = heatState();
+  // 两个烧杯
+  const cups = [
+    { x: 150, label: '水 1kg', c: '#60a5fa', dT: h.dWater, cap: 'c = 4.2×10³' },
+    { x: 470, label: '沙子 1kg', c: '#fbbf24', dT: h.dSand, cap: 'c = 0.92×10³' }
+  ];
+  cups.forEach(cup => {
+    // 烧杯
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cup.x, 120); ctx.lineTo(cup.x, 300); ctx.lineTo(cup.x + 140, 300); ctx.lineTo(cup.x + 140, 120);
+    ctx.stroke();
+    // 内容物
+    ctx.fillStyle = cup.c + '55';
+    ctx.fillRect(cup.x + 4, 180, 132, 116);
+    // 温度计
+    const tFill = Math.min(1, cup.dT / 50);
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(cup.x + 62, 130, 12, 130);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(cup.x + 62, 260 - 130 * tFill, 12, 130 * tFill);
+    // 火焰
+    if (h.t < 10) {
+      const flick = Math.sin(performance.now() / 90) * 4;
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.moveTo(cup.x + 70, 348 + flick);
+      ctx.quadraticCurveTo(cup.x + 52, 322, cup.x + 70, 310);
+      ctx.quadraticCurveTo(cup.x + 88, 322, cup.x + 70, 348 + flick);
+      ctx.fill();
+    }
+    // 文字
+    ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 15px sans-serif';
+    ctx.fillText(cup.label, cup.x + 26, 108);
+    ctx.fillStyle = cup.c; ctx.font = '13px sans-serif';
+    ctx.fillText(cup.cap, cup.x + 22, 326);
+    ctx.fillStyle = '#ef4444'; ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(`+${cup.dT.toFixed(1)}°C`, cup.x + 38, 92);
+  });
+  // 对比结论
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '14px sans-serif';
+  ctx.fillText('同样加热：沙子升温 ≈ 水的 4.6 倍 → 水的比热容大，吸热本领强', 96, 420);
+  // 进度提示
+  ctx.fillStyle = '#64748b'; ctx.font = '12px sans-serif';
+  ctx.fillText(`加热 ${h.t.toFixed(1)} min（相同火力、相同质量）`, 250, 50);
+}
+
+function draw() {
+  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
+  const now = performance.now();
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (demo === 'molecular') drawMolecular(dt);
+  else drawHeatCapacity();
+  requestAnimationFrame(draw);
+}
+updInfo();
+requestAnimationFrame(draw);
+
+/* ============================================================
+ * 计算模式
+ * ============================================================ */
+const CHECKS = {
+  a1: { test: v => Math.abs(v - 420) / 420 <= 0.05,
+        ok: '✅ 正确！Q = cmΔt = 4.2×10³ × 2 × (70−20) = 4.2×10⁵ J = 420 kJ。',
+        no: '❌ 提示：Q = cmΔt = 4.2×10³ × 2 × 50（注意 Δt 是 50°C）。' },
+  a2: { test: v => Math.abs(v - 0.92) / 0.92 <= 0.05,
+        ok: '✅ 正确！c = Q/(mΔt) = 9.2×10³/(1×10) = 0.92×10³ J/(kg·°C)。',
+        no: '❌ 提示：c = Q/(m·Δt) = 9200 ÷ 10 = ?' },
+  a3: { test: v => Math.abs(v - 365) / 365 <= 0.08,
+        ok: '✅ 正确！Δt = Q/(cm) = 6.72×10⁵/(0.92×10³×2) ≈ 365 °C——同样的热量让沙子升温约为水的 4.6 倍！',
+        no: '❌ 提示：Δt = Q/(c·m) = 672000 ÷ (920 × 2)。' }
+};
+document.querySelectorAll('[data-check]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = btn.dataset.check;
+    const inp = document.getElementById(id);
+    const fb = document.getElementById('fb-' + id);
+    const rule = CHECKS[id];
+    const v = parseFloat(inp.value);
+    const ok = !isNaN(v) && rule.test(v);
+    fb.style.color = ok ? '#10b981' : '#ef4444';
+    fb.textContent = ok ? rule.ok : rule.no;
+  });
+});
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const QUIZ = [
+  { q: '关于内能，下列说法正确的是（　　）',
+    opts: ['0°C 的物体没有内能', '一切物体在任何温度下都有内能', '温度高的物体内能一定大', '静止的物体没有内能'],
+    ans: 1, ex: '分子永不停息地做无规则运动，所以任何物体在任何温度下都有内能。' },
+  { q: '改变物体内能的两种方式是（　　）',
+    opts: ['做功和热传递', '加热和冷却', '摩擦和碰撞', '升温和降温'],
+    ans: 0, ex: '做功（摩擦生热、压缩气体）与热传递（温度差引起），二者在改变内能上等效。' },
+  { q: '把墨水分别滴入冷水和热水中，现象是（　　）',
+    opts: ['热水中扩散更快', '冷水中扩散更快', '一样快', '热水不扩散'],
+    ans: 0, ex: '温度越高分子热运动越剧烈，扩散越快。' },
+  { q: '水的比热容较大，这一特性解释了（　　）',
+    opts: ['海边昼夜温差比沙漠小', '水能灭火', '水结冰体积变大', '水能溶解很多物质'],
+    ans: 0, ex: '同样吸放热，水温度变化小 → 沿海昼夜温差小；沙漠沙子比热容小，昼夜温差大。' },
+  { q: '关于热量，下列说法正确的是（　　）',
+    opts: ['物体含有热量', '热量是在热传递过程中转移能量的多少', '温度越高热量越多', '热量就是内能'],
+    ans: 1, ex: '热量是过程量：热传递中转移能量的多少，不能说物体"含有"热量。' }
+];
+let qi = 0, qScore = 0, qAnswered = false;
+const quizQ = document.getElementById('quizQ');
+const quizOpts = document.getElementById('quizOpts');
+const quizFb = document.getElementById('quizFb');
+const quizResult = document.getElementById('quizResult');
+const btnStart = document.getElementById('quizStart');
+const btnPrev = document.getElementById('quizPrev');
+const btnNext = document.getElementById('quizNext');
+
+function renderQ() {
+  const q = QUIZ[qi];
+  qAnswered = false;
+  quizQ.textContent = `第${qi + 1}题 / 共${QUIZ.length}题：${q.q}`;
+  quizFb.textContent = '';
+  quizOpts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const d = document.createElement('div');
+    d.className = 'quiz-opt';
+    d.textContent = o;
+    d.addEventListener('click', () => {
+      if (qAnswered) return;
+      qAnswered = true;
+      const ok = i === q.ans;
+      if (ok) qScore++;
+      quizOpts.children[q.ans].classList.add('correct');
+      if (!ok) d.classList.add('wrong');
+      quizFb.textContent = (ok ? '✅ ' : '❌ ') + q.ex;
+    });
+    quizOpts.appendChild(d);
+  });
+  btnPrev.disabled = qi === 0;
+  btnNext.disabled = false;
+  btnNext.textContent = qi === QUIZ.length - 1 ? '查看成绩' : '下一题';
+}
+function finishQuiz() {
+  const pass = qScore >= Math.ceil(QUIZ.length * 0.8);
+  quizQ.textContent = '测验完成！';
+  quizOpts.innerHTML = '';
+  quizFb.textContent = '';
+  quizResult.classList.remove('hidden');
+  quizResult.innerHTML = `得分：<b>${qScore} / ${QUIZ.length}</b>　${pass ? '🎉 通关！' : '继续加油，再试一次！'}`;
+  btnNext.disabled = true;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('internal-energy');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+btnStart.addEventListener('click', () => {
+  qi = 0; qScore = 0;
+  quizResult.classList.add('hidden');
+  btnStart.textContent = '重新答题';
+  renderQ();
+});
+btnPrev.addEventListener('click', () => { if (qi > 0) { qi--; renderQ(); } });
+btnNext.addEventListener('click', () => {
+  if (qi < QUIZ.length - 1) { qi++; renderQ(); }
+  else finishQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('internal-energy')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+</body>
+</html>

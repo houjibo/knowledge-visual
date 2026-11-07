@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>稳恒磁场 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --magnetic: #6366f1;
+    --current: #f59e0b;
+    --force: #ef4444;
+    --field: #10b981;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--magnetic), var(--current), var(--field)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.8; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.biot { border-color: var(--magnetic); }
+  .concept-card.ampere { border-color: var(--current); }
+  .concept-card.lorentz { border-color: var(--force); }
+  .concept-card.gauss { border-color: var(--field); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.biot .title { color: var(--magnetic); }
+  .concept-card.ampere .title { color: var(--current); }
+  .concept-card.lorentz .title { color: var(--force); }
+  .concept-card.gauss .title { color: var(--field); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-field::before { background: var(--field); }
+  .legend .l-current::before { background: var(--current); }
+  .legend .l-force::before { background: var(--force); }
+  .legend .l-wire::before { background: #94a3b8; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; }
+  .quiz-nav button { padding: 6px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .vector-display { display: flex; gap: 12px; margin: 8px 0; font-size: 13px; flex-wrap: wrap; }
+  .vector-display .vec { padding: 6px 10px; border-radius: 6px; background: rgba(255,255,255,0.04); }
+  .vector-display .vec b { font-family: monospace; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .section { display: none; }
+  .section.active { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🧲 稳恒磁场 Interactive</h1>
+    <p>毕奥-萨伐尔定律 · 安培环路定理 · 洛伦兹力 · 安培力</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="field">磁场分布</div>
+    <div class="tab" data-tab="ampere">安培力</div>
+    <div class="tab" data-tab="lorentz">洛伦兹力</div>
+    <div class="tab" data-tab="quiz">互动练习</div>
+  </div>
+
+  <!-- Section 1: 磁场分布 -->
+  <div class="section active" id="sec-field">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvField" width="600" height="500"></canvas>
+        <div class="legend">
+          <span class="l-wire">导线</span>
+          <span class="l-current">电流方向</span>
+          <span class="l-field">磁场线</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📐 磁场源选择</h3>
+        <div class="mode-switch" id="fieldModes">
+          <div class="mode-btn active" data-mode="wire">直导线</div>
+          <div class="mode-btn" data-mode="loop">环形线圈</div>
+          <div class="mode-btn" data-mode="solenoid">螺线管</div>
+          <div class="mode-btn" data-mode="helmtz">亥姆霍兹线圈</div>
+        </div>
+        <div class="slider-row">
+          <label>电流 I</label>
+          <input type="range" id="fieldCurrent" min="0.5" max="5" step="0.1" value="2" />
+          <span class="val" id="valFieldCurrent">2.0 A</span>
+        </div>
+        <div class="equation" id="fieldEq">
+          B = μ₀I / (2πr)<br>
+          <small style="color:#94a3b8">长直导线磁场</small>
+        </div>
+        <div class="info-grid" id="fieldInfo">
+          <div>距离 r = <b id="infoR">2.0 cm</b></div>
+          <div>B = <b id="infoB">20.0 μT</b></div>
+          <div>方向: <b id="infoDir">切线方向</b></div>
+          <div>μ₀ = <b>4π×10⁻⁷ T·m/A</b></div>
+        </div>
+        <div class="concept-card biot">
+          <div class="title">毕奥-萨伐尔定律</div>
+          dB = (μ₀/4π) × (Idl × r̂) / r²<br>
+          <small>电流元产生的磁场与电流成正比，与距离平方成反比</small>
+        </div>
+        <div class="concept-card gauss">
+          <div class="title">磁场高斯定理</div>
+          ∮ B·dA = 0<br>
+          <small>磁力线无起止点，磁场是无源场</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: 安培力 -->
+  <div class="section" id="sec-ampere">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvAmpere" width="600" height="500"></canvas>
+        <div class="legend">
+          <span class="l-field">磁场 B</span>
+          <span class="l-current">电流 I</span>
+          <span class="l-force">安培力 F</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>⚡ 安培力参数</h3>
+        <div class="slider-row">
+          <label>磁场 B</label>
+          <input type="range" id="ampB" min="0.1" max="3" step="0.1" value="1" />
+          <span class="val" id="valAmpB">1.0 T</span>
+        </div>
+        <div class="slider-row">
+          <label>电流 I</label>
+          <input type="range" id="ampI" min="0.5" max="5" step="0.1" value="2" />
+          <span class="val" id="valAmpI">2.0 A</span>
+        </div>
+        <div class="slider-row">
+          <label>导线长 L</label>
+          <input type="range" id="ampL" min="0.5" max="3" step="0.1" value="1.5" />
+          <span class="val" id="valAmpL">1.5 m</span>
+        </div>
+        <div class="slider-row">
+          <label>角度 θ</label>
+          <input type="range" id="ampTheta" min="0" max="180" step="1" value="90" />
+          <span class="val" id="valAmpTheta">90°</span>
+        </div>
+        <div class="equation">
+          F = BIL sin θ<br>
+          <small style="color:#94a3b8">F = <span id="ampResult">3.00</span> N</small>
+        </div>
+        <div class="mode-switch" id="ampereModes">
+          <div class="mode-btn active" data-mode="parallel">平行磁场</div>
+          <div class="mode-btn" data-mode="rail">导轨运动</div>
+          <div class="mode-btn" data-mode="coil">力矩线圈</div>
+        </div>
+        <div class="concept-card ampere">
+          <div class="title">安培力公式</div>
+          dF = Idl × B<br>
+          <small>方向由右手定则（叉积）确定：四指从I转向B，拇指为力的方向</small>
+        </div>
+        <div class="concept-card lorentz">
+          <div class="title">安培力的本质</div>
+          安培力是大量运动电荷所受洛伦兹力的宏观表现
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: 洛伦兹力 -->
+  <div class="section" id="sec-lorentz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvLorentz" width="600" height="500"></canvas>
+        <div class="legend">
+          <span class="l-field">磁场 B (⊗进入屏幕)</span>
+          <span class="l-force">粒子轨迹</span>
+          <span class="l-current">正电荷</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🔬 带电粒子在磁场中</h3>
+        <div class="slider-row">
+          <label>磁场 B</label>
+          <input type="range" id="lorB" min="0.1" max="3" step="0.1" value="1" />
+          <span class="val" id="valLorB">1.0 T</span>
+        </div>
+        <div class="slider-row">
+          <label>速度 v</label>
+          <input type="range" id="lorV" min="1" max="10" step="0.5" value="5" />
+          <span class="val" id="valLorV">5.0 ×10⁶m/s</span>
+        </div>
+        <div class="slider-row">
+          <label>入射角 α</label>
+          <input type="range" id="lorAlpha" min="0" max="90" step="5" value="90" />
+          <span class="val" id="valLorAlpha">90°</span>
+        </div>
+        <div class="mode-switch" id="lorModes">
+          <div class="mode-btn active" data-mode="circle">垂直入射(圆)</div>
+          <div class="mode-btn" data-mode="helix">斜入射(螺旋)</div>
+          <div class="mode-btn" data-mode="selector">速度选择器</div>
+          <div class="mode-btn" data-mode="mass">质谱仪</div>
+        </div>
+        <div class="equation">
+          f = qvB sin α<br>
+          r = mv / (qB sin α)<br>
+          <small style="color:#94a3b8">r = <span id="lorRadius">3.49</span> cm</small>
+        </div>
+        <div class="info-grid">
+          <div>粒子: <b id="lorParticle">质子</b></div>
+          <div>回旋半径: <b id="lorR">3.49 cm</b></div>
+          <div>回旋周期: <b id="lorT">6.56×10⁻⁸ s</b></div>
+          <div>螺距: <b id="lorPitch">0 cm</b></div>
+        </div>
+        <div class="concept-card lorentz">
+          <div class="title">洛伦兹力特点</div>
+          洛伦兹力始终垂直于速度方向，<b style="color:#fbbf24">不做功</b>，只改变运动方向，不改变速度大小。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: 互动练习 -->
+  <div class="section" id="sec-quiz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvQuiz" width="600" height="500"></canvas>
+      </div>
+      <div class="panel">
+        <h3>📝 互动练习</h3>
+        <div class="quiz" id="quizBox">
+          <div class="quiz-q" id="quizQ">Loading...</div>
+          <div class="quiz-opts" id="quizOpts"></div>
+          <div class="quiz-feedback" id="quizFb"></div>
+          <div class="quiz-nav">
+            <button id="quizPrev">← 上一题</button>
+            <button id="quizNext">下一题 →</button>
+          </div>
+          <div style="margin-top:8px;font-size:13px;color:#94a3b8" id="quizProgress"></div>
+        </div>
+        <div class="concept-card biot" style="margin-top:14px">
+          <div class="title">安培环路定理</div>
+          ∮ B·dl = μ₀ ΣI<br>
+          <small>稳恒磁场中，B沿任意闭合回路的线积分等于穿过该回路的电流代数和的μ₀倍</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>大学物理 · 稳恒磁场 · 互动可视化 | 知识可视化全学科项目</footer>
+
+<script src="assets/common.js"></script>
+<script>
+// ============ TAB SWITCHING ============
+const tabs = document.querySelectorAll('.tab');
+const sections = document.querySelectorAll('.section');
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  sections.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('sec-' + t.dataset.tab).classList.add('active');
+}));
+
+// ============ SECTION 1: MAGNETIC FIELD DISTRIBUTION ============
+(function() {
+  const cv = document.getElementById('cvField');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  let mode = 'wire';
+  let current = 2;
+  const mu0 = 4 * Math.PI * 1e-7;
+
+  const sliderI = document.getElementById('fieldCurrent');
+  const valI = document.getElementById('valFieldCurrent');
+  const eqEl = document.getElementById('fieldEq');
+  const infoR = document.getElementById('infoR');
+  const infoB = document.getElementById('infoB');
+  const infoDir = document.getElementById('infoDir');
+
+  document.querySelectorAll('#fieldModes .mode-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#fieldModes .mode-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      mode = b.dataset.mode;
+      updateEq();
+      draw();
+    });
+  });
+
+  sliderI.addEventListener('input', () => {
+    current = parseFloat(sliderI.value);
+    valI.textContent = current.toFixed(1) + ' A';
+    draw();
+  });
+
+  function updateEq() {
+    const eqs = {
+      wire: 'B = μ₀I / (2πr)<br><small style="color:#94a3b8">长直导线磁场</small>',
+      loop: 'B = μ₀IR² / (2(R²+x²)^(3/2))<br><small style="color:#94a3b8">环形线圈轴线上磁场</small>',
+      solenoid: 'B = μ₀nI<br><small style="color:#94a3b8">长直螺线管内部均匀磁场</small>',
+      helmtz: 'B ≈ (4/5)^(3/2) × μ₀NI/R<br><small style="color:#94a3b8">亥姆霍兹线圈近似均匀场</small>'
+    };
+    eqEl.innerHTML = eqs[mode];
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    if (mode === 'wire') drawWire();
+    else if (mode === 'loop') drawLoop();
+    else if (mode === 'solenoid') drawSolenoid();
+    else if (mode === 'helmtz') drawHelmtz();
+  }
+
+  function drawWire() {
+    const cx = W / 2, cy = H / 2;
+    // Wire (current coming out of screen)
+    ctx.beginPath();
+    ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+    ctx.fillStyle = '#94a3b8';
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⊙', cx, cy);
+
+    // Field lines (concentric circles)
+    for (let r = 40; r < 240; r += 35) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(16,185,129,${0.6 - r * 0.002})`;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([]);
+      ctx.stroke();
+      // Arrow
+      const angle = -Math.PI / 4;
+      const ax = cx + r * Math.cos(angle);
+      const ay = cy + r * Math.sin(angle);
+      drawArrow(ax, ay, angle + Math.PI / 2, 8, '#10b981');
+    }
+
+    // Info
+    const rM = 0.02;
+    const B = mu0 * current / (2 * Math.PI * rM);
+    infoR.textContent = '2.0 cm';
+    infoB.textContent = (B * 1e6).toFixed(1) + ' μT';
+    infoDir.textContent = '逆时针(俯视)';
+  }
+
+  function drawLoop() {
+    const cx = W / 2, cy = H / 2;
+    const R = 80;
+
+    // Loop
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, R, R * 0.3, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Current arrows on loop
+    drawArrow(cx + R, cy, 0, 10, '#f59e0b');
+    drawArrow(cx - R, cy, Math.PI, 10, '#f59e0b');
+
+    // Field lines
+    for (let i = -3; i <= 3; i++) {
+      const offsetX = i * 25;
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(16,185,129,${0.5 - Math.abs(i) * 0.08})`;
+      ctx.lineWidth = 1.5;
+      for (let t = 0; t < Math.PI * 2; t += 0.05) {
+        const rx = 30 + Math.abs(i) * 15;
+        const ry = 80 + Math.abs(i) * 30;
+        const x = cx + offsetX + rx * Math.cos(t);
+        const y = cy - ry * Math.sin(t) * 0.5;
+        if (t === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // Axis
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(cx, 30);
+    ctx.lineTo(cx, H - 30);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const B = mu0 * current / (2 * 0.08);
+    infoR.textContent = 'R = 8.0 cm';
+    infoB.textContent = '中心 B = ' + (B * 1e6).toFixed(1) + ' μT';
+    infoDir.textContent = '右手定则确定';
+  }
+
+  function drawSolenoid() {
+    const cx = W / 2, cy = H / 2;
+    const len = 300, h = 60;
+    const x0 = cx - len / 2, y0 = cy - h / 2;
+
+    // Solenoid body
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x0, y0, len, h);
+
+    // Coil windings
+    for (let i = 0; i < 20; i++) {
+      const x = x0 + 15 + i * (len - 30) / 19;
+      ctx.beginPath();
+      ctx.moveTo(x, y0);
+      ctx.lineTo(x, y0 + h);
+      ctx.strokeStyle = 'rgba(148,163,184,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // Internal field lines (uniform)
+    for (let y = y0 + 10; y < y0 + h; y += 12) {
+      ctx.beginPath();
+      ctx.moveTo(x0 + 10, y);
+      ctx.lineTo(x0 + len - 10, y);
+      ctx.strokeStyle = 'rgba(16,185,129,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      drawArrow(x0 + len - 30, y, 0, 6, '#10b981');
+    }
+
+    // External field lines (curved, weaker)
+    ctx.strokeStyle = 'rgba(16,185,129,0.25)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 3; i++) {
+      const offset = 30 + i * 25;
+      ctx.beginPath();
+      ctx.moveTo(x0 + len, cy);
+      ctx.bezierCurveTo(x0 + len + offset, cy - 60 - i * 20, x0 - offset, cy - 60 - i * 20, x0, cy);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x0 + len, cy);
+      ctx.bezierCurveTo(x0 + len + offset, cy + 60 + i * 20, x0 - offset, cy + 60 + i * 20, x0, cy);
+      ctx.stroke();
+    }
+
+    // Current direction
+    drawArrow(x0 + len / 2, y0 - 5, 0, 8, '#f59e0b');
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('I', x0 + len / 2 + 12, y0 - 5);
+
+    const n = 100;
+    const B = mu0 * n * current;
+    infoR.textContent = 'n = 100 匝/m';
+    infoB.textContent = 'B = ' + (B * 1e3).toFixed(2) + ' mT';
+    infoDir.textContent = '内部均匀，方向沿轴';
+  }
+
+  function drawHelmtz() {
+    const cx = W / 2, cy = H / 2;
+    const R = 60, sep = 60;
+
+    // Two coils
+    [-1, 1].forEach(s => {
+      const x = cx + s * sep / 2;
+      ctx.beginPath();
+      ctx.ellipse(x, cy, 10, R, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      // Current arrows
+      drawArrow(x, cy - R, s > 0 ? Math.PI : 0, 8, '#f59e0b');
+      drawArrow(x, cy + R, s > 0 ? 0 : Math.PI, 8, '#f59e0b');
+    });
+
+    // Uniform field region
+    ctx.fillStyle = 'rgba(16,185,129,0.08)';
+    ctx.fillRect(cx - sep / 2, cy - R + 10, sep, 2 * R - 20);
+
+    // Field lines in between (uniform)
+    for (let y = cy - R + 20; y < cy + R - 10; y += 15) {
+      ctx.beginPath();
+      ctx.moveTo(cx - sep / 2 + 5, y);
+      ctx.lineTo(cx + sep / 2 - 5, y);
+      ctx.strokeStyle = 'rgba(16,185,129,0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      drawArrow(cx + 5, y, 0, 6, '#10b981');
+    }
+
+    // Label
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('均匀场区', cx, cy + R + 25);
+
+    const Rm = 0.06;
+    const B = Math.pow(4 / 5, 1.5) * mu0 * 100 * current / Rm;
+    infoR.textContent = 'R = 6.0 cm';
+    infoB.textContent = 'B ≈ ' + (B * 1e3).toFixed(2) + ' mT';
+    infoDir.textContent = '两线圈间近似均匀';
+  }
+
+  function drawArrow(x, y, angle, size, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.beginPath();
+    ctx.moveTo(size, 0);
+    ctx.lineTo(-size * 0.5, -size * 0.5);
+    ctx.lineTo(-size * 0.5, size * 0.5);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  updateEq();
+  draw();
+})();
+
+// ============ SECTION 2: AMPERE FORCE ============
+(function() {
+  const cv = document.getElementById('cvAmpere');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  let B = 1, I = 2, L = 1.5, theta = 90;
+  let ampMode = 'parallel';
+  let animT = 0;
+  let animId = null;
+
+  const slB = document.getElementById('ampB');
+  const slI = document.getElementById('ampI');
+  const slL = document.getElementById('ampL');
+  const slT = document.getElementById('ampTheta');
+
+  function update() {
+    B = parseFloat(slB.value);
+    I = parseFloat(slI.value);
+    L = parseFloat(slL.value);
+    theta = parseInt(slT.value);
+    document.getElementById('valAmpB').textContent = B.toFixed(1) + ' T';
+    document.getElementById('valAmpI').textContent = I.toFixed(1) + ' A';
+    document.getElementById('valAmpL').textContent = L.toFixed(1) + ' m';
+    document.getElementById('valAmpTheta').textContent = theta + '°';
+    const F = B * I * L * Math.sin(theta * Math.PI / 180);
+    document.getElementById('ampResult').textContent = F.toFixed(2);
+    draw();
+  }
+
+  document.querySelectorAll('#ampereModes .mode-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#ampereModes .mode-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      ampMode = b.dataset.mode;
+      animT = 0;
+      draw();
+    });
+  });
+
+  [slB, slI, slL, slT].forEach(s => s.addEventListener('input', update));
+
+  function drawArrow(x, y, angle, size, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.beginPath();
+    ctx.moveTo(size, 0);
+    ctx.lineTo(-size * 0.5, -size * 0.5);
+    ctx.lineTo(-size * 0.5, size * 0.5);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    if (ampMode === 'parallel') drawParallel();
+    else if (ampMode === 'rail') drawRail();
+    else if (ampMode === 'coil') drawCoil();
+  }
+
+  function drawParallel() {
+    const cx = W / 2, cy = H / 2;
+    const wireLen = 200;
+    const thetaRad = theta * Math.PI / 180;
+
+    // Magnetic field (horizontal)
+    for (let y = 60; y < H - 40; y += 40) {
+      ctx.beginPath();
+      ctx.moveTo(40, y);
+      ctx.lineTo(W - 40, y);
+      ctx.strokeStyle = 'rgba(16,185,129,0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      drawArrow(W - 60, y, 0, 6, '#10b981');
+    }
+    ctx.fillStyle = '#10b981';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('B →', 50, 50);
+
+    // Wire
+    const wireAngle = (theta - 90) * Math.PI / 180;
+    const x1 = cx - wireLen / 2 * Math.cos(wireAngle);
+    const y1 = cy - wireLen / 2 * Math.sin(wireAngle);
+    const x2 = cx + wireLen / 2 * Math.cos(wireAngle);
+    const y2 = cy + wireLen / 2 * Math.sin(wireAngle);
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    drawArrow(x2, y2, wireAngle, 10, '#f59e0b');
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('I', x2 + 15, y2);
+
+    // Force (perpendicular to both B and I)
+    const F = B * I * L * Math.sin(thetaRad);
+    const fLen = F * 40;
+    const fAngle = wireAngle - Math.PI / 2;
+    if (fLen > 2) {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + fLen * Math.cos(fAngle), cy + fLen * Math.sin(fAngle));
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      drawArrow(cx + fLen * Math.cos(fAngle), cy + fLen * Math.sin(fAngle), fAngle, 10, '#ef4444');
+      ctx.fillStyle = '#ef4444';
+      ctx.fillText('F', cx + fLen * Math.cos(fAngle) + 10, cy + fLen * Math.sin(fAngle));
+    }
+
+    // Angle arc
+    ctx.beginPath();
+    ctx.arc(cx, cy, 30, 0, -wireAngle, wireAngle !== 0);
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('θ=' + theta + '°', cx + 35, cy - 10);
+  }
+
+  function drawRail() {
+    const cx = W / 2, cy = H / 2;
+    const railW = 120, railLen = 350;
+
+    // Magnetic field (into screen)
+    for (let x = 80; x < W - 40; x += 50) {
+      for (let y = 80; y < H - 40; y += 50) {
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(16,185,129,0.3)';
+        ctx.fill();
+        ctx.fillStyle = 'rgba(16,185,129,0.5)';
+        ctx.font = '10px sans-serif';
+        ctx.fillText('⊗', x - 5, y + 4);
+      }
+    }
+
+    // Rails
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(60, cy - railW / 2);
+    ctx.lineTo(60 + railLen, cy - railW / 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(60, cy + railW / 2);
+    ctx.lineTo(60 + railLen, cy + railW / 2);
+    ctx.stroke();
+
+    // Moving bar
+    const barX = 100 + (animT % 300);
+    ctx.beginPath();
+    ctx.moveTo(barX, cy - railW / 2);
+    ctx.lineTo(barX, cy + railW / 2);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    // Current arrow
+    drawArrow(barX, cy - railW / 2 - 10, -Math.PI / 2, 8, '#f59e0b');
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('I', barX + 8, cy - railW / 2 - 10);
+
+    // Force arrow
+    const F = B * I * L;
+    const fLen = Math.min(F * 30, 100);
+    ctx.beginPath();
+    ctx.moveTo(barX, cy);
+    ctx.lineTo(barX + fLen, cy);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    drawArrow(barX + fLen, cy, 0, 10, '#ef4444');
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText('F', barX + fLen + 10, cy + 5);
+
+    ctx.fillStyle = '#10b981';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('B ⊗ (进入屏幕)', 80, 70);
+  }
+
+  function drawCoil() {
+    const cx = W / 2, cy = H / 2;
+    const w = 160, h = 100;
+
+    // Magnetic field
+    for (let y = 40; y < H - 20; y += 35) {
+      ctx.beginPath();
+      ctx.moveTo(30, y);
+      ctx.lineTo(W - 30, y);
+      ctx.strokeStyle = 'rgba(16,185,129,0.2)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      drawArrow(W - 50, y, 0, 5, '#10b981');
+    }
+
+    // Coil rectangle
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(cx - w / 2, cy - h / 2, w, h);
+
+    // Current direction markers
+    drawArrow(cx, cy - h / 2, 0, 8, '#f59e0b');
+    drawArrow(cx, cy + h / 2, Math.PI, 8, '#f59e0b');
+    drawArrow(cx - w / 2, cy, -Math.PI / 2, 8, '#f59e0b');
+    drawArrow(cx + w / 2, cy, Math.PI / 2, 8, '#f59e0b');
+
+    // Forces on sides (torque)
+    const F = B * I * (h / 100);
+    const fLen = Math.min(F * 30, 60);
+
+    // Top side force (up)
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - h / 2);
+    ctx.lineTo(cx, cy - h / 2 - fLen);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    drawArrow(cx, cy - h / 2 - fLen, -Math.PI / 2, 8, '#ef4444');
+
+    // Bottom side force (down)
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + h / 2);
+    ctx.lineTo(cx, cy + h / 2 + fLen);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    drawArrow(cx, cy + h / 2 + fLen, Math.PI / 2, 8, '#ef4444');
+
+    // Torque arrow
+    ctx.beginPath();
+    ctx.arc(cx, cy, w / 2 + 20, -Math.PI * 0.3, Math.PI * 0.3);
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    drawArrow(cx + (w / 2 + 20) * Math.cos(Math.PI * 0.3), cy + (w / 2 + 20) * Math.sin(Math.PI * 0.3), Math.PI * 0.3 + Math.PI / 2, 8, '#fbbf24');
+
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('力矩 τ = NBIS sinθ', cx, cy + h / 2 + fLen + 30);
+    ctx.fillStyle = '#10b981';
+    ctx.fillText('B →', W - 50, 35);
+    ctx.textAlign = 'start';
+  }
+
+  update();
+})();
+
+// ============ SECTION 3: LORENTZ FORCE ============
+(function() {
+  const cv = document.getElementById('cvLorentz');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  let B = 1, v = 5, alpha = 90;
+  let lorMode = 'circle';
+  let animT = 0;
+  let animId = null;
+
+  const slB = document.getElementById('lorB');
+  const slV = document.getElementById('lorV');
+  const slA = document.getElementById('lorAlpha');
+
+  const q = 1.6e-19, m = 1.67e-27;
+
+  function update() {
+    B = parseFloat(slB.value);
+    v = parseFloat(slV.value);
+    alpha = parseInt(slA.value);
+    document.getElementById('valLorB').textContent = B.toFixed(1) + ' T';
+    document.getElementById('valLorV').textContent = v.toFixed(1) + ' ×10⁶m/s';
+    document.getElementById('valLorAlpha').textContent = alpha + '°';
+
+    const vReal = v * 1e6;
+    const sinA = Math.sin(alpha * Math.PI / 180);
+    const r = (m * vReal) / (q * B * sinA) * 100;
+    const T = (2 * Math.PI * m) / (q * B);
+    const pitch = (alpha < 90) ? (2 * Math.PI * m * vReal * Math.cos(alpha * Math.PI / 180)) / (q * B) * 100 : 0;
+
+    document.getElementById('lorRadius').textContent = (r / 100).toFixed(2) + ' cm';
+    document.getElementById('lorR').textContent = (r / 100).toFixed(2) + ' cm';
+    document.getElementById('lorT').textContent = T.toExponential(2) + ' s';
+    document.getElementById('lorPitch').textContent = (pitch / 100).toFixed(2) + ' cm';
+
+    draw();
+  }
+
+  document.querySelectorAll('#lorModes .mode-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#lorModes .mode-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      lorMode = b.dataset.mode;
+      animT = 0;
+      draw();
+    });
+  });
+
+  [slB, slV, slA].forEach(s => s.addEventListener('input', update));
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    if (lorMode === 'circle') drawCircle();
+    else if (lorMode === 'helix') drawHelix();
+    else if (lorMode === 'selector') drawSelector();
+    else if (lorMode === 'mass') drawMassSpec();
+  }
+
+  function drawFieldIntoScreen() {
+    for (let x = 50; x < W; x += 45) {
+      for (let y = 50; y < H; y += 45) {
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(16,185,129,0.15)';
+        ctx.fill();
+        ctx.fillStyle = 'rgba(16,185,129,0.3)';
+        ctx.font = '8px sans-serif';
+        ctx.fillText('⊗', x - 4, y + 3);
+      }
+    }
+  }
+
+  function drawCircle() {
+    drawFieldIntoScreen();
+    const cx = W / 2, cy = H / 2;
+    const r = 40 + v * 15 / B;
+
+    // Circular path
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Particle
+    const angle = animT * 0.03;
+    const px = cx + r * Math.cos(angle);
+    const py = cy + r * Math.sin(angle);
+
+    ctx.beginPath();
+    ctx.arc(px, py, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('+', px, py);
+
+    // Velocity vector
+    const vAngle = angle + Math.PI / 2;
+    const vLen = 30;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + vLen * Math.cos(vAngle), py + vLen * Math.sin(vAngle));
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    drawArrowHead(px + vLen * Math.cos(vAngle), py + vLen * Math.sin(vAngle), vAngle, 6, '#3b82f6');
+
+    // Force vector (toward center)
+    const fAngle = angle + Math.PI;
+    const fLen = 25;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + fLen * Math.cos(fAngle), py + fLen * Math.sin(fAngle));
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    drawArrowHead(px + fLen * Math.cos(fAngle), py + fLen * Math.sin(fAngle), fAngle, 6, '#ef4444');
+
+    // Labels
+    ctx.textAlign = 'start';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('v', px + vLen * Math.cos(vAngle) + 5, py + vLen * Math.sin(vAngle));
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText('f', px + fLen * Math.cos(fAngle) + 5, py + fLen * Math.sin(fAngle));
+    ctx.fillStyle = '#10b981';
+    ctx.fillText('B ⊗ (进入屏幕)', 50, 40);
+
+    animT++;
+    if (lorMode === 'circle') animId = requestAnimationFrame(draw);
+  }
+
+  function drawHelix() {
+    drawFieldIntoScreen();
+    const cx = W / 2, cy = H / 2;
+    const r = 30 + v * 10 / B;
+    const pitchPx = alpha < 90 ? 20 + 30 * Math.cos(alpha * Math.PI / 180) / B : 0;
+
+    // Helix path
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(239,68,68,0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    for (let t = 0; t < Math.PI * 6; t += 0.1) {
+      const x = 80 + t * pitchPx / Math.PI;
+      const y = cy + r * Math.sin(t);
+      if (t === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Particle
+    const t = animT * 0.05;
+    const px = 80 + t * pitchPx / Math.PI;
+    const py = cy + r * Math.sin(t);
+
+    ctx.beginPath();
+    ctx.arc(px, py, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('+', px, py);
+
+    // v_parallel and v_perp
+    ctx.textAlign = 'start';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('v∥ = v cosα', W - 150, 40);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText('v⊥ = v sinα', W - 150, 60);
+    ctx.fillStyle = '#10b981';
+    ctx.fillText('B ⊗', 50, 40);
+
+    animT++;
+    if (lorMode === 'helix') animId = requestAnimationFrame(draw);
+  }
+
+  function drawSelector() {
+    const cx = W / 2, cy = H / 2;
+
+    // E field (vertical)
+    ctx.fillStyle = 'rgba(59,130,246,0.1)';
+    ctx.fillRect(100, 80, W - 200, H - 160);
+
+    // E field arrows
+    for (let y = 100; y < H - 100; y += 40) {
+      drawArrowHead(cx, y, Math.PI / 2, 8, 'rgba(59,130,246,0.5)');
+      drawArrowHead(cx, y, -Math.PI / 2, 8, 'rgba(59,130,246,0.5)');
+    }
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('E ↓', 110, 100);
+
+    // B field (into screen)
+    for (let x = 130; x < W - 100; x += 50) {
+      for (let y = 110; y < H - 100; y += 50) {
+        ctx.fillStyle = 'rgba(16,185,129,0.3)';
+        ctx.font = '10px sans-serif';
+        ctx.fillText('⊗', x, y);
+      }
+    }
+    ctx.fillStyle = '#10b981';
+    ctx.fillText('B ⊗', W - 150, 100);
+
+    // Straight path (selected velocity)
+    const px = 100 + (animT * 2) % (W - 200);
+    ctx.beginPath();
+    ctx.arc(px, cy, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('+', px, cy);
+
+    // Velocity arrow
+    ctx.beginPath();
+    ctx.moveTo(px, cy);
+    ctx.lineTo(px + 25, cy);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('v = E/B 的粒子直线通过', cx, H - 60);
+
+    animT++;
+    if (lorMode === 'selector') animId = requestAnimationFrame(draw);
+  }
+
+  function drawMassSpec() {
+    const cx = W / 2, cy = H / 2;
+
+    // Velocity selector region
+    ctx.fillStyle = 'rgba(59,130,246,0.05)';
+    ctx.fillRect(30, 80, 180, H - 160);
+    ctx.strokeStyle = 'rgba(59,130,246,0.3)';
+    ctx.strokeRect(30, 80, 180, H - 160);
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('速度选择器', 120, 75);
+
+    // Slit
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(210, cy - 30, 10, 25);
+    ctx.fillRect(210, cy + 5, 10, 25);
+
+    // B field region (semicircle)
+    ctx.beginPath();
+    ctx.arc(380, cy, 150, -Math.PI / 2, Math.PI / 2);
+    ctx.strokeStyle = 'rgba(16,185,129,0.3)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#10b981';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('B⊗ 偏转区', 380, cy - 160);
+
+    // Different mass particles (different radii)
+    const masses = [
+      { label: 'm₁', r: 60, color: '#ef4444' },
+      { label: 'm₂', r: 90, color: '#f59e0b' },
+      { label: 'm₃', r: 120, color: '#10b981' }
+    ];
+
+    masses.forEach((p, i) => {
+      // Semicircle path
+      ctx.beginPath();
+      ctx.arc(250, cy, p.r, -Math.PI / 2, Math.PI / 2);
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([3, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Detector point
+      const dy = cy + p.r;
+      ctx.beginPath();
+      ctx.arc(250, cy + p.r * 2, 5, 0, Math.PI * 2);
+      // Actually the detector is at (250, cy + 2*r)... let me recalculate
+      // The semicircle center is at (250, cy), so the particle exits at (250, cy + r*... no)
+      // Actually semicircle from -pi/2 to pi/2 means it starts at top and ends at bottom
+      // Entry: (250, cy - r), Exit: (250, cy + r)
+      // But entry should be from the slit at cy...
+      // Let me fix: center at (250 + r, cy), semicircle from pi/2 to 3pi/2
+    });
+
+    // Simpler approach: particles enter from left, curve in B field
+    masses.forEach((p, i) => {
+      const centerX = 250;
+      const centerY = cy;
+      
+      // Entry straight line
+      ctx.beginPath();
+      ctx.moveTo(220, centerY);
+      ctx.lineTo(250, centerY);
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
+      ctx.stroke();
+
+      // Semicircle (curving down)
+      ctx.beginPath();
+      ctx.arc(centerX, centerY - p.r + p.r, p.r, 0, Math.PI);
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Detector mark
+      ctx.beginPath();
+      ctx.arc(centerX, centerY + p.r * 2 - p.r + p.r, 4, 0, Math.PI * 2);
+      // Hmm, let me simplify: center at (centerX, centerY), arc from 0 to pi
+      // Entry at (centerX + r, centerY), exit at (centerX - r, centerY)
+      // That doesn't work either. Let me think...
+      
+      // Particle enters from left at y = centerY
+      // B field into screen, positive charge curves downward
+      // Center of circle is at (centerX, centerY + r) — below entry point
+      // No, center is perpendicular to velocity, to the right of entry, displaced by r in the force direction
+      
+      // Actually: velocity is → (right), B is ⊗ (into screen)
+      // F = qv × B, for positive charge: F is downward
+      // So center of circular path is at (centerX, centerY + r)
+      // Particle traces semicircle and hits detector at (centerX, centerY + 2r)
+    });
+
+    // Let me redo this more cleanly
+    ctx.clearRect(0, 0, W, H);
+    
+    // Background
+    ctx.fillStyle = 'rgba(16,185,129,0.03)';
+    ctx.fillRect(240, 50, 340, H - 100);
+
+    // Labels
+    ctx.fillStyle = '#10b981';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('B ⊗ 偏转区', 400, 70);
+
+    // Entry slit
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(248, cy - 40, 4, 35);
+    ctx.fillRect(248, cy + 5, 4, 35);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px sans-serif';
+    ctx.fillText('狭缝', 250, cy - 50);
+
+    // Particle paths (semicircles going down)
+    masses.forEach((p, i) => {
+      const entryX = 250;
+      const entryY = cy;
+      const cX = entryX;
+      const cY = entryY + p.r; // center below entry
+
+      // Semicircle path
+      ctx.beginPath();
+      ctx.arc(cX, cY, p.r, -Math.PI / 2, Math.PI / 2);
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Detector point
+      const detY = cY + p.r;
+      ctx.beginPath();
+      ctx.arc(cX, detY > H - 40 ? H - 40 : detY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+
+      // Label
+      ctx.fillStyle = p.color;
+      ctx.font = '13px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(p.label + ' (r=' + (p.r / 50).toFixed(1) + 'cm)', cX + p.r + 10, cY);
+    });
+
+    // Detector screen
+    ctx.beginPath();
+    ctx.moveTo(250, cy + 20);
+    ctx.lineTo(250, H - 30);
+    ctx.strokeStyle = 'rgba(148,163,184,0.3)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([2, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('质量不同 → 半径不同 → 分离鉴定', W / 2, H - 20);
+
+    // Animate one particle
+    const animR = 90;
+    const acX = 250, acY = cy + animR;
+    const angle = -Math.PI / 2 + (animT * 0.02) % Math.PI;
+    const apx = acX + animR * Math.cos(angle);
+    const apy = acY + animR * Math.sin(angle);
+    if (apy < H - 30) {
+      ctx.beginPath();
+      ctx.arc(apx, apy, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fill();
+    }
+
+    animT++;
+    if (lorMode === 'mass') animId = requestAnimationFrame(draw);
+  }
+
+  function drawArrowHead(x, y, angle, size, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.beginPath();
+    ctx.moveTo(size, 0);
+    ctx.lineTo(-size * 0.5, -size * 0.5);
+    ctx.lineTo(-size * 0.5, size * 0.5);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  update();
+})();
+
+// ============ SECTION 4: QUIZ ============
+(function() {
+  const cv = document.getElementById('cvQuiz');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+
+  const quizzes = [
+    {
+      q: '一根长直导线通有电流 I=5A，距导线 10cm 处的磁感应强度为？',
+      opts: ['1.0×10⁻⁵ T', '1.0×10⁻⁶ T', '5.0×10⁻⁶ T', '2.0×10⁻⁵ T'],
+      ans: 0,
+      explain: 'B = μ₀I/(2πr) = 4π×10⁻⁷×5/(2π×0.1) = 1.0×10⁻⁵ T'
+    },
+    {
+      q: '带电粒子垂直进入匀强磁场后做匀速圆周运动，洛伦兹力做功为？',
+      opts: ['正功', '负功', '零', '取决于速度方向'],
+      ans: 2,
+      explain: '洛伦兹力始终垂直于速度方向，因此不做功（W = F·d = 0）'
+    },
+    {
+      q: '安培环路定理 ∮B·dl = μ₀ΣI 说明了什么？',
+      opts: ['磁场是保守场', '磁场是无源场', '磁场是涡旋场', '磁场随时间变化'],
+      ans: 2,
+      explain: '安培环路定理表明稳恒磁场是涡旋场（非保守场），B的环流不等于零'
+    },
+    {
+      q: '两根平行直导线通以同向电流，它们之间的作用力是？',
+      opts: ['排斥力', '吸引力', '无力', '先吸引后排斥'],
+      ans: 1,
+      explain: '同向电流互相吸引，反向电流互相排斥。这是安培力的结果。'
+    },
+    {
+      q: '速度选择器中，能直线通过的粒子速度满足？',
+      opts: ['v = E+B', 'v = E/B', 'v = B/E', 'v = EB'],
+      ans: 1,
+      explain: '电场力 qE = 洛伦兹力 qvB，解得 v = E/B'
+    },
+    {
+      q: '螺线管内部的磁场特点是？',
+      opts: ['不均匀，边缘强', '均匀，沿轴向', '径向分布', '为零'],
+      ans: 1,
+      explain: '理想长直螺线管内部为均匀磁场，B = μ₀nI，方向沿管轴'
+    },
+    {
+      q: '质谱仪利用什么原理分离不同质量的离子？',
+      opts: ['不同质量离子速度不同', '不同质量离子回旋半径不同', '不同质量离子电荷不同', '不同质量离子能量不同'],
+      ans: 1,
+      explain: 'r = mv/(qB)，相同电荷和速度下，质量越大回旋半径越大，从而实现分离'
+    },
+    {
+      q: '亥姆霍兹线圈的特殊之处在于？',
+      opts: ['产生最强磁场', '产生均匀磁场', '产生交变磁场', '产生脉冲磁场'],
+      ans: 1,
+      explain: '亥姆霍兹线圈（两线圈间距等于半径）在中心区域产生高度均匀的磁场'
+    }
+  ];
+
+  let currentQ = 0;
+  let answered = new Array(quizzes.length).fill(false);
+  let correct = new Array(quizzes.length).fill(false);
+
+  /* ============ 进度追踪（r100） ============ */
+  function steadyMagneticCheckDone() {
+    const doneCount = correct.filter(Boolean).length;
+    if (doneCount >= quizzes.length && typeof PageProgress !== 'undefined') {
+      if (!PageProgress.isDone('steady-magnetic')) {
+        PageProgress.markDone('steady-magnetic');
+        const prog = document.getElementById('quizProgress');
+        if (prog) prog.textContent += ' ｜ 🎉 知识地图已点亮';
+      }
+    }
+  }
+  if (typeof PageProgress !== 'undefined' && PageProgress.isDone('steady-magnetic')) {
+    // 已完成：页面加载即在进度条处提示
+    setTimeout(() => {
+      const prog = document.getElementById('quizProgress');
+      if (prog && !/已点亮/.test(prog.textContent)) {
+        prog.textContent += ' ｜ ✓ 已完成';
+      }
+    }, 0);
+  }
+
+  function drawQuizViz() {
+    ctx.clearRect(0, 0, W, H);
+    const q = quizzes[currentQ];
+
+    // Draw relevant diagram based on question
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, W, H);
+
+    if (currentQ === 0) {
+      // Wire with B field
+      const cx = W / 2, cy = H / 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 15, 0, Math.PI * 2);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⊙', cx, cy);
+      for (let r = 50; r < 200; r += 40) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(16,185,129,${0.5 - r * 0.002})`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+      // r marker
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + 100, cy);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('r = 10 cm', cx + 50, cy - 15);
+      ctx.fillStyle = '#10b981';
+      ctx.fillText('B = ?', cx + 130, cy);
+    } else if (currentQ === 1) {
+      // Circular motion
+      const cx = W / 2, cy = H / 2, r = 100;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      const angle = Date.now() * 0.002;
+      const px = cx + r * Math.cos(angle);
+      const py = cy + r * Math.sin(angle);
+      ctx.beginPath();
+      ctx.arc(px, py, 10, 0, Math.PI * 2);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText('+', px - 4, py + 4);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('W = f · ds = ?', cx, cy);
+    } else if (currentQ === 3) {
+      // Two parallel wires
+      const cx = W / 2, cy = H / 2;
+      [-50, 50].forEach((offset, i) => {
+        ctx.beginPath();
+        ctx.arc(cx + offset, cy, 10, 0, Math.PI * 2);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⊙', cx + offset, cy);
+      });
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('I₁ = I₂ (同向)', cx, cy - 80);
+      ctx.fillText('F = ?', cx, cy + 80);
+    } else {
+      // Generic magnetic field illustration
+      for (let x = 50; x < W; x += 50) {
+        for (let y = 50; y < H; y += 50) {
+          ctx.fillStyle = 'rgba(16,185,129,0.2)';
+          ctx.font = '12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('⊗', x, y);
+        }
+      }
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🧲 稳恒磁场', W / 2, H / 2);
+    }
+    ctx.textAlign = 'start';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function renderQuiz() {
+    const q = quizzes[currentQ];
+    document.getElementById('quizQ').textContent = `第${currentQ + 1}题：${q.q}`;
+    const optsEl = document.getElementById('quizOpts');
+    optsEl.innerHTML = '';
+    q.opts.forEach((opt, i) => {
+      const div = document.createElement('div');
+      div.className = 'quiz-opt';
+      div.textContent = String.fromCharCode(65 + i) + '. ' + opt;
+      if (answered[currentQ]) {
+        if (i === q.ans) div.classList.add('correct');
+        else if (div._clicked) div.classList.add('wrong');
+      }
+      div.addEventListener('click', () => {
+        if (answered[currentQ]) return;
+        answered[currentQ] = true;
+        correct[currentQ] = (i === q.ans);
+        div._clicked = true;
+        renderQuiz();
+        steadyMagneticCheckDone();
+      });
+      optsEl.appendChild(div);
+    });
+    const fb = document.getElementById('quizFb');
+    if (answered[currentQ]) {
+      fb.textContent = (correct[currentQ] ? '✅ 正确！' : '❌ 错误。') + ' ' + q.explain;
+    } else {
+      fb.textContent = '';
+    }
+    document.getElementById('quizPrev').disabled = currentQ === 0;
+    document.getElementById('quizNext').disabled = currentQ === quizzes.length - 1;
+    document.getElementById('quizProgress').textContent = `进度：${currentQ + 1}/${quizzes.length} | 正确：${correct.filter(Boolean).length}`;
+    drawQuizViz();
+  }
+
+  document.getElementById('quizPrev').addEventListener('click', () => {
+    if (currentQ > 0) { currentQ--; renderQuiz(); }
+  });
+  document.getElementById('quizNext').addEventListener('click', () => {
+    if (currentQ < quizzes.length - 1) { currentQ++; renderQuiz(); }
+  });
+
+  renderQuiz();
+})();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学物理"></script>
+</body>
+</html>

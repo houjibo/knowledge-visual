@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>离散数学 · 图论互动可视化</title>
+<script src="assets/common.js"></script>
+<link rel="stylesheet" href="assets/common.css" />
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --node: #3b82f6;
+    --edge: #10b981;
+    --highlight: #f59e0b;
+    --path: #ec4899;
+    --tree: #06b6d4;
+    --dark: #0f172a;
+    --light: #f1f5f9;
+  }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; margin: 0; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--node), var(--edge), var(--highlight)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 14px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); position: relative; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); cursor: crosshair; }
+  .panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); max-height: 640px; overflow-y: auto; }
+  .panel h3 { margin: 0 0 10px; font-size: 1.1rem; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.1rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; }
+  .prop-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.6; border-left: 3px solid var(--primary); }
+  .prop-card .prop-title { font-weight: 600; color: #c4b5fd; margin-bottom: 4px; }
+  .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; display: inline-block; margin: 3px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .mode-btn:hover { background: rgba(255,255,255,0.12); }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 60px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.5; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-node::before { background: var(--node); }
+  .legend .l-edge::before { background: var(--edge); }
+  .legend .l-path::before { background: var(--path); }
+  .legend .l-highlight::before { background: var(--highlight); }
+  .info-bar { display: flex; gap: 12px; justify-content: center; font-size: 12px; color: #94a3b8; margin: 8px 0; flex-wrap: wrap; }
+  .info-bar b { color: #fbbf24; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🕸️ 离散数学 · 图论 Interactive</h1>
+    <p>图的基本概念 · 树 · 欧拉路径 · 哈密顿回路 · 图算法</p>
+    <div id="quizScore" style="font-size:12px;color:#94a3b8;margin-top:4px"></div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="explore">🖱️ 自由建图</div>
+    <div class="tab" data-mode="euler">🔗 欧拉路径</div>
+    <div class="tab" data-mode="hamilton">🔄 哈密顿回路</div>
+    <div class="tab" data-mode="tree">🌲 树与生成树</div>
+    <div class="tab" data-mode="bfs">🔍 遍历算法</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="720" height="600"></canvas>
+      <div class="info-bar" id="infoBar"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel">
+      <h3 id="panelTitle">🖱️ 自由建图</h3>
+      <div id="panelContent"></div>
+    </div>
+  </div>
+</div>
+
+<footer>大学数学 · 离散数学（图论）互动可视化 · 知识可视化项目</footer>
+
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+let currentMode = 'explore';
+let animT = 0;
+let animFrame = null;
+
+// ============ Graph data structure ============
+class Graph {
+  constructor() { this.nodes = []; this.edges = []; }
+  addNode(x, y, label) {
+    const id = this.nodes.length;
+    this.nodes.push({ id, x, y, label: label || String.fromCharCode(65 + id), vx: 0, vy: 0 });
+    return id;
+  }
+  addEdge(a, b, w) {
+    if (a !== b && !this.edges.find(e => (e.a===a&&e.b===b)||(e.a===b&&e.b===a))) {
+      this.edges.push({ a, b, w: w || 1 });
+    }
+  }
+  degree(id) { return this.edges.filter(e => e.a === id || e.b === id).length; }
+  neighbors(id) {
+    const ns = [];
+    this.edges.forEach(e => {
+      if (e.a === id) ns.push(e.b);
+      if (e.b === id) ns.push(e.a);
+    });
+    return ns;
+  }
+  clear() { this.nodes = []; this.edges = []; }
+  clone() {
+    const g = new Graph();
+    g.nodes = this.nodes.map(n => ({...n}));
+    g.edges = this.edges.map(e => ({...e}));
+    return g;
+  }
+}
+
+let graph = new Graph();
+let dragNode = null;
+let selectedNode = null;
+let linkStart = null;
+let hoverNode = null;
+
+// ============ Preset graphs ============
+function presetComplete(n) {
+  const g = new Graph();
+  const cx = W/2, cy = H/2, r = 180;
+  for (let i = 0; i < n; i++) {
+    const a = 2*Math.PI*i/n - Math.PI/2;
+    g.addNode(cx + r*Math.cos(a), cy + r*Math.sin(a));
+  }
+  for (let i = 0; i < n; i++) for (let j = i+1; j < n; j++) g.addEdge(i, j);
+  return g;
+}
+
+function presetCycle(n) {
+  const g = new Graph();
+  const cx = W/2, cy = H/2, r = 180;
+  for (let i = 0; i < n; i++) {
+    const a = 2*Math.PI*i/n - Math.PI/2;
+    g.addNode(cx + r*Math.cos(a), cy + r*Math.sin(a));
+  }
+  for (let i = 0; i < n; i++) g.addEdge(i, (i+1)%n);
+  return g;
+}
+
+function presetPetersen() {
+  const g = new Graph();
+  const cx = W/2, cy = H/2;
+  const r1 = 180, r2 = 90;
+  for (let i = 0; i < 5; i++) {
+    const a = 2*Math.PI*i/5 - Math.PI/2;
+    g.addNode(cx + r1*Math.cos(a), cy + r1*Math.sin(a));
+  }
+  for (let i = 0; i < 5; i++) {
+    const a = 2*Math.PI*i/5 - Math.PI/2;
+    g.addNode(cx + r2*Math.cos(a), cy + r2*Math.sin(a));
+  }
+  // outer cycle
+  for (let i = 0; i < 5; i++) g.addEdge(i, (i+1)%5);
+  // inner star (pentagram)
+  for (let i = 0; i < 5; i++) g.addEdge(5+i, 5+(i+2)%5);
+  // spokes
+  for (let i = 0; i < 5; i++) g.addEdge(i, 5+i);
+  return g;
+}
+
+function presetTree() {
+  const g = new Graph();
+  g.addNode(W/2, 60, 'A');
+  g.addNode(W/2-160, 180, 'B');
+  g.addNode(W/2+160, 180, 'C');
+  g.addNode(W/2-240, 320, 'D');
+  g.addNode(W/2-80, 320, 'E');
+  g.addNode(W/2+80, 320, 'F');
+  g.addNode(W/2+240, 320, 'G');
+  g.addNode(W/2-280, 460, 'H');
+  g.addNode(W/2-200, 460, 'I');
+  g.addNode(W/2-120, 460, 'J');
+  g.addNode(W/2+200, 460, 'K');
+  g.addNode(W/2+280, 460, 'L');
+  g.addEdge(0,1); g.addEdge(0,2);
+  g.addEdge(1,3); g.addEdge(1,4);
+  g.addEdge(2,5); g.addEdge(2,6);
+  g.addEdge(3,7); g.addEdge(3,8); g.addEdge(4,9);
+  g.addEdge(5,10); g.addEdge(6,11);
+  return g;
+}
+
+function presetKoenigsberg() {
+  const g = new Graph();
+  g.addNode(180, 200, 'A');
+  g.addNode(540, 200, 'B');
+  g.addNode(180, 420, 'C');
+  g.addNode(540, 420, 'D');
+  // 7 bridges: A-B x2, A-C x2, A-D, B-D x2, C-D
+  g.addEdge(0,1); g.addEdge(0,1); // will be handled as multigraph
+  g.addEdge(0,2); g.addEdge(0,2);
+  g.addEdge(0,3);
+  g.addEdge(1,3); g.addEdge(1,3);
+  g.addEdge(2,3);
+  return g;
+}
+
+// ============ Drawing ============
+function clearCanvas() { ctx.clearRect(0, 0, W, H); }
+
+function drawEdge(e, color='rgba(16,185,129,0.5)', width=2, g) {
+  const na = g.nodes[e.a], nb = g.nodes[e.b];
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(na.x, na.y);
+  ctx.lineTo(nb.x, nb.y);
+  ctx.stroke();
+
+  // weight label
+  if (e.w && e.w !== 1) {
+    const mx = (na.x + nb.x) / 2;
+    const my = (na.y + nb.y) / 2;
+    ctx.fillStyle = 'rgba(15,23,42,0.8)';
+    ctx.fillRect(mx - 10, my - 8, 20, 16);
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(e.w, mx, my);
+  }
+}
+
+function drawNode(n, color='#3b82f6', radius=20, highlight=false) {
+  if (highlight) {
+    ctx.fillStyle = 'rgba(245,158,11,0.2)';
+    ctx.beginPath(); ctx.arc(n.x, n.y, radius + 10, 0, 2*Math.PI); ctx.fill();
+  }
+  // glow
+  const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, radius);
+  grad.addColorStop(0, color);
+  grad.addColorStop(1, color + '44');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(n.x, n.y, radius, 0, 2*Math.PI); ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(n.x, n.y, radius, 0, 2*Math.PI); ctx.stroke();
+
+  // label
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 14px -apple-system, "PingFang SC", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(n.label, n.x, n.y);
+}
+
+function drawGraph(g, edgeColor, nodeColor, pathEdges, pathNodes, highlightNodes) {
+  // edges
+  g.edges.forEach(e => {
+    const isPath = pathEdges && pathEdges.some(pe => (pe.a===e.a&&pe.b===e.b)||(pe.a===e.b&&pe.b===e.a));
+    drawEdge(e, isPath ? '#ec4899' : (edgeColor || 'rgba(16,185,129,0.4)'), isPath ? 3.5 : 2, g);
+  });
+  // nodes
+  g.nodes.forEach(n => {
+    const onPath = pathNodes && pathNodes.includes(n.id);
+    const hl = highlightNodes && highlightNodes.includes(n.id);
+    drawNode(n, onPath ? '#ec4899' : (nodeColor || '#3b82f6'), onPath ? 24 : 20, hl);
+  });
+}
+
+function drawLabel(text, x, y, color='#94a3b8', size=12, align='center') {
+  ctx.fillStyle = color;
+  ctx.font = `${size}px -apple-system, "PingFang SC", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(text, x, y);
+}
+
+// ============ EXPLORE MODE ============
+let exploreMode = 'add'; // add, link, delete, move
+
+function handleExploreClick(x, y) {
+  const hit = graph.nodes.find(n => Math.hypot(n.x - x, n.y - y) < 22);
+
+  switch (exploreMode) {
+    case 'add':
+      if (!hit) {
+        graph.addNode(x, y);
+        draw();
+        updatePanel();
+      }
+      break;
+    case 'link':
+      if (hit) {
+        if (!linkStart) {
+          linkStart = hit.id;
+        } else {
+          graph.addEdge(linkStart, hit.id);
+          linkStart = null;
+          draw();
+          updatePanel();
+        }
+      }
+      break;
+    case 'delete':
+      if (hit) {
+        graph.edges = graph.edges.filter(e => e.a !== hit.id && e.b !== hit.id);
+        graph.nodes = graph.nodes.filter(n => n.id !== hit.id);
+        // re-index
+        const oldToNew = {};
+        graph.nodes.forEach((n, i) => { oldToNew[n.id] = i; n.id = i; n.label = String.fromCharCode(65 + i); });
+        graph.edges = graph.edges.map(e => ({ ...e, a: oldToNew[e.a], b: oldToNew[e.b] }));
+        draw();
+        updatePanel();
+      }
+      break;
+    case 'move':
+      if (hit) dragNode = hit.id;
+      break;
+  }
+}
+
+function drawExplore() {
+  clearCanvas();
+  drawGraph(graph);
+
+  // link preview
+  if (exploreMode === 'link' && linkStart !== null) {
+    const sn = graph.nodes[linkStart];
+    ctx.strokeStyle = 'rgba(245,158,11,0.5)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(sn.x, sn.y);
+    const rect = cv.getBoundingClientRect();
+    ctx.lineTo(mouseX || sn.x, mouseY || sn.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // mode indicator
+  const modeNames = { add: '点击空白添加节点', link: '点击两个节点连边', delete: '点击节点删除', move: '拖拽节点移动' };
+  drawLabel(modeNames[exploreMode], W/2, H - 15, '#64748b', 12);
+
+  document.getElementById('infoBar').innerHTML = `节点: <b>${graph.nodes.length}</b> | 边: <b>${graph.edges.length}</b>`;
+  document.getElementById('legend').innerHTML = '<span class="l-node">节点</span><span class="l-edge">边</span>';
+}
+
+// ============ EULER MODE ============
+let eulerPath = [];
+let eulerStep = 0;
+let eulerAuto = false;
+
+function findEulerPath(g) {
+  // Check if Euler path exists (0 or 2 odd-degree vertices)
+  const odds = g.nodes.filter(n => g.degree(n.id) % 2 === 1);
+  if (odds.length !== 0 && odds.length !== 2) return null;
+
+  // Hierholzer's algorithm (simplified for undirected graph)
+  const adj = g.nodes.map(n => []);
+  g.edges.forEach((e, i) => {
+    adj[e.a].push({ to: e.b, edge: i, used: false });
+    adj[e.b].push({ to: e.a, edge: i, used: false });
+  });
+
+  const start = odds.length === 2 ? odds[0].id : 0;
+  const stack = [start];
+  const circuit = [];
+  const edgeUsed = new Array(g.edges.length).fill(false);
+
+  while (stack.length > 0) {
+    const v = stack[stack.length - 1];
+    const next = adj[v].find(a => !edgeUsed[a.edge]);
+    if (next) {
+      edgeUsed[next.edge] = true;
+      stack.push(next.to);
+    } else {
+      circuit.push(stack.pop());
+    }
+  }
+
+  return circuit.reverse();
+}
+
+function drawEuler() {
+  clearCanvas();
+  const g = graph;
+
+  // Highlight odd-degree nodes
+  const odds = g.nodes.filter(n => g.degree(n.id) % 2 === 1);
+
+  drawGraph(g, 'rgba(16,185,129,0.3)', '#3b82f6', null, null, odds.map(n => n.id));
+
+  // Draw euler path so far
+  if (eulerPath.length > 1) {
+    for (let i = 0; i < eulerStep && i < eulerPath.length - 1; i++) {
+      const a = g.nodes[eulerPath[i]];
+      const b = g.nodes[eulerPath[i+1]];
+      ctx.strokeStyle = '#ec4899';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    // current position
+    if (eulerStep < eulerPath.length) {
+      const cn = g.nodes[eulerPath[eulerStep]];
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath(); ctx.arc(cn.x, cn.y, 28, 0, 2*Math.PI); ctx.fill();
+      drawNode(cn, '#f59e0b', 24);
+    }
+  }
+
+  // Degree labels
+  g.nodes.forEach(n => {
+    const d = g.degree(n.id);
+    drawLabel(`deg=${d}`, n.x, n.y + 32, d % 2 === 1 ? '#f59e0b' : '#64748b', 11);
+  });
+
+  const eulerExists = odds.length === 0 || odds.length === 2;
+  document.getElementById('infoBar').innerHTML =
+    `奇度节点: <b style="color:${odds.length===0||odds.length===2?'#10b981':'#ef4444'}">${odds.length}</b> | ` +
+    `欧拉路径${eulerExists ? '✅ 存在' : '❌ 不存在'} | 路径: <b>${eulerStep}/${eulerPath.length > 0 ? eulerPath.length - 1 : '?'}</b>`;
+  document.getElementById('legend').innerHTML = '<span class="l-highlight">奇度节点</span><span class="l-path">欧拉路径</span>';
+}
+
+// ============ HAMILTON MODE ============
+let hamPath = [];
+let hamStep = 0;
+let hamUserPath = [];
+
+function drawHamilton() {
+  clearCanvas();
+  const g = graph;
+
+  // Draw base graph
+  drawGraph(g, 'rgba(16,185,129,0.3)', '#3b82f6');
+
+  // Draw user's Hamilton path attempt
+  if (hamUserPath.length > 1) {
+    for (let i = 0; i < hamUserPath.length - 1; i++) {
+      const a = g.nodes[hamUserPath[i]];
+      const b = g.nodes[hamUserPath[i+1]];
+      ctx.strokeStyle = '#ec4899';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    hamUserPath.forEach(id => {
+      drawNode(g.nodes[id], '#ec4899', 24);
+    });
+  }
+
+  // Highlight visited count
+  g.nodes.forEach(n => {
+    const visited = hamUserPath.includes(n.id);
+    if (visited) {
+      drawLabel('✓', n.x, n.y + 32, '#10b981', 13);
+    }
+  });
+
+  // Check if Hamilton circuit
+  const allVisited = hamUserPath.length === g.nodes.length;
+  const isCircuit = allVisited && hamUserPath.length > 2 &&
+    g.edges.some(e => (e.a===hamUserPath[0]&&e.b===hamUserPath[hamUserPath.length-1])||(e.b===hamUserPath[0]&&e.a===hamUserPath[hamUserPath.length-1]));
+
+  document.getElementById('infoBar').innerHTML =
+    `已访问: <b>${hamUserPath.length}/${g.nodes.length}</b> | ` +
+    `哈密顿回路: <b style="color:${isCircuit?'#10b981':'#fbbf24'}">${isCircuit?'✅ 完成！':'尝试中...'}</b>`;
+  document.getElementById('legend').innerHTML = '<span class="l-path">访问路径</span><span class="l-node">未访问</span>';
+}
+
+// ============ TREE MODE ============
+let treeEdges = [];
+let mstMode = false;
+
+function drawTree() {
+  clearCanvas();
+  const g = graph;
+
+  // Draw all edges
+  g.edges.forEach(e => {
+    const inTree = treeEdges.some(te => (te.a===e.a&&te.b===e.b)||(te.a===e.b&&te.b===e.a));
+    drawEdge(e, inTree ? '#06b6d4' : 'rgba(255,255,255,0.1)', inTree ? 3 : 1.5, g);
+  });
+
+  // Draw nodes
+  g.nodes.forEach(n => drawNode(n, '#3b82f6', 20));
+
+  // Tree edge count
+  const isTree = g.nodes.length > 0 && treeEdges.length === g.nodes.length - 1;
+  const totalW = treeEdges.reduce((s, te) => {
+    const e = g.edges.find(ee => (ee.a===te.a&&ee.b===te.b)||(ee.a===te.b&&ee.b===te.a));
+    return s + (e ? e.w : 1);
+  }, 0);
+
+  document.getElementById('infoBar').innerHTML =
+    `节点: <b>${g.nodes.length}</b> | 树边: <b>${treeEdges.length}/${g.nodes.length > 0 ? g.nodes.length - 1 : 0}</b> | ` +
+    `总权重: <b>${totalW}</b> | ${isTree ? '<b style="color:#10b981">✅ 是生成树</b>' : ''}`;
+  document.getElementById('legend').innerHTML = '<span class="l-edge">非树边</span><span class="l-node">树边</span>';
+}
+
+// ============ BFS MODE ============
+let bfsOrder = [];
+let bfsStep = 0;
+let bfsVisited = new Set();
+let bfsQueue = [];
+let bfsStart = 0;
+
+function runBFS() {
+  if (graph.nodes.length === 0) return;
+  bfsOrder = [];
+  bfsVisited = new Set();
+  bfsQueue = [bfsStart];
+  bfsVisited.add(bfsStart);
+  const order = [];
+
+  while (bfsQueue.length > 0) {
+    const v = bfsQueue.shift();
+    order.push(v);
+    graph.neighbors(v).forEach(n => {
+      if (!bfsVisited.has(n)) {
+        bfsVisited.add(n);
+        bfsQueue.push(n);
+      }
+    });
+  }
+  bfsOrder = order;
+  bfsStep = 0;
+}
+
+function drawBFS() {
+  clearCanvas();
+  const g = graph;
+
+  // Draw edges
+  g.edges.forEach(e => drawEdge(e, 'rgba(16,185,129,0.3)', 2, g));
+
+  // Draw nodes with BFS state
+  g.nodes.forEach(n => {
+    const visitedIdx = bfsOrder.indexOf(n.id);
+    let color = '#3b82f6';
+    let r = 20;
+
+    if (visitedIdx >= 0 && visitedIdx < bfsStep) {
+      color = '#10b981'; // visited
+    } else if (visitedIdx === bfsStep) {
+      color = '#f59e0b'; // current
+      r = 26;
+    } else if (bfsQueue.map(String).includes(String(n.id)) && bfsVisited.has(n.id)) {
+      color = '#8b5cf6'; // in queue
+    }
+
+    drawNode(n, color, r, visitedIdx === bfsStep);
+
+    // BFS order number
+    if (visitedIdx >= 0 && visitedIdx < bfsStep) {
+      drawLabel(`${visitedIdx + 1}`, n.x, n.y + 32, '#10b981', 11);
+    }
+  });
+
+  document.getElementById('infoBar').innerHTML =
+    `起点: <b>${graph.nodes[bfsStart]?.label || '-'}</b> | 已访问: <b>${bfsStep}/${bfsOrder.length}</b> | 队列: <b>${bfsStep < bfsOrder.length ? '处理中' : '完成'}`;
+  document.getElementById('legend').innerHTML = '<span class="l-highlight">当前</span><span class="l-node">已访问</span>';
+}
+
+// ============ QUIZ ============
+const quizData = [
+  { q: '一个无向图有 6 个节点，每个节点度数为 3，则边数为？', opts: ['6', '9', '12', '18'], ans: 1 },
+  { q: '欧拉路径存在的充要条件是？', opts: ['所有节点度数为偶数', '奇度节点数为 0 或 2', '图是连通的', '节点数等于边数'], ans: 1 },
+  { q: '一棵有 n 个节点的树有多少条边？', opts: ['n', 'n-1', 'n+1', '2n'], ans: 1 },
+  { q: '哈密顿回路经过每个节点几次？', opts: ['恰好一次', '至少一次', '最多两次', '任意次'], ans: 0 },
+  { q: 'BFS 使用什么数据结构？', opts: ['栈', '队列', '堆', '哈希表'], ans: 1 },
+  { q: '完全图 K₅ 的边数是？', opts: ['5', '10', '15', '20'], ans: 1 },
+  { q: '以下哪个不是树的性质？', opts: ['连通', '无环', '任意两点间有唯一路径', '存在环'], ans: 3 }
+];
+let quizIdx = 0;
+let quizAnswered = false;
+const quizCorrectSet = new Set();
+
+function updateQuizScore() {
+  const el = document.getElementById('quizScore');
+  if (!el) return;
+  const answered = quizCorrectSet.size;
+  const total = quizData.length;
+  el.textContent = `已答对 ${answered}/${total}`;
+  if (answered >= total) {
+    el.textContent += ' ✅ 已掌握';
+    if (typeof PageProgress !== 'undefined') PageProgress.markDone('discrete-math');
+  }
+}
+
+function drawQuiz() {
+  clearCanvas();
+  drawLabel('🎯 离散数学 · 图论练习', W/2, 40, '#c4b5fd', 18);
+
+  ctx.fillStyle = 'rgba(139,92,246,0.08)';
+  ctx.font = 'italic 24px "Times New Roman", serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('G = (V, E)', W/2, 100);
+
+  drawLabel(`${Math.min(quizIdx + 1, quizData.length)} / ${quizData.length}`, W/2, 150, '#64748b', 13);
+
+  // Decorative graph
+  const cx = W/2, cy = 320;
+  for (let i = 0; i < 5; i++) {
+    const a = 2*Math.PI*i/5 - Math.PI/2;
+    const x = cx + 120*Math.cos(a);
+    const y = cy + 120*Math.sin(a);
+    ctx.strokeStyle = 'rgba(16,185,129,0.1)';
+    ctx.lineWidth = 1;
+    for (let j = i+1; j < 5; j++) {
+      const a2 = 2*Math.PI*j/5 - Math.PI/2;
+      ctx.beginPath(); ctx.moveTo(x, y);
+      ctx.lineTo(cx + 120*Math.cos(a2), cy + 120*Math.sin(a2));
+      ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(59,130,246,0.15)';
+    ctx.beginPath(); ctx.arc(x, y, 16, 0, 2*Math.PI); ctx.fill();
+  }
+
+  document.getElementById('legend').innerHTML = '';
+}
+
+function renderQuizQuestion() {
+  const content = document.getElementById('panelContent');
+  if (quizIdx >= quizData.length) {
+    content.innerHTML = `
+      <div style="text-align:center;padding:30px">
+        <div style="font-size:48px;margin-bottom:16px">🎉</div>
+        <div style="font-size:18px;color:#c4b5fd;margin-bottom:8px">练习完成！</div>
+        <div class="mode-btn" style="margin-top:16px;display:inline-block" id="retryQuiz">重新练习</div>
+      </div>
+    `;
+    document.getElementById('retryQuiz')?.addEventListener('click', () => { quizIdx = 0; quizAnswered = false; renderQuizQuestion(); draw(); });
+    return;
+  }
+  const q = quizData[quizIdx];
+  quizAnswered = false;
+  content.innerHTML = `
+    <div class="quiz">
+      <div class="quiz-q"><b>第 ${quizIdx + 1} 题</b><br>${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((opt, i) => `<div class="quiz-opt" data-idx="${i}">${opt}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+    </div>
+  `;
+  content.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const idx = parseInt(opt.dataset.idx);
+      if (idx === q.ans) {
+        opt.classList.add('correct');
+        document.getElementById('quizFeedback').textContent = '✅ 正确！';
+        quizCorrectSet.add(quizIdx);
+        updateQuizScore();
+      } else {
+        opt.classList.add('wrong');
+        content.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        document.getElementById('quizFeedback').textContent = '❌ 错误，正确答案已标出';
+        quizCorrectSet.delete(quizIdx);
+        updateQuizScore();
+      }
+      setTimeout(() => { quizIdx++; renderQuizQuestion(); draw(); }, 1500);
+    });
+  });
+}
+
+// ============ Panel updates ============
+function updatePanel() {
+  const title = document.getElementById('panelTitle');
+  const content = document.getElementById('panelContent');
+
+  switch (currentMode) {
+    case 'explore':
+      title.textContent = '🖱️ 自由建图';
+      content.innerHTML = `
+        <div class="prop-card">
+          <div class="prop-title">操作模式</div>
+          选择一种操作，然后在画布上点击/拖拽。
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0">
+          <div class="mode-btn ${exploreMode==='add'?'active':''}" data-em="add">➕ 添加节点</div>
+          <div class="mode-btn ${exploreMode==='link'?'active':''}" data-em="link">🔗 连边</div>
+          <div class="mode-btn ${exploreMode==='delete'?'active':''}" data-em="delete">🗑️ 删除</div>
+          <div class="mode-btn ${exploreMode==='move'?'active':''}" data-em="move">✋ 移动</div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">预设图</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0">
+          <div class="mode-btn" data-preset="complete5">K₅ 完全图</div>
+          <div class="mode-btn" data-preset="complete6">K₆ 完全图</div>
+          <div class="mode-btn" data-preset="cycle6">C₆ 环</div>
+          <div class="mode-btn" data-preset="petersen">Petersen图</div>
+          <div class="mode-btn" data-preset="tree">树</div>
+          <div class="mode-btn" data-preset="clear">🗑️ 清空</div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">图论基础</div>
+          <b>节点度</b> = 与该节点相连的边数<br>
+          <b>握手定理</b>：所有节点度数之和 = 2×边数<br>
+          <b>完全图 Kₙ</b>：每对节点都有边，共 n(n-1)/2 条边
+        </div>
+      `;
+      content.querySelectorAll('[data-em]').forEach(btn => {
+        btn.addEventListener('click', () => { exploreMode = btn.dataset.em; linkStart = null; updatePanel(); draw(); });
+      });
+      content.querySelectorAll('[data-preset]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          switch (btn.dataset.preset) {
+            case 'complete5': graph = presetComplete(5); break;
+            case 'complete6': graph = presetComplete(6); break;
+            case 'cycle6': graph = presetCycle(6); break;
+            case 'petersen': graph = presetPetersen(); break;
+            case 'tree': graph = presetTree(); break;
+            case 'clear': graph = new Graph(); break;
+          }
+          eulerPath = []; eulerStep = 0; hamUserPath = []; treeEdges = [];
+          updatePanel(); draw();
+        });
+      });
+      break;
+
+    case 'euler':
+      title.textContent = '🔗 欧拉路径';
+      const odds = graph.nodes.filter(n => graph.degree(n.id) % 2 === 1);
+      const eulerExists = odds.length === 0 || odds.length === 2;
+      content.innerHTML = `
+        <div class="equation">欧拉路径：经过每条边恰好一次</div>
+        <div class="prop-card">
+          <div class="prop-title">存在条件</div>
+          • <b>欧拉回路</b>（起点=终点）：所有节点度数为偶数<br>
+          • <b>欧拉路径</b>（起点≠终点）：恰好 2 个奇度节点<br>
+          • 其他情况：欧拉路径不存在
+        </div>
+        <div style="margin:10px 0">
+          <div class="mode-btn" id="eulerFind">🔍 查找欧拉路径</div>
+          <div class="mode-btn" id="eulerStep">⏭️ 单步执行</div>
+          <div class="mode-btn" id="eulerAuto">▶️ 自动播放</div>
+          <div class="mode-btn" id="eulerReset">🔄 重置</div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">当前图状态</div>
+          奇度节点: <b style="color:${eulerExists?'#10b981':'#ef4444'}">${odds.length}</b>
+          ${odds.length > 0 ? ` (${odds.map(n => n.label).join(', ')})` : ''}<br>
+          欧拉路径: <b>${eulerExists ? '✅ 存在' : '❌ 不存在'}</b>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">提示</div>
+          先用"自由建图"创建图，或加载预设。柯尼斯堡七桥问题对应的图有 4 个奇度节点，所以欧拉路径不存在！
+        </div>
+      `;
+      document.getElementById('eulerFind')?.addEventListener('click', () => {
+        eulerPath = findEulerPath(graph) || [];
+        eulerStep = 0;
+        draw();
+      });
+      document.getElementById('eulerStep')?.addEventListener('click', () => {
+        if (eulerStep < eulerPath.length - 1) { eulerStep++; draw(); }
+      });
+      document.getElementById('eulerAuto')?.addEventListener('click', () => {
+        eulerAuto = !eulerAuto;
+        if (eulerAuto) autoEuler();
+      });
+      document.getElementById('eulerReset')?.addEventListener('click', () => {
+        eulerPath = []; eulerStep = 0; eulerAuto = false; draw();
+      });
+      break;
+
+    case 'hamilton':
+      title.textContent = '🔄 哈密顿回路';
+      content.innerHTML = `
+        <div class="equation">哈密顿回路：经过每个节点恰好一次</div>
+        <div class="prop-card">
+          <div class="prop-title">判定</div>
+          哈密顿回路问题是 NP 完全问题，没有已知的多项式时间算法。<br>
+          <b>充分条件（Dirac定理）</b>：若 n≥3 且每个节点度数 ≥ n/2，则存在哈密顿回路。
+        </div>
+        <p style="font-size:13px;color:#cbd5e1;margin:8px 0">点击节点构建路径：</p>
+        <div style="margin:10px 0">
+          <div class="mode-btn" id="hamReset">🔄 重置路径</div>
+          <div class="mode-btn" id="hamPresetK5">加载 K₅</div>
+          <div class="mode-btn" id="hamPresetPetersen">加载 Petersen</div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">操作说明</div>
+          依次点击节点，尝试找到经过所有节点的回路。<br>
+          起点和终点必须相邻才能形成回路。
+        </div>
+      `;
+      document.getElementById('hamReset')?.addEventListener('click', () => { hamUserPath = []; draw(); });
+      document.getElementById('hamPresetK5')?.addEventListener('click', () => { graph = presetComplete(5); hamUserPath = []; draw(); updatePanel(); });
+      document.getElementById('hamPresetPetersen')?.addEventListener('click', () => { graph = presetPetersen(); hamUserPath = []; draw(); updatePanel(); });
+      break;
+
+    case 'tree':
+      title.textContent = '🌲 树与生成树';
+      const isTree = graph.nodes.length > 0 && treeEdges.length === graph.nodes.length - 1;
+      content.innerHTML = `
+        <div class="equation">树：连通无环图，n 个节点 n-1 条边</div>
+        <div class="prop-card">
+          <div class="prop-title">树的性质</div>
+          • 连通且无环<br>
+          • 任意两节点间有<b>唯一路径</b><br>
+          • 删除任一边则不连通<br>
+          • n 个节点的树恰好有 <b>n-1</b> 条边
+        </div>
+        <p style="font-size:13px;color:#cbd5e1;margin:8px 0">点击边加入/移出生成树：</p>
+        <div style="margin:10px 0">
+          <div class="mode-btn" id="treePreset">加载带权图</div>
+          <div class="mode-btn" id="treeClear">清除树边</div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">当前状态</div>
+          树边: <b>${treeEdges.length}</b> / ${graph.nodes.length > 0 ? graph.nodes.length - 1 : 0}<br>
+          ${isTree ? '<b style="color:#10b981">✅ 构成生成树</b>' : ''}
+        </div>
+      `;
+      document.getElementById('treePreset')?.addEventListener('click', () => {
+        graph = new Graph();
+        const positions = [[180,120],[540,120],[120,300],[360,280],[600,300],[200,480],[520,480]];
+        positions.forEach((p,i) => graph.addNode(p[0], p[1], String.fromCharCode(65+i)));
+        const weights = [[0,1,4],[0,2,3],[0,3,5],[1,3,2],[1,4,6],[2,3,4],[2,5,3],[3,4,3],[3,5,5],[3,6,4],[4,6,2],[5,6,3]];
+        weights.forEach(w => graph.addEdge(w[0], w[1], w[2]));
+        treeEdges = [];
+        draw(); updatePanel();
+      });
+      document.getElementById('treeClear')?.addEventListener('click', () => { treeEdges = []; draw(); updatePanel(); });
+      break;
+
+    case 'bfs':
+      title.textContent = '🔍 广度优先搜索';
+      content.innerHTML = `
+        <div class="equation">BFS：逐层扩展，使用队列</div>
+        <div class="prop-card">
+          <div class="prop-title">算法步骤</div>
+          1. 将起点入队，标记已访问<br>
+          2. 取出队首节点 v<br>
+          3. 将 v 的所有未访问邻居入队<br>
+          4. 重复 2-3 直到队列为空
+        </div>
+        <div style="margin:10px 0">
+          <div class="mode-btn" id="bfsRun">▶️ 开始 BFS</div>
+          <div class="mode-btn" id="bfsStepBtn">⏭️ 单步</div>
+          <div class="mode-btn" id="bfsReset">🔄 重置</div>
+        </div>
+        <div class="slider-row">
+          <label>起始节点</label>
+          <input type="range" min="0" max="${Math.max(0, graph.nodes.length - 1)}" value="${bfsStart}" id="bfsStartSlider">
+          <span class="val">${graph.nodes[bfsStart]?.label || '-'}</span>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">应用</div>
+          最短路径（无权图）、连通分量检测、社交网络分析、网络爬虫。
+        </div>
+      `;
+      document.getElementById('bfsRun')?.addEventListener('click', () => { runBFS(); bfsStep = bfsOrder.length; draw(); });
+      document.getElementById('bfsStepBtn')?.addEventListener('click', () => {
+        if (bfsOrder.length === 0) runBFS();
+        if (bfsStep < bfsOrder.length) { bfsStep++; draw(); }
+      });
+      document.getElementById('bfsReset')?.addEventListener('click', () => { bfsOrder = []; bfsStep = 0; draw(); });
+      const slider = document.getElementById('bfsStartSlider');
+      if (slider) slider.addEventListener('input', e => {
+        bfsStart = parseInt(e.target.value);
+        e.target.nextElementSibling.textContent = graph.nodes[bfsStart]?.label || '-';
+        bfsOrder = []; bfsStep = 0;
+        draw();
+      });
+      break;
+
+    case 'quiz':
+      title.textContent = '🎯 图论练习';
+      quizIdx = 0;
+      quizAnswered = false;
+      quizCorrectSet.clear();
+      updateQuizScore();
+      renderQuizQuestion();
+      break;
+  }
+}
+
+// ============ Mouse events ============
+let mouseX = null, mouseY = null;
+
+function getCanvasPos(e) {
+  const rect = cv.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) * (W / rect.width),
+    y: (e.clientY - rect.top) * (H / rect.height)
+  };
+}
+
+cv.addEventListener('mousedown', e => {
+  const { x, y } = getCanvasPos(e);
+
+  if (currentMode === 'explore') {
+    handleExploreClick(x, y);
+  } else if (currentMode === 'hamilton') {
+    const hit = graph.nodes.find(n => Math.hypot(n.x - x, n.y - y) < 22);
+    if (hit && !hamUserPath.includes(hit.id)) {
+      // Check adjacency with last node
+      if (hamUserPath.length === 0 || graph.neighbors(hamUserPath[hamUserPath.length - 1]).includes(hit.id)) {
+        hamUserPath.push(hit.id);
+        draw();
+      }
+    }
+  } else if (currentMode === 'tree') {
+    // Find closest edge
+    let closestEdge = null;
+    let closestDist = 15;
+    graph.edges.forEach(e => {
+      const na = graph.nodes[e.a], nb = graph.nodes[e.b];
+      const dx = nb.x - na.x, dy = nb.y - na.y;
+      const len = Math.hypot(dx, dy);
+      if (len === 0) return;
+      const t = Math.max(0, Math.min(1, ((x - na.x) * dx + (y - na.y) * dy) / (len * len)));
+      const px = na.x + t * dx, py = na.y + t * dy;
+      const dist = Math.hypot(x - px, y - py);
+      if (dist < closestDist) { closestDist = dist; closestEdge = e; }
+    });
+    if (closestEdge) {
+      const idx = treeEdges.findIndex(te => (te.a===closestEdge.a&&te.b===closestEdge.b)||(te.a===closestEdge.b&&te.b===closestEdge.a));
+      if (idx >= 0) treeEdges.splice(idx, 1);
+      else treeEdges.push({ a: closestEdge.a, b: closestEdge.b });
+      draw();
+      updatePanel();
+    }
+  }
+});
+
+cv.addEventListener('mousemove', e => {
+  const { x, y } = getCanvasPos(e);
+  mouseX = x; mouseY = y;
+
+  if (currentMode === 'explore' && exploreMode === 'move' && dragNode !== null) {
+    graph.nodes[dragNode].x = x;
+    graph.nodes[dragNode].y = y;
+    draw();
+  }
+  if (currentMode === 'explore' && exploreMode === 'link' && linkStart !== null) {
+    draw();
+  }
+});
+
+cv.addEventListener('mouseup', () => {
+  dragNode = null;
+});
+
+// ============ Auto euler animation ============
+function autoEuler() {
+  if (!eulerAuto || eulerStep >= eulerPath.length - 1) { eulerAuto = false; return; }
+  eulerStep++;
+  draw();
+  setTimeout(autoEuler, 500);
+}
+
+// ============ Main draw ============
+function draw() {
+  switch (currentMode) {
+    case 'explore': drawExplore(); break;
+    case 'euler': drawEuler(); break;
+    case 'hamilton': drawHamilton(); break;
+    case 'tree': drawTree(); break;
+    case 'bfs': drawBFS(); break;
+    case 'quiz': drawQuiz(); break;
+  }
+}
+
+function animate() {
+  animT++;
+  if (currentMode === 'explore' || currentMode === 'euler' || currentMode === 'hamilton' || currentMode === 'tree' || currentMode === 'bfs') {
+    // Only redraw for animations if needed
+  }
+  animFrame = requestAnimationFrame(animate);
+}
+
+// ============ Tab switching ============
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    linkStart = null;
+    updatePanel();
+    draw();
+  });
+});
+
+// Init with a default graph
+graph = presetComplete(5);
+updatePanel();
+draw();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

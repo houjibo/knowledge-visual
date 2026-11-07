@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>行列式与矩阵 · 大学数学互动可视化</title>
+<script src="assets/common.js"></script>
+<style>
+  :root {
+    --primary: #7c3aed;
+    --surface: #3b82f6;
+    --accent1: #ef4444;
+    --accent2: #10b981;
+    --accent3: #f59e0b;
+    --accent4: #ec4899;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.78);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1a1040 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1360px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 22px; }
+  header h1 { font-size: 2.1rem; background: linear-gradient(90deg, var(--surface), var(--accent1), var(--accent2)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; font-size: 0.95rem; margin-top: 4px; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 22px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(124,58,237,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 720px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .equation { font-family: "Times New Roman", "STSong", serif; font-size: 1.05rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .eq-r { color: var(--accent1); font-weight: 600; }
+  .eq-g { color: var(--accent2); font-weight: 600; }
+  .eq-b { color: var(--surface); font-weight: 600; }
+  .eq-y { color: var(--accent3); font-weight: 600; }
+  .eq-p { color: var(--accent4); font-weight: 600; }
+
+  .matrix-grid { display: inline-grid; gap: 4px; margin: 8px auto; text-align: center; }
+  .matrix-grid .cell { padding: 6px 10px; background: rgba(255,255,255,0.06); border-radius: 6px; font-family: monospace; font-size: 14px; min-width: 42px; transition: all .3s; }
+  .matrix-grid .cell.hl1 { background: rgba(239,68,68,0.25); color: var(--accent1); }
+  .matrix-grid .cell.hl2 { background: rgba(16,185,129,0.25); color: var(--accent2); }
+  .matrix-grid .cell.hl3 { background: rgba(59,130,246,0.25); color: var(--surface); }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 120px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--accent3); font-weight: 600; font-size: 13px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 13px; color: #93c5fd; transition: all .2s; user-select: none; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.1); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .steps { margin: 12px 0; }
+  .step { padding: 10px 14px; margin: 6px 0; background: rgba(255,255,255,0.04); border-radius: 8px; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--primary); transition: all .3s; }
+  .step.active { background: rgba(124,58,237,0.12); border-left-color: var(--accent2); }
+  .step .sn { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: white; text-align: center; line-height: 22px; font-size: 11px; margin-right: 8px; font-weight: 700; }
+  .step.active .sn { background: var(--accent2); }
+
+  .desc { font-size: 13px; color: #94a3b8; line-height: 1.7; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(124,58,237,0.08); border-radius: 12px; border: 1px solid rgba(124,58,237,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.2); border-color: var(--accent2); color: var(--accent2); }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.2); border-color: var(--accent1); color: var(--accent1); }
+  .quiz-result { margin-top: 10px; font-size: 13px; font-weight: 600; }
+
+  .hidden { display: none; }
+  .bracket { font-size: 2.5rem; font-weight: 100; color: #64748b; line-height: 1; vertical-align: middle; }
+  .matrix-display { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 8px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📐 行列式与矩阵</h1>
+    <p>大学数学 · 线性代数核心 — 行列式几何意义 · 矩阵变换 · 逆矩阵 · 秩</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="det">行列式几何意义</div>
+    <div class="tab" data-tab="transform">矩阵变换</div>
+    <div class="tab" data-tab="inverse">逆矩阵与秩</div>
+    <div class="tab" data-tab="practice">互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="640" height="520"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+</div>
+
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const panel = document.getElementById('panel');
+const legendEl = document.getElementById('legend');
+
+/* ── Tab switching ── */
+let currentTab = 'det';
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelector('.tab.active').classList.remove('active');
+    t.classList.add('active');
+    currentTab = t.dataset.tab;
+    init();
+  });
+});
+
+/* ── Utility ── */
+function clearCanvas() {
+  ctx.clearRect(0, 0, W, H);
+}
+function drawGrid(ox, oy, scale, label) {
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let i = -10; i <= 10; i++) {
+    ctx.beginPath(); ctx.moveTo(ox + i * scale, 0); ctx.lineTo(ox + i * scale, H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, oy + i * scale); ctx.lineTo(W, oy + i * scale); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(W, oy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, H); ctx.stroke();
+  // arrows
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.beginPath(); ctx.moveTo(W-2, oy); ctx.lineTo(W-12, oy-5); ctx.lineTo(W-12, oy+5); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(ox, 2); ctx.lineTo(ox-5, 12); ctx.lineTo(ox+5, 12); ctx.fill();
+  if (label) {
+    ctx.fillStyle = '#64748b'; ctx.font = '12px monospace';
+    ctx.fillText('x', W-14, oy+16); ctx.fillText('y', ox+8, 14);
+    ctx.fillText('O', ox+4, oy+14);
+  }
+}
+function drawParallelogram(ox, oy, scale, a, b, color, fill) {
+  const ax = a[0]*scale, ay = -a[1]*scale;
+  const bx = b[0]*scale, by = -b[1]*scale;
+  ctx.beginPath();
+  ctx.moveTo(ox, oy);
+  ctx.lineTo(ox+ax, oy+ay);
+  ctx.lineTo(ox+ax+bx, oy+ay+by);
+  ctx.lineTo(ox+bx, oy+by);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = color; ctx.fill(); }
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+}
+function drawArrow(ox, oy, scale, v, color, lw) {
+  const ex = ox + v[0]*scale, ey = oy - v[1]*scale;
+  ctx.strokeStyle = color; ctx.lineWidth = lw || 2.5;
+  ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ex, ey); ctx.stroke();
+  const angle = Math.atan2(oy-ey, ex-ox);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(ex - 10*Math.cos(angle-0.35), ey + 10*Math.sin(angle-0.35));
+  ctx.lineTo(ex - 10*Math.cos(angle+0.35), ey + 10*Math.sin(angle+0.35));
+  ctx.fill();
+}
+function matMul2(m, v) {
+  return [m[0]*v[0]+m[1]*v[1], m[2]*v[0]+m[3]*v[1]];
+}
+function det2(m) { return m[0]*m[3]-m[1]*m[2]; }
+
+/* ════════════════════════════════════════════
+   TAB 1: 行列式几何意义
+   ════════════════════════════════════════════ */
+let det_a = [2, 0], det_b = [0, 1.5];
+let det_anim = 0;
+
+function initDet() {
+  const ox = 200, oy = 320, sc = 80;
+  clearCanvas();
+  drawGrid(ox, oy, sc, true);
+
+  const d = det2([det_a[0], det_b[0], det_a[1], det_b[1]]);
+  const area = Math.abs(d);
+
+  // parallelogram
+  const col = d > 0 ? 'rgba(59,130,246,0.25)' : 'rgba(239,68,68,0.25)';
+  drawParallelogram(ox, oy, sc, det_a, det_b, col, true);
+
+  // vectors
+  drawArrow(ox, oy, sc, det_a, '#ef4444', 3);
+  drawArrow(ox, oy, sc, det_b, '#10b981', 3);
+
+  // labels
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = '#ef4444';
+  ctx.fillText(`a⃗ = (${det_a[0].toFixed(1)}, ${det_a[1].toFixed(1)})`, ox+det_a[0]*sc+8, oy-det_a[1]*sc);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`b⃗ = (${det_b[0].toFixed(1)}, ${det_b[1].toFixed(1)})`, ox+det_b[0]*sc+8, oy-det_b[1]*sc-10);
+
+  // area text
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText(`S = |det| = ${area.toFixed(2)}`, ox + (det_a[0]+det_b[0])*sc/2 - 40, oy - (det_a[1]+det_b[1])*sc/2 + 30);
+
+  // sign indicator
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = d >= 0 ? '#10b981' : '#ef4444';
+  ctx.fillText(d > 0 ? 'det > 0 (逆时针)' : d < 0 ? 'det < 0 (顺时针)' : 'det = 0 (退化)', 20, 24);
+
+  legendEl.innerHTML = '<span style="color:#ef4444">● 向量 a⃗</span><span style="color:#10b981">● 向量 b⃗</span><span style="color:#3b82f6">● 平行四边形面积</span>';
+
+  panel.innerHTML = `
+    <h3>📐 行列式的几何意义</h3>
+    <div class="desc">
+      2×2 行列式 <b>det(A) = a₁b₂ − a₂b₁</b> 等于向量 a⃗, b⃗ 张成的平行四边形的<b>有向面积</b>。
+      det > 0 表示 b⃗ 在 a⃗ 的逆时针方向；det = 0 表示两向量共线（面积为零）。
+    </div>
+    <div class="equation">
+      det <span class="eq-b">A</span> = |<span class="eq-r">a₁</span> <span class="eq-g">b₁</span>; <span class="eq-r">a₂</span> <span class="eq-g">b₂</span>| = <span class="eq-r">a₁</span>·<span class="eq-g">b₂</span> − <span class="eq-r">a₂</span>·<span class="eq-g">b₁</span> = <b>${d.toFixed(2)}</b>
+    </div>
+    <div class="slider-row"><label>a⃗ x 分量</label><input type="range" min="-3" max="3" step="0.1" value="${det_a[0]}" id="s_ax"><span class="val">${det_a[0].toFixed(1)}</span></div>
+    <div class="slider-row"><label>a⃗ y 分量</label><input type="range" min="-3" max="3" step="0.1" value="${det_a[1]}" id="s_ay"><span class="val">${det_a[1].toFixed(1)}</span></div>
+    <div class="slider-row"><label>b⃗ x 分量</label><input type="range" min="-3" max="3" step="0.1" value="${det_b[0]}" id="s_bx"><span class="val">${det_b[0].toFixed(1)}</span></div>
+    <div class="slider-row"><label>b⃗ y 分量</label><input type="range" min="-3" max="3" step="0.1" value="${det_b[1]}" id="s_by"><span class="val">${det_b[1].toFixed(1)}</span></div>
+    <div class="info-grid">
+      <div><b>行列式值</b><br>${d.toFixed(2)}</div>
+      <div><b>面积</b><br>${area.toFixed(2)}</div>
+      <div><b>方向</b><br>${d > 0 ? '逆时针 (+)' : d < 0 ? '顺时针 (−)' : '退化 (0)'}</div>
+      <div><b>可逆性</b><br>${d !== 0 ? '✅ 矩阵可逆' : '❌ 矩阵奇异'}</div>
+    </div>
+    <div class="steps">
+      <div class="step active"><span class="sn">1</span>拖动滑块改变向量 a⃗ 和 b⃗</div>
+      <div class="step"><span class="sn">2</span>观察平行四边形面积的变化</div>
+      <div class="step"><span class="sn">3</span>当 det = 0 时，两向量共线，面积为零</div>
+    </div>
+  `;
+  bindDetSliders();
+}
+
+function bindDetSliders() {
+  const ids = ['s_ax','s_ay','s_bx','s_by'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      const v = parseFloat(el.value);
+      el.nextElementSibling.textContent = v.toFixed(1);
+      if (id === 's_ax') det_a[0] = v;
+      if (id === 's_ay') det_a[1] = v;
+      if (id === 's_bx') det_b[0] = v;
+      if (id === 's_by') det_b[1] = v;
+      initDet();
+    });
+  });
+}
+
+/* ════════════════════════════════════════════
+   TAB 2: 矩阵变换
+   ════════════════════════════════════════════ */
+let trans_mode = 'shear'; // rotate, scale, shear, reflect
+let trans_t = 0;
+let trans_anim_id = null;
+
+function initTransform() {
+  clearCanvas();
+  const ox = 320, oy = 280, sc = 60;
+  drawGrid(ox, oy, sc, true);
+
+  // unit square + basis vectors
+  const e1 = [1, 0], e2 = [0, 1];
+  let M;
+  const t = trans_t;
+
+  if (trans_mode === 'rotate') {
+    const c = Math.cos(t), s = Math.sin(t);
+    M = [c, -s, s, c];
+  } else if (trans_mode === 'scale') {
+    M = [1 + t*0.8, 0, 0, 1 - t*0.5];
+  } else if (trans_mode === 'shear') {
+    M = [1, t*1.5, 0, 1];
+  } else { // reflect
+    const angle = t;
+    M = [Math.cos(2*angle), Math.sin(2*angle), Math.sin(2*angle), -Math.cos(2*angle)];
+  }
+
+  const te1 = matMul2(M, e1);
+  const te2 = matMul2(M, e2);
+
+  // Draw original (ghost)
+  drawParallelogram(ox, oy, sc, e1, e2, 'rgba(255,255,255,0.1)', true);
+  ctx.setLineDash([4,4]);
+  drawArrow(ox, oy, sc, e1, 'rgba(239,68,68,0.3)', 1.5);
+  drawArrow(ox, oy, sc, e2, 'rgba(16,185,129,0.3)', 1.5);
+  ctx.setLineDash([]);
+
+  // Draw transformed
+  const d = det2(M);
+  const col = d >= 0 ? 'rgba(59,130,246,0.3)' : 'rgba(236,72,153,0.3)';
+  drawParallelogram(ox, oy, sc, te1, te2, col, true);
+  drawArrow(ox, oy, sc, te1, '#ef4444', 3);
+  drawArrow(ox, oy, sc, te2, '#10b981', 3);
+
+  // Grid of points transformed
+  for (let i = -3; i <= 3; i++) {
+    for (let j = -3; j <= 3; j++) {
+      if (i === 0 && j === 0) continue;
+      const p = matMul2(M, [i, j]);
+      const px = ox + p[0]*sc, py = oy - p[1]*sc;
+      ctx.fillStyle = 'rgba(251,191,36,0.4)';
+      ctx.beginPath(); ctx.arc(px, py, 2.5, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // Labels
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = '#ef4444';
+  ctx.fillText(`e₁' = (${te1[0].toFixed(2)}, ${te1[1].toFixed(2)})`, ox+te1[0]*sc+10, oy-te1[1]*sc);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`e₂' = (${te2[0].toFixed(2)}, ${te2[1].toFixed(2)})`, ox+te2[0]*sc+10, oy-te2[1]*sc-10);
+
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText(`det = ${d.toFixed(2)}`, 20, 24);
+
+  const modeNames = { rotate: '旋转变换', scale: '缩放变换', shear: '剪切变换', reflect: '反射变换' };
+  legendEl.innerHTML = `<span style="color:rgba(255,255,255,0.3)">● 原始</span><span style="color:#3b82f6">● 变换后</span><span style="color:#fbbf24">● 网格点映射</span>`;
+
+  const mStr = trans_mode === 'rotate'
+    ? `R(θ) = [cos θ, −sin θ; sin θ, cos θ], θ = ${(t*180/Math.PI).toFixed(0)}°`
+    : trans_mode === 'scale'
+    ? `S = [${(1+t*0.8).toFixed(2)}, 0; 0, ${(1-t*0.5).toFixed(2)}]`
+    : trans_mode === 'shear'
+    ? `Shear = [1, ${(t*1.5).toFixed(2)}; 0, 1]`
+    : `Reflect(α) = [cos2α, sin2α; sin2α, −cos2α], α = ${(t*180/Math.PI).toFixed(0)}°`;
+
+  panel.innerHTML = `
+    <h3>🔄 ${modeNames[trans_mode]}</h3>
+    <div class="mode-switch">
+      <div class="mode-btn ${trans_mode==='rotate'?'active':''}" data-m="rotate">旋转</div>
+      <div class="mode-btn ${trans_mode==='scale'?'active':''}" data-m="scale">缩放</div>
+      <div class="mode-btn ${trans_mode==='shear'?'active':''}" data-m="shear">剪切</div>
+      <div class="mode-btn ${trans_mode==='reflect'?'active':''}" data-m="reflect">反射</div>
+    </div>
+    <div class="desc">
+      矩阵 M 作用在每一个点上，将 <b>e₁</b> 映射到 <b class="eq-r">e₁'</b>，<b>e₂</b> 映射到 <b class="eq-g">e₂'</b>。
+      行列式 det(M) 表示面积的缩放因子：|det| > 1 面积放大，|det| < 1 面积缩小，det < 0 翻转定向。
+    </div>
+    <div class="equation">${mStr}</div>
+    <div class="slider-row"><label>参数 t</label><input type="range" min="${trans_mode==='reflect'?'-1.57':'-2'}" max="${trans_mode==='reflect'?'1.57':'2'}" step="0.01" value="${t}" id="s_tt"><span class="val">${t.toFixed(2)}</span></div>
+    <div class="info-grid">
+      <div><b>det(M)</b><br>${d.toFixed(3)}</div>
+      <div><b>面积缩放</b><br>${Math.abs(d).toFixed(3)}×</div>
+      <div><b>迹 tr(M)</b><br>${(M[0]+M[3]).toFixed(3)}</div>
+      <div><b>定向</b><br>${d > 0 ? '保持 (+)' : d < 0 ? '翻转 (−)' : '退化'}</div>
+    </div>
+    <div class="steps">
+      <div class="step active"><span class="sn">1</span>选择变换类型（旋转/缩放/剪切/反射）</div>
+      <div class="step"><span class="sn">2</span>拖动参数 t 观察连续变化</div>
+      <div class="step"><span class="sn">3</span>注意 det 的符号变化与面积关系</div>
+    </div>
+  `;
+
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      trans_mode = b.dataset.m;
+      trans_t = trans_mode === 'rotate' ? 0.5 : trans_mode === 'reflect' ? 0.4 : 0.8;
+      initTransform();
+    });
+  });
+  const slider = document.getElementById('s_tt');
+  if (slider) {
+    slider.addEventListener('input', () => {
+      trans_t = parseFloat(slider.value);
+      slider.nextElementSibling.textContent = trans_t.toFixed(2);
+      initTransform();
+    });
+  }
+}
+
+/* ════════════════════════════════════════════
+   TAB 3: 逆矩阵与秩
+   ════════════════════════════════════════════ */
+let inv_a = [1, 0.5, 0.3, 1];
+
+function initInverse() {
+  clearCanvas();
+  const ox = 200, oy = 300, sc = 70;
+  drawGrid(ox, oy, sc, true);
+
+  const d = det2(inv_a);
+  const e1 = [1,0], e2 = [0,1];
+  const te1 = matMul2(inv_a, e1);
+  const te2 = matMul2(inv_a, e2);
+
+  // Original ghost
+  ctx.setLineDash([4,4]);
+  drawParallelogram(ox, oy, sc, e1, e2, 'rgba(255,255,255,0.08)', true);
+  ctx.setLineDash([]);
+
+  // Transformed
+  const col = d !== 0 ? 'rgba(59,130,246,0.2)' : 'rgba(239,68,68,0.2)';
+  drawParallelogram(ox, oy, sc, te1, te2, col, true);
+  drawArrow(ox, oy, sc, te1, '#ef4444', 3);
+  drawArrow(ox, oy, sc, te2, '#10b981', 3);
+
+  // If invertible, show inverse mapping
+  if (Math.abs(d) > 0.01) {
+    const inv = [inv_a[3]/d, -inv_a[1]/d, -inv_a[2]/d, inv_a[0]/d];
+    ctx.font = '12px monospace';
+    ctx.fillStyle = '#10b981';
+    ctx.fillText(`M⁻¹ = [${(inv[0]).toFixed(2)}, ${(inv[1]).toFixed(2)}; ${(inv[2]).toFixed(2)}, ${(inv[3]).toFixed(2)}]`, 20, H-20);
+
+    // Show M * M^-1 = I by transforming back a point
+    const p = [1.5, 1.2];
+    const Mp = matMul2(inv_a, p);
+    const Mpinv = matMul2(inv, Mp);
+    // draw original point
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath(); ctx.arc(ox+p[0]*sc, oy-p[1]*sc, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fbbf24'; ctx.font = '12px sans-serif';
+    ctx.fillText('P', ox+p[0]*sc+8, oy-p[1]*sc);
+    // draw M*p
+    ctx.fillStyle = '#ec4899';
+    ctx.beginPath(); ctx.arc(ox+Mp[0]*sc, oy-Mp[1]*sc, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillText("M·P", ox+Mp[0]*sc+8, oy-Mp[1]*sc);
+    // draw M⁻¹·M·p = P (should coincide)
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.5; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(ox+Mp[0]*sc, oy-Mp[1]*sc); ctx.lineTo(ox+Mpinv[0]*sc, oy-Mpinv[1]*sc); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Rank indicator
+  let rank = 2;
+  if (Math.abs(d) < 0.01) {
+    // check if zero matrix
+    if (inv_a.every(v => Math.abs(v) < 0.01)) rank = 0;
+    else rank = 1;
+  }
+
+  ctx.font = 'bold 15px sans-serif';
+  ctx.fillStyle = rank === 2 ? '#10b981' : rank === 1 ? '#f59e0b' : '#ef4444';
+  ctx.fillText(`rank = ${rank}`, 20, 24);
+
+  legendEl.innerHTML = '<span style="color:rgba(255,255,255,0.3)">● 原始基</span><span style="color:#ef4444">● M·e₁</span><span style="color:#10b981">● M·e₂</span><span style="color:#fbbf24">● 点 P</span><span style="color:#ec4899">● M·P</span>';
+
+  const rankText = rank === 2 ? '满秩 (rank=2)，矩阵可逆' : rank === 1 ? '秩为1，列向量共线' : '零矩阵 (rank=0)';
+
+  panel.innerHTML = `
+    <h3>🔑 逆矩阵与秩</h3>
+    <div class="desc">
+      矩阵 M 可逆 ⟺ det(M) ≠ 0 ⟺ rank(M) = 2。
+      逆矩阵 <b>M⁻¹</b> 满足 M·M⁻¹ = I。当 det = 0 时矩阵<b>奇异</b>，不存在逆矩阵。
+      秩 = 列向量张成空间的维数。
+    </div>
+    <div class="equation">
+      M = [<span class="eq-r">${inv_a[0].toFixed(2)}</span>, <span class="eq-g">${inv_a[1].toFixed(2)}</span>; <span class="eq-r">${inv_a[2].toFixed(2)}</span>, <span class="eq-g">${inv_a[3].toFixed(2)}</span>]
+    </div>
+    <div class="slider-row"><label>m₁₁</label><input type="range" min="-2" max="2" step="0.05" value="${inv_a[0]}" id="s_m11"><span class="val">${inv_a[0].toFixed(2)}</span></div>
+    <div class="slider-row"><label>m₁₂</label><input type="range" min="-2" max="2" step="0.05" value="${inv_a[1]}" id="s_m12"><span class="val">${inv_a[1].toFixed(2)}</span></div>
+    <div class="slider-row"><label>m₂₁</label><input type="range" min="-2" max="2" step="0.05" value="${inv_a[2]}" id="s_m21"><span class="val">${inv_a[2].toFixed(2)}</span></div>
+    <div class="slider-row"><label>m₂₂</label><input type="range" min="-2" max="2" step="0.05" value="${inv_a[3]}" id="s_m22"><span class="val">${inv_a[3].toFixed(2)}</span></div>
+    <div class="info-grid">
+      <div><b>det(M)</b><br>${d.toFixed(3)}</div>
+      <div><b>rank(M)</b><br>${rank}</div>
+      <div><b>可逆?</b><br>${Math.abs(d)>0.01?'✅ 可逆':'❌ 奇异'}</div>
+      <div><b>零空间</b><br>${rank===2?'{0}':rank===1?'一条直线':'全空间'}</div>
+    </div>
+    ${Math.abs(d)>0.01 ? `<div class="equation" style="font-size:0.9rem">M⁻¹ = 1/det · [<span class="eq-g">${inv_a[3].toFixed(2)}</span>, <span class="eq-g">${(-inv_a[1]).toFixed(2)}</span>; <span class="eq-g">${(-inv_a[2]).toFixed(2)}</span>, <span class="eq-g">${inv_a[0].toFixed(2)}</span>]</div>` : ''}
+    <div class="steps">
+      <div class="step active"><span class="sn">1</span>调整矩阵元素观察秩的变化</div>
+      <div class="step"><span class="sn">2</span>使 det = 0 → 矩阵变奇异</div>
+      <div class="step"><span class="sn">3</span>观察 M·P 和 M⁻¹·(M·P) = P 的验证</div>
+    </div>
+  `;
+
+  ['s_m11','s_m12','s_m21','s_m22'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      inv_a[i] = parseFloat(el.value);
+      el.nextElementSibling.textContent = inv_a[i].toFixed(2);
+      initInverse();
+    });
+  });
+}
+
+/* ════════════════════════════════════════════
+   TAB 4: 互动练习
+   ════════════════════════════════════════════ */
+const quizzes = [
+  {
+    q: '矩阵 A = [2, 1; 3, 4] 的行列式 det(A) = ?',
+    opts: ['5', '11', '−5', '8'],
+    ans: 0,
+    explain: 'det(A) = 2×4 − 1×3 = 8 − 3 = 5'
+  },
+  {
+    q: '若 det(A) = 0，则下列哪项一定成立？',
+    opts: ['A 是单位矩阵', 'A 不可逆', 'A 是对称矩阵', 'A 的元素全为零'],
+    ans: 1,
+    explain: 'det(A) = 0 意味着 A 是奇异矩阵，不存在逆矩阵。'
+  },
+  {
+    q: '2×2 矩阵 M = [3, 0; 0, 2] 对单位正方形的面积缩放因子是？',
+    opts: ['5', '6', '3', '2'],
+    ans: 1,
+    explain: 'det(M) = 3×2 − 0×0 = 6，面积放大 6 倍。'
+  },
+  {
+    q: '矩阵 [1, 2; 2, 4] 的秩是？',
+    opts: ['0', '1', '2', '不存在'],
+    ans: 1,
+    explain: '第二行 = 2 × 第一行，两行线性相关，rank = 1。det = 1×4 − 2×2 = 0。'
+  },
+  {
+    q: '旋转矩阵 R(θ) = [cos θ, −sin θ; sin θ, cos θ] 的行列式是？',
+    opts: ['cos θ', '1', '0', '2cos θ'],
+    ans: 1,
+    explain: 'det(R) = cos²θ + sin²θ = 1，旋转不改变面积。'
+  },
+  {
+    q: '若 A⁻¹ = [2, 1; 0, 3]，则 A = ?',
+    opts: ['[1/2, −1/6; 0, 1/3]', '[2, −1; 0, 3]', '[1/2, 1/6; 0, 1/3]', '不存在'],
+    ans: 0,
+    explain: 'det(A⁻¹) = 6，A = (1/6)·[3, −1; 0, 2] = [1/2, −1/6; 0, 1/3]'
+  }
+];
+
+let quizIdx = 0, quizAnswered = false;
+let quizScore = 0, quizTotal = 0;
+
+function initPractice() {
+  clearCanvas();
+  quizIdx = 0;
+  quizAnswered = false;
+  quizScore = 0;
+  quizTotal = 0;
+  renderQuiz();
+  drawQuizVisual();
+}
+
+function drawQuizVisual() {
+  const ox = 320, oy = 280, sc = 80;
+  clearCanvas();
+  drawGrid(ox, oy, sc, true);
+
+  // Draw a decorative matrix
+  ctx.font = 'bold 28px "Times New Roman", serif';
+  ctx.fillStyle = 'rgba(124,58,237,0.6)';
+  ctx.textAlign = 'center';
+  ctx.fillText('det(A) = ?', ox, oy - 40);
+
+  // Animated parallelogram
+  const t = Date.now() / 2000;
+  const a = [2*Math.cos(t*0.5), 1.5*Math.sin(t*0.3)];
+  const b = [1*Math.sin(t*0.4), 2*Math.cos(t*0.6)];
+  const d = a[0]*b[1] - a[1]*b[0];
+  const col = d > 0 ? 'rgba(59,130,246,0.2)' : 'rgba(239,68,68,0.2)';
+  drawParallelogram(ox, oy, sc, a, b, col, true);
+  drawArrow(ox, oy, sc, a, '#ef4444', 2.5);
+  drawArrow(ox, oy, sc, b, '#10b981', 2.5);
+
+  ctx.font = '14px sans-serif';
+  ctx.fillStyle = '#fbbf24';
+  ctx.textAlign = 'center';
+  ctx.fillText(`面积 = |${d.toFixed(2)}|`, ox, oy + 100);
+  ctx.textAlign = 'left';
+
+  requestAnimationFrame(drawQuizVisual);
+}
+
+function renderQuiz() {
+  const q = quizzes[quizIdx];
+  legendEl.innerHTML = '';
+  panel.innerHTML = `
+    <h3>🧪 互动练习 (${quizIdx+1}/${quizzes.length})</h3>
+    <div class="quiz">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts" id="qopts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-i="${i}">${String.fromCharCode(65+i)}. ${o}</div>`).join('')}
+      </div>
+      <div class="quiz-result" id="qres"></div>
+      <div class="quiz-score" style="margin-top:8px;font-size:12px;color:#94a3b8">已答 ${quizTotal}/${quizzes.length} · 答对 ${quizScore}${typeof PageProgress !== 'undefined' && PageProgress.isDone('matrix') ? ' · ✅ 已记录完成' : ''}</div>
+    </div>
+    <div class="desc" style="margin-top:14px">
+      💡 左侧画布展示了行列式与面积的实时关系。拖动观察变化有助于理解后面的题目！
+    </div>
+  `;
+  quizAnswered = false;
+  document.querySelectorAll('.quiz-opt').forEach(o => {
+    o.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      quizTotal++;
+      const i = parseInt(o.dataset.i);
+      if (i === q.ans) {
+        o.classList.add('correct');
+        quizScore++;
+        document.getElementById('qres').innerHTML = `<span style="color:#10b981">✅ 正确！</span> ${q.explain}`;
+      } else {
+        o.classList.add('wrong');
+        document.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        document.getElementById('qres').innerHTML = `<span style="color:#ef4444">❌ 不对</span> ${q.explain}`;
+      }
+      if (typeof PageProgress !== 'undefined' && quizScore >= Math.ceil(quizzes.length * 0.6) && !PageProgress.isDone('matrix')) {
+        PageProgress.markDone('matrix');
+      }
+      // Next button
+      if (quizIdx < quizzes.length - 1) {
+        document.getElementById('qres').innerHTML += `<br><button id="nextq" style="margin-top:10px;padding:8px 20px;border-radius:8px;background:var(--primary);color:white;border:none;cursor:pointer;font-size:14px">下一题 →</button>`;
+        document.getElementById('nextq').addEventListener('click', () => { quizIdx++; renderQuiz(); });
+      } else {
+        document.getElementById('qres').innerHTML += `<br><span style="color:#fbbf24;margin-top:8px;display:block">🎉 全部完成！</span>`;
+      }
+    });
+  });
+}
+
+/* ── Init ── */
+function init() {
+  if (trans_anim_id) { cancelAnimationFrame(trans_anim_id); trans_anim_id = null; }
+  if (currentTab === 'det') initDet();
+  else if (currentTab === 'transform') initTransform();
+  else if (currentTab === 'inverse') initInverse();
+  else if (currentTab === 'practice') initPractice();
+}
+init();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

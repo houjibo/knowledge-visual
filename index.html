@@ -42,7 +42,32 @@
       font-size: 13px; font-weight: 600;
     }
     .badge-math { background: #E8F5E9; color: #2E7D32; }
+    .badge-physics { background: #E3F2FD; color: #1565C0; }
+    .badge-chemistry { background: #FFF3E0; color: #E65100; }
+    .badge-science { background: #E0F2F1; color: #00695C; }
     .badge-placeholder { background: #F5F5F5; color: #9E9E9E; }
+
+    /* 学科学习进度（localStorage 汇总） */
+    .subject-progress {
+      margin-top: 14px; width: 100%;
+      font-size: 12px; color: #6E6E73;
+    }
+    .subject-progress .sp-text {
+      display: flex; justify-content: space-between; margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .subject-progress .sp-bar {
+      height: 6px; border-radius: 3px; background: rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .subject-progress .sp-fill {
+      height: 100%; border-radius: 3px; width: 0%;
+      transition: width 0.6s ease;
+    }
+    .sp-fill.sp-math { background: #43A047; }
+    .sp-fill.sp-physics { background: #1E88E5; }
+    .sp-fill.sp-chemistry { background: #FB8C00; }
+    .sp-fill.sp-science { background: #00ACC1; }
   </style>
 </head>
 <body>
@@ -55,16 +80,46 @@
     <a href="math/index.html" class="subject-card">
       <div class="subject-icon">📐</div>
       <div class="subject-name">数学</div>
-      <div class="subject-desc">小学数学知识体系 · 按主题分类 · 知识点依赖图</div>
-      <span class="subject-badge badge-math">10 个知识点 · 已完成</span>
+      <div class="subject-desc">小学 · 初中 · 高中 · 大学 · 知识地图与互动可视化</div>
+      <span class="subject-badge badge-math">198 个知识点</span>
+      <div class="subject-progress" data-subject="math" data-total="198">
+        <div class="sp-text"><span class="sp-label">尚未开始</span><span class="sp-pct"></span></div>
+        <div class="sp-bar"><div class="sp-fill sp-math"></div></div>
+      </div>
     </a>
 
-    <div class="subject-card" style="opacity: 0.5; pointer-events: none;">
+    <a href="physics/index.html" class="subject-card">
+      <div class="subject-icon">🔭</div>
+      <div class="subject-name">物理</div>
+      <div class="subject-desc">初中 · 高中 · 大学 · 互动可视化</div>
+      <span class="subject-badge badge-physics">55 个知识点</span>
+      <div class="subject-progress" data-subject="physics" data-total="55">
+        <div class="sp-text"><span class="sp-label">尚未开始</span><span class="sp-pct"></span></div>
+        <div class="sp-bar"><div class="sp-fill sp-physics"></div></div>
+      </div>
+    </a>
+
+    <a href="chemistry/index.html" class="subject-card">
+      <div class="subject-icon">🧪</div>
+      <div class="subject-name">化学</div>
+      <div class="subject-desc">初中 · 高中 · 大学 · 互动可视化</div>
+      <span class="subject-badge badge-chemistry">46 个知识点</span>
+      <div class="subject-progress" data-subject="chemistry" data-total="46">
+        <div class="sp-text"><span class="sp-label">尚未开始</span><span class="sp-pct"></span></div>
+        <div class="sp-bar"><div class="sp-fill sp-chemistry"></div></div>
+      </div>
+    </a>
+
+    <a href="science/index.html" class="subject-card">
       <div class="subject-icon">🔬</div>
       <div class="subject-name">科学</div>
-      <div class="subject-desc">即将推出</div>
-      <span class="subject-badge badge-placeholder">🚧 规划中</span>
-    </div>
+      <div class="subject-desc">小学科学 · 趣味启蒙互动</div>
+      <span class="subject-badge badge-science">17 个知识点</span>
+      <div class="subject-progress" data-subject="science" data-total="17">
+        <div class="sp-text"><span class="sp-label">尚未开始</span><span class="sp-pct"></span></div>
+        <div class="sp-bar"><div class="sp-fill sp-science"></div></div>
+      </div>
+    </a>
 
     <div class="subject-card" style="opacity: 0.5; pointer-events: none;">
       <div class="subject-icon">📖</div>
@@ -80,5 +135,56 @@
       <span class="subject-badge badge-placeholder">🚧 规划中</span>
     </div>
   </div>
+
+  <script>
+  /* ============================================
+     跨学科学习进度总览（iter-r126）
+     数据源：各学段 common.js 的 PageProgress localStorage
+       数学（四学段共享）: kv-math-progress
+       物理: kv-physics-middle/high/uni-progress
+       化学: kv-chemistry-middle/high/uni-progress
+       科学: kv-science-progress
+     done 数 = store 中已记录 slug 数（无需硬编码 slug 列表），
+     total 用卡片 data-total（与目录实际页数同步，iter-r126 校准）。
+     ============================================ */
+  (function () {
+    const SUBJECT_KEYS = {
+      math: ['kv-math-progress'],
+      physics: ['kv-physics-middle-progress', 'kv-physics-high-progress', 'kv-physics-uni-progress'],
+      chemistry: ['kv-chemistry-middle-progress', 'kv-chemistry-high-progress', 'kv-chemistry-uni-progress'],
+      science: ['kv-science-progress']
+    };
+    function readStore(key) {
+      try { return JSON.parse(localStorage.getItem(key) || '{}') || {}; }
+      catch (e) { return {}; }
+    }
+    function countDone(subject) {
+      const slugs = new Set();
+      (SUBJECT_KEYS[subject] || []).forEach(k => {
+        Object.keys(readStore(k)).forEach(s => slugs.add(s));
+      });
+      return slugs.size;
+    }
+    document.querySelectorAll('.subject-progress[data-subject]').forEach(el => {
+      const subject = el.getAttribute('data-subject');
+      const total = parseInt(el.getAttribute('data-total'), 10) || 0;
+      const done = countDone(subject);
+      const pct = total > 0 ? Math.min(100, Math.round(done / total * 100)) : 0;
+      const label = el.querySelector('.sp-label');
+      const pctEl = el.querySelector('.sp-pct');
+      const fill = el.querySelector('.sp-fill');
+      if (done === 0) {
+        label.textContent = '尚未开始';
+        pctEl.textContent = '';
+      } else {
+        label.textContent = '已学 ' + done + '/' + total;
+        pctEl.textContent = pct + '%';
+      }
+      // 下一帧再设置宽度，触发 CSS transition
+      requestAnimationFrame(() => { fill.style.width = pct + '%'; });
+      el.setAttribute('aria-label', subject + ' 学习进度 ' + done + '/' + total);
+    });
+  })();
+  </script>
 </body>
 </html>

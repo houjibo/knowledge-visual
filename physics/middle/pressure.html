@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>压强 · 初中物理互动可视化</title>
+<link rel="stylesheet" href="assets/common.css" />
+<style>
+  :root {
+    --primary: #0891b2;
+    --pressure: #ef4444;
+    --liquid: #3b82f6;
+    --atmos: #8b5cf6;
+    --force: #f59e0b;
+    --area: #10b981;
+    --dark: #0f172a;
+    --light: #f1f5f9;
+  }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; margin: 0; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--pressure), var(--liquid), var(--atmos)); -webkit-background-clip: text; color: transparent; margin: 0; }
+  header p { color: #94a3b8; margin: 6px 0 0; font-size: 14px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 8px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; color: #cbd5e1; }
+  .tab.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 20px rgba(8,145,178,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); overflow-y: auto; max-height: 640px; }
+  .panel h3 { margin: 0 0 10px; font-size: 1.05rem; color: #e2e8f0; }
+  .eq { font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 8px 0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 65px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--primary); }
+  .card .ct { font-weight: 600; color: #67e8f9; margin-bottom: 4px; }
+  .mode-switch { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 5px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 12px; color: #e2e8f0; transition: all .2s; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; font-size: 12px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 6px 8px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .quiz { margin-top: 10px; padding: 12px; background: rgba(8,145,178,0.08); border-radius: 12px; border: 1px solid rgba(8,145,178,0.3); }
+  .quiz-q { font-size: 13px; margin-bottom: 8px; }
+  .quiz-opts { display: grid; gap: 5px; }
+  .quiz-opt { padding: 7px 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 12px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-fb { margin-top: 6px; font-size: 12px; min-height: 16px; }
+  .legend { display: flex; gap: 12px; justify-content: center; font-size: 11px; color: #cbd5e1; margin-top: 6px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
+  .legend .l-p::before { background: var(--pressure); }
+  .legend .l-l::before { background: var(--liquid); }
+  .legend .l-a::before { background: var(--atmos); }
+  .legend .l-f::before { background: var(--force); }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>💎 压强 Interactive</h1>
+    <p>固体压强 · 液体压强 · 大气压强 · 帕斯卡原理</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="solid">🧱 固体压强</div>
+    <div class="tab" data-mode="liquid">🌊 液体压强</div>
+    <div class="tab" data-mode="atmos">🎈 大气压强</div>
+    <div class="tab" data-mode="pascal">⚙️ 帕斯卡原理</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="720" height="560"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel">
+      <h3 id="panelTitle">🧱 固体压强</h3>
+      <div id="panelContent"></div>
+    </div>
+  </div>
+</div>
+<footer>初中物理 · 压强互动可视化 · 知识可视化项目</footer>
+
+<script src="assets/touch.js"></script>
+<script src="assets/common.js"></script>
+<script>
+// r111: 进度追踪接入
+let totalCorrect = 0;
+const quizSolved = new Set();
+function bumpTotalCorrect() {
+  totalCorrect++;
+  if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('pressure')) {
+    PageProgress.markDone('pressure');
+    if (typeof showToast === 'function') showToast('🎉 本页知识点已点亮！');
+  }
+}
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+let mode = 'solid';
+let animId = null;
+let t = 0;
+
+// Params
+let force = 60, area = 40; // solid: force(N), area(cm²)
+let liquidDepth = 200; // liquid depth in pixels
+let liquidDensity = 1.0; // water=1, salt=1.03, oil=0.8
+let atmMode = 'magdeburg'; // magdeburg, cup, tube
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(tb => tb.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    t = 0;
+    updatePanel();
+    draw();
+  });
+});
+
+function drawArrow(x0, y0, x1, y1, color, lw = 3) {
+  const dx = x1 - x0, dy = y1 - y0;
+  const len = Math.sqrt(dx*dx + dy*dy);
+  if (len < 2) return;
+  const headLen = Math.min(14, len * 0.3);
+  const ang = Math.atan2(dy, dx);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = lw;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.lineTo(x1, y1);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x1 - headLen * Math.cos(ang - 0.4), y1 - headLen * Math.sin(ang - 0.4));
+  ctx.lineTo(x1 - headLen * Math.cos(ang + 0.4), y1 - headLen * Math.sin(ang + 0.4));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function updatePanel() {
+  const title = document.getElementById('panelTitle');
+  const content = document.getElementById('panelContent');
+  const legend = document.getElementById('legend');
+
+  if (mode === 'solid') {
+    title.textContent = '🧱 固体压强';
+    legend.innerHTML = '<span class="l-f">压力 F</span><span class="l-p">压强 P</span>';
+    content.innerHTML = `
+      <div class="card"><div class="ct">📐 压强公式</div>
+      <div class="eq">P = F / S</div>
+      P: 压强 (Pa) F: 压力 (N) S: 受力面积 (m²)</div>
+      <div class="slider-row">
+        <label>压力 F:</label>
+        <input type="range" id="fSlider" min="10" max="200" step="5" value="${force}">
+        <span class="val" id="fVal">${force}N</span>
+      </div>
+      <div class="slider-row">
+        <label>面积 S:</label>
+        <input type="range" id="sSlider" min="10" max="100" step="5" value="${area}">
+        <span class="val" id="sVal">${area}cm²</span>
+      </div>
+      <div class="info-grid">
+        <div>压强 P: <b id="pVal">--</b></div>
+        <div>效果: <b id="pEffect">--</b></div>
+      </div>
+      <div class="card" style="margin-top:10px"><div class="ct">💡 增大/减小压强</div>
+      <b>增大</b>：增大压力 或 减小受力面积<br>
+      <b>减小</b>：减小压力 或 增大受力面积<br>
+      实例：刀刃薄→减小面积→增大压强<br>
+      书包带宽→增大面积→减小压强</div>
+    `;
+    document.getElementById('fSlider').addEventListener('input', e => {
+      force = +e.target.value;
+      document.getElementById('fVal').textContent = force + 'N';
+      draw();
+    });
+    document.getElementById('sSlider').addEventListener('input', e => {
+      area = +e.target.value;
+      document.getElementById('sVal').textContent = area + 'cm²';
+      draw();
+    });
+  } else if (mode === 'liquid') {
+    title.textContent = '🌊 液体压强';
+    legend.innerHTML = '<span class="l-l">液体压强</span><span class="l-f">深度 h</span>';
+    content.innerHTML = `
+      <div class="card"><div class="ct">📐 液体压强公式</div>
+      <div class="eq">P = ρgh</div>
+      ρ: 液体密度 g: 9.8 N/kg h: 深度(m)</div>
+      <div class="slider-row">
+        <label>深度 h:</label>
+        <input type="range" id="hSlider" min="20" max="400" step="10" value="${liquidDepth}">
+        <span class="val" id="hVal">${liquidDepth}mm</span>
+      </div>
+      <div class="mode-switch">
+        <div class="mode-btn active" data-ld="0.8">油 (0.8)</div>
+        <div class="mode-btn" data-ld="1.0">水 (1.0)</div>
+        <div class="mode-btn" data-ld="1.03">盐水 (1.03)</div>
+      </div>
+      <div class="info-grid">
+        <div>液体压强: <b id="lpVal">--</b></div>
+        <div>深度: <b id="lhVal">--</b></div>
+      </div>
+      <div class="card" style="margin-top:10px"><div class="ct">💡 液体压强特点</div>
+      • 液体内部<b>向各个方向</b>都有压强<br>
+      • 同深度各方向压强<b>相等</b><br>
+      • 深度越大，压强<b>越大</b><br>
+      • 与液体<b>密度</b>有关</div>
+    `;
+    document.getElementById('hSlider').addEventListener('input', e => {
+      liquidDepth = +e.target.value;
+      document.getElementById('hVal').textContent = liquidDepth + 'mm';
+      draw();
+    });
+    content.querySelectorAll('.mode-btn[data-ld]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        content.querySelectorAll('.mode-btn[data-ld]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        liquidDensity = +btn.dataset.ld;
+        draw();
+      });
+    });
+  } else if (mode === 'atmos') {
+    title.textContent = '🎈 大气压强';
+    legend.innerHTML = '<span class="l-a">大气压</span>';
+    content.innerHTML = `
+      <div class="card"><div class="ct">🌍 大气压强</div>
+      大气对浸在其中的物体产生的压强。<br>
+      <div class="eq">P₀ = 1.013 × 10⁵ Pa (标准大气压)</div>
+      相当于 760mm 水银柱产生的压强。</div>
+      <div class="mode-switch">
+        <div class="mode-btn active" data-am="magdeburg">马德堡半球</div>
+        <div class="mode-btn" data-am="cup">覆杯实验</div>
+        <div class="mode-btn" data-am="tube">托里拆利</div>
+      </div>
+      <div class="card" id="atmInfo"></div>
+    `;
+    content.querySelectorAll('.mode-btn[data-am]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        content.querySelectorAll('.mode-btn[data-am]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        atmMode = btn.dataset.am;
+        t = 0;
+        updateAtmInfo();
+        draw();
+      });
+    });
+    updateAtmInfo();
+  } else if (mode === 'pascal') {
+    title.textContent = '⚙️ 帕斯卡原理';
+    legend.innerHTML = '<span class="l-f">施加力</span><span class="l-p">传递压强</span>';
+    content.innerHTML = `
+      <div class="card"><div class="ct">⚙️ 帕斯卡原理</div>
+      加在密闭液体上的压强，能够<b>大小不变</b>地向各个方向传递。</div>
+      <div class="slider-row">
+        <label>小活塞力 F₁:</label>
+        <input type="range" id="pf1" min="10" max="100" step="5" value="30">
+        <span class="val" id="pf1Val">30N</span>
+      </div>
+      <div class="slider-row">
+        <label>面积比 S₂/S₁:</label>
+        <input type="range" id="pRatio" min="2" max="10" step="1" value="5">
+        <span class="val" id="pRatioVal">5倍</span>
+      </div>
+      <div class="info-grid">
+        <div>大活塞力 F₂: <b id="pf2Val">--</b></div>
+        <div>增力倍数: <b id="pMult">--</b></div>
+      </div>
+      <div class="card" style="margin-top:10px"><div class="ct">💡 液压机原理</div>
+      <div class="eq">F₁/S₁ = F₂/S₂ → F₂ = F₁ × S₂/S₁</div>
+      小力通过大面积传递 → 得到大力<br>
+      应用：液压千斤顶、液压制动</div>
+    `;
+    document.getElementById('pf1').addEventListener('input', e => {
+      draw();
+    });
+    document.getElementById('pRatio').addEventListener('input', e => {
+      draw();
+    });
+  } else if (mode === 'quiz') {
+    title.textContent = '🎯 互动练习';
+    legend.innerHTML = '';
+    showQuiz();
+  }
+}
+
+function updateAtmInfo() {
+  const el = document.getElementById('atmInfo');
+  if (!el) return;
+  const infos = {
+    magdeburg: `<div class="ct">🔴 马德堡半球实验</div>
+      1654年，格里克将两个铜半球合在一起抽成真空，<b>16匹马</b>都无法拉开！<br>
+      证明：大气压存在且很大。`,
+    cup: `<div class="ct">🔵 覆杯实验</div>
+      杯中装满水，盖上纸片倒置，纸片不会掉落！<br>
+      原因：大气压从下方托住了纸片和水柱。`,
+    tube: `<div class="ct">🟣 托里拆利实验</div>
+      玻璃管装满水银倒置在水银槽中，<br>
+      水银柱下降到 <b>760mm</b> 处停止。<br>
+      P₀ = ρ水银 × g × h = 1.013 × 10⁵ Pa`
+  };
+  el.innerHTML = infos[atmMode] || '';
+}
+
+function drawSolid() {
+  ctx.clearRect(0, 0, W, H);
+  const cx = W / 2, groundY = 420;
+  const progress = Math.min(t / 40, 1);
+
+  // Ground
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(100, groundY);
+  ctx.lineTo(620, groundY);
+  ctx.stroke();
+  for (let i = 100; i < 620; i += 12) {
+    ctx.beginPath();
+    ctx.moveTo(i, groundY);
+    ctx.lineTo(i - 6, groundY + 8);
+    ctx.stroke();
+  }
+
+  // Block - size represents area
+  const blockW = 40 + area * 1.5;
+  const blockH = 60;
+  const bx = cx - blockW / 2;
+  const by = groundY - blockH;
+
+  // Deformation (sink effect)
+  const sink = Math.min(force / 200 * 15, 15) * progress;
+
+  ctx.fillStyle = 'rgba(239,68,68,0.2)';
+  ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.rect(bx, by + sink, blockW, blockH);
+  ctx.fill();
+  ctx.stroke();
+
+  // Force arrow
+  const arrowLen = force * 1.5 * progress;
+  drawArrow(cx, by + sink - 20, cx, by + sink - 20 - arrowLen, '#f59e0b', 4);
+  ctx.save();
+  ctx.translate(cx, by + sink - 20 - arrowLen);
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'bold 15px sans-serif';
+  ctx.fillText('F=' + force + 'N', 10, 0);
+  ctx.restore();
+
+  // Pressure indication (color intensity on ground)
+  const pressure = force / (area * 0.0001); // Pa
+  const intensity = Math.min(pressure / 50000, 1);
+  ctx.fillStyle = `rgba(239,68,68,${intensity * 0.4})`;
+  ctx.fillRect(bx - 5, groundY, blockW + 10, 15);
+
+  // Area label
+  ctx.fillStyle = '#10b981';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('S = ' + area + 'cm²', cx - 30, groundY + 35);
+
+  // Pressure value
+  const pKPa = (pressure / 1000).toFixed(1);
+  const pEl = document.getElementById('pVal');
+  const effectEl = document.getElementById('pEffect');
+  if (pEl) pEl.textContent = pKPa + ' kPa';
+  if (effectEl) {
+    if (intensity > 0.7) effectEl.textContent = '⚠️ 压强大！';
+    else if (intensity > 0.3) effectEl.textContent = '中等压强';
+    else effectEl.textContent = '压强较小';
+  }
+
+  // Formula
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('P = F / S', 100, 50);
+  ctx.fillText(`P = ${force} / ${(area * 0.0001).toFixed(4)}`, 100, 75);
+  ctx.fillStyle = '#ef4444';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`P = ${pKPa} kPa`, 100, 105);
+
+  // Comparison blocks
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('面积小 → 压强大', 500, 50);
+  ctx.fillText('面积大 → 压强小', 500, 70);
+
+  // Small vs big comparison
+  const compY = 180;
+  // Small area
+  ctx.fillStyle = 'rgba(239,68,68,0.3)';
+  ctx.fillRect(490, compY, 20, 40);
+  ctx.fillStyle = '#ef4444';
+  ctx.font = '11px sans-serif';
+  ctx.fillText('S小→P大', 490, compY + 55);
+
+  // Big area
+  ctx.fillStyle = 'rgba(59,130,246,0.3)';
+  ctx.fillRect(560, compY, 80, 40);
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillText('S大→P小', 565, compY + 55);
+}
+
+function drawLiquid() {
+  ctx.clearRect(0, 0, W, H);
+  const containerX = 200, containerW = 320;
+  const containerTop = 60, containerBottom = 500;
+  const containerH = containerBottom - containerTop;
+
+  // Container walls
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(containerX, containerTop);
+  ctx.lineTo(containerX, containerBottom);
+  ctx.lineTo(containerX + containerW, containerBottom);
+  ctx.lineTo(containerX + containerW, containerTop);
+  ctx.stroke();
+
+  // Liquid fill
+  const liquidTop = containerBottom - liquidDepth;
+  const densityColors = {
+    0.8: 'rgba(245,158,11,0.25)',
+    1.0: 'rgba(59,130,246,0.25)',
+    1.03: 'rgba(16,185,129,0.25)'
+  };
+  const densityBorders = {
+    0.8: '#f59e0b',
+    1.0: '#3b82f6',
+    1.03: '#10b981'
+  };
+
+  ctx.fillStyle = densityColors[liquidDensity] || densityColors[1.0];
+  ctx.fillRect(containerX + 2, liquidTop, containerW - 4, liquidDepth);
+
+  // Liquid surface wave
+  ctx.strokeStyle = densityBorders[liquidDensity] || densityBorders[1.0];
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let x = containerX + 2; x < containerX + containerW - 2; x++) {
+    const waveY = liquidTop + Math.sin((x + t * 2) * 0.05) * 3;
+    if (x === containerX + 2) ctx.moveTo(x, waveY);
+    else ctx.lineTo(x, waveY);
+  }
+  ctx.stroke();
+
+  // Pressure arrows at different depths
+  const depths = [0.25, 0.5, 0.75, 0.95];
+  const cx = containerX + containerW / 2;
+  depths.forEach(d => {
+    const y = liquidTop + liquidDepth * d;
+    const pLen = d * 80;
+    // Left arrow (inward)
+    drawArrow(containerX + 10, y, containerX + 10 + pLen, y, 'rgba(59,130,246,0.7)', 2);
+    // Right arrow (inward)
+    drawArrow(containerX + containerW - 10, y, containerX + containerW - 10 - pLen, y, 'rgba(59,130,246,0.7)', 2);
+    // Down arrow
+    drawArrow(cx, y - 5, cx, y + pLen * 0.6, 'rgba(239,68,68,0.7)', 2);
+  });
+
+  // Depth marker
+  const markerX = containerX + containerW + 30;
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.moveTo(containerX + containerW, liquidTop);
+  ctx.lineTo(markerX + 20, liquidTop);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(containerX + containerW, containerBottom);
+  ctx.lineTo(markerX + 20, containerBottom);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  drawArrow(markerX, liquidTop, markerX, containerBottom, '#f59e0b', 2);
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('h', markerX + 8, (liquidTop + containerBottom) / 2);
+
+  // Pressure calculation
+  const h_m = liquidDepth / 1000; // convert mm to m
+  const P = liquidDensity * 1000 * 9.8 * h_m; // Pa
+  const pKPa = (P / 1000).toFixed(2);
+
+  const lpEl = document.getElementById('lpVal');
+  const lhEl = document.getElementById('lhVal');
+  if (lpEl) lpEl.textContent = pKPa + ' kPa';
+  if (lhEl) lhEl.textContent = (liquidDepth / 100).toFixed(1) + ' cm';
+
+  // Formula display
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('P = ρgh', 50, 50);
+  ctx.fillText(`P = ${liquidDensity * 1000} × 9.8 × ${h_m.toFixed(3)}`, 50, 75);
+  ctx.fillStyle = '#3b82f6';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`P = ${pKPa} kPa`, 50, 105);
+
+  // Bubbles
+  for (let i = 0; i < 5; i++) {
+    const bx = containerX + 40 + i * 60;
+    const by = containerBottom - ((t * 1.5 + i * 80) % liquidDepth);
+    if (by > liquidTop) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(bx, by, 4 + i, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+}
+
+function drawAtmos() {
+  ctx.clearRect(0, 0, W, H);
+  const progress = Math.min(t / 60, 1);
+
+  if (atmMode === 'magdeburg') {
+    // Two hemispheres
+    const cx = W / 2, cy = H / 2;
+    const r = 100;
+    const sep = 30 * progress; // try to separate
+
+    // Left hemisphere
+    ctx.fillStyle = 'rgba(139,92,246,0.3)';
+    ctx.strokeStyle = '#8b5cf6';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx - sep, cy, r, Math.PI * 0.5, Math.PI * 1.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Right hemisphere
+    ctx.beginPath();
+    ctx.arc(cx + sep, cy, r, -Math.PI * 0.5, Math.PI * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Vacuum label inside
+    ctx.fillStyle = 'rgba(139,92,246,0.1)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#8b5cf6';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('真空', cx - 15, cy + 5);
+
+    // Horses pulling
+    // Left horses
+    for (let i = 0; i < 4; i++) {
+      const hx = cx - sep - r - 60 - i * 50;
+      const hy = cy - 40 + i * 25;
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = '24px sans-serif';
+      ctx.fillText('🐴', hx, hy);
+    }
+    // Right horses
+    for (let i = 0; i < 4; i++) {
+      const hx = cx + sep + r + 30 + i * 50;
+      const hy = cy - 40 + i * 25;
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = '24px sans-serif';
+      ctx.fillText('🐴', hx, hy);
+    }
+
+    // Force arrows
+    drawArrow(cx - sep - r, cy, cx - sep - r - 40, cy, '#ef4444', 3);
+    drawArrow(cx + sep + r, cy, cx + sep + r + 40, cy, '#ef4444', 3);
+
+    // Atmospheric pressure arrows (pushing inward)
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+      const ax = cx + (r + 30) * Math.cos(a);
+      const ay = cy + (r + 30) * Math.sin(a);
+      const ix = cx + r * Math.cos(a);
+      const iy = cy + r * Math.sin(a);
+      drawArrow(ax, ay, ix, iy, 'rgba(139,92,246,0.4)', 1.5);
+    }
+
+    // Label
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('大气压从四面八方挤压半球', 150, 50);
+    ctx.fillText('16匹马都无法拉开！', 200, 75);
+
+  } else if (atmMode === 'cup') {
+    // Cup experiment
+    const cx = W / 2, cupTop = 150;
+    const cupW = 100, cupH = 180;
+
+    // Hand
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '36px sans-serif';
+    ctx.fillText('🤚', cx - 18, cupTop - 10);
+
+    // Cup (upside down)
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - cupW / 2, cupTop);
+    ctx.lineTo(cx - cupW / 2 - 10, cupTop + cupH);
+    ctx.lineTo(cx + cupW / 2 + 10, cupTop + cupH);
+    ctx.lineTo(cx + cupW / 2, cupTop);
+    ctx.stroke();
+
+    // Water inside
+    ctx.fillStyle = 'rgba(59,130,246,0.3)';
+    ctx.beginPath();
+    ctx.moveTo(cx - cupW / 2 + 2, cupTop + 5);
+    ctx.lineTo(cx - cupW / 2 - 8, cupTop + cupH - 2);
+    ctx.lineTo(cx + cupW / 2 + 8, cupTop + cupH - 2);
+    ctx.lineTo(cx + cupW / 2 - 2, cupTop + 5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Paper/card at bottom
+    const cardY = cupTop + cupH;
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(cx - cupW / 2 - 15, cardY, cupW + 30, 5);
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('纸片', cx - 12, cardY + 20);
+
+    // Gravity arrow (down)
+    drawArrow(cx, cardY + 25, cx, cardY + 80, '#ef4444', 3);
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('G (水重力)', cx + 10, cardY + 65);
+
+    // Atmospheric pressure arrow (up)
+    drawArrow(cx, cardY + 30, cx, cardY - 10, '#8b5cf6', 4);
+    ctx.fillStyle = '#8b5cf6';
+    ctx.fillText('大气压 F₀', cx + 10, cardY + 10);
+
+    // Explanation
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('大气压 > 水的重力', 150, 50);
+    ctx.fillText('所以纸片不会掉落！', 180, 75);
+
+    // Air pressure arrows around
+    for (let i = 0; i < 8; i++) {
+      const ax = 80 + i * 80;
+      drawArrow(ax, 520, ax, 490, 'rgba(139,92,246,0.3)', 1.5);
+    }
+
+  } else if (atmMode === 'tube') {
+    // Torricelli experiment
+    const tubeX = W / 2 - 20, tubeW = 40;
+    const tubeTop = 60, tubeBottom = 400;
+    const mercuryTop = 130; // 760mm level
+
+    // Glass tube
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(tubeX, tubeTop);
+    ctx.lineTo(tubeX, tubeBottom);
+    ctx.moveTo(tubeX + tubeW, tubeTop);
+    ctx.lineTo(tubeX + tubeW, tubeBottom);
+    ctx.stroke();
+
+    // Sealed top
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(tubeX - 2, tubeTop - 5, tubeW + 4, 10);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('封闭（真空）', tubeX - 30, tubeTop - 15);
+
+    // Mercury in tube
+    ctx.fillStyle = 'rgba(139,92,246,0.4)';
+    ctx.fillRect(tubeX + 2, mercuryTop, tubeW - 4, tubeBottom - mercuryTop);
+
+    // Mercury trough
+    ctx.fillStyle = 'rgba(139,92,246,0.3)';
+    ctx.beginPath();
+    ctx.moveTo(tubeX - 80, tubeBottom);
+    ctx.lineTo(tubeX - 80, tubeBottom + 40);
+    ctx.lineTo(tubeX + tubeW + 80, tubeBottom + 40);
+    ctx.lineTo(tubeX + tubeW + 80, tubeBottom);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#8b5cf6';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Mercury surface in trough
+    ctx.fillStyle = 'rgba(139,92,246,0.4)';
+    ctx.fillRect(tubeX - 78, tubeBottom, tubeW + 156, 5);
+
+    // Height marker
+    const markerX = tubeX + tubeW + 50;
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(tubeX + tubeW, mercuryTop);
+    ctx.lineTo(markerX + 20, mercuryTop);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(tubeX + tubeW, tubeBottom);
+    ctx.lineTo(markerX + 20, tubeBottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    drawArrow(markerX, mercuryTop, markerX, tubeBottom, '#f59e0b', 2);
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('h = 760mm', markerX + 10, (mercuryTop + tubeBottom) / 2);
+
+    // Atmospheric pressure on trough surface
+    drawArrow(tubeX - 50, tubeBottom - 30, tubeX - 50, tubeBottom + 10, '#8b5cf6', 3);
+    ctx.fillStyle = '#8b5cf6';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('P₀', tubeX - 70, tubeBottom - 35);
+
+    // Formula
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('P₀ = ρgh', 100, 50);
+    ctx.fillText('= 13600 × 9.8 × 0.76', 100, 75);
+    ctx.fillStyle = '#8b5cf6';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('= 1.013 × 10⁵ Pa', 100, 105);
+  }
+}
+
+function drawPascal() {
+  ctx.clearRect(0, 0, W, H);
+
+  const f1 = +document.getElementById('pf1')?.value || 30;
+  const ratio = +document.getElementById('pRatio')?.value || 5;
+  const s1 = 10;
+  const s2 = s1 * ratio;
+  const f2 = f1 * ratio;
+
+  // Small piston (left)
+  const sx = 150, sy = 250, sw = 60, sh = 120;
+  // Large piston (right)
+  const lx = 400, ly = 200, lw = 120, lh = 200;
+
+  // Connection pipe
+  ctx.fillStyle = 'rgba(8,145,178,0.15)';
+  ctx.strokeStyle = '#0891b2';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(sx, sy + sh);
+  ctx.lineTo(sx, sy + sh + 60);
+  ctx.lineTo(lx + lw, sy + sh + 60);
+  ctx.lineTo(lx + lw, ly + lh);
+  ctx.lineTo(lx, ly + lh);
+  ctx.lineTo(lx, sy + sh + 60 + (lw - sw));
+  ctx.lineTo(sx + sw, sy + sh + 60 + (lw - sw));
+  ctx.lineTo(sx + sw, sy + sh);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Small cylinder
+  ctx.fillStyle = 'rgba(8,145,178,0.2)';
+  ctx.fillRect(sx, sy, sw, sh);
+  ctx.strokeRect(sx, sy, sw, sh);
+
+  // Large cylinder
+  ctx.fillRect(lx, ly, lw, lh);
+  ctx.strokeRect(lx, ly, lw, lh);
+
+  // Liquid
+  ctx.fillStyle = 'rgba(59,130,246,0.3)';
+  ctx.fillRect(sx + 2, sy + 30, sw - 4, sh - 30);
+  ctx.fillRect(lx + 2, ly + 30, lw - 4, lh - 30);
+
+  // Pistons
+  const p1Push = Math.sin(t * 0.05) * 10;
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(sx + 5, sy + 20 + p1Push, sw - 10, 15);
+  ctx.fillStyle = '#10b981';
+  ctx.fillRect(lx + 5, ly + 20 - p1Push / ratio, lw - 10, 15);
+
+  // Force arrows
+  drawArrow(sx + sw / 2, sy - 10, sx + sw / 2, sy + 20 + p1Push, '#f59e0b', 4);
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('F₁=' + f1 + 'N', sx - 10, sy - 20);
+
+  drawArrow(lx + lw / 2, ly + 20 - p1Push / ratio, lx + lw / 2, ly - 10, '#10b981', 4);
+  ctx.fillStyle = '#10b981';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('F₂=' + f2 + 'N', lx + lw / 2 - 20, ly - 20);
+
+  // Labels
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('S₁=' + s1, sx + 10, sy + sh + 20);
+  ctx.fillText('S₂=' + s2, lx + lw / 2 - 15, ly + lh + 20);
+
+  // Pressure transmission visualization
+  const pulsePos = (t * 3) % 200;
+  ctx.strokeStyle = `rgba(59,130,246,${0.5 - pulsePos / 400})`;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(sx + sw / 2, sy + sh + 30, pulsePos * 0.5, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Formula
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('P = F₁/S₁ = F₂/S₂', 100, 50);
+  ctx.fillText(`F₂ = F₁ × S₂/S₁ = ${f1} × ${ratio} = ${f2}N`, 100, 80);
+
+  // Update info
+  const pf2El = document.getElementById('pf2Val');
+  const pMultEl = document.getElementById('pMult');
+  if (pf2El) pf2El.textContent = f2 + 'N';
+  if (pMultEl) pMultEl.textContent = ratio + '倍';
+  const pf1Val = document.getElementById('pf1Val');
+  const pRatioVal = document.getElementById('pRatioVal');
+  if (pf1Val) pf1Val.textContent = f1 + 'N';
+  if (pRatioVal) pRatioVal.textContent = ratio + '倍';
+}
+
+const quizzes = [
+  { q: '一块砖平放和竖放在水平地面上，哪种情况压强大？', opts: ['平放', '竖放', '一样大', '无法判断'], ans: 1, explain: '竖放时受力面积小，压力不变，由 P=F/S 知压强更大。' },
+  { q: '液体压强与哪个因素无关？', opts: ['液体密度', '深度', '液体体积', 'g值'], ans: 2, explain: 'P=ρgh，液体压强只与密度和深度有关，与液体总体积无关。' },
+  { q: '托里拆利实验中，如果将玻璃管倾斜，水银柱的竖直高度将？', opts: ['变大', '变小', '不变', '无法确定'], ans: 2, explain: '大气压不变，支持的水银柱竖直高度不变（但长度会变长）。' },
+  { q: '下列哪个不是利用大气压的实例？', opts: ['吸管吸饮料', '注射器吸药液', '高压锅煮饭', '吸盘挂钩'], ans: 2, explain: '高压锅是利用增大压强提高沸点，不是利用大气压。' },
+  { q: '液压机小活塞面积 2cm²，大活塞面积 20cm²，在小活塞上加 50N 的力，大活塞能产生多大的力？', opts: ['50N', '100N', '500N', '5000N'], ans: 2, explain: 'F₂ = F₁ × S₂/S₁ = 50 × 20/2 = 500N' },
+  { q: '深海鱼被捕捞到水面后往往会死亡，主要原因是？', opts: ['温度太高', '压强突然减小', '没有食物', '氧气太多'], ans: 1, explain: '深海中压强大，鱼体内器官适应了高压环境，到水面后压强骤降导致内脏损伤。' }
+];
+let quizIdx = 0;
+
+function showQuiz() {
+  const content = document.getElementById('panelContent');
+  const q = quizzes[quizIdx % quizzes.length];
+  content.innerHTML = `
+    <div class="quiz">
+      <div class="quiz-q"><b>第 ${quizIdx + 1} 题</b>：${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-idx="${i}">${String.fromCharCode(65 + i)}. ${o}</div>`).join('')}
+      </div>
+      <div class="quiz-fb" id="quizFb"></div>
+    </div>
+    <div class="mode-switch" style="margin-top:10px">
+      <div class="mode-btn" id="prevQ">← 上一题</div>
+      <div class="mode-btn" id="nextQ">下一题 →</div>
+    </div>
+  `;
+  content.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const idx = +opt.dataset.idx;
+      content.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+      if (idx === q.ans) {
+        opt.classList.add('correct');
+        document.getElementById('quizFb').innerHTML = '✅ 正确！' + q.explain;
+        document.getElementById('quizFb').style.color = '#10b981';
+        const qKey = quizIdx % quizzes.length;
+        if (!quizSolved.has(qKey)) {
+          quizSolved.add(qKey);
+          bumpTotalCorrect();
+        }
+      } else {
+        opt.classList.add('wrong');
+        content.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        document.getElementById('quizFb').innerHTML = '❌ 错误。' + q.explain;
+        document.getElementById('quizFb').style.color = '#ef4444';
+      }
+    });
+  });
+  document.getElementById('prevQ').addEventListener('click', () => { quizIdx = Math.max(0, quizIdx - 1); showQuiz(); });
+  document.getElementById('nextQ').addEventListener('click', () => { quizIdx++; showQuiz(); });
+}
+
+function draw() {
+  if (animId) cancelAnimationFrame(animId);
+
+  if (mode === 'solid') drawSolid();
+  else if (mode === 'liquid') drawLiquid();
+  else if (mode === 'atmos') drawAtmos();
+  else if (mode === 'pascal') drawPascal();
+  else if (mode === 'quiz') {
+    ctx.clearRect(0, 0, W, H);
+    const cx = W / 2, cy = H / 2;
+    // Decorative pressure visualization
+    for (let r = 30; r < 200; r += 25) {
+      ctx.strokeStyle = `rgba(8,145,178,${0.3 - r / 800})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + Math.sin(t * 0.03 + r * 0.1) * 5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillText('P = F/S', cx - 40, cy + 7);
+  }
+
+  t++;
+  animId = requestAnimationFrame(draw);
+}
+
+updatePanel();
+draw();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中物理"></script>
+</body>
+</html>

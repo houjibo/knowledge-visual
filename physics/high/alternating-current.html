@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>交变电流 · 高中物理互动可视化</title>
+<style>
+  :root {
+    --primary: #a3e635;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1a2e05 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #bef264; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #84cc16, #a3e635, #bef264); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(163,230,53,.4); color: #1a2e05; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .hidden { display: none !important; }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .stage > * { min-width: 0; }
+  @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #243b0b 0%, #0f172a 100%); touch-action: none; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #cbd5e1; flex-wrap: wrap; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #bef264; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--primary); min-height: 44px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #bef264; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid var(--primary); line-height: 1.7; font-size: 14px; }
+  .concept-card.warn { border-color: #f59e0b; }
+  .concept-card .title { font-weight: 700; margin-bottom: 4px; color: var(--primary); }
+  .concept-card.warn .title { color: #f59e0b; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(163,230,53,0.08); border-radius: 12px; border: 1px solid rgba(163,230,53,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #bef264; min-height: 18px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #1a2e05; font-weight: 700; min-height: 44px; min-width: 44px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  .practice-item { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+  .practice-item h4 { color: #e2e8f0; margin-bottom: 10px; font-size: 15px; line-height: 1.6; }
+  .practice-opts { display: grid; gap: 6px; }
+  .practice-fb { margin-top: 8px; font-size: 13px; min-height: 18px; line-height: 1.6; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 28px; }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .container { padding: 10px 14px; }
+    .breadcrumb { padding: 6px 10px; font-size: 12px; margin-bottom: 8px; }
+    header { margin-bottom: 10px; }
+    header h1 { font-size: 1.5rem; }
+    header p { font-size: 12px; margin-top: 2px; }
+    .tabs { gap: 6px; margin-bottom: 10px; }
+    .tab { padding: 6px 14px; font-size: 12px; min-height: 36px; }
+    .canvas-wrap, .panel { padding: 10px; border-radius: 12px; }
+    .panel h3 { font-size: 1rem; margin-bottom: 8px; }
+    .equation { padding: 8px; font-size: 0.95rem; margin: 6px 0; }
+    .concept-card { padding: 10px; margin: 6px 0; font-size: 13px; }
+    .slider-row { margin: 6px 0; font-size: 13px; }
+  }
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    header h1 { font-size: 1.6rem; }
+    .tabs { gap: 6px; }
+    .tab { padding: 8px 12px; font-size: 13px; }
+    .slider-row { flex-wrap: wrap; }
+    .slider-row label { flex: 0 0 auto; }
+    .slider-row .val { flex: 0 0 auto; }
+    .slider-row input[type=range] { flex: 1 1 100%; order: 3; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">🔭 物理</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">高中</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">交变电流</span>
+    <span id="done-mark" style="margin-left:auto;color:#10b981;font-weight:600;"></span>
+  </nav>
+
+  <header>
+    <h1>🔌 交变电流</h1>
+    <p>正弦交流电的产生 · 峰值与有效值 · 变压器 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 探究</div>
+    <div class="tab" data-mode="practice">🧪 计算</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 探究模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div>
+        <div class="canvas-wrap">
+          <canvas id="acCanvas" width="720" height="480"></canvas>
+          <div class="legend">
+            <span>线圈在磁场中旋转 → 磁通量变化 → 感应电动势</span>
+            <span>e = E<sub>m</sub>·sin(ωt)</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>发电机模型</h3>
+        <div class="slider-row">
+          <label>转速（频率 f）</label>
+          <input type="range" id="sliderF" min="0.2" max="2" step="0.1" value="0.5">
+          <span class="val" id="valF">0.5 Hz</span>
+        </div>
+        <div class="slider-row">
+          <label>峰值电压 Eₘ</label>
+          <input type="range" id="sliderE" min="50" max="311" step="1" value="311">
+          <span class="val" id="valE">311 V</span>
+        </div>
+        <div class="info-grid">
+          <div>有效值 E = Eₘ/√2<br><b id="infoEff">220 V</b></div>
+          <div>周期 T = 1/f<br><b id="infoT">2.00 s</b></div>
+        </div>
+        <div class="equation">瞬时值：<b>e = Eₘ sin(ωt)</b>，ω = 2πf<br>有效值：<b>E = Eₘ/√2 ≈ 0.707 Eₘ</b></div>
+        <div class="concept-card">
+          <div class="title">中性面：e = 0 的位置</div>
+          线圈平面<b>垂直于磁场</b>时（中性面），磁通量最大但<b>变化率为零</b> → 感应电动势为零，电流在此<b>改变方向</b>。线圈每转一周，电流方向改变<b>两次</b>。
+        </div>
+        <div class="concept-card">
+          <div class="title">为什么用"有效值"</div>
+          交流电时刻变化，用<b>热效应等效</b>的直流值衡量：让交流和直流通过相同电阻，一个周期内产生相同热量，该直流值即有效值。电表读数、电器标称值（220V）都是<b>有效值</b>。
+        </div>
+        <div class="concept-card warn">
+          <div class="title">⚠️ 变压器（理想）</div>
+          只适用于<b>交流</b>！U₁/U₂ = n₁/n₂：匝数比决定电压比。升压输电减小电流 → 降低线路热损耗（P<sub>损</sub> = I²R），所以远距离输电用高压。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 计算模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="practice-item" id="p1">
+      <h4>1️⃣ 我国市电 220 V 是有效值，其峰值约为？（√2 ≈ 1.41）</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">156 V</button>
+        <button class="quiz-opt" data-ok="1">311 V</button>
+        <button class="quiz-opt" data-ok="0">380 V</button>
+        <button class="quiz-opt" data-ok="0">220 V</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+    <div class="practice-item" id="p2">
+      <h4>2️⃣ 某交流电频率 f = 50 Hz，其周期 T 和角频率 ω 分别为？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">T = 0.02 s，ω = 50π rad/s</button>
+        <button class="quiz-opt" data-ok="1">T = 0.02 s，ω = 100π rad/s</button>
+        <button class="quiz-opt" data-ok="0">T = 0.05 s，ω = 100π rad/s</button>
+        <button class="quiz-opt" data-ok="0">T = 0.02 s，ω = 3140 rad/s</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+    <div class="practice-item" id="p3">
+      <h4>3️⃣ 理想变压器原线圈 1100 匝、副线圈 100 匝，原线圈接 220 V 交流电，副线圈输出电压为？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">2420 V</button>
+        <button class="quiz-opt" data-ok="1">20 V</button>
+        <button class="quiz-opt" data-ok="0">200 V</button>
+        <button class="quiz-opt" data-ok="0">11 V</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="panel">
+      <h3>🎯 交变电流 · 小测验（5 题，≥80% 通关）</h3>
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">点击「开始答题」</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFb"></div>
+        <div class="quiz-nav">
+          <button id="quizStart">开始答题</button>
+          <button id="quizPrev" disabled>上一题</button>
+          <button id="quizNext" disabled>下一题</button>
+        </div>
+        <div class="quiz-result hidden" id="quizResult"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>高中物理 · 交变电流 · 互动可视化 | 知识可视化全学科项目</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+let mode = 'learn';
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+}));
+
+/* ============================================================
+ * 探究模式
+ * ============================================================ */
+const canvas = document.getElementById('acCanvas');
+const ctx = canvas.getContext('2d');
+const sliderF = document.getElementById('sliderF');
+const sliderE = document.getElementById('sliderE');
+let lastT = performance.now();
+let angle = 0;
+let trace = [];
+
+function st() {
+  const f = +sliderF.value, Em = +sliderE.value;
+  return { f, Em, T: 1 / f, Eff: Em / Math.SQRT2, omega: 2 * Math.PI * f };
+}
+function updInfo() {
+  const s = st();
+  document.getElementById('valF').textContent = s.f.toFixed(1) + ' Hz';
+  document.getElementById('valE').textContent = s.Em + ' V';
+  document.getElementById('infoEff').textContent = s.Eff.toFixed(0) + ' V';
+  document.getElementById('infoT').textContent = s.T.toFixed(2) + ' s';
+}
+sliderF.addEventListener('input', updInfo);
+sliderE.addEventListener('input', updInfo);
+
+function draw(now) {
+  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+  const s = st();
+  angle += s.omega * dt;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  /* ---- 左：旋转线圈 ---- */
+  const cx = 190, cy = 220;
+  // 磁极 N（左红）S（右蓝）
+  ctx.fillStyle = '#f472b6';
+  ctx.fillRect(cx - 130, cy - 90, 34, 180);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 18px sans-serif';
+  ctx.fillText('N', cx - 120, cy + 6);
+  ctx.fillStyle = '#60a5fa';
+  ctx.fillRect(cx + 96, cy - 90, 34, 180);
+  ctx.fillStyle = '#fff';
+  ctx.fillText('S', cx + 106, cy + 6);
+  // 磁感线
+  ctx.strokeStyle = 'rgba(244,114,182,0.35)'; ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 5]);
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath(); ctx.moveTo(cx - 96, cy + i * 36); ctx.lineTo(cx + 96, cy + i * 36); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  // 旋转线圈（投影为椭圆宽度变化）
+  const squash = Math.cos(angle);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(Math.max(0.08, Math.abs(squash)) * Math.sign(squash || 1), 1);
+  ctx.strokeStyle = '#a3e635'; ctx.lineWidth = 4;
+  ctx.strokeRect(-70, -55, 140, 110);
+  ctx.restore();
+  // 转轴
+  ctx.fillStyle = '#94a3b8';
+  ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fill();
+  // 中性面标记（竖直）
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.setLineDash([3, 4]);
+  ctx.beginPath(); ctx.moveTo(cx, cy - 80); ctx.lineTo(cx, cy + 80); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#94a3b8'; ctx.font = '11px sans-serif';
+  ctx.fillText('中性面', cx + 8, cy - 68);
+  // 当前 e 值
+  const e = s.Em * Math.sin(angle);
+  ctx.fillStyle = '#bef264'; ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(`e = ${e.toFixed(0)} V`, cx - 40, cy + 130);
+  const near0 = Math.abs(Math.sin(angle)) < 0.15;
+  if (near0) {
+    ctx.fillStyle = '#fbbf24'; ctx.font = '12px sans-serif';
+    ctx.fillText('经过中性面：e≈0，电流换向', cx - 84, cy + 152);
+  }
+
+  /* ---- 右：e-t 图像 ---- */
+  const gx = 360, gy = 60, gw = 330, gh = 260, gyMid = gy + gh / 2;
+  ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5;
+  ctx.strokeRect(gx, gy, gw, gh);
+  ctx.beginPath(); ctx.moveTo(gx, gyMid); ctx.lineTo(gx + gw, gyMid); ctx.stroke();
+  ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
+  ctx.fillText('e–t 图像', gx + 8, gy - 8);
+  // 峰值/有效值参考线
+  const yEm = gyMid - 80, yEff = gyMid - 80 / Math.SQRT2;
+  ctx.strokeStyle = 'rgba(251,191,36,0.5)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(gx, yEm); ctx.lineTo(gx + gw, yEm); ctx.stroke();
+  ctx.strokeStyle = 'rgba(74,222,128,0.5)';
+  ctx.beginPath(); ctx.moveTo(gx, yEff); ctx.lineTo(gx + gw, yEff); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#fbbf24'; ctx.font = '11px sans-serif';
+  ctx.fillText(`+Eₘ=${s.Em}V`, gx + 4, yEm - 4);
+  ctx.fillStyle = '#4ade80';
+  ctx.fillText(`+E=${s.Eff.toFixed(0)}V(有效值)`, gx + 4, yEff - 4);
+  // 轨迹
+  trace.push(Math.sin(angle));
+  const maxN = Math.floor(gw / 1.5);
+  if (trace.length > maxN) trace.shift();
+  ctx.strokeStyle = '#a3e635'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  trace.forEach((v, i) => {
+    const px = gx + i * 1.5, py = gyMid - v * 80;
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  });
+  ctx.stroke();
+  // 底部参数
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText(`f = ${s.f.toFixed(1)} Hz　ω = ${(s.omega).toFixed(1)} rad/s　T = ${s.T.toFixed(2)} s`, 200, 430);
+  requestAnimationFrame(draw);
+}
+updInfo();
+requestAnimationFrame(draw);
+
+/* ============================================================
+ * 计算模式
+ * ============================================================ */
+const PRACTICE_TIPS = {
+  p1: '✅ 正确！Eₘ = 220 × √2 ≈ 220 × 1.41 ≈ 311 V。',
+  p2: '✅ 正确！T = 1/f = 0.02 s；ω = 2πf = 100π rad/s ≈ 314 rad/s。',
+  p3: '✅ 正确！U₂ = U₁·n₂/n₁ = 220 × 100/1100 = 20 V。'
+};
+document.querySelectorAll('.practice-item').forEach(item => {
+  const fb = item.querySelector('.practice-fb');
+  item.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const ok = opt.dataset.ok === '1';
+      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      opt.classList.add(ok ? 'correct' : 'wrong');
+      fb.style.color = ok ? '#10b981' : '#ef4444';
+      fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
+    });
+  });
+});
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const QUIZ = [
+  { q: '交流发电机线圈经过中性面时（　　）',
+    opts: ['感应电动势最大', '感应电动势为零，电流改变方向', '磁通量为零', '磁通量变化率最大'],
+    ans: 1, ex: '中性面：磁通量最大但变化率为零 → e = 0，电流在此换向。' },
+  { q: '正弦交流电的有效值 E 与峰值 Eₘ 的关系是（　　）',
+    opts: ['E = Eₘ/2', 'E = Eₘ/√2', 'E = Eₘ', 'E = √2 Eₘ'],
+    ans: 1, ex: 'E = Eₘ/√2 ≈ 0.707Eₘ，由热效应等效定义。' },
+  { q: '我们通常说的市电"220 V"指的是（　　）',
+    opts: ['峰值', '有效值', '瞬时值', '平均值'],
+    ans: 1, ex: '电表读数和电器标称值都是有效值；峰值为 311 V。' },
+  { q: '理想变压器中，原副线圈电压与匝数的关系是（　　）',
+    opts: ['U₁/U₂ = n₂/n₁', 'U₁/U₂ = n₁/n₂', 'U₁n₁ = U₂n₂', '电压与匝数无关'],
+    ans: 1, ex: 'U₁/U₂ = n₁/n₂（电压比 = 匝数比）；功率守恒则电流比相反。' },
+  { q: '远距离输电采用高压的目的是（　　）',
+    opts: ['增大输电电流', '减小线路热损耗', '提高输电速度', '增大电阻'],
+    ans: 1, ex: '功率一定时 U 越大 I 越小，线路损耗 P = I²R 大幅降低。' }
+];
+let qi = 0, qScore = 0, qAnswered = false;
+const quizQ = document.getElementById('quizQ');
+const quizOpts = document.getElementById('quizOpts');
+const quizFb = document.getElementById('quizFb');
+const quizResult = document.getElementById('quizResult');
+const btnStart = document.getElementById('quizStart');
+const btnPrev = document.getElementById('quizPrev');
+const btnNext = document.getElementById('quizNext');
+
+function renderQ() {
+  const q = QUIZ[qi];
+  qAnswered = false;
+  quizQ.textContent = `第${qi + 1}题 / 共${QUIZ.length}题：${q.q}`;
+  quizFb.textContent = '';
+  quizOpts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const d = document.createElement('div');
+    d.className = 'quiz-opt';
+    d.textContent = o;
+    d.addEventListener('click', () => {
+      if (qAnswered) return;
+      qAnswered = true;
+      const ok = i === q.ans;
+      if (ok) qScore++;
+      quizOpts.children[q.ans].classList.add('correct');
+      if (!ok) d.classList.add('wrong');
+      quizFb.textContent = (ok ? '✅ ' : '❌ ') + q.ex;
+    });
+    quizOpts.appendChild(d);
+  });
+  btnPrev.disabled = qi === 0;
+  btnNext.disabled = false;
+  btnNext.textContent = qi === QUIZ.length - 1 ? '查看成绩' : '下一题';
+}
+function finishQuiz() {
+  const pass = qScore >= Math.ceil(QUIZ.length * 0.8);
+  quizQ.textContent = '测验完成！';
+  quizOpts.innerHTML = '';
+  quizFb.textContent = '';
+  quizResult.classList.remove('hidden');
+  quizResult.innerHTML = `得分：<b>${qScore} / ${QUIZ.length}</b>　${pass ? '🎉 通关！' : '继续加油，再试一次！'}`;
+  btnNext.disabled = true;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('alternating-current');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+btnStart.addEventListener('click', () => {
+  qi = 0; qScore = 0;
+  quizResult.classList.add('hidden');
+  btnStart.textContent = '重新答题';
+  renderQ();
+});
+btnPrev.addEventListener('click', () => { if (qi > 0) { qi--; renderQ(); } });
+btnNext.addEventListener('click', () => {
+  if (qi < QUIZ.length - 1) { qi++; renderQ(); }
+  else finishQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('alternating-current')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+</body>
+</html>

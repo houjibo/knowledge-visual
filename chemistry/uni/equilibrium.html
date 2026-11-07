@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>化学平衡 · 大学化学互动可视化</title>
+<style>
+  :root {
+    --primary: #6366f1;
+    --accent: #f59e0b;
+    --fwd: #ef4444;
+    --rev: #3b82f6;
+    --eq: #10b981;
+    --phase-s: #60a5fa;
+    --phase-l: #f87171;
+    --phase-g: #a78bfa;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.3rem; background: linear-gradient(90deg, var(--fwd), var(--primary), var(--eq)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 0.95rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 11px 22px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 14px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(99,102,241,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .legend .l-fwd::before { background: var(--fwd); }
+  .legend .l-rev::before { background: var(--rev); }
+  .legend .l-eq::before { background: var(--eq); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 660px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 10px; color: #e2e8f0; }
+
+  .concept-box { font-size: 0.98rem; text-align: left; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 10px 0; line-height: 1.85; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--fwd); font-weight: 600; }
+  .concept-box .hl2 { color: var(--rev); font-weight: 600; }
+  .concept-box .hl3 { color: var(--eq); font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--accent); font-weight: 600; font-size: 12px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 7px 14px; border-radius: 10px; background: rgba(99,102,241,0.1); border: 2px solid rgba(99,102,241,0.3); cursor: pointer; font-size: 13px; color: #a5b4fc; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 12px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; line-height: 1.5; }
+  .info-grid b { color: #fbbf24; }
+
+  .formula-box { padding: 12px; background: rgba(99,102,241,0.08); border-radius: 12px; margin: 10px 0; font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; color: #a5b4fc; border: 1px solid rgba(99,102,241,0.2); }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(99,102,241,0.1); border-radius: 14px; border: 2px solid rgba(99,102,241,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 13px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; color: #a5b4fc; min-height: 20px; line-height: 1.5; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 12px; }
+  .quiz-nav button { padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚖️ 化学平衡与相平衡</h1>
+    <p>大学化学 · 平衡常数 · 相图 · 杠杆规则<span id="done-mark" style="color:#10b981;font-weight:700;margin-left:8px;font-size:14px;"></span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="0">① 化学平衡常数</div>
+    <div class="tab" data-tab="1">② 相图可视化</div>
+    <div class="tab" data-tab="2">③ 杠杆规则</div>
+    <div class="tab" data-tab="3">④ 综合练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <!-- Section 0: Equilibrium Constant -->
+      <div class="section active" id="sec0">
+        <canvas id="cv0" width="640" height="480"></canvas>
+        <div class="legend">
+          <span class="l-fwd">正反应速率</span>
+          <span class="l-rev">逆反应速率</span>
+          <span class="l-eq">平衡浓度</span>
+        </div>
+      </div>
+      <!-- Section 1: Phase Diagram -->
+      <div class="section" id="sec1">
+        <canvas id="cv1" width="640" height="480"></canvas>
+        <div class="legend">
+          <span class="l-fwd">固相区</span>
+          <span class="l-rev">液相区</span>
+          <span style="display:inline-flex;align-items:center"><span style="width:10px;height:10px;border-radius:50%;background:var(--phase-g);display:inline-block;margin-right:5px"></span>气相区</span>
+        </div>
+      </div>
+      <!-- Section 2: Lever Rule -->
+      <div class="section" id="sec2">
+        <canvas id="cv2" width="640" height="480"></canvas>
+        <div class="legend">
+          <span class="l-fwd">α 相</span>
+          <span class="l-rev">β 相</span>
+          <span class="l-eq">系统点</span>
+        </div>
+      </div>
+      <!-- Section 3: Quiz -->
+      <div class="section" id="sec3">
+        <canvas id="cv3" width="640" height="480"></canvas>
+        <div class="legend"><span class="l-eq">知识检测</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <!-- Panel 0 -->
+      <div class="section active" id="pnl0">
+        <h3>🧪 化学平衡常数</h3>
+        <div class="concept-box">
+          对于可逆反应 <span class="hl">aA + bB ⇌ cC + dD</span>，<br>
+          平衡常数：<span class="hl3">K = [C]ᶜ[D]ᵈ / [A]ᵃ[B]ᵇ</span><br>
+          • K > 1 → 正反应有利（产物为主）<br>
+          • K < 1 → 逆反应有利（反应物为主）<br>
+          • 温度改变，K 值改变
+        </div>
+        <div class="formula-box">K<sub>c</sub> = Π[C<sub>i</sub>]^ν<sub>i</sub> &nbsp;&nbsp; ΔG° = −RT ln K</div>
+        <div class="slider-row">
+          <label>温度 T (K)</label>
+          <input type="range" id="s0t" min="200" max="1000" value="500" step="10">
+          <span class="val" id="v0t">500 K</span>
+        </div>
+        <div class="slider-row">
+          <label>ΔH° (kJ/mol)</label>
+          <input type="range" id="s0h" min="-100" max="100" value="-40" step="5">
+          <span class="val" id="v0h">-40</span>
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="kinetic">速率-时间</div>
+          <div class="mode-btn" data-mode="concen">浓度-时间</div>
+          <div class="mode-btn" data-mode="energy">能量曲线</div>
+        </div>
+        <div class="info-grid">
+          <div><b>K 值</b><br><span id="info0k">—</span></div>
+          <div><b>ΔG°</b><br><span id="info0g">—</span></div>
+          <div><b>正反应速率</b><br><span id="info0f">—</span></div>
+          <div><b>逆反应速率</b><br><span id="info0r">—</span></div>
+        </div>
+      </div>
+
+      <!-- Panel 1 -->
+      <div class="section" id="pnl1">
+        <h3>🌡️ 单组分相图（水）</h3>
+        <div class="concept-box">
+          相图描述物质在不同 <span class="hl">温度(T)</span> 和 <span class="hl2">压力(P)</span> 下的稳定相。<br>
+          • <span class="hl">三相点</span>：固-液-气共存（T=0.01°C, P=611Pa）<br>
+          • <span class="hl2">临界点</span>：液-气不可区分（T=374°C, P=22.1MPa）<br>
+          • 相律：<span class="hl3">F = C − P + 2</span>
+        </div>
+        <div class="formula-box">F = C − P + 2 &nbsp; (Gibbs 相律)</div>
+        <div class="slider-row">
+          <label>温度 (°C)</label>
+          <input type="range" id="s1t" min="-20" max="400" value="25" step="1">
+          <span class="val" id="v1t">25 °C</span>
+        </div>
+        <div class="slider-row">
+          <label>压力 (MPa)</label>
+          <input type="range" id="s1p" min="0" max="25" value="0.1" step="0.1">
+          <span class="val" id="v1p">0.1 MPa</span>
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="water">水相图</div>
+          <div class="mode-btn" data-mode="co2">CO₂ 相图</div>
+        </div>
+        <div class="info-grid">
+          <div><b>当前相态</b><br><span id="info1phase">—</span></div>
+          <div><b>自由度 F</b><br><span id="info1f">—</span></div>
+          <div><b>三相点</b><br><span id="info1tp">—</span></div>
+          <div><b>临界点</b><br><span id="info1cp">—</span></div>
+        </div>
+      </div>
+
+      <!-- Panel 2 -->
+      <div class="section" id="pnl2">
+        <h3>⚖️ 杠杆规则</h3>
+        <div class="concept-box">
+          在二组分系统的两相区中，<span class="hl">杠杆规则</span>用于计算各相的相对量：<br>
+          <span class="hl3">n_α × l_α = n_β × l_β</span><br>
+          • l_α：系统点到 α 相边界的距离<br>
+          • l_β：系统点到 β 相边界的距离<br>
+          • 类似力学杠杆：支点 = 系统点
+        </div>
+        <div class="formula-box">x_α = (x_β' − x_0) / (x_β' − x_α') &nbsp; (质量分数)</div>
+        <div class="slider-row">
+          <label>组成 x₀</label>
+          <input type="range" id="s2x" min="0" max="100" value="40" step="1">
+          <span class="val" id="v2x">0.40</span>
+        </div>
+        <div class="slider-row">
+          <label>温度</label>
+          <input type="range" id="s2t" min="0" max="100" value="50" step="1">
+          <span class="val" id="v2t">50 %</span>
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="binary">二元相图</div>
+          <div class="mode-btn" data-mode="eutectic">共晶系统</div>
+        </div>
+        <div class="info-grid">
+          <div><b>α 相分数</b><br><span id="info2a">—</span></div>
+          <div><b>β 相分数</b><br><span id="info2b">—</span></div>
+          <div><b>α 相组成</b><br><span id="info2ax">—</span></div>
+          <div><b>β 相组成</b><br><span id="info2bx">—</span></div>
+        </div>
+      </div>
+
+      <!-- Panel 3: Quiz -->
+      <div class="section" id="pnl3">
+        <h3>📝 综合练习</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="q3q">—</div>
+          <div class="quiz-opts" id="q3opts"></div>
+          <div class="quiz-feedback" id="q3fb"></div>
+          <div class="quiz-nav">
+            <button id="q3prev">上一题</button>
+            <button id="q3next">下一题</button>
+            <span style="flex:1"></span>
+            <span id="q3score" style="font-size:13px;color:#a5b4fc;align-self:center"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ===== Tab switching ===== */
+const tabs = document.querySelectorAll('.tab');
+const secs = [document.getElementById('sec0'),document.getElementById('sec1'),document.getElementById('sec2'),document.getElementById('sec3')];
+const pnls = [document.getElementById('pnl0'),document.getElementById('pnl1'),document.getElementById('pnl2'),document.getElementById('pnl3')];
+let curTab = 0;
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  curTab = +t.dataset.tab;
+  secs.forEach((s,i) => s.classList.toggle('active', i===curTab));
+  pnls.forEach((p,i) => p.classList.toggle('active', i===curTab));
+}));
+
+/* ===== Section 0: Equilibrium Constant ===== */
+const cv0 = document.getElementById('cv0'), ctx0 = cv0.getContext('2d');
+let mode0 = 'kinetic', animT0 = 0;
+const s0t = document.getElementById('s0t'), s0h = document.getElementById('s0h');
+const v0t = document.getElementById('v0t'), v0h = document.getElementById('v0h');
+
+function calcK(T, dH) {
+  const R = 8.314;
+  const dG = dH * 1000 - T * 50; // simplified: dS° ~ 50 J/mol·K
+  const K = Math.exp(-dG / (R * T));
+  return { K, dG };
+}
+
+function drawKinetic(t) {
+  const W = cv0.width, H = cv0.height;
+  ctx0.clearRect(0,0,W,H);
+  const T = +s0t.value, dH = +s0h.value;
+  const { K } = calcK(T, dH);
+  const kf = K > 1 ? Math.min(K * 0.5, 5) : 0.5;
+  const kr = K > 1 ? 0.5 : Math.min(0.5 / K, 5);
+
+  // axes
+  ctx0.strokeStyle = '#475569'; ctx0.lineWidth = 1;
+  ctx0.beginPath(); ctx0.moveTo(60,30); ctx0.lineTo(60,H-40); ctx0.lineTo(W-20,H-40); ctx0.stroke();
+  ctx0.fillStyle = '#94a3b8'; ctx0.font = '12px sans-serif';
+  ctx0.fillText('速率 v', 10, 25); ctx0.fillText('时间 t', W-50, H-20);
+
+  // forward rate decays, reverse rate increases, meet at equilibrium
+  const eqLevel = kf * kr / (kf + kr);
+  for (let x = 0; x < W - 80; x++) {
+    const tt = x / (W - 80) * 5;
+    const fwd = kf * Math.exp(-kr * tt) + eqLevel * (1 - Math.exp(-kr * tt));
+    const rev = kr * (1 - Math.exp(-kf * tt)) + eqLevel * Math.exp(-kf * tt);
+    const yf = H - 40 - (fwd / (kf + 0.1)) * (H - 80);
+    const yr = H - 40 - (rev / (kf + 0.1)) * (H - 80);
+    if (x === 0) {
+      ctx0.strokeStyle = '#ef4444'; ctx0.beginPath(); ctx0.moveTo(60 + x, yf);
+    } else {
+      ctx0.lineTo(60 + x, yf);
+    }
+  }
+  ctx0.stroke();
+  ctx0.strokeStyle = '#3b82f6'; ctx0.beginPath();
+  for (let x = 0; x < W - 80; x++) {
+    const tt = x / (W - 80) * 5;
+    const rev = kr * (1 - Math.exp(-kf * tt)) + eqLevel * Math.exp(-kf * tt);
+    const yr = H - 40 - (rev / (kf + 0.1)) * (H - 80);
+    if (x === 0) ctx0.moveTo(60 + x, yr); else ctx0.lineTo(60 + x, yr);
+  }
+  ctx0.stroke();
+
+  // equilibrium line
+  const yeq = H - 40 - (eqLevel / (kf + 0.1)) * (H - 80);
+  ctx0.setLineDash([6,4]); ctx0.strokeStyle = '#10b981';
+  ctx0.beginPath(); ctx0.moveTo(60, yeq); ctx0.lineTo(W-20, yeq); ctx0.stroke();
+  ctx0.setLineDash([]);
+  ctx0.fillStyle = '#10b981'; ctx0.font = '13px sans-serif';
+  ctx0.fillText('平衡 v_eq', W - 90, yeq - 6);
+
+  document.getElementById('info0k').textContent = K.toFixed(3);
+  document.getElementById('info0g').textContent = (calcK(T,dH).dG/1000).toFixed(1) + ' kJ/mol';
+  document.getElementById('info0f').textContent = kf.toFixed(3);
+  document.getElementById('info0r').textContent = kr.toFixed(3);
+}
+
+function drawConcen() {
+  const W = cv0.width, H = cv0.height;
+  ctx0.clearRect(0,0,W,H);
+  const T = +s0t.value, dH = +s0h.value;
+  const { K } = calcK(T, dH);
+
+  ctx0.strokeStyle = '#475569'; ctx0.lineWidth = 1;
+  ctx0.beginPath(); ctx0.moveTo(60,30); ctx0.lineTo(60,H-40); ctx0.lineTo(W-20,H-40); ctx0.stroke();
+  ctx0.fillStyle = '#94a3b8'; ctx0.font = '12px sans-serif';
+  ctx0.fillText('浓度 c', 10, 25); ctx0.fillText('时间 t', W-50, H-20);
+
+  const cA0 = 1.0, cC0 = 0;
+  const cAeq = cA0 / (1 + K), cCeq = cC0 + K * cA0 / (1 + K);
+
+  // Reactant A decays
+  ctx0.strokeStyle = '#ef4444'; ctx0.beginPath();
+  for (let x = 0; x < W - 80; x++) {
+    const tt = x / (W - 80) * 5;
+    const c = cAeq + (cA0 - cAeq) * Math.exp(-2 * tt);
+    const y = H - 40 - c * (H - 80);
+    if (x === 0) ctx0.moveTo(60 + x, y); else ctx0.lineTo(60 + x, y);
+  }
+  ctx0.stroke();
+  ctx0.fillStyle = '#ef4444'; ctx0.fillText('[A]', W - 60, H - 40 - cAeq * (H - 80) + 4);
+
+  // Product C increases
+  ctx0.strokeStyle = '#3b82f6'; ctx0.beginPath();
+  for (let x = 0; x < W - 80; x++) {
+    const tt = x / (W - 80) * 5;
+    const c = cCeq - (cCeq - cC0) * Math.exp(-2 * tt);
+    const y = H - 40 - c * (H - 80);
+    if (x === 0) ctx0.moveTo(60 + x, y); else ctx0.lineTo(60 + x, y);
+  }
+  ctx0.stroke();
+  ctx0.fillStyle = '#3b82f6'; ctx0.fillText('[C]', W - 60, H - 40 - cCeq * (H - 80) - 6);
+
+  // equilibrium dashed lines
+  ctx0.setLineDash([4,3]); ctx0.strokeStyle = '#10b981';
+  [cAeq, cCeq].forEach(c => {
+    const y = H - 40 - c * (H - 80);
+    ctx0.beginPath(); ctx0.moveTo(60,y); ctx0.lineTo(W-20,y); ctx0.stroke();
+  });
+  ctx0.setLineDash([]);
+
+  document.getElementById('info0k').textContent = K.toFixed(3);
+  document.getElementById('info0g').textContent = (calcK(T,dH).dG/1000).toFixed(1) + ' kJ/mol';
+}
+
+function drawEnergy() {
+  const W = cv0.width, H = cv0.height;
+  ctx0.clearRect(0,0,W,H);
+  const dH = +s0h.value;
+
+  ctx0.strokeStyle = '#475569'; ctx0.lineWidth = 1;
+  ctx0.beginPath(); ctx0.moveTo(60,30); ctx0.lineTo(60,H-40); ctx0.lineTo(W-20,H-40); ctx0.stroke();
+  ctx0.fillStyle = '#94a3b8'; ctx0.font = '12px sans-serif';
+  ctx0.fillText('能量 E', 10, 25); ctx0.fillText('反应进程', W-70, H-20);
+
+  const reactantY = H * 0.5;
+  const productY = reactantY - dH * 2;
+  const peakY = Math.min(reactantY, productY) - 80;
+
+  // energy curve
+  ctx0.strokeStyle = '#f59e0b'; ctx0.lineWidth = 3; ctx0.beginPath();
+  for (let x = 0; x <= W - 100; x++) {
+    const t = x / (W - 100);
+    let y;
+    if (t < 0.3) y = reactantY;
+    else if (t < 0.5) {
+      const u = (t - 0.3) / 0.2;
+      y = reactantY + (peakY - reactantY) * Math.sin(u * Math.PI / 2);
+    } else if (t < 0.7) {
+      const u = (t - 0.5) / 0.2;
+      y = peakY + (productY - peakY) * Math.sin(u * Math.PI / 2);
+    } else y = productY;
+    if (x === 0) ctx0.moveTo(60 + x, y); else ctx0.lineTo(60 + x, y);
+  }
+  ctx0.stroke(); ctx0.lineWidth = 1;
+
+  // labels
+  ctx0.fillStyle = '#ef4444'; ctx0.font = '14px sans-serif';
+  ctx0.fillText('反应物', 70, reactantY - 10);
+  ctx0.fillStyle = '#3b82f6';
+  ctx0.fillText('产物', W - 80, productY - 10);
+  ctx0.fillStyle = '#f59e0b';
+  ctx0.fillText('Ea (活化能)', W/2 - 30, peakY - 10);
+
+  // ΔH arrow
+  ctx0.strokeStyle = '#10b981'; ctx0.setLineDash([4,3]);
+  ctx0.beginPath(); ctx0.moveTo(80, reactantY); ctx0.lineTo(80, productY); ctx0.stroke();
+  ctx0.setLineDash([]);
+  ctx0.fillStyle = '#10b981';
+  ctx0.fillText('ΔH = ' + dH + ' kJ/mol', 90, (reactantY + productY)/2);
+
+  const T = +s0t.value;
+  document.getElementById('info0k').textContent = calcK(T,dH).K.toFixed(3);
+  document.getElementById('info0g').textContent = (calcK(T,dH).dG/1000).toFixed(1) + ' kJ/mol';
+}
+
+function draw0() {
+  if (mode0 === 'kinetic') drawKinetic();
+  else if (mode0 === 'concen') drawConcen();
+  else drawEnergy();
+}
+
+s0t.addEventListener('input', () => { v0t.textContent = s0t.value + ' K'; draw0(); });
+s0h.addEventListener('input', () => { v0h.textContent = s0h.value; draw0(); });
+document.querySelectorAll('#pnl0 .mode-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#pnl0 .mode-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  mode0 = b.dataset.mode;
+  draw0();
+}));
+
+/* ===== Section 1: Phase Diagram ===== */
+const cv1 = document.getElementById('cv1'), ctx1 = cv1.getContext('2d');
+const s1t = document.getElementById('s1t'), s1p = document.getElementById('s1p');
+const v1t = document.getElementById('v1t'), v1p = document.getElementById('v1p');
+let mode1 = 'water';
+
+function drawPhaseDiagram() {
+  const W = cv1.width, H = cv1.height;
+  ctx1.clearRect(0,0,W,H);
+
+  const isWater = mode1 === 'water';
+  // triple point & critical point
+  const tp = isWater ? {T: 0.01, P: 0.000611} : {T: -56.6, P: 0.518};
+  const cp = isWater ? {T: 374, P: 22.1} : {T: 31, P: 7.38};
+
+  // coordinate mapping
+  const Tmin = isWater ? -20 : -80, Tmax = isWater ? 400 : 50;
+  const Pmin = 0, Pmax = isWater ? 25 : 10;
+  const mapX = T => 60 + (T - Tmin) / (Tmax - Tmin) * (W - 80);
+  const mapY = P => H - 40 - (P - Pmin) / (Pmax - Pmin) * (H - 80);
+
+  // axes
+  ctx1.strokeStyle = '#475569'; ctx1.lineWidth = 1;
+  ctx1.beginPath(); ctx1.moveTo(60,30); ctx1.lineTo(60,H-40); ctx1.lineTo(W-20,H-40); ctx1.stroke();
+  ctx1.fillStyle = '#94a3b8'; ctx1.font = '12px sans-serif';
+  ctx1.fillText('P (MPa)', 10, 25); ctx1.fillText('T (°C)', W-55, H-20);
+
+  // fill phase regions
+  const tpX = mapX(tp.T), tpY = mapY(tp.P);
+  const cpX = mapX(cp.T), cpY = mapY(cp.P);
+
+  // Solid region (left, high P for water; left for CO2)
+  ctx1.fillStyle = 'rgba(96,165,250,0.15)';
+  ctx1.beginPath();
+  ctx1.moveTo(60, 30);
+  if (isWater) {
+    // water: solid-liquid line tilts left (anomalous)
+    ctx1.lineTo(tpX, tpY);
+    ctx1.lineTo(tpX - 15, 30); // steep left tilt
+  } else {
+    ctx1.lineTo(tpX, tpY);
+    ctx1.lineTo(tpX + 20, 30);
+  }
+  ctx1.closePath(); ctx1.fill();
+
+  // Liquid region
+  ctx1.fillStyle = 'rgba(248,113,113,0.15)';
+  ctx1.beginPath();
+  if (isWater) {
+    ctx1.moveTo(tpX - 15, 30);
+    ctx1.lineTo(tpX, tpY);
+    ctx1.lineTo(cpX, cpY);
+    ctx1.lineTo(cpX, 30);
+  } else {
+    ctx1.moveTo(tpX + 20, 30);
+    ctx1.lineTo(tpX, tpY);
+    ctx1.lineTo(cpX, cpY);
+    ctx1.lineTo(cpX, 30);
+  }
+  ctx1.closePath(); ctx1.fill();
+
+  // Gas region
+  ctx1.fillStyle = 'rgba(167,139,250,0.15)';
+  ctx1.beginPath();
+  ctx1.moveTo(60, H-40);
+  ctx1.lineTo(60, tpY);
+  ctx1.lineTo(tpX, tpY);
+  ctx1.lineTo(cpX, cpY);
+  ctx1.lineTo(cpX, H-40);
+  ctx1.closePath(); ctx1.fill();
+
+  // phase boundary lines
+  ctx1.strokeStyle = '#e2e8f0'; ctx1.lineWidth = 2;
+  // solid-liquid
+  ctx1.beginPath();
+  if (isWater) {
+    ctx1.moveTo(tpX - 15, 30); ctx1.lineTo(tpX, tpY);
+  } else {
+    ctx1.moveTo(tpX + 20, 30); ctx1.lineTo(tpX, tpY);
+  }
+  ctx1.stroke();
+  // liquid-gas
+  ctx1.beginPath(); ctx1.moveTo(tpX, tpY); ctx1.lineTo(cpX, cpY); ctx1.stroke();
+  // solid-gas
+  ctx1.beginPath(); ctx1.moveTo(60, tpY); ctx1.lineTo(tpX, tpY); ctx1.stroke();
+
+  // labels
+  ctx1.font = '16px sans-serif'; ctx1.fillStyle = '#60a5fa'; ctx1.fillText('固', 80, H/2);
+  ctx1.fillStyle = '#f87171'; ctx1.fillText('液', W/2 - 40, H/3);
+  ctx1.fillStyle = '#a78bfa'; ctx1.fillText('气', W/2, H - 70);
+
+  // triple & critical points
+  ctx1.fillStyle = '#fbbf24'; ctx1.font = '11px sans-serif';
+  ctx1.beginPath(); ctx1.arc(tpX, tpY, 5, 0, Math.PI*2); ctx1.fill();
+  ctx1.fillText('三相点', tpX + 8, tpY - 4);
+  ctx1.fillStyle = '#f59e0b';
+  ctx1.beginPath(); ctx1.arc(cpX, cpY, 5, 0, Math.PI*2); ctx1.fill();
+  ctx1.fillText('临界点', cpX + 8, cpY - 4);
+
+  // current state point
+  const T = +s1t.value, P = +s1p.value;
+  const sx = mapX(T), sy = mapY(P);
+  ctx1.fillStyle = '#10b981';
+  ctx1.beginPath(); ctx1.arc(sx, sy, 7, 0, Math.PI*2); ctx1.fill();
+  ctx1.strokeStyle = '#fff'; ctx1.lineWidth = 2;
+  ctx1.beginPath(); ctx1.arc(sx, sy, 7, 0, Math.PI*2); ctx1.stroke();
+
+  // determine phase (simplified)
+  let phase = '气相';
+  if (T < tp.T && P > tp.P) phase = '固相';
+  else if (P > tp.P && T > tp.T && T < cp.T) phase = '液相';
+  else if (T > cp.T && P > cp.P) phase = '超临界流体';
+  if (Math.abs(T - tp.T) < 2 && Math.abs(P - tp.P) < 0.01) phase = '三相点 (固液气共存)';
+
+  document.getElementById('info1phase').textContent = phase;
+  document.getElementById('info1tp').textContent = `T=${tp.T}°C, P=${tp.P}MPa`;
+  document.getElementById('info1cp').textContent = `T=${cp.T}°C, P=${cp.P}MPa`;
+
+  // degrees of freedom
+  let F = 2;
+  if (phase.includes('三相')) F = 0;
+  else if (phase === '超临界流体') F = 2;
+  document.getElementById('info1f').textContent = F;
+}
+
+s1t.addEventListener('input', () => { v1t.textContent = s1t.value + ' °C'; drawPhaseDiagram(); });
+s1p.addEventListener('input', () => { v1p.textContent = (+s1p.value).toFixed(1) + ' MPa'; drawPhaseDiagram(); });
+document.querySelectorAll('#pnl1 .mode-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#pnl1 .mode-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  mode1 = b.dataset.mode;
+  drawPhaseDiagram();
+}));
+
+/* ===== Section 2: Lever Rule ===== */
+const cv2 = document.getElementById('cv2'), ctx2 = cv2.getContext('2d');
+const s2x = document.getElementById('s2x'), s2t2 = document.getElementById('s2t');
+const v2x = document.getElementById('v2x'), v2t = document.getElementById('v2t');
+let mode2 = 'binary';
+
+function drawLever() {
+  const W = cv2.width, H = cv2.height;
+  ctx2.clearRect(0,0,W,H);
+
+  const mapX = x => 60 + x / 100 * (W - 80);
+  const mapY = t => H - 40 - t / 100 * (H - 80);
+
+  // axes
+  ctx2.strokeStyle = '#475569'; ctx2.lineWidth = 1;
+  ctx2.beginPath(); ctx2.moveTo(60,30); ctx2.lineTo(60,H-40); ctx2.lineTo(W-20,H-40); ctx2.stroke();
+  ctx2.fillStyle = '#94a3b8'; ctx2.font = '12px sans-serif';
+  ctx2.fillText('T', 15, 25); ctx2.fillText('x (组成)', W-65, H-20);
+
+  // liquidus and solidus curves (simplified binary)
+  ctx2.strokeStyle = '#ef4444'; ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  for (let x = 0; x <= 100; x += 2) {
+    const tl = 100 - 60 * Math.sin(x / 100 * Math.PI);
+    const px = mapX(x), py = mapY(tl);
+    if (x === 0) ctx2.moveTo(px, py); else ctx2.lineTo(px, py);
+  }
+  ctx2.stroke();
+  ctx2.fillStyle = '#ef4444'; ctx2.font = '11px sans-serif';
+  ctx2.fillText('液相线', mapX(50) - 15, mapY(100 - 60 * Math.sin(0.5 * Math.PI)) - 8);
+
+  ctx2.strokeStyle = '#3b82f6'; ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  for (let x = 0; x <= 100; x += 2) {
+    const ts = 100 - 80 * Math.sin(x / 100 * Math.PI);
+    const px = mapX(x), py = mapY(ts);
+    if (x === 0) ctx2.moveTo(px, py); else ctx2.lineTo(px, py);
+  }
+  ctx2.stroke();
+  ctx2.fillStyle = '#3b82f6';
+  ctx2.fillText('固相线', mapX(50) - 15, mapY(100 - 80 * Math.sin(0.5 * Math.PI)) + 16);
+
+  // fill regions
+  ctx2.fillStyle = 'rgba(248,113,113,0.1)';
+  ctx2.beginPath();
+  ctx2.moveTo(60, 30);
+  for (let x = 0; x <= 100; x += 2) {
+    const tl = 100 - 60 * Math.sin(x / 100 * Math.PI);
+    ctx2.lineTo(mapX(x), mapY(tl));
+  }
+  ctx2.lineTo(W-20, 30); ctx2.closePath(); ctx2.fill();
+
+  ctx2.fillStyle = 'rgba(96,165,250,0.1)';
+  ctx2.beginPath();
+  ctx2.moveTo(60, H-40);
+  for (let x = 0; x <= 100; x += 2) {
+    const ts = 100 - 80 * Math.sin(x / 100 * Math.PI);
+    ctx2.lineTo(mapX(x), mapY(ts));
+  }
+  ctx2.lineTo(W-20, H-40); ctx2.closePath(); ctx2.fill();
+
+  // tie line at current temperature
+  const Tcur = +s2t2.value;
+  const x0 = +s2x.value;
+
+  // find compositions at this T on liquidus and solidus
+  let xAlpha = 0, xBeta = 100;
+  for (let x = 0; x <= 50; x++) {
+    const ts = 100 - 80 * Math.sin(x / 100 * Math.PI);
+    if (ts <= Tcur) { xAlpha = x; break; }
+  }
+  for (let x = 100; x >= 50; x--) {
+    const tl = 100 - 60 * Math.sin(x / 100 * Math.PI);
+    if (tl <= Tcur) { xBeta = x; break; }
+  }
+
+  const yT = mapY(Tcur);
+  ctx2.setLineDash([6,4]); ctx2.strokeStyle = '#fbbf24'; ctx2.lineWidth = 2;
+  ctx2.beginPath(); ctx2.moveTo(mapX(xAlpha), yT); ctx2.lineTo(mapX(xBeta), yT); ctx2.stroke();
+  ctx2.setLineDash([]);
+
+  // system point
+  const sx = mapX(x0), sy = yT;
+  ctx2.fillStyle = '#10b981';
+  ctx2.beginPath(); ctx2.arc(sx, sy, 8, 0, Math.PI*2); ctx2.fill();
+  ctx2.strokeStyle = '#fff'; ctx2.lineWidth = 2;
+  ctx2.beginPath(); ctx2.arc(sx, sy, 8, 0, Math.PI*2); ctx2.stroke();
+
+  // lever arms
+  ctx2.fillStyle = '#ef4444'; ctx2.font = '12px sans-serif';
+  ctx2.fillText('α', mapX(xAlpha) - 5, yT - 12);
+  ctx2.fillStyle = '#3b82f6';
+  ctx2.fillText('β', mapX(xBeta) - 5, yT - 12);
+
+  // lever visualization
+  ctx2.strokeStyle = '#fbbf24'; ctx2.lineWidth = 3;
+  ctx2.beginPath(); ctx2.moveTo(mapX(xAlpha), yT + 20); ctx2.lineTo(mapX(xBeta), yT + 20); ctx2.stroke();
+  // fulcrum
+  ctx2.fillStyle = '#fbbf24';
+  ctx2.beginPath();
+  ctx2.moveTo(sx, yT + 20); ctx2.lineTo(sx - 8, yT + 35); ctx2.lineTo(sx + 8, yT + 35); ctx2.closePath(); ctx2.fill();
+
+  // lever rule calculation
+  const lAlpha = x0 - xAlpha;
+  const lBeta = xBeta - x0;
+  const total = lAlpha + lBeta || 1;
+  const fracAlpha = lBeta / total;
+  const fracBeta = lAlpha / total;
+
+  document.getElementById('info2a').textContent = (fracAlpha * 100).toFixed(1) + '%';
+  document.getElementById('info2b').textContent = (fracBeta * 100).toFixed(1) + '%';
+  document.getElementById('info2ax').textContent = 'x = ' + (xAlpha / 100).toFixed(2);
+  document.getElementById('info2bx').textContent = 'x = ' + (xBeta / 100).toFixed(2);
+}
+
+s2x.addEventListener('input', () => { v2x.textContent = (+s2x.value / 100).toFixed(2); drawLever(); });
+s2t2.addEventListener('input', () => { v2t.textContent = s2t2.value + ' %'; drawLever(); });
+document.querySelectorAll('#pnl2 .mode-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#pnl2 .mode-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  mode2 = b.dataset.mode;
+  drawLever();
+}));
+
+/* ===== Section 3: Quiz ===== */
+const cv3 = document.getElementById('cv3'), ctx3 = cv3.getContext('2d');
+const quizData = [
+  { q: '对于反应 N₂(g) + 3H₂(g) ⇌ 2NH₃(g)，ΔH < 0，升高温度，K 值如何变化？', opts: ['增大', '减小', '不变', '无法判断'], ans: 1, exp: '放热反应升温，平衡向逆反应方向移动，K 减小。' },
+  { q: '水的三相点自由度 F 等于？', opts: ['0', '1', '2', '3'], ans: 0, exp: 'F = C - P + 2 = 1 - 3 + 2 = 0' },
+  { q: '杠杆规则适用于？', opts: ['单相区', '两相区', '三相线', '任何区域'], ans: 1, exp: '杠杆规则用于两相区中计算各相的相对量。' },
+  { q: '临界点的特征是什么？', opts: ['固液共存', '液气不可区分', '三相共存', '蒸气压为零'], ans: 1, exp: '临界点以上，液相和气相无法区分，为超临界流体。' },
+  { q: 'ΔG° = 0 时，K 等于？', opts: ['0', '1', '∞', '无法确定'], ans: 1, exp: 'ΔG° = -RTlnK = 0 → lnK = 0 → K = 1' },
+];
+let qIdx = 0, qScore = 0, qAnswered = false;
+
+function drawQuiz() {
+  const W = cv3.width, H = cv3.height;
+  ctx3.clearRect(0,0,W,H);
+  // decorative
+  ctx3.fillStyle = '#6366f1'; ctx3.font = 'bold 48px sans-serif';
+  ctx3.fillText('⚖️', W/2 - 24, H/2 - 40);
+  ctx3.font = '18px sans-serif'; ctx3.fillStyle = '#94a3b8';
+  ctx3.fillText('化学平衡 · 知识检测', W/2 - 90, H/2 + 10);
+  ctx3.font = '14px sans-serif';
+  ctx3.fillText(`第 ${qIdx+1} / ${quizData.length} 题`, W/2 - 45, H/2 + 40);
+}
+
+function renderQuiz() {
+  const q = quizData[qIdx];
+  document.getElementById('q3q').textContent = `Q${qIdx+1}. ${q.q}`;
+  const optsEl = document.getElementById('q3opts');
+  optsEl.innerHTML = '';
+  qAnswered = false;
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = `${'ABCD'[i]}. ${opt}`;
+    div.addEventListener('click', () => {
+      if (qAnswered) return;
+      qAnswered = true;
+      if (i === q.ans) { div.classList.add('correct'); qScore++; document.getElementById('q3fb').textContent = '✅ 正确！' + q.exp; }
+      else { div.classList.add('wrong'); document.getElementById('q3fb').textContent = '❌ 错误。' + q.exp; }
+      document.getElementById('q3score').textContent = `得分：${qScore}/${quizData.length}`;
+    });
+    optsEl.appendChild(div);
+  });
+  document.getElementById('q3fb').textContent = '';
+  document.getElementById('q3prev').disabled = qIdx === 0;
+  document.getElementById('q3next').disabled = qIdx === quizData.length - 1;
+  drawQuiz();
+}
+
+document.getElementById('q3prev').addEventListener('click', () => { if (qIdx > 0) { qIdx--; renderQuiz(); } });
+document.getElementById('q3next').addEventListener('click', () => { if (qIdx < quizData.length - 1) { qIdx++; renderQuiz(); } });
+
+/* ===== Progress tracking: first-try correct per question, all → markDone ===== */
+const quizFirstTryCorrect = new Array(quizData.length).fill(false);
+const quizTried = new Array(quizData.length).fill(false);
+
+function checkAllDone() {
+  if (quizFirstTryCorrect.every(v => v) && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('equilibrium');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const opt = e.target.closest('.quiz-opt');
+  if (!opt) return;
+  const container = opt.closest('.quiz');
+  if (!container) return;
+  if (quizTried[qIdx]) return; // 本题已答过
+  quizTried[qIdx] = true;
+  const opts = Array.from(container.querySelectorAll('.quiz-opt'));
+  const chosenIdx = opts.indexOf(opt);
+  if (chosenIdx === quizData[qIdx].ans) {
+    quizFirstTryCorrect[qIdx] = true;
+  }
+  setTimeout(() => {
+    if (!quizFirstTryCorrect[qIdx]) {
+      quizTried[qIdx] = false; // 答错可再试
+    }
+    checkAllDone();
+  }, 50);
+});
+
+/* ===== Init ===== */
+draw0();
+drawPhaseDiagram();
+drawLever();
+renderQuiz();
+
+// 进入时若已完成则回填角标
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('equilibrium')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学化学"></script>
+</body>
+</html>

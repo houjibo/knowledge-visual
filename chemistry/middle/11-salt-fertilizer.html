@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>盐和化肥 - 互动可视化</title>
+<link rel="stylesheet" href="assets/common.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%, #a5d6a7 100%);
+    min-height: 100vh;
+    color: #1b5e20;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+header {
+    text-align: center;
+    padding: 30px 20px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 32px rgba(27,94,32,0.1);
+}
+header h1 { font-size: 2.2em; color: #2e7d32; margin-bottom: 8px; }
+header p { color: #388e3c; font-size: 1.1em; }
+
+.section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 32px rgba(27,94,32,0.1);
+}
+.section h2 {
+    font-size: 1.6em;
+    color: #2e7d32;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #81c784;
+}
+.info-box {
+    background: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    padding: 15px 20px;
+    border-radius: 0 10px 10px 0;
+    margin: 15px 0;
+}
+.info-box strong { color: #2e7d32; }
+
+/* === 盐的定义卡片 === */
+.salt-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+.salt-card {
+    background: linear-gradient(135deg, #fff 0%, #f1f8e9 100%);
+    border-radius: 15px;
+    padding: 20px;
+    border: 2px solid #c5e1a5;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+.salt-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(46,125,50,0.15); }
+.salt-card h4 { font-size: 1.2em; color: #33691e; margin-bottom: 8px; }
+.salt-card .formula { font-size: 1.4em; color: #1b5e20; font-weight: 700; margin: 8px 0; }
+.salt-card .desc { font-size: 0.9em; color: #558b2f; }
+
+/* === 复分解反应 === */
+.reaction-area {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin: 20px 0;
+}
+.reaction-eq {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 20px;
+    background: #f1f8e9;
+    border-radius: 15px;
+    font-size: 1.2em;
+    font-weight: 600;
+}
+.ion-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 12px;
+    font-size: 1em;
+    font-weight: 700;
+    transition: all 0.5s;
+    position: relative;
+}
+.ion-box.cation { background: #fff3e0; border: 2px solid #ff9800; color: #e65100; }
+.ion-box.anion { background: #e3f2fd; border: 2px solid #2196f3; color: #0d47a1; }
+.ion-box.product { background: #e8f5e9; border: 2px solid #4caf50; color: #1b5e20; }
+.ion-box.precipitate { background: #fce4ec; border: 2px solid #e91e63; color: #880e4f; animation: precipitateAnim 1s ease-in forwards; }
+@keyframes precipitateAnim {
+    0% { transform: translateY(0); opacity: 1; }
+    50% { transform: translateY(10px); }
+    100% { transform: translateY(20px); opacity: 0.7; }
+}
+.arrow-mark { font-size: 1.5em; color: #689f38; }
+.condition-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin: 2px;
+}
+.condition-tag.water { background: #e3f2fd; color: #1565c0; }
+.condition-tag.gas { background: #fff3e0; color: #e65100; }
+.condition-tag.ppt { background: #fce4ec; color: #c62828; }
+
+/* 反应选择器 */
+.reaction-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin: 15px 0;
+}
+.reaction-btn {
+    padding: 10px 18px;
+    border: 2px solid #81c784;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    font-weight: 600;
+    color: #2e7d32;
+    transition: all 0.3s;
+}
+.reaction-btn:hover, .reaction-btn.active {
+    background: #2e7d32;
+    color: white;
+    border-color: #2e7d32;
+}
+
+/* 条件检查 */
+.condition-check {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 15px 0;
+}
+.cond-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: #f5f5f5;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s;
+}
+.cond-item.met { background: #e8f5e9; border-color: #4caf50; }
+.cond-item.unmet { background: #ffebee; border-color: #ef5350; }
+.cond-icon { font-size: 1.3em; }
+
+/* === 化肥博览 === */
+.fertilizer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+.fert-card {
+    background: white;
+    border-radius: 15px;
+    padding: 18px;
+    border: 2px solid #c5e1a5;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+.fert-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(46,125,50,0.15); }
+.fert-card .fert-type {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.fert-card .fert-type.nitrogen { background: #e3f2fd; color: #1565c0; }
+.fert-card .fert-type.phosphorus { background: #fff3e0; color: #e65100; }
+.fert-card .fert-type.potassium { background: #fce4ec; color: #c62828; }
+.fert-card .fert-type.complex { background: #f3e5f5; color: #7b1fa2; }
+.fert-card h4 { color: #33691e; margin-bottom: 5px; }
+.fert-card .fert-formula { font-size: 1.2em; font-weight: 700; color: #1b5e20; }
+.fert-card .fert-effect { font-size: 0.85em; color: #558b2f; margin-top: 8px; }
+.fert-card .fert-detail {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #c5e1a5;
+    font-size: 0.85em;
+    color: #455a64;
+}
+.fert-card.expanded .fert-detail { display: block; }
+
+/* === 实验探究 === */
+.experiment-area {
+    margin: 20px 0;
+}
+.exp-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px;
+    margin: 10px 0;
+    background: #f9fbe3;
+    border-radius: 12px;
+    border-left: 4px solid #c0ca33;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.exp-step:hover { background: #f0f4c3; }
+.exp-step.completed { border-left-color: #4caf50; background: #e8f5e9; }
+.exp-step .step-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #c0ca33;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.exp-step.completed .step-num { background: #4caf50; }
+.exp-step .step-content h4 { color: #33691e; margin-bottom: 5px; }
+.exp-step .step-content p { color: #558b2f; font-size: 0.9em; }
+
+/* 烧杯动画 */
+.beaker-demo {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 30px;
+    margin: 20px 0;
+    padding: 30px;
+    background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-radius: 15px;
+    min-height: 200px;
+}
+.beaker {
+    width: 100px;
+    height: 140px;
+    border: 3px solid #78909c;
+    border-top: none;
+    border-radius: 0 0 15px 15px;
+    position: relative;
+    overflow: hidden;
+    background: rgba(255,255,255,0.3);
+}
+.beaker .liquid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transition: all 0.8s;
+}
+.beaker .label {
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.85em;
+    font-weight: 600;
+    white-space: nowrap;
+    color: #37474f;
+}
+.beaker .bubbles {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.bubble {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.6);
+    position: absolute;
+    animation: bubbleRise 1.5s infinite;
+}
+.bubble:nth-child(2) { left: 15px; animation-delay: 0.3s; }
+.bubble:nth-child(3) { left: -10px; animation-delay: 0.7s; }
+@keyframes bubbleRise {
+    0% { transform: translateY(0); opacity: 0.8; }
+    100% { transform: translateY(-80px); opacity: 0; }
+}
+.mix-arrow {
+    font-size: 2em;
+    color: #689f38;
+    animation: mixPulse 1s infinite;
+    align-self: center;
+}
+@keyframes mixPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* === 练习区 === */
+.quiz-area { margin: 20px 0; }
+.quiz-q {
+    padding: 18px;
+    background: #f1f8e9;
+    border-radius: 12px;
+    margin: 12px 0;
+}
+.quiz-q p { font-weight: 600; color: #33691e; margin-bottom: 10px; }
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-opt {
+    padding: 10px 15px;
+    border: 2px solid #c5e1a5;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.quiz-opt:hover { background: #f1f8e9; }
+.quiz-opt.correct { background: #c8e6c9; border-color: #4caf50; color: #1b5e20; }
+.quiz-opt.wrong { background: #ffcdd2; border-color: #ef5350; color: #b71c1c; }
+.quiz-explain {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 15px;
+    background: #e8f5e9;
+    border-radius: 8px;
+    font-size: 0.9em;
+    color: #2e7d32;
+}
+.quiz-explain.show { display: block; }
+
+/* 导航 */
+.nav-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+.nav-tab {
+    padding: 10px 20px;
+    border: 2px solid #81c784;
+    border-radius: 25px;
+    background: white;
+    cursor: pointer;
+    font-weight: 600;
+    color: #2e7d32;
+    transition: all 0.3s;
+}
+.nav-tab:hover, .nav-tab.active {
+    background: #2e7d32;
+    color: white;
+    border-color: #2e7d32;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+@media (max-width: 768px) {
+    header h1 { font-size: 1.6em; }
+    .section { padding: 20px; }
+    .beaker-demo { flex-direction: column; align-items: center; }
+    .mix-arrow { transform: rotate(90deg); }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>🧪 盐和化肥</h1>
+        <p>初中化学 · 九年级 | 盐的概念 · 复分解反应 · 化肥简介</p>
+    </header>
+
+    <div class="nav-tabs">
+        <div class="nav-tab active" data-tab="salt">📖 盐的概念</div>
+        <div class="nav-tab" data-tab="reaction">⚗️ 复分解反应</div>
+        <div class="nav-tab" data-tab="fertilizer">🌱 化肥博览</div>
+        <div class="nav-tab" data-tab="experiment">🔬 实验探究</div>
+        <div class="nav-tab" data-tab="quiz">✏️ 练习</div>
+    </div>
+
+    <!-- === 盐的概念 === -->
+    <div class="tab-content active" id="tab-salt">
+        <div class="section">
+            <h2>什么是盐？</h2>
+            <div class="info-box">
+                <strong>定义：</strong>由<strong>金属离子</strong>（或铵根离子 NH₄⁺）和<strong>酸根离子</strong>组成的化合物叫做盐。
+            </div>
+            <p style="margin:15px 0; color:#558b2f;">盐是一类重要的化合物，我们日常食用的食盐就是最常见的一种。盐的种类非常多，根据组成的不同可以分为很多类别。</p>
+
+            <h3 style="color:#33691e; margin:20px 0 15px;">常见的盐</h3>
+            <div class="salt-cards">
+                <div class="salt-card" onclick="this.classList.toggle('expanded')">
+                    <h4>🧂 氯化钠（食盐）</h4>
+                    <div class="formula">NaCl</div>
+                    <div class="desc">调味品，生理盐水成分。由 Na⁺ 和 Cl⁻ 组成。</div>
+                    <div class="fert-detail">
+                        <p><strong>用途：</strong>调味、腌制食品、配制生理盐水（0.9% NaCl溶液）、农业选种、工业制纯碱。</p>
+                        <p><strong>分布：</strong>盐湖、盐井、海盐。</p>
+                    </div>
+                </div>
+                <div class="salt-card" onclick="this.classList.toggle('expanded')">
+                    <h4>🏭 碳酸钠（纯碱）</h4>
+                    <div class="formula">Na₂CO₃</div>
+                    <div class="desc">俗称纯碱、苏打。水溶液显碱性。</div>
+                    <div class="fert-detail">
+                        <p><strong>用途：</strong>玻璃、造纸、纺织、洗涤。</p>
+                        <p><strong>注意：</strong>虽叫"纯碱"但它是盐，不是碱！水溶液显碱性。</p>
+                    </div>
+                </div>
+                <div class="salt-card" onclick="this.classList.toggle('expanded')">
+                    <h4>🍞 碳酸氢钠</h4>
+                    <div class="formula">NaHCO₃</div>
+                    <div class="desc">俗称小苏打。焙制糕点的发酵粉成分。</div>
+                    <div class="fert-detail">
+                        <p><strong>用途：</strong>发酵粉、治疗胃酸过多的药物。</p>
+                        <p><strong>特性：</strong>与酸反应产生 CO₂ 气体，使面团蓬松。</p>
+                    </div>
+                </div>
+                <div class="salt-card" onclick="this.classList.toggle('expanded')">
+                    <h4>🪨 碳酸钙</h4>
+                    <div class="formula">CaCO₃</div>
+                    <div class="desc">大理石、石灰石的主要成分。</div>
+                    <div class="fert-detail">
+                        <p><strong>用途：</strong>建筑材料、补钙剂、实验室制 CO₂。</p>
+                        <p><strong>特性：</strong>与稀盐酸反应制取二氧化碳。</p>
+                    </div>
+                </div>
+                <div class="salt-card" onclick="this.classList.toggle('expanded')">
+                    <h4>💊 硫酸铜</h4>
+                    <div class="formula">CuSO₄</div>
+                    <div class="desc">白色粉末，水溶液呈蓝色。</div>
+                    <div class="fert-detail">
+                        <p><strong>用途：</strong>配制波尔多液（农药）、电镀。</p>
+                        <p><strong>特性：</strong>CuSO₄·5H₂O 为蓝色晶体（胆矾）。</p>
+                    </div>
+                </div>
+                <div class="salt-card" onclick="this.classList.toggle('expanded')">
+                    <h4>🌿 碳酸氢铵</h4>
+                    <div class="formula">NH₄HCO₃</div>
+                    <div class="desc">一种常见的氮肥，含铵根离子。</div>
+                    <div class="fert-detail">
+                        <p><strong>用途：</strong>农业化肥。</p>
+                        <p><strong>特性：</strong>受热易分解，产生氨气气味。不能与碱性物质混用。</p>
+                    </div>
+                </div>
+            </div>
+            <p style="font-size:0.85em; color:#78909c; margin-top:10px;">💡 点击卡片可展开查看详情</p>
+        </div>
+    </div>
+
+    <!-- === 复分解反应 === -->
+    <div class="tab-content" id="tab-reaction">
+        <div class="section">
+            <h2>复分解反应</h2>
+            <div class="info-box">
+                <strong>定义：</strong>两种化合物互相交换成分，生成另外两种化合物的反应。<br>
+                <strong>通式：</strong>AB + CD → AD + CB
+            </div>
+
+            <h3 style="color:#33691e; margin:20px 0 10px;">反应发生的条件</h3>
+            <p style="color:#558b2f; margin-bottom:15px;">复分解反应不是任意两种化合物混合就能发生的，必须满足以下条件之一：</p>
+            <div class="condition-check" id="condCheck">
+                <div class="cond-item" id="cond-water">
+                    <span class="cond-icon">💧</span>
+                    <span>生成水</span>
+                </div>
+                <div class="cond-item" id="cond-gas">
+                    <span class="cond-icon">💨</span>
+                    <span>生成气体↑</span>
+                </div>
+                <div class="cond-item" id="cond-ppt">
+                    <span class="cond-icon">⬇️</span>
+                    <span>生成沉淀↓</span>
+                </div>
+            </div>
+
+            <h3 style="color:#33691e; margin:25px 0 10px;">选择反应观察</h3>
+            <div class="reaction-selector">
+                <div class="reaction-btn active" data-rx="0">AgNO₃ + NaCl</div>
+                <div class="reaction-btn" data-rx="1">Na₂CO₃ + HCl</div>
+                <div class="reaction-btn" data-rx="2">NaOH + HCl</div>
+                <div class="reaction-btn" data-rx="3">CaCO₃ + HCl</div>
+            </div>
+
+            <div class="reaction-area" id="reactionArea">
+                <!-- 动态填充 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- === 化肥博览 === -->
+    <div class="tab-content" id="tab-fertilizer">
+        <div class="section">
+            <h2>化学肥料</h2>
+            <div class="info-box">
+                <strong>化肥</strong>是用化学方法制成的含植物营养元素的肥料。植物需要量最大的三种营养元素：<strong>氮(N)、磷(P)、钾(K)</strong>。
+            </div>
+
+            <h3 style="color:#33691e; margin:20px 0 10px;">🌿 氮肥 — 促进枝叶生长</h3>
+            <div class="fertilizer-grid">
+                <div class="fert-card" onclick="this.classList.toggle('expanded')">
+                    <span class="fert-type nitrogen">氮肥</span>
+                    <h4>尿素</h4>
+                    <div class="fert-formula">CO(NH₂)₂</div>
+                    <div class="fert-effect">含氮量最高的氮肥（46.7%）</div>
+                    <div class="fert-detail">白色晶体，易溶于水。适用于各种土壤和作物。</div>
+                </div>
+                <div class="fert-card" onclick="this.classList.toggle('expanded')">
+                    <span class="fert-type nitrogen">氮肥</span>
+                    <h4>碳酸氢铵</h4>
+                    <div class="fert-formula">NH₄HCO₃</div>
+                    <div class="fert-effect">速效氮肥，价格便宜</div>
+                    <div class="fert-detail">受热易分解产生NH₃，不能与碱性物质混合施用。</div>
+                </div>
+                <div class="fert-card" onclick="this.classList.toggle('expanded')">
+                    <span class="fert-type nitrogen">氮肥</span>
+                    <h4>硫酸铵</h4>
+                    <div class="fert-formula">(NH₄)₂SO₄</div>
+                    <div class="fert-effect">长期施用会使土壤酸化</div>
+                    <div class="fert-detail">白色晶体，易溶于水。属于铵态氮肥。</div>
+                </div>
+            </div>
+
+            <h3 style="color:#33691e; margin:20px 0 10px;">🦴 磷肥 — 促进开花结果</h3>
+            <div class="fertilizer-grid">
+                <div class="fert-card" onclick="this.classList.toggle('expanded')">
+                    <span class="fert-type phosphorus">磷肥</span>
+                    <h4>过磷酸钙</h4>
+                    <div class="fert-formula">Ca(H₂PO₄)₂</div>
+                    <div class="fert-effect">最常用的磷肥</div>
+                    <div class="fert-detail">灰白色粉末，能溶于水。促进作物根系发达、穗粒增多。</div>
+                </div>
+                <div class="fert-card" onclick="this.classList.toggle('expanded')">
+                    <span class="fert-type phosphorus">磷肥</span>
+                    <h4>磷矿粉</h4>
+                    <div class="fert-formula">Ca₃(PO₄)₂</div>
+                    <div class="fert-effect">难溶于水，肥效慢而持久</div>
+                    <div class="fert-detail">天然磷矿石磨成粉末，适用于酸性土壤。</div>
+                </div>
+            </div>
+
+            <h3 style="color:#33691e; margin:20px 0 10px;">🍂 钾肥 — 促进茎秆粗壮</h3>
+            <div class="fertilizer-grid">
+                <div class="fert-card" onclick="this.classList.toggle('expanded')">
+                    <span class="fert-type potassium">钾肥</span>
+                    <h4>硫酸钾</h4>
+                    <div class="fert-formula">K₂SO₄</div>
+                    <div class="fert-effect">使茎秆粗壮，抗倒伏</div>
+                    <div class="fert-detail">白色晶体，易溶于水。适用于各种作物。</div>
+                </div>
+                <div class="fert-card" onclick="this.classList.toggle('expanded')">
+                    <span class="fert-type potassium">钾肥</span>
+                    <h4>氯化钾</h4>
+                    <div class="fert-formula">KCl</div>
+                    <div class="fert-effect">增强抗病虫害能力</div>
+                    <div class="fert-detail">白色或浅黄色晶体。不宜用于忌氯作物（如烟草）。</div>
+                </div>
+            </div>
+
+            <h3 style="color:#33691e; margin:20px 0 10px;">🌈 复合肥 — 含两种或以上营养元素</h3>
+            <div class="fertilizer-grid">
+                <div class="fert-card" onclick="this.classList.toggle('expanded')">
+                    <span class="fert-type complex">复合肥</span>
+                    <h4>磷酸二氢钾</h4>
+                    <div class="fert-formula">KH₂PO₄</div>
+                    <div class="fert-effect">含K和P两种营养元素</div>
+                    <div class="fert-detail">高效复合肥，常用于叶面喷施。</div>
+                </div>
+                <div class="fert-card" onclick="this.classList.toggle('expanded')">
+                    <span class="fert-type complex">复合肥</span>
+                    <h4>硝酸钾</h4>
+                    <div class="fert-formula">KNO₃</div>
+                    <div class="fert-effect">含K和N两种营养元素</div>
+                    <div class="fert-detail">白色晶体，易溶于水。火药成分之一。</div>
+                </div>
+            </div>
+
+            <div class="info-box" style="margin-top:20px;">
+                <strong>⚠️ 合理施肥：</strong>铵态氮肥不能与碱性物质（如草木灰、熟石灰）混合使用，否则会释放氨气，降低肥效。<br>
+                <strong>💡 记忆口诀：</strong>氮促叶、磷促果、钾促茎；缺氮叶黄、缺磷紫斑、缺钾倒伏。
+            </div>
+        </div>
+    </div>
+
+    <!-- === 实验探究 === -->
+    <div class="tab-content" id="tab-experiment">
+        <div class="section">
+            <h2>🔬 实验：盐与酸的反应</h2>
+            <p style="color:#558b2f; margin-bottom:15px;">点击每一步观察实验过程：</p>
+
+            <div class="experiment-area">
+                <div class="exp-step" data-step="0" onclick="runExpStep(0)">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>准备药品</h4>
+                        <p>取少量碳酸钠（Na₂CO₃）粉末于试管中。</p>
+                    </div>
+                </div>
+                <div class="exp-step" data-step="1" onclick="runExpStep(1)">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>加入稀盐酸</h4>
+                        <p>向试管中缓慢滴加稀盐酸（HCl），观察现象。</p>
+                    </div>
+                </div>
+                <div class="exp-step" data-step="2" onclick="runExpStep(2)">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h4>观察现象</h4>
+                        <p>试管中产生大量气泡，生成的气体能使澄清石灰水变浑浊。</p>
+                    </div>
+                </div>
+                <div class="exp-step" data-step="3" onclick="runExpStep(3)">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <h4>得出结论</h4>
+                        <p>Na₂CO₃ + 2HCl → 2NaCl + H₂O + CO₂↑</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="beaker-demo" id="beakerDemo">
+                <div class="beaker" id="beaker1">
+                    <div class="liquid" style="height:0%; background:rgba(255,255,255,0.5);"></div>
+                    <div class="label">试管</div>
+                </div>
+                <div class="mix-arrow" id="mixArrow" style="display:none;">→</div>
+                <div class="beaker" id="beaker2">
+                    <div class="liquid" style="height:0%; background:transparent;"></div>
+                    <div class="label">石灰水</div>
+                </div>
+            </div>
+
+            <div class="info-box" style="margin-top:15px;">
+                <strong>实验要点：</strong>碳酸盐（含 CO₃²⁻）与稀盐酸反应会产生 CO₂ 气体，这是检验碳酸盐的方法。
+            </div>
+        </div>
+    </div>
+
+    <!-- === 练习 === -->
+    <div class="tab-content" id="tab-quiz">
+        <div class="section">
+            <h2>✏️ 知识练习</h2>
+            <div class="quiz-area" id="quizArea">
+                <!-- 动态填充 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ===== PageProgress: markDone wiring =====
+   完成条件（3 项核心互动全部达成）：
+   ① 复分解反应：查看过全部 4 个反应
+   ② 实验步骤：完成碳酸钠与盐酸反应 4 步演示
+   ③ 答对任意 1 道练习题 */
+const ppMilestones = { reaction: false, experiment: false, quiz: false };
+const ppViewedReactions = new Set();
+function ppCheckDone() {
+    if (!(ppMilestones.reaction && ppMilestones.experiment && ppMilestones.quiz)) return;
+    if (typeof PageProgress !== 'undefined' && !PageProgress.isDone('11-salt-fertilizer')) {
+        PageProgress.markDone('11-salt-fertilizer');
+    }
+}
+
+// 导航切换
+document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+});
+
+// === 复分解反应数据 ===
+const reactions = [
+    {
+        reactants: ['AgNO₃', 'NaCl'],
+        products: ['AgCl↓', 'NaNO₃'],
+        condition: 'ppt',
+        equation: 'AgNO₃ + NaCl → AgCl↓ + NaNO₃',
+        desc: '生成白色沉淀 AgCl，反应发生',
+        ions: [
+            {text: 'Ag⁺', type: 'cation'}, {text: 'NO₃⁻', type: 'anion'},
+            {text: 'Na⁺', type: 'cation'}, {text: 'Cl⁻', type: 'anion'}
+        ],
+        result: [{text: 'AgCl↓', type: 'precipitate'}, {text: 'NaNO₃', type: 'product'}]
+    },
+    {
+        reactants: ['Na₂CO₃', 'HCl'],
+        products: ['NaCl', 'H₂O', 'CO₂↑'],
+        condition: 'water+gas',
+        equation: 'Na₂CO₃ + 2HCl → 2NaCl + H₂O + CO₂↑',
+        desc: '生成水和气体 CO₂，反应发生',
+        ions: [
+            {text: 'Na⁺', type: 'cation'}, {text: 'CO₃²⁻', type: 'anion'},
+            {text: 'H⁺', type: 'cation'}, {text: 'Cl⁻', type: 'anion'}
+        ],
+        result: [{text: 'NaCl', type: 'product'}, {text: 'H₂O', type: 'product'}, {text: 'CO₂↑', type: 'product'}]
+    },
+    {
+        reactants: ['NaOH', 'HCl'],
+        products: ['NaCl', 'H₂O'],
+        condition: 'water',
+        equation: 'NaOH + HCl → NaCl + H₂O',
+        desc: '中和反应，生成水，属于复分解反应',
+        ions: [
+            {text: 'Na⁺', type: 'cation'}, {text: 'OH⁻', type: 'anion'},
+            {text: 'H⁺', type: 'cation'}, {text: 'Cl⁻', type: 'anion'}
+        ],
+        result: [{text: 'NaCl', type: 'product'}, {text: 'H₂O', type: 'product'}]
+    },
+    {
+        reactants: ['CaCO₃', 'HCl'],
+        products: ['CaCl₂', 'H₂O', 'CO₂↑'],
+        condition: 'water+gas',
+        equation: 'CaCO₃ + 2HCl → CaCl₂ + H₂O + CO₂↑',
+        desc: '大理石与盐酸反应，生成气体和水',
+        ions: [
+            {text: 'Ca²⁺', type: 'cation'}, {text: 'CO₃²⁻', type: 'anion'},
+            {text: 'H⁺', type: 'cation'}, {text: 'Cl⁻', type: 'anion'}
+        ],
+        result: [{text: 'CaCl₂', type: 'product'}, {text: 'H₂O', type: 'product'}, {text: 'CO₂↑', type: 'product'}]
+    }
+];
+
+function showReaction(idx) {
+    const rx = reactions[idx];
+    const area = document.getElementById('reactionArea');
+
+    // 条件检查
+    const condWater = document.getElementById('cond-water');
+    const condGas = document.getElementById('cond-gas');
+    const condPpt = document.getElementById('cond-ppt');
+    condWater.className = 'cond-item ' + (rx.condition.includes('water') ? 'met' : 'unmet');
+    condGas.className = 'cond-item ' + (rx.condition.includes('gas') ? 'met' : 'unmet');
+    condPpt.className = 'cond-item ' + (rx.condition.includes('ppt') ? 'met' : 'unmet');
+
+    // 离子交换动画
+    let ionsHtml = '<div class="reaction-eq"><span style="color:#78909c;">反应物离子：</span>';
+    rx.ions.forEach(ion => {
+        ionsHtml += `<div class="ion-box ${ion.type}">${ion.text}</div>`;
+    });
+    ionsHtml += '<span class="arrow-mark">→</span>';
+    rx.result.forEach(r => {
+        ionsHtml += `<div class="ion-box ${r.type}">${r.text}</div>`;
+    });
+    ionsHtml += '</div>';
+
+    // 方程式和说明
+    let detailHtml = `
+        <div class="info-box">
+            <strong>化学方程式：</strong><br>${rx.equation}
+        </div>
+        <p style="color:#558b2f; margin-top:10px;"><strong>现象：</strong>${rx.desc}</p>
+    `;
+
+    area.innerHTML = ionsHtml + detailHtml;
+
+    // PageProgress: 查看反应
+    ppViewedReactions.add(idx);
+    if (ppViewedReactions.size >= reactions.length) {
+        ppMilestones.reaction = true;
+        ppCheckDone();
+    }
+}
+
+document.querySelectorAll('.reaction-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.reaction-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showReaction(parseInt(btn.dataset.rx));
+    });
+});
+showReaction(0);
+
+// === 实验步骤 ===
+let currentStep = -1;
+function runExpStep(step) {
+    document.querySelectorAll('.exp-step').forEach((s, i) => {
+        if (i <= step) s.classList.add('completed');
+        else s.classList.remove('completed');
+    });
+
+    const b1 = document.getElementById('beaker1');
+    const b2 = document.getElementById('beaker2');
+    const arrow = document.getElementById('mixArrow');
+
+    if (step === 0) {
+        b1.querySelector('.liquid').style.height = '30%';
+        b1.querySelector('.liquid').style.background = 'rgba(255,255,255,0.8)';
+        b1.querySelector('.label').textContent = 'Na₂CO₃ 粉末';
+    } else if (step === 1) {
+        b1.querySelector('.liquid').style.height = '60%';
+        b1.querySelector('.liquid').style.background = 'rgba(200,230,200,0.6)';
+        b1.innerHTML += '<div class="bubbles"><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div></div>';
+        b1.querySelector('.label').textContent = '产生气泡！';
+        arrow.style.display = 'block';
+    } else if (step === 2) {
+        b2.querySelector('.liquid').style.height = '50%';
+        b2.querySelector('.liquid').style.background = 'rgba(240,240,240,0.9)';
+        b2.querySelector('.label').textContent = '石灰水变浑浊';
+    } else if (step === 3) {
+        const eqBox = document.createElement('div');
+        eqBox.style.cssText = 'text-align:center;padding:15px;background:#e8f5e9;border-radius:12px;margin-top:15px;font-size:1.1em;font-weight:600;color:#2e7d32;';
+        eqBox.innerHTML = 'Na₂CO₃ + 2HCl → 2NaCl + H₂O + CO₂↑<br><span style="font-size:0.85em;font-weight:400;">CO₂ 使石灰水变浑浊：Ca(OH)₂ + CO₂ → CaCO₃↓ + H₂O</span>';
+        const demo = document.getElementById('beakerDemo');
+        if (!document.getElementById('eqResult')) {
+            eqBox.id = 'eqResult';
+            demo.parentNode.insertBefore(eqBox, demo.nextSibling);
+        }
+        // PageProgress: 完成实验最后一步
+        ppMilestones.experiment = true;
+        ppCheckDone();
+    }
+}
+
+// === 练习题 ===
+const quizzes = [
+    {
+        q: '下列物质中，属于盐的是？',
+        opts: ['HCl', 'NaOH', 'NaCl', 'H₂O'],
+        ans: 2,
+        explain: 'NaCl 由金属离子 Na⁺ 和酸根离子 Cl⁻ 组成，符合盐的定义。'
+    },
+    {
+        q: '复分解反应发生的条件不包括？',
+        opts: ['生成沉淀', '生成气体', '生成水', '生成单质'],
+        ans: 3,
+        explain: '复分解反应需要生成沉淀、气体或水之一，生成单质不是复分解反应的条件。'
+    },
+    {
+        q: '碳酸钠（Na₂CO₃）俗称什么？',
+        opts: ['食盐', '小苏打', '纯碱', '烧碱'],
+        ans: 2,
+        explain: '碳酸钠俗称纯碱、苏打。注意它是盐不是碱，只是水溶液显碱性。小苏打是 NaHCO₃。'
+    },
+    {
+        q: '农民发现作物叶片发黄，应施用哪种肥料？',
+        opts: ['磷肥', '钾肥', '氮肥', '不能确定'],
+        ans: 2,
+        explain: '缺氮会导致叶片发黄，应施用氮肥（如尿素、碳酸氢铵等）。'
+    },
+    {
+        q: '下列哪组物质能发生复分解反应？',
+        opts: ['NaCl 和 KNO₃', 'Na₂CO₃ 和 HCl', 'NaOH 和 KCl', 'Cu 和 HCl'],
+        ans: 1,
+        explain: 'Na₂CO₃ + 2HCl → 2NaCl + H₂O + CO₂↑，生成气体和水，满足复分解反应条件。'
+    },
+    {
+        q: '铵态氮肥不能与下列哪种物质混合使用？',
+        opts: ['水', '草木灰（碱性）', '沙子', '泥土'],
+        ans: 1,
+        explain: '铵态氮肥遇碱会释放氨气（NH₃），降低肥效。草木灰显碱性，不能混合使用。'
+    },
+    {
+        q: '下列化肥中属于复合肥的是？',
+        opts: ['尿素 CO(NH₂)₂', '硫酸钾 K₂SO₄', '磷酸二氢钾 KH₂PO₄', '碳酸氢铵 NH₄HCO₃'],
+        ans: 2,
+        explain: 'KH₂PO₄ 同时含有 K 和 P 两种营养元素，属于复合肥。'
+    }
+];
+
+function renderQuiz() {
+    const area = document.getElementById('quizArea');
+    let html = '';
+    quizzes.forEach((quiz, qi) => {
+        html += `<div class="quiz-q" id="qq${qi}"><p>${qi + 1}. ${quiz.q}</p><div class="quiz-options">`;
+        quiz.opts.forEach((opt, oi) => {
+            html += `<div class="quiz-opt" onclick="checkAns(${qi},${oi})">${String.fromCharCode(65 + oi)}. ${opt}</div>`;
+        });
+        html += `</div><div class="quiz-explain" id="qe${qi}">${quiz.explain}</div></div>`;
+    });
+    area.innerHTML = html;
+}
+
+function checkAns(qi, oi) {
+    const q = quizzes[qi];
+    const opts = document.querySelectorAll(`#qq${qi} .quiz-opt`);
+    opts.forEach((o, i) => {
+        o.style.pointerEvents = 'none';
+        if (i === q.ans) o.classList.add('correct');
+        else if (i === oi && oi !== q.ans) o.classList.add('wrong');
+    });
+    document.getElementById('qe' + qi).classList.add('show');
+
+    // PageProgress: 答对任意 1 题
+    if (oi === q.ans) {
+        ppMilestones.quiz = true;
+        ppCheckDone();
+    }
+}
+
+renderQuiz();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中化学"></script>
+</body>
+</html>

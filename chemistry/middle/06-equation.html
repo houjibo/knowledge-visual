@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>化学方程式 · 互动可视化</title>
+<style>
+:root{--p:#10b981;--a:#06b6d4;--w:#f59e0b;--d:#ef4444;--pu:#8b5cf6;--pk:#ec4899;--dk:#0f172a;--card:rgba(15,23,42,.72);--bd:rgba(255,255,255,.08);--tx:#e2e8f0;--mt:#94a3b8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(135deg,#0f172a,#1e293b);color:var(--tx);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+header{text-align:center;margin-bottom:24px}
+header h1{font-size:2rem;background:linear-gradient(90deg,var(--p),var(--a),var(--pu));-webkit-background-clip:text;color:transparent;margin-bottom:6px}
+header p{color:var(--mt);font-size:14px}
+.tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap}
+.tab{padding:10px 18px;border-radius:999px;background:rgba(255,255,255,.06);cursor:pointer;transition:all .25s;border:1px solid var(--bd);font-size:14px;user-select:none}
+.tab.active{background:var(--p);border-color:var(--p);box-shadow:0 4px 20px rgba(16,185,129,.4)}
+.tab:hover:not(.active){background:rgba(255,255,255,.12)}
+.section{display:none}.section.active{display:block}
+.stage{display:grid;grid-template-columns:1.2fr 1fr;gap:20px;margin-bottom:20px}
+@media(max-width:900px){.stage{grid-template-columns:1fr}}
+.canvas-wrap{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;backdrop-filter:blur(10px)}
+canvas{width:100%;height:auto;display:block;border-radius:10px;background:radial-gradient(circle at center,#1e293b,#0f172a)}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;backdrop-filter:blur(10px)}
+.panel h3{font-size:1rem;margin-bottom:10px;color:var(--a)}
+.panel p,.panel li{color:var(--mt);font-size:13px;line-height:1.7}
+.panel ul{padding-left:18px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.controls label{font-size:13px;color:var(--mt)}
+.btn{padding:8px 16px;border-radius:8px;background:var(--p);color:#fff;border:none;cursor:pointer;font-size:13px;transition:all .2s}
+.btn:hover{background:#059669;transform:translateY(-1px)}
+.btn.secondary{background:rgba(255,255,255,.1)}.btn.secondary:hover{background:rgba(255,255,255,.2)}
+.btn.accent{background:var(--a)}.btn.accent:hover{background:#0891b2}
+.btn.warn{background:var(--w)}.btn.warn:hover{background:#d97706}
+.formula-box{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:12px 16px;margin:10px 0;font-size:18px;text-align:center;color:var(--tx);font-family:"Times New Roman",serif}
+.info-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:12px 16px;margin:10px 0;font-size:13px;color:var(--mt);line-height:1.7}
+.info-box strong{color:var(--w)}
+.eq-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0}
+.eq-row .mol{background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.3);border-radius:10px;padding:8px 14px;font-size:16px;font-family:"Times New Roman",serif;color:var(--tx);min-width:60px;text-align:center}
+.eq-row .plus{font-size:20px;color:var(--a);font-weight:bold}
+.eq-row .arrow{font-size:22px;color:var(--p);font-weight:bold}
+.eq-row .coeff{display:inline-block;min-width:28px;text-align:center;color:var(--w);font-weight:bold;font-size:18px}
+.balance-game{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px;margin:12px 0}
+.balance-game h4{color:var(--a);margin-bottom:12px;font-size:15px}
+.coeff-inputs{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.coeff-inputs .mol-group{display:flex;flex-direction:column;align-items:center;gap:4px}
+.coeff-inputs .mol-group label{font-size:11px;color:var(--mt)}
+.coeff-inputs input{width:50px;text-align:center;padding:8px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid var(--bd);color:var(--tx);font-size:18px;font-weight:bold;outline:none}
+.coeff-inputs input:focus{border-color:var(--a)}
+.coeff-inputs .mol-label{font-size:14px;color:var(--tx);font-family:"Times New Roman",serif}
+.coeff-inputs .plus-sign{font-size:18px;color:var(--a);align-self:center}
+.result-msg{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13px;display:none}
+.result-msg.correct{display:block;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--p)}
+.result-msg.wrong{display:block;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--d)}
+.calc-card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px;margin:12px 0}
+.calc-card h4{color:var(--pu);margin-bottom:12px;font-size:15px}
+.calc-step{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:8px;padding:10px 14px;margin:8px 0;font-size:13px;color:var(--mt);line-height:1.7}
+.calc-step strong{color:var(--pu)}
+.calc-input{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;align-items:center}
+.calc-input select,.calc-input input{background:rgba(255,255,255,.08);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:8px 12px;font-size:13px;outline:none}
+.calc-input input{width:100px}
+.score-bar{display:flex;gap:10px;align-items:center;margin:12px 0}
+.score-bar .bar{flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+.score-bar .bar-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--a));border-radius:4px;transition:width .4s}
+.score-bar span{font-size:12px;color:var(--mt)}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>⚖️ 化学方程式</h1>
+<p>质量守恒定律 · 方程式书写与配平 · 计算练习</p>
+</header>
+
+<div class="tabs">
+<div class="tab active" onclick="switchTab(0)">🧪 质量守恒实验</div>
+<div class="tab" onclick="switchTab(1)">⚖️ 方程式配平</div>
+<div class="tab" onclick="switchTab(2)">📝 计算练习</div>
+</div>
+
+<!-- Tab 0: 质量守恒实验 -->
+<div class="section active" id="sec0">
+<div class="stage">
+<div class="canvas-wrap">
+<canvas id="cvConservation" width="560" height="380"></canvas>
+<div class="controls">
+<button class="btn" onclick="startReaction()">▶ 开始反应</button>
+<button class="btn secondary" onclick="resetReaction()">↺ 重置</button>
+<select id="rxnSelect" onchange="changeRxn()">
+<option value="0">铁 + 硫酸铜</option>
+<option value="1">碳酸钙 + 盐酸</option>
+<option value="2">镁条燃烧</option>
+</select>
+</div>
+</div>
+<div class="panel">
+<h3>🔬 质量守恒定律</h3>
+<p>参加化学反应的各物质的质量总和，等于反应后生成的各物质的质量总和。</p>
+<div class="info-box">
+<strong>微观解释：</strong>反应前后原子的<strong>种类</strong>不变、<strong>数目</strong>不变、<strong>质量</strong>不变。
+</div>
+<div id="massDisplay" style="margin-top:12px"></div>
+<ul style="margin-top:12px">
+<li>反应前后元素种类不变</li>
+<li>反应前后各元素原子个数不变</li>
+<li>反应前后各物质质量总和不变</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- Tab 1: 方程式配平 -->
+<div class="section" id="sec1">
+<div class="balance-game">
+<h4>🎯 配平挑战 — 填入正确的化学计量数</h4>
+<div id="balanceProblem"></div>
+<div class="coeff-inputs" id="coeffInputs"></div>
+<div style="display:flex;gap:10px;margin-top:12px">
+<button class="btn" onclick="checkBalance()">✓ 检查</button>
+<button class="btn secondary" onclick="showHint()">💡 提示</button>
+<button class="btn accent" onclick="nextBalance()">→ 下一题</button>
+</div>
+<div class="result-msg" id="balanceResult"></div>
+<div class="score-bar">
+<span>进度：</span>
+<div class="bar"><div class="bar-fill" id="balanceBar" style="width:0%"></div></div>
+<span id="balanceScore">0/0</span>
+</div>
+</div>
+<div class="panel" style="margin-top:16px">
+<h3>📖 配平方法</h3>
+<ul>
+<li><strong>观察法</strong>：从最复杂的物质入手，逐步调整</li>
+<li><strong>最小公倍数法</strong>：找原子数的最小公倍数</li>
+<li><strong>奇偶法</strong>：先配平奇数个的原子</li>
+</ul>
+<div class="info-box" style="margin-top:10px">
+<strong>注意：</strong>化学计量数为最简整数比，不能为分数。配平后检查两边各元素原子数是否相等。
+</div>
+</div>
+</div>
+
+<!-- Tab 2: 计算练习 -->
+<div class="section" id="sec2">
+<div class="calc-card">
+<h4>🧮 根据化学方程式计算</h4>
+<div class="calc-input">
+<select id="calcRxn" onchange="loadCalc()"></select>
+</div>
+<div id="calcProblem" style="margin:12px 0"></div>
+<div class="calc-input">
+<label>已知：</label>
+<select id="calcKnown"></select>
+<input id="calcKnownVal" type="number" placeholder="质量/g" />
+</div>
+<div class="calc-input">
+<label>求解：</label>
+<select id="calcUnknown"></select>
+<button class="btn" onclick="solveCalc()">计算</button>
+</div>
+<div id="calcSteps"></div>
+<div class="score-bar" style="margin-top:16px">
+<span>正确率：</span>
+<div class="bar"><div class="bar-fill" id="calcBar" style="width:0%"></div></div>
+<span id="calcScore">0/0</span>
+</div>
+</div>
+</div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ===== PageProgress: markDone wiring ===== */
+const DONE_THRESHOLD = 3;
+const quizSolved = new Set();
+let totalCorrect = 0;
+function checkDone(box) {
+  if (box === undefined || box === null) return;
+  if (quizSolved.has(box)) return;
+  quizSolved.add(box);
+  totalCorrect++;
+  if (totalCorrect >= DONE_THRESHOLD && typeof PageProgress !== 'undefined' && !PageProgress.isDone('06-equation')) {
+    PageProgress.markDone('06-equation');
+    if (typeof showToast === 'function') showToast('🎉 已记录完成「化学方程式」');
+  }
+}
+
+/* ===== Tab Switching ===== */
+function switchTab(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+  document.querySelectorAll('.section').forEach((s,j)=>s.classList.toggle('active',j===i));
+}
+
+/* ===== Tab 0: Conservation of Mass ===== */
+const cv=document.getElementById('cvConservation'),ctx=cv.getContext('2d');
+const reactions=[
+  {name:'铁 + 硫酸铜',left:['Fe','CuSO₄'],right:['FeSO₄','Cu'],
+   leftMass:[56,160],rightMass:[152,64],
+   leftColors:['#94a3b8','#38bdf8'],rightColors:['#38bdf8','#f59e0b'],
+   leftNames:['铁','硫酸铜'],rightNames:['硫酸亚铁','铜']},
+  {name:'碳酸钙 + 盐酸',left:['CaCO₃','HCl'],right:['CaCl₂','H₂O','CO₂↑'],
+   leftMass:[100,73],rightMass:[111,18,44],
+   leftColors:['#e2e8f0','#a78bfa'],rightColors:['#a78bfa','#38bdf8','#94a3b8'],
+   leftNames:['碳酸钙','盐酸'],rightNames:['氯化钙','水','二氧化碳']},
+  {name:'镁条燃烧',left:['Mg','O₂'],right:['MgO'],
+   leftMass:[48,32],rightMass:[80],
+   leftColors:['#e2e8f0','#38bdf8'],rightColors:['#e2e8f0'],
+   leftNames:['镁','氧气'],rightNames:['氧化镁']}
+];
+let curRxn=0, animProgress=0, animating=false, animId=null;
+
+function drawReaction(){
+  const r=reactions[curRxn],W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  // Title
+  ctx.fillStyle='#94a3b8';ctx.font='14px sans-serif';ctx.textAlign='center';
+  ctx.fillText(r.name,W/2,24);
+  // Left side
+  const leftX=W*0.2, rightX=W*0.75, midY=H*0.45;
+  const p=Math.min(animProgress,1);
+  // Draw reactant molecules
+  r.left.forEach((m,i)=>{
+    const y=midY-40+i*80;
+    const alpha=1-p*0.7;
+    drawMolecule(leftX,y,m,r.leftColors[i],alpha,r.leftMass[i]);
+  });
+  // Arrow
+  ctx.save();
+  ctx.globalAlpha=0.6;
+  ctx.strokeStyle='#10b981';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(W*0.38,midY);ctx.lineTo(W*0.58,midY);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W*0.56,midY-8);ctx.lineTo(W*0.58,midY);ctx.lineTo(W*0.56,midY+8);ctx.stroke();
+  ctx.restore();
+  // Draw product molecules
+  r.right.forEach((m,i)=>{
+    const y=midY-((r.right.length-1)*40)+i*80;
+    const alpha=p;
+    drawMolecule(rightX,y,m,r.rightColors[i],alpha,r.rightMass[i]);
+  });
+  // Mass display
+  const totalLeft=r.leftMass.reduce((a,b)=>a+b,0);
+  const totalRight=r.rightMass.reduce((a,b)=>a+b,0);
+  ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+  ctx.fillStyle='#f59e0b';
+  ctx.fillText(`总质量: ${totalLeft}`,leftX,H*0.88);
+  ctx.fillText(`总质量: ${totalRight}`,rightX,H*0.88);
+  if(p>0.5){
+    ctx.fillStyle='#10b981';ctx.font='bold 16px sans-serif';
+    ctx.fillText(`${totalLeft} = ${totalRight}  ✓`,W/2,H*0.95);
+  }
+  // Update panel
+  let html='<div style="font-size:13px;color:#94a3b8;line-height:1.8">';
+  html+='<strong style="color:#f59e0b">反应物：</strong>';
+  r.leftNames.forEach((n,i)=>html+=`${n}(${r.leftMass[i]}) `);
+  html+='<br><strong style="color:#10b981">生成物：</strong>';
+  r.rightNames.forEach((n,i)=>html+=`${n}(${r.rightMass[i]}) `);
+  html+=`<br><strong style="color:#06b6d4">验证：</strong>${totalLeft} = ${totalRight} ✓`;
+  html+='</div>';
+  document.getElementById('massDisplay').innerHTML=html;
+}
+
+function drawMolecule(x,y,label,color,alpha,mass){
+  ctx.save();ctx.globalAlpha=alpha;
+  const r=28+mass*0.08;
+  const grd=ctx.createRadialGradient(x-4,y-4,r*0.1,x,y,r);
+  grd.addColorStop(0,color);grd.addColorStop(1,color+'40');
+  ctx.fillStyle=grd;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(label,x,y);
+  ctx.restore();
+}
+
+function startReaction(){
+  if(animating)return;
+  animating=true;animProgress=0;
+  function step(){
+    animProgress+=0.015;
+    drawReaction();
+    if(animProgress<1.2){animId=requestAnimationFrame(step)}
+    else{animating=false}
+  }
+  step();
+}
+function resetReaction(){animProgress=0;animating=false;drawReaction()}
+function changeRxn(){curRxn=+document.getElementById('rxnSelect').value;resetReaction()}
+drawReaction();
+
+/* ===== Tab 1: Balance Equations ===== */
+const balanceProblems=[
+  {left:[['H₂',1],['O₂',1]],right:[['H₂O',2]],answer:[2,1,2],
+   eq:'_H₂ + _O₂ → _H₂O'},
+  {left:[['Fe',1],['O₂',1]],right:[['Fe₃O₄',1]],answer:[3,2,1],
+   eq:'_Fe + _O₂ → _Fe₃O₄'},
+  {left:[['KMnO₄',1]],right:[['K₂MnO₄',1],['MnO₂',1],['O₂',1]],answer:[2,1,1,1],
+   eq:'_KMnO₄ → _K₂MnO₄ + _MnO₂ + _O₂↑'},
+  {left:[['H₂O₂',1]],right:[['H₂O',1],['O₂',1]],answer:[2,2,1],
+   eq:'_H₂O₂ → _H₂O + _O₂↑'},
+  {left:[['C₂H₅OH',1],['O₂',1]],right:[['CO₂',1],['H₂O',1]],answer:[1,3,2,3],
+   eq:'_C₂H₅OH + _O₂ → _CO₂ + _H₂O'},
+  {left:[['Fe₂O₃',1],['C',1]],right:[['Fe',1],['CO₂',1]],answer:[2,3,4,3],
+   eq:'_Fe₂O₃ + _C → _Fe + _CO₂↑'},
+  {left:[['Al',1],['HCl',1]],right:[['AlCl₃',1],['H₂',1]],answer:[2,6,2,3],
+   eq:'_Al + _HCl → _AlCl₃ + _H₂↑'},
+  {left:[['NaOH',1],['CuSO₄',1]],right:[['Cu(OH)₂',1],['Na₂SO₄',1]],answer:[2,1,1,1],
+   eq:'_NaOH + _CuSO₄ → _Cu(OH)₂↓ + _Na₂SO₄'}
+];
+let curBal=0,balCorrect=0,balTotal=0;
+
+function renderBalance(){
+  const p=balanceProblems[curBal];
+  document.getElementById('balanceProblem').innerHTML=
+    `<div class="formula-box" style="font-size:20px">${p.eq}</div>`;
+  let html='';
+  const allMols=[...p.left,...p.right];
+  let idx=0;
+  p.left.forEach((m,i)=>{
+    html+=`<div class="mol-group"><label>系数</label><input id="ci${idx}" type="number" min="1" max="20" value=""><div class="mol-label">${m[0]}</div></div>`;
+    idx++;
+    if(i<p.left.length-1)html+='<div class="plus-sign">+</div>';
+  });
+  html+='<div class="plus-sign" style="font-size:24px;color:#10b981">→</div>';
+  p.right.forEach((m,i)=>{
+    html+=`<div class="mol-group"><label>系数</label><input id="ci${idx}" type="number" min="1" max="20" value=""><div class="mol-label">${m[0]}</div></div>`;
+    idx++;
+    if(i<p.right.length-1)html+='<div class="plus-sign">+</div>';
+  });
+  document.getElementById('coeffInputs').innerHTML=html;
+  document.getElementById('balanceResult').className='result-msg';
+  document.getElementById('balanceResult').style.display='none';
+}
+
+function checkBalance(){
+  const p=balanceProblems[curBal];
+  const inputs=[];
+  for(let i=0;i<p.answer.length;i++){
+    const v=parseInt(document.getElementById('ci'+i).value);
+    if(!v||v<1){inputs.push(null)}else{inputs.push(v)}
+  }
+  const res=document.getElementById('balanceResult');
+  if(inputs.some(v=>v===null)){
+    res.className='result-msg wrong';res.style.display='block';
+    res.textContent='⚠️ 请填写所有系数（正整数）';return;
+  }
+  // Simplify check
+  const g=gcdArr(inputs);
+  const simplified=inputs.map(v=>v/g);
+  const answer=p.answer;
+  const g2=gcdArr(answer);
+  const simpAns=answer.map(v=>v/g2);
+  let correct=true;
+  for(let i=0;i<inputs.length;i++){if(simplified[i]!==simpAns[i])correct=false}
+  balTotal++;
+  if(correct){
+    balCorrect++;
+    checkDone(curBal);
+    res.className='result-msg correct';res.style.display='block';
+    res.textContent='✅ 正确！配平成功！';
+  }else{
+    res.className='result-msg wrong';res.style.display='block';
+    res.textContent='❌ 不正确，再检查一下各元素的原子数是否相等。';
+  }
+  document.getElementById('balanceBar').style.width=(balCorrect/Math.max(balTotal,1)*100)+'%';
+  document.getElementById('balanceScore').textContent=`${balCorrect}/${balTotal}`;
+}
+
+function gcdArr(a){return a.reduce((g,v)=>gcd(g,v))}
+function gcd(a,b){return b?gcd(b,a%b):a}
+
+function showHint(){
+  const p=balanceProblems[curBal];
+  const res=document.getElementById('balanceResult');
+  res.className='result-msg';res.style.display='block';
+  res.style.background='rgba(245,158,11,.1)';res.style.borderColor='rgba(245,158,11,.3)';res.style.color='#f59e0b';
+  // Show first coefficient
+  res.textContent=`💡 提示：第一个系数是 ${p.answer[0]}`;
+}
+
+function nextBalance(){curBal=(curBal+1)%balanceProblems.length;renderBalance()}
+renderBalance();
+
+/* ===== Tab 2: Calculation ===== */
+const calcProblems=[
+  {eq:'2H₂ + O₂ → 2H₂O',masses:[4,32,36],names:['H₂','O₂','H₂O'],
+   question:'已知氢气的质量，求生成水的质量'},
+  {eq:'CaCO₃ → CaO + CO₂↑',masses:[100,56,44],names:['CaCO₃','CaO','CO₂'],
+   question:'已知碳酸钙的质量，求生成氧化钙的质量'},
+  {eq:'Fe + CuSO₄ → FeSO₄ + Cu',masses:[56,160,152,64],names:['Fe','CuSO₄','FeSO₄','Cu'],
+   question:'已知铁的质量，求生成铜的质量'},
+  {eq:'2Mg + O₂ → 2MgO',masses:[48,32,80],names:['Mg','O₂','MgO'],
+   question:'已知镁的质量，求生成氧化镁的质量'},
+  {eq:'Zn + H₂SO₄ → ZnSO₄ + H₂↑',masses:[65,98,161,2],names:['Zn','H₂SO₄','ZnSO₄','H₂'],
+   question:'已知锌的质量，求生成氢气的质量'}
+];
+let calcCorrect=0,calcTotal=0;
+
+function loadCalc(){
+  const idx=+document.getElementById('calcRxn').value;
+  const p=calcProblems[idx];
+  document.getElementById('calcProblem').innerHTML=
+    `<div class="formula-box">${p.eq}</div><p style="color:#94a3b8;font-size:13px;margin-top:8px">${p.question}</p>`;
+  let opts='';
+  p.names.forEach((n,i)=>opts+=`<option value="${i}">${n} (M=${p.masses[i]})</option>`);
+  document.getElementById('calcKnown').innerHTML=opts;
+  document.getElementById('calcUnknown').innerHTML=opts;
+  document.getElementById('calcUnknown').selectedIndex=1;
+  document.getElementById('calcSteps').innerHTML='';
+}
+
+function solveCalc(){
+  const idx=+document.getElementById('calcRxn').value;
+  const p=calcProblems[idx];
+  const ki=+document.getElementById('calcKnown').value;
+  const ui=+document.getElementById('calcUnknown').value;
+  const kv=parseFloat(document.getElementById('calcKnownVal').value);
+  if(!kv||kv<=0){document.getElementById('calcSteps').innerHTML='<div class="info-box"><strong>⚠️</strong> 请输入正确的已知质量</div>';return}
+  if(ki===ui){document.getElementById('calcSteps').innerHTML='<div class="info-box"><strong>⚠️</strong> 已知和求解不能选同一个物质</div>';return}
+  calcTotal++;
+  // Calculate
+  const ratio=kv/p.masses[ki];
+  const answer=(ratio*p.masses[ui]).toFixed(2);
+  let html='';
+  html+=`<div class="calc-step"><strong>步骤1：</strong>写出化学方程式<br>${p.eq}</div>`;
+  html+=`<div class="calc-step"><strong>步骤2：</strong>找出相关物质的相对质量比<br>${p.names[ki]}: ${p.masses[ki]} ${p.names[ui]}: ${p.masses[ui]}</div>`;
+  html+=`<div class="calc-step"><strong>步骤3：</strong>列比例式<br>${p.masses[ki]} / ${p.masses[ui]} = ${kv}g / x</div>`;
+  html+=`<div class="calc-step"><strong>步骤4：</strong>求解<br>x = ${kv} × ${p.masses[ui]} / ${p.masses[ki]} = <strong style="color:#10b981;font-size:16px">${answer} g</strong></div>`;
+  document.getElementById('calcSteps').innerHTML=html;
+  calcCorrect++;
+  document.getElementById('calcBar').style.width=(calcCorrect/Math.max(calcTotal,1)*100)+'%';
+  document.getElementById('calcScore').textContent=`${calcCorrect}/${calcTotal}`;
+}
+
+// Init calc select
+let opts='';
+calcProblems.forEach((p,i)=>opts+=`<option value="${i}">${p.eq}</option>`);
+document.getElementById('calcRxn').innerHTML=opts;
+loadCalc();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中化学"></script>
+</body>
+</html>

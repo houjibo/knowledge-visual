@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>流体力学 · 伯努利方程 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #06b6d4;
+    --flow: #0ea5e9;
+    --pressure: #f59e0b;
+    --velocity: #10b981;
+    --lift: #a855f7;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0c4a6e 0%, #0f172a 60%, #082f49 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px;
+    font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #67e8f9; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #06b6d4, #38bdf8, #7dd3fc); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(6,182,212,.4); color: #082f49; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #164e63 0%, #0f172a 100%); touch-action: none; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.1rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #67e8f9; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.flow { border-color: var(--flow); }
+  .concept-card.pressure { border-color: var(--pressure); }
+  .concept-card.velocity { border-color: var(--velocity); }
+  .concept-card.lift { border-color: var(--lift); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.flow .title { color: var(--flow); }
+  .concept-card.pressure .title { color: var(--pressure); }
+  .concept-card.velocity .title { color: var(--velocity); }
+  .concept-card.lift .title { color: var(--lift); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-flow::before { background: var(--flow); }
+  .legend .l-pressure::before { background: var(--pressure); }
+  .legend .l-velocity::before { background: var(--velocity); }
+  .legend .l-lift::before { background: var(--lift); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 36px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: #082f49; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(6,182,212,0.08); border-radius: 12px; border: 1px solid rgba(6,182,212,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #082f49; font-weight: 700; min-height: 36px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">🔭 物理</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">大学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">流体力学</span>
+  </nav>
+
+  <header>
+    <h1>💧 流体力学 · 伯努利方程</h1>
+    <p>连续性方程 · 伯努利原理 · 机翼升力 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 学习</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 学习模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="learnCanvas" width="700" height="420"></canvas>
+        <div class="legend">
+          <span class="l-flow">流线</span>
+          <span class="l-pressure">压强 P</span>
+          <span class="l-velocity">流速 v</span>
+          <span class="l-lift">高度 h</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📐 核心方程</h3>
+        <div class="equation">
+          连续性：A₁v₁ = A₂v₂<br/>
+          伯努利：<b>P + ½ρv² + ρgh = 常量</b>
+        </div>
+        <div class="slider-row">
+          <label>粗管半径 r₁</label>
+          <input type="range" id="r1" min="20" max="60" value="50" />
+          <span class="val" id="r1v">50</span>
+        </div>
+        <div class="slider-row">
+          <label>细管半径 r₂</label>
+          <input type="range" id="r2" min="10" max="60" value="22" />
+          <span class="val" id="r2v">22</span>
+        </div>
+        <div class="slider-row">
+          <label>入口流速 v₁</label>
+          <input type="range" id="v1" min="1" max="8" step="0.1" value="2" />
+          <span class="val" id="v1v">2.0 m/s</span>
+        </div>
+        <div class="info-grid">
+          <div>v₂ = <b id="calc-v2">10.3</b> m/s</div>
+          <div>P₂ − P₁ = <b id="calc-dp">−51.9</b> kPa</div>
+          <div>流量 Q = <b id="calc-q">15.7</b> L/s</div>
+          <div>ρ = <b>1000</b> kg/m³（水）</div>
+        </div>
+        <div class="concept-card flow">
+          <div class="title">🌊 连续性方程</div>
+          不可压缩流体通过同一流管，截面积 A 与流速 v 成反比：A₁v₁ = A₂v₂。河道变窄 → 水流加速。
+        </div>
+        <div class="concept-card pressure">
+          <div class="title">⚖️ 伯努利方程</div>
+          理想流体沿流线，压强能 + 动能 + 重力势能之和守恒：P + ½ρv² + ρgh = C。流速高处压强低。
+        </div>
+        <div class="concept-card lift">
+          <div class="title">✈️ 应用：机翼升力</div>
+          翼型上表面流速快、压强低，下表面流速慢、压强大，压强差产生向上的升力 F = ΔP · S。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🧪 练习：调参达到目标</h3>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-target="v2">让 v₂ ≥ 8 m/s</button>
+          <button class="mode-btn" data-target="dp">让 ΔP ≤ −40 kPa</button>
+          <button class="mode-btn" data-target="q">让 Q ≥ 25 L/s</button>
+        </div>
+        <div class="slider-row">
+          <label>粗管半径 r₁</label>
+          <input type="range" id="pr1" min="20" max="60" value="40" />
+          <span class="val" id="pr1v">40</span>
+        </div>
+        <div class="slider-row">
+          <label>细管半径 r₂</label>
+          <input type="range" id="pr2" min="10" max="60" value="30" />
+          <span class="val" id="pr2v">30</span>
+        </div>
+        <div class="slider-row">
+          <label>入口流速 v₁</label>
+          <input type="range" id="pv1" min="1" max="8" step="0.1" value="3" />
+          <span class="val" id="pv1v">3.0 m/s</span>
+        </div>
+        <div class="info-grid">
+          <div>当前 v₂ = <b id="p-v2">5.3</b> m/s</div>
+          <div>当前 ΔP = <b id="p-dp">−9.8</b> kPa</div>
+          <div>当前 Q = <b id="p-q">15.1</b> L/s</div>
+          <div>状态：<b id="p-status">未达成</b></div>
+        </div>
+        <div class="concept-card velocity">
+          <div class="title">💡 提示</div>
+          <span id="p-hint">让细管更细，或提高入口流速，可使 v₂ 增大。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="quizCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🎯 随堂测验（4 题，3/4 合格）</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q">题目加载中…</div>
+          <div class="quiz-opts" id="quiz-opts"></div>
+          <div class="quiz-feedback" id="quiz-fb"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev">⬅ 上一题</button>
+            <button id="quiz-next">下一题 ➡</button>
+            <button id="quiz-submit" class="hidden">📊 提交评分</button>
+            <button id="quiz-retry" class="hidden">🔄 重新测验</button>
+          </div>
+          <div class="quiz-result hidden" id="quiz-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Knowledge Visual · 大学物理 · 流体力学 · <span id="done-mark"></span></footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 通用：模式切换
+ * ============================================================ */
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+let mode = 'learn';
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    mode = t.dataset.mode;
+    Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+    if (mode === 'quiz') renderQuiz();
+    draw();
+  });
+});
+
+/* ============================================================
+ * 物理计算
+ * ============================================================ */
+const RHO = 1000; // 水 kg/m³
+function physics(r1, r2, v1) {
+  // r 单位 cm → m
+  const A1 = Math.PI * (r1 / 100) ** 2;
+  const A2 = Math.PI * (r2 / 100) ** 2;
+  const v2 = v1 * A1 / A2;
+  const Q = A1 * v1;               // m³/s
+  const dp = 0.5 * RHO * (v1 * v1 - v2 * v2) / 1000;  // kPa (P2-P1)
+  return { A1, A2, v2, Q, dp };
+}
+
+/* ============================================================
+ * 学习模式
+ * ============================================================ */
+const r1El = document.getElementById('r1');
+const r2El = document.getElementById('r2');
+const v1El = document.getElementById('v1');
+function updLearn() {
+  document.getElementById('r1v').textContent = r1El.value;
+  document.getElementById('r2v').textContent = r2El.value;
+  document.getElementById('v1v').textContent = Number(v1El.value).toFixed(1) + ' m/s';
+  const p = physics(+r1El.value, +r2El.value, +v1El.value);
+  document.getElementById('calc-v2').textContent = p.v2.toFixed(1);
+  document.getElementById('calc-dp').textContent = p.dp.toFixed(1);
+  document.getElementById('calc-q').textContent = (p.Q * 1000).toFixed(1);
+}
+[r1El, r2El, v1El].forEach(el => el.addEventListener('input', () => { updLearn(); draw(); }));
+updLearn();
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const pr1 = document.getElementById('pr1');
+const pr2 = document.getElementById('pr2');
+const pv1 = document.getElementById('pv1');
+let practiceTarget = 'v2';
+const targetDesc = {
+  v2: { text: '让 v₂ ≥ 8 m/s', check: p => p.v2 >= 8, hint: '让细管更细，或提高入口流速，可使 v₂ 增大。' },
+  dp: { text: '让 ΔP ≤ −40 kPa', check: p => p.dp <= -40, hint: '压强差与 v₂²−v₁² 成正比，拉大两管半径差距。' },
+  q:  { text: '让 Q ≥ 25 L/s', check: p => p.Q * 1000 >= 25, hint: 'Q = A₁v₁，增大粗管半径或入口流速。' }
+};
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    practiceTarget = btn.dataset.target;
+    document.getElementById('p-hint').textContent = targetDesc[practiceTarget].hint;
+    updPractice(); draw();
+  });
+});
+function updPractice() {
+  document.getElementById('pr1v').textContent = pr1.value;
+  document.getElementById('pr2v').textContent = pr2.value;
+  document.getElementById('pv1v').textContent = Number(pv1.value).toFixed(1) + ' m/s';
+  const p = physics(+pr1.value, +pr2.value, +pv1.value);
+  document.getElementById('p-v2').textContent = p.v2.toFixed(1);
+  document.getElementById('p-dp').textContent = p.dp.toFixed(1);
+  document.getElementById('p-q').textContent = (p.Q * 1000).toFixed(1);
+  const ok = targetDesc[practiceTarget].check(p);
+  document.getElementById('p-status').textContent = ok ? '✅ 达成！' : '未达成';
+  document.getElementById('p-status').style.color = ok ? '#10b981' : '#f59e0b';
+}
+[pr1, pr2, pv1].forEach(el => el.addEventListener('input', () => { updPractice(); draw(); }));
+updPractice();
+
+/* ============================================================
+ * Canvas 绘制：文丘里管
+ * ============================================================ */
+function drawPipe(ctx, W, H, r1, r2, v1, particles, showLabels) {
+  const p = physics(r1, r2, v1);
+  // 管子几何：左段粗管 0~0.35W，收缩段 0.35~0.55W，细管 0.55~1W
+  const cx = W / 2, cy = H / 2;
+  const s = 1.6; // 半径像素比例
+  const R1 = r1 * s, R2 = r2 * s;
+  const x1 = W * 0.05, x2 = W * 0.40, x3 = W * 0.55, x4 = W * 0.95;
+
+  // 背景
+  ctx.clearRect(0, 0, W, H);
+
+  // 管壁
+  ctx.beginPath();
+  ctx.moveTo(x1, cy - R1);
+  ctx.lineTo(x2, cy - R1);
+  ctx.lineTo(x3, cy - R2);
+  ctx.lineTo(x4, cy - R2);
+  ctx.lineTo(x4, cy + R2);
+  ctx.lineTo(x3, cy + R2);
+  ctx.lineTo(x2, cy + R1);
+  ctx.lineTo(x1, cy + R1);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(6,182,212,0.12)';
+  ctx.fill();
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 流线（3 条）
+  for (let i = 1; i <= 3; i++) {
+    const k = i / 4;
+    ctx.beginPath();
+    ctx.moveTo(x1, cy - R1 + k * 2 * R1);
+    ctx.lineTo(x2, cy - R1 + k * 2 * R1);
+    ctx.lineTo(x3, cy - R2 + k * 2 * R2);
+    ctx.lineTo(x4, cy - R2 + k * 2 * R2);
+    ctx.strokeStyle = 'rgba(103,232,249,0.35)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // 粒子（流速可视化）
+  particles.forEach(pt => {
+    // 根据 x 所在区段决定速度
+    let v;
+    if (pt.x < x2) v = v1;
+    else if (pt.x < x3) {
+      const k = (pt.x - x2) / (x3 - x2);
+      v = v1 + (p.v2 - v1) * k;
+    } else v = p.v2;
+    pt.x += v * 1.2;
+    if (pt.x > x4) pt.x = x1;
+    // y 插值：粗管 → 细管
+    let R;
+    if (pt.x < x2) R = R1;
+    else if (pt.x < x3) {
+      const k = (pt.x - x2) / (x3 - x2);
+      R = R1 + (R2 - R1) * k;
+    } else R = R2;
+    const y = cy + pt.k * R * 1.6;
+    ctx.beginPath();
+    ctx.arc(pt.x, y, 2.2, 0, Math.PI * 2);
+    ctx.fillStyle = pt.x < x3 ? '#38bdf8' : '#10b981';
+    ctx.fill();
+  });
+
+  if (showLabels) {
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(`① A₁ = ${(p.A1 * 10000).toFixed(1)} cm²  v₁ = ${v1.toFixed(1)} m/s`, x1 + 6, cy - R1 - 12);
+    ctx.fillText(`② A₂ = ${(p.A2 * 10000).toFixed(1)} cm²  v₂ = ${p.v2.toFixed(1)} m/s`, x3 + 6, cy - R2 - 12);
+    // 压强计
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(`P₁`, x1 + (x2 - x1) / 2, cy + R1 + 24);
+    ctx.fillText(`P₂ = P₁ ${p.dp.toFixed(1)} kPa`, x3 + (x4 - x3) / 2 - 20, cy + R2 + 24);
+    // 文丘里 U 形管示意
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 1.5;
+    const m1 = (x1 + x2) / 2, m2 = (x3 + x4) / 2;
+    const yB = Math.min(H - 20, cy + R1 + 60);
+    ctx.beginPath();
+    ctx.moveTo(m1, cy + R1); ctx.lineTo(m1, yB); ctx.lineTo(m2, yB); ctx.lineTo(m2, cy + R2);
+    ctx.stroke();
+    // 液柱差
+    const dh = Math.min(40, Math.abs(p.dp) * 0.6);
+    ctx.fillStyle = 'rgba(245,158,11,0.6)';
+    ctx.fillRect(m1 - 4, yB - 20, 8, 20);
+    ctx.fillRect(m2 - 4, yB - 20 + dh, 8, 20 - dh);
+  }
+}
+
+const particles = [];
+for (let i = 0; i < 80; i++) particles.push({ x: Math.random() * 660 + 20, k: (Math.random() - 0.5) });
+
+const learnCtx = document.getElementById('learnCanvas').getContext('2d');
+const practiceCtx = document.getElementById('practiceCanvas').getContext('2d');
+const quizCtx = document.getElementById('quizCanvas').getContext('2d');
+
+function draw() {
+  if (mode === 'learn') drawPipe(learnCtx, 700, 420, +r1El.value, +r2El.value, +v1El.value, particles, true);
+  else if (mode === 'practice') drawPipe(practiceCtx, 700, 420, +pr1.value, +pr2.value, +pv1.value, particles, true);
+  else drawQuizScene(quizCtx, 700, 420);
+}
+setInterval(draw, 50);
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const quizData = [
+  {
+    q: '1️⃣ 不可压缩流体流经变径管，细管处（A₂ < A₁）的流速 v₂ 与 v₁ 关系为？',
+    opts: ['v₂ < v₁（细管流得慢）', 'v₂ = v₁（流速恒定）', 'v₂ > v₁（细管流得快）', '无法确定'],
+    ans: 2,
+    fb: '连续性方程 A₁v₁ = A₂v₂，A 减小则 v 增大。'
+  },
+  {
+    q: '2️⃣ 伯努利方程 P + ½ρv² + ρgh = C 中，水平管道（h 相同）流速增大时，压强 P 会？',
+    opts: ['增大', '减小', '不变', '先增后减'],
+    ans: 1,
+    fb: 'h 相同，v↑ → ½ρv²↑ → 压强 P↓。这就是"流速大、压强小"。'
+  },
+  {
+    q: '3️⃣ 飞机机翼产生升力的物理机制是？',
+    opts: ['机翼上下表面气压差', '机翼推动空气向下的反作用力', '空气浮力', '以上都有，但伯努利效应贡献最大'],
+    ans: 0,
+    fb: '上表面流速快、压强低，下表面流速慢、压强大，压强差 × 翼面积 = 升力。'
+  },
+  {
+    q: '4️⃣ 水以 v₁ = 2 m/s 流入直径 4 cm 的管，若下游直径收缩到 2 cm，下游流速 v₂ 为？',
+    opts: ['1 m/s', '2 m/s', '4 m/s', '8 m/s'],
+    ans: 3,
+    fb: 'A ∝ d²，d₂/d₁ = 1/2 → A₂/A₁ = 1/4 → v₂ = 4v₁ = 8 m/s。'
+  }
+];
+let quizIdx = 0;
+let quizAnswers = new Array(quizData.length).fill(-1);
+let quizSubmitted = false;
+
+const qEl = document.getElementById('quiz-q');
+const qOpts = document.getElementById('quiz-opts');
+const qFb = document.getElementById('quiz-fb');
+const qPrev = document.getElementById('quiz-prev');
+const qNext = document.getElementById('quiz-next');
+const qSubmit = document.getElementById('quiz-submit');
+const qRetry = document.getElementById('quiz-retry');
+const qResult = document.getElementById('quiz-result');
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  qEl.textContent = q.q;
+  qOpts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+    if (quizAnswers[quizIdx] === i) div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+    if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) div.classList.add('correct');
+    div.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizAnswers[quizIdx] = i;
+      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
+      renderQuizOpts();
+    });
+    qOpts.appendChild(div);
+  });
+  function renderQuizOpts() {
+    [...qOpts.children].forEach((c, i) => {
+      c.classList.remove('correct', 'wrong');
+      if (quizAnswers[quizIdx] === i) c.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+      if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) c.classList.add('correct');
+    });
+  }
+  qFb.textContent = quizAnswers[quizIdx] === -1 ? '' : (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
+  qPrev.disabled = quizIdx === 0;
+  qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
+  qSubmit.classList.toggle('hidden', quizIdx !== quizData.length - 1 || quizSubmitted);
+  qRetry.classList.toggle('hidden', !quizSubmitted);
+}
+qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+qSubmit.addEventListener('click', () => {
+  quizSubmitted = true;
+  const score = quizData.reduce((s, q, i) => s + (quizAnswers[i] === q.ans ? 1 : 0), 0);
+  const pass = score >= 3;
+  qResult.classList.remove('hidden');
+  qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
+  qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  qResult.textContent = pass ? `🎉 得分 ${score}/4，合格！本知识点已标记完成` : `😅 得分 ${score}/4，未达到 3/4，请复习后重试`;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('fluid-mechanics');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+  renderQuiz();
+});
+qRetry.addEventListener('click', () => {
+  quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
+  qResult.classList.add('hidden');
+  renderQuiz();
+});
+
+function drawQuizScene(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`🎯 第 ${quizIdx + 1}/${quizData.length} 题`, 30, 40);
+  // 装饰：文丘里管示意
+  drawPipe(ctx, W, H - 100, 50, 20, 3, particles, false);
+}
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('fluid-mechanics')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+renderQuiz();
+draw();
+</script>
+</body>
+</html>

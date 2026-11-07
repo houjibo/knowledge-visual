@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>积分变换 · 傅里叶与拉普拉斯变换互动可视化</title>
+<link rel="stylesheet" href="assets/common.css" />
+<script src="assets/common.js"></script>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --fourier: #3b82f6;
+    --laplace: #10b981;
+    --freq: #f59e0b;
+    --signal: #ec4899;
+    --dark: #0f172a;
+    --light: #f1f5f9;
+  }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; margin: 0; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--fourier), var(--laplace), var(--freq)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 14px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); max-height: 640px; overflow-y: auto; }
+  .panel h3 { margin: 0 0 10px; font-size: 1.1rem; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 60px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .signal-btn { padding: 6px 12px; border-radius: 8px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 13px; color: #93c5fd; transition: all .2s; }
+  .signal-btn.active { background: var(--fourier); border-color: var(--fourier); color: white; }
+  .prop-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.6; border-left: 3px solid var(--primary); }
+  .prop-card .prop-title { font-weight: 600; color: #c4b5fd; margin-bottom: 4px; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.5; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-signal::before { background: var(--signal); }
+  .legend .l-fourier::before { background: var(--fourier); }
+  .legend .l-laplace::before { background: var(--laplace); }
+  .legend .l-freq::before { background: var(--freq); }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔄 积分变换 Interactive</h1>
+    <p>傅里叶变换 · 拉普拉斯变换 · 频域分析 · 信号分解</p>
+    <div id="quizScoreLine" style="font-size:12px;color:#94a3b8;margin-top:4px"></div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="fourier">🌊 傅里叶变换</div>
+    <div class="tab" data-mode="laplace">📈 拉普拉斯变换</div>
+    <div class="tab" data-mode="spectrum">📊 频谱分析</div>
+    <div class="tab" data-mode="synthesis">🎵 信号合成</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="720" height="600"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel">
+      <h3 id="panelTitle">🌊 傅里叶变换</h3>
+      <div id="panelContent"></div>
+    </div>
+  </div>
+</div>
+
+<footer>大学数学 · 积分变换互动可视化 · 知识可视化项目</footer>
+
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+let currentMode = 'fourier';
+let animT = 0;
+let animFrame = null;
+
+// ============ Signal presets ============
+const signals = {
+  sine:     { name: '正弦波', fn: t => Math.sin(2*Math.PI*t), freqs: [1], amps: [1] },
+  square:   { name: '方波', fn: t => Math.sign(Math.sin(2*Math.PI*t)), freqs: [1,3,5,7,9,11,13,15], amps: [1,1/3,1/5,1/7,1/9,1/11,1/13,1/15] },
+  sawtooth: { name: '锯齿波', fn: t => 2*(t - Math.floor(t+0.5)), freqs: [1,2,3,4,5,6,7,8], amps: [1,-.5,1/3,-.25,1/5,-1/6,1/7,-1/8] },
+  triangle: { name: '三角波', fn: t => 2*Math.abs(2*(t-Math.floor(t+0.75)))-1, freqs: [1,3,5,7,9], amps: [1,-1/9,1/25,-1/49,1/81] },
+  custom:   { name: '自定义', fn: null, freqs: [1], amps: [1] }
+};
+let currentSignal = 'sine';
+
+// Fourier params
+let fourierN = 5;
+let fourierScrollX = 0;
+
+// Laplace params
+let laplaceSigma = 0.5;
+let laplaceOmega = 0;
+
+// Spectrum: custom freq composition
+let specFreqs = [
+  { freq: 1, amp: 1.0, phase: 0 },
+  { freq: 3, amp: 0.5, phase: 0 },
+  { freq: 5, amp: 0.3, phase: 0 }
+];
+
+// ============ Tabs ============
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    updatePanel();
+    draw();
+  });
+});
+
+// ============ Drawing helpers ============
+function clearCanvas() {
+  ctx.clearRect(0, 0, W, H);
+}
+
+function drawGrid(x0, y0, w, h, xRange, yRange, color='rgba(255,255,255,0.06)') {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 0.5;
+  const xStep = w / (xRange[1] - xRange[0]);
+  const yStep = h / (yRange[1] - yRange[0]);
+  for (let x = Math.ceil(xRange[0]); x <= xRange[1]; x++) {
+    const px = x0 + (x - xRange[0]) * xStep;
+    ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + h); ctx.stroke();
+  }
+  for (let y = Math.ceil(yRange[0]); y <= yRange[1]; y++) {
+    const py = y0 + h - (y - yRange[0]) * yStep;
+    ctx.beginPath(); ctx.moveTo(x0, py); ctx.lineTo(x0 + w, py); ctx.stroke();
+  }
+  // axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  const zeroY = y0 + h - (0 - yRange[0]) * yStep;
+  if (zeroY >= y0 && zeroY <= y0 + h) {
+    ctx.beginPath(); ctx.moveTo(x0, zeroY); ctx.lineTo(x0 + w, zeroY); ctx.stroke();
+  }
+  const zeroX = x0 + (0 - xRange[0]) * xStep;
+  if (zeroX >= x0 && zeroX <= x0 + w) {
+    ctx.beginPath(); ctx.moveTo(zeroX, y0); ctx.lineTo(zeroX, y0 + h); ctx.stroke();
+  }
+}
+
+function mapX(val, x0, w, range) { return x0 + (val - range[0]) / (range[1] - range[0]) * w; }
+function mapY(val, y0, h, range) { return y0 + h - (val - range[0]) / (range[1] - range[0]) * h; }
+
+function drawCurve(fn, x0, y0, w, h, xRange, yRange, color, lineWidth=2) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth;
+  ctx.beginPath();
+  const steps = 400;
+  for (let i = 0; i <= steps; i++) {
+    const x = xRange[0] + (xRange[1] - xRange[0]) * i / steps;
+    const y = fn(x);
+    const px = mapX(x, x0, w, xRange);
+    const py = mapY(y, y0, h, yRange);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+}
+
+function drawLabel(text, x, y, color='#94a3b8', size=12, align='center') {
+  ctx.fillStyle = color;
+  ctx.font = `${size}px -apple-system, "PingFang SC", sans-serif`;
+  ctx.textAlign = align;
+  ctx.fillText(text, x, y);
+}
+
+// ============ FOURIER MODE ============
+function drawFourier() {
+  clearCanvas();
+  const sig = signals[currentSignal];
+  const N = fourierN;
+
+  // Top half: time domain signal
+  const topH = 260;
+  drawGrid(40, 20, W - 80, topH, [-0.5, 2.5], [-1.5, 1.5]);
+  drawLabel('时域信号 f(t)', W/2, 16, '#94a3b8', 13);
+
+  // Draw individual harmonics
+  const harmColors = ['#f472b6','#fb923c','#facc15','#4ade80','#22d3ee','#818cf8','#e879f9','#f87171'];
+  for (let k = 0; k < Math.min(N, sig.freqs.length); k++) {
+    const f = sig.freqs[k];
+    const a = sig.amps[k];
+    drawCurve(t => a * Math.sin(2*Math.PI*f*t), 40, 20, W-80, topH, [-0.5, 2.5], [-1.5, 1.5], harmColors[k%8]+'66', 1);
+  }
+
+  // Draw composite
+  drawCurve(t => {
+    let s = 0;
+    for (let k = 0; k < Math.min(N, sig.freqs.length); k++) s += sig.amps[k] * Math.sin(2*Math.PI*sig.freqs[k]*t);
+    return s;
+  }, 40, 20, W-80, topH, [-0.5, 2.5], [-1.5, 1.5], '#ec4899', 2.5);
+
+  // Animated tracer
+  const tracerT = (animT * 0.15) % 3 - 0.5;
+  const tracerY = sig.freqs.reduce((s, f, k) => k < N ? s + sig.amps[k]*Math.sin(2*Math.PI*f*tracerT) : s, 0);
+  const tpx = mapX(tracerT, 40, W-80, [-0.5, 2.5]);
+  const tpy = mapY(tracerY, 20, topH, [-1.5, 1.5]);
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(tpx, tpy, 5, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.beginPath(); ctx.arc(tpx, tpy, 10, 0, 2*Math.PI); ctx.fill();
+
+  // Bottom half: frequency spectrum
+  const botY = 320;
+  const botH = 240;
+  drawGrid(40, botY, W - 80, botH, [0, 10], [0, 1.5]);
+  drawLabel('频域 |F(ω)| 频谱', W/2, botY - 6, '#94a3b8', 13);
+
+  // Draw spectrum bars
+  for (let k = 0; k < Math.min(N, sig.freqs.length); k++) {
+    const f = sig.freqs[k];
+    const a = Math.abs(sig.amps[k]);
+    const bx = mapX(f, 40, W-80, [0, 10]);
+    const by = mapY(a, botY, botH, [0, 1.5]);
+    const bw = 14;
+
+    const grad = ctx.createLinearGradient(bx, botY + botH, bx, by);
+    grad.addColorStop(0, harmColors[k%8]+'33');
+    grad.addColorStop(1, harmColors[k%8]);
+    ctx.fillStyle = grad;
+    ctx.fillRect(bx - bw/2, by, bw, botY + botH - by);
+
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`f=${f}`, bx, botY + botH + 14);
+    ctx.fillStyle = harmColors[k%8];
+    ctx.fillText(a.toFixed(2), bx, by - 6);
+  }
+
+  // Connection lines from time to freq
+  ctx.setLineDash([3, 4]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  for (let k = 0; k < Math.min(N, sig.freqs.length); k++) {
+    const f = sig.freqs[k];
+    const bx = mapX(f, 40, W-80, [0, 10]);
+    ctx.beginPath(); ctx.moveTo(bx, 20 + topH); ctx.lineTo(bx, botY); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // Legend
+  document.getElementById('legend').innerHTML = '<span class="l-signal">合成信号</span><span class="l-freq">频谱分量</span>';
+}
+
+// ============ LAPLACE MODE ============
+function drawLaplace() {
+  clearCanvas();
+
+  // s-plane visualization
+  const cx = W/2, cy = H/2;
+  const scale = 50;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 0.5;
+  for (let x = -7; x <= 7; x++) {
+    const px = cx + x * scale;
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+  }
+  for (let y = -6; y <= 6; y++) {
+    const py = cy + y * scale;
+    ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+
+  drawLabel('Re(s)', W - 40, cy - 10, '#94a3b8', 13, 'right');
+  drawLabel('Im(s)', cx + 15, 20, '#94a3b8', 13, 'left');
+  drawLabel('s 平面', W/2, 25, '#c4b5fd', 14);
+
+  // ROC shading (sigma > some value)
+  const sigmaLine = cx + laplaceSigma * scale;
+  ctx.fillStyle = 'rgba(16,185,129,0.08)';
+  ctx.fillRect(sigmaLine, 0, W - sigmaLine, H);
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath(); ctx.moveTo(sigmaLine, 0); ctx.lineTo(sigmaLine, H); ctx.stroke();
+  ctx.setLineDash([]);
+  drawLabel(`σ = ${laplaceSigma.toFixed(1)}`, sigmaLine + 5, 45, '#10b981', 12, 'left');
+  drawLabel('ROC →', sigmaLine + 40, 60, '#10b98188', 11, 'left');
+
+  // Pole-zero plot for common transforms
+  // Example: F(s) = 1/(s+a) has pole at s = -a
+  const poles = [
+    { x: -1, y: 0, label: 'p₁=-1' },
+    { x: -2, y: 1, label: 'p₂' },
+    { x: -2, y: -1, label: 'p₃' }
+  ];
+  const zeros = [
+    { x: -3, y: 0, label: 'z₁' }
+  ];
+
+  // Draw zeros (circles)
+  zeros.forEach(z => {
+    const px = cx + z.x * scale;
+    const py = cy - z.y * scale;
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(px, py, 10, 0, 2*Math.PI); ctx.stroke();
+    drawLabel(z.label, px, py - 16, '#3b82f6', 11);
+  });
+
+  // Draw poles (crosses)
+  poles.forEach(p => {
+    const px = cx + p.x * scale;
+    const py = cy - p.y * scale;
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2.5;
+    const s = 8;
+    ctx.beginPath(); ctx.moveTo(px-s, py-s); ctx.lineTo(px+s, py+s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px+s, py-s); ctx.lineTo(px-s, py+s); ctx.stroke();
+    drawLabel(p.label, px, py - 16, '#ef4444', 11);
+  });
+
+  // Animated evaluation point
+  const evalOmega = animT * 0.03;
+  const evalPx = cx + laplaceSigma * scale;
+  const evalPy = cy - evalOmega * scale;
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath(); ctx.arc(evalPx, evalPy, 6, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = 'rgba(245,158,11,0.2)';
+  ctx.beginPath(); ctx.arc(evalPx, evalPy, 14, 0, 2*Math.PI); ctx.fill();
+  drawLabel(`s = ${laplaceSigma.toFixed(1)} + j${evalOmega.toFixed(1)}`, evalPx + 20, evalPy, '#f59e0b', 11, 'left');
+
+  // Draw |F(s)| magnitude as color intensity along the eval line
+  for (let oy = -5; oy <= 5; oy += 0.2) {
+    const s_re = laplaceSigma;
+    const s_im = oy;
+    // Simple 1/(s+1) magnitude
+    const mag = 1 / Math.sqrt((s_re+1)*(s_re+1) + s_im*s_im);
+    const intensity = Math.min(mag, 1);
+    const py = cy - oy * scale;
+    ctx.fillStyle = `rgba(16,185,129,${intensity * 0.4})`;
+    ctx.fillRect(evalPx - 3, py - 2, 6, 4);
+  }
+
+  // Bottom: time domain comparison
+  const botY = H - 160;
+  const botH = 130;
+  drawGrid(40, botY, W - 80, botH, [0, 5], [-0.5, 2]);
+  drawLabel('时域 f(t) = e⁻ᵗ·u(t)', W/2, botY - 6, '#94a3b8', 12);
+  drawCurve(t => t >= 0 ? Math.exp(-t) : 0, 40, botY, W-80, botH, [0, 5], [-0.5, 2], '#10b981', 2);
+
+  document.getElementById('legend').innerHTML = '<span class="l-laplace">拉普拉斯域</span><span class="l-freq">评估轨迹</span>';
+}
+
+// ============ SPECTRUM MODE ============
+function drawSpectrum() {
+  clearCanvas();
+
+  // Top: composite signal
+  const topH = 220;
+  drawGrid(40, 20, W - 80, topH, [0, 4], [-2.5, 2.5]);
+  drawLabel('合成信号 f(t) = Σ Aₖ·sin(2πfₖt)', W/2, 16, '#94a3b8', 13);
+
+  drawCurve(t => {
+    let s = 0;
+    specFreqs.forEach(c => s += c.amp * Math.sin(2*Math.PI*c.freq*t + c.phase));
+    return s;
+  }, 40, 20, W-80, topH, [0, 4], [-2.5, 2.5], '#ec4899', 2.5);
+
+  // Middle: individual components
+  const midY = 270;
+  const compH = 120;
+  drawLabel('各频率分量', W/2, midY - 4, '#c4b5fd', 12);
+
+  const compColors = ['#f472b6','#fb923c','#facc15','#4ade80','#22d3ee','#818cf8'];
+  specFreqs.forEach((c, i) => {
+    const yOff = midY + i * 42;
+    if (yOff + 35 > H - 140) return;
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 0.5;
+    const zeroY = yOff + 17;
+    ctx.beginPath(); ctx.moveTo(40, zeroY); ctx.lineTo(W-40, zeroY); ctx.stroke();
+
+    drawCurve(t => c.amp * Math.sin(2*Math.PI*c.freq*t + c.phase), 40, yOff, W-80, 35, [0, 4], [-1.5, 1.5], compColors[i%6], 1.5);
+    drawLabel(`${c.freq}Hz, A=${c.amp.toFixed(1)}`, W - 30, yOff + 20, compColors[i%6], 11, 'right');
+  });
+
+  // Bottom: DFT-like bar chart
+  const botY = H - 150;
+  const botH = 120;
+  drawGrid(40, botY, W - 80, botH, [0, 10], [0, 1.5]);
+  drawLabel('幅度谱 |F(f)|', W/2, botY - 6, '#94a3b8', 13);
+
+  specFreqs.forEach((c, i) => {
+    const bx = mapX(c.freq, 40, W-80, [0, 10]);
+    const by = mapY(c.amp, botY, botH, [0, 1.5]);
+    const bw = 20;
+
+    const grad = ctx.createLinearGradient(bx, botY + botH, bx, by);
+    grad.addColorStop(0, compColors[i%6]+'33');
+    grad.addColorStop(1, compColors[i%6]);
+    ctx.fillStyle = grad;
+    ctx.fillRect(bx - bw/2, by, bw, botY + botH - by);
+
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${c.freq}Hz`, bx, botY + botH + 14);
+    ctx.fillStyle = compColors[i%6];
+    ctx.fillText(c.amp.toFixed(2), bx, by - 6);
+  });
+
+  document.getElementById('legend').innerHTML = '<span class="l-signal">合成信号</span><span class="l-freq">频谱分量</span>';
+}
+
+// ============ SYNTHESIS MODE ============
+function drawSynthesis() {
+  clearCanvas();
+
+  // Epicycle visualization
+  const centerX = W * 0.35;
+  const centerY = H * 0.45;
+  const R = 120;
+
+  const sig = signals[currentSignal];
+  const N = Math.min(fourierN, sig.freqs.length);
+
+  let x = centerX;
+  let y = centerY;
+
+  // Draw epicycles
+  for (let k = 0; k < N; k++) {
+    const f = sig.freqs[k];
+    const a = sig.amps[k] * R * 0.4;
+    const angle = 2 * Math.PI * f * animT * 0.02;
+
+    // Circle
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.arc(x, y, a, 0, 2*Math.PI); ctx.stroke();
+
+    // Radius line
+    const nx = x + a * Math.cos(angle);
+    const ny = y - a * Math.sin(angle);
+    ctx.strokeStyle = `hsl(${k * 45}, 70%, 60%)`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(nx, ny); ctx.stroke();
+
+    // Dot
+    ctx.fillStyle = `hsl(${k * 45}, 70%, 60%)`;
+    ctx.beginPath(); ctx.arc(nx, ny, 3, 0, 2*Math.PI); ctx.fill();
+
+    x = nx;
+    y = ny;
+  }
+
+  // Result point
+  ctx.fillStyle = '#ec4899';
+  ctx.beginPath(); ctx.arc(x, y, 5, 0, 2*Math.PI); ctx.fill();
+
+  // Draw waveform to the right
+  const waveX = W * 0.6;
+  const waveW = W * 0.35;
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(waveX, centerY); ctx.lineTo(waveX + waveW, centerY); ctx.stroke();
+
+  // Connection line
+  ctx.strokeStyle = 'rgba(236,72,153,0.3)';
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(waveX, y); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Wave trace
+  ctx.strokeStyle = '#ec4899';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i < 200; i++) {
+    const t = animT * 0.02 - i * 0.015;
+    let sy = 0;
+    for (let k = 0; k < N; k++) {
+      sy += sig.amps[k] * R * 0.4 * Math.sin(2 * Math.PI * sig.freqs[k] * t);
+    }
+    const px = waveX + i * (waveW / 200);
+    const py = centerY - sy;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Labels
+  drawLabel('旋转矢量合成（傅里叶级数几何意义）', W/2, 25, '#c4b5fd', 14);
+  drawLabel(`${sig.name} — ${N} 个谐波`, W/2, H - 20, '#94a3b8', 12);
+
+  document.getElementById('legend').innerHTML = '<span class="l-signal">合成波形</span>';
+}
+
+// ============ QUIZ MODE ============
+const quizData = [
+  {
+    q: '傅里叶变换将信号从____域变换到____域？',
+    opts: ['时间域 → 空间域', '时间域 → 频率域', '频率域 → 时间域', '空间域 → 频率域'],
+    ans: 1
+  },
+  {
+    q: '方波的傅里叶级数包含哪些频率分量？',
+    opts: ['所有整数倍谐波', '所有奇数倍谐波', '所有偶数倍谐波', '仅基频'],
+    ans: 1
+  },
+  {
+    q: '拉普拉斯变换中，s = σ + jω，当 σ = 0 时退化为？',
+    opts: ['z 变换', '傅里叶变换', '离散余弦变换', '小波变换'],
+    ans: 1
+  },
+  {
+    q: '拉普拉斯变换的收敛域（ROC）是指？',
+    opts: ['使变换收敛的 s 值范围', '使变换收敛的 t 值范围', '使变换收敛的 ω 值范围', '使变换收敛的 z 值范围'],
+    ans: 0
+  },
+  {
+    q: 'δ(t) 的傅里叶变换是？',
+    opts: ['1/ω', 'δ(ω)', '1（常数）', '2πδ(ω)'],
+    ans: 2
+  },
+  {
+    q: '傅里叶变换的线性性质表明？',
+    opts: ['时移对应频域相移', '卷积对应乘积', '变换是线性算子', '微分对应乘以 jω'],
+    ans: 2
+  }
+];
+let quizIdx = 0;
+let quizAnswered = false;
+const quizCorrectSet = new Set();
+
+function updateQuizScoreLine() {
+  const el = document.getElementById('quizScoreLine');
+  if (!el) return;
+  const total = quizData.length;
+  const answered = quizCorrectSet.size;
+  el.textContent = `已答对 ${answered}/${total}`;
+  if (answered >= total && total > 0) {
+    el.textContent += ' ✅ 已掌握';
+    if (typeof PageProgress !== 'undefined') PageProgress.markDone('integral-transform');
+  }
+}
+
+function drawQuiz() {
+  clearCanvas();
+  drawLabel('🎯 积分变换 互动练习', W/2, 40, '#c4b5fd', 18);
+
+  const q = quizData[quizIdx];
+
+  // Decorative formula
+  ctx.fillStyle = 'rgba(139,92,246,0.1)';
+  ctx.font = 'italic 28px "Times New Roman", serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('F(ω) = ∫ f(t)e⁻ʲωᵗ dt', W/2, 100);
+  ctx.fillText('F(s) = ∫ f(t)e⁻ˢᵗ dt', W/2, 140);
+
+  // Progress
+  drawLabel(`${quizIdx + 1} / ${quizData.length}`, W/2, 180, '#64748b', 13);
+
+  // Score indicator
+  const correct = quizData.filter((q, i) => i < quizIdx && document.querySelector(`.quiz-opt.correct[data-qi="${i}"]`)).length;
+  drawLabel(`✓ ${correct}`, W/2, 200, '#10b981', 14);
+
+  // Animated background elements
+  for (let i = 0; i < 6; i++) {
+    const angle = animT * 0.01 + i * Math.PI / 3;
+    const r = 200 + 30 * Math.sin(animT * 0.02 + i);
+    const px = W/2 + r * Math.cos(angle);
+    const py = 350 + r * 0.3 * Math.sin(angle);
+    ctx.fillStyle = `hsla(${i*60}, 70%, 60%, 0.05)`;
+    ctx.beginPath(); ctx.arc(px, py, 40, 0, 2*Math.PI); ctx.fill();
+  }
+
+  document.getElementById('legend').innerHTML = '';
+}
+
+function updatePanel() {
+  const title = document.getElementById('panelTitle');
+  const content = document.getElementById('panelContent');
+
+  switch (currentMode) {
+    case 'fourier':
+      title.textContent = '🌊 傅里叶变换';
+      content.innerHTML = `
+        <div class="equation">F(ω) = ∫<sub>-∞</sub><sup>∞</sup> f(t)·e<sup>-jωt</sup> dt</div>
+        <div class="prop-card">
+          <div class="prop-title">核心思想</div>
+          任何周期信号都可以分解为不同频率的正弦波之和。频率越低的分量贡献越大。
+        </div>
+        <p style="font-size:13px;color:#cbd5e1;margin:8px 0">选择信号类型：</p>
+        <div class="signal-select" style="display:flex;gap:6px;flex-wrap:wrap">
+          ${Object.entries(signals).filter(([k]) => k !== 'custom').map(([k, v]) =>
+            `<div class="signal-btn ${k === currentSignal ? 'active' : ''}" data-sig="${k}">${v.name}</div>`
+          ).join('')}
+        </div>
+        <div class="slider-row">
+          <label>谐波数量</label>
+          <input type="range" min="1" max="15" value="${fourierN}" id="sliderN">
+          <span class="val" id="valN">${fourierN}</span>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">观察要点</div>
+          1. 增加谐波数量，合成信号越来越接近原始波形<br>
+          2. 方波只含奇数次谐波，锯齿波含所有谐波<br>
+          3. 频谱图显示各频率分量的幅度
+        </div>
+      `;
+      content.querySelectorAll('.signal-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentSignal = btn.dataset.sig;
+          updatePanel();
+          draw();
+        });
+      });
+      const sliderN = document.getElementById('sliderN');
+      if (sliderN) sliderN.addEventListener('input', e => {
+        fourierN = parseInt(e.target.value);
+        document.getElementById('valN').textContent = fourierN;
+        draw();
+      });
+      break;
+
+    case 'laplace':
+      title.textContent = '📈 拉普拉斯变换';
+      content.innerHTML = `
+        <div class="equation">F(s) = ∫<sub>0</sub><sup>∞</sup> f(t)·e<sup>-st</sup> dt</div>
+        <div class="prop-card">
+          <div class="prop-title">与傅里叶变换的关系</div>
+          令 s = σ + jω，当 σ = 0 时，拉普拉斯变换退化为傅里叶变换。拉普拉斯变换是傅里叶变换的推广。
+        </div>
+        <div class="slider-row">
+          <label>σ (实部)</label>
+          <input type="range" min="-3" max="3" step="0.1" value="${laplaceSigma}" id="sliderSigma">
+          <span class="val" id="valSigma">${laplaceSigma.toFixed(1)}</span>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">s 平面</div>
+          <b style="color:#ef4444">×</b> = 极点（系统不稳定）<br>
+          <b style="color:#3b82f6">○</b> = 零点<br>
+          绿色区域 = 收敛域 (ROC)<br>
+          黄色点 = 沿 s = σ + jω 的评估轨迹
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">应用</div>
+          控制系统稳定性分析、电路分析、信号处理。极点位置决定系统特性：左半平面稳定，右半平面不稳定。
+        </div>
+      `;
+      const sliderSigma = document.getElementById('sliderSigma');
+      if (sliderSigma) sliderSigma.addEventListener('input', e => {
+        laplaceSigma = parseFloat(e.target.value);
+        document.getElementById('valSigma').textContent = laplaceSigma.toFixed(1);
+        draw();
+      });
+      break;
+
+    case 'spectrum':
+      title.textContent = '📊 频谱分析';
+      content.innerHTML = `
+        <div class="equation">f(t) = Σ Aₖ·sin(2πfₖt + φₖ)</div>
+        <div class="prop-card">
+          <div class="prop-title">互动信号合成</div>
+          调节各频率分量的幅度和相位，观察合成信号的变化。理解"频谱"就是信号的频率成分清单。
+        </div>
+        ${specFreqs.map((c, i) => `
+          <div style="margin:8px 0;padding:8px;background:rgba(255,255,255,0.03);border-radius:8px">
+            <div style="font-size:12px;color:#c4b5fd;margin-bottom:4px">分量 ${i+1}</div>
+            <div class="slider-row">
+              <label>频率 (Hz)</label>
+              <input type="range" min="1" max="10" step="1" value="${c.freq}" data-spec="${i}" data-param="freq">
+              <span class="val">${c.freq}</span>
+            </div>
+            <div class="slider-row">
+              <label>幅度</label>
+              <input type="range" min="0" max="1.5" step="0.1" value="${c.amp}" data-spec="${i}" data-param="amp">
+              <span class="val">${c.amp.toFixed(1)}</span>
+            </div>
+          </div>
+        `).join('')}
+        <div class="mode-switch">
+          <div class="mode-btn" id="addFreq">+ 添加分量</div>
+          <div class="mode-btn" id="resetFreq">重置</div>
+        </div>
+      `;
+      content.querySelectorAll('input[data-spec]').forEach(slider => {
+        slider.addEventListener('input', e => {
+          const idx = parseInt(e.target.dataset.spec);
+          const param = e.target.dataset.param;
+          specFreqs[idx][param] = parseFloat(e.target.value);
+          e.target.nextElementSibling.textContent = param === 'amp' ? specFreqs[idx][param].toFixed(1) : specFreqs[idx][param];
+          draw();
+        });
+      });
+      document.getElementById('addFreq')?.addEventListener('click', () => {
+        if (specFreqs.length < 6) {
+          specFreqs.push({ freq: specFreqs.length + 1, amp: 0.5, phase: 0 });
+          updatePanel();
+          draw();
+        }
+      });
+      document.getElementById('resetFreq')?.addEventListener('click', () => {
+        specFreqs = [
+          { freq: 1, amp: 1.0, phase: 0 },
+          { freq: 3, amp: 0.5, phase: 0 },
+          { freq: 5, amp: 0.3, phase: 0 }
+        ];
+        updatePanel();
+        draw();
+      });
+      break;
+
+    case 'synthesis':
+      title.textContent = '🎵 信号合成（旋转矢量）';
+      content.innerHTML = `
+        <div class="prop-card">
+          <div class="prop-title">傅里叶级数的几何意义</div>
+          每个频率分量对应一个旋转矢量。多个矢量首尾相连，末端轨迹就是合成信号。
+        </div>
+        <p style="font-size:13px;color:#cbd5e1;margin:8px 0">选择目标波形：</p>
+        <div class="signal-select" style="display:flex;gap:6px;flex-wrap:wrap">
+          ${Object.entries(signals).filter(([k]) => k !== 'custom').map(([k, v]) =>
+            `<div class="signal-btn ${k === currentSignal ? 'active' : ''}" data-sig="${k}">${v.name}</div>`
+          ).join('')}
+        </div>
+        <div class="slider-row">
+          <label>谐波数量</label>
+          <input type="range" min="1" max="12" value="${fourierN}" id="sliderSynN">
+          <span class="val" id="valSynN">${fourierN}</span>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">观察要点</div>
+          1. 每个圆代表一个频率分量<br>
+          2. 圆的大小 = 该频率的幅度<br>
+          3. 旋转速度 = 频率<br>
+          4. 右侧波形是各矢量末端的水平投影
+        </div>
+      `;
+      content.querySelectorAll('.signal-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentSignal = btn.dataset.sig;
+          updatePanel();
+          draw();
+        });
+      });
+      const sliderSynN = document.getElementById('sliderSynN');
+      if (sliderSynN) sliderSynN.addEventListener('input', e => {
+        fourierN = parseInt(e.target.value);
+        document.getElementById('valSynN').textContent = fourierN;
+        draw();
+      });
+      break;
+
+    case 'quiz':
+      title.textContent = '🎯 积分变换练习';
+      quizIdx = 0;
+      quizAnswered = false;
+      renderQuizQuestion();
+      break;
+  }
+}
+
+function renderQuizQuestion() {
+  const content = document.getElementById('panelContent');
+  if (quizIdx >= quizData.length) {
+    content.innerHTML = `
+      <div style="text-align:center;padding:30px">
+        <div style="font-size:48px;margin-bottom:16px">🎉</div>
+        <div style="font-size:18px;color:#c4b5fd;margin-bottom:8px">练习完成！</div>
+        <div style="font-size:14px;color:#94a3b8">你已完成所有 ${quizData.length} 道题目</div>
+        <div class="mode-btn" style="margin-top:16px;display:inline-block" id="retryQuiz">重新练习</div>
+      </div>
+    `;
+    document.getElementById('retryQuiz')?.addEventListener('click', () => {
+      quizIdx = 0;
+      quizAnswered = false;
+      renderQuizQuestion();
+      draw();
+    });
+    return;
+  }
+
+  const q = quizData[quizIdx];
+  quizAnswered = false;
+  content.innerHTML = `
+    <div class="quiz">
+      <div class="quiz-q"><b>第 ${quizIdx + 1} 题</b><br>${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((opt, i) => `<div class="quiz-opt" data-idx="${i}" data-qi="${quizIdx}">${opt}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+    </div>
+    <div class="prop-card" style="margin-top:12px">
+      <div class="prop-title">知识提示</div>
+      ${getQuizHint(quizIdx)}
+    </div>
+  `;
+  content.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const idx = parseInt(opt.dataset.idx);
+      const correct = q.ans;
+      if (idx === correct) {
+        opt.classList.add('correct');
+        quizCorrectSet.add(quizIdx);
+        updateQuizScoreLine();
+        document.getElementById('quizFeedback').textContent = '✅ 正确！';
+      } else {
+        opt.classList.add('wrong');
+        quizCorrectSet.delete(quizIdx);
+        updateQuizScoreLine();
+        content.querySelectorAll('.quiz-opt')[correct].classList.add('correct');
+        document.getElementById('quizFeedback').textContent = '❌ 错误，正确答案已标出';
+      }
+      setTimeout(() => { quizIdx++; renderQuizQuestion(); draw(); }, 1500);
+    });
+  });
+}
+
+function getQuizHint(idx) {
+  const hints = [
+    '傅里叶变换的核心：将时域信号分解为频率分量，实现时域到频域的映射。',
+    '方波是奇函数，其傅里叶级数只含正弦项（奇次谐波）。',
+    '拉普拉斯变换 F(s) 中 s = σ + jω，σ=0 时就是傅里叶变换 F(ω)。',
+    'ROC 是使积分收敛的所有 s 值集合，对系统稳定性分析至关重要。',
+    'δ(t) 包含所有频率分量且幅度相等，所以其傅里叶变换为常数 1。',
+    '线性性质：F{af + bg} = aF{f} + bF{g}，这是变换的基本代数性质。'
+  ];
+  return hints[idx] || '';
+}
+
+// ============ Main draw loop ============
+function draw() {
+  switch (currentMode) {
+    case 'fourier': drawFourier(); break;
+    case 'laplace': drawLaplace(); break;
+    case 'spectrum': drawSpectrum(); break;
+    case 'synthesis': drawSynthesis(); break;
+    case 'quiz': drawQuiz(); break;
+  }
+}
+
+function animate() {
+  animT++;
+  draw();
+  animFrame = requestAnimationFrame(animate);
+}
+
+updatePanel();
+updateQuizScoreLine();
+animate();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

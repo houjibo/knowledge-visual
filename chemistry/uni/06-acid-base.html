@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>酸碱平衡与沉淀 · 大学化学互动可视化</title>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --accent: #f59e0b;
+    --acid: #ef4444;
+    --base: #3b82f6;
+    --neutral: #10b981;
+    --precip: #a78bfa;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.3rem; background: linear-gradient(90deg, var(--acid), var(--primary), var(--base)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 0.95rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 11px 22px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 14px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .legend .l-acid::before { background: var(--acid); }
+  .legend .l-base::before { background: var(--base); }
+  .legend .l-neutral::before { background: var(--neutral); }
+  .legend .l-precip::before { background: var(--precip); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 660px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 10px; color: #e2e8f0; }
+
+  .concept-box { font-size: 0.98rem; text-align: left; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 10px 0; line-height: 1.85; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--acid); font-weight: 600; }
+  .concept-box .hl2 { color: var(--base); font-weight: 600; }
+  .concept-box .hl3 { color: var(--neutral); font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--accent); font-weight: 600; font-size: 12px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 7px 14px; border-radius: 10px; background: rgba(139,92,246,0.1); border: 2px solid rgba(139,92,246,0.3); cursor: pointer; font-size: 13px; color: #c4b5fd; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 12px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; line-height: 1.5; }
+  .info-grid b { color: #fbbf24; }
+
+  .formula-box { padding: 12px; background: rgba(139,92,246,0.08); border-radius: 12px; margin: 10px 0; font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; color: #c4b5fd; border: 1px solid rgba(139,92,246,0.2); }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(139,92,246,0.1); border-radius: 14px; border: 2px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 13px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; color: #c4b5fd; min-height: 20px; line-height: 1.5; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 12px; }
+  .quiz-nav button { padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .ph-scale { height: 40px; border-radius: 10px; margin: 12px 0; position: relative; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 25%, #10b981 50%, #3b82f6 75%, #8b5cf6 100%); }
+  .ph-marker { position: absolute; top: -8px; width: 4px; height: 56px; background: white; border-radius: 2px; transition: left 0.3s; box-shadow: 0 0 8px rgba(255,255,255,0.8); }
+  .ph-labels { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+  .beaker { position: relative; width: 200px; height: 240px; margin: 20px auto; }
+  .beaker-body { width: 100%; height: 100%; border: 3px solid rgba(255,255,255,0.3); border-top: none; border-radius: 0 0 20px 20px; position: relative; overflow: hidden; }
+  .beaker-liquid { position: absolute; bottom: 0; width: 100%; transition: all 0.5s; }
+  .beaker-spout { position: absolute; top: -10px; left: -20px; width: 40px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-bottom: none; border-radius: 20px 0 0 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🧪 酸碱平衡与沉淀</h1>
+    <p>大学化学 · 分析化学基础 · 互动可视化<span id="done-mark" style="color:#10b981;font-weight:700;margin-left:8px;font-size:14px;"></span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-section="theory">酸碱理论</div>
+    <div class="tab" data-section="buffer">缓冲溶液</div>
+    <div class="tab" data-section="precipitation">沉淀溶解</div>
+    <div class="tab" data-section="quiz">练习测试</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <!-- 酸碱理论 -->
+      <div class="section active" id="theory">
+        <canvas id="theoryCanvas" width="600" height="500"></canvas>
+        <div class="legend">
+          <span class="l-acid">H⁺ 离子</span>
+          <span class="l-base">OH⁻ 离子</span>
+          <span class="l-neutral">H₂O 分子</span>
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="arrhenius">阿伦尼乌斯</div>
+          <div class="mode-btn" data-mode="bronsted">布朗斯特-劳里</div>
+          <div class="mode-btn" data-mode="lewis">路易斯</div>
+        </div>
+      </div>
+
+      <!-- 缓冲溶液 -->
+      <div class="section" id="buffer">
+        <canvas id="bufferCanvas" width="600" height="500"></canvas>
+        <div class="legend">
+          <span class="l-acid">加入酸</span>
+          <span class="l-base">加入碱</span>
+          <span class="l-precip">缓冲容量</span>
+        </div>
+      </div>
+
+      <!-- 沉淀溶解 -->
+      <div class="section" id="precipitation">
+        <canvas id="precipCanvas" width="600" height="500"></canvas>
+        <div class="legend">
+          <span class="l-precip">沉淀颗粒</span>
+          <span class="l-acid">阳离子</span>
+          <span class="l-base">阴离子</span>
+        </div>
+      </div>
+
+      <!-- 练习测试 -->
+      <div class="section" id="quiz">
+        <div class="quiz">
+          <div class="quiz-q" id="quizQuestion"></div>
+          <div class="quiz-opts" id="quizOptions"></div>
+          <div class="quiz-feedback" id="quizFeedback"></div>
+          <div class="quiz-nav">
+            <button id="quizPrev">上一题</button>
+            <button id="quizNext">下一题</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <!-- 酸碱理论面板 -->
+      <div class="section active" id="theoryPanel">
+        <h3>📚 酸碱理论演进</h3>
+        <div class="concept-box">
+          <b>🔬 阿伦尼乌斯理论 (1887)</b><br>
+          酸：在水中电离产生 <span class="hl">H⁺</span> 的物质<br>
+          碱：在水中电离产生 <span class="hl2">OH⁻</span> 的物质<br>
+          <small>局限：仅限于水溶液，无法解释非水体系</small>
+        </div>
+        <div class="concept-box">
+          <b>🔄 布朗斯特-劳里理论 (1923)</b><br>
+          酸：<span class="hl">质子供体</span>（能给出质子）<br>
+          碱：<span class="hl2">质子受体</span>（能接受质子）<br>
+          <small>优势：适用于任何溶剂，引入共轭酸碱对概念</small>
+        </div>
+        <div class="concept-box">
+          <b>⚡ 路易斯理论 (1923)</b><br>
+          酸：<span class="hl">电子对受体</span>（缺电子物种）<br>
+          碱：<span class="hl2">电子对供体</span>（有孤对电子）<br>
+          <small>最广泛：涵盖所有配位反应，包括无质子体系</small>
+        </div>
+        <div class="slider-row">
+          <label>pH 值：</label>
+          <input type="range" id="phSlider" min="0" max="14" step="0.1" value="7">
+          <span class="val" id="phValue">7.0</span>
+        </div>
+        <div class="ph-scale">
+          <div class="ph-marker" id="phMarker" style="left: 50%;"></div>
+        </div>
+        <div class="ph-labels">
+          <span>0 强酸</span>
+          <span>7 中性</span>
+          <span>14 强碱</span>
+        </div>
+      </div>
+
+      <!-- 缓冲溶液面板 -->
+      <div class="section" id="bufferPanel">
+        <h3>🧪 缓冲溶液原理</h3>
+        <div class="concept-box">
+          <b>📌 缓冲溶液组成</b><br>
+          由<span class="hl">弱酸</span>及其<span class="hl2">共轭碱</span>（或弱碱及其共轭酸）组成<br>
+          能抵抗少量外来酸碱的影响，保持 pH 基本不变
+        </div>
+        <div class="formula-box">
+          Henderson-Hasselbalch 方程：<br>
+          pH = pKₐ + lg([A⁻]/[HA])
+        </div>
+        <div class="slider-row">
+          <label>弱酸浓度：</label>
+          <input type="range" id="acidConc" min="0.01" max="0.5" step="0.01" value="0.1">
+          <span class="val" id="acidConcVal">0.10 M</span>
+        </div>
+        <div class="slider-row">
+          <label>共轭碱浓度：</label>
+          <input type="range" id="baseConc" min="0.01" max="0.5" step="0.01" value="0.1">
+          <span class="val" id="baseConcVal">0.10 M</span>
+        </div>
+        <div class="slider-row">
+          <label>pKₐ：</label>
+          <input type="range" id="pkaSlider" min="2" max="10" step="0.1" value="4.76">
+          <span class="val" id="pkaVal">4.76</span>
+        </div>
+        <div class="info-grid">
+          <div><b>初始 pH：</b><br><span id="initialPH">4.76</span></div>
+          <div><b>缓冲容量：</b><br><span id="bufferCap">0.20</span></div>
+          <div><b>加入 0.01mol HCl 后：</b><br>pH = <span id="afterAcid">4.67</span></div>
+          <div><b>加入 0.01mol NaOH 后：</b><br>pH = <span id="afterBase">4.85</span></div>
+        </div>
+      </div>
+
+      <!-- 沉淀溶解面板 -->
+      <div class="section" id="precipPanel">
+        <h3>⚗️ 沉淀溶解平衡</h3>
+        <div class="concept-box">
+          <b>📌 溶度积 Ksp</b><br>
+          难溶电解质在饱和溶液中，各离子浓度幂的乘积为常数<br>
+          <span class="hl3">Q = Ksp</span>：饱和溶液，平衡状态<br>
+          <span class="hl">Q > Ksp</span>：过饱和，有沉淀生成<br>
+          <span class="hl2">Q < Ksp</span>：不饱和，沉淀溶解
+        </div>
+        <div class="formula-box">
+          以 AgCl 为例：AgCl(s) ⇌ Ag⁺(aq) + Cl⁻(aq)<br>
+          Ksp = [Ag⁺][Cl⁻] = 1.8 × 10⁻¹⁰
+        </div>
+        <div class="slider-row">
+          <label>[Ag⁺]：</label>
+          <input type="range" id="agConc" min="0" max="2" step="0.01" value="1">
+          <span class="val" id="agConcVal">1.00 × 10⁻⁵</span>
+        </div>
+        <div class="slider-row">
+          <label>[Cl⁻]：</label>
+          <input type="range" id="clConc" min="0" max="2" step="0.01" value="1">
+          <span class="val" id="clConcVal">1.00 × 10⁻⁵</span>
+        </div>
+        <div class="info-grid">
+          <div><b>离子积 Q：</b><br><span id="ionProduct">1.00 × 10⁻¹⁰</span></div>
+          <div><b>状态：</b><br><span id="precipState">未饱和</span></div>
+        </div>
+      </div>
+
+      <!-- 练习面板 -->
+      <div class="section" id="quizPanel">
+        <h3>📝 知识检测</h3>
+        <div class="concept-box">
+          <b>💡 学习提示</b><br>
+          完成练习后查看答案解析<br>
+          共 5 道题目，涵盖酸碱理论与沉淀平衡
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// ===== Progress tracking: visit all 4 tabs → markDone =====
+const ALL_TABS = ['theory', 'buffer', 'precipitation', 'quiz'];
+const visitedTabs = new Set(['theory']);
+function tryMarkDone() {
+  if (typeof PageProgress === 'undefined') return;
+  if (ALL_TABS.every(t => visitedTabs.has(t))) {
+    PageProgress.markDone('06-acid-base');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const section = tab.dataset.section;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(section)?.classList.add('active');
+    document.getElementById(section + 'Panel')?.classList.add('active');
+    visitedTabs.add(section);
+    tryMarkDone();
+  });
+});
+
+// Theory mode switching
+let theoryMode = 'arrhenius';
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    theoryMode = btn.dataset.mode;
+    drawTheory();
+  });
+});
+
+// pH slider
+const phSlider = document.getElementById('phSlider');
+const phValue = document.getElementById('phValue');
+const phMarker = document.getElementById('phMarker');
+phSlider.addEventListener('input', () => {
+  const ph = parseFloat(phSlider.value);
+  phValue.textContent = ph.toFixed(1);
+  phMarker.style.left = (ph / 14 * 100) + '%';
+  drawTheory();
+});
+
+// Buffer sliders
+const acidConc = document.getElementById('acidConc');
+const baseConc = document.getElementById('baseConc');
+const pkaSlider = document.getElementById('pkaSlider');
+const acidConcVal = document.getElementById('acidConcVal');
+const baseConcVal = document.getElementById('baseConcVal');
+const pkaVal = document.getElementById('pkaVal');
+const initialPH = document.getElementById('initialPH');
+const bufferCap = document.getElementById('bufferCap');
+const afterAcid = document.getElementById('afterAcid');
+const afterBase = document.getElementById('afterBase');
+
+function updateBuffer() {
+  const ha = parseFloat(acidConc.value);
+  const a = parseFloat(baseConc.value);
+  const pka = parseFloat(pkaSlider.value);
+  
+  acidConcVal.textContent = ha.toFixed(2) + ' M';
+  baseConcVal.textContent = a.toFixed(2) + ' M';
+  pkaVal.textContent = pka.toFixed(2);
+  
+  const ph = pka + Math.log10(a / ha);
+  initialPH.textContent = ph.toFixed(2);
+  
+  // Buffer capacity (simplified)
+  const cap = ha + a;
+  bufferCap.textContent = cap.toFixed(2);
+  
+  // After adding acid/base
+  const phAfterAcid = pka + Math.log10((a - 0.01) / (ha + 0.01));
+  const phAfterBase = pka + Math.log10((a + 0.01) / (ha - 0.01));
+  afterAcid.textContent = isFinite(phAfterAcid) ? phAfterAcid.toFixed(2) : '—';
+  afterBase.textContent = isFinite(phAfterBase) ? phAfterBase.toFixed(2) : '—';
+  
+  drawBuffer();
+}
+
+acidConc.addEventListener('input', updateBuffer);
+baseConc.addEventListener('input', updateBuffer);
+pkaSlider.addEventListener('input', updateBuffer);
+
+// Precipitation sliders
+const agConc = document.getElementById('agConc');
+const clConc = document.getElementById('clConc');
+const agConcVal = document.getElementById('agConcVal');
+const clConcVal = document.getElementById('clConcVal');
+const ionProduct = document.getElementById('ionProduct');
+const precipState = document.getElementById('precipState');
+
+function updatePrecip() {
+  const ag = Math.pow(10, -parseFloat(agConc.value) * 5);
+  const cl = Math.pow(10, -parseFloat(clConc.value) * 5);
+  
+  agConcVal.textContent = ag.toExponential(2);
+  clConcVal.textContent = cl.toExponential(2);
+  
+  const q = ag * cl;
+  ionProduct.textContent = q.toExponential(2);
+  
+  const ksp = 1.8e-10;
+  if (q > ksp * 1.1) {
+    precipState.textContent = '过饱和，有沉淀';
+    precipState.style.color = '#ef4444';
+  } else if (q < ksp * 0.9) {
+    precipState.textContent = '未饱和';
+    precipState.style.color = '#3b82f6';
+  } else {
+    precipState.textContent = '饱和，平衡';
+    precipState.style.color = '#10b981';
+  }
+  
+  drawPrecip();
+}
+
+agConc.addEventListener('input', updatePrecip);
+clConc.addEventListener('input', updatePrecip);
+
+// Canvas: Theory
+const theoryCanvas = document.getElementById('theoryCanvas');
+const theoryCtx = theoryCanvas.getContext('2d');
+
+function drawTheory() {
+  const ctx = theoryCtx;
+  const w = theoryCanvas.width;
+  const h = theoryCanvas.height;
+  ctx.clearRect(0, 0, w, h);
+  
+  const ph = parseFloat(phSlider.value);
+  
+  // Draw beaker
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillRect(150, 100, 300, 350);
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(150, 100, 300, 350);
+  
+  // Draw liquid
+  const liquidHeight = 300;
+  const liquidY = 100 + (350 - liquidHeight);
+  
+  let color;
+  if (ph < 7) {
+    const intensity = (7 - ph) / 7;
+    color = `rgba(239, 68, 68, ${0.3 + intensity * 0.5})`;
+  } else if (ph > 7) {
+    const intensity = (ph - 7) / 7;
+    color = `rgba(59, 130, 246, ${0.3 + intensity * 0.5})`;
+  } else {
+    color = 'rgba(16, 185, 129, 0.3)';
+  }
+  
+  ctx.fillStyle = color;
+  ctx.fillRect(150, liquidY, 300, liquidHeight);
+  
+  // Draw particles based on mode
+  const particleCount = 30;
+  for (let i = 0; i < particleCount; i++) {
+    const x = 160 + Math.random() * 280;
+    const y = liquidY + 10 + Math.random() * (liquidHeight - 20);
+    
+    if (theoryMode === 'arrhenius') {
+      if (ph < 7) {
+        // H+ ions
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.font = '10px sans-serif';
+        ctx.fillText('H⁺', x - 6, y + 4);
+      } else if (ph > 7) {
+        // OH- ions
+        ctx.fillStyle = '#3b82f6';
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.font = '10px sans-serif';
+        ctx.fillText('OH⁻', x - 10, y + 4);
+      } else {
+        // H2O molecules
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (theoryMode === 'bronsted') {
+      // Show proton transfer
+      if (i % 2 === 0) {
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(x, y, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText('HA', x - 8, y + 4);
+      } else {
+        ctx.fillStyle = '#3b82f6';
+        ctx.beginPath();
+        ctx.arc(x, y, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText('B', x - 5, y + 4);
+      }
+    } else {
+      // Lewis: electron pairs
+      ctx.fillStyle = i % 2 === 0 ? '#ef4444' : '#3b82f6';
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(x + 3, y - 3, 2, 0, Math.PI * 2);
+      ctx.arc(x - 3, y - 3, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  
+  // Title
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.textAlign = 'center';
+  const titles = {
+    arrhenius: '阿伦尼乌斯理论',
+    bronsted: '布朗斯特-劳里理论',
+    lewis: '路易斯理论'
+  };
+  ctx.fillText(titles[theoryMode], w / 2, 50);
+  
+  // pH display
+  ctx.font = '14px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`pH = ${ph.toFixed(1)}`, w / 2, 80);
+}
+
+// Canvas: Buffer
+const bufferCanvas = document.getElementById('bufferCanvas');
+const bufferCtx = bufferCanvas.getContext('2d');
+
+function drawBuffer() {
+  const ctx = bufferCtx;
+  const w = bufferCanvas.width;
+  const h = bufferCanvas.height;
+  ctx.clearRect(0, 0, w, h);
+  
+  const ha = parseFloat(acidConc.value);
+  const a = parseFloat(baseConc.value);
+  const pka = parseFloat(pkaSlider.value);
+  
+  // Draw titration curve
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(50, 50);
+  ctx.lineTo(50, 450);
+  ctx.lineTo(550, 450);
+  ctx.stroke();
+  
+  // pH curve
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  
+  const points = [];
+  for (let i = 0; i <= 100; i++) {
+    const added = i / 100 * 0.2; // moles of strong acid/base added
+    const newHA = ha + added;
+    const newA = Math.max(0.001, a - added);
+    const ph = pka + Math.log10(newA / newHA);
+    const x = 50 + i * 5;
+    const y = 450 - (ph / 14) * 400;
+    points.push({x, y, ph});
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  
+  // Buffer region
+  const bufferPH = pka + Math.log10(a / ha);
+  const bufferY = 450 - (bufferPH / 14) * 400;
+  ctx.setLineDash([5, 5]);
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(50, bufferY);
+  ctx.lineTo(550, bufferY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Labels
+  ctx.fillStyle = 'white';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('缓冲溶液 pH 变化曲线', w / 2, 30);
+  
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('加入强酸量 →', w / 2, 480);
+  
+  ctx.save();
+  ctx.translate(20, 250);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('pH →', 0, 0);
+  ctx.restore();
+  
+  // Current point
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(50, bufferY, 8, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`pH = ${bufferPH.toFixed(2)}`, 70, bufferY - 10);
+}
+
+// Canvas: Precipitation
+const precipCanvas = document.getElementById('precipCanvas');
+const precipCtx = precipCanvas.getContext('2d');
+
+let precipParticles = [];
+function initPrecipParticles() {
+  precipParticles = [];
+  for (let i = 0; i < 50; i++) {
+    precipParticles.push({
+      x: Math.random() * 500 + 50,
+      y: Math.random() * 400 + 50,
+      vx: (Math.random() - 0.5) * 2,
+      vy: (Math.random() - 0.5) * 2,
+      type: Math.random() > 0.5 ? 'ag' : 'cl',
+      size: Math.random() * 3 + 2
+    });
+  }
+}
+initPrecipParticles();
+
+function drawPrecip() {
+  const ctx = precipCtx;
+  const w = precipCanvas.width;
+  const h = precipCanvas.height;
+  ctx.clearRect(0, 0, w, h);
+  
+  const ag = Math.pow(10, -parseFloat(agConc.value) * 5);
+  const cl = Math.pow(10, -parseFloat(clConc.value) * 5);
+  const q = ag * cl;
+  const ksp = 1.8e-10;
+  
+  // Draw container
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillRect(50, 50, 500, 400);
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(50, 50, 500, 400);
+  
+  // Update and draw particles
+  precipParticles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    
+    if (p.x < 50 || p.x > 550) p.vx *= -1;
+    if (p.y < 50 || p.y > 450) p.vy *= -1;
+    
+    if (p.type === 'ag') {
+      ctx.fillStyle = '#ef4444';
+    } else {
+      ctx.fillStyle = '#3b82f6';
+    }
+    
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  // If supersaturated, show precipitate
+  if (q > ksp * 1.1) {
+    const precipAmount = Math.min(20, (q / ksp - 1) * 10);
+    ctx.fillStyle = 'rgba(167, 139, 250, 0.6)';
+    for (let i = 0; i < precipAmount; i++) {
+      const x = 100 + Math.random() * 400;
+      const y = 400 + Math.random() * 40;
+      ctx.beginPath();
+      ctx.arc(x, y, Math.random() * 8 + 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    ctx.fillStyle = '#a78bfa';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('⬇ 沉淀生成', w / 2, 480);
+  }
+  
+  // Title
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('沉淀溶解平衡模拟', w / 2, 30);
+  
+  // Status
+  ctx.font = '14px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  const stateText = q > ksp * 1.1 ? '过饱和' : q < ksp * 0.9 ? '未饱和' : '饱和';
+  ctx.fillText(`Q = ${q.toExponential(2)} | Ksp = 1.8×10⁻¹⁰ | ${stateText}`, w / 2, 490);
+}
+
+// Animation loop
+function animate() {
+  const activeSection = document.querySelector('.section.active');
+  if (activeSection.id === 'theory') drawTheory();
+  else if (activeSection.id === 'buffer') drawBuffer();
+  else if (activeSection.id === 'precipitation') drawPrecip();
+  
+  requestAnimationFrame(animate);
+}
+animate();
+
+// Quiz
+const quizData = [
+  {
+    q: '1. 根据布朗斯特-劳里理论，下列哪个是碱？',
+    opts: ['HCl', 'NH₃', 'H₂SO₄', 'CH₃COOH'],
+    ans: 1,
+    explain: 'NH₃ 能接受质子（H⁺），是布朗斯特碱'
+  },
+  {
+    q: '2. 缓冲溶液的 pH 主要取决于？',
+    opts: ['弱酸的浓度', '共轭碱的浓度', 'pKₐ 和浓度比', '温度'],
+    ans: 2,
+    explain: '根据 Henderson-Hasselbalch 方程，pH = pKₐ + lg([A⁻]/[HA])'
+  },
+  {
+    q: '3. 当 Q > Ksp 时，溶液处于什么状态？',
+    opts: ['未饱和', '饱和', '过饱和，有沉淀', '无法判断'],
+    ans: 2,
+    explain: 'Q > Ksp 表示离子浓度超过平衡浓度，会有沉淀生成'
+  },
+  {
+    q: '4. 路易斯酸的特点是？',
+    opts: ['给出质子', '接受质子', '接受电子对', '给出电子对'],
+    ans: 2,
+    explain: '路易斯酸是电子对受体，能接受电子对形成配位键'
+  },
+  {
+    q: '5. AgCl 的 Ksp = 1.8×10⁻¹⁰，在纯水中的溶解度为？',
+    opts: ['1.8×10⁻¹⁰ mol/L', '1.34×10⁻⁵ mol/L', '9×10⁻¹¹ mol/L', '3.6×10⁻¹⁰ mol/L'],
+    ans: 1,
+    explain: '设溶解度为 s，则 s² = 1.8×10⁻¹⁰，s = 1.34×10⁻⁵ mol/L'
+  }
+];
+
+let currentQuiz = 0;
+const quizQuestion = document.getElementById('quizQuestion');
+const quizOptions = document.getElementById('quizOptions');
+const quizFeedback = document.getElementById('quizFeedback');
+const quizPrev = document.getElementById('quizPrev');
+const quizNext = document.getElementById('quizNext');
+
+function showQuiz() {
+  const data = quizData[currentQuiz];
+  quizQuestion.textContent = data.q;
+  quizOptions.innerHTML = '';
+  quizFeedback.textContent = '';
+  
+  data.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+      if (i === data.ans) {
+        div.classList.add('correct');
+        quizFeedback.textContent = '✓ ' + data.explain;
+        quizFeedback.style.color = '#10b981';
+      } else {
+        div.classList.add('wrong');
+        quizFeedback.textContent = '✗ 正确答案是 ' + data.opts[data.ans] + '。' + data.explain;
+        quizFeedback.style.color = '#ef4444';
+      }
+    });
+    quizOptions.appendChild(div);
+  });
+  
+  quizPrev.disabled = currentQuiz === 0;
+  quizNext.disabled = currentQuiz === quizData.length - 1;
+}
+
+quizPrev.addEventListener('click', () => {
+  if (currentQuiz > 0) {
+    currentQuiz--;
+    showQuiz();
+  }
+});
+
+quizNext.addEventListener('click', () => {
+  if (currentQuiz < quizData.length - 1) {
+    currentQuiz++;
+    showQuiz();
+  }
+});
+
+showQuiz();
+
+// Initialize
+updateBuffer();
+updatePrecip();
+
+// Restore done-mark on load
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('06-acid-base')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学化学"></script>
+</body>
+</html>

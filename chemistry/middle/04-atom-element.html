@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>原子与元素 · 初中化学互动可视化</title>
+<link rel="stylesheet" href="assets/common.css" />
+<style>
+  :root {
+    --primary: #0891b2;
+    --proton: #ef4444;
+    --neutron: #f59e0b;
+    --electron: #3b82f6;
+    --nucleus: #dc2626;
+    --orbital: #6366f1;
+    --dark: #0f172a;
+    --light: #f1f5f9;
+  }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; margin: 0; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--proton), var(--neutron), var(--electron)); -webkit-background-clip: text; color: transparent; margin: 0; }
+  header p { color: #94a3b8; margin: 6px 0 0; font-size: 14px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 8px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; color: #cbd5e1; }
+  .tab.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 20px rgba(8,145,178,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); overflow-y: auto; max-height: 640px; }
+  .panel h3 { margin: 0 0 10px; font-size: 1.05rem; color: #e2e8f0; }
+  .eq { font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 8px 0; }
+  .eq .hl { color: #fbbf24; font-weight: 600; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 55px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--primary); }
+  .card .ct { font-weight: 600; color: #67e8f9; margin-bottom: 4px; }
+  .result-box { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(99,102,241,0.15)); border: 1px solid rgba(59,130,246,0.3); border-radius: 12px; padding: 14px; margin: 10px 0; }
+  .result-box .label { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+  .result-box .value { font-size: 1.3rem; font-weight: 700; color: #67e8f9; font-family: monospace; }
+  .atom-selector { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  .atom-btn { padding: 6px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 12px; color: #e2e8f0; transition: all .2s; }
+  .atom-btn.active { background: var(--primary); border-color: var(--primary); }
+  .atom-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .periodic-table { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin: 10px 0; }
+  .p-element { padding: 4px 2px; border-radius: 4px; text-align: center; font-size: 10px; cursor: pointer; transition: all .2s; border: 1px solid transparent; }
+  .p-element:hover { transform: scale(1.1); z-index: 1; border-color: #fff; }
+  .p-element .sym { font-size: 14px; font-weight: 700; display: block; }
+  .p-element .num { font-size: 8px; color: rgba(255,255,255,0.7); }
+  .quiz { margin-top: 10px; padding: 12px; background: rgba(8,145,178,0.08); border-radius: 12px; border: 1px solid rgba(8,145,178,0.3); }
+  .quiz-q { font-size: 13px; margin-bottom: 8px; }
+  .quiz-opts { display: grid; gap: 5px; }
+  .quiz-opt { padding: 7px 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 12px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-fb { margin-top: 6px; font-size: 12px; min-height: 16px; }
+  .legend { display: flex; gap: 12px; justify-content: center; font-size: 11px; color: #cbd5e1; margin-top: 6px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
+  .legend .l-p::before { background: var(--proton); }
+  .legend .l-n::before { background: var(--neutron); }
+  .legend .l-e::before { background: var(--electron); }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 16px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; font-size: 12px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 6px 8px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .element-detail { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; border: 1px solid rgba(255,255,255,0.1); }
+  .element-detail .big-sym { font-size: 2rem; font-weight: 700; color: var(--primary); }
+  .element-detail .elem-name { font-size: 1rem; color: #e2e8f0; margin-left: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚛️ 原子与元素 Interactive</h1>
+    <p>原子结构 · 元素概念 · 元素周期表</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="model">🔬 原子模型</div>
+    <div class="tab" data-mode="build">🧪 搭建原子</div>
+    <div class="tab" data-mode="relation">🔗 元素与原子</div>
+    <div class="tab" data-mode="periodic">📊 周期表探索</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="600" height="500"></canvas>
+      <div class="legend">
+        <span class="l-p">质子 (+)</span>
+        <span class="l-n">中子 (0)</span>
+        <span class="l-e">电子 (-)</span>
+      </div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>初中化学 · 原子与元素互动可视化 · 九年级</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// PageProgress 完成度追踪（5 题，≥60% 记完成）
+const DONE_THRESHOLD = 3;
+const quizSolved = new Set();
+let totalCorrect = 0;
+function checkDone(quiz) {
+  if (!quiz || quizSolved.has(quiz)) return;
+  quizSolved.add(quiz);
+  totalCorrect++;
+  if (totalCorrect >= DONE_THRESHOLD && typeof PageProgress !== 'undefined' && !PageProgress.isDone('04-atom-element')) {
+    PageProgress.markDone('04-atom-element');
+    if (typeof showToast === 'function') showToast('🎉 已记录完成「原子与元素」');
+  }
+}
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const panel = document.getElementById('panel');
+let mode = 'model';
+let animFrame;
+let time = 0;
+
+// 原子数据
+const elements = [
+  { name: '氢', sym: 'H', num: 1, protons: 1, neutrons: 0, electrons: [1], mass: 1, period: 1, group: 1, color: '#ef4444' },
+  { name: '氦', sym: 'He', num: 2, protons: 2, neutrons: 2, electrons: [2], mass: 4, period: 1, group: 18, color: '#f59e0b' },
+  { name: '锂', sym: 'Li', num: 3, protons: 3, neutrons: 4, electrons: [2,1], mass: 7, period: 2, group: 1, color: '#10b981' },
+  { name: '铍', sym: 'Be', num: 4, protons: 4, neutrons: 5, electrons: [2,2], mass: 9, period: 2, group: 2, color: '#14b8a6' },
+  { name: '硼', sym: 'B', num: 5, protons: 5, neutrons: 6, electrons: [2,3], mass: 11, period: 2, group: 13, color: '#06b6d4' },
+  { name: '碳', sym: 'C', num: 6, protons: 6, neutrons: 6, electrons: [2,4], mass: 12, period: 2, group: 14, color: '#6366f1' },
+  { name: '氮', sym: 'N', num: 7, protons: 7, neutrons: 7, electrons: [2,5], mass: 14, period: 2, group: 15, color: '#8b5cf6' },
+  { name: '氧', sym: 'O', num: 8, protons: 8, neutrons: 8, electrons: [2,6], mass: 16, period: 2, group: 16, color: '#3b82f6' },
+  { name: '氟', sym: 'F', num: 9, protons: 9, neutrons: 10, electrons: [2,7], mass: 19, period: 2, group: 17, color: '#22c55e' },
+  { name: '氖', sym: 'Ne', num: 10, protons: 10, neutrons: 10, electrons: [2,8], mass: 20, period: 2, group: 18, color: '#f59e0b' },
+  { name: '钠', sym: 'Na', num: 11, protons: 11, neutrons: 12, electrons: [2,8,1], mass: 23, period: 3, group: 1, color: '#10b981' },
+  { name: '镁', sym: 'Mg', num: 12, protons: 12, neutrons: 12, electrons: [2,8,2], mass: 24, period: 3, group: 2, color: '#14b8a6' },
+  { name: '铝', sym: 'Al', num: 13, protons: 13, neutrons: 14, electrons: [2,8,3], mass: 27, period: 3, group: 13, color: '#06b6d4' },
+  { name: '硅', sym: 'Si', num: 14, protons: 14, neutrons: 14, electrons: [2,8,4], mass: 28, period: 3, group: 14, color: '#6366f1' },
+  { name: '磷', sym: 'P', num: 15, protons: 15, neutrons: 16, electrons: [2,8,5], mass: 31, period: 3, group: 15, color: '#8b5cf6' },
+  { name: '硫', sym: 'S', num: 16, protons: 16, neutrons: 16, electrons: [2,8,6], mass: 32, period: 3, group: 16, color: '#3b82f6' },
+  { name: '氯', sym: 'Cl', num: 17, protons: 17, neutrons: 18, electrons: [2,8,7], mass: 35.5, period: 3, group: 17, color: '#22c55e' },
+  { name: '氩', sym: 'Ar', num: 18, protons: 18, neutrons: 22, electrons: [2,8,8], mass: 40, period: 3, group: 18, color: '#f59e0b' },
+  { name: '钾', sym: 'K', num: 19, protons: 19, neutrons: 20, electrons: [2,8,8,1], mass: 39, period: 4, group: 1, color: '#10b981' },
+  { name: '钙', sym: 'Ca', num: 20, protons: 20, neutrons: 20, electrons: [2,8,8,2], mass: 40, period: 4, group: 2, color: '#14b8a6' }
+];
+
+// 状态
+const state = {
+  currentElement: 7,  // 氧
+  buildProtons: 6,
+  buildNeutrons: 6,
+  buildElectrons: 6,
+  selectedElement: null
+};
+
+// 绘制原子核
+function drawNucleus(x, y, protons, neutrons, scale = 1) {
+  const particles = [];
+  const total = protons + neutrons;
+  const r = Math.max(8, Math.sqrt(total) * 5) * scale;
+  
+  // 生成粒子位置
+  for (let i = 0; i < total; i++) {
+    const angle = (i / total) * Math.PI * 2 + Math.random() * 0.5;
+    const dist = Math.random() * r * 0.7;
+    particles.push({
+      x: x + Math.cos(angle) * dist,
+      y: y + Math.sin(angle) * dist,
+      isProton: i < protons
+    });
+  }
+  
+  // 绘制粒子
+  particles.forEach(p => {
+    const grad = ctx.createRadialGradient(p.x - 2, p.y - 2, 0, p.x, p.y, 5 * scale);
+    if (p.isProton) {
+      grad.addColorStop(0, '#fca5a5');
+      grad.addColorStop(1, '#ef4444');
+    } else {
+      grad.addColorStop(0, '#fde68a');
+      grad.addColorStop(1, '#f59e0b');
+    }
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4 * scale, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  // 核发光效果
+  const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 1.5);
+  glow.addColorStop(0, 'rgba(239,68,68,0.15)');
+  glow.addColorStop(1, 'rgba(239,68,68,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(x, y, r * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// 绘制电子轨道
+function drawOrbital(x, y, radius, electronCount, shellIndex, totalShells) {
+  // 轨道线
+  ctx.strokeStyle = `rgba(99,102,241,${0.3 - shellIndex * 0.05})`;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // 电子
+  const speed = (0.02 + shellIndex * 0.005);
+  for (let i = 0; i < electronCount; i++) {
+    const angle = time * speed + (i / electronCount) * Math.PI * 2;
+    const ex = x + Math.cos(angle) * radius;
+    const ey = y + Math.sin(angle) * radius;
+    
+    // 电子发光
+    const glow = ctx.createRadialGradient(ex, ey, 0, ex, ey, 8);
+    glow.addColorStop(0, 'rgba(59,130,246,0.6)');
+    glow.addColorStop(1, 'rgba(59,130,246,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(ex, ey, 8, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 电子本体
+    const eGrad = ctx.createRadialGradient(ex - 1, ey - 1, 0, ex, ey, 4);
+    eGrad.addColorStop(0, '#93c5fd');
+    eGrad.addColorStop(1, '#3b82f6');
+    ctx.fillStyle = eGrad;
+    ctx.beginPath();
+    ctx.arc(ex, ey, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// 绘制完整原子
+function drawAtom(x, y, element, scale = 1) {
+  const el = typeof element === 'number' ? elements[element] : element;
+  
+  // 绘制电子层
+  el.electrons.forEach((count, i) => {
+    const radius = (35 + i * 30) * scale;
+    drawOrbital(x, y, radius, count, i, el.electrons.length);
+  });
+  
+  // 绘制原子核
+  drawNucleus(x, y, el.protons, el.neutrons, scale);
+  
+  // 标注
+  ctx.font = `bold ${14 * scale}px sans-serif`;
+  ctx.fillStyle = '#e2e8f0';
+  ctx.textAlign = 'center';
+  ctx.fillText(el.sym, x, y + (el.electrons.length * 30 + 55) * scale);
+  ctx.font = `${10 * scale}px sans-serif`;
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(el.name, x, y + (el.electrons.length * 30 + 70) * scale);
+  ctx.textAlign = 'left';
+}
+
+// 模式1: 原子模型展示
+function drawModel() {
+  ctx.clearRect(0, 0, 600, 500);
+  const el = elements[state.currentElement];
+  drawAtom(300, 230, el, 1.2);
+  
+  // 信息标注
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'left';
+  ctx.fillText(`原子序数: ${el.num}`, 450, 100);
+  ctx.fillText(`质子数: ${el.protons}`, 450, 120);
+  ctx.fillText(`中子数: ${el.neutrons}`, 450, 140);
+  ctx.fillText(`电子数: ${el.electrons.reduce((a,b)=>a+b,0)}`, 450, 160);
+  ctx.fillText(`相对原子质量: ${el.mass}`, 450, 180);
+  
+  // 电子排布
+  ctx.fillText('电子排布:', 450, 210);
+  el.electrons.forEach((count, i) => {
+    ctx.fillText(`  第${i+1}层: ${count}个`, 450, 230 + i * 20);
+  });
+  
+  time++;
+}
+
+// 模式2: 搭建原子
+function drawBuild() {
+  ctx.clearRect(0, 0, 600, 500);
+  
+  // 计算电子排布
+  const totalE = state.buildElectrons;
+  const shells = [];
+  let remaining = totalE;
+  const maxPerShell = [2, 8, 8, 2];
+  for (let i = 0; i < maxPerShell.length && remaining > 0; i++) {
+    const inShell = Math.min(remaining, maxPerShell[i]);
+    shells.push(inShell);
+    remaining -= inShell;
+  }
+  
+  // 绘制
+  const fakeEl = {
+    sym: '', name: '',
+    protons: state.buildProtons,
+    neutrons: state.buildNeutrons,
+    electrons: shells,
+    num: state.buildProtons
+  };
+  
+  // 绘制电子层
+  shells.forEach((count, i) => {
+    const radius = 35 + i * 30;
+    drawOrbital(300, 230, radius, count, i, shells.length);
+  });
+  
+  // 绘制原子核
+  drawNucleus(300, 230, state.buildProtons, state.buildNeutrons, 1);
+  
+  // 识别元素
+  const found = elements.find(e => e.protons === state.buildProtons);
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillStyle = found ? '#10b981' : '#fbbf24';
+  ctx.textAlign = 'center';
+  if (found) {
+    ctx.fillText(`${found.sym} ${found.name}`, 300, 460);
+  } else {
+    ctx.fillText(`质子数=${state.buildProtons} 的元素`, 300, 460);
+  }
+  ctx.textAlign = 'left';
+  
+  time++;
+}
+
+// 模式3: 元素与原子关系
+function drawRelation() {
+  ctx.clearRect(0, 0, 600, 500);
+  
+  // 标题
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillStyle = '#e2e8f0';
+  ctx.textAlign = 'center';
+  ctx.fillText('元素 vs 原子', 300, 40);
+  
+  // 左侧: 原子（微观）
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillText('原子（微观概念）', 150, 80);
+  
+  // 画一个具体原子
+  drawAtom(150, 200, elements[7], 0.7); // 氧原子
+  
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('讲种类，讲个数', 150, 340);
+  ctx.fillText('是微观粒子', 150, 360);
+  
+  // 右侧: 元素（宏观）
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('元素（宏观概念）', 450, 80);
+  
+  // 画元素符号
+  ctx.font = 'bold 60px serif';
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('O', 430, 230);
+  ctx.font = '14px sans-serif';
+  ctx.fillText('氧元素', 450, 260);
+  
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('只讲种类，不讲个数', 450, 340);
+  ctx.fillText('是宏观概念', 450, 360);
+  
+  // 中间连线
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(230, 200);
+  ctx.lineTo(370, 200);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // 关系标注
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#67e8f9';
+  ctx.fillText('同一类原子', 300, 190);
+  ctx.fillText('的总称', 300, 210);
+  
+  // 底部关系图
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillStyle = '#e2e8f0';
+  ctx.fillText('关系：元素 = 具有相同核电荷数的一类原子的总称', 300, 430);
+  
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('例：氧元素包括 O、O₂、O₃ 中所有的氧原子', 300, 460);
+  
+  ctx.textAlign = 'left';
+  time++;
+}
+
+// 模式4: 周期表探索
+function drawPeriodic() {
+  ctx.clearRect(0, 0, 600, 500);
+  
+  // 简化周期表（前20号元素）
+  const tableLayout = [
+    ['H','He'],
+    ['Li','Be','B','C','N','O','F','Ne'],
+    ['Na','Mg','Al','Si','P','S','Cl','Ar'],
+    ['K','Ca']
+  ];
+  
+  const startX = 80;
+  const startY = 60;
+  const cellW = 55;
+  const cellH = 55;
+  const gap = 5;
+  
+  // 绘制周期表
+  tableLayout.forEach((row, ri) => {
+    row.forEach((sym, ci) => {
+      const el = elements.find(e => e.sym === sym);
+      if (!el) return;
+      
+      const x = startX + ci * (cellW + gap);
+      const y = startY + ri * (cellH + gap);
+      
+      const isSelected = state.selectedElement && state.selectedElement.sym === sym;
+      
+      // 背景
+      const colors = {
+        1: '#10b981', 2: '#14b8a6', 13: '#06b6d4', 14: '#6366f1',
+        15: '#8b5cf6', 16: '#3b82f6', 17: '#22c55e', 18: '#f59e0b'
+      };
+      const bgColor = colors[el.group] || '#64748b';
+      
+      ctx.fillStyle = isSelected ? bgColor : bgColor + '60';
+      ctx.strokeStyle = isSelected ? '#fff' : bgColor;
+      ctx.lineWidth = isSelected ? 2 : 1;
+      
+      // 圆角矩形
+      const r = 6;
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + cellW - r, y);
+      ctx.quadraticCurveTo(x + cellW, y, x + cellW, y + r);
+      ctx.lineTo(x + cellW, y + cellH - r);
+      ctx.quadraticCurveTo(x + cellW, y + cellH, x + cellW - r, y + cellH);
+      ctx.lineTo(x + r, y + cellH);
+      ctx.quadraticCurveTo(x, y + cellH, x, y + cellH - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      
+      // 文字
+      ctx.font = '9px sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.textAlign = 'left';
+      ctx.fillText(el.num, x + 4, y + 12);
+      
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.fillText(el.sym, x + cellW/2, y + 35);
+      
+      ctx.font = '9px sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.fillText(el.name, x + cellW/2, y + 48);
+    });
+  });
+  
+  // 周期标注
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'right';
+  for (let i = 0; i < tableLayout.length; i++) {
+    ctx.fillText(`第${i+1}周期`, startX - 10, startY + i * (cellH + gap) + cellH/2 + 4);
+  }
+  
+  // 选中元素详情
+  if (state.selectedElement) {
+    const el = state.selectedElement;
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillText('元素详情', 80, 340);
+    
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    const details = [
+      `元素符号: ${el.sym}`,
+      `原子序数: ${el.num}`,
+      `质子数: ${el.protons}`,
+      `中子数: ${el.neutrons}`,
+      `相对原子质量: ${el.mass}`,
+      `周期: 第${el.period}周期`,
+      `族: 第${el.group}族`,
+      `电子排布: ${el.electrons.join(', ')}`
+    ];
+    details.forEach((d, i) => {
+      ctx.fillText(d, 80, 365 + i * 18);
+    });
+  }
+  
+  ctx.textAlign = 'left';
+  time++;
+}
+
+// 模式5: 练习
+function drawQuiz() {
+  ctx.clearRect(0, 0, 600, 500);
+  
+  // 装饰
+  ctx.font = '80px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('⚛️', 300, 280);
+  ctx.font = 'bold 20px sans-serif';
+  ctx.fillStyle = '#e2e8f0';
+  ctx.fillText('原子与元素练习', 300, 350);
+  ctx.textAlign = 'left';
+  
+  time++;
+}
+
+// 更新面板
+function updatePanel() {
+  if (mode === 'model') {
+    const el = elements[state.currentElement];
+    panel.innerHTML = `
+      <h3>🔬 原子模型</h3>
+      <div class="card">
+        <div class="ct">原子结构</div>
+        原子由<b>原子核</b>（质子+中子）和<b>核外电子</b>组成。
+      </div>
+      <div class="atom-selector">
+        ${elements.slice(0, 12).map((e, i) => `
+          <div class="atom-btn ${state.currentElement === i ? 'active' : ''}" data-idx="${i}">
+            ${e.sym}
+          </div>
+        `).join('')}
+      </div>
+      <div class="result-box">
+        <div class="label">${el.name} (${el.sym})</div>
+        <div class="info-grid">
+          <div>质子数: <b>${el.protons}</b></div>
+          <div>中子数: <b>${el.neutrons}</b></div>
+          <div>电子数: <b>${el.electrons.reduce((a,b)=>a+b,0)}</b></div>
+          <div>质量数: <b>${el.mass}</b></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct">电子排布</div>
+        ${el.electrons.map((c, i) => `第${i+1}层: <b>${c}</b>个电子`).join('<br>')}
+      </div>
+      <div class="card">
+        <div class="ct">关键知识</div>
+        • 质子数 = 核外电子数 = 原子序数（原子不带电）<br>
+        • 质量数 ≈ 质子数 + 中子数<br>
+        • 电子分层排布，最外层不超过8个
+      </div>
+    `;
+    document.querySelectorAll('.atom-btn').forEach(btn => {
+      btn.onclick = () => {
+        state.currentElement = +btn.dataset.idx;
+        updatePanel();
+      };
+    });
+  } else if (mode === 'build') {
+    const totalE = state.buildElectrons;
+    const shells = [];
+    let remaining = totalE;
+    const maxPerShell = [2, 8, 8, 2];
+    for (let i = 0; i < maxPerShell.length && remaining > 0; i++) {
+      const inShell = Math.min(remaining, maxPerShell[i]);
+      shells.push(inShell);
+      remaining -= inShell;
+    }
+    const found = elements.find(e => e.protons === state.buildProtons);
+    
+    panel.innerHTML = `
+      <h3>🧪 搭建原子</h3>
+      <div class="card">
+        <div class="ct">自由组合</div>
+        拖动滑块改变质子、中子、电子数，观察原子结构变化。
+      </div>
+      <div class="slider-row">
+        <label>质子数 (+)</label>
+        <input type="range" min="1" max="20" value="${state.buildProtons}" id="protonSlider">
+        <span class="val" id="protonVal">${state.buildProtons}</span>
+      </div>
+      <div class="slider-row">
+        <label>中子数 (0)</label>
+        <input type="range" min="0" max="20" value="${state.buildNeutrons}" id="neutronSlider">
+        <span class="val" id="neutronVal">${state.buildNeutrons}</span>
+      </div>
+      <div class="slider-row">
+        <label>电子数 (-)</label>
+        <input type="range" min="1" max="20" value="${state.buildElectrons}" id="electronSlider">
+        <span class="val" id="electronVal">${state.buildElectrons}</span>
+      </div>
+      <div class="result-box">
+        <div class="label">识别结果</div>
+        <div style="margin-top: 8px;">
+          ${found ? 
+            `<span style="font-size: 1.3rem; font-weight: 700; color: #10b981;">${found.sym} ${found.name}</span><br>
+             <span style="font-size: 12px; color: #94a3b8;">原子序数 = 质子数 = ${found.num}</span>` :
+            `<span style="color: #fbbf24;">未找到对应元素（超出前20号）</span>`
+          }
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct">电子排布</div>
+        ${shells.map((c, i) => `第${i+1}层: <b>${c}</b>个`).join('<br>')}
+      </div>
+      <div class="card">
+        <div class="ct">思考</div>
+        • 质子数决定<b>元素种类</b><br>
+        • 中子数影响<b>原子质量</b>（同位素）<br>
+        • 最外层电子数决定<b>化学性质</b>
+      </div>
+    `;
+    document.getElementById('protonSlider').oninput = e => {
+      state.buildProtons = +e.target.value;
+      document.getElementById('protonVal').textContent = state.buildProtons;
+      updatePanel();
+    };
+    document.getElementById('neutronSlider').oninput = e => {
+      state.buildNeutrons = +e.target.value;
+      document.getElementById('neutronVal').textContent = state.buildNeutrons;
+    };
+    document.getElementById('electronSlider').oninput = e => {
+      state.buildElectrons = +e.target.value;
+      document.getElementById('electronVal').textContent = state.buildElectrons;
+      updatePanel();
+    };
+  } else if (mode === 'relation') {
+    panel.innerHTML = `
+      <h3>🔗 元素与原子的关系</h3>
+      <div class="card">
+        <div class="ct">核心区别</div>
+        <b>原子</b>是微观概念，讲种类也讲个数；<br>
+        <b>元素</b>是宏观概念，只讲种类不讲个数。
+      </div>
+      <div class="eq">
+        元素 = 具有相同<span class="hl">核电荷数</span>（质子数）<br>的一类原子的<span class="hl">总称</span>
+      </div>
+      <div class="card">
+        <div class="ct">举例说明</div>
+        • "一个氧原子" → 用<b>原子</b>（微观）<br>
+        • "氧气由氧元素组成" → 用<b>元素</b>（宏观）<br>
+        • "水由氢元素和氧元素组成" ✓<br>
+        • "水由2个氢原子和1个氧原子构成" ✓
+      </div>
+      <div class="card">
+        <div class="ct">地壳中元素含量</div>
+        • 氧(O) > 硅(Si) > 铝(Al) > 铁(Fe)<br>
+        • 最多的金属元素：<b>铝</b><br>
+        • 最多的非金属元素：<b>氧</b>
+      </div>
+      <div class="card">
+        <div class="ct">元素分类</div>
+        • <b>金属元素</b>：最外层电子数一般 < 4<br>
+        • <b>非金属元素</b>：最外层电子数一般 ≥ 4<br>
+        • <b>稀有气体</b>：最外层电子数 = 8（He为2）
+      </div>
+    `;
+  } else if (mode === 'periodic') {
+    const sel = state.selectedElement;
+    panel.innerHTML = `
+      <h3>📊 元素周期表探索</h3>
+      <div class="card">
+        <div class="ct">周期表结构</div>
+        • <b>周期</b>（横行）：电子层数相同<br>
+        • <b>族</b>（纵列）：最外层电子数相同（化学性质相似）
+      </div>
+      <div class="card">
+        <div class="ct">点击探索</div>
+        点击左侧周期表中的元素，查看详细信息。<br>
+        颜色代表元素类别：
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px;">
+          <span style="font-size: 11px;"><span style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 2px;"></span> 碱金属</span>
+          <span style="font-size: 11px;"><span style="display: inline-block; width: 10px; height: 10px; background: #14b8a6; border-radius: 2px;"></span> 碱土金属</span>
+          <span style="font-size: 11px;"><span style="display: inline-block; width: 10px; height: 10px; background: #6366f1; border-radius: 2px;"></span> 碳族</span>
+          <span style="font-size: 11px;"><span style="display: inline-block; width: 10px; height: 10px; background: #22c55e; border-radius: 2px;"></span> 卤素</span>
+          <span style="font-size: 11px;"><span style="display: inline-block; width: 10px; height: 10px; background: #f59e0b; border-radius: 2px;"></span> 稀有气体</span>
+        </div>
+      </div>
+      ${sel ? `
+        <div class="element-detail">
+          <span class="big-sym">${sel.sym}</span>
+          <span class="elem-name">${sel.name}</span>
+          <div class="info-grid" style="margin-top: 10px;">
+            <div>原子序数: <b>${sel.num}</b></div>
+            <div>质量: <b>${sel.mass}</b></div>
+            <div>质子: <b>${sel.protons}</b></div>
+            <div>中子: <b>${sel.neutrons}</b></div>
+            <div>周期: <b>第${sel.period}周期</b></div>
+            <div>族: <b>第${sel.group}族</b></div>
+          </div>
+          <div style="margin-top: 8px; font-size: 12px; color: #94a3b8;">
+            电子排布: ${sel.electrons.map((c,i) => `第${i+1}层${c}个`).join('，')}
+          </div>
+        </div>
+      ` : '<div class="card"><div class="ct">提示</div>点击周期表中的元素查看详情</div>'}
+    `;
+  } else if (mode === 'quiz') {
+    panel.innerHTML = `
+      <h3>🎯 原子与元素练习</h3>
+      <div class="quiz">
+        <div class="quiz-q">1. 决定元素种类的是：</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="false">A. 中子数</div>
+          <div class="quiz-opt" data-correct="true">B. 质子数</div>
+          <div class="quiz-opt" data-correct="false">C. 电子数</div>
+          <div class="quiz-opt" data-correct="false">D. 最外层电子数</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+      <div class="quiz">
+        <div class="quiz-q">2. 关于元素和原子的说法正确的是：</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="false">A. 元素是微观概念</div>
+          <div class="quiz-opt" data-correct="true">B. 元素是具有相同质子数的一类原子的总称</div>
+          <div class="quiz-opt" data-correct="false">C. 元素既讲种类也讲个数</div>
+          <div class="quiz-opt" data-correct="false">D. 一个水分子由氢元素和氧元素组成</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+      <div class="quiz">
+        <div class="quiz-q">3. 地壳中含量最多的金属元素是：</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="false">A. 铁</div>
+          <div class="quiz-opt" data-correct="true">B. 铝</div>
+          <div class="quiz-opt" data-correct="false">C. 钙</div>
+          <div class="quiz-opt" data-correct="false">D. 钠</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+      <div class="quiz">
+        <div class="quiz-q">4. 最外层电子数为8的原子属于：</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="false">A. 金属元素</div>
+          <div class="quiz-opt" data-correct="false">B. 非金属元素</div>
+          <div class="quiz-opt" data-correct="true">C. 稀有气体（He除外）</div>
+          <div class="quiz-opt" data-correct="false">D. 无法确定</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+      <div class="quiz">
+        <div class="quiz-q">5. 同一周期的元素具有相同的：</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="true">A. 电子层数</div>
+          <div class="quiz-opt" data-correct="false">B. 最外层电子数</div>
+          <div class="quiz-opt" data-correct="false">C. 中子数</div>
+          <div class="quiz-opt" data-correct="false">D. 相对原子质量</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+    `;
+    document.querySelectorAll('.quiz-opt').forEach(opt => {
+      opt.onclick = () => {
+        const quiz = opt.closest('.quiz');
+        const isCorrect = opt.dataset.correct === 'true';
+        const fb = quiz.querySelector('.quiz-fb');
+        quiz.querySelectorAll('.quiz-opt').forEach(o => {
+          o.classList.remove('correct', 'wrong');
+          if (o.dataset.correct === 'true') o.classList.add('correct');
+        });
+        if (isCorrect) {
+          opt.classList.add('correct');
+          fb.innerHTML = '<span style="color: #10b981">✓ 正确！</span>';
+          checkDone(quiz);
+        } else {
+          opt.classList.add('wrong');
+          fb.innerHTML = '<span style="color: #ef4444">✗ 再想想</span>';
+        }
+      };
+    });
+  }
+}
+
+// Canvas 点击处理（周期表）
+cv.addEventListener('click', (e) => {
+  if (mode !== 'periodic') return;
+  const rect = cv.getBoundingClientRect();
+  const scaleX = 600 / rect.width;
+  const scaleY = 500 / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
+  
+  const tableLayout = [
+    ['H','He'],
+    ['Li','Be','B','C','N','O','F','Ne'],
+    ['Na','Mg','Al','Si','P','S','Cl','Ar'],
+    ['K','Ca']
+  ];
+  
+  const startX = 80, startY = 60, cellW = 55, cellH = 55, gap = 5;
+  
+  for (let ri = 0; ri < tableLayout.length; ri++) {
+    for (let ci = 0; ci < tableLayout[ri].length; ci++) {
+      const sym = tableLayout[ri][ci];
+      const x = startX + ci * (cellW + gap);
+      const y = startY + ri * (cellH + gap);
+      if (mx >= x && mx <= x + cellW && my >= y && my <= y + cellH) {
+        state.selectedElement = elements.find(el => el.sym === sym);
+        updatePanel();
+        return;
+      }
+    }
+  }
+});
+
+// 动画循环
+function animate() {
+  if (mode === 'model') drawModel();
+  else if (mode === 'build') drawBuild();
+  else if (mode === 'relation') drawRelation();
+  else if (mode === 'periodic') drawPeriodic();
+  else if (mode === 'quiz') drawQuiz();
+  animFrame = requestAnimationFrame(animate);
+}
+
+// Tab 切换
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    state.selectedElement = null;
+    updatePanel();
+  };
+});
+
+// 初始化
+updatePanel();
+animate();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中化学"></script>
+</body>
+</html>

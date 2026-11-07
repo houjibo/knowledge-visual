@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投影与视图 - 初中数学九年级</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #5C6BC0 0%, #7E57C2 100%);
+            min-height: 100vh; padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #5C6BC0 0%, #7E57C2 100%); color: white; padding: 28px 30px; text-align: center; }
+        .header h1 { font-size: 2.4em; margin-bottom: 8px; }
+        .header p { font-size: 1.1em; opacity: 0.9; }
+        .tabs { display: flex; background: #f5f5f5; border-bottom: 2px solid #e0e0e0; }
+        .tab { flex: 1; padding: 16px 10px; text-align: center; cursor: pointer; font-weight: 600; font-size: 0.95em; transition: all 0.3s; border: none; background: transparent; color: #666; }
+        .tab:hover { background: #e8e8e8; }
+        .tab.active { background: white; color: #5C6BC0; border-bottom: 3px solid #5C6BC0; }
+        .content { padding: 30px; min-height: 600px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .section-title { font-size: 1.4em; color: #333; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .section-desc { color: #666; margin-bottom: 20px; line-height: 1.6; font-size: 0.95em; }
+        .canvas-wrap { display: flex; justify-content: center; margin: 15px 0; }
+        canvas { border: 2px solid #e0e0e0; border-radius: 12px; background: #fafcff; cursor: crosshair; touch-action: none; max-width: 100%; }
+        .controls { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 15px 0; }
+        .btn { padding: 10px 22px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9em; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, #5C6BC0, #7E57C2); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(92,107,192,0.4); }
+        .btn-secondary { background: #f0f0f0; color: #555; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .btn-secondary.active { background: #5C6BC0; color: white; }
+        .slider-group { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-group label { min-width: 100px; font-weight: 600; color: #555; font-size: 0.9em; }
+        .slider-group input[type="range"] { flex: 1; accent-color: #5C6BC0; }
+        .slider-group .val { min-width: 40px; text-align: center; font-weight: 700; color: #5C6BC0; }
+        .info-box { background: #f8f6ff; border-left: 4px solid #7E57C2; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 15px 0; line-height: 1.7; font-size: 0.92em; color: #444; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+        /* Quiz styles */
+        .quiz-q { background: #f8f6ff; border-radius: 12px; padding: 18px; margin-bottom: 15px; }
+        .quiz-q h4 { color: #5C6BC0; margin-bottom: 10px; }
+        .quiz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .quiz-opt { padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: center; font-size: 0.9em; }
+        .quiz-opt:hover { border-color: #5C6BC0; background: #f8f6ff; }
+        .quiz-opt.correct { border-color: #4CAF50; background: #e8f5e9; color: #2e7d32; }
+        .quiz-opt.wrong { border-color: #f44336; background: #ffebee; color: #c62828; }
+        .quiz-result { text-align: center; padding: 20px; font-size: 1.2em; font-weight: 700; color: #5C6BC0; }
+        /* 3D shape selector */
+        .shape-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 12px 0; }
+        .shape-btn { padding: 8px 16px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: all 0.2s; background: white; }
+        .shape-btn:hover { border-color: #7E57C2; }
+        .shape-btn.active { border-color: #5C6BC0; background: #5C6BC0; color: white; }
+        /* Net folding animation */
+        .fold-info { text-align: center; margin: 10px 0; font-size: 0.95em; color: #666; }
+        /* Reconstruct game */
+        .reconstruct-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 400px; margin: 15px auto; }
+        .reconstruct-cell { aspect-ratio: 1; border: 2px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; cursor: pointer; transition: all 0.2s; background: white; }
+        .reconstruct-cell:hover { border-color: #7E57C2; background: #f8f6ff; }
+        .reconstruct-cell.filled { background: #5C6BC0; color: white; border-color: #5C6BC0; }
+        .reconstruct-cell.correct-cell { background: #4CAF50; color: white; border-color: #4CAF50; }
+        .reconstruct-cell.wrong-cell { background: #f44336; color: white; border-color: #f44336; }
+        .progress-bar { height: 8px; background: #e0e0e0; border-radius: 4px; margin: 15px 0; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #5C6BC0, #7E57C2); border-radius: 4px; transition: width 0.3s; }
+        .view-label { text-align: center; font-weight: 700; color: #5C6BC0; margin-top: 5px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📐 投影与视图</h1>
+        <p>九年级 · 三视图 · 展开图 · 空间想象</p>
+    </div>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">🏗️ 三视图</button>
+        <button class="tab" onclick="switchTab(1)">📦 展开图</button>
+        <button class="tab" onclick="switchTab(2)">🧩 还原立体</button>
+        <button class="tab" onclick="switchTab(3)">✏️ 练习</button>
+    </div>
+    <div class="content">
+        <!-- Tab 0: 三视图探索 -->
+        <div class="tab-content active" id="tab0">
+            <div class="section-title">🏗️ 三视图探索</div>
+            <div class="section-desc">选择立体图形，从不同角度观察它的正面、侧面和俯视图。旋转3D模型查看效果。</div>
+            <div class="shape-btns" id="shapeBtns"></div>
+            <div class="slider-group">
+                <label>旋转角度</label>
+                <input type="range" id="rotAngle" min="0" max="360" value="30">
+                <span class="val" id="rotAngleVal">30°</span>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <div class="canvas-wrap"><canvas id="cv3d" width="400" height="350"></canvas></div>
+                    <div class="view-label">3D 模型（可拖拽旋转）</div>
+                </div>
+                <div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div>
+                            <div class="canvas-wrap"><canvas id="cvFront" width="180" height="180"></canvas></div>
+                            <div class="view-label">正视图（正面）</div>
+                        </div>
+                        <div>
+                            <div class="canvas-wrap"><canvas id="cvSide" width="180" height="180"></canvas></div>
+                            <div class="view-label">侧视图（左面）</div>
+                        </div>
+                        <div>
+                            <div class="canvas-wrap"><canvas id="cvTop" width="180" height="180"></canvas></div>
+                            <div class="view-label">俯视图（上面）</div>
+                        </div>
+                        <div class="info-box" id="viewInfo" style="font-size:0.85em; margin:0;">
+                            <b>三视图规则：</b><br>
+                            长对正（正视图与俯视图）<br>
+                            高平齐（正视图与侧视图）<br>
+                            宽相等（侧视图与俯视图）
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 1: 展开图 -->
+        <div class="tab-content" id="tab1">
+            <div class="section-title">📦 展开图交互</div>
+            <div class="section-desc">观察立体图形的展开过程，拖动滑块控制展开/折叠程度。点击不同展开方式查看。</div>
+            <div class="shape-btns" id="netShapeBtns"></div>
+            <div class="slider-group">
+                <label>展开程度</label>
+                <input type="range" id="foldSlider" min="0" max="100" value="100">
+                <span class="val" id="foldVal">100%</span>
+            </div>
+            <div class="canvas-wrap"><canvas id="cvNet" width="700" height="420"></canvas></div>
+            <div class="fold-info" id="foldInfo">正方体有 <b>11种</b> 不同展开图，下面展示其中一种</div>
+            <div class="controls">
+                <button class="btn btn-secondary" onclick="prevNet()">◀ 上一种</button>
+                <button class="btn btn-primary" onclick="toggleFoldAnim()">▶ 展开/折叠动画</button>
+                <button class="btn btn-secondary" onclick="nextNet()">下一种 ▶</button>
+            </div>
+        </div>
+
+        <!-- Tab 2: 从三视图还原立体 -->
+        <div class="tab-content" id="tab2">
+            <div class="section-title">🧩 从三视图还原立体</div>
+            <div class="section-desc">给出正视图和俯视图，在网格中摆出对应的立体图形（数字表示层数）。</div>
+            <div id="reconstructProblem" style="text-align:center; margin:10px 0; font-weight:600; color:#5C6BC0;"></div>
+            <div class="grid-2">
+                <div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div>
+                            <div class="canvas-wrap"><canvas id="cvRFront" width="180" height="180"></canvas></div>
+                            <div class="view-label">正视图</div>
+                        </div>
+                        <div>
+                            <div class="canvas-wrap"><canvas id="cvRTop" width="180" height="180"></canvas></div>
+                            <div class="view-label">俯视图</div>
+                        </div>
+                    </div>
+                    <div class="info-box" style="text-align:center; margin-top:10px;">
+                        点击网格放/移除方块<br>数字 = 该位置叠放的方块数
+                    </div>
+                </div>
+                <div>
+                    <div style="text-align:center; margin-bottom:10px; font-weight:600; color:#666;">你的答案（俯视图网格）</div>
+                    <div class="reconstruct-grid" id="reconstructGrid"></div>
+                    <div class="controls" style="margin-top:15px;">
+                        <button class="btn btn-primary" onclick="checkReconstruct()">✅ 检查</button>
+                        <button class="btn btn-secondary" onclick="newReconstruct()">🔄 换一题</button>
+                    </div>
+                    <div id="reconstructResult" style="text-align:center; margin-top:10px; font-weight:700;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: 练习 -->
+        <div class="tab-content" id="tab3">
+            <div class="section-title">✏️ 投影与视图练习</div>
+            <div class="section-desc">检验你对三视图和展开图的掌握程度。</div>
+            <div class="progress-bar"><div class="progress-fill" id="quizProgress" style="width:0%"></div></div>
+            <div id="quizArea"></div>
+            <div class="quiz-result" id="quizResult" style="display:none;"></div>
+        </div>
+    </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// === Tab switching ===
+function switchTab(idx) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===idx));
+    if(idx===0) draw3D();
+    if(idx===1) drawNet();
+    if(idx===2) drawReconstructViews();
+}
+
+// ===== 进度追踪 =====
+const PAGE_SLUG = 'projection';
+const DONE_THRESHOLD = 6; // 8 题中答对 6 题（≥75%）记完成
+let quizDone = false;
+function maybeMarkDone(score) {
+    if (quizDone) return;
+    if (score >= DONE_THRESHOLD && typeof PageProgress !== 'undefined' && !PageProgress.isDone(PAGE_SLUG)) {
+        PageProgress.markDone(PAGE_SLUG);
+        quizDone = true;
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#4CAF50;color:white;padding:12px 20px;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+        toast.textContent = '✅ 已记录完成「投影与视图」';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+}
+
+// === Tab 0: 三视图 ===
+const shapes = [
+    { name: '正方体', icon: '🟦' },
+    { name: '长方体', icon: '📦' },
+    { name: '圆柱', icon: '🥫' },
+    { name: '圆锥', icon: '🔺' },
+    { name: '三棱柱', icon: '🔷' },
+    { name: '四棱锥', icon: '🔻' }
+];
+let curShape = 0;
+let drag3D = false, lastX = 0, lastY = 0, rotX = -25, rotY = 30;
+
+// Init shape buttons
+const shapeBtnsEl = document.getElementById('shapeBtns');
+shapes.forEach((s,i) => {
+    const b = document.createElement('button');
+    b.className = 'shape-btn' + (i===0?' active':'');
+    b.textContent = s.icon + ' ' + s.name;
+    b.onclick = () => { curShape = i; document.querySelectorAll('#shapeBtns .shape-btn').forEach((x,j)=>x.classList.toggle('active',j===i)); draw3D(); };
+    shapeBtnsEl.appendChild(b);
+});
+
+const cv3d = document.getElementById('cv3d'), ctx3d = cv3d.getContext('2d');
+const cvFront = document.getElementById('cvFront'), ctxF = cvFront.getContext('2d');
+const cvSide = document.getElementById('cvSide'), ctxS = cvSide.getContext('2d');
+const cvTop = document.getElementById('cvTop'), ctxT = cvTop.getContext('2d');
+
+// 3D projection helpers
+function project(x, y, z, rx, ry) {
+    const a = rx * Math.PI/180, b = ry * Math.PI/180;
+    let x1 = x*Math.cos(b) - z*Math.sin(b);
+    let z1 = x*Math.sin(b) + z*Math.cos(b);
+    let y1 = y*Math.cos(a) - z1*Math.sin(a);
+    let z2 = y*Math.sin(a) + z1*Math.cos(a);
+    const scale = 300 / (z2 + 4);
+    return [200 + x1*scale, 175 - y1*scale, z2];
+}
+
+function drawPoly(ctx, pts, color, stroke) {
+    ctx.beginPath();
+    pts.forEach((p,i) => i===0 ? ctx.moveTo(p[0],p[1]) : ctx.lineTo(p[0],p[1]));
+    ctx.closePath();
+    if(color) { ctx.fillStyle = color; ctx.fill(); }
+    if(stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
+}
+
+function getShapeVertices(idx) {
+    // Return faces as arrays of [x,y,z] vertices, centered at origin, scale ~1
+    switch(idx) {
+        case 0: { // cube
+            const v = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+            return [[v[0],v[1],v[2],v[3]],[v[4],v[5],v[6],v[7]],[v[0],v[1],v[5],v[4]],[v[2],v[3],v[7],v[6]],[v[0],v[3],v[7],v[4]],[v[1],v[2],v[6],v[5]]];
+        }
+        case 1: { // cuboid
+            const v = [[-1.5,-1,-1],[1.5,-1,-1],[1.5,1,-1],[-1.5,1,-1],[-1.5,-1,1],[1.5,-1,1],[1.5,1,1],[-1.5,1,1]];
+            return [[v[0],v[1],v[2],v[3]],[v[4],v[5],v[6],v[7]],[v[0],v[1],v[5],v[4]],[v[2],v[3],v[7],v[6]],[v[0],v[3],v[7],v[4]],[v[1],v[2],v[6],v[5]]];
+        }
+        case 2: { // cylinder (approximated with 12 sides)
+            const n=12, faces=[];
+            const top=[], bot=[];
+            for(let i=0;i<n;i++){const a=i*2*Math.PI/n; top.push([Math.cos(a),1,Math.sin(a)]); bot.push([Math.cos(a),-1,Math.sin(a)]);}
+            faces.push(top); faces.push(bot);
+            for(let i=0;i<n;i++){faces.push([bot[i],bot[(i+1)%n],top[(i+1)%n],top[i]]);}
+            return faces;
+        }
+        case 3: { // cone
+            const n=12, faces=[], tip=[0,1,0], bot=[];
+            for(let i=0;i<n;i++){const a=i*2*Math.PI/n; bot.push([Math.cos(a),-1,Math.sin(a)]);}
+            faces.push(bot);
+            for(let i=0;i<n;i++){faces.push([bot[i],tip,bot[(i+1)%n]]);}
+            return faces;
+        }
+        case 4: { // triangular prism
+            const v = [[0,-1,-1],[1,-1,-0.5],[-1,-1,-0.5],[0,1,-1],[1,1,-0.5],[-1,1,-0.5]];
+            // Wait, let me use proper triangular prism: triangle along Y, extruded in Z
+            const h=1;
+            const t0=[-1,-1,-h], t1=[1,-1,-h], t2=[0,1,-h];
+            const t3=[-1,-1,h], t4=[1,-1,h], t5=[0,1,h];
+            return [[t0,t1,t2],[t3,t4,t5],[t0,t1,t4,t3],[t1,t2,t5,t4],[t0,t2,t5,t3]];
+        }
+        case 5: { // square pyramid
+            const b0=[-1,-1,-1],b1=[1,-1,-1],b2=[1,-1,1],b3=[-1,-1,1],tip=[0,1,0];
+            return [[b0,b1,b2,b3],[b0,b1,tip],[b1,b2,tip],[b2,b3,tip],[b3,b0,tip]];
+        }
+    }
+}
+
+function faceCenter(face) {
+    let cx=0,cy=0,cz=0;
+    face.forEach(v=>{cx+=v[0];cy+=v[1];cz+=v[2];});
+    return [cx/face.length, cy/face.length, cz/face.length];
+}
+
+function faceNormal(face) {
+    const a = face[0], b = face[1], c = face[2];
+    const u = [b[0]-a[0], b[1]-a[1], b[2]-a[2]];
+    const v = [c[0]-a[0], c[1]-a[1], c[2]-a[2]];
+    return [u[1]*v[2]-u[2]*v[1], u[2]*v[0]-u[0]*v[2], u[0]*v[1]-u[1]*v[0]];
+}
+
+const faceColors = ['#7986CB','#9FA8DA','#5C6BC0','#3F51B5','#7E57C2','#B39DDB'];
+
+function draw3D() {
+    const rx = rotX, ry = rotY;
+    ctx3d.clearRect(0,0,400,350);
+    // Draw grid floor
+    ctx3d.strokeStyle = '#e0e0e0'; ctx3d.lineWidth = 1;
+    for(let i=-3;i<=3;i++){
+        let p1=project(i,-1.5,-3,rx,ry), p2=project(i,-1.5,3,rx,ry);
+        ctx3d.beginPath(); ctx3d.moveTo(p1[0],p1[1]); ctx3d.lineTo(p2[0],p2[1]); ctx3d.stroke();
+        p1=project(-3,-1.5,i,rx,ry); p2=project(3,-1.5,i,rx,ry);
+        ctx3d.beginPath(); ctx3d.moveTo(p1[0],p1[1]); ctx3d.lineTo(p2[0],p2[1]); ctx3d.stroke();
+    }
+    const faces = getShapeVertices(curShape);
+    // Sort faces by depth (painter's algorithm)
+    const sorted = faces.map((f,i)=>{
+        const c = faceCenter(f);
+        const p = project(c[0],c[1],c[2],rx,ry);
+        return {face:f, depth:p[2], idx:i};
+    }).sort((a,b)=>b.depth-a.depth);
+
+    sorted.forEach(({face, idx}) => {
+        const pts = face.map(v => project(v[0],v[1],v[2],rx,ry));
+        const col = faceColors[idx % faceColors.length];
+        drawPoly(ctx3d, pts, col+'cc', '#333');
+    });
+
+    // Draw axes
+    const o=project(0,-1.5,0,rx,ry);
+    const ax=project(2,-1.5,0,rx,ry), ay=project(0,1,0,rx,ry), az=project(0,-1.5,2,rx,ry);
+    ctx3d.lineWidth=2;
+    ctx3d.strokeStyle='#f44336'; ctx3d.beginPath(); ctx3d.moveTo(o[0],o[1]); ctx3d.lineTo(ax[0],ax[1]); ctx3d.stroke();
+    ctx3d.strokeStyle='#4CAF50'; ctx3d.beginPath(); ctx3d.moveTo(o[0],o[1]); ctx3d.lineTo(ay[0],ay[1]); ctx3d.stroke();
+    ctx3d.strokeStyle='#2196F3'; ctx3d.beginPath(); ctx3d.moveTo(o[0],o[1]); ctx3d.lineTo(az[0],az[1]); ctx3d.stroke();
+
+    drawViews();
+}
+
+function drawViews() {
+    // Orthographic projections: front (xz at y=max), side (yz at x=min), top (xz at y=min)
+    const faces = getShapeVertices(curShape);
+    // For views, project to 2D
+    function drawView(ctx, projFn, w, h) {
+        ctx.clearRect(0,0,w,h);
+        ctx.fillStyle='#fafcff'; ctx.fillRect(0,0,w,h);
+        // Grid
+        ctx.strokeStyle='#eee'; ctx.lineWidth=1;
+        for(let i=0;i<=6;i++){ctx.beginPath();ctx.moveTo(i*30,0);ctx.lineTo(i*30,h);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*30);ctx.lineTo(w,i*30);ctx.stroke();}
+        // Project all faces and draw outlines
+        ctx.strokeStyle='#5C6BC0'; ctx.lineWidth=2;
+        faces.forEach(face => {
+            const pts = face.map(v => projFn(v));
+            ctx.beginPath();
+            pts.forEach((p,i) => i===0 ? ctx.moveTo(p[0],p[1]) : ctx.lineTo(p[0],p[1]));
+            ctx.closePath();
+            ctx.fillStyle='rgba(92,107,192,0.15)'; ctx.fill();
+            ctx.stroke();
+        });
+    }
+    // Front view: look from +z, see x,y
+    drawView(ctxF, v => [90+v[0]*35, 90-v[1]*35], 180, 180);
+    // Side view: look from -x, see z,y
+    drawView(ctxS, v => [90+v[2]*35, 90-v[1]*35], 180, 180);
+    // Top view: look from +y, see x,z
+    drawView(ctxT, v => [90+v[0]*35, 90+v[2]*35], 180, 180);
+}
+
+// Drag to rotate 3D
+cv3d.addEventListener('mousedown', e=>{drag3D=true;lastX=e.clientX;lastY=e.clientY;});
+cv3d.addEventListener('touchstart', e=>{drag3D=true;lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;e.preventDefault();},{passive:false});
+window.addEventListener('mousemove', e=>{if(!drag3D)return;rotY+=(e.clientX-lastX)*0.5;rotX+=(e.clientY-lastY)*0.5;lastX=e.clientX;lastY=e.clientY;draw3D();});
+window.addEventListener('touchmove', e=>{if(!drag3D)return;rotY+=(e.touches[0].clientX-lastX)*0.5;rotX+=(e.touches[0].clientY-lastY)*0.5;lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;e.preventDefault();},{passive:false});
+window.addEventListener('mouseup', ()=>drag3D=false);
+window.addEventListener('touchend', ()=>drag3D=false);
+document.getElementById('rotAngle').addEventListener('input', e=>{rotY=+e.target.value;document.getElementById('rotAngleVal').textContent=rotY+'°';draw3D();});
+
+// === Tab 1: 展开图 ===
+const cvNet = document.getElementById('cvNet'), ctxNet = cvNet.getContext('2d');
+let netShape = 0, netVariant = 0, foldT = 1.0, foldAnim = null, foldDir = 1;
+
+// Cube net patterns (6 squares, offsets [row,col] for each face)
+const cubeNets = [
+    // Cross pattern
+    [[0,1],[1,0],[1,1],[1,2],[1,3],[2,1]],
+    // T pattern
+    [[0,0],[0,1],[0,2],[0,3],[1,1],[2,1]],
+    // L pattern
+    [[0,0],[1,0],[2,0],[2,1],[2,2],[2,3]],
+    // Zigzag
+    [[0,0],[0,1],[1,1],[1,2],[2,2],[2,3]],
+    // Line
+    [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5]]
+];
+
+const netShapes = [
+    { name: '正方体', icon: '🟦' },
+    { name: '圆柱', icon: '🥫' },
+    { name: '圆锥', icon: '🔺' }
+];
+
+const netBtnsEl = document.getElementById('netShapeBtns');
+netShapes.forEach((s,i) => {
+    const b = document.createElement('button');
+    b.className = 'shape-btn' + (i===0?' active':'');
+    b.textContent = s.icon + ' ' + s.name;
+    b.onclick = () => { netShape = i; netVariant = 0; document.querySelectorAll('#netShapeBtns .shape-btn').forEach((x,j)=>x.classList.toggle('active',j===i)); drawNet(); };
+    netBtnsEl.appendChild(b);
+});
+
+function drawNet() {
+    ctxNet.clearRect(0,0,700,420);
+    const t = foldT; // 0=flat, 1=folded
+    if(netShape === 0) drawCubeNet(t);
+    else if(netShape === 1) drawCylinderNet(t);
+    else drawConeNet(t);
+}
+
+function drawCubeNet(t) {
+    const net = cubeNets[netVariant % cubeNets.length];
+    const sz = 60;
+    const ox = 200, oy = 100;
+    const colors = ['#7986CB','#9FA8DA','#5C6BC0','#3F51B5','#7E57C2','#B39DDB'];
+    const labels = ['下','前','上','后','左','右'];
+
+    net.forEach((pos, i) => {
+        // Each square unfolds from center
+        const cx = pos[1]*sz + ox;
+        const cy = pos[0]*sz + oy;
+
+        ctxNet.save();
+        // Fold effect: rotate around center edge
+        if(t > 0) {
+            const foldAngle = t * Math.PI * 0.4;
+            const dx = (pos[1]-2.5)*sz*0.15*t;
+            const dy = (pos[0]-1)*sz*0.15*t;
+            ctxNet.translate(cx+sz/2+dx, cy+sz/2+dy);
+            ctxNet.scale(1-t*0.1*Math.abs(pos[1]-2.5), 1-t*0.1*Math.abs(pos[0]-1));
+            ctxNet.translate(-(cx+sz/2), -(cy+sz/2));
+        }
+
+        ctxNet.fillStyle = colors[i]; ctxNet.globalAlpha = 0.85;
+        ctxNet.fillRect(cx, cy, sz, sz);
+        ctxNet.globalAlpha = 1;
+        ctxNet.strokeStyle = '#333'; ctxNet.lineWidth = 2;
+        ctxNet.strokeRect(cx, cy, sz, sz);
+
+        ctxNet.fillStyle = 'white'; ctxNet.font = 'bold 16px sans-serif'; ctxNet.textAlign = 'center'; ctxNet.textBaseline = 'middle';
+        ctxNet.fillText(labels[i], cx+sz/2, cy+sz/2);
+        ctxNet.restore();
+    });
+
+    // Folded 3D preview on right
+    drawMiniCube3D(550, 210, 80, t);
+
+    document.getElementById('foldInfo').innerHTML = `正方体有 <b>11种</b> 不同展开图，当前第 <b>${netVariant+1}</b> 种`;
+}
+
+function drawMiniCube3D(cx, cy, sz, t) {
+    ctxNet.save();
+    ctxNet.globalAlpha = 0.3 + 0.7*t;
+    // Simple isometric cube
+    const s = sz * (0.5 + 0.5*t);
+    const pts = [
+        [cx, cy-s*0.3], // front-top
+        [cx+s*0.5, cy], // right-top
+        [cx+s*0.5, cy+s*0.6], // right-bottom
+        [cx, cy+s*0.3], // front-bottom
+        [cx-s*0.5, cy], // left-top
+        [cx-s*0.5, cy+s*0.6], // left-bottom
+        [cx, cy-s*0.9], // back-top
+    ];
+    // Top face
+    ctxNet.fillStyle='#7E57C2'; ctxNet.beginPath();
+    ctxNet.moveTo(pts[4][0],pts[4][1]); ctxNet.lineTo(pts[0][0],pts[0][1]); ctxNet.lineTo(pts[6][0],pts[6][1]); ctxNet.lineTo(pts[5][0],pts[5][1]);
+    // Hmm, let me just draw a simple isometric cube
+    ctxNet.restore();
+
+    // Draw isometric cube
+    const r = sz * 0.4 * (0.5 + 0.5*t);
+    const a = Math.PI/6;
+    const top = [cx, cy-r*1.2];
+    const left = [cx-r*Math.cos(a), cy-r*0.2];
+    const right = [cx+r*Math.cos(a), cy-r*0.2];
+    const bot = [cx, cy+r*0.8];
+    const bleft = [cx-r*Math.cos(a), cy+r*0.2+ r*0.6];
+    const bright = [cx+r*Math.cos(a), cy+r*0.2+ r*0.6];
+    const bbot = [cx, cy+r*1.8];
+
+    ctxNet.globalAlpha = 0.3 + 0.7*t;
+    // Top
+    drawPoly(ctxNet, [top, left, [cx, cy+r*0.2], right], '#B39DDB', '#333');
+    // Left
+    drawPoly(ctxNet, [left, [cx, cy+r*0.2], bbot, bleft], '#7E57C2', '#333');
+    // Right
+    drawPoly(ctxNet, [[cx, cy+r*0.2], right, bright, bbot], '#5C6BC0', '#333');
+    ctxNet.globalAlpha = 1;
+
+    ctxNet.fillStyle='#666'; ctxNet.font='14px sans-serif'; ctxNet.textAlign='center';
+    ctxNet.fillText(t>0.5?'折叠状态':'展开状态', cx, cy+r*2.2);
+}
+
+function drawCylinderNet(t) {
+    const cx=250, cy=200;
+    // Two circles (top/bottom) + rectangle (side)
+    const rw = 180, rh = 120, cr = 50;
+
+    // Rectangle (side)
+    ctxNet.fillStyle='#7986CB'; ctxNet.globalAlpha=0.8;
+    ctxNet.fillRect(cx-rw/2, cy-rh/2, rw, rh);
+    ctxNet.strokeStyle='#333'; ctxNet.lineWidth=2; ctxNet.strokeRect(cx-rw/2, cy-rh/2, rw, rh);
+    ctxNet.globalAlpha=1;
+    ctxNet.fillStyle='white'; ctxNet.font='bold 16px sans-serif'; ctxNet.textAlign='center'; ctxNet.textBaseline='middle';
+    ctxNet.fillText('侧面', cx, cy);
+
+    // Top circle
+    const topY = cy - rh/2 - cr - 20 - (1-t)*60;
+    ctxNet.beginPath(); ctxNet.arc(cx, topY, cr, 0, Math.PI*2);
+    ctxNet.fillStyle='#5C6BC0'; ctxNet.globalAlpha=0.8; ctxNet.fill(); ctxNet.globalAlpha=1;
+    ctxNet.strokeStyle='#333'; ctxNet.lineWidth=2; ctxNet.stroke();
+    ctxNet.fillStyle='white'; ctxNet.fillText('上面', cx, topY);
+
+    // Bottom circle
+    const botY = cy + rh/2 + cr + 20 + (1-t)*60;
+    ctxNet.beginPath(); ctxNet.arc(cx, botY, cr, 0, Math.PI*2);
+    ctxNet.fillStyle='#7E57C2'; ctxNet.globalAlpha=0.8; ctxNet.fill(); ctxNet.globalAlpha=1;
+    ctxNet.strokeStyle='#333'; ctxNet.lineWidth=2; ctxNet.stroke();
+    ctxNet.fillStyle='white'; ctxNet.fillText('下面', cx, botY);
+
+    // Arrows
+    ctxNet.strokeStyle='#999'; ctxNet.lineWidth=1; ctxNet.setLineDash([4,4]);
+    ctxNet.beginPath(); ctxNet.moveTo(cx, topY+cr); ctxNet.lineTo(cx, cy-rh/2); ctxNet.stroke();
+    ctxNet.beginPath(); ctxNet.moveTo(cx, cy+rh/2); ctxNet.lineTo(cx, botY-cr); ctxNet.stroke();
+    ctxNet.setLineDash([]);
+
+    // Label
+    ctxNet.fillStyle='#666'; ctxNet.font='14px sans-serif';
+    ctxNet.fillText('圆柱展开 = 2个圆 + 1个矩形（侧面展开）', cx, 390);
+    ctxNet.fillText(`矩形长 = 底面周长 2πr，宽 = 圆柱高 h`, cx, 410);
+}
+
+function drawConeNet(t) {
+    const cx=300, cy=200;
+    // Sector (side) + circle (bottom)
+    const R = 130, angle = Math.PI * 1.2; // sector angle depends on slant
+    const botR = 45;
+
+    // Sector
+    ctxNet.beginPath();
+    ctxNet.moveTo(cx, cy);
+    ctxNet.arc(cx, cy, R, -Math.PI/2, -Math.PI/2 + angle);
+    ctxNet.closePath();
+    ctxNet.fillStyle='#7986CB'; ctxNet.globalAlpha=0.8; ctxNet.fill(); ctxNet.globalAlpha=1;
+    ctxNet.strokeStyle='#333'; ctxNet.lineWidth=2; ctxNet.stroke();
+    ctxNet.fillStyle='white'; ctxNet.font='bold 16px sans-serif'; ctxNet.textAlign='center';
+    ctxNet.fillText('侧面(扇形)', cx+20, cy-30);
+
+    // Bottom circle
+    const botY = cy + R + botR + 40 + (1-t)*60;
+    ctxNet.beginPath(); ctxNet.arc(cx, botY, botR, 0, Math.PI*2);
+    ctxNet.fillStyle='#7E57C2'; ctxNet.globalAlpha=0.8; ctxNet.fill(); ctxNet.globalAlpha=1;
+    ctxNet.strokeStyle='#333'; ctxNet.lineWidth=2; ctxNet.stroke();
+    ctxNet.fillStyle='white'; ctxNet.fillText('底面', cx, botY);
+
+    // Arrow
+    ctxNet.strokeStyle='#999'; ctxNet.lineWidth=1; ctxNet.setLineDash([4,4]);
+    ctxNet.beginPath(); ctxNet.moveTo(cx, cy+R*0.5); ctxNet.lineTo(cx, botY-botR); ctxNet.stroke();
+    ctxNet.setLineDash([]);
+
+    ctxNet.fillStyle='#666'; ctxNet.font='14px sans-serif';
+    ctxNet.fillText('圆锥展开 = 1个扇形 + 1个圆', cx, 400);
+    ctxNet.fillText('扇形半径 = 母线长 l，弧长 = 底面周长 2πr', cx, 420);
+}
+
+document.getElementById('foldSlider').addEventListener('input', e => {
+    foldT = +e.target.value / 100;
+    document.getElementById('foldVal').textContent = Math.round(foldT*100) + '%';
+    drawNet();
+});
+
+function toggleFoldAnim() {
+    if(foldAnim) { clearInterval(foldAnim); foldAnim=null; return; }
+    foldDir = foldT > 0.5 ? -1 : 1;
+    foldAnim = setInterval(()=>{
+        foldT += foldDir * 0.03;
+        if(foldT<=0){foldT=0;foldDir=1;}
+        if(foldT>=1){foldT=1;foldDir=-1;}
+        document.getElementById('foldSlider').value = Math.round(foldT*100);
+        document.getElementById('foldVal').textContent = Math.round(foldT*100)+'%';
+        drawNet();
+    }, 30);
+}
+
+function prevNet() { netVariant = (netVariant - 1 + cubeNets.length) % cubeNets.length; drawNet(); }
+function nextNet() { netVariant = (netVariant + 1) % cubeNets.length; drawNet(); }
+
+// === Tab 2: 从三视图还原 ===
+let reconstructData = null;
+
+function newReconstruct() {
+    // Generate a random 3x3 grid with heights 0-3
+    const grid = [];
+    const rows=3, cols=3;
+    for(let r=0;r<rows;r++){
+        grid[r]=[];
+        for(let c=0;c<cols;c++){
+            grid[r][c] = Math.floor(Math.random()*3); // 0-2
+        }
+    }
+    // Ensure at least some blocks
+    grid[1][1] = Math.max(grid[1][1], 1);
+
+    // Compute front view (max height per column)
+    const front = [];
+    for(let c=0;c<cols;c++){
+        let mx=0; for(let r=0;r<rows;r++) mx=Math.max(mx,grid[r][c]); front[c]=mx;
+    }
+    // Compute top view (whether any block exists)
+    const top = [];
+    for(let r=0;r<rows;r++){
+        top[r]=[];
+        for(let c=0;c<cols;c++) top[r][c] = grid[r][c]>0 ? 1 : 0;
+    }
+
+    reconstructData = { grid, front, top, rows, cols, answer: grid.map(r=>[...r]) };
+    // Player grid starts empty
+    reconstructData.player = Array.from({length:rows}, ()=>Array(cols).fill(0));
+
+    document.getElementById('reconstructResult').textContent = '';
+    buildReconstructGrid();
+    drawReconstructViews();
+}
+
+function buildReconstructGrid() {
+    const el = document.getElementById('reconstructGrid');
+    el.innerHTML = '';
+    const {rows, cols} = reconstructData;
+    el.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+            const cell = document.createElement('div');
+            cell.className = 'reconstruct-cell';
+            cell.dataset.r = r; cell.dataset.c = c;
+            cell.onclick = () => {
+                reconstructData.player[r][c] = (reconstructData.player[r][c]+1) % 4;
+                cell.textContent = reconstructData.player[r][c] || '';
+                cell.classList.toggle('filled', reconstructData.player[r][c]>0);
+            };
+            el.appendChild(cell);
+        }
+    }
+}
+
+function drawReconstructViews() {
+    if(!reconstructData) return;
+    const {front, top, rows, cols} = reconstructData;
+    // Front view
+    ctxRFront.clearRect(0,0,180,180);
+    ctxRFront.fillStyle='#fafcff'; ctxRFront.fillRect(0,0,180,180);
+    const bw = 40, bh = 40;
+    const fox = 90 - cols*bw/2;
+    for(let c=0;c<cols;c++){
+        const h = front[c];
+        for(let i=0;i<h;i++){
+            ctxRFront.fillStyle = `hsl(${230+i*20}, 60%, ${65-i*10}%)`;
+            ctxRFront.fillRect(fox+c*bw, 180-40-(i+1)*bh, bw-2, bh-2);
+            ctxRFront.strokeStyle='#333'; ctxRFront.lineWidth=1;
+            ctxRFront.strokeRect(fox+c*bw, 180-40-(i+1)*bh, bw-2, bh-2);
+        }
+    }
+    // Top view
+    ctxRTop.clearRect(0,0,180,180);
+    ctxRTop.fillStyle='#fafcff'; ctxRTop.fillRect(0,0,180,180);
+    const tox = 90 - cols*bw/2, toy = 90 - rows*bw/2;
+    for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+            if(top[r][c]){
+                ctxRTop.fillStyle='#7E57C2'; ctxRTop.globalAlpha=0.7;
+                ctxRTop.fillRect(tox+c*bw, toy+r*bw, bw-2, bw-2);
+                ctxRTop.globalAlpha=1;
+                ctxRTop.strokeStyle='#333'; ctxRTop.lineWidth=1;
+                ctxRTop.strokeRect(tox+c*bw, toy+r*bw, bw-2, bw-2);
+            }
+        }
+    }
+    document.getElementById('reconstructProblem').textContent = `根据正视图和俯视图，在右侧网格中摆出立体图形（点击增加层数）`;
+}
+
+function checkReconstruct() {
+    if(!reconstructData) return;
+    const {answer, player, rows, cols} = reconstructData;
+    let correct = true;
+    const cells = document.querySelectorAll('.reconstruct-cell');
+    cells.forEach(cell => {
+        cell.classList.remove('correct-cell','wrong-cell');
+        const r=+cell.dataset.r, c=+cell.dataset.c;
+        if(player[r][c] === answer[r][c]) {
+            if(answer[r][c]>0) cell.classList.add('correct-cell');
+        } else {
+            cell.classList.add('wrong-cell');
+            correct = false;
+        }
+    });
+    const res = document.getElementById('reconstructResult');
+    if(correct) {
+        res.textContent = '✅ 完全正确！空间想象力很棒！';
+        res.style.color = '#4CAF50';
+    } else {
+        res.textContent = '❌ 有些位置不对，再试试！红色=需要调整';
+        res.style.color = '#f44336';
+    }
+}
+
+const cvRFront = document.getElementById('cvRFront'), ctxRFront = cvRFront.getContext('2d');
+const cvRTop = document.getElementById('cvRTop'), ctxRTop = cvRTop.getContext('2d');
+
+// === Tab 3: 练习 ===
+const quizData = [
+    { q: '正方体的三视图分别是什么形状？', opts: ['三个圆','三个正方形','两个正方形一个圆','三角形'], ans: 1 },
+    { q: '圆柱的正视图是什么形状？', opts: ['圆','三角形','矩形','梯形'], ans: 2 },
+    { q: '圆锥的俯视图是什么形状？', opts: ['三角形','圆（含圆心）','矩形','椭圆'], ans: 1 },
+    { q: '正方体展开图不可能包含以下哪种形状？', opts: ['6个正方形','十字形','L形','6个长方形'], ans: 3 },
+    { q: '三视图中"长对正"指的是哪两个视图的关系？', opts: ['正视图和侧视图','正视图和俯视图','侧视图和俯视图','三个视图'], ans: 1 },
+    { q: '一个几何体的正视图是三角形，俯视图是圆，这个几何体是？', opts: ['圆柱','圆锥','三棱锥','球'], ans: 1 },
+    { q: '正方体共有几种不同的展开图？', opts: ['6种','8种','11种','12种'], ans: 2 },
+    { q: '球的三视图都是什么形状？', opts: ['椭圆','圆','正方形','点'], ans: 1 }
+];
+let quizIdx = 0, quizScore = 0;
+
+function renderQuiz() {
+    if(quizIdx >= quizData.length) {
+        document.getElementById('quizArea').style.display = 'none';
+        const r = document.getElementById('quizResult');
+        r.style.display = 'block';
+        r.innerHTML = `🎉 完成！得分：${quizScore}/${quizData.length}<br>${quizScore>=6?'太棒了！':quizScore>=4?'不错，继续加油！':'再复习一下吧！'}`;
+        maybeMarkDone(quizScore);
+        return;
+    }
+    const q = quizData[quizIdx];
+    document.getElementById('quizProgress').style.width = (quizIdx/quizData.length*100)+'%';
+    const area = document.getElementById('quizArea');
+    area.innerHTML = `<div class="quiz-q"><h4>第${quizIdx+1}题 / 共${quizData.length}题</h4><p style="margin-bottom:12px;">${q.q}</p><div class="quiz-opts" id="quizOpts"></div></div>`;
+    const optsEl = document.getElementById('quizOpts');
+    q.opts.forEach((opt, i) => {
+        const d = document.createElement('div');
+        d.className = 'quiz-opt';
+        d.textContent = opt;
+        d.onclick = () => {
+            if(d.classList.contains('correct')||d.classList.contains('wrong')) return;
+            if(i === q.ans) { d.classList.add('correct'); quizScore++; }
+            else { d.classList.add('wrong'); optsEl.children[q.ans].classList.add('correct'); }
+            setTimeout(()=>{quizIdx++;renderQuiz();}, 1000);
+        };
+        optsEl.appendChild(d);
+    });
+}
+
+// Init
+draw3D();
+newReconstruct();
+renderQuiz();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中数学"></script>
+</body>
+</html>

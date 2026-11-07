@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>集合与逻辑入门 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --set: #06b6d4;
+    --logic: #f59e0b;
+    --map: #10b981;
+    --prop: #ef4444;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1f2937 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .back { display:inline-block; margin-bottom: 12px; color: #fcd34d; text-decoration: none; font-size: 14px; }
+  .back:hover { color: #fde68a; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--set), var(--logic), var(--map), var(--prop)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); touch-action: manipulation; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); max-height: 560px; overflow-y: auto; }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:#94a3b8; }
+  .legend span::before { content:''; display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; background:currentColor; }
+  .l-set { color: var(--set); }
+  .l-logic { color: var(--logic); }
+  .l-map { color: var(--map); }
+  .l-prop { color: var(--prop); }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #fbbf24; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 130px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .btn-row { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: #e2e8f0; cursor: pointer; font-size: 13px; transition: all .2s; min-height: 36px; }
+  .btn:hover { background: rgba(255,255,255,0.12); }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+  .btn.active { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .concept-card { border-left: 3px solid var(--set); background: rgba(255,255,255,0.04); padding: 10px 12px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; line-height: 1.7; }
+  .concept-card.logic { border-left-color: var(--logic); }
+  .concept-card.map { border-left-color: var(--map); }
+  .concept-card.prop { border-left-color: var(--prop); }
+  .concept-card .title { font-weight: 700; color: #fbbf24; margin-bottom: 4px; }
+  .quiz .quiz-q { font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
+  .quiz-opt { padding: 10px 12px; margin: 6px 0; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; min-height: 40px; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: var(--map); }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; line-height: 1.7; }
+  .quiz-result { text-align: center; padding: 18px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 15px; line-height: 2; }
+  .truth-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-family: monospace; font-size: 13px; }
+  .truth-table th, .truth-table td { border: 1px solid var(--border); padding: 6px 8px; text-align: center; }
+  .truth-table th { background: rgba(255,255,255,0.08); color: #fbbf24; }
+  .truth-table tr.hl td { background: rgba(139,92,246,0.18); }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back" href="index.html">← 返回大学数学</a>
+  <header>
+    <h1>🧠 集合与逻辑入门</h1>
+    <p>集合运算 · 命题逻辑 · 映射 · 充分必要条件</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="set">○ 集合运算</div>
+    <div class="tab" data-mode="logic">⚡ 命题逻辑</div>
+    <div class="tab" data-mode="map">→ 映射</div>
+    <div class="tab" data-mode="prop">⇔ 充分必要</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="600" height="450"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>知识可视化 · 大学数学 · 集合与逻辑</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
+const legend = document.getElementById('legend');
+
+let mode = 'set';
+let state = {};
+
+// ============ Tab 切换 ============
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    initMode();
+  });
+});
+
+function initMode() {
+  state = {};
+  legend.innerHTML = '';
+  if (mode === 'set') initSet();
+  else if (mode === 'logic') initLogic();
+  else if (mode === 'map') initMap();
+  else if (mode === 'prop') initProp();
+  else if (mode === 'quiz') initQuiz();
+}
+
+// ============ 1. 集合运算（韦恩图） ============
+let setOp = 'union';
+let setA = 5, setB = 4, setAB = 2;
+
+function initSet() {
+  setOp = 'union';
+  panel.innerHTML = `
+    <h3>○ 集合运算 · 韦恩图</h3>
+    <div class="slider-row"><label>|A| 元素数</label><input type="range" id="sA" min="0" max="10" value="5"><span class="val" id="vA">5</span></div>
+    <div class="slider-row"><label>|B| 元素数</label><input type="range" id="sB" min="0" max="10" value="4"><span class="val" id="vB">4</span></div>
+    <div class="slider-row"><label>|A∩B| 交集</label><input type="range" id="sAB" min="0" max="5" value="2"><span class="val" id="vAB">2</span></div>
+    <div class="btn-row">
+      <button class="btn op active" data-op="union">A ∪ B 并</button>
+      <button class="btn op" data-op="inter">A ∩ B 交</button>
+      <button class="btn op" data-op="diff">A − B 差</button>
+      <button class="btn op" data-op="sym">A △ B 对称差</button>
+      <button class="btn op" data-op="comp">Aᶜ 补</button>
+    </div>
+    <div class="equation" id="eqn"></div>
+    <div class="info-grid" id="info"></div>
+    <div class="concept-card">
+      <div class="title">集合运算律</div>
+      交换律：A∪B = B∪A · A∩B = B∩A<br>
+      结合律：(A∪B)∪C = A∪(B∪C)<br>
+      分配律：A∩(B∪C) = (A∩B)∪(A∩C)<br>
+      德摩根：(A∪B)ᶜ = Aᶜ ∩ Bᶜ
+    </div>`;
+  legend.innerHTML = '<span class="l-set">A</span><span class="l-logic">B</span><span class="l-map">选中区域</span>';
+  ['sA','sB','sAB'].forEach(id => {
+    document.getElementById(id).addEventListener('input', e => {
+      setA = +document.getElementById('sA').value;
+      setB = +document.getElementById('sB').value;
+      setAB = Math.min(+document.getElementById('sAB').value, Math.min(setA, setB));
+      document.getElementById('sAB').max = Math.min(setA, setB);
+      document.getElementById('sAB').value = setAB;
+      document.getElementById('vA').textContent = setA;
+      document.getElementById('vB').textContent = setB;
+      document.getElementById('vAB').textContent = setAB;
+      drawSet();
+    });
+  });
+  panel.querySelectorAll('.btn.op').forEach(btn => {
+    btn.addEventListener('click', () => {
+      panel.querySelectorAll('.btn.op').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      setOp = btn.dataset.op;
+      drawSet();
+    });
+  });
+  setA = 5; setB = 4; setAB = 2;
+  drawSet();
+}
+
+function drawSet() {
+  ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 0, 600, 450);
+  const ax = 240, ay = 220, bx = 360, by = 220, r = 110;
+  // 宇宙 U
+  ctx.strokeStyle = 'rgba(148,163,184,0.4)'; ctx.lineWidth = 2;
+  ctx.strokeRect(40, 40, 520, 340);
+  ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('U', 50, 65);
+
+  function drawCircle(cx, cy, color, fillAlpha) {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = color.replace('ALPHA', fillAlpha); ctx.fill();
+    ctx.strokeStyle = color.replace('ALPHA', '0.9'); ctx.lineWidth = 2.5; ctx.stroke();
+  }
+
+  // 选中区域用 clip 高亮
+  ctx.save();
+  ctx.beginPath();
+  if (setOp === 'union') {
+    ctx.arc(ax, ay, r, 0, Math.PI * 2);
+    ctx.moveTo(bx + r, by);
+    ctx.arc(bx, by, r, 0, Math.PI * 2);
+    ctx.clip('evenodd');
+    // 需要重新设置以支持 evenodd 不支持跨两圆——改用两次绘制
+    ctx.restore();
+    ctx.save();
+    ctx.beginPath(); ctx.arc(ax, ay, r, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = 'rgba(16,185,129,0.45)'; ctx.fillRect(0, 0, 600, 450);
+    ctx.restore(); ctx.save();
+    ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = 'rgba(16,185,129,0.45)'; ctx.fillRect(0, 0, 600, 450);
+    ctx.restore();
+  } else if (setOp === 'inter') {
+    ctx.arc(ax, ay, r, 0, Math.PI * 2); ctx.clip();
+    ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = 'rgba(16,185,129,0.55)'; ctx.fillRect(0, 0, 600, 450);
+    ctx.restore();
+  } else if (setOp === 'diff') {
+    ctx.arc(ax, ay, r, 0, Math.PI * 2); ctx.clip();
+    ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2);
+    ctx.clip('evenodd'); // 不直接支持反向，改用组合
+    ctx.restore();
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, 600, 450);
+    ctx.arc(bx, by, r, 0, Math.PI * 2);
+    ctx.clip('evenodd');
+    ctx.beginPath(); ctx.arc(ax, ay, r, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = 'rgba(16,185,129,0.5)'; ctx.fillRect(0, 0, 600, 450);
+    ctx.restore();
+  } else if (setOp === 'sym') {
+    ctx.restore();
+    // A - B
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, 600, 450);
+    ctx.arc(bx, by, r, 0, Math.PI * 2);
+    ctx.clip('evenodd');
+    ctx.beginPath(); ctx.arc(ax, ay, r, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = 'rgba(16,185,129,0.5)'; ctx.fillRect(0, 0, 600, 450);
+    ctx.restore();
+    // B - A
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, 600, 450);
+    ctx.arc(ax, ay, r, 0, Math.PI * 2);
+    ctx.clip('evenodd');
+    ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = 'rgba(16,185,129,0.5)'; ctx.fillRect(0, 0, 600, 450);
+    ctx.restore();
+  } else if (setOp === 'comp') {
+    ctx.beginPath(); ctx.rect(0, 0, 600, 450);
+    ctx.arc(ax, ay, r, 0, Math.PI * 2);
+    ctx.clip('evenodd');
+    ctx.fillStyle = 'rgba(16,185,129,0.35)'; ctx.fillRect(40, 40, 520, 340);
+    ctx.restore();
+  }
+  ctx.save();
+
+  // 圆边界
+  ctx.beginPath(); ctx.arc(ax, ay, r, 0, Math.PI * 2);
+  ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2);
+  ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2.5; ctx.stroke();
+
+  // 标签
+  ctx.fillStyle = '#06b6d4'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('A', ax - 60, ay - 70);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('B', bx + 60, by - 70);
+
+  // 数量标签（仅示意，不按真实几何比例）
+  ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 18px monospace';
+  const onlyA = setA - setAB, onlyB = setB - setAB;
+  if (setOp !== 'comp') {
+    ctx.fillText(onlyA, ax - 45, ay + 6);
+    ctx.fillText(setAB, (ax + bx) / 2, ay + 6);
+    ctx.fillText(onlyB, bx + 45, ay + 6);
+  }
+
+  // 当前计算
+  let result = 0, expr = '';
+  const U = 15;
+  if (setOp === 'union') { result = setA + setB - setAB; expr = `|A∪B| = |A|+|B|−|A∩B| = ${setA}+${setB}−${setAB} = <b>${result}</b>`; }
+  else if (setOp === 'inter') { result = setAB; expr = `|A∩B| = <b>${result}</b>`; }
+  else if (setOp === 'diff') { result = setA - setAB; expr = `|A−B| = |A|−|A∩B| = ${setA}−${setAB} = <b>${result}</b>`; }
+  else if (setOp === 'sym') { result = setA + setB - 2 * setAB; expr = `|A△B| = |A|+|B|−2|A∩B| = <b>${result}</b>`; }
+  else if (setOp === 'comp') { result = U - setA; expr = `|Aᶜ| = |U|−|A| = ${U}−${setA} = <b>${result}</b>（设 |U|=${U}）`; }
+  document.getElementById('eqn').innerHTML = expr;
+  document.getElementById('info').innerHTML = `
+    <div><b style="color:#06b6d4;">仅 A</b>：${onlyA} 个</div>
+    <div><b style="color:#f59e0b;">仅 B</b>：${onlyB} 个</div>
+    <div><b style="color:#10b981;">交集</b>：${setAB} 个</div>
+    <div><b style="color:#fbbf24;">选中</b>：${result} 个</div>`;
+}
+
+// ============ 2. 命题逻辑 ============
+let logicP = true, logicQ = true;
+
+function initLogic() {
+  logicP = true; logicQ = true;
+  panel.innerHTML = `
+    <h3>⚡ 命题逻辑 · 真值表</h3>
+    <div class="btn-row">
+      <button class="btn" id="btnP">P = 真</button>
+      <button class="btn" id="btnQ">Q = 真</button>
+    </div>
+    <div id="truth"></div>
+    <div class="concept-card logic">
+      <div class="title">联结词</div>
+      ¬P 非（否定） · P∧Q 合取（且）<br>
+      P∨Q 析取（或） · P→Q 蕴含（如果...那么）<br>
+      P↔Q 等价（当且仅当）
+    </div>
+    <div class="concept-card logic">
+      <div class="title">等价式</div>
+      P→Q ⇔ ¬P∨Q ⇔ ¬Q→¬P（逆否）<br>
+      德摩根：¬(P∧Q) ⇔ ¬P∨¬Q
+    </div>`;
+  legend.innerHTML = '<span class="l-logic">真 T</span><span style="color:#64748b;">假 F</span>';
+  document.getElementById('btnP').addEventListener('click', () => { logicP = !logicP; drawLogic(); });
+  document.getElementById('btnQ').addEventListener('click', () => { logicQ = !logicQ; drawLogic(); });
+  drawLogic();
+}
+
+function drawLogic() {
+  document.getElementById('btnP').textContent = `P = ${logicP ? '真' : '假'}`;
+  document.getElementById('btnP').className = 'btn' + (logicP ? ' primary' : '');
+  document.getElementById('btnQ').textContent = `Q = ${logicQ ? '真' : '假'}`;
+  document.getElementById('btnQ').className = 'btn' + (logicQ ? ' primary' : '');
+
+  const rows = [
+    [true, true], [true, false], [false, true], [false, false]
+  ];
+  const html = ['<table class="truth-table"><tr><th>P</th><th>Q</th><th>¬P</th><th>P∧Q</th><th>P∨Q</th><th>P→Q</th><th>P↔Q</th></tr>'];
+  rows.forEach(([p, q]) => {
+    const hl = (p === logicP && q === logicQ) ? ' class="hl"' : '';
+    const T = b => b ? '<span style="color:#10b981;font-weight:700;">T</span>' : '<span style="color:#64748b;">F</span>';
+    html.push(`<tr${hl}><td>${T(p)}</td><td>${T(q)}</td><td>${T(!p)}</td><td>${T(p&&q)}</td><td>${T(p||q)}</td><td>${T(!p||q)}</td><td>${T(p===q)}</td></tr>`);
+  });
+  html.push('</table>');
+  document.getElementById('truth').innerHTML = html.join('');
+
+  // Canvas：当前真值的可视化灯
+  ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 0, 600, 450);
+  const cx = 300, cy = 100;
+  function lamp(x, y, label, on) {
+    ctx.beginPath(); ctx.arc(x, y, 36, 0, Math.PI * 2);
+    ctx.fillStyle = on ? '#10b981' : '#1f2937';
+    ctx.fill();
+    ctx.strokeStyle = on ? '#34d399' : '#475569'; ctx.lineWidth = 3; ctx.stroke();
+    if (on) {
+      ctx.beginPath(); ctx.arc(x, y, 50, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(52,211,153,0.4)'; ctx.lineWidth = 2; ctx.stroke();
+    }
+    ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(label, x, y + 66);
+    ctx.fillStyle = on ? '#065f46' : '#94a3b8'; ctx.font = 'bold 16px monospace';
+    ctx.fillText(on ? 'T' : 'F', x, y + 6);
+  }
+  lamp(150, cy, 'P', logicP);
+  lamp(450, cy, 'Q', logicQ);
+
+  const ops = [
+    ['¬P', !logicP],
+    ['P ∧ Q', logicP && logicQ],
+    ['P ∨ Q', logicP || logicQ],
+    ['P → Q', !logicP || logicQ],
+    ['P ↔ Q', logicP === logicQ]
+  ];
+  ops.forEach((op, i) => {
+    lamp(80 + i * 110, 280, op[0], op[1]);
+  });
+  ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('点击面板按钮切换 P、Q 真值，观察联结词结果', 300, 400);
+}
+
+// ============ 3. 映射 ============
+let mapType = 'injective';
+
+function initMap() {
+  mapType = 'injective';
+  panel.innerHTML = `
+    <h3>→ 映射 · 单射 / 满射 / 双射</h3>
+    <div class="btn-row">
+      <button class="btn map active" data-m="injective">单射</button>
+      <button class="btn map" data-m="surjective">满射</button>
+      <button class="btn map" data-m="bijective">双射</button>
+      <button class="btn map" data-m="neither">一般映射</button>
+    </div>
+    <div class="equation" id="mapEq"></div>
+    <div class="concept-card map">
+      <div class="title">定义</div>
+      <b>单射 (injective)</b>：不同原像有不同像<br>
+      <b>满射 (surjective)</b>：每个 B 元素都被打到<br>
+      <b>双射 (bijective)</b>：单 + 满 → 一一对应，存在逆映射
+    </div>
+    <div class="info-grid" id="mapInfo"></div>`;
+  legend.innerHTML = '<span class="l-set">A (定义域)</span><span class="l-map">B (值域)</span>';
+  panel.querySelectorAll('.btn.map').forEach(btn => {
+    btn.addEventListener('click', () => {
+      panel.querySelectorAll('.btn.map').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mapType = btn.dataset.m;
+      drawMap();
+    });
+  });
+  drawMap();
+}
+
+function drawMap() {
+  ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 0, 600, 450);
+  // A 元素
+  let A, B, f;
+  if (mapType === 'injective') {
+    A = [1, 2, 3]; B = ['a', 'b', 'c', 'd'];
+    f = { 1: 'a', 2: 'c', 3: 'd' };
+  } else if (mapType === 'surjective') {
+    A = [1, 2, 3, 4]; B = ['a', 'b', 'c'];
+    f = { 1: 'a', 2: 'b', 3: 'c', 4: 'a' };
+  } else if (mapType === 'bijective') {
+    A = [1, 2, 3]; B = ['a', 'b', 'c'];
+    f = { 1: 'b', 2: 'a', 3: 'c' };
+  } else {
+    A = [1, 2, 3, 4]; B = ['a', 'b', 'c'];
+    f = { 1: 'a', 2: 'a', 3: 'b', 4: 'a' };
+  }
+  const ax = 130, bx = 470;
+  const aY = i => 100 + i * (300 / Math.max(A.length - 1, 1));
+  const bY = i => 100 + i * (300 / Math.max(B.length - 1, 1));
+  const bIdx = Object.fromEntries(B.map((v, i) => [v, i]));
+
+  // 圆点
+  ctx.font = 'bold 16px monospace'; ctx.textAlign = 'center';
+  A.forEach((a, i) => {
+    ctx.beginPath(); ctx.arc(ax, aY(i), 20, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(6,182,212,0.3)'; ctx.fill();
+    ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#e2e8f0'; ctx.fillText(a, ax, aY(i) + 6);
+  });
+  const bHit = {};
+  Object.values(f).forEach(b => bHit[b] = (bHit[b] || 0) + 1);
+  B.forEach((b, i) => {
+    const hit = bHit[b] || 0;
+    ctx.beginPath(); ctx.arc(bx, bY(i), 20, 0, Math.PI * 2);
+    ctx.fillStyle = hit > 0 ? 'rgba(16,185,129,0.4)' : 'rgba(100,116,139,0.2)';
+    ctx.fill();
+    ctx.strokeStyle = hit > 1 ? '#ef4444' : (hit === 1 ? '#10b981' : '#475569');
+    ctx.lineWidth = hit > 1 ? 3 : 2; ctx.stroke();
+    ctx.fillStyle = '#e2e8f0'; ctx.fillText(b, bx, bY(i) + 6);
+    if (hit > 1) {
+      ctx.fillStyle = '#ef4444'; ctx.font = 'bold 13px sans-serif';
+      ctx.fillText(`×${hit}`, bx + 32, bY(i) + 5);
+      ctx.font = 'bold 16px monospace';
+    }
+  });
+
+  // 箭头
+  A.forEach((a, i) => {
+    const ti = bIdx[f[a]];
+    const x1 = ax + 22, y1 = aY(i), x2 = bx - 22, y2 = bY(ti);
+    ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x1, y1);
+    ctx.quadraticCurveTo((x1 + x2) / 2, (y1 + y2) / 2 - 14, x2, y2);
+    ctx.stroke();
+    // 箭头头
+    const ang = Math.atan2(y2 - ((y1 + y2) / 2 - 14), x2 - (x1 + x2) / 2);
+    ctx.fillStyle = '#a78bfa';
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 10 * Math.cos(ang - 0.4), y2 - 10 * Math.sin(ang - 0.4));
+    ctx.lineTo(x2 - 10 * Math.cos(ang + 0.4), y2 - 10 * Math.sin(ang + 0.4));
+    ctx.closePath(); ctx.fill();
+  });
+
+  // 标题
+  ctx.fillStyle = '#06b6d4'; ctx.font = 'bold 18px sans-serif';
+  ctx.fillText('A', ax, 60);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('B', bx, 60);
+
+  // 判定
+  const inj = B.every(b => (bHit[b] || 0) <= 1);
+  const sur = B.every(b => (bHit[b] || 0) >= 1);
+  const bij = inj && sur;
+  document.getElementById('mapEq').innerHTML = `
+    <b style="color:${inj ? '#10b981' : '#ef4444'};">单射 ${inj ? '✓' : '✗'}</b> ·
+    <b style="color:${sur ? '#10b981' : '#ef4444'};">满射 ${sur ? '✓' : '✗'}</b> ·
+    <b style="color:${bij ? '#10b981' : '#ef4444'};">双射 ${bij ? '✓' : '✗'}</b>`;
+  document.getElementById('mapInfo').innerHTML = `
+    <div><b>|A|</b> = ${A.length}</div>
+    <div><b>|B|</b> = ${B.length}</div>
+    <div><b>|f(A)|</b> = ${Object.keys(bHit).length}（像集大小）</div>
+    <div><b>逆映射</b>：${bij ? '存在 ✓' : '不存在 ✗'}</div>`;
+}
+
+// ============ 4. 充分必要条件 ============
+let propType = 'sufficient'; // sufficient / necessary / iff / neither
+
+function initProp() {
+  propType = 'sufficient';
+  panel.innerHTML = `
+    <h3>⇔ 充分与必要条件</h3>
+    <div class="btn-row">
+      <button class="btn prop active" data-p="sufficient">P⇒Q（充分不必要）</button>
+      <button class="btn prop" data-p="necessary">Q⇒P（必要不充分）</button>
+      <button class="btn prop" data-p="iff">P⇔Q（充要）</button>
+      <button class="btn prop" data-p="neither">互不推出</button>
+    </div>
+    <div class="equation" id="propEq"></div>
+    <div class="concept-card prop">
+      <div class="title">判定方法（韦恩图视角）</div>
+      P⇒Q ⇔ P 区域 ⊆ Q 区域（P 是 Q 的<b>充分</b>条件）<br>
+      Q⇒P ⇔ Q 区域 ⊆ P 区域（P 是 Q 的<b>必要</b>条件）<br>
+      P⇔Q ⇔ P、Q 区域<b>完全重合</b>（充要条件）
+    </div>
+    <div class="concept-card prop">
+      <div class="title">例子</div>
+      · "x = 2" 是 "x² = 4" 的<b>充分不必要</b>条件<br>
+      · "x² = 4" 是 "x = 2" 的<b>必要不充分</b>条件<br>
+      · "x² − 4 = 0 且 x ≥ 0" ⇔ "x = 2" <b>充要</b>
+    </div>`;
+  legend.innerHTML = '<span class="l-prop">P</span><span class="l-logic">Q</span>';
+  panel.querySelectorAll('.btn.prop').forEach(btn => {
+    btn.addEventListener('click', () => {
+      panel.querySelectorAll('.btn.prop').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      propType = btn.dataset.p;
+      drawProp();
+    });
+  });
+  drawProp();
+}
+
+function drawProp() {
+  ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 0, 600, 450);
+  // U
+  ctx.strokeStyle = 'rgba(148,163,184,0.4)'; ctx.lineWidth = 2;
+  ctx.strokeRect(40, 40, 520, 340);
+  ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('U', 50, 65);
+
+  let desc = '';
+  if (propType === 'sufficient') {
+    // P 完全在 Q 内
+    drawEllipse(300, 220, 180, 120, '#f59e0b', 'Q');
+    drawEllipse(280, 220, 90, 60, '#ef4444', 'P');
+    desc = 'P ⊆ Q 且 P ≠ Q<br>→ P 是 Q 的<b style="color:#fbbf24;">充分不必要</b>条件<br>→ Q 是 P 的<b style="color:#fbbf24;">必要不充分</b>条件';
+  } else if (propType === 'necessary') {
+    // Q 完全在 P 内
+    drawEllipse(300, 220, 180, 120, '#ef4444', 'P');
+    drawEllipse(320, 220, 90, 60, '#f59e0b', 'Q');
+    desc = 'Q ⊆ P 且 Q ≠ P<br>→ P 是 Q 的<b style="color:#fbbf24;">必要不充分</b>条件<br>→ Q 是 P 的<b style="color:#fbbf24;">充分不必要</b>条件';
+  } else if (propType === 'iff') {
+    // P = Q
+    drawEllipse(300, 220, 160, 110, '#8b5cf6', 'P=Q');
+    desc = 'P 与 Q <b style="color:#fbbf24;">完全重合</b><br>→ P 是 Q 的<b style="color:#fbbf24;">充分必要（充要）条件</b><br>→ 记作 P ⇔ Q';
+  } else {
+    // 部分重叠
+    drawEllipse(240, 220, 130, 100, '#ef4444', 'P');
+    drawEllipse(360, 220, 130, 100, '#f59e0b', 'Q');
+    desc = 'P 与 Q <b style="color:#fbbf24;">部分重叠</b><br>→ P、Q <b style="color:#fbbf24;">互为既不充分也不必要</b>条件';
+  }
+  document.getElementById('propEq').innerHTML = desc;
+
+  function drawEllipse(cx, cy, rx, ry, color, label) {
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fillStyle = color.replace(')', ',0.18)').replace('rgb', 'rgba').replace('#', '');
+    // 直接用 16 进制加 alpha
+    ctx.fillStyle = color + '30'; ctx.fill();
+    ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = color; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(label, cx, cy - ry - 12 + 30);
+  }
+}
+
+// ============ 5. 互动练习 ============
+const QUIZ = [
+  { q: '设 A = {1,2,3}, B = {2,3,4}。A ∩ B = ?',
+    opts: ['{1,2,3,4}', '{2,3}', '{1,4}', '∅'], ans: 1,
+    exp: '交集是两个集合共有的元素：A∩B = {2,3}。' },
+  { q: '德摩根定律 ¬(P∧Q) 等价于？',
+    opts: ['¬P ∧ ¬Q', '¬P ∨ ¬Q', 'P ∨ Q', '¬(P∨Q)'], ans: 1,
+    exp: '¬(P∧Q) ⇔ ¬P∨¬Q；"都"的否定是"至少一个不"。' },
+  { q: 'P→Q 在什么时候为假？',
+    opts: ['P 真 Q 真', 'P 真 Q 假', 'P 假 Q 真', 'P 假 Q 假'], ans: 1,
+    exp: '蕴含仅当"前件真、后件假"时为假。' },
+  { q: '映射 f: A→B 是双射的充要条件是？',
+    opts: ['仅是单射', '仅是满射', '既是单射又是满射', 'A、B 元素一样多即可'], ans: 2,
+    exp: '双射 = 单射 + 满射，此时存在逆映射 f⁻¹。' },
+  { q: '"x > 5" 是 "x > 3" 的什么条件？',
+    opts: ['充分不必要', '必要不充分', '充要', '既不充分也不必要'], ans: 0,
+    exp: 'x>5 ⇒ x>3（充分），但 x>3 推不出 x>5（如 x=4）。' },
+  { q: '集合 A 有 n 个元素，则其幂集 P(A) 有多少个元素？',
+    opts: ['n', '2n', 'n²', '2ⁿ'], ans: 3,
+    exp: '每个元素都有"选/不选"两种，共 2ⁿ 个子集。' },
+  { q: '¬(P∨Q) 等价于？',
+    opts: ['¬P ∨ ¬Q', '¬P ∧ ¬Q', 'P ∧ Q', 'P→Q'], ans: 1,
+    exp: '德摩根：¬(P∨Q) ⇔ ¬P∧¬Q。' },
+  { q: 'P↔Q 为真当且仅当？',
+    opts: ['P、Q 都为真', 'P、Q 都为假', 'P、Q 真值相同', 'P、Q 真值不同'], ans: 2,
+    exp: '等价联结词要求两边真值一致（同真或同假）。' }
+];
+let quizIdx = 0, quizScore = 0, quizAnswered = false;
+
+function initQuiz() {
+  quizIdx = 0; quizScore = 0;
+  ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 0, 600, 450);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('完成 8 道题，检验集合与逻辑掌握情况', canvas.width / 2, canvas.height / 2 - 20);
+  ctx.fillText('答完自动出结果与解析', canvas.width / 2, canvas.height / 2 + 10);
+  renderQuiz();
+}
+
+function renderQuiz() {
+  if (quizIdx >= QUIZ.length) {
+    const pass = quizScore >= 6;
+    panel.innerHTML = `
+      <h3>🎯 测验完成</h3>
+      <div class="quiz-result">
+        得分 <b style="color:${pass ? '#10b981' : '#ef4444'};font-size:2em;">${quizScore}</b> / ${QUIZ.length}<br>
+        ${pass ? '🎉 已通过（≥6 分）' : '💪 继续加油（≥6 分通过）'}<br>
+        <button class="btn primary" id="retryQuiz" style="margin-top:12px;">↻ 再测一次</button>
+      </div>
+      <div class="concept-card" style="margin-top:14px;">
+        <div class="title">知识总结</div>
+        · 集合：A∪B、A∩B、A−B、A△B、Aᶜ，德摩根律<br>
+        · 逻辑：¬、∧、∨、→、↔；P→Q ⇔ ¬P∨Q ⇔ ¬Q→¬P<br>
+        · 映射：单射 / 满射 / 双射；双射 ⇔ 存在逆映射<br>
+        · 条件：P⇒Q 充分；Q⇒P 必要；P⇔Q 充要
+      </div>`;
+    document.getElementById('retryQuiz').addEventListener('click', initQuiz);
+    if (pass && typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('logic-set');
+    }
+    return;
+  }
+  const q = QUIZ[quizIdx];
+  quizAnswered = false;
+  panel.innerHTML = `
+    <h3>第 ${quizIdx + 1} / ${QUIZ.length} 题 <span style="float:right;color:#fbbf24;">得分 ${quizScore}</span></h3>
+    <div class="quiz">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-i="${i}">${o}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="fb"></div>
+    </div>`;
+  panel.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const i = +opt.dataset.i;
+      const fb = document.getElementById('fb');
+      if (i === q.ans) {
+        opt.classList.add('correct');
+        quizScore++;
+        fb.textContent = '✓ ' + q.exp;
+        fb.style.color = '#10b981';
+      } else {
+        opt.classList.add('wrong');
+        panel.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        fb.textContent = '✗ ' + q.exp;
+        fb.style.color = '#ef4444';
+      }
+      setTimeout(() => { quizIdx++; renderQuiz(); }, 1800);
+    });
+  });
+}
+
+// Init
+initMode();
+</script>
+</body>
+</html>

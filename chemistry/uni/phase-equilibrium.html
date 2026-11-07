@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>相平衡与相图 · 水的三相图 · 大学化学互动可视化</title>
+<style>
+  :root {
+    --primary: #06b6d4;
+    --solid: #60a5fa;
+    --liquid: #34d399;
+    --gas: #fbbf24;
+    --triple: #f472b6;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0c2532 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px;
+    font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #67e8f9; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #06b6d4, #34d399, #fbbf24); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(6,182,212,.4); color: #082f38; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #164e63 0%, #0f172a 100%); touch-action: none; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #67e8f9; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 100px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #67e8f9; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.solid { border-color: var(--solid); }
+  .concept-card.liquid { border-color: var(--liquid); }
+  .concept-card.gas { border-color: var(--gas); }
+  .concept-card.triple { border-color: var(--triple); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.solid .title { color: var(--solid); }
+  .concept-card.liquid .title { color: var(--liquid); }
+  .concept-card.gas .title { color: var(--gas); }
+  .concept-card.triple .title { color: var(--triple); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-solid::before { background: var(--solid); }
+  .legend .l-liquid::before { background: var(--liquid); }
+  .legend .l-gas::before { background: var(--gas); }
+  .legend .l-triple::before { background: var(--triple); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 36px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: #082f38; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(6,182,212,0.08); border-radius: 12px; border: 1px solid rgba(6,182,212,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #67e8f9; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #082f38; font-weight: 700; min-height: 36px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">🧪 化学</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">大学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">相平衡</span>
+  </nav>
+
+  <header>
+    <h1>⚖️ 相平衡与相图 · 水的三相图</h1>
+    <p>相律 · Clapeyron 方程 · 三相点 · 相图判读 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 学习</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 学习模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="learnCanvas" width="700" height="460"></canvas>
+        <div class="legend">
+          <span class="l-solid">固相</span>
+          <span class="l-liquid">液相</span>
+          <span class="l-gas">气相</span>
+          <span class="l-triple">三相点</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📐 核心概念</h3>
+        <div class="equation">
+          吉布斯相律：<b>F = C − P + 2</b><br/>
+          Clapeyron 方程：<b>dP/dT = ΔH / (T·ΔV)</b><br/>
+          水三相点：<b>273.16 K, 611.7 Pa</b>
+        </div>
+        <div class="slider-row">
+          <label>温度 T (°C)</label>
+          <input type="range" id="temp" min="-20" max="180" step="1" value="25" />
+          <span class="val" id="tempv">25 °C</span>
+        </div>
+        <div class="slider-row">
+          <label>压强 P (kPa)</label>
+          <input type="range" id="pres" min="0.6" max="220" step="0.5" value="101.3" />
+          <span class="val" id="presv">101.3 kPa</span>
+        </div>
+        <div class="info-grid">
+          <div>稳定相：<b id="calc-phase">液相</b></div>
+          <div>自由度数 F：<b id="calc-f">2</b></div>
+          <div>相数 P：<b id="calc-pn">1</b></div>
+          <div>状态：<b id="calc-loc">液相区</b></div>
+        </div>
+        <div class="concept-card triple">
+          <div class="title">📍 三相点</div>
+          固、液、气三相共存且平衡的唯一状态点。水为 273.16 K / 611.7 Pa，CO₂ 为 216.6 K / 518 kPa（故常压下 CO₂ 直接升华）。三相点 F=0，无自由度。
+        </div>
+        <div class="concept-card solid">
+          <div class="title">🧊 熔化曲线（固-液）</div>
+          几乎所有物质的熔化曲线向右倾斜（dP/dT &gt; 0），水是少数例外：冰的密度小于水，ΔV&lt;0，曲线向左倾斜，所以加压可使冰熔化（滑冰原理之一）。
+        </div>
+        <div class="concept-card liquid">
+          <div class="title">💧 汽化曲线（液-气）</div>
+          从三相点延伸到临界点。水的临界点 647 K / 22.06 MPa，超过临界点后液气不分，形成超临界流体。曲线斜率由 Clausius-Clapeyron 方程给出。
+        </div>
+        <div class="concept-card gas">
+          <div class="title">☁️ 升华曲线（固-气）</div>
+          从三相点向低温低压延伸。固体直接变气体（升华）需要压强低于三相点压强。干冰在常压下升华即因 CO₂ 三相点压强（518 kPa）远高于大气压。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="460"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🧪 练习：调温调压达到目标状态</h3>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-target="ice">❄️ 制成冰</button>
+          <button class="mode-btn" data-target="steam">☁️ 制成水蒸气</button>
+          <button class="mode-btn" data-target="triple">📍 接近三相点</button>
+          <button class="mode-btn" data-target="superheat">🔥 过热液体</button>
+        </div>
+        <div class="slider-row">
+          <label>温度 T (°C)</label>
+          <input type="range" id="ptemp" min="-20" max="180" step="1" value="50" />
+          <span class="val" id="ptempv">50 °C</span>
+        </div>
+        <div class="slider-row">
+          <label>压强 P (kPa)</label>
+          <input type="range" id="ppres" min="0.6" max="220" step="0.5" value="101.3" />
+          <span class="val" id="ppresv">101.3 kPa</span>
+        </div>
+        <div class="info-grid">
+          <div>当前相态：<b id="p-phase">液相</b></div>
+          <div>当前位置：<b id="p-loc">液相区</b></div>
+          <div>距三相点：<b id="p-dist">—</b></div>
+          <div>状态：<b id="p-status">未达成</b></div>
+        </div>
+        <div class="concept-card triple">
+          <div class="title">💡 提示</div>
+          <span id="p-hint">降低温度到 0°C 以下即可让水凝固为冰。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="quizCanvas" width="700" height="460"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🎯 随堂测验（4 题，3/4 合格）</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q">题目加载中…</div>
+          <div class="quiz-opts" id="quiz-opts"></div>
+          <div class="quiz-feedback" id="quiz-fb"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev">⬅ 上一题</button>
+            <button id="quiz-next">下一题 ➡</button>
+            <button id="quiz-submit" class="hidden">📊 提交评分</button>
+            <button id="quiz-retry" class="hidden">🔄 重新测验</button>
+          </div>
+          <div class="quiz-result hidden" id="quiz-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Knowledge Visual · 大学化学 · 相平衡与相图 · <span id="done-mark"></span></footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+let mode = 'learn';
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    mode = t.dataset.mode;
+    Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+    if (mode === 'quiz') renderQuiz();
+    draw();
+  });
+});
+
+/* ============================================================
+ * 简化相图（水）判定逻辑
+ * 三相点 T_t = 0.01 °C, P_t = 0.611 kPa
+ * 升华曲线（T<0.01°C）：Clausius-Clapeyron 简化
+ * 熔化曲线（T 略随 P 变化）：水的斜率负 → 高压下熔点略降
+ * 汽化曲线（T>0.01°C）：Antoine 简化（对数型）
+ * ============================================================ */
+const T_t = 0.01;         // °C
+const P_t = 0.611;        // kPa
+
+// 汽化曲线（kPa）：Antoine 方程（水，0-200°C）
+function vaporPressure(T) {
+  // log10(P_mmHg) = 8.14019 - 1810.94/(244.485+T)
+  const PmmHg = Math.pow(10, 8.14019 - 1810.94 / (244.485 + T));
+  return PmmHg * 0.133322;  // 转 kPa
+}
+
+// 升华曲线（kPa）：简化 CC 方程
+function sublimationPressure(T) {
+  // 从三相点出发，斜率较陡
+  const dT = T - T_t;  // 负值
+  return P_t * Math.exp(dT * 0.08);
+}
+
+// 熔化曲线（°C）：水 P 增加 → T 略降（每 1000 kPa 约 -0.0074 K）
+function fusionTemp(P) {
+  return T_t - (P - P_t) * 0.000074;
+}
+
+// 判定相态
+function phaseAt(T, P) {
+  if (T < T_t) {
+    // 低温区：与升华/熔化曲线比较
+    if (P < sublimationPressure(T)) return { phase: '气相', loc: '气相区', n: 1 };
+    return { phase: '固相', loc: '固相区', n: 1 };
+  }
+  // 高温区
+  if (P > 100 && Math.abs(T - fusionTemp(P)) < 0.5) {
+    return { phase: '固-液共存', loc: '熔化曲线上', n: 2 };
+  }
+  if (T < fusionTemp(P)) {
+    return { phase: '固相', loc: '固相区（高压）', n: 1 };
+  }
+  const Pv = vaporPressure(T);
+  if (Math.abs(P - Pv) < Pv * 0.05) {
+    return { phase: '液-气共存', loc: '汽化曲线上', n: 2 };
+  }
+  if (P > Pv) return { phase: '液相', loc: '液相区', n: 1 };
+  return { phase: '气相', loc: '气相区', n: 1 };
+}
+
+function isNearTriple(T, P, tol) {
+  return Math.abs(T - T_t) < tol && Math.abs(P - P_t) < 0.05;
+}
+
+/* ============================================================
+ * 学习模式
+ * ============================================================ */
+const tempEl = document.getElementById('temp');
+const presEl = document.getElementById('pres');
+function updLearn() {
+  const T = +tempEl.value, P = +presEl.value;
+  document.getElementById('tempv').textContent = T + ' °C';
+  document.getElementById('presv').textContent = P.toFixed(1) + ' kPa';
+  const r = phaseAt(T, P);
+  const nearT = isNearTriple(T, P, 1);
+  if (nearT) {
+    document.getElementById('calc-phase').textContent = '三相共存';
+    document.getElementById('calc-pn').textContent = '3';
+    document.getElementById('calc-f').textContent = '0';
+    document.getElementById('calc-loc').textContent = '三相点';
+  } else {
+    document.getElementById('calc-phase').textContent = r.phase;
+    document.getElementById('calc-pn').textContent = String(r.n);
+    document.getElementById('calc-f').textContent = String(3 - r.n);  // C=1
+    document.getElementById('calc-loc').textContent = r.loc;
+  }
+}
+[tempEl, presEl].forEach(el => el.addEventListener('input', () => { updLearn(); draw(); }));
+updLearn();
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const ptemp = document.getElementById('ptemp');
+const ppres = document.getElementById('ppres');
+let practiceTarget = 'ice';
+const targetDesc = {
+  ice: {
+    text: '❄️ 制成冰',
+    check: (T, P, r) => r.phase === '固相',
+    hint: '降低温度到 0°C 以下即可让水凝固为冰。'
+  },
+  steam: {
+    text: '☁️ 制成水蒸气',
+    check: (T, P, r) => r.phase === '气相',
+    hint: '温度升到 100°C 以上，或降低压强让沸点降低，使 P < 当前温度下的饱和蒸汽压。'
+  },
+  triple: {
+    text: '📍 接近三相点',
+    check: (T, P) => isNearTriple(T, P, 0.5),
+    hint: '三相点：T ≈ 0.01 °C，P ≈ 0.611 kPa。将温度调到 0 附近、压强调到最小（约 0.6 kPa）。'
+  },
+  superheat: {
+    text: '🔥 过热液体（液相超过常压沸点）',
+    check: (T, P, r) => r.phase === '液相' && T > 100,
+    hint: '温度高于 100°C 仍保持液态 → 必须加压，使 P 大于该温度下的饱和蒸汽压。例如 T=120°C 时 P > 198.5 kPa。'
+  }
+};
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    practiceTarget = btn.dataset.target;
+    document.getElementById('p-hint').textContent = targetDesc[practiceTarget].hint;
+    updPractice(); draw();
+  });
+});
+function updPractice() {
+  const T = +ptemp.value, P = +ppres.value;
+  document.getElementById('ptempv').textContent = T + ' °C';
+  document.getElementById('ppresv').textContent = P.toFixed(1) + ' kPa';
+  const r = phaseAt(T, P);
+  document.getElementById('p-phase').textContent = r.phase;
+  document.getElementById('p-loc').textContent = r.loc;
+  const dT = T - T_t, dP = P - P_t;
+  document.getElementById('p-dist').textContent = 'ΔT=' + dT.toFixed(2) + ' °C, ΔP=' + dP.toFixed(2) + ' kPa';
+  const ok = targetDesc[practiceTarget].check(T, P, r);
+  document.getElementById('p-status').textContent = ok ? '✅ 达成！' : '未达成';
+  document.getElementById('p-status').style.color = ok ? '#10b981' : '#f59e0b';
+}
+[ptemp, ppres].forEach(el => el.addEventListener('input', () => { updPractice(); draw(); }));
+updPractice();
+
+/* ============================================================
+ * Canvas 绘制：相图
+ * ============================================================ */
+function drawPhaseDiagram(ctx, W, H, curT, curP) {
+  ctx.clearRect(0, 0, W, H);
+
+  // 坐标系：x=T (-20 ~ 180 °C)，y=P (log 0.5 ~ 220 kPa)
+  const margin = { l: 60, r: 30, t: 30, b: 50 };
+  const plotW = W - margin.l - margin.r;
+  const plotH = H - margin.t - margin.b;
+  const Tmin = -20, Tmax = 180;
+  const Pmin = Math.log10(0.5), Pmax = Math.log10(250);
+
+  const tx = T => margin.l + (T - Tmin) / (Tmax - Tmin) * plotW;
+  const py = P => margin.t + plotH - (Math.log10(P) - Pmin) / (Pmax - Pmin) * plotH;
+
+  // 背景区域着色
+  // 固相区（左上）
+  ctx.fillStyle = 'rgba(96,165,250,0.10)';
+  ctx.fillRect(margin.l, margin.t, tx(T_t) - margin.l, plotH);
+  // 液相区（中上）
+  ctx.fillStyle = 'rgba(52,211,153,0.08)';
+  ctx.fillRect(tx(T_t), margin.t, W - margin.r - tx(T_t), plotH * 0.5);
+  // 气相区（右下）
+  ctx.fillStyle = 'rgba(251,191,36,0.08)';
+  ctx.fillRect(tx(T_t), margin.t + plotH * 0.5, W - margin.r - tx(T_t), plotH * 0.5);
+
+  // 坐标轴
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(margin.l, margin.t);
+  ctx.lineTo(margin.l, margin.t + plotH);
+  ctx.lineTo(margin.l + plotW, margin.t + plotH);
+  ctx.stroke();
+
+  // 标签
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('P (kPa, log)', 8, margin.t + 15);
+  ctx.fillText('T (°C)', W - 60, H - 18);
+
+  // 网格刻度
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px sans-serif';
+  for (let T = 0; T <= 180; T += 30) {
+    const x = tx(T);
+    ctx.fillText(T + '', x - 8, margin.t + plotH + 16);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.beginPath(); ctx.moveTo(x, margin.t); ctx.lineTo(x, margin.t + plotH); ctx.stroke();
+  }
+  [1, 10, 100].forEach(P => {
+    const y = py(P);
+    ctx.fillText(P + '', 25, y + 4);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.beginPath(); ctx.moveTo(margin.l, y); ctx.lineTo(margin.l + plotW, y); ctx.stroke();
+  });
+
+  // 升华曲线（T < T_t）
+  ctx.strokeStyle = '#60a5fa';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let T = Tmin; T <= T_t; T += 1) {
+    const P = sublimationPressure(T);
+    if (P < 0.5) continue;
+    const x = tx(T), y = py(P);
+    if (T === Tmin) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // 熔化曲线（T 接近 T_t，几乎垂直，水向左倾）
+  ctx.strokeStyle = '#a78bfa';
+  ctx.beginPath();
+  let first = true;
+  for (let P = P_t; P <= 220; P += 1) {
+    const T = fusionTemp(P);
+    const x = tx(T), y = py(P);
+    if (first) { ctx.moveTo(x, y); first = false; } else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // 汽化曲线（T > T_t）
+  ctx.strokeStyle = '#34d399';
+  ctx.beginPath();
+  first = true;
+  for (let T = T_t; T <= Tmax; T += 1) {
+    const P = vaporPressure(T);
+    if (P > 250) break;
+    const x = tx(T), y = py(P);
+    if (first) { ctx.moveTo(x, y); first = false; } else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // 三相点
+  const tX = tx(T_t), tY = py(P_t);
+  ctx.fillStyle = '#f472b6';
+  ctx.beginPath(); ctx.arc(tX, tY, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(tX, tY, 10, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = '#f472b6';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('三相点', tX + 14, tY - 8);
+
+  // 区域标注
+  ctx.fillStyle = 'rgba(96,165,250,0.8)';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('固相', tx(-12), py(80));
+  ctx.fillStyle = 'rgba(52,211,153,0.8)';
+  ctx.fillText('液相', tx(80), py(80));
+  ctx.fillStyle = 'rgba(251,191,36,0.8)';
+  ctx.fillText('气相', tx(120), py(2));
+
+  // 常压参考线（101.3 kPa）
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(margin.l, py(101.3)); ctx.lineTo(margin.l + plotW, py(101.3)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '11px sans-serif';
+  ctx.fillText('101.3 kPa（常压）', margin.l + 8, py(101.3) - 4);
+
+  // 当前状态点
+  if (curT !== undefined && curP !== undefined) {
+    const x = tx(curT), y = py(Math.max(0.5, curP));
+    const r = phaseAt(curT, curP);
+    const color = r.phase === '固相' ? '#60a5fa' : r.phase === '液相' ? '#34d399' : r.phase === '气相' ? '#fbbf24' : '#f472b6';
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('(' + curT + '°C, ' + curP.toFixed(1) + ' kPa)', x + 16, y + 4);
+  }
+}
+
+function draw() {
+  const lc = document.getElementById('learnCanvas').getContext('2d');
+  drawPhaseDiagram(lc, 700, 460, +tempEl.value, +presEl.value);
+  const pc = document.getElementById('practiceCanvas').getContext('2d');
+  drawPhaseDiagram(pc, 700, 460, +ptemp.value, +ppres.value);
+}
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const quizData = [
+  {
+    q: '根据吉布斯相律 F = C − P + 2，纯水的三相点处自由度 F 是多少？',
+    opts: ['0', '1', '2', '3'],
+    ans: 0,
+    fb: '三相点 C=1, P=3，F = 1 − 3 + 2 = 0。三相点是无变量系统，温度和压强都被唯一确定。'
+  },
+  {
+    q: '在 101.3 kPa 下加热水，温度达到 100°C 后继续加热，温度会如何变化？',
+    opts: ['持续上升', '保持 100°C 直到全部汽化', '下降', '先升后降'],
+    ans: 1,
+    fb: '两相共存时 F=1，压强固定后温度也固定（沸点）。吸收的热量全部用于汽化潜热，直到液相消失。'
+  },
+  {
+    q: '水的熔化曲线（固-液平衡线）斜率为负的根本原因是？',
+    opts: ['冰的密度小于水（ΔV<0）', '冰的熔化热很大', '水的比热容大', '水的表面张力大'],
+    ans: 0,
+    fb: '由 Clapeyron 方程 dP/dT = ΔH/(T·ΔV)，熔化 ΔH>0，但冰→水时 ΔV<0（冰密度小），故斜率 dP/dT < 0。加压使冰熔化。'
+  },
+  {
+    q: '干冰（固态 CO₂）在常温常压下直接升华而不熔化的原因是？',
+    opts: ['CO₂ 分子量小', 'CO₂ 三相点压强（518 kPa）高于大气压', 'CO₂ 是无极性分子', 'CO₂ 升华热大'],
+    ans: 1,
+    fb: 'CO₂ 三相点为 216.6 K / 518 kPa，常压（101.3 kPa）低于三相点压强，液相无法稳定存在，固相直接升华为气相。'
+  }
+];
+let quizIdx = 0;
+let quizAnswers = new Array(quizData.length).fill(-1);
+let quizSubmitted = false;
+
+const qEl = document.getElementById('quiz-q');
+const qOpts = document.getElementById('quiz-opts');
+const qFb = document.getElementById('quiz-fb');
+const qPrev = document.getElementById('quiz-prev');
+const qNext = document.getElementById('quiz-next');
+const qSubmit = document.getElementById('quiz-submit');
+const qRetry = document.getElementById('quiz-retry');
+const qResult = document.getElementById('quiz-result');
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  qEl.textContent = (quizIdx + 1) + '. ' + q.q;
+  qOpts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = String.fromCharCode(65 + i) + '. ' + opt;
+    if (quizAnswers[quizIdx] === i) div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+    if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) div.classList.add('correct');
+    div.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizAnswers[quizIdx] = i;
+      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
+      [...qOpts.children].forEach((ch, j) => {
+        ch.classList.remove('correct', 'wrong');
+        if (quizAnswers[quizIdx] === j) ch.classList.add('correct');
+      });
+    });
+    qOpts.appendChild(div);
+  });
+  qFb.textContent = quizAnswers[quizIdx] === -1 ? '' : (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
+  qPrev.disabled = quizIdx === 0;
+  qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
+  qSubmit.classList.toggle('hidden', quizIdx !== quizData.length - 1 || quizSubmitted);
+  qRetry.classList.toggle('hidden', !quizSubmitted);
+}
+qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+qSubmit.addEventListener('click', () => {
+  quizSubmitted = true;
+  const score = quizData.reduce((s, q, i) => s + (quizAnswers[i] === q.ans ? 1 : 0), 0);
+  const pass = score >= 3;
+  qResult.classList.remove('hidden');
+  qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
+  qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  qResult.textContent = pass ? '🎉 得分 ' + score + '/4，合格！本知识点已标记完成' : '😅 得分 ' + score + '/4，未达到 3/4，请复习后重试';
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('phase-equilibrium');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+  renderQuiz();
+});
+qRetry.addEventListener('click', () => {
+  quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
+  qResult.classList.add('hidden');
+  renderQuiz();
+});
+
+function drawQuizScene() {
+  const ctx = document.getElementById('quizCanvas').getContext('2d');
+  drawPhaseDiagram(ctx, 700, 460, 60, 80);  // 固定参考点
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('🎯 第 ' + (quizIdx + 1) + '/' + quizData.length + ' 题', 70, 50);
+}
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('phase-equilibrium')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+renderQuiz();
+draw();
+drawQuizScene();
+</script>
+</body>
+</html>

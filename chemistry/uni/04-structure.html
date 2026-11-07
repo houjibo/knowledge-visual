@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>结构化学 · 大学化学互动可视化</title>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --accent: #f59e0b;
+    --orbital-s: #60a5fa;
+    --orbital-p: #f87171;
+    --orbital-d: #a78bfa;
+    --orbital-f: #34d399;
+    --bond-sigma: #fbbf24;
+    --bond-pi: #f472b6;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.3rem; background: linear-gradient(90deg, var(--orbital-s), var(--primary), var(--orbital-p)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 0.95rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 11px 22px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 14px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .legend .l-s::before { background: var(--orbital-s); }
+  .legend .l-p::before { background: var(--orbital-p); }
+  .legend .l-d::before { background: var(--orbital-d); }
+  .legend .l-f::before { background: var(--orbital-f); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 660px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 10px; color: #e2e8f0; }
+
+  .concept-box { font-size: 0.98rem; text-align: left; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 10px 0; line-height: 1.85; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--orbital-s); font-weight: 600; }
+  .concept-box .hl2 { color: var(--orbital-p); font-weight: 600; }
+  .concept-box .hl3 { color: var(--orbital-d); font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--accent); font-weight: 600; font-size: 12px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 7px 14px; border-radius: 10px; background: rgba(139,92,246,0.1); border: 2px solid rgba(139,92,246,0.3); cursor: pointer; font-size: 13px; color: #c4b5fd; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 12px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; line-height: 1.5; }
+  .info-grid b { color: #fbbf24; }
+
+  .formula-box { padding: 12px; background: rgba(139,92,246,0.08); border-radius: 12px; margin: 10px 0; font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; color: #c4b5fd; border: 1px solid rgba(139,92,246,0.2); }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(139,92,246,0.1); border-radius: 14px; border: 2px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 13px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; color: #c4b5fd; min-height: 20px; line-height: 1.5; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 12px; }
+  .quiz-nav button { padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+
+  .section { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>结构化学 · 原子轨道与分子轨道</h1>
+    <p>探索原子结构、分子轨道理论、杂化轨道<span id="done-mark" style="color:#10b981;font-weight:700;margin-left:8px;font-size:14px;"></span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-section="atomic">原子轨道</div>
+    <div class="tab" data-section="molecular">分子轨道</div>
+    <div class="tab" data-section="hybrid">杂化轨道</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="canvas" width="700" height="600"></canvas>
+      <div class="legend">
+        <span class="l-s">s 轨道</span>
+        <span class="l-p">p 轨道</span>
+        <span class="l-d">d 轨道</span>
+        <span class="l-f">f 轨道</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <!-- 原子轨道 -->
+      <div class="section active" id="atomic">
+        <h3>原子轨道可视化</h3>
+        <div class="concept-box">
+          <b>量子数与轨道形状：</b><br>
+          • <span class="hl">主量子数 n</span>：决定电子层（1, 2, 3...）<br>
+          • <span class="hl">角量子数 l</span>：决定轨道形状（s, p, d, f）<br>
+          • <span class="hl">磁量子数 m</span>：决定轨道空间取向<br>
+          • <span class="hl">自旋量子数 ms</span>：+1/2 或 -1/2
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-orbital="s">1s</div>
+          <div class="mode-btn" data-orbital="2s">2s</div>
+          <div class="mode-btn" data-orbital="px">2px</div>
+          <div class="mode-btn" data-orbital="py">2py</div>
+          <div class="mode-btn" data-orbital="pz">2pz</div>
+          <div class="mode-btn" data-orbital="dxy">3dxy</div>
+          <div class="mode-btn" data-orbital="dz2">3dz²</div>
+        </div>
+
+        <div class="slider-row">
+          <label>电子云密度</label>
+          <input type="range" id="density" min="10" max="100" value="50" />
+          <span class="val" id="densityVal">50%</span>
+        </div>
+
+        <div class="slider-row">
+          <label>旋转速度</label>
+          <input type="range" id="rotation" min="0" max="100" value="30" />
+          <span class="val" id="rotationVal">30</span>
+        </div>
+
+        <div class="info-grid">
+          <div><b>轨道类型：</b><span id="orbitalType">s</span></div>
+          <div><b>节点数：</b><span id="nodes">0</span></div>
+          <div><b>能量层级：</b><span id="energyLevel">n=1</span></div>
+          <div><b>对称性：</b><span id="symmetry">球对称</span></div>
+        </div>
+
+        <div class="formula-box">
+          ψ<sub>n,l,m</sub>(r,θ,φ) = R<sub>n,l</sub>(r) · Y<sub>l,m</sub>(θ,φ)
+        </div>
+      </div>
+
+      <!-- 分子轨道 -->
+      <div class="section" id="molecular">
+        <h3>分子轨道理论</h3>
+        <div class="concept-box">
+          <b>分子轨道形成：</b><br>
+          • 原子轨道线性组合（LCAO）<br>
+          • <span class="hl">成键轨道</span>：能量降低，电子云重叠<br>
+          • <span class="hl2">反键轨道</span>：能量升高，节点增加<br>
+          • <span class="hl3">非键轨道</span>：能量不变
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-molecule="h2">H₂</div>
+          <div class="mode-btn" data-molecule="o2">O₂</div>
+          <div class="mode-btn" data-molecule="n2">N₂</div>
+          <div class="mode-btn" data-molecule="co">CO</div>
+        </div>
+
+        <div class="slider-row">
+          <label>键长 (pm)</label>
+          <input type="range" id="bondLength" min="50" max="200" value="74" />
+          <span class="val" id="bondLengthVal">74 pm</span>
+        </div>
+
+        <div class="info-grid">
+          <div><b>键级：</b><span id="bondOrder">1</span></div>
+          <div><b>磁性：</b><span id="magnetism">抗磁性</span></div>
+          <div><b>电子构型：</b><span id="electronConfig">σ1s²</span></div>
+          <div><b>键能：</b><span id="bondEnergy">436 kJ/mol</span></div>
+        </div>
+
+        <div class="formula-box">
+          键级 = (成键电子数 - 反键电子数) / 2
+        </div>
+      </div>
+
+      <!-- 杂化轨道 -->
+      <div class="section" id="hybrid">
+        <h3>杂化轨道理论</h3>
+        <div class="concept-box">
+          <b>杂化类型预测：</b><br>
+          • <span class="hl">sp 杂化</span>：直线形，180°（如 CO₂）<br>
+          • <span class="hl2">sp² 杂化</span>：平面三角形，120°（如 BF₃）<br>
+          • <span class="hl3">sp³ 杂化</span>：四面体，109.5°（如 CH₄）<br>
+          • <span class="hl">sp³d</span>：三角双锥（如 PCl₅）
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-hybrid="sp">sp</div>
+          <div class="mode-btn" data-hybrid="sp2">sp²</div>
+          <div class="mode-btn" data-hybrid="sp3">sp³</div>
+          <div class="mode-btn" data-hybrid="sp3d">sp³d</div>
+        </div>
+
+        <div class="slider-row">
+          <label>键角 (°)</label>
+          <input type="range" id="bondAngle" min="90" max="180" value="109" />
+          <span class="val" id="bondAngleVal">109°</span>
+        </div>
+
+        <div class="info-grid">
+          <div><b>杂化类型：</b><span id="hybridType">sp³</span></div>
+          <div><b>几何构型：</b><span id="geometry">四面体</span></div>
+          <div><b>孤对电子：</b><span id="lonePairs">0</span></div>
+          <div><b>实例：</b><span id="example">CH₄</span></div>
+        </div>
+
+        <div class="formula-box">
+          杂化轨道数 = σ键数 + 孤对电子数
+        </div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">加载中...</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFeedback"></div>
+        <div class="quiz-nav">
+          <button id="prevQ">上一题</button>
+          <button id="nextQ">下一题</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const cx = W / 2, cy = H / 2;
+
+let currentSection = 'atomic';
+let currentOrbital = 's';
+let currentMolecule = 'h2';
+let currentHybrid = 'sp3';
+let density = 50;
+let rotation = 30;
+let bondLength = 74;
+let bondAngle = 109;
+let time = 0;
+
+// 题库
+const quizData = [
+  {
+    q: "2p 轨道的角量子数 l 等于？",
+    opts: ["0", "1", "2", "3"],
+    ans: 1,
+    explain: "p 轨道的角量子数 l = 1"
+  },
+  {
+    q: "H₂ 分子的键级是多少？",
+    opts: ["0", "1", "2", "3"],
+    ans: 1,
+    explain: "H₂ 有 2 个成键电子，0 个反键电子，键级 = 1"
+  },
+  {
+    q: "CH₄ 分子中 C 的杂化类型是？",
+    opts: ["sp", "sp²", "sp³", "sp³d"],
+    ans: 2,
+    explain: "CH₄ 有 4 个 σ 键，0 个孤对电子，为 sp³ 杂化"
+  },
+  {
+    q: "O₂ 分子的磁性是？",
+    opts: ["抗磁性", "顺磁性", "铁磁性", "无磁性"],
+    ans: 1,
+    explain: "O₂ 有 2 个未成对电子，为顺磁性"
+  },
+  {
+    q: "sp² 杂化的几何构型是？",
+    opts: ["直线形", "平面三角形", "四面体", "三角双锥"],
+    ans: 1,
+    explain: "sp² 杂化为平面三角形，键角 120°"
+  }
+];
+
+let currentQuiz = 0;
+
+function loadQuiz() {
+  const q = quizData[currentQuiz];
+  document.getElementById('quizQ').textContent = q.q;
+  const optsDiv = document.getElementById('quizOpts');
+  optsDiv.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.onclick = () => checkAnswer(i);
+    optsDiv.appendChild(div);
+  });
+  document.getElementById('quizFeedback').textContent = '';
+  document.getElementById('prevQ').disabled = currentQuiz === 0;
+  document.getElementById('nextQ').disabled = currentQuiz === quizData.length - 1;
+}
+
+function checkAnswer(idx) {
+  const q = quizData[currentQuiz];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach((opt, i) => {
+    opt.classList.remove('correct', 'wrong');
+    if (i === q.ans) opt.classList.add('correct');
+    else if (i === idx && idx !== q.ans) opt.classList.add('wrong');
+  });
+  document.getElementById('quizFeedback').textContent = q.explain;
+}
+
+document.getElementById('prevQ').onclick = () => {
+  if (currentQuiz > 0) { currentQuiz--; loadQuiz(); }
+};
+document.getElementById('nextQ').onclick = () => {
+  if (currentQuiz < quizData.length - 1) { currentQuiz++; loadQuiz(); }
+};
+
+/* ===== Progress tracking: visit all 3 tabs + all quiz first-try correct → markDone ===== */
+const ALL_TABS = ['atomic', 'molecular', 'hybrid'];
+const visitedTabs = new Set(['atomic']);
+const quizFirstTryCorrect = new Array(quizData.length).fill(false);
+const quizTried = new Array(quizData.length).fill(false);
+
+function maybeMarkDone() {
+  const tabsOk = ALL_TABS.every(t => visitedTabs.has(t));
+  const quizOk = quizFirstTryCorrect.every(v => v);
+  if (tabsOk && quizOk && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('04-structure');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('04-structure')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+
+const _origCheckAnswer = checkAnswer;
+checkAnswer = function(idx) {
+  if (!quizTried[currentQuiz]) {
+    quizTried[currentQuiz] = true;
+    if (idx === quizData[currentQuiz].ans) quizFirstTryCorrect[currentQuiz] = true;
+  }
+  _origCheckAnswer(idx);
+  if (!quizFirstTryCorrect[currentQuiz]) quizTried[currentQuiz] = false;
+  maybeMarkDone();
+};
+
+// Tab 切换
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentSection = tab.dataset.section;
+    visitedTabs.add(currentSection);
+    maybeMarkDone();
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(currentSection).classList.add('active');
+    draw();
+  };
+});
+
+// 原子轨道选择
+document.querySelectorAll('[data-orbital]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('[data-orbital]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentOrbital = btn.dataset.orbital;
+    updateOrbitalInfo();
+    draw();
+  };
+});
+
+// 分子选择
+document.querySelectorAll('[data-molecule]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('[data-molecule]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMolecule = btn.dataset.molecule;
+    updateMoleculeInfo();
+    draw();
+  };
+});
+
+// 杂化选择
+document.querySelectorAll('[data-hybrid]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('[data-hybrid]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentHybrid = btn.dataset.hybrid;
+    updateHybridInfo();
+    draw();
+  };
+});
+
+// 滑块
+document.getElementById('density').oninput = (e) => {
+  density = e.target.value;
+  document.getElementById('densityVal').textContent = density + '%';
+  draw();
+};
+
+document.getElementById('rotation').oninput = (e) => {
+  rotation = e.target.value;
+  document.getElementById('rotationVal').textContent = rotation;
+};
+
+document.getElementById('bondLength').oninput = (e) => {
+  bondLength = e.target.value;
+  document.getElementById('bondLengthVal').textContent = bondLength + ' pm';
+  draw();
+};
+
+document.getElementById('bondAngle').oninput = (e) => {
+  bondAngle = e.target.value;
+  document.getElementById('bondAngleVal').textContent = bondAngle + '°';
+  draw();
+};
+
+function updateOrbitalInfo() {
+  const info = {
+    's': { type: 's', nodes: 0, level: 'n=1', symmetry: '球对称' },
+    '2s': { type: 's', nodes: 1, level: 'n=2', symmetry: '球对称' },
+    'px': { type: 'p', nodes: 0, level: 'n=2', symmetry: '轴对称' },
+    'py': { type: 'p', nodes: 0, level: 'n=2', symmetry: '轴对称' },
+    'pz': { type: 'p', nodes: 0, level: 'n=2', symmetry: '轴对称' },
+    'dxy': { type: 'd', nodes: 0, level: 'n=3', symmetry: '面对称' },
+    'dz2': { type: 'd', nodes: 0, level: 'n=3', symmetry: '轴对称' }
+  };
+  const i = info[currentOrbital];
+  document.getElementById('orbitalType').textContent = i.type;
+  document.getElementById('nodes').textContent = i.nodes;
+  document.getElementById('energyLevel').textContent = i.level;
+  document.getElementById('symmetry').textContent = i.symmetry;
+}
+
+function updateMoleculeInfo() {
+  const info = {
+    'h2': { order: 1, mag: '抗磁性', config: 'σ1s²', energy: '436 kJ/mol' },
+    'o2': { order: 2, mag: '顺磁性', config: '(σ2s)²(σ*2s)²(σ2p)²(π2p)⁴(π*2p)²', energy: '498 kJ/mol' },
+    'n2': { order: 3, mag: '抗磁性', config: '(σ2s)²(σ*2s)²(π2p)⁴(σ2p)²', energy: '945 kJ/mol' },
+    'co': { order: 3, mag: '抗磁性', config: '(σ2s)²(σ*2s)²(π2p)⁴(σ2p)²', energy: '1072 kJ/mol' }
+  };
+  const i = info[currentMolecule];
+  document.getElementById('bondOrder').textContent = i.order;
+  document.getElementById('magnetism').textContent = i.mag;
+  document.getElementById('electronConfig').textContent = i.config;
+  document.getElementById('bondEnergy').textContent = i.energy;
+}
+
+function updateHybridInfo() {
+  const info = {
+    'sp': { type: 'sp', geo: '直线形', lone: 0, ex: 'CO₂' },
+    'sp2': { type: 'sp²', geo: '平面三角形', lone: 0, ex: 'BF₃' },
+    'sp3': { type: 'sp³', geo: '四面体', lone: 0, ex: 'CH₄' },
+    'sp3d': { type: 'sp³d', geo: '三角双锥', lone: 0, ex: 'PCl₅' }
+  };
+  const i = info[currentHybrid];
+  document.getElementById('hybridType').textContent = i.type;
+  document.getElementById('geometry').textContent = i.geo;
+  document.getElementById('lonePairs').textContent = i.lone;
+  document.getElementById('example').textContent = i.ex;
+}
+
+function drawAtomicOrbital() {
+  ctx.clearRect(0, 0, W, H);
+  
+  // 绘制坐标轴
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx, 50); ctx.lineTo(cx, H - 50);
+  ctx.moveTo(50, cy); ctx.lineTo(W - 50, cy);
+  ctx.stroke();
+  
+  const scale = density / 50;
+  const rot = rotation / 100;
+  
+  if (currentOrbital === 's' || currentOrbital === '2s') {
+    // s 轨道 - 球对称
+    const r = currentOrbital === 's' ? 120 : 160;
+    const nodes = currentOrbital === 's' ? 0 : 1;
+    
+    for (let i = 0; i < 50 * scale; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * r * (1 + nodes * 0.3);
+      const x = cx + Math.cos(angle) * dist;
+      const y = cy + Math.sin(angle) * dist;
+      const alpha = 0.3 * (1 - dist / r);
+      
+      ctx.fillStyle = `rgba(96, 165, 250, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(x, y, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    if (nodes > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 0.6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  } else if (currentOrbital.startsWith('p')) {
+    // p 轨道 - 哑铃形
+    const axis = currentOrbital.slice(-1);
+    const r = 140;
+    
+    for (let i = 0; i < 60 * scale; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * r;
+      const sign = Math.random() > 0.5 ? 1 : -1;
+      
+      let x, y;
+      if (axis === 'x') {
+        x = cx + sign * dist * Math.cos(angle);
+        y = cy + dist * Math.sin(angle) * 0.5;
+      } else if (axis === 'y') {
+        x = cx + dist * Math.sin(angle) * 0.5;
+        y = cy + sign * dist * Math.cos(angle);
+      } else {
+        x = cx + dist * Math.cos(angle) * 0.5;
+        y = cy + sign * dist * Math.sin(angle);
+      }
+      
+      const alpha = 0.3 * (1 - dist / r);
+      ctx.fillStyle = `rgba(248, 113, 113, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(x, y, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (currentOrbital.startsWith('d')) {
+    // d 轨道 - 四叶草或哑铃+环
+    const type = currentOrbital.slice(2);
+    const r = 130;
+    
+    for (let i = 0; i < 80 * scale; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * r;
+      
+      let x, y;
+      if (type === 'xy') {
+        const lobe = Math.floor(Math.random() * 4);
+        const baseAngle = lobe * Math.PI / 2 + Math.PI / 4;
+        x = cx + Math.cos(baseAngle) * dist * 0.7 + Math.cos(angle) * 20;
+        y = cy + Math.sin(baseAngle) * dist * 0.7 + Math.sin(angle) * 20;
+      } else { // dz2
+        if (Math.random() > 0.3) {
+          x = cx + Math.cos(angle) * 30;
+          y = cy + (Math.random() - 0.5) * dist;
+        } else {
+          const ringR = 80;
+          x = cx + Math.cos(angle) * ringR;
+          y = cy + Math.sin(angle) * 20;
+        }
+      }
+      
+      const alpha = 0.3 * (1 - dist / r);
+      ctx.fillStyle = `rgba(167, 139, 250, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(x, y, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  
+  // 原子核
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawMolecularOrbital() {
+  ctx.clearRect(0, 0, W, H);
+  
+  const scale = bondLength / 100;
+  const sep = 100 * scale;
+  
+  // 左侧原子
+  ctx.fillStyle = 'rgba(96, 165, 250, 0.3)';
+  ctx.beginPath();
+  ctx.arc(cx - sep, cy, 60, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 右侧原子
+  ctx.fillStyle = 'rgba(248, 113, 113, 0.3)';
+  ctx.beginPath();
+  ctx.arc(cx + sep, cy, 60, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 成键区域
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, sep);
+  grad.addColorStop(0, 'rgba(251, 191, 36, 0.4)');
+  grad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, sep * 0.8, 80, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 电子云粒子
+  for (let i = 0; i < 40; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.random() * sep * 0.8;
+    const x = cx + Math.cos(angle) * dist;
+    const y = cy + Math.sin(angle) * dist * 0.6;
+    const alpha = 0.4 * (1 - dist / (sep * 0.8));
+    
+    ctx.fillStyle = `rgba(251, 191, 36, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // 原子核
+  ctx.fillStyle = '#60a5fa';
+  ctx.beginPath();
+  ctx.arc(cx - sep, cy, 10, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.fillStyle = '#f87171';
+  ctx.beginPath();
+  ctx.arc(cx + sep, cy, 10, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 标注
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('成键轨道', cx, cy + 100);
+  ctx.fillText('σ 键', cx, cy + 120);
+}
+
+function drawHybridOrbital() {
+  ctx.clearRect(0, 0, W, H);
+  
+  const angleRad = bondAngle * Math.PI / 180;
+  const r = 120;
+  
+  if (currentHybrid === 'sp') {
+    // 直线形
+    ctx.strokeStyle = 'rgba(96, 165, 250, 0.5)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - r, cy);
+    ctx.lineTo(cx + r, cy);
+    ctx.stroke();
+    
+    // 箭头
+    drawArrow(cx - r, cy, -1, 0);
+    drawArrow(cx + r, cy, 1, 0);
+    
+  } else if (currentHybrid === 'sp2') {
+    // 平面三角形
+    for (let i = 0; i < 3; i++) {
+      const angle = i * angleRad - Math.PI / 2;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      
+      ctx.strokeStyle = 'rgba(248, 113, 113, 0.5)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      
+      drawArrow(x, y, Math.cos(angle), Math.sin(angle));
+    }
+    
+  } else if (currentHybrid === 'sp3') {
+    // 四面体（投影）
+    const positions = [
+      [0, -1],
+      [0.94, 0.33],
+      [-0.94, 0.33],
+      [0, 0.5]
+    ];
+    
+    positions.forEach((pos, i) => {
+      const x = cx + pos[0] * r;
+      const y = cy + pos[1] * r;
+      
+      ctx.strokeStyle = `rgba(167, 139, 250, ${i < 3 ? 0.5 : 0.3})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      
+      if (i < 3) drawArrow(x, y, pos[0], pos[1]);
+    });
+    
+  } else if (currentHybrid === 'sp3d') {
+    // 三角双锥
+    // 赤道面
+    for (let i = 0; i < 3; i++) {
+      const angle = i * 2 * Math.PI / 3;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r * 0.5;
+      
+      ctx.strokeStyle = 'rgba(52, 211, 153, 0.5)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      
+      drawArrow(x, y, Math.cos(angle), Math.sin(angle) * 0.5);
+    }
+    
+    // 轴向
+    ctx.strokeStyle = 'rgba(52, 211, 153, 0.5)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r);
+    ctx.lineTo(cx, cy + r);
+    ctx.stroke();
+    
+    drawArrow(cx, cy - r, 0, -1);
+    drawArrow(cx, cy + r, 0, 1);
+  }
+  
+  // 中心原子
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawArrow(x, y, dx, dy) {
+  const size = 10;
+  const angle = Math.atan2(dy, dx);
+  
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - size * Math.cos(angle - Math.PI / 6), y - size * Math.sin(angle - Math.PI / 6));
+  ctx.lineTo(x - size * Math.cos(angle + Math.PI / 6), y - size * Math.sin(angle + Math.PI / 6));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function draw() {
+  if (currentSection === 'atomic') {
+    drawAtomicOrbital();
+  } else if (currentSection === 'molecular') {
+    drawMolecularOrbital();
+  } else if (currentSection === 'hybrid') {
+    drawHybridOrbital();
+  }
+}
+
+function animate() {
+  time += 0.01;
+  if (rotation > 0) draw();
+  requestAnimationFrame(animate);
+}
+
+// 初始化
+updateOrbitalInfo();
+updateMoleculeInfo();
+updateHybridInfo();
+loadQuiz();
+draw();
+animate();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学化学"></script>
+</body>
+</html>

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>天气与水循环 · 小学科学互动可视化</title>
+<style>
+  :root {
+    --primary: #38bdf8;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #082f49 0%, #0f172a 55%, #164e63 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #7dd3fc; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #0ea5e9, #38bdf8, #7dd3fc); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(56,189,248,.4); color: #082f49; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .hidden { display: none !important; }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .stage > * { min-width: 0; }
+  @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #0c4a6e 0%, #0f172a 100%); touch-action: none; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #cbd5e1; flex-wrap: wrap; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--primary); min-height: 44px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #7dd3fc; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid var(--primary); line-height: 1.7; font-size: 14px; }
+  .concept-card.warn { border-color: #f59e0b; }
+  .concept-card .title { font-weight: 700; margin-bottom: 4px; color: var(--primary); }
+  .concept-card.warn .title { color: #f59e0b; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(56,189,248,0.08); border-radius: 12px; border: 1px solid rgba(56,189,248,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #7dd3fc; min-height: 18px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #082f49; font-weight: 700; min-height: 44px; min-width: 44px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  .practice-item { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+  .practice-item h4 { color: #e2e8f0; margin-bottom: 10px; font-size: 15px; line-height: 1.6; }
+  .practice-opts { display: grid; gap: 6px; }
+  .practice-fb { margin-top: 8px; font-size: 13px; min-height: 18px; line-height: 1.6; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 28px; }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .container { padding: 10px 14px; }
+    .breadcrumb { padding: 6px 10px; font-size: 12px; margin-bottom: 8px; }
+    header { margin-bottom: 10px; }
+    header h1 { font-size: 1.5rem; }
+    header p { font-size: 12px; margin-top: 2px; }
+    .tabs { gap: 6px; margin-bottom: 10px; }
+    .tab { padding: 6px 14px; font-size: 12px; min-height: 36px; }
+    .canvas-wrap, .panel { padding: 10px; border-radius: 12px; }
+    .panel h3 { font-size: 1rem; margin-bottom: 8px; }
+    .concept-card { padding: 10px; margin: 6px 0; font-size: 13px; }
+    .slider-row { margin: 6px 0; font-size: 13px; }
+  }
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    header h1 { font-size: 1.6rem; }
+    .tabs { gap: 6px; }
+    .tab { padding: 8px 12px; font-size: 13px; }
+    .slider-row { flex-wrap: wrap; }
+    .slider-row label { flex: 0 0 auto; }
+    .slider-row .val { flex: 0 0 auto; }
+    .slider-row input[type=range] { flex: 1 1 100%; order: 3; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">🔬 科学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">天气与水循环</span>
+    <span id="done-mark" style="margin-left:auto;color:#10b981;font-weight:600;"></span>
+  </nav>
+
+  <header>
+    <h1>🌦️ 天气与水循环</h1>
+    <p>蒸发 · 凝结 · 降水 · 自然界的水循环 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 探究</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 探究模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div>
+        <div class="canvas-wrap">
+          <canvas id="cycleCanvas" width="720" height="460"></canvas>
+          <div class="legend">
+            <span>☀️ 蒸发 → ☁️ 凝结 → 🌧️ 降水 → 🏞️ 径流</span>
+            <span>拖动温度滑块看变化</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>水循环模拟器</h3>
+        <div class="slider-row">
+          <label>太阳温度</label>
+          <input type="range" id="sliderTemp" min="0" max="40" step="1" value="25">
+          <span class="val" id="valTemp">25°C</span>
+        </div>
+        <div class="info-grid">
+          <div>蒸发速度<br><b id="infoEvap">较快</b></div>
+          <div>高空温度<br><b id="infoHigh">很低（约 −20°C）</b></div>
+        </div>
+        <div class="concept-card">
+          <div class="title">水循环四部曲</div>
+          ① <b>蒸发</b>：太阳照射，江河湖海的水变成<b>水蒸气</b>升到空中；② <b>凝结</b>：高空很冷，水蒸气变成小水滴或小冰晶，聚成<b>云</b>；③ <b>降水</b>：小水滴越来越大，太重了就落下来——<b>雨、雪、冰雹</b>；④ <b>径流</b>：雨水汇入河流，流回大海，循环不息。
+        </div>
+        <div class="concept-card">
+          <div class="title">云和雨是怎么来的</div>
+          云 = 无数悬浮的小水滴/小冰晶。它们碰撞合并变大，空气托不住时就降落：温度高于 0°C 落下是<b>雨</b>，低于 0°C 是<b>雪</b>。
+        </div>
+        <div class="concept-card warn">
+          <div class="title">⚠️ 趣味知识</div>
+          ① 水循环让地球上的水<b>总量基本不变</b>——你喝的水可能曾经是恐龙喝过的！② 蒸发只发生在水面吗？不，湿衣服晾干、出汗都是蒸发，<b>任何温度下都能蒸发</b>，温度越高越快。③ 烧开水的"白气"不是水蒸气（水蒸气看不见），是遇冷凝结的小水滴。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="practice-item" id="p1">
+      <h4>1️⃣ 水循环的正确顺序是？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">降水 → 蒸发 → 凝结 → 径流</button>
+        <button class="quiz-opt" data-ok="1">蒸发 → 凝结 → 降水 → 径流</button>
+        <button class="quiz-opt" data-ok="0">凝结 → 蒸发 → 径流 → 降水</button>
+        <button class="quiz-opt" data-ok="0">径流 → 降水 → 凝结 → 蒸发</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+    <div class="practice-item" id="p2">
+      <h4>2️⃣ 云是由什么组成的？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">水蒸气（看得见的气体）</button>
+        <button class="quiz-opt" data-ok="1">许多小水滴或小冰晶</button>
+        <button class="quiz-opt" data-ok="0">烟雾</button>
+        <button class="quiz-opt" data-ok="0">棉花一样的固体</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+    <div class="practice-item" id="p3">
+      <h4>3️⃣ 夏天湿衣服晾在室外很快变干，这是因为？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">水渗进了衣服纤维</button>
+        <button class="quiz-opt" data-ok="0">水变成了冰</button>
+        <button class="quiz-opt" data-ok="1">水蒸发变成水蒸气进入空气</button>
+        <button class="quiz-opt" data-ok="0">太阳把水"吸"走了</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="panel">
+      <h3>🎯 天气与水循环 · 小测验（5 题，≥80% 通关）</h3>
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">点击「开始答题」</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFb"></div>
+        <div class="quiz-nav">
+          <button id="quizStart">开始答题</button>
+          <button id="quizPrev" disabled>上一题</button>
+          <button id="quizNext" disabled>下一题</button>
+        </div>
+        <div class="quiz-result hidden" id="quizResult"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>小学科学 · 天气与水循环 · 互动可视化 | 知识可视化全学科项目</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+let mode = 'learn';
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+}));
+
+/* ============================================================
+ * 探究模式
+ * ============================================================ */
+const canvas = document.getElementById('cycleCanvas');
+const ctx = canvas.getContext('2d');
+const sliderTemp = document.getElementById('sliderTemp');
+let lastT = performance.now();
+let vapor = [];   // 上升的水蒸气粒子
+let drops = [];   // 降水粒子
+
+function tempState() {
+  const T = +sliderTemp.value;
+  const rate = T <= 0 ? 0.05 : 0.15 + T / 40 * 1.3;   // 蒸发速率
+  const label = T <= 5 ? '很慢' : T <= 15 ? '较慢' : T <= 30 ? '较快' : '非常快';
+  return { T, rate, label };
+}
+sliderTemp.addEventListener('input', () => {
+  const s = tempState();
+  document.getElementById('valTemp').textContent = s.T + '°C';
+  document.getElementById('infoEvap').textContent = s.label;
+});
+
+function drawCloud(cx, cy, scale, alpha) {
+  ctx.fillStyle = `rgba(241,245,249,${alpha})`;
+  [[0, 0, 30], [-28, 8, 22], [28, 8, 24], [-10, -14, 22], [14, -12, 20]].forEach(([dx, dy, r]) => {
+    ctx.beginPath(); ctx.arc(cx + dx * scale, cy + dy * scale, r * scale, 0, Math.PI * 2); ctx.fill();
+  });
+}
+
+function draw() {
+  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
+  const now = performance.now();
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+  const s = tempState();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  /* ---- 场景：海（左）+ 山（右）---- */
+  // 海洋
+  ctx.fillStyle = '#0ea5e9';
+  ctx.fillRect(0, 340, 400, 120);
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  for (let i = 0; i < 4; i++) {
+    const wy = 352 + i * 24;
+    const off = Math.sin(now / 800 + i) * 12;
+    ctx.beginPath(); ctx.ellipse(100 + off + i * 60, wy, 40, 3, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  // 山
+  ctx.fillStyle = '#475569';
+  ctx.beginPath(); ctx.moveTo(400, 460); ctx.lineTo(560, 200); ctx.lineTo(720, 460); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#f1f5f9';
+  ctx.beginPath(); ctx.moveTo(535, 240); ctx.lineTo(560, 200); ctx.lineTo(585, 240); ctx.closePath(); ctx.fill();
+  // 河流（山上流向海）
+  ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(560, 250); ctx.quadraticCurveTo(520, 340, 400, 400); ctx.stroke();
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '12px sans-serif';
+  ctx.fillText('④ 径流：雨水顺河流回大海', 420, 440);
+
+  /* ---- 太阳 ---- */
+  const sunGlow = 0.25 + s.T / 40 * 0.6;
+  const sg = ctx.createRadialGradient(90, 70, 8, 90, 70, 70);
+  sg.addColorStop(0, `rgba(253,224,71,${sunGlow})`);
+  sg.addColorStop(1, 'rgba(253,224,71,0)');
+  ctx.fillStyle = sg;
+  ctx.beginPath(); ctx.arc(90, 70, 70, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fde047';
+  ctx.beginPath(); ctx.arc(90, 70, 26, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#92400e'; ctx.font = 'bold 13px sans-serif';
+  ctx.fillText(`${s.T}°C`, 76, 75);
+
+  /* ---- ① 蒸发：海面上升粒子 ---- */
+  if (Math.random() < s.rate * dt * 6) {
+    vapor.push({ x: 60 + Math.random() * 300, y: 336, v: 26 + Math.random() * 22, life: 0 });
+  }
+  vapor = vapor.filter(p => p.y > 150);
+  vapor.forEach(p => {
+    p.y -= p.v * dt;
+    p.life += dt;
+    const a = Math.min(0.9, (340 - p.y) / 120 + 0.2);
+    ctx.strokeStyle = `rgba(186,230,253,${a})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.quadraticCurveTo(p.x + 4, p.y - 8, p.x, p.y - 16);
+    ctx.stroke();
+  });
+  ctx.fillStyle = '#7dd3fc'; ctx.font = 'bold 13px sans-serif';
+  ctx.fillText('① 蒸发（水 → 水蒸气）', 60, 320);
+
+  /* ---- ② 凝结：云 ---- */
+  const cloudA = Math.min(0.95, 0.35 + vapor.length * 0.05);
+  drawCloud(300, 110, 1.1, cloudA);
+  drawCloud(430, 85, 0.9, cloudA * 0.9);
+  ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 13px sans-serif';
+  ctx.fillText('② 凝结：水蒸气 → 小水滴（云）', 240, 45);
+
+  /* ---- ③ 降水：云下雨/雪 ---- */
+  const rainRate = Math.max(0, vapor.length - 8) * 0.3;
+  if (vapor.length > 10 && Math.random() < rainRate * dt * 4) {
+    const isSnow = s.T <= 2;
+    drops.push({ x: 400 + Math.random() * 120, y: 130, v: 120 + Math.random() * 60, snow: isSnow });
+  }
+  drops = drops.filter(d => d.y < (d.snow ? 240 : 345));
+  drops.forEach(d => {
+    d.y += d.v * dt;
+    if (d.snow) {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(d.x, d.y, 2.5, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.strokeStyle = 'rgba(147,197,253,0.9)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x - 2, d.y + 10); ctx.stroke();
+    }
+  });
+  ctx.fillStyle = '#93c5fd'; ctx.font = 'bold 13px sans-serif';
+  ctx.fillText(s.T <= 2 ? '③ 降水：雪 ❄' : '③ 降水：雨 🌧', 420, 165);
+
+  /* ---- 循环箭头 ---- */
+  ctx.strokeStyle = 'rgba(125,211,252,0.5)'; ctx.lineWidth = 2.5;
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath(); ctx.arc(360, 240, 190, Math.PI * 0.7, Math.PI * 1.55); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(125,211,252,0.8)';
+  ctx.beginPath(); ctx.moveTo(176, 320); ctx.lineTo(190, 316); ctx.lineTo(182, 304); ctx.fill();
+
+  requestAnimationFrame(draw);
+}
+document.getElementById('valTemp').textContent = '25°C';
+requestAnimationFrame(draw);
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const PRACTICE_TIPS = {
+  p1: '✅ 正确！蒸发 → 凝结 → 降水 → 径流，再回到大海，循环不息。',
+  p2: '✅ 正确！云是无数小水滴或小冰晶聚在一起形成的（水蒸气本身看不见）。',
+  p3: '✅ 正确！温度高蒸发快——水变成水蒸气进入空气，衣服就干了。'
+};
+document.querySelectorAll('.practice-item').forEach(item => {
+  const fb = item.querySelector('.practice-fb');
+  item.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const ok = opt.dataset.ok === '1';
+      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      opt.classList.add(ok ? 'correct' : 'wrong');
+      fb.style.color = ok ? '#10b981' : '#ef4444';
+      fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
+    });
+  });
+});
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const QUIZ = [
+  { q: '水循环中，使海水变成水蒸气升上天空的是（　　）',
+    opts: ['风吹', '太阳的热量', '月亮引力', '地球自转'],
+    ans: 1, ex: '太阳照射提供热量 → 蒸发。温度越高，蒸发越快。' },
+  { q: '水蒸气在高空中变成小水滴的过程叫（　　）',
+    opts: ['蒸发', '凝结', '降水', '沸腾'],
+    ans: 1, ex: '高空温度低，水蒸气遇冷凝结成小水滴或小冰晶，聚成云。' },
+  { q: '下列属于降水的是（　　）',
+    opts: ['云的形成', '江河流动', '雨、雪、冰雹落下', '湖面蒸发'],
+    ans: 2, ex: '降水包括雨、雪、冰雹等从云中落下的水。' },
+  { q: '关于蒸发，下列说法正确的是（　　）',
+    opts: ['只有沸腾时才蒸发', '任何温度下都能蒸发', '只有海水会蒸发', '蒸发需要太阳直射'],
+    ans: 1, ex: '蒸发在任何温度下都进行（湿衣服阴天也会干），温度越高越快。' },
+  { q: '水循环让地球上的水（　　）',
+    opts: ['越来越多', '总量基本保持不变', '越来越少', '全部变成淡水'],
+    ans: 1, ex: '水在海洋、天空、陆地间循环转移，总量基本不变——所以要珍惜每一滴水。' }
+];
+let qi = 0, qScore = 0, qAnswered = false;
+const quizQ = document.getElementById('quizQ');
+const quizOpts = document.getElementById('quizOpts');
+const quizFb = document.getElementById('quizFb');
+const quizResult = document.getElementById('quizResult');
+const btnStart = document.getElementById('quizStart');
+const btnPrev = document.getElementById('quizPrev');
+const btnNext = document.getElementById('quizNext');
+
+function renderQ() {
+  const q = QUIZ[qi];
+  qAnswered = false;
+  quizQ.textContent = `第${qi + 1}题 / 共${QUIZ.length}题：${q.q}`;
+  quizFb.textContent = '';
+  quizOpts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const d = document.createElement('div');
+    d.className = 'quiz-opt';
+    d.textContent = o;
+    d.addEventListener('click', () => {
+      if (qAnswered) return;
+      qAnswered = true;
+      const ok = i === q.ans;
+      if (ok) qScore++;
+      quizOpts.children[q.ans].classList.add('correct');
+      if (!ok) d.classList.add('wrong');
+      quizFb.textContent = (ok ? '✅ ' : '❌ ') + q.ex;
+    });
+    quizOpts.appendChild(d);
+  });
+  btnPrev.disabled = qi === 0;
+  btnNext.disabled = false;
+  btnNext.textContent = qi === QUIZ.length - 1 ? '查看成绩' : '下一题';
+}
+function finishQuiz() {
+  const pass = qScore >= Math.ceil(QUIZ.length * 0.8);
+  quizQ.textContent = '测验完成！';
+  quizOpts.innerHTML = '';
+  quizFb.textContent = '';
+  quizResult.classList.remove('hidden');
+  quizResult.innerHTML = `得分：<b>${qScore} / ${QUIZ.length}</b>　${pass ? '🎉 通关！' : '继续加油，再试一次！'}`;
+  btnNext.disabled = true;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('weather-water-cycle');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+btnStart.addEventListener('click', () => {
+  qi = 0; qScore = 0;
+  quizResult.classList.add('hidden');
+  btnStart.textContent = '重新答题';
+  renderQ();
+});
+btnPrev.addEventListener('click', () => { if (qi > 0) { qi--; renderQ(); } });
+btnNext.addEventListener('click', () => {
+  if (qi < QUIZ.length - 1) { qi++; renderQ(); }
+  else finishQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('weather-water-cycle')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>运动和力 · 初中物理互动可视化</title>
+<style>
+  :root {
+    --primary: #3b82f6;
+    --newton: #8b5cf6;
+    --inertia: #ef4444;
+    --balance: #10b981;
+    --force: #f59e0b;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f2744 0%, #1a1a3e 50%, #0f2744 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1320px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.4rem; background: linear-gradient(90deg, var(--newton), var(--inertia), var(--balance)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 1rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab { padding: 12px 24px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(59,130,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 16px; justify-content: center; font-size: 13px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .legend .l-newton::before { background: var(--newton); }
+  .legend .l-inertia::before { background: var(--inertia); }
+  .legend .l-balance::before { background: var(--balance); }
+  .legend .l-force::before { background: var(--force); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 700px; }
+  .panel h3 { font-size: 1.15rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .concept-box { font-size: 1.05rem; text-align: left; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 12px 0; line-height: 1.9; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--newton); font-weight: 600; }
+  .concept-box .hl2 { color: var(--inertia); font-weight: 600; }
+  .concept-box .hl3 { color: var(--balance); font-weight: 600; }
+  .concept-box .hl4 { color: var(--force); font-weight: 600; }
+
+  .formula { display: inline-block; background: rgba(245,158,11,0.15); padding: 6px 14px; border-radius: 8px; font-family: "Times New Roman", serif; font-size: 1.15rem; color: #fbbf24; margin: 8px 0; font-style: italic; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--inertia); font-weight: 600; font-size: 13px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 16px; border-radius: 10px; background: rgba(59,130,246,0.1); border: 2px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 14px; color: #93c5fd; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .data-display { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+  .data-item { text-align: center; padding: 12px 8px; background: rgba(255,255,255,0.05); border-radius: 10px; }
+  .data-item .label { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+  .data-item .value { font-size: 1.3rem; font-weight: 700; font-family: monospace; }
+  .data-item .unit { font-size: 11px; color: #64748b; margin-left: 2px; }
+  .data-item.newton .value { color: var(--newton); }
+  .data-item.inertia .value { color: var(--inertia); }
+  .data-item.balance .value { color: var(--balance); }
+  .data-item.force .value { color: var(--force); }
+
+  .quiz { margin-top: 16px; padding: 18px; background: rgba(59,130,246,0.1); border-radius: 14px; border: 2px solid rgba(59,130,246,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 10px; }
+  .quiz-opt { padding: 12px 16px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); border-color: var(--primary); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: var(--balance); color: #6ee7b7; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.2); border-color: var(--inertia); color: #fca5a5; }
+  .quiz-result { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 14px; text-align: center; display: none; }
+  .quiz-result.show { display: block; }
+  .quiz-result.pass { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+  .quiz-result.fail { background: rgba(239,68,68,0.15); color: #fca5a5; }
+
+  .btn { padding: 10px 22px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: all .2s; margin: 4px; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.2); color: var(--light); }
+  .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-group { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+
+  .status-badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-left: 8px; }
+  .status-badge.balanced { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+  .status-badge.unbalanced { background: rgba(239,68,68,0.2); color: #fca5a5; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>运动和力</h1>
+    <p>初中物理 · 牛顿第一定律 · 惯性 · 二力平衡</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="newton">🍎 牛顿第一定律</div>
+    <div class="tab" data-tab="inertia">🎯 惯性现象</div>
+    <div class="tab" data-tab="balance">⚖️ 二力平衡</div>
+    <div class="tab" data-tab="quiz">📝 知识闯关</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="canvas" width="800" height="500"></canvas>
+      <div class="legend">
+        <span class="l-newton">运动状态</span>
+        <span class="l-inertia">惯性效应</span>
+        <span class="l-balance">平衡力</span>
+        <span class="l-force">合力方向</span>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-outline" id="btnReset">🔄 重置</button>
+        <button class="btn btn-primary" id="btnStart">▶ 开始</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <!-- 牛顿第一定律 -->
+      <div id="panel-newton">
+        <h3>🍎 牛顿第一定律</h3>
+        <div class="concept-box">
+          <b>核心内容：</b><br>
+          一切物体在没有受到<span class="hl">力的作用</span>时，总保持<span class="hl2">静止状态</span>或<span class="hl3">匀速直线运动状态</span>。<br><br>
+          <b>理解要点：</b><br>
+          • 力不是维持运动的原因，而是<span class="hl4">改变运动状态</span>的原因<br>
+          • 物体具有保持原来运动状态不变的性质——<span class="hl">惯性</span><br>
+          • 牛顿第一定律是在大量实验基础上推理得出的
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="galileo">伽利略理想实验</div>
+          <div class="mode-btn" data-mode="space">太空中的物体</div>
+        </div>
+        <div class="slider-row">
+          <label>表面粗糙度：</label>
+          <input type="range" id="roughness" min="0" max="100" value="50">
+          <span class="val" id="roughnessVal">中等</span>
+        </div>
+        <div class="data-display">
+          <div class="data-item newton">
+            <div class="label">初速度</div>
+            <div class="value"><span id="v0">5.0</span><span class="unit">m/s</span></div>
+          </div>
+          <div class="data-item inertia">
+            <div class="label">滑行距离</div>
+            <div class="value"><span id="distance">0.0</span><span class="unit">m</span></div>
+          </div>
+          <div class="data-item balance">
+            <div class="label">摩擦力</div>
+            <div class="value"><span id="friction">0.0</span><span class="unit">N</span></div>
+          </div>
+        </div>
+        <div class="info-grid">
+          <div><b>毛巾表面：</b>粗糙，摩擦力大，滑行距离短</div>
+          <div><b>木板表面：</b>较光滑，摩擦力小，滑行距离长</div>
+          <div><b>冰面：</b>很光滑，摩擦力很小，滑行距离很长</div>
+          <div><b>理想光滑：</b>无摩擦力，物体永远运动下去</div>
+        </div>
+      </div>
+
+      <!-- 惯性现象 -->
+      <div id="panel-inertia" class="hidden">
+        <h3>🎯 惯性现象</h3>
+        <div class="concept-box">
+          <b>什么是惯性：</b><br>
+          物体保持<span class="hl">原来运动状态</span>不变的性质叫做惯性。<br><br>
+          <b>惯性特点：</b><br>
+          • 一切物体<span class="hl2">都有惯性</span>，与物体是否受力、是否运动无关<br>
+          • 惯性大小只与物体的<span class="hl3">质量</span>有关，质量越大，惯性越大<br>
+          • 惯性不是力，不能说"受到惯性"，只能说"具有惯性"
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="car">急刹车</div>
+          <div class="mode-btn" data-mode="tablecloth">抽桌布</div>
+          <div class="mode-btn" data-mode="ball">投球入杯</div>
+        </div>
+        <div class="slider-row">
+          <label>质量 (kg)：</label>
+          <input type="range" id="mass" min="1" max="10" value="5">
+          <span class="val" id="massVal">5 kg</span>
+        </div>
+        <div class="slider-row">
+          <label>初速度 (m/s)：</label>
+          <input type="range" id="speed" min="1" max="20" value="10">
+          <span class="val" id="speedVal">10 m/s</span>
+        </div>
+        <div class="data-display">
+          <div class="data-item inertia">
+            <div class="label">物体质量</div>
+            <div class="value"><span id="massDisplay">5</span><span class="unit">kg</span></div>
+          </div>
+          <div class="data-item newton">
+            <div class="label">惯性大小</div>
+            <div class="value" id="inertiaSize">中等</div>
+          </div>
+          <div class="data-item balance">
+            <div class="label">运动状态</div>
+            <div class="value" id="motionState">静止</div>
+          </div>
+        </div>
+        <div class="info-grid">
+          <div><b>急刹车：</b>车停了，人由于惯性继续向前运动</div>
+          <div><b>抽桌布：</b>快速抽出，餐具由于惯性保持静止</div>
+          <div><b>投球入杯：</b>球离开手后，由于惯性继续向前运动</div>
+          <div><b>质量越大：</b>惯性越大，运动状态越难改变</div>
+        </div>
+      </div>
+
+      <!-- 二力平衡 -->
+      <div id="panel-balance" class="hidden">
+        <h3>⚖️ 二力平衡</h3>
+        <div class="concept-box">
+          <b>平衡状态：</b><br>
+          物体保持<span class="hl">静止</span>或<span class="hl2">匀速直线运动</span>状态，称为处于平衡状态。<br><br>
+          <b>二力平衡条件：</b><br>
+          • 两个力作用在<span class="hl3">同一物体</span>上<br>
+          • 两个力大小<span class="hl4">相等</span><br>
+          • 两个力方向<span class="hl">相反</span><br>
+          • 两个力作用在<span class="hl2">同一直线</span>上<br><br>
+          <span class="formula">F₁ = F₂，方向相反，合力 = 0</span>
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="hanging">悬挂静止</div>
+          <div class="mode-btn" data-mode="push">匀速推动</div>
+          <div class="mode-btn" data-mode="tug">拔河比赛</div>
+        </div>
+        <div class="slider-row">
+          <label>左侧力 (N)：</label>
+          <input type="range" id="forceLeft" min="0" max="100" value="50">
+          <span class="val" id="forceLeftVal">50 N</span>
+        </div>
+        <div class="slider-row">
+          <label>右侧力 (N)：</label>
+          <input type="range" id="forceRight" min="0" max="100" value="50">
+          <span class="val" id="forceRightVal">50 N</span>
+        </div>
+        <div class="data-display">
+          <div class="data-item force">
+            <div class="label">左侧力</div>
+            <div class="value"><span id="fLeftDisplay">50</span><span class="unit">N</span></div>
+          </div>
+          <div class="data-item balance">
+            <div class="label">合力</div>
+            <div class="value"><span id="netForce">0</span><span class="unit">N</span></div>
+          </div>
+          <div class="data-item newton">
+            <div class="label">状态</div>
+            <div class="value"><span id="balanceState" class="status-badge balanced">平衡</span></div>
+          </div>
+        </div>
+        <div class="info-grid">
+          <div><b>悬挂静止：</b>重力=拉力，物体静止</div>
+          <div><b>匀速推动：</b>推力=摩擦力，匀速运动</div>
+          <div><b>拔河比赛：</b>两边力相等时，绳子静止</div>
+          <div><b>合力为零：</b>物体保持原有运动状态</div>
+        </div>
+      </div>
+
+      <!-- 知识闯关 -->
+      <div id="panel-quiz" class="hidden">
+        <h3>📝 知识闯关</h3>
+        <div class="quiz" id="quizContainer">
+          <div class="quiz-q" id="quizQ">加载中...</div>
+          <div class="quiz-opts" id="quizOpts"></div>
+          <div class="quiz-result" id="quizResult"></div>
+          <div class="btn-group">
+            <button class="btn btn-outline" id="btnPrevQ">← 上一题</button>
+            <button class="btn btn-primary" id="btnNextQ">下一题 →</button>
+          </div>
+          <div style="text-align:center;margin-top:12px;font-size:13px;color:#94a3b8;">
+            第 <span id="qIndex">1</span> / <span id="qTotal">6</span> 题 | 正确：<span id="qCorrect">0</span> 题
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/touch.js"></script>
+<script src="assets/common.js"></script>
+<script>
+// r110: 进度追踪接入
+let totalCorrect = 0;
+function bumpTotalCorrect() {
+  totalCorrect++;
+  if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('motion-force')) {
+    PageProgress.markDone('motion-force');
+    if (typeof showToast === 'function') showToast('🎉 本页知识点已点亮！');
+  }
+}
+
+// ===== 全局状态 =====
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let currentTab = 'newton';
+let animId = null;
+let isRunning = false;
+
+// 牛顿第一定律状态
+let newtonState = {
+  mode: 'galileo',
+  v0: 5,
+  roughness: 50,
+  x: 100, y: 350,
+  vx: 0,
+  distance: 0,
+  trail: []
+};
+
+// 惯性状态
+let inertiaState = {
+  mode: 'car',
+  mass: 5,
+  speed: 10,
+  carX: 100, carV: 0,
+  personX: 150, personV: 0,
+  phase: 'ready', // ready, running, done
+  time: 0
+};
+
+// 二力平衡状态
+let balanceState = {
+  mode: 'hanging',
+  forceLeft: 50,
+  forceRight: 50,
+  objectY: 250,
+  objectV: 0,
+  targetY: 250
+};
+
+// ===== Tab 切换 =====
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    
+    ['newton', 'inertia', 'balance', 'quiz'].forEach(id => {
+      document.getElementById(`panel-${id}`).classList.add('hidden');
+    });
+    document.getElementById(`panel-${currentTab}`).classList.remove('hidden');
+    
+    resetAnimation();
+    draw();
+  });
+});
+
+// ===== 模式切换 =====
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    if (currentTab === 'newton') {
+      newtonState.mode = btn.dataset.mode;
+    } else if (currentTab === 'inertia') {
+      inertiaState.mode = btn.dataset.mode;
+    } else if (currentTab === 'balance') {
+      balanceState.mode = btn.dataset.mode;
+    }
+    resetAnimation();
+    draw();
+  });
+});
+
+// ===== 滑块事件 =====
+document.getElementById('roughness').addEventListener('input', e => {
+  newtonState.roughness = +e.target.value;
+  const labels = ['很光滑', '较光滑', '中等', '较粗糙', '很粗糙'];
+  document.getElementById('roughnessVal').textContent = labels[Math.floor(+e.target.value / 25)];
+  updateNewtonFriction();
+});
+
+document.getElementById('mass').addEventListener('input', e => {
+  inertiaState.mass = +e.target.value;
+  document.getElementById('massVal').textContent = +e.target.value + ' kg';
+  document.getElementById('massDisplay').textContent = +e.target.value;
+  const sizes = ['很小', '较小', '中等', '较大', '很大'];
+  document.getElementById('inertiaSize').textContent = sizes[Math.floor((+e.target.value - 1) / 2)];
+});
+
+document.getElementById('speed').addEventListener('input', e => {
+  inertiaState.speed = +e.target.value;
+  document.getElementById('speedVal').textContent = +e.target.value + ' m/s';
+});
+
+document.getElementById('forceLeft').addEventListener('input', e => {
+  balanceState.forceLeft = +e.target.value;
+  document.getElementById('forceLeftVal').textContent = +e.target.value + ' N';
+  document.getElementById('fLeftDisplay').textContent = +e.target.value;
+  updateBalance();
+});
+
+document.getElementById('forceRight').addEventListener('input', e => {
+  balanceState.forceRight = +e.target.value;
+  document.getElementById('forceRightVal').textContent = +e.target.value + ' N';
+  updateBalance();
+});
+
+function updateNewtonFriction() {
+  const friction = (newtonState.roughness / 100 * 10).toFixed(1);
+  document.getElementById('friction').textContent = friction;
+}
+
+function updateBalance() {
+  const net = Math.abs(balanceState.forceLeft - balanceState.forceRight);
+  document.getElementById('netForce').textContent = net;
+  const stateEl = document.getElementById('balanceState');
+  if (net === 0) {
+    stateEl.textContent = '平衡';
+    stateEl.className = 'status-badge balanced';
+  } else {
+    stateEl.textContent = '不平衡';
+    stateEl.className = 'status-badge unbalanced';
+  }
+}
+
+// ===== 按钮事件 =====
+document.getElementById('btnReset').addEventListener('click', resetAnimation);
+document.getElementById('btnStart').addEventListener('click', () => {
+  if (isRunning) {
+    isRunning = false;
+    document.getElementById('btnStart').textContent = '▶ 开始';
+    if (animId) cancelAnimationFrame(animId);
+  } else {
+    isRunning = true;
+    document.getElementById('btnStart').textContent = '⏸ 暂停';
+    animate();
+  }
+});
+
+function resetAnimation() {
+  isRunning = false;
+  document.getElementById('btnStart').textContent = '▶ 开始';
+  if (animId) cancelAnimationFrame(animId);
+  
+  if (currentTab === 'newton') {
+    newtonState.x = 100;
+    newtonState.y = 350;
+    newtonState.vx = newtonState.v0;
+    newtonState.distance = 0;
+    newtonState.trail = [];
+    document.getElementById('distance').textContent = '0.0';
+  } else if (currentTab === 'inertia') {
+    inertiaState.carX = 100;
+    inertiaState.personX = 150;
+    inertiaState.carV = 0;
+    inertiaState.personV = 0;
+    inertiaState.phase = 'ready';
+    inertiaState.time = 0;
+    document.getElementById('motionState').textContent = '静止';
+  } else if (currentTab === 'balance') {
+    balanceState.objectY = 250;
+    balanceState.objectV = 0;
+    balanceState.targetY = 250;
+  }
+  draw();
+}
+
+// ===== 绘制函数 =====
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  if (currentTab === 'newton') {
+    drawNewton();
+  } else if (currentTab === 'inertia') {
+    drawInertia();
+  } else if (currentTab === 'balance') {
+    drawBalance();
+  } else if (currentTab === 'quiz') {
+    drawQuizBg();
+  }
+}
+
+function drawNewton() {
+  // 背景网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < canvas.width; i += 40) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, canvas.height);
+    ctx.stroke();
+  }
+  
+  if (newtonState.mode === 'galileo') {
+    // 伽利略理想实验 - 斜面
+    // 画斜面
+    ctx.fillStyle = 'rgba(139,92,246,0.3)';
+    ctx.beginPath();
+    ctx.moveTo(50, 400);
+    ctx.lineTo(200, 200);
+    ctx.lineTo(200, 400);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#8b5cf6';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // 画水平面
+    const surfaceColors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6'];
+    const surfaceLabels = ['毛巾', '木板', '冰面', '理想光滑'];
+    const surfaceIndex = Math.floor(newtonState.roughness / 25);
+    ctx.fillStyle = surfaceColors[surfaceIndex] + '40';
+    ctx.fillRect(200, 380, 550, 40);
+    ctx.strokeStyle = surfaceColors[surfaceIndex];
+    ctx.lineWidth = 3;
+    ctx.strokeRect(200, 380, 550, 40);
+    
+    // 表面纹理
+    ctx.strokeStyle = surfaceColors[surfaceIndex] + '60';
+    ctx.lineWidth = 1;
+    for (let i = 210; i < 750; i += 20) {
+      ctx.beginPath();
+      ctx.moveTo(i, 385);
+      ctx.lineTo(i + 10, 395);
+      ctx.stroke();
+    }
+    
+    // 标签
+    ctx.fillStyle = surfaceColors[surfaceIndex];
+    ctx.font = '14px sans-serif';
+    ctx.fillText(surfaceLabels[surfaceIndex], 450, 410);
+    
+    // 画小球
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(newtonState.x, newtonState.y, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fca5a5';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // 轨迹
+    if (newtonState.trail.length > 1) {
+      ctx.strokeStyle = 'rgba(239,68,68,0.3)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(newtonState.trail[0].x, newtonState.trail[0].y);
+      for (let i = 1; i < newtonState.trail.length; i++) {
+        ctx.lineTo(newtonState.trail[i].x, newtonState.trail[i].y);
+      }
+      ctx.stroke();
+    }
+    
+    // 速度箭头
+    if (newtonState.vx > 0.1) {
+      ctx.strokeStyle = '#10b981';
+      ctx.fillStyle = '#10b981';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(newtonState.x + 25, newtonState.y);
+      ctx.lineTo(newtonState.x + 25 + newtonState.vx * 10, newtonState.y);
+      ctx.stroke();
+      // 箭头
+      ctx.beginPath();
+      ctx.moveTo(newtonState.x + 25 + newtonState.vx * 10, newtonState.y);
+      ctx.lineTo(newtonState.x + 15 + newtonState.vx * 10, newtonState.y - 8);
+      ctx.lineTo(newtonState.x + 15 + newtonState.vx * 10, newtonState.y + 8);
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    // 说明文字
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('从同一高度释放，观察在不同表面上的滑行距离', 250, 150);
+    ctx.fillText('表面越光滑 → 摩擦力越小 → 滑行距离越远', 250, 175);
+    
+  } else if (newtonState.mode === 'space') {
+    // 太空中的物体
+    // 星星背景
+    ctx.fillStyle = '#fff';
+    for (let i = 0; i < 50; i++) {
+      const x = (i * 137) % canvas.width;
+      const y = (i * 97) % canvas.height;
+      ctx.beginPath();
+      ctx.arc(x, y, 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // 太空船
+    ctx.fillStyle = '#3b82f6';
+    ctx.beginPath();
+    ctx.moveTo(newtonState.x - 30, newtonState.y);
+    ctx.lineTo(newtonState.x + 30, newtonState.y);
+    ctx.lineTo(newtonState.x + 20, newtonState.y - 20);
+    ctx.lineTo(newtonState.x - 20, newtonState.y - 20);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#60a5fa';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // 速度箭头
+    if (newtonState.vx > 0.1) {
+      ctx.strokeStyle = '#10b981';
+      ctx.fillStyle = '#10b981';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(newtonState.x + 35, newtonState.y - 10);
+      ctx.lineTo(newtonState.x + 35 + newtonState.vx * 8, newtonState.y - 10);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(newtonState.x + 35 + newtonState.vx * 8, newtonState.y - 10);
+      ctx.lineTo(newtonState.x + 25 + newtonState.vx * 8, newtonState.y - 18);
+      ctx.lineTo(newtonState.x + 25 + newtonState.vx * 8, newtonState.y - 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    // 说明
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('太空中没有空气阻力', 300, 100);
+    ctx.fillText('物体将永远匀速直线运动下去', 300, 125);
+    ctx.fillText('这就是牛顿第一定律', 300, 150);
+  }
+}
+
+function drawInertia() {
+  // 背景
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < canvas.width; i += 40) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, canvas.height);
+    ctx.stroke();
+  }
+  
+  // 地面
+  ctx.fillStyle = 'rgba(100,100,100,0.3)';
+  ctx.fillRect(0, 420, canvas.width, 80);
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, 420);
+  ctx.lineTo(canvas.width, 420);
+  ctx.stroke();
+  
+  if (inertiaState.mode === 'car') {
+    // 急刹车场景
+    // 画车
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(inertiaState.carX, 350, 120, 60);
+    // 车轮
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.arc(inertiaState.carX + 25, 415, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(inertiaState.carX + 95, 415, 15, 0, Math.PI * 2);
+    ctx.fill();
+    // 车窗
+    ctx.fillStyle = '#60a5fa';
+    ctx.fillRect(inertiaState.carX + 60, 355, 50, 30);
+    
+    // 画人
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(inertiaState.personX, 340, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(inertiaState.personX - 8, 355, 16, 35);
+    
+    // 惯性箭头
+    if (inertiaState.phase === 'running' && inertiaState.carV < inertiaState.personV) {
+      ctx.strokeStyle = '#f59e0b';
+      ctx.fillStyle = '#f59e0b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(inertiaState.personX + 20, 340);
+      ctx.lineTo(inertiaState.personX + 60, 340);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(inertiaState.personX + 60, 340);
+      ctx.lineTo(inertiaState.personX + 50, 332);
+      ctx.lineTo(inertiaState.personX + 50, 348);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('惯性', inertiaState.personX + 25, 330);
+    }
+    
+    // 说明
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('车突然刹车停止', 300, 100);
+    ctx.fillText('人由于惯性继续向前运动', 300, 125);
+    ctx.fillText('所以急刹车时要系安全带！', 300, 150);
+    
+  } else if (inertiaState.mode === 'tablecloth') {
+    // 抽桌布
+    // 桌子
+    ctx.fillStyle = '#8b5cf6';
+    ctx.fillRect(200, 300, 400, 20);
+    // 桌腿
+    ctx.fillRect(220, 320, 20, 100);
+    ctx.fillRect(560, 320, 20, 100);
+    
+    // 桌布
+    ctx.fillStyle = '#ef4444';
+    const clothOffset = inertiaState.phase === 'running' ? inertiaState.time * 5 : 0;
+    ctx.fillRect(200 - clothOffset, 290, 400, 15);
+    
+    // 餐具
+    if (inertiaState.phase !== 'running' || inertiaState.time < 20) {
+      ctx.fillStyle = '#f1f5f9';
+      ctx.beginPath();
+      ctx.arc(300, 280, 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(400, 280, 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(500, 280, 20, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // 说明
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('快速抽出桌布', 300, 100);
+    ctx.fillText('餐具由于惯性保持静止', 300, 125);
+    ctx.fillText('所以餐具不会跟着桌布一起飞出去', 300, 150);
+    
+  } else if (inertiaState.mode === 'ball') {
+    // 投球入杯
+    // 手
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(150, 300, 25, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 球
+    if (inertiaState.phase !== 'running' || inertiaState.time < 30) {
+      const ballX = inertiaState.phase === 'running' ? 150 + inertiaState.time * 8 : 150;
+      const ballY = inertiaState.phase === 'running' ? 300 - inertiaState.time * 2 + inertiaState.time * inertiaState.time * 0.1 : 300;
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(ballX, ballY, 15, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // 杯子
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath();
+    ctx.moveTo(600, 350);
+    ctx.lineTo(620, 420);
+    ctx.lineTo(680, 420);
+    ctx.lineTo(700, 350);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#6ee7b7';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // 说明
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('球离开手后', 300, 100);
+    ctx.fillText('由于惯性继续向前运动', 300, 125);
+    ctx.fillText('同时受重力作用下落入杯中', 300, 150);
+  }
+}
+
+function drawBalance() {
+  // 背景
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < canvas.width; i += 40) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, canvas.height);
+    ctx.stroke();
+  }
+  
+  const centerX = canvas.width / 2;
+  const centerY = balanceState.objectY;
+  const netForce = balanceState.forceRight - balanceState.forceLeft;
+  
+  if (balanceState.mode === 'hanging') {
+    // 悬挂静止
+    // 天花板
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(0, 50, canvas.width, 20);
+    
+    // 绳子
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(centerX, 70);
+    ctx.lineTo(centerX, centerY - 30);
+    ctx.stroke();
+    
+    // 物体
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(centerX - 40, centerY - 30, 80, 60);
+    ctx.strokeStyle = '#60a5fa';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(centerX - 40, centerY - 30, 80, 60);
+    
+    // 重力箭头（向下）
+    const gravityLen = 50;
+    ctx.strokeStyle = '#ef4444';
+    ctx.fillStyle = '#ef4444';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(centerX + 50, centerY);
+    ctx.lineTo(centerX + 50, centerY + gravityLen);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(centerX + 50, centerY + gravityLen);
+    ctx.lineTo(centerX + 42, centerY + gravityLen - 10);
+    ctx.lineTo(centerX + 58, centerY + gravityLen - 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.font = '14px sans-serif';
+    ctx.fillText('G', centerX + 60, centerY + gravityLen / 2);
+    
+    // 拉力箭头（向上）
+    ctx.strokeStyle = '#10b981';
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath();
+    ctx.moveTo(centerX - 50, centerY);
+    ctx.lineTo(centerX - 50, centerY - gravityLen);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(centerX - 50, centerY - gravityLen);
+    ctx.lineTo(centerX - 58, centerY - gravityLen + 10);
+    ctx.lineTo(centerX - 42, centerY - gravityLen + 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.font = '14px sans-serif';
+    ctx.fillText('F', centerX - 70, centerY - gravityLen / 2);
+    
+    // 说明
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('物体静止时：拉力 = 重力', 300, 450);
+    ctx.fillText('合力为零，处于平衡状态', 300, 475);
+    
+  } else if (balanceState.mode === 'push') {
+    // 匀速推动
+    // 地面
+    ctx.fillStyle = 'rgba(100,100,100,0.3)';
+    ctx.fillRect(0, 380, canvas.width, 120);
+    
+    // 物体
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(centerX - 40, centerY - 30, 80, 60);
+    ctx.strokeStyle = '#60a5fa';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(centerX - 40, centerY - 30, 80, 60);
+    
+    // 推力箭头（向右）
+    const forceLen = balanceState.forceRight * 0.8;
+    ctx.strokeStyle = '#10b981';
+    ctx.fillStyle = '#10b981';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(centerX - 50, centerY);
+    ctx.lineTo(centerX - 50 - forceLen, centerY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(centerX - 50 - forceLen, centerY);
+    ctx.lineTo(centerX - 40 - forceLen, centerY - 8);
+    ctx.lineTo(centerX - 40 - forceLen, centerY + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.font = '14px sans-serif';
+    ctx.fillText('F推', centerX - 60 - forceLen, centerY - 15);
+    
+    // 摩擦力箭头（向左）
+    ctx.strokeStyle = '#ef4444';
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.moveTo(centerX + 50, centerY);
+    ctx.lineTo(centerX + 50 + forceLen, centerY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(centerX + 50 + forceLen, centerY);
+    ctx.lineTo(centerX + 40 + forceLen, centerY - 8);
+    ctx.lineTo(centerX + 40 + forceLen, centerY + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.font = '14px sans-serif';
+    ctx.fillText('f摩擦', centerX + 60 + forceLen, centerY - 15);
+    
+    // 说明
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('匀速直线运动时：推力 = 摩擦力', 300, 450);
+    ctx.fillText('合力为零，保持匀速运动', 300, 475);
+    
+  } else if (balanceState.mode === 'tug') {
+    // 拔河比赛
+    // 绳子
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(100, centerY);
+    ctx.lineTo(700, centerY);
+    ctx.stroke();
+    
+    // 中间标记
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(centerX + netForce * 0.5, centerY, 10, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 左边人
+    ctx.fillStyle = '#3b82f6';
+    ctx.beginPath();
+    ctx.arc(150, centerY - 40, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(140, centerY - 20, 20, 50);
+    
+    // 右边人
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath();
+    ctx.arc(650, centerY - 40, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(640, centerY - 20, 20, 50);
+    
+    // 左边力箭头
+    const leftLen = balanceState.forceLeft * 0.6;
+    ctx.strokeStyle = '#3b82f6';
+    ctx.fillStyle = '#3b82f6';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(170, centerY);
+    ctx.lineTo(170 + leftLen, centerY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(170 + leftLen, centerY);
+    ctx.lineTo(160 + leftLen, centerY - 8);
+    ctx.lineTo(160 + leftLen, centerY + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.font = '14px sans-serif';
+    ctx.fillText(`${balanceState.forceLeft}N`, 170 + leftLen / 2, centerY - 15);
+    
+    // 右边力箭头
+    const rightLen = balanceState.forceRight * 0.6;
+    ctx.strokeStyle = '#10b981';
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath();
+    ctx.moveTo(630, centerY);
+    ctx.lineTo(630 - rightLen, centerY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(630 - rightLen, centerY);
+    ctx.lineTo(640 - rightLen, centerY - 8);
+    ctx.lineTo(640 - rightLen, centerY + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.font = '14px sans-serif';
+    ctx.fillText(`${balanceState.forceRight}N`, 630 - rightLen / 2, centerY - 15);
+    
+    // 说明
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('两边力相等时，绳子保持静止', 300, 450);
+    ctx.fillText('力不相等时，绳子向力大的一方移动', 300, 475);
+  }
+}
+
+function drawQuizBg() {
+  ctx.fillStyle = 'rgba(59,130,246,0.1)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#3b82f6';
+  ctx.font = 'bold 48px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('📝', canvas.width / 2, canvas.height / 2 - 30);
+  ctx.font = '24px sans-serif';
+  ctx.fillText('知识闯关', canvas.width / 2, canvas.height / 2 + 30);
+  ctx.font = '16px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('测试你对运动和力的理解', canvas.width / 2, canvas.height / 2 + 70);
+  ctx.textAlign = 'left';
+}
+
+// ===== 动画循环 =====
+function animate() {
+  if (!isRunning) return;
+  
+  if (currentTab === 'newton') {
+    // 牛顿第一定律动画
+    const friction = newtonState.roughness / 100 * 0.1;
+    newtonState.vx = Math.max(0, newtonState.vx - friction);
+    newtonState.x += newtonState.vx;
+    newtonState.distance += newtonState.vx * 0.1;
+    
+    newtonState.trail.push({ x: newtonState.x, y: newtonState.y });
+    if (newtonState.trail.length > 100) newtonState.trail.shift();
+    
+    document.getElementById('distance').textContent = newtonState.distance.toFixed(1);
+    document.getElementById('v0').textContent = newtonState.vx.toFixed(1);
+    
+    if (newtonState.x > canvas.width || newtonState.vx < 0.01) {
+      isRunning = false;
+      document.getElementById('btnStart').textContent = '▶ 开始';
+    }
+    
+  } else if (currentTab === 'inertia') {
+    // 惯性动画
+    if (inertiaState.phase === 'ready') {
+      inertiaState.phase = 'running';
+      inertiaState.carV = inertiaState.speed;
+      inertiaState.personV = inertiaState.speed;
+      document.getElementById('motionState').textContent = '运动中';
+    }
+    
+    if (inertiaState.phase === 'running') {
+      inertiaState.time++;
+      
+      if (inertiaState.mode === 'car') {
+        // 车减速，人继续匀速
+        inertiaState.carV = Math.max(0, inertiaState.carV - 0.5);
+        inertiaState.carX += inertiaState.carV;
+        inertiaState.personX += inertiaState.personV;
+        
+        if (inertiaState.carV === 0) {
+          document.getElementById('motionState').textContent = '车停止';
+        }
+        if (inertiaState.personX > canvas.width) {
+          inertiaState.phase = 'done';
+          isRunning = false;
+          document.getElementById('btnStart').textContent = '▶ 开始';
+        }
+      } else if (inertiaState.mode === 'tablecloth') {
+        if (inertiaState.time > 60) {
+          inertiaState.phase = 'done';
+          isRunning = false;
+          document.getElementById('btnStart').textContent = '▶ 开始';
+        }
+      } else if (inertiaState.mode === 'ball') {
+        if (inertiaState.time > 50) {
+          inertiaState.phase = 'done';
+          isRunning = false;
+          document.getElementById('btnStart').textContent = '▶ 开始';
+        }
+      }
+    }
+    
+  } else if (currentTab === 'balance') {
+    // 二力平衡动画
+    const netForce = balanceState.forceRight - balanceState.forceLeft;
+    const targetY = 250 + netForce * 0.5;
+    balanceState.objectY += (targetY - balanceState.objectY) * 0.1;
+  }
+  
+  draw();
+  if (isRunning) {
+    animId = requestAnimationFrame(animate);
+  }
+}
+
+// ===== 测验系统 =====
+const quizData = [
+  {
+    q: '关于牛顿第一定律，下列说法正确的是？',
+    opts: ['力是维持物体运动的原因', '物体不受力时一定静止', '力是改变物体运动状态的原因', '运动的物体一定受到力的作用'],
+    ans: 2
+  },
+  {
+    q: '关于惯性，下列说法正确的是？',
+    opts: ['只有运动的物体才有惯性', '只有静止的物体才有惯性', '物体速度越大惯性越大', '物体质量越大惯性越大'],
+    ans: 3
+  },
+  {
+    q: '下列现象中，利用惯性的是？',
+    opts: ['汽车刹车时人向前倾', '跳远运动员助跑后起跳', '苹果从树上落下', '以上都是'],
+    ans: 1
+  },
+  {
+    q: '二力平衡的条件是？',
+    opts: ['大小相等、方向相反', '大小相等、方向相反、作用在同一物体上', '大小相等、方向相反、作用在同一直线上', '大小相等、方向相反、作用在同一物体上、作用在同一直线上'],
+    ans: 3
+  },
+  {
+    q: '物体在平衡力作用下？',
+    opts: ['一定静止', '一定匀速直线运动', '静止或匀速直线运动', '运动状态一定改变'],
+    ans: 2
+  },
+  {
+    q: '关于力和运动的关系，下列说法正确的是？',
+    opts: ['物体受力才能运动', '物体受力运动状态一定改变', '物体不受力运动状态一定不变', '物体运动状态改变一定受到力的作用'],
+    ans: 3
+  }
+];
+
+let quizIndex = 0;
+let quizCorrect = 0;
+let quizAnswered = new Array(quizData.length).fill(false);
+
+function loadQuiz() {
+  const q = quizData[quizIndex];
+  document.getElementById('quizQ').textContent = q.q;
+  document.getElementById('qIndex').textContent = quizIndex + 1;
+  document.getElementById('qTotal').textContent = quizData.length;
+  document.getElementById('qCorrect').textContent = quizCorrect;
+  
+  const optsEl = document.getElementById('quizOpts');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = String.fromCharCode(65 + i) + '. ' + opt;
+    div.addEventListener('click', () => selectAnswer(i));
+    if (quizAnswered[quizIndex]) {
+      if (i === q.ans) div.classList.add('correct');
+      else div.classList.add('wrong');
+    }
+    optsEl.appendChild(div);
+  });
+  
+  const resultEl = document.getElementById('quizResult');
+  resultEl.classList.remove('show');
+}
+
+function selectAnswer(idx) {
+  if (quizAnswered[quizIndex]) return;
+  quizAnswered[quizIndex] = true;
+  
+  const q = quizData[quizIndex];
+  const opts = document.querySelectorAll('.quiz-opt');
+  
+  if (idx === q.ans) {
+    opts[idx].classList.add('correct');
+    quizCorrect++;
+    bumpTotalCorrect();
+    document.getElementById('quizResult').textContent = '✓ 回答正确！';
+    document.getElementById('quizResult').className = 'quiz-result show pass';
+  } else {
+    opts[idx].classList.add('wrong');
+    opts[q.ans].classList.add('correct');
+    document.getElementById('quizResult').textContent = '✗ 回答错误，正确答案是 ' + String.fromCharCode(65 + q.ans);
+    document.getElementById('quizResult').className = 'quiz-result show fail';
+  }
+  
+  document.getElementById('qCorrect').textContent = quizCorrect;
+}
+
+document.getElementById('btnNextQ').addEventListener('click', () => {
+  if (quizIndex < quizData.length - 1) {
+    quizIndex++;
+    loadQuiz();
+  }
+});
+
+document.getElementById('btnPrevQ').addEventListener('click', () => {
+  if (quizIndex > 0) {
+    quizIndex--;
+    loadQuiz();
+  }
+});
+
+// ===== 初始化 =====
+updateNewtonFriction();
+updateBalance();
+loadQuiz();
+draw();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中物理"></script>
+</body>
+</html>

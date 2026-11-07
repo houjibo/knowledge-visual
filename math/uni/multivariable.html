@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>多元函数微分 · 大学数学互动可视化</title>
+<style>
+  :root {
+    --primary: #7c3aed;
+    --surface: #3b82f6;
+    --px: #ef4444;
+    --py: #10b981;
+    --contour: #f59e0b;
+    --tangent: #ec4899;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1a1040 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1340px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 22px; }
+  header h1 { font-size: 2.1rem; background: linear-gradient(90deg, var(--surface), var(--px), var(--py)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; font-size: 0.95rem; margin-top: 4px; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 22px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(124,58,237,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .stage { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-s::before { background: var(--surface); }
+  .legend .l-px::before { background: var(--px); }
+  .legend .l-py::before { background: var(--py); }
+  .legend .l-c::before { background: var(--contour); }
+  .legend .l-t::before { background: var(--tangent); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 700px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .equation { font-family: "Times New Roman", "STSong", serif; font-size: 1.05rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .eq-hl { color: var(--px); font-weight: 600; }
+  .eq-hl2 { color: var(--py); font-weight: 600; }
+  .eq-hls { color: var(--surface); font-weight: 600; }
+  .eq-hlc { color: var(--contour); font-weight: 600; }
+  .eq-hlt { color: var(--tangent); font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--px); font-weight: 600; font-size: 13px; }
+
+  .func-select, .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .func-btn, .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 13px; color: #93c5fd; transition: all .2s; user-select: none; }
+  .func-btn.active, .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .func-btn:hover:not(.active), .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.1); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .steps { margin: 12px 0; }
+  .step { padding: 10px 14px; margin: 6px 0; background: rgba(255,255,255,0.04); border-radius: 8px; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--primary); transition: all .3s; }
+  .step.active { background: rgba(124,58,237,0.12); border-left-color: var(--py); }
+  .step .sn { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: white; text-align: center; line-height: 22px; font-size: 11px; margin-right: 8px; font-weight: 700; }
+  .step.active .sn { background: var(--py); }
+
+  .desc { font-size: 13px; color: #94a3b8; line-height: 1.7; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(124,58,237,0.08); border-radius: 12px; border: 1px solid rgba(124,58,237,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.2); border-color: var(--py); color: #6ee7b7; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.2); border-color: var(--px); color: #fca5a5; }
+  .quiz-explain { margin-top: 10px; font-size: 13px; color: #94a3b8; line-height: 1.6; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; display: none; }
+  .quiz-explain.show { display: block; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+  .section-content { display: none; }
+  .section-content.active { display: block; }
+
+  .knowledge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .knowledge-card { background: rgba(255,255,255,0.04); padding: 12px; border-radius: 10px; font-size: 12px; line-height: 1.6; border-left: 3px solid var(--primary); }
+  .knowledge-card b { color: #fbbf24; display: block; margin-bottom: 4px; }
+
+  footer { text-align: center; margin-top: 30px; padding: 16px; color: #475569; font-size: 12px; }
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📐 多元函数微分</h1>
+    <p>大学数学 · 偏导数 · 全微分 · 三维曲面可视化</p>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="surface">🏔️ 三维曲面</div>
+    <div class="tab" data-tab="partial">📊 偏导数</div>
+    <div class="tab" data-tab="total">🔗 全微分</div>
+    <div class="tab" data-tab="contour">🗺️ 等高线</div>
+    <div class="tab" data-tab="quiz">📝 练习</div>
+  </div>
+
+  <!-- ==================== 1. 三维曲面 ==================== -->
+  <div class="section active" id="sec-surface">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvSurface" width="700" height="520"></canvas>
+        <div class="legend">
+          <span class="l-s">曲面 z=f(x,y)</span>
+          <span class="l-t">切平面</span>
+          <span class="l-c">等高线投影</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🏔️ 三维曲面可视化</h3>
+        <div class="desc">多元函数 z = f(x,y) 将二维平面映射到三维空间。拖动滑块改变观察点位置，感受曲面的形态。</div>
+
+        <div class="func-select" id="surfaceFuncs">
+          <div class="func-btn active" data-fn="paraboloid">z = x²+y²</div>
+          <div class="func-btn" data-fn="saddle">z = x²−y²</div>
+          <div class="func-btn" data-fn="sin">z = sin(x²+y²)</div>
+          <div class="func-btn" data-fn="exp">z = e^(−x²−y²)</div>
+        </div>
+
+        <div class="slider-row">
+          <label>旋转角度 θ</label>
+          <input type="range" id="sTheta" min="0" max="360" value="35">
+          <span class="val" id="vTheta">35°</span>
+        </div>
+        <div class="slider-row">
+          <label>俯仰角度 φ</label>
+          <input type="range" id="sPhi" min="5" max="85" value="30">
+          <span class="val" id="vPhi">30°</span>
+        </div>
+        <div class="slider-row">
+          <label>缩放</label>
+          <input type="range" id="sZoom" min="40" max="160" value="90">
+          <span class="val" id="vZoom">90</span>
+        </div>
+
+        <div class="equation">
+          <span class="eq-hls">z</span> = f(<span class="eq-hl">x</span>, <span class="eq-hl2">y</span>)
+        </div>
+
+        <div class="info-grid" id="surfaceInfo">
+          <div><b>函数</b><br>抛物面 z = x² + y²</div>
+          <div><b>顶点</b><br>(0, 0, 0) 最小值点</div>
+          <div><b>对称性</b><br>关于 z 轴旋转对称</div>
+          <div><b>截面</b><br>x=0 → 抛物线；y=0 → 抛物线</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 2. 偏导数 ==================== -->
+  <div class="section" id="sec-partial">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvPartial" width="700" height="520"></canvas>
+        <div class="legend">
+          <span class="l-s">曲面</span>
+          <span class="l-px">∂f/∂x 方向切线</span>
+          <span class="l-py">∂f/∂y 方向切线</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📊 偏导数的几何意义</h3>
+        <div class="desc">偏导数 ∂f/∂x 是固定 y 后，f 沿 x 方向的变化率——即曲面上沿 x 方向的切线斜率。∂f/∂y 类似。</div>
+
+        <div class="func-select" id="partialFuncs">
+          <div class="func-btn active" data-fn="paraboloid">x²+y²</div>
+          <div class="func-btn" data-fn="saddle">x²−y²</div>
+          <div class="func-btn" data-fn="product">x·y</div>
+        </div>
+
+        <div class="slider-row">
+          <label>x₀</label>
+          <input type="range" id="pX" min="-200" max="200" value="80">
+          <span class="val" id="vpX">0.80</span>
+        </div>
+        <div class="slider-row">
+          <label>y₀</label>
+          <input type="range" id="pY" min="-200" max="200" value="60">
+          <span class="val" id="vpY">0.60</span>
+        </div>
+        <div class="slider-row">
+          <label>旋转 θ</label>
+          <input type="range" id="pTheta" min="0" max="360" value="40">
+          <span class="val" id="vpTheta">40°</span>
+        </div>
+
+        <div class="equation">
+          <span class="eq-hl">∂f/∂x</span> = lim<sub>Δx→0</sub> [f(x+Δx, y) − f(x,y)] / Δx
+        </div>
+        <div class="equation">
+          <span class="eq-hl2">∂f/∂y</span> = lim<sub>Δy→0</sub> [f(x, y+Δy) − f(x,y)] / Δy
+        </div>
+
+        <div class="info-grid" id="partialInfo">
+          <div><b>∂f/∂x</b><br>= 2x = <span id="pxVal" style="color:#ef4444;font-weight:700">1.60</span></div>
+          <div><b>∂f/∂y</b><br>= 2y = <span id="pyVal" style="color:#10b981;font-weight:700">1.20</span></div>
+          <div><b>梯度 ∇f</b><br>= (<span id="gxVal">1.60</span>, <span id="gyVal">1.20</span>)</div>
+          <div><b>方向</b><br>梯度指向函数增长最快方向</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 3. 全微分 ==================== -->
+  <div class="section" id="sec-total">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvTotal" width="700" height="520"></canvas>
+        <div class="legend">
+          <span class="l-s">曲面</span>
+          <span class="l-t">切平面</span>
+          <span class="l-c">Δf 实际增量</span>
+          <span style="color:#06b6d4">── dz 线性近似</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🔗 全微分与线性近似</h3>
+        <div class="desc">全微分 dz = (∂f/∂x)dx + (∂f/∂y)dy 是函数增量 Δf 的线性主部。切平面是曲面在某点的最佳线性近似。</div>
+
+        <div class="func-select" id="totalFuncs">
+          <div class="func-btn active" data-fn="paraboloid">x²+y²</div>
+          <div class="func-btn" data-fn="saddle">x²−y²</div>
+          <div class="func-btn" data-fn="sqrt">√(x²+y²)</div>
+        </div>
+
+        <div class="slider-row">
+          <label>x₀</label>
+          <input type="range" id="tX" min="-200" max="200" value="80">
+          <span class="val" id="vtX">0.80</span>
+        </div>
+        <div class="slider-row">
+          <label>y₀</label>
+          <input type="range" id="tY" min="-200" max="200" value="60">
+          <span class="val" id="vtY">0.60</span>
+        </div>
+        <div class="slider-row">
+          <label>Δx</label>
+          <input type="range" id="tDx" min="-100" max="100" value="30">
+          <span class="val" id="vtDx">0.30</span>
+        </div>
+        <div class="slider-row">
+          <label>Δy</label>
+          <input type="range" id="tDy" min="-100" max="100" value="20">
+          <span class="val" id="vtDy">0.20</span>
+        </div>
+
+        <div class="equation">
+          <span class="eq-hlt">dz</span> = <span class="eq-hl">∂f/∂x</span> · dx + <span class="eq-hl2">∂f/∂y</span> · dy
+        </div>
+
+        <div class="steps" id="totalSteps">
+          <div class="step active"><span class="sn">1</span>f(x₀,y₀) = <span id="tsF0">1.00</span></div>
+          <div class="step"><span class="sn">2</span>f(x₀+Δx, y₀+Δy) = <span id="tsF1">1.69</span>（实际值）</div>
+          <div class="step"><span class="sn">3</span>Δf = f₁ − f₀ = <span id="tsDf">0.69</span></div>
+          <div class="step"><span class="sn">4</span>dz = fₓ·dx + fᵧ·dy = <span id="tsDz">0.60</span>（线性近似）</div>
+          <div class="step"><span class="sn">5</span>误差 = |Δf − dz| = <span id="tsErr">0.09</span></div>
+        </div>
+
+        <div class="desc">💡 当 Δx, Δy 很小时，dz ≈ Δf，这就是全微分的核心价值——用线性函数近似非线性函数的局部行为。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 4. 等高线 ==================== -->
+  <div class="section" id="sec-contour">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvContour" width="700" height="520"></canvas>
+        <div class="legend">
+          <span class="l-c">等高线</span>
+          <span class="l-px">梯度向量</span>
+          <span style="color:#06b6d4">● 当前点</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🗺️ 等高线与梯度场</h3>
+        <div class="desc">等高线是 f(x,y)=C 的曲线集合。梯度 ∇f 始终垂直于等高线，指向函数增长最快的方向。</div>
+
+        <div class="func-select" id="contourFuncs">
+          <div class="func-btn active" data-fn="paraboloid">x²+y²</div>
+          <div class="func-btn" data-fn="saddle">x²−y²</div>
+          <div class="func-btn" data-fn="ripple">sin(x)·cos(y)</div>
+        </div>
+
+        <div class="slider-row">
+          <label>点击位置 x</label>
+          <input type="range" id="cX" min="-200" max="200" value="80">
+          <span class="val" id="vcX">0.80</span>
+        </div>
+        <div class="slider-row">
+          <label>点击位置 y</label>
+          <input type="range" id="cY" min="-200" max="200" value="-60">
+          <span class="val" id="vcY">-0.60</span>
+        </div>
+        <div class="slider-row">
+          <label>等高线数</label>
+          <input type="range" id="cLevels" min="5" max="25" value="12">
+          <span class="val" id="vcLevels">12</span>
+        </div>
+
+        <div class="equation">
+          ∇<span class="eq-hls">f</span> = (<span class="eq-hl">∂f/∂x</span>, <span class="eq-hl2">∂f/∂y</span>) ⊥ 等高线
+        </div>
+
+        <div class="info-grid" id="contourInfo">
+          <div><b>f(x₀,y₀)</b><br>= <span id="cfVal">1.00</span></div>
+          <div><b>∇f</b><br>= (<span id="cgxVal" style="color:#ef4444">1.60</span>, <span id="cgyVal" style="color:#10b981">-1.20</span>)</div>
+          <div><b>|∇f|</b><br>= <span id="cmagVal">2.00</span>（最大变化率）</div>
+          <div><b>方向角</b><br>θ = <span id="cangVal">-36.9°</span></div>
+        </div>
+
+        <div class="knowledge-grid">
+          <div class="knowledge-card"><b>等高线密集</b>梯度大，函数变化剧烈（陡坡）</div>
+          <div class="knowledge-card"><b>等高线稀疏</b>梯度小，函数变化平缓（缓坡）</div>
+          <div class="knowledge-card"><b>梯度方向</b>垂直等高线向外（函数增大方向）</div>
+          <div class="knowledge-card"><b>负梯度</b>指向函数减小最快方向（下降方向）</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 5. 练习 ==================== -->
+  <div class="section" id="sec-quiz">
+    <div class="panel" style="max-width:800px;margin:0 auto">
+      <h3>📝 互动练习</h3>
+      <div id="quizContainer"></div>
+      <div style="text-align:center;margin-top:16px">
+        <button onclick="resetQuiz()" style="padding:10px 28px;border-radius:10px;background:var(--primary);color:white;border:none;cursor:pointer;font-size:14px">重新答题</button>
+        <span id="quizScore" style="margin-left:16px;font-size:15px;color:#94a3b8"></span>
+      </div>
+    </div>
+  </div>
+
+  <footer>大学数学 · 多元函数微分 · 互动可视化 v1.0</footer>
+</div>
+
+<script>
+// ========== Utility ==========
+const PI = Math.PI, sin = Math.sin, cos = Math.cos, sqrt = Math.sqrt, exp = Math.exp, abs = Math.abs;
+const canvas3d = (id) => { const c = document.getElementById(id); return { c, ctx: c.getContext('2d') }; };
+
+// 3D projection helpers
+function project(x, y, z, cx, cy, theta, phi, scale) {
+  const rad = PI / 180;
+  const ct = cos(theta * rad), st = sin(theta * rad);
+  const cp = cos(phi * rad), sp = sin(phi * rad);
+  const rx = x * ct - y * st;
+  const ry = x * st * sp + y * ct * sp - z * cp;
+  const rz = x * st * cp + y * ct * cp + z * sp;  // not used but for depth
+  return { sx: cx + rx * scale, sy: cy - ry * scale, depth: rz };
+}
+
+// Function evaluators
+const funcs = {
+  paraboloid: (x, y) => x * x + y * y,
+  saddle: (x, y) => x * x - y * y,
+  sin: (x, y) => sin(x * x + y * y),
+  exp: (x, y) => exp(-(x * x + y * y)),
+  product: (x, y) => x * y,
+  sqrt: (x, y) => sqrt(x * x + y * y + 0.01),
+  ripple: (x, y) => sin(x) * cos(y),
+};
+
+const funcLabels = {
+  paraboloid: { name: '抛物面', eq: 'z = x² + y²', info: ['<b>函数</b><br>抛物面 z = x² + y²', '<b>顶点</b><br>(0, 0, 0) 最小值点', '<b>对称性</b><br>关于 z 轴旋转对称', '<b>截面</b><br>x=0 → 抛物线；y=0 → 抛物线'] },
+  saddle: { name: '鞍面', eq: 'z = x² − y²', info: ['<b>函数</b><br>鞍面 z = x² − y²', '<b>鞍点</b><br>(0, 0, 0) 非极值点', '<b>对称性</b><br>关于 xz 平面对称', '<b>截面</b><br>y=0 → 上凹；x=0 → 下凹'] },
+  sin: { name: '波纹', eq: 'z = sin(x²+y²)', info: ['<b>函数</b><br>波纹 z = sin(x²+y²)', '<b>中心</b><br>振荡波纹，中心=0', '<b>对称性</b><br>旋转对称', '<b>截面</b><br>径向衰减振荡'] },
+  exp: { name: '高斯', eq: 'z = e^(−x²−y²)', info: ['<b>函数</b><br>高斯 z = e^(−x²−y²)', '<b>峰值</b><br>(0, 0, 1) 最大值', '<b>对称性</b><br>旋转对称', '<b>衰减</b><br>远离中心快速趋于0'] },
+  product: { name: 'xy', eq: 'z = x·y', info: ['<b>函数</b><br>z = x·y', '<b>鞍点</b><br>(0, 0, 0)', '<b>对称性</b><br>关于原点对称', '<b>截面</b><br>斜截面上的双曲线'] },
+  sqrt: { name: '锥面', eq: 'z = √(x²+y²)', info: ['<b>函数</b><br>锥面 z = √(x²+y²)', '<b>顶点</b><br>(0, 0, 0) 不可微点', '<b>对称性</b><br>旋转对称', '<b>截面</b><br>V 形折线'] },
+  ripple: { name: '涟漪', eq: 'z = sin(x)·cos(y)', info: ['<b>函数</b><br>z = sin(x)·cos(y)', '<b>周期</b><br>x方向2π，y方向2π', '<b>对称性</b><br>棋盘格图案', '<b>截面</b><br>正弦/余弦曲线'] },
+};
+
+// Partial derivatives
+function partialX(fn, x, y) {
+  const h = 0.0001;
+  return (funcs[fn](x + h, y) - funcs[fn](x - h, y)) / (2 * h);
+}
+function partialY(fn, x, y) {
+  const h = 0.0001;
+  return (funcs[fn](x, y + h) - funcs[fn](x, y - h)) / (2 * h);
+}
+
+// ========== TAB SWITCHING ==========
+let currentTab = 'surface';
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('sec-' + currentTab).classList.add('active');
+    render();
+  });
+});
+
+// ========== 1. SURFACE ==========
+let surfFn = 'paraboloid';
+document.querySelectorAll('#surfaceFuncs .func-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#surfaceFuncs .func-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    surfFn = btn.dataset.fn;
+    const info = funcLabels[surfFn].info;
+    document.getElementById('surfaceInfo').innerHTML = info.map(h => '<div>' + h + '</div>').join('');
+    render();
+  });
+});
+
+function drawSurface() {
+  const { c, ctx } = canvas3d('cvSurface');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const theta = +document.getElementById('sTheta').value;
+  const phi = +document.getElementById('sPhi').value;
+  const zoom = +document.getElementById('sZoom').value;
+  document.getElementById('vTheta').textContent = theta + '°';
+  document.getElementById('vPhi').textContent = phi + '°';
+  document.getElementById('vZoom').textContent = zoom;
+
+  const cx = W / 2, cy = H / 2 + 40, sc = zoom;
+  const N = 28, range = 2;
+
+  // Draw grid lines along x
+  for (let j = 0; j <= N; j++) {
+    ctx.beginPath();
+    let first = true;
+    for (let i = 0; i <= N; i++) {
+      const x = -range + (2 * range * i) / N;
+      const y = -range + (2 * range * j) / N;
+      const z = funcs[surfFn](x, y);
+      const p = project(x, y, z * 0.5, cx, cy, theta, phi, sc);
+      if (first) { ctx.moveTo(p.sx, p.sy); first = false; } else ctx.lineTo(p.sx, p.sy);
+    }
+    ctx.strokeStyle = 'rgba(59,130,246,0.25)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  // Draw grid lines along y
+  for (let i = 0; i <= N; i++) {
+    ctx.beginPath();
+    let first = true;
+    for (let j = 0; j <= N; j++) {
+      const x = -range + (2 * range * i) / N;
+      const y = -range + (2 * range * j) / N;
+      const z = funcs[surfFn](x, y);
+      const p = project(x, y, z * 0.5, cx, cy, theta, phi, sc);
+      if (first) { ctx.moveTo(p.sx, p.sy); first = false; } else ctx.lineTo(p.sx, p.sy);
+    }
+    ctx.strokeStyle = 'rgba(59,130,246,0.25)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Axes
+  const axLen = 2.3;
+  [[axLen,0,0,'#ef4444','x'],[0,axLen,0,'#10b981','y'],[0,0,axLen*0.5,'#f59e0b','z']].forEach(([ax,ay,az,col,lbl]) => {
+    const o = project(0,0,0,cx,cy,theta,phi,sc);
+    const e = project(ax,ay,az,cx,cy,theta,phi,sc);
+    ctx.beginPath(); ctx.moveTo(o.sx, o.sy); ctx.lineTo(e.sx, e.sy);
+    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = col; ctx.font = '14px sans-serif'; ctx.fillText(lbl, e.sx + 5, e.sy - 5);
+  });
+
+  // Contour projection on bottom
+  ctx.globalAlpha = 0.15;
+  for (let j = 0; j <= N; j++) {
+    ctx.beginPath();
+    let first = true;
+    for (let i = 0; i <= N; i++) {
+      const x = -range + (2 * range * i) / N;
+      const y = -range + (2 * range * j) / N;
+      const p = project(x, y, -1.5, cx, cy, theta, phi, sc);
+      if (first) { ctx.moveTo(p.sx, p.sy); first = false; } else ctx.lineTo(p.sx, p.sy);
+    }
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 0.5; ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ========== 2. PARTIAL DERIVATIVES ==========
+let partFn = 'paraboloid';
+document.querySelectorAll('#partialFuncs .func-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#partialFuncs .func-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    partFn = btn.dataset.fn;
+    render();
+  });
+});
+
+function drawPartial() {
+  const { c, ctx } = canvas3d('cvPartial');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const x0 = +document.getElementById('pX').value / 100;
+  const y0 = +document.getElementById('pY').value / 100;
+  const theta = +document.getElementById('pTheta').value;
+  const phi = 30;
+  document.getElementById('vpX').textContent = x0.toFixed(2);
+  document.getElementById('vpY').textContent = y0.toFixed(2);
+  document.getElementById('vpTheta').textContent = theta + '°';
+
+  const cx = W / 2, cy = H / 2 + 40, sc = 90;
+  const N = 24, range = 2;
+
+  // Surface grid
+  for (let j = 0; j <= N; j++) {
+    ctx.beginPath(); let first = true;
+    for (let i = 0; i <= N; i++) {
+      const x = -range + (2 * range * i) / N;
+      const y = -range + (2 * range * j) / N;
+      const z = funcs[partFn](x, y) * 0.5;
+      const p = project(x, y, z, cx, cy, theta, phi, sc);
+      if (first) { ctx.moveTo(p.sx, p.sy); first = false; } else ctx.lineTo(p.sx, p.sy);
+    }
+    ctx.strokeStyle = 'rgba(59,130,246,0.2)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  for (let i = 0; i <= N; i++) {
+    ctx.beginPath(); let first = true;
+    for (let j = 0; j <= N; j++) {
+      const x = -range + (2 * range * i) / N;
+      const y = -range + (2 * range * j) / N;
+      const z = funcs[partFn](x, y) * 0.5;
+      const p = project(x, y, z, cx, cy, theta, phi, sc);
+      if (first) { ctx.moveTo(p.sx, p.sy); first = false; } else ctx.lineTo(p.sx, p.sy);
+    }
+    ctx.strokeStyle = 'rgba(59,130,246,0.2)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  const z0 = funcs[partFn](x0, y0) * 0.5;
+  const pt = project(x0, y0, z0, cx, cy, theta, phi, sc);
+
+  // ∂f/∂x tangent line (vary x, fix y)
+  const fx = partialX(partFn, x0, y0);
+  ctx.beginPath();
+  for (let t = -1.5; t <= 1.5; t += 0.05) {
+    const xx = x0 + t;
+    const zz = z0 + fx * t * 0.5;
+    const p = project(xx, y0, zz, cx, cy, theta, phi, sc);
+    t === -1.5 ? ctx.moveTo(p.sx, p.sy) : ctx.lineTo(p.sx, p.sy);
+  }
+  ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2.5; ctx.stroke();
+
+  // ∂f/∂y tangent line (fix x, vary y)
+  const fy = partialY(partFn, x0, y0);
+  ctx.beginPath();
+  for (let t = -1.5; t <= 1.5; t += 0.05) {
+    const yy = y0 + t;
+    const zz = z0 + fy * t * 0.5;
+    const p = project(x0, yy, zz, cx, cy, theta, phi, sc);
+    t === -1.5 ? ctx.moveTo(p.sx, p.sy) : ctx.lineTo(p.sx, p.sy);
+  }
+  ctx.strokeStyle = '#10b981'; ctx.lineWidth = 2.5; ctx.stroke();
+
+  // Point
+  ctx.beginPath(); ctx.arc(pt.sx, pt.sy, 6, 0, 2 * PI);
+  ctx.fillStyle = '#fbbf24'; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+
+  // Axes
+  const axLen = 2.3;
+  [[axLen,0,0,'#ef4444','x'],[0,axLen,0,'#10b981','y'],[0,0,axLen*0.5,'#f59e0b','z']].forEach(([ax,ay,az,col,lbl]) => {
+    const o = project(0,0,0,cx,cy,theta,phi,sc);
+    const e = project(ax,ay,az,cx,cy,theta,phi,sc);
+    ctx.beginPath(); ctx.moveTo(o.sx, o.sy); ctx.lineTo(e.sx, e.sy);
+    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = col; ctx.font = '14px sans-serif'; ctx.fillText(lbl, e.sx + 5, e.sy - 5);
+  });
+
+  // Info
+  const fxA = partialX(partFn, x0, y0);
+  const fyA = partialY(partFn, x0, y0);
+  document.getElementById('pxVal').textContent = fxA.toFixed(2);
+  document.getElementById('pyVal').textContent = fyA.toFixed(2);
+  document.getElementById('gxVal').textContent = fxA.toFixed(2);
+  document.getElementById('gyVal').textContent = fyA.toFixed(2);
+}
+
+// ========== 3. TOTAL DIFFERENTIAL ==========
+let totalFn = 'paraboloid';
+document.querySelectorAll('#totalFuncs .func-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#totalFuncs .func-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    totalFn = btn.dataset.fn;
+    render();
+  });
+});
+
+function drawTotal() {
+  const { c, ctx } = canvas3d('cvTotal');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const x0 = +document.getElementById('tX').value / 100;
+  const y0 = +document.getElementById('tY').value / 100;
+  const dx = +document.getElementById('tDx').value / 100;
+  const dy = +document.getElementById('tDy').value / 100;
+  document.getElementById('vtX').textContent = x0.toFixed(2);
+  document.getElementById('vtY').textContent = y0.toFixed(2);
+  document.getElementById('vtDx').textContent = dx.toFixed(2);
+  document.getElementById('vtDy').textContent = dy.toFixed(2);
+
+  const theta = 40, phi = 30, sc = 90;
+  const cx = W / 2, cy = H / 2 + 40;
+  const N = 24, range = 2;
+
+  // Surface
+  for (let j = 0; j <= N; j++) {
+    ctx.beginPath(); let first = true;
+    for (let i = 0; i <= N; i++) {
+      const x = -range + (2 * range * i) / N;
+      const y = -range + (2 * range * j) / N;
+      const z = funcs[totalFn](x, y) * 0.5;
+      const p = project(x, y, z, cx, cy, theta, phi, sc);
+      if (first) { ctx.moveTo(p.sx, p.sy); first = false; } else ctx.lineTo(p.sx, p.sy);
+    }
+    ctx.strokeStyle = 'rgba(59,130,246,0.2)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  for (let i = 0; i <= N; i++) {
+    ctx.beginPath(); let first = true;
+    for (let j = 0; j <= N; j++) {
+      const x = -range + (2 * range * i) / N;
+      const y = -range + (2 * range * j) / N;
+      const z = funcs[totalFn](x, y) * 0.5;
+      const p = project(x, y, z, cx, cy, theta, phi, sc);
+      if (first) { ctx.moveTo(p.sx, p.sy); first = false; } else ctx.lineTo(p.sx, p.sy);
+    }
+    ctx.strokeStyle = 'rgba(59,130,246,0.2)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  const z0 = funcs[totalFn](x0, y0) * 0.5;
+  const fx = partialX(totalFn, x0, y0);
+  const fy = partialY(totalFn, x0, y0);
+
+  // Tangent plane
+  const planeN = 16, planeR = 1.2;
+  for (let j = 0; j <= planeN; j++) {
+    ctx.beginPath(); let first = true;
+    for (let i = 0; i <= planeN; i++) {
+      const u = -planeR + (2 * planeR * i) / planeN;
+      const v = -planeR + (2 * planeR * j) / planeN;
+      const px = x0 + u, py = y0 + v;
+      const pz = z0 + fx * u * 0.5 + fy * v * 0.5;
+      const p = project(px, py, pz, cx, cy, theta, phi, sc);
+      if (first) { ctx.moveTo(p.sx, p.sy); first = false; } else ctx.lineTo(p.sx, p.sy);
+    }
+    ctx.strokeStyle = 'rgba(236,72,153,0.2)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  for (let i = 0; i <= planeN; i++) {
+    ctx.beginPath(); let first = true;
+    for (let j = 0; j <= planeN; j++) {
+      const u = -planeR + (2 * planeR * i) / planeN;
+      const v = -planeR + (2 * planeR * j) / planeN;
+      const px = x0 + u, py = y0 + v;
+      const pz = z0 + fx * u * 0.5 + fy * v * 0.5;
+      const p = project(px, py, pz, cx, cy, theta, phi, sc);
+      if (first) { ctx.moveTo(p.sx, p.sy); first = false; } else ctx.lineTo(p.sx, p.sy);
+    }
+    ctx.strokeStyle = 'rgba(236,72,153,0.2)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  // Points
+  const pt0 = project(x0, y0, z0, cx, cy, theta, phi, sc);
+  const x1 = x0 + dx, y1 = y0 + dy;
+  const z1actual = funcs[totalFn](x1, y1) * 0.5;
+  const z1linear = z0 + fx * dx * 0.5 + fy * dy * 0.5;
+
+  const ptA = project(x1, y1, z1actual, cx, cy, theta, phi, sc);
+  const ptL = project(x1, y1, z1linear, cx, cy, theta, phi, sc);
+
+  // Δf line (actual)
+  ctx.beginPath(); ctx.moveTo(pt0.sx, pt0.sy); ctx.lineTo(ptA.sx, ptA.sy);
+  ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2.5; ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
+
+  // dz line (linear)
+  ctx.beginPath(); ctx.moveTo(pt0.sx, pt0.sy); ctx.lineTo(ptL.sx, ptL.sy);
+  ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 2.5; ctx.stroke();
+
+  // Points
+  ctx.beginPath(); ctx.arc(pt0.sx, pt0.sy, 6, 0, 2 * PI); ctx.fillStyle = '#fbbf24'; ctx.fill();
+  ctx.beginPath(); ctx.arc(ptA.sx, ptA.sy, 5, 0, 2 * PI); ctx.fillStyle = '#f59e0b'; ctx.fill();
+  ctx.beginPath(); ctx.arc(ptL.sx, ptL.sy, 5, 0, 2 * PI); ctx.fillStyle = '#06b6d4'; ctx.fill();
+
+  // Labels
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#fbbf24'; ctx.fillText('P₀', pt0.sx + 8, pt0.sy - 8);
+  ctx.fillStyle = '#f59e0b'; ctx.fillText('实际', ptA.sx + 8, ptA.sy);
+  ctx.fillStyle = '#06b6d4'; ctx.fillText('线性', ptL.sx + 8, ptL.sy + 14);
+
+  // Steps
+  const f0 = funcs[totalFn](x0, y0);
+  const f1 = funcs[totalFn](x1, y1);
+  const df = f1 - f0;
+  const dz = fx * dx + fy * dy;
+  const err = abs(df - dz);
+
+  document.getElementById('tsF0').textContent = f0.toFixed(4);
+  document.getElementById('tsF1').textContent = f1.toFixed(4);
+  document.getElementById('tsDf').textContent = df.toFixed(4);
+  document.getElementById('tsDz').textContent = dz.toFixed(4);
+  document.getElementById('tsErr').textContent = err.toFixed(4);
+}
+
+// ========== 4. CONTOUR ==========
+let contourFn = 'paraboloid';
+document.querySelectorAll('#contourFuncs .func-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#contourFuncs .func-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    contourFn = btn.dataset.fn;
+    render();
+  });
+});
+
+function drawContour() {
+  const { c, ctx } = canvas3d('cvContour');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const x0 = +document.getElementById('cX').value / 100;
+  const y0 = +document.getElementById('cY').value / 100;
+  const levels = +document.getElementById('cLevels').value;
+  document.getElementById('vcX').textContent = x0.toFixed(2);
+  document.getElementById('vcY').textContent = y0.toFixed(2);
+  document.getElementById('vcLevels').textContent = levels;
+
+  const cx = W / 2, cy = H / 2;
+  const range = 3, sc = (W / 2 - 40) / range;
+
+  const toScreen = (x, y) => ({ sx: cx + x * sc, sy: cy - y * sc });
+
+  // Find z range
+  let zMin = Infinity, zMax = -Infinity;
+  const res = 80;
+  for (let i = 0; i <= res; i++) {
+    for (let j = 0; j <= res; j++) {
+      const x = -range + (2 * range * i) / res;
+      const y = -range + (2 * range * j) / res;
+      const z = funcs[contourFn](x, y);
+      if (z < zMin) zMin = z;
+      if (z > zMax) zMax = z;
+    }
+  }
+
+  // Marching squares for contour lines
+  const nLevels = levels;
+  const colors = ['#3b82f6','#6366f1','#8b5cf6','#a855f7','#d946ef','#ec4899','#f43f5e','#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#14b8a6','#06b6d4','#0ea5e9','#3b82f6','#6366f1','#8b5cf6','#a855f7','#d946ef','#ec4899','#f43f5e','#ef4444'];
+
+  for (let lv = 0; lv < nLevels; lv++) {
+    const zLevel = zMin + (zMax - zMin) * (lv + 1) / (nLevels + 1);
+    ctx.beginPath();
+    const step = (2 * range) / res;
+    for (let i = 0; i < res; i++) {
+      for (let j = 0; j < res; j++) {
+        const x = -range + i * step;
+        const y = -range + j * step;
+        const z00 = funcs[contourFn](x, y);
+        const z10 = funcs[contourFn](x + step, y);
+        const z01 = funcs[contourFn](x, y + step);
+        const z11 = funcs[contourFn](x + step, y + step);
+
+        const b00 = z00 >= zLevel ? 1 : 0;
+        const b10 = z10 >= zLevel ? 1 : 0;
+        const b01 = z01 >= zLevel ? 1 : 0;
+        const b11 = z11 >= zLevel ? 1 : 0;
+        const code = b00 | (b10 << 1) | (b01 << 2) | (b11 << 3);
+        if (code === 0 || code === 15) continue;
+
+        const lerp = (a, b, va, vb) => {
+          if (abs(vb - va) < 1e-10) return (a + b) / 2;
+          return a + (zLevel - va) / (vb - va) * (b - a);
+        };
+
+        const segments = [];
+        const bottom = { x: lerp(x, x + step, z00, z10), y };
+        const top = { x: lerp(x, x + step, z01, z11), y: y + step };
+        const left = { x, y: lerp(y, y + step, z00, z01) };
+        const right = { x: x + step, y: lerp(y, y + step, z10, z11) };
+
+        const addSeg = (a, b) => { const sa = toScreen(a.x, a.y), sb = toScreen(b.x, b.y); ctx.moveTo(sa.sx, sa.sy); ctx.lineTo(sb.sx, sb.sy); };
+
+        switch (code) {
+          case 1: case 14: addSeg(bottom, left); break;
+          case 2: case 13: addSeg(bottom, right); break;
+          case 3: case 12: addSeg(left, right); break;
+          case 4: case 11: addSeg(top, left); break;
+          case 5: case 10: addSeg(bottom, top); break;
+          case 6: case 9: addSeg(bottom, left); addSeg(top, right); break;
+          case 7: case 8: addSeg(top, right); break;
+        }
+      }
+    }
+    ctx.strokeStyle = colors[lv % colors.length];
+    ctx.lineWidth = 1.2;
+    ctx.globalAlpha = 0.6;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5;
+  for (let x = -range; x <= range; x++) {
+    const s = toScreen(x, -range), e = toScreen(x, range);
+    ctx.beginPath(); ctx.moveTo(s.sx, s.sy); ctx.lineTo(e.sx, e.sy); ctx.stroke();
+  }
+  for (let y = -range; y <= range; y++) {
+    const s = toScreen(-range, y), e = toScreen(range, y);
+    ctx.beginPath(); ctx.moveTo(s.sx, s.sy); ctx.lineTo(e.sx, e.sy); ctx.stroke();
+  }
+
+  // Gradient vector at point
+  const fx = partialX(contourFn, x0, y0);
+  const fy = partialY(contourFn, x0, y0);
+  const mag = sqrt(fx * fx + fy * fy);
+  const pt = toScreen(x0, y0);
+  const gradScale = sc * 0.4 / Math.max(mag, 0.01);
+  const gEnd = toScreen(x0 + fx * 0.4 / Math.max(mag, 0.01), y0 + fy * 0.4 / Math.max(mag, 0.01));
+
+  // Gradient arrow
+  ctx.beginPath(); ctx.moveTo(pt.sx, pt.sy); ctx.lineTo(gEnd.sx, gEnd.sy);
+  ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3; ctx.stroke();
+  // Arrowhead
+  const angle = Math.atan2(-(gEnd.sy - pt.sy), gEnd.sx - pt.sx);
+  ctx.beginPath();
+  ctx.moveTo(gEnd.sx, gEnd.sy);
+  ctx.lineTo(gEnd.sx - 10 * cos(angle - 0.4), gEnd.sy + 10 * sin(angle - 0.4));
+  ctx.lineTo(gEnd.sx - 10 * cos(angle + 0.4), gEnd.sy + 10 * sin(angle + 0.4));
+  ctx.closePath();
+  ctx.fillStyle = '#ef4444'; ctx.fill();
+
+  // Point
+  ctx.beginPath(); ctx.arc(pt.sx, pt.sy, 7, 0, 2 * PI);
+  ctx.fillStyle = '#06b6d4'; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+
+  // Info
+  const fVal = funcs[contourFn](x0, y0);
+  const ang = Math.atan2(fy, fx) * 180 / PI;
+  document.getElementById('cfVal').textContent = fVal.toFixed(3);
+  document.getElementById('cgxVal').textContent = fx.toFixed(3);
+  document.getElementById('cgyVal').textContent = fy.toFixed(3);
+  document.getElementById('cmagVal').textContent = mag.toFixed(3);
+  document.getElementById('cangVal').textContent = ang.toFixed(1) + '°';
+}
+
+// ========== QUIZ ==========
+const quizData = [
+  { q: '设 f(x,y) = x²y + y³，则 ∂f/∂x = ?', opts: ['2xy', 'x² + 3y²', '2xy + 3y²', 'x²y'], ans: 0, explain: '对 x 求偏导时，将 y 视为常数：∂/∂x(x²y) = 2xy，∂/∂x(y³) = 0，所以 ∂f/∂x = 2xy。' },
+  { q: '函数 f(x,y) = e^(xy) 在点 (1,0) 处的梯度是？', opts: ['(0, 1)', '(1, 0)', '(0, 0)', '(1, 1)'], ans: 0, explain: '∂f/∂x = ye^(xy)，在(1,0)处 = 0·1 = 0；∂f/∂y = xe^(xy)，在(1,0)处 = 1·1 = 1。梯度 = (0, 1)。' },
+  { q: '全微分 dz = ∂f/∂x·dx + ∂f/∂y·dy 的几何意义是？', opts: ['曲面的面积', '切平面上 z 的增量', '曲线的弧长', '方向导数'], ans: 1, explain: '全微分 dz 是切平面上对应点的 z 增量，是 Δf 的线性主部（最佳线性近似）。' },
+  { q: '梯度 ∇f 与等高线的关系是？', opts: ['平行', '垂直', '成45°角', '无关'], ans: 1, explain: '梯度方向始终垂直于等高线，指向函数值增长最快的方向。' },
+  { q: 'f(x,y) = x² − y² 在 (0,0) 点是？', opts: ['极大值点', '极小值点', '鞍点', '拐点'], ans: 2, explain: '沿 x 方向 f 增大（x²），沿 y 方向 f 减小（−y²），所以 (0,0) 是鞍点，既非极大也非极小。' },
+  { q: '设 f(x,y) = ln(x²+y²)，则 ∂f/∂x = ?', opts: ['2x/(x²+y²)', '1/(x²+y²)', 'x/(x²+y²)', '2/(x²+y²)'], ans: 0, explain: '链式法则：∂/∂x[ln(x²+y²)] = 1/(x²+y²) · 2x = 2x/(x²+y²)。' },
+  { q: '方向导数最大的方向是？', opts: ['等高线方向', '梯度方向', '负梯度方向', '任意方向'], ans: 1, explain: '方向导数在梯度方向取最大值 |∇f|，在负梯度方向取最小值 −|∇f|。' },
+  { q: 'f(x,y) = x³ + y³ − 3xy 的驻点满足？', opts: ['3x²−3y=0 且 3y²−3x=0', 'x²=y 且 y²=x', '前两个都对', 'x=y=0'], ans: 2, explain: '∂f/∂x = 3x²−3y = 0 → x²=y；∂f/∂y = 3y²−3x = 0 → y²=x。两个条件等价于 x²=y 且 y²=x，解为 (0,0) 和 (1,1)。' },
+];
+
+let quizAnswered = [];
+function renderQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  quizAnswered = new Array(quizData.length).fill(null);
+  quizData.forEach((q, qi) => {
+    const div = document.createElement('div');
+    div.className = 'quiz';
+    div.style.marginBottom = '14px';
+    div.innerHTML = `<div class="quiz-q"><b>第${qi + 1}题</b> ${q.q}</div><div class="quiz-opts" id="qopts-${qi}"></div><div class="quiz-explain" id="qexp-${qi}">${q.explain}</div>`;
+    container.appendChild(div);
+    const optsDiv = div.querySelector('.quiz-opts');
+    q.opts.forEach((opt, oi) => {
+      const btn = document.createElement('div');
+      btn.className = 'quiz-opt';
+      btn.textContent = String.fromCharCode(65 + oi) + '. ' + opt;
+      btn.onclick = () => {
+        if (quizAnswered[qi] !== null) return;
+        quizAnswered[qi] = oi;
+        btn.classList.add(oi === q.ans ? 'correct' : 'wrong');
+        if (oi !== q.ans) optsDiv.children[q.ans].classList.add('correct');
+        document.getElementById('qexp-' + qi).classList.add('show');
+        updateScore();
+      };
+      optsDiv.appendChild(btn);
+    });
+  });
+}
+
+function updateScore() {
+  const answered = quizAnswered.filter(a => a !== null).length;
+  const correct = quizAnswered.filter((a, i) => a === quizData[i].ans).length;
+  const scoreEl = document.getElementById('quizScore');
+  scoreEl.textContent = `已答 ${answered}/${quizData.length}，正确 ${correct}`;
+  // 进度追踪：全部作答且答对 ≥75% 时标记完成
+  if (typeof PageProgress !== 'undefined' && answered === quizData.length && correct >= Math.ceil(quizData.length * 0.75) && !PageProgress.isDone('multivariable')) {
+    PageProgress.markDone('multivariable');
+    scoreEl.innerHTML += ' <span style="color:#fbbf24">✅ 已掌握</span>';
+  }
+}
+
+function resetQuiz() { renderQuiz(); document.getElementById('quizScore').textContent = ''; }
+
+// ========== RENDER LOOP ==========
+function render() {
+  if (currentTab === 'surface') drawSurface();
+  else if (currentTab === 'partial') drawPartial();
+  else if (currentTab === 'total') drawTotal();
+  else if (currentTab === 'contour') drawContour();
+  else if (currentTab === 'quiz') renderQuiz();
+}
+
+// Slider events
+['sTheta','sPhi','sZoom','pX','pY','pTheta','tX','tY','tDx','tDy','cX','cY','cLevels'].forEach(id => {
+  document.getElementById(id).addEventListener('input', render);
+});
+
+// Init
+render();
+renderQuiz();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

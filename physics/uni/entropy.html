@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>热力学第二定律与熵 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #a855f7;
+    --hot: #ef4444;
+    --warm: #f97316;
+    --cool: #3b82f6;
+    --cold: #6366f1;
+    --energy: #eab308;
+    --entropy: #a855f7;
+    --info: #06b6d4;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .back { display:inline-block; margin-bottom: 12px; color: #c4b5fd; text-decoration: none; font-size: 14px; }
+  .back:hover { color: #e9d5ff; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--entropy), var(--info), var(--energy)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(168,85,247,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); touch-action: manipulation; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.1rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.8; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .btn-row { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: #e2e8f0; cursor: pointer; font-size: 13px; transition: all .2s; min-height: 36px; }
+  .btn:hover { background: rgba(255,255,255,0.12); }
+  .btn.primary { background: var(--primary); border-color: var(--primary); }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.entropy { border-color: var(--entropy); }
+  .concept-card.info { border-color: var(--info); }
+  .concept-card.hot { border-color: var(--hot); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; font-size: 12px; color: #94a3b8; }
+  .legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+  .legend .l-hot::before { background: var(--hot); }
+  .legend .l-cool::before { background: var(--cool); }
+  .legend .l-energy::before { background: var(--energy); }
+  .legend .l-entropy::before { background: var(--entropy); }
+  .legend .l-info::before { background: var(--info); }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(168,85,247,0.08); border-radius: 12px; border: 1px solid rgba(168,85,247,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 36px; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; min-height: 36px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .score-badge { display: inline-block; padding: 4px 12px; background: rgba(168,85,247,0.2); border-radius: 999px; font-size: 12px; color: var(--primary); margin-left: 8px; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back" href="index.html">← 返回大学物理</a>
+  <header>
+    <h1>♾️ 热力学第二定律与熵</h1>
+    <p>卡诺循环 · 熵增原理 · 麦克斯韦妖 · 信息熵</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="carnot">🔄 卡诺循环</div>
+    <div class="tab" data-mode="mixing">🎲 熵增·自由膨胀</div>
+    <div class="tab" data-mode="demon">😈 麦克斯韦妖</div>
+    <div class="tab" data-mode="shannon">📡 信息熵</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="600" height="450"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>知识可视化 · 大学物理 · 热力学第二定律与熵</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
+const legendEl = document.getElementById('legend');
+
+let mode = 'carnot';
+let animId = null;
+let time = 0;
+
+// ── Tab switching ──
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    initMode();
+  });
+});
+
+function initMode() {
+  if (mode === 'carnot') initCarnot();
+  else if (mode === 'mixing') initMixing();
+  else if (mode === 'demon') initDemon();
+  else if (mode === 'shannon') initShannon();
+  else if (mode === 'quiz') initQuiz();
+}
+
+// ═══════════════════════════════════════════════
+// MODE 1: 卡诺循环 (Carnot Cycle)
+// ═══════════════════════════════════════════════
+let carnotT = 0;         // 0~1 phase along cycle
+let carnotSpeed = 0.004;
+let Th = 600;            // 高温热源 K
+let Tc = 300;            // 低温热源 K
+let carnotPath = [];     // P-V path cache
+
+function carnotEfficiency() { return 1 - Tc / Th; }
+
+// Build P-V path: isothermal expand → adiabatic expand → isothermal compress → adiabatic compress
+function buildCarnotPath() {
+  carnotPath = [];
+  const V1 = 1, nR = 1;
+  const V2 = 2;                       // isothermal expansion at Th: V1→V2
+  const V3 = V2 * Math.pow(Th / Tc, 1 / (5/3 - 1));  // adiabatic expansion Th→Tc (γ=5/3)
+  const V4 = V1 * Math.pow(Th / Tc, 1 / (5/3 - 1));  // adiabatic compression Tc→Th
+  // stage A: isothermal expansion at Th (V1→V2)
+  for (let i = 0; i <= 30; i++) {
+    const V = V1 + (V2 - V1) * i / 30;
+    carnotPath.push({ V, P: nR * Th / V, T: Th, stage: 'A' });
+  }
+  // stage B: adiabatic expansion (V2→V3, Th→Tc)
+  for (let i = 1; i <= 30; i++) {
+    const V = V2 + (V3 - V2) * i / 30;
+    const T = Th * Math.pow(V2 / V, 5/3 - 1);
+    carnotPath.push({ V, P: nR * T / V, T, stage: 'B' });
+  }
+  // stage C: isothermal compression at Tc (V3→V4)
+  for (let i = 1; i <= 30; i++) {
+    const V = V3 + (V4 - V3) * i / 30;
+    carnotPath.push({ V, P: nR * Tc / V, T: Tc, stage: 'C' });
+  }
+  // stage D: adiabatic compression (V4→V1, Tc→Th)
+  for (let i = 1; i <= 30; i++) {
+    const V = V4 + (V1 - V4) * i / 30;
+    const T = Tc * Math.pow(V4 / V, 5/3 - 1);
+    carnotPath.push({ V, P: nR * T / V, T, stage: 'D' });
+  }
+}
+
+function drawCarnot() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+  const pad = 50;
+  const cw = W - pad * 2, ch = H - pad * 2;
+
+  // Axes
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad);
+  ctx.lineTo(pad, H - pad);
+  ctx.lineTo(W - pad, H - pad);
+  ctx.stroke();
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('V (体积)', W / 2, H - pad + 30);
+  ctx.save();
+  ctx.translate(pad - 30, H / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('P (压强)', 0, 0);
+  ctx.restore();
+
+  if (carnotPath.length === 0) buildCarnotPath();
+  // Rebuild when T changes
+  buildCarnotPath();
+
+  // Map P,V to canvas
+  let maxV = 0, maxP = 0;
+  carnotPath.forEach(p => { if (p.V > maxV) maxV = p.V; if (p.P > maxP) maxP = p.P; });
+  maxV *= 1.1; maxP *= 1.1;
+  const toX = v => pad + (v / maxV) * cw;
+  const toY = p => H - pad - (p / maxP) * ch;
+
+  // Fill cycle area
+  ctx.beginPath();
+  carnotPath.forEach((p, i) => { i === 0 ? ctx.moveTo(toX(p.V), toY(p.P)) : ctx.lineTo(toX(p.V), toY(p.P)); });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(168,85,247,0.15)';
+  ctx.fill();
+
+  // Stage colors
+  const stageColors = { A: '#ef4444', B: '#f97316', C: '#3b82f6', D: '#6366f1' };
+  const stageNames = { A: 'A 等温膨胀', B: 'B 绝热膨胀', C: 'C 等温压缩', D: 'D 绝热压缩' };
+  for (let i = 0; i < carnotPath.length - 1; i++) {
+    const p1 = carnotPath[i], p2 = carnotPath[i + 1];
+    ctx.strokeStyle = stageColors[p1.stage];
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(toX(p1.V), toY(p1.P));
+    ctx.lineTo(toX(p2.V), toY(p2.P));
+    ctx.stroke();
+  }
+
+  // Moving piston point
+  const idx = Math.floor(carnotT * (carnotPath.length - 1));
+  const cur = carnotPath[idx];
+  const cx = toX(cur.V), cy = toY(cur.P);
+  const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, 14);
+  grad.addColorStop(0, '#fff');
+  grad.addColorStop(1, 'rgba(168,85,247,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = stageColors[cur.stage];
+  ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fill();
+
+  // Stage label
+  ctx.fillStyle = stageColors[cur.stage];
+  ctx.font = 'bold 15px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(stageNames[cur.stage], pad + 10, pad + 22);
+
+  // Stage description & values
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '13px sans-serif';
+  ctx.fillText(`T = ${cur.T.toFixed(0)} K   V = ${cur.V.toFixed(2)}   P = ${cur.P.toFixed(2)}`, pad + 10, pad + 44);
+
+  // Corner efficiency
+  const eta = carnotEfficiency();
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(`η = 1 - Tc/Th = ${(eta * 100).toFixed(1)}%`, W - pad - 10, pad + 22);
+
+  // Animate
+  carnotT = (carnotT + carnotSpeed) % 1;
+}
+
+function carnotPanel() {
+  return `
+    <h3>🔄 卡诺循环</h3>
+    <div class="equation">η = 1 − T<sub>c</sub>/T<sub>h</sub></div>
+    <div class="slider-row">
+      <label>高温热源 Th</label>
+      <input type="range" id="thSlider" min="400" max="900" step="10" value="${Th}">
+      <span class="val" id="thVal">${Th} K</span>
+    </div>
+    <div class="slider-row">
+      <label>低温热源 Tc</label>
+      <input type="range" id="tcSlider" min="200" max="500" step="10" value="${Tc}">
+      <span class="val" id="tcVal">${Tc} K</span>
+    </div>
+    <div class="info-grid">
+      <div><b>效率 η</b><br>${(carnotEfficiency() * 100).toFixed(1)}%</div>
+      <div><b>温差 ΔT</b><br>${Th - Tc} K</div>
+    </div>
+    <div class="concept-card entropy">
+      <div class="title">卡诺定理</div>
+      所有工作在两个恒温热源之间的热机，以可逆卡诺热机效率最高；其效率只取决于两个热源的温度，与工作物质无关。
+    </div>
+    <div class="concept-card hot">
+      <div class="title">四个冲程</div>
+      A 等温膨胀（吸热 Q<sub>h</sub>）→ B 绝热膨胀（降温到 Tc）→ C 等温压缩（放热 Q<sub>c</sub>）→ D 绝热压缩（升温回 Th）。
+    </div>
+  `;
+}
+
+function bindCarnot() {
+  const th = document.getElementById('thSlider');
+  const tc = document.getElementById('tcSlider');
+  th.addEventListener('input', e => {
+    Th = +e.target.value;
+    if (Tc >= Th - 50) { Tc = Th - 50; tc.value = Tc; }
+    document.getElementById('thVal').textContent = Th + ' K';
+    document.getElementById('tcVal').textContent = Tc + ' K';
+    panel.innerHTML = carnotPanel(); bindCarnot();
+  });
+  tc.addEventListener('input', e => {
+    Tc = +e.target.value;
+    if (Tc >= Th - 50) { Th = Tc + 50; th.value = Th; }
+    document.getElementById('thVal').textContent = Th + ' K';
+    document.getElementById('tcVal').textContent = Tc + ' K';
+    panel.innerHTML = carnotPanel(); bindCarnot();
+  });
+}
+
+function initCarnot() {
+  legendEl.innerHTML = `
+    <span class="l-hot">A 等温膨胀（吸热）</span>
+    <span class="l-energy">B 绝热膨胀</span>
+    <span class="l-cool">C 等温压缩（放热）</span>
+    <span class="l-entropy">D 绝热压缩</span>`;
+  panel.innerHTML = carnotPanel();
+  bindCarnot();
+}
+
+// ═══════════════════════════════════════════════
+// MODE 2: 熵增·自由膨胀 (Free Expansion / Mixing)
+// ═══════════════════════════════════════════════
+let mixParticles = [];
+let mixStarted = false;
+let mixTime = 0;
+let mixN = 80;
+
+function initMixingGrid() {
+  mixParticles = [];
+  mixTime = 0;
+  mixStarted = false;
+  // Left half: hot (red), right half empty (vacuum)
+  for (let i = 0; i < mixN; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const sp = 1 + Math.random() * 1.5;
+    mixParticles.push({
+      x: 30 + Math.random() * (canvas.width / 2 - 60),
+      y: 60 + Math.random() * (canvas.height - 120),
+      vx: Math.cos(angle) * sp,
+      vy: Math.sin(angle) * sp,
+      r: 3.5,
+      color: '#ef4444',
+    });
+  }
+}
+
+function computeMixingEntropy() {
+  // 8x6 grid → Ω = number of occupied left cells vs total
+  const cols = 8, rows = 6;
+  const cw = canvas.width / cols, chh = canvas.height / rows;
+  let leftCount = 0;
+  mixParticles.forEach(p => { if (p.x < canvas.width / 2) leftCount++; });
+  const frac = leftCount / mixParticles.length;
+  // 简化 Shannon 熵
+  let S = 0;
+  if (frac > 0 && frac < 1) S = -frac * Math.log2(frac) - (1 - frac) * Math.log2(1 - frac);
+  return { frac, S };
+}
+
+function updateMixing() {
+  if (!mixStarted) return;
+  mixTime += 1 / 60;
+  mixParticles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.x < p.r + 10) { p.x = p.r + 10; p.vx = Math.abs(p.vx); }
+    if (p.x > canvas.width - p.r - 10) { p.x = canvas.width - p.r - 10; p.vx = -Math.abs(p.vx); }
+    if (p.y < p.r + 10) { p.y = p.r + 10; p.vy = Math.abs(p.vy); }
+    if (p.y > canvas.height - p.r - 10) { p.y = canvas.height - p.r - 10; p.vy = -Math.abs(p.vy); }
+  });
+}
+
+function drawMixing() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+  // Container
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 10, W - 20, H - 20);
+  // Middle partition (transparent if started)
+  if (!mixStarted) {
+    ctx.strokeStyle = '#fbbf24';
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(W / 2, 10); ctx.lineTo(W / 2, H - 10);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('⏸ 隔板（点击"抽开隔板"开始）', W / 2, H / 2 - 80);
+  } else {
+    // Fading partition
+    const alpha = Math.max(0, 1 - mixTime / 0.5);
+    if (alpha > 0) {
+      ctx.strokeStyle = `rgba(251,191,36,${alpha * 0.5})`;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.moveTo(W / 2, 10); ctx.lineTo(W / 2, H - 10);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  // Particles
+  mixParticles.forEach(p => {
+    const grad = ctx.createRadialGradient(p.x - 1, p.y - 1, 0.5, p.x, p.y, p.r);
+    grad.addColorStop(0, '#fecaca');
+    grad.addColorStop(1, p.color);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  // Statistics
+  const { frac, S } = computeMixingEntropy();
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '13px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(`左室占比 ${(frac * 100).toFixed(1)}%`, 20, 30);
+  ctx.fillText(`Shannon 熵 S = ${S.toFixed(3)} bit`, 20, 50);
+  ctx.textAlign = 'right';
+  ctx.fillText(`t = ${mixTime.toFixed(1)} s`, W - 20, 30);
+}
+
+function mixingPanel() {
+  const { frac, S } = computeMixingEntropy();
+  return `
+    <h3>🎲 自由膨胀与熵增</h3>
+    <div class="equation">ΔS = nR ln(V₂/V₁) > 0</div>
+    <div class="btn-row">
+      <button class="btn primary" id="mixStartBtn">▶ 抽开隔板</button>
+      <button class="btn" id="mixResetBtn">↺ 重置</button>
+    </div>
+    <div class="info-grid">
+      <div><b>左室占比</b><br>${(frac * 100).toFixed(1)}%</div>
+      <div><b>Shannon 熵</b><br>${S.toFixed(3)} bit</div>
+    </div>
+    <div class="concept-card entropy">
+      <div class="title">熵增原理</div>
+      孤立系统的熵永不减少。气体自由膨胀是不可逆过程，分子不会自发全部回到左室——并非物理上不可能，而是概率小到等同于不可能。
+    </div>
+    <div class="concept-card hot">
+      <div class="title">微观状态数 Ω</div>
+      玻尔兹曼熵 S = k ln Ω。扩散后分子的微观状态数呈指数级增长，因此熵增大。
+    </div>
+  `;
+}
+
+function bindMixing() {
+  document.getElementById('mixStartBtn').addEventListener('click', () => {
+    mixStarted = true;
+  });
+  document.getElementById('mixResetBtn').addEventListener('click', () => {
+    initMixingGrid();
+    panel.innerHTML = mixingPanel();
+    bindMixing();
+  });
+}
+
+function initMixing() {
+  legendEl.innerHTML = `
+    <span class="l-hot">气体分子</span>
+    <span class="l-energy">隔板</span>
+    <span class="l-entropy">熵增</span>`;
+  if (mixParticles.length === 0) initMixingGrid();
+  panel.innerHTML = mixingPanel();
+  bindMixing();
+}
+
+// ═══════════════════════════════════════════════
+// MODE 3: 麦克斯韦妖 (Maxwell's Demon)
+// ═══════════════════════════════════════════════
+let demonParticles = [];
+let demonActive = true;
+let demonTime = 0;
+let demonDoorOpen = false;
+
+function initDemonGrid() {
+  demonParticles = [];
+  demonTime = 0;
+  const N = 60;
+  for (let i = 0; i < N; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const sp = 0.5 + Math.random() * 2;
+    demonParticles.push({
+      x: 30 + Math.random() * (canvas.width - 60),
+      y: 60 + Math.random() * (canvas.height - 120),
+      vx: Math.cos(angle) * sp,
+      vy: Math.sin(angle) * sp,
+      r: 4,
+      speed: sp,
+    });
+  }
+}
+
+function updateDemon() {
+  demonTime += 1 / 60;
+  const W = canvas.width, H = canvas.height;
+  const midX = W / 2;
+  const doorY1 = H / 2 - 40, doorY2 = H / 2 + 40;
+  // Demon decides door open/closed based on fast particles approaching from left
+  demonDoorOpen = false;
+  if (demonActive) {
+    demonParticles.forEach(p => {
+      const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      const isFast = speed > 1.5;
+      // Fast particle moving right from left toward door
+      if (isFast && p.x < midX && p.vx > 0 && Math.abs(p.x - midX) < 60 && p.y > doorY1 && p.y < doorY2) demonDoorOpen = true;
+      // Slow particle moving left from right toward door
+      if (!isFast && p.x > midX && p.vx < 0 && Math.abs(p.x - midX) < 60 && p.y > doorY1 && p.y < doorY2) demonDoorOpen = true;
+    });
+  }
+  demonParticles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.x < p.r + 10) { p.x = p.r + 10; p.vx = Math.abs(p.vx); }
+    if (p.x > W - p.r - 10) { p.x = W - p.r - 10; p.vx = -Math.abs(p.vx); }
+    if (p.y < p.r + 10) { p.y = p.r + 10; p.vy = Math.abs(p.vy); }
+    if (p.y > H - p.r - 10) { p.y = H - p.r - 10; p.vy = -Math.abs(p.vy); }
+    // Wall collision at mid
+    const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+    const isFast = speed > 1.5;
+    if (Math.abs(p.x - midX) < p.r + 2) {
+      // In door region?
+      const inDoorY = p.y > doorY1 && p.y < doorY2;
+      if (!inDoorY) {
+        // Bounce on wall
+        if (p.x < midX) { p.x = midX - p.r - 2; p.vx = -Math.abs(p.vx); }
+        else { p.x = midX + p.r + 2; p.vx = Math.abs(p.vx); }
+      } else if (!demonDoorOpen) {
+        // Door closed
+        if (p.x < midX) { p.x = midX - p.r - 2; p.vx = -Math.abs(p.vx); }
+        else { p.x = midX + p.r + 2; p.vx = Math.abs(p.vx); }
+      } else if (demonActive) {
+        // Demon lets pass only based on rule
+        if (p.x < midX && p.vx > 0 && !isFast) { p.x = midX - p.r - 2; p.vx = -Math.abs(p.vx); }
+        if (p.x > midX && p.vx < 0 && isFast) { p.x = midX + p.r + 2; p.vx = Math.abs(p.vx); }
+      }
+    }
+  });
+}
+
+function drawDemon() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+  const midX = W / 2;
+  const doorY1 = H / 2 - 40, doorY2 = H / 2 + 40;
+  // Container
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 10, W - 20, H - 20);
+  // Middle wall (with door gap)
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(midX, 10); ctx.lineTo(midX, doorY1);
+  ctx.moveTo(midX, doorY2); ctx.lineTo(midX, H - 10);
+  ctx.stroke();
+  // Door
+  ctx.strokeStyle = demonDoorOpen ? '#10b981' : '#ef4444';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(midX, doorY1); ctx.lineTo(midX, doorY2);
+  ctx.stroke();
+  // Demon emoji
+  ctx.font = '28px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('😈', midX, doorY1 - 12);
+  // Particles colored by speed
+  demonParticles.forEach(p => {
+    const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+    const t = Math.min(1, speed / 2.5);
+    const r = Math.round(59 + 196 * t);
+    const g = Math.round(130 - 80 * t);
+    const b = Math.round(246 - 176 * t);
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  // Count fast/slow on each side
+  let leftFast = 0, leftSlow = 0, rightFast = 0, rightSlow = 0;
+  demonParticles.forEach(p => {
+    const sp = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+    const fast = sp > 1.5;
+    if (p.x < midX) { fast ? leftFast++ : leftSlow++; }
+    else { fast ? rightFast++ : rightSlow++; }
+  });
+  // HUD
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '13px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(`左室 快:${leftFast} 慢:${leftSlow}`, 20, 30);
+  ctx.textAlign = 'right';
+  ctx.fillText(`右室 快:${rightFast} 慢:${rightSlow}`, W - 20, 30);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = demonDoorOpen ? '#10b981' : '#94a3b8';
+  ctx.fillText(demonDoorOpen ? '🚪 门开' : '🚪 门关', midX, H - 20);
+}
+
+function demonPanel() {
+  return `
+    <h3>😈 麦克斯韦妖</h3>
+    <div class="equation">ΔS<sub>妖</sub> ≥ k·ln 2 / bit</div>
+    <div class="btn-row">
+      <button class="btn ${demonActive ? 'primary' : ''}" id="demonToggleBtn">${demonActive ? '😈 妖：开' : '😴 妖：关'}</button>
+      <button class="btn" id="demonResetBtn">↺ 重置</button>
+    </div>
+    <div class="concept-card entropy">
+      <div class="title">思想实验</div>
+      1867 年 Maxwell 提出：一个"妖"守在门边，只让快分子进左室、慢分子进右室，似乎不耗功就能制造温差，违反热力学第二定律？
+    </div>
+    <div class="concept-card info">
+      <div class="title">Landauer 原理</div>
+      解答：妖必须<b>擦除记忆</b>才能持续工作。每擦除 1 bit 信息至少产生 k·ln2 的熵，正好抵消它减少的熵——信息也是物理的。
+    </div>
+  `;
+}
+
+function bindDemon() {
+  document.getElementById('demonToggleBtn').addEventListener('click', () => {
+    demonActive = !demonActive;
+    panel.innerHTML = demonPanel();
+    bindDemon();
+  });
+  document.getElementById('demonResetBtn').addEventListener('click', () => {
+    initDemonGrid();
+  });
+}
+
+function initDemon() {
+  legendEl.innerHTML = `
+    <span class="l-hot">快分子（红）</span>
+    <span class="l-cool">慢分子（蓝）</span>
+    <span class="l-entropy">妖的门</span>`;
+  if (demonParticles.length === 0) initDemonGrid();
+  panel.innerHTML = demonPanel();
+  bindDemon();
+}
+
+// ═══════════════════════════════════════════════
+// MODE 4: 信息熵 (Shannon Entropy)
+// ═══════════════════════════════════════════════
+let shannonDist = [0.5, 0.25, 0.125, 0.125];  // 4-symbol distribution
+let shannonText = '';
+let shannonSamples = [];
+
+function shannonEntropy(p) {
+  let H = 0;
+  p.forEach(pi => { if (pi > 0) H -= pi * Math.log2(pi); });
+  return H;
+}
+
+function shannonSamplesGen() {
+  const symbols = ['A', 'B', 'C', 'D'];
+  shannonSamples = [];
+  for (let i = 0; i < 60; i++) {
+    const r = Math.random();
+    let acc = 0;
+    for (let s = 0; s < symbols.length; s++) {
+      acc += shannonDist[s];
+      if (r < acc) { shannonSamples.push(symbols[s]); break; }
+    }
+  }
+  shannonText = shannonSamples.join('');
+}
+
+function drawShannon() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+  const pad = 40;
+  const cw = W - pad * 2;
+  const barW = cw / shannonDist.length * 0.6;
+  const gap = cw / shannonDist.length * 0.4;
+  const maxH = H - 200;
+  // Bars
+  const colors = ['#ef4444', '#f97316', '#3b82f6', '#a855f7'];
+  const symbols = ['A', 'B', 'C', 'D'];
+  for (let i = 0; i < shannonDist.length; i++) {
+    const x = pad + i * (barW + gap) + gap / 2;
+    const h = shannonDist[i] * maxH;
+    const y = H - 100 - h;
+    const grad = ctx.createLinearGradient(0, y, 0, H - 100);
+    grad.addColorStop(0, colors[i]);
+    grad.addColorStop(1, colors[i] + '40');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, y, barW, h);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(symbols[i], x + barW / 2, H - 80);
+    ctx.font = '12px monospace';
+    ctx.fillText((shannonDist[i] * 100).toFixed(1) + '%', x + barW / 2, y - 8);
+  }
+  // Entropy line
+  const Hcur = shannonEntropy(shannonDist);
+  const Hmax = Math.log2(shannonDist.length);
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`H = ${Hcur.toFixed(3)} bit / 符号    (最大 ${Hmax.toFixed(2)} bit)`, W / 2, 30);
+  // Sample text
+  if (shannonText) {
+    ctx.font = '11px monospace';
+    ctx.fillStyle = '#94a3b8';
+    ctx.textAlign = 'left';
+    const lines = [];
+    for (let i = 0; i < shannonText.length; i += 50) lines.push(shannonText.slice(i, i + 50));
+    lines.forEach((ln, i) => ctx.fillText(ln, pad, H - 50 + i * 14));
+  }
+}
+
+function shannonPanel() {
+  const H = shannonEntropy(shannonDist);
+  return `
+    <h3>📡 Shannon 信息熵</h3>
+    <div class="equation">H = −Σ p<sub>i</sub> log₂ p<sub>i</sub></div>
+    <div class="slider-row">
+      <label>P(A)</label>
+      <input type="range" id="pA" min="5" max="90" step="5" value="${shannonDist[0] * 100}">
+      <span class="val" id="pAVal">${(shannonDist[0] * 100).toFixed(0)}%</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="shannonSampleBtn">🎲 重新采样</button>
+      <button class="btn" id="shannonUniformBtn">⚖️ 均匀分布</button>
+    </div>
+    <div class="info-grid">
+      <div><b>当前熵</b><br>${H.toFixed(3)} bit</div>
+      <div><b>最大熵</b><br>${Math.log2(shannonDist.length).toFixed(3)} bit</div>
+    </div>
+    <div class="concept-card info">
+      <div class="title">熵 = 不确定度</div>
+      分布越均匀，熵越大，预测下一个符号越难。分布越集中，熵越小。等概时 H = log₂ N 取最大值。
+    </div>
+    <div class="concept-card entropy">
+      <div class="title">物理熵 ↔ 信息熵</div>
+      Shannon 熵与玻尔兹曼熵形式相同，都度量"可能性数量"。这也是 Maxwell 妖悖论与 Landauer 原理的桥梁。
+    </div>
+  `;
+}
+
+function bindShannon() {
+  document.getElementById('pA').addEventListener('input', e => {
+    const pa = +e.target.value / 100;
+    const remain = 1 - pa;
+    shannonDist = [pa, remain * 0.5, remain * 0.3, remain * 0.2];
+    document.getElementById('pAVal').textContent = (pa * 100).toFixed(0) + '%';
+    panel.innerHTML = shannonPanel();
+    bindShannon();
+  });
+  document.getElementById('shannonSampleBtn').addEventListener('click', () => {
+    shannonSamplesGen();
+  });
+  document.getElementById('shannonUniformBtn').addEventListener('click', () => {
+    shannonDist = [0.25, 0.25, 0.25, 0.25];
+    panel.innerHTML = shannonPanel();
+    bindShannon();
+  });
+}
+
+function initShannon() {
+  legendEl.innerHTML = `
+    <span class="l-hot">符号 A</span>
+    <span class="l-energy">符号 B</span>
+    <span class="l-cool">符号 C</span>
+    <span class="l-entropy">符号 D</span>`;
+  if (!shannonText) shannonSamplesGen();
+  panel.innerHTML = shannonPanel();
+  bindShannon();
+}
+
+// ═══════════════════════════════════════════════
+// MODE 5: Quiz
+// ═══════════════════════════════════════════════
+const quizData = [
+  { q: '卡诺热机的效率取决于什么？', opts: ['工作物质种类', '两个热源的温度', '循环速度', '气体质量'], ans: 1, explain: '卡诺定理：η = 1 − Tc/Th，只与两个热源温度有关，与工作物质无关。' },
+  { q: '孤立系统中气体自由膨胀后，熵如何变化？', opts: ['增大', '减小', '不变', '无法确定'], ans: 0, explain: '自由膨胀是不可逆过程，熵增大。ΔS = nR ln(V₂/V₁) > 0。' },
+  { q: '玻尔兹曼熵公式 S = k·ln Ω 中，Ω 表示：', opts: ['温度', '体积', '微观状态数', '压强'], ans: 2, explain: 'Ω 是系统可能的微观状态数。微观状态越多，熵越大。' },
+  { q: '麦克斯韦妖悖论的解答关键在于：', opts: ['妖需要消耗能量开门', '妖必须擦除记忆，产生熵', '门不能完全无摩擦', '量子涨落会破坏选择'], ans: 1, explain: 'Landauer 原理：擦除 1 bit 信息至少产生 k·ln2 的熵，正好补偿妖减小的熵。' },
+  { q: '4 个等概符号的 Shannon 熵为：', opts: ['1 bit', '2 bit', '4 bit', '0.5 bit'], ans: 1, explain: 'H = log₂ 4 = 2 bit。等概分布时熵取最大值。' },
+  { q: '下列哪个过程熵减小？', opts: ['气体自由膨胀', '热从高温传到低温', '冰箱内部降温（对外放热）', '香水扩散到房间'], ans: 2, explain: '冰箱内部熵减小，但向环境放热使环境熵增更多。孤立系统总熵仍增大。' },
+  { q: '可逆过程的熵变：', opts: ['总是 0', '总是正的', '总是负的', '孤立系统中为 0'], ans: 3, explain: '对孤立系统，可逆过程 ΔS=0，不可逆 ΔS>0。非孤立系统熵可正可负。' },
+  { q: '"信息是物理的"这一结论来自：', opts: ['海森堡不确定性', 'Landauer 原理', '牛顿第二定律', '能量守恒'], ans: 1, explain: 'Landauer 原理指出擦除信息必产生热与熵，揭示了信息的物理本质。' },
+];
+let quizIdx = 0;
+let quizAnswered = false;
+let totalCorrect = 0;
+
+function bumpTotalCorrect() {
+  totalCorrect++;
+  if (totalCorrect >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('entropy')) {
+    PageProgress.markDone('entropy');
+  }
+}
+
+function drawQuiz() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+  // Decorative
+  for (let i = 0; i < 25; i++) {
+    const x = (time * 0.3 + i * 53) % W;
+    const y = (Math.sin(time * 0.012 + i * 1.3) * 0.5 + 0.5) * H;
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(168,85,247,${0.2 + 0.15 * Math.sin(time * 0.02 + i)})`;
+    ctx.fill();
+  }
+  ctx.fillStyle = '#c4b5fd';
+  ctx.font = 'bold 20px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('♾️ 第二定律与熵 · 知识检测', W / 2, H / 2 - 20);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.fillText(`在右侧答题，共 ${quizData.length} 题，答对 ≥5 题解锁完成标记`, W / 2, H / 2 + 12);
+}
+
+function quizPanel() {
+  const q = quizData[quizIdx];
+  return `
+    <h3>🎯 第 ${quizIdx + 1} / ${quizData.length} 题 <span class="score-badge">已答对 ${totalCorrect}</span></h3>
+    <div class="quiz">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-i="${i}">${String.fromCharCode(65 + i)}. ${o}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="quizFb"></div>
+      <div class="quiz-nav">
+        <button id="prevBtn" ${quizIdx === 0 ? 'disabled' : ''}>← 上一题</button>
+        <button id="nextBtn" ${quizIdx === quizData.length - 1 ? 'disabled' : ''}>下一题 →</button>
+      </div>
+    </div>
+  `;
+}
+
+function bindQuiz() {
+  quizAnswered = false;
+  const q = quizData[quizIdx];
+  document.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const i = +opt.dataset.i;
+      const fb = document.getElementById('quizFb');
+      if (i === q.ans) {
+        opt.classList.add('correct');
+        fb.textContent = '✓ ' + q.explain;
+        fb.style.color = '#10b981';
+        bumpTotalCorrect();
+      } else {
+        opt.classList.add('wrong');
+        document.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        fb.textContent = '✗ ' + q.explain;
+        fb.style.color = '#ef4444';
+      }
+    });
+  });
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    if (quizIdx > 0) { quizIdx--; panel.innerHTML = quizPanel(); bindQuiz(); }
+  });
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    if (quizIdx < quizData.length - 1) { quizIdx++; panel.innerHTML = quizPanel(); bindQuiz(); }
+  });
+}
+
+function initQuiz() {
+  legendEl.innerHTML = `<span class="l-entropy">答题模式</span><span class="l-info">解析即时反馈</span>`;
+  panel.innerHTML = quizPanel();
+  bindQuiz();
+}
+
+// ═══════════════════════════════════════════════
+// MAIN LOOP
+// ═══════════════════════════════════════════════
+function tick() {
+  time += 1 / 60;
+  if (mode === 'carnot') drawCarnot();
+  else if (mode === 'mixing') { updateMixing(); drawMixing(); }
+  else if (mode === 'demon') { updateDemon(); drawDemon(); }
+  else if (mode === 'shannon') drawShannon();
+  else if (mode === 'quiz') drawQuiz();
+  animId = requestAnimationFrame(tick);
+}
+
+initMode();
+tick();
+</script>
+</body>
+</html>

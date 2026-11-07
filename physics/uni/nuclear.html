@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>原子核物理 · 大学物理互动可视化</title>
+<style>
+  :root {
+    --primary: #f59e0b;
+    --alpha: #ef4444;
+    --beta: #3b82f6;
+    --gamma: #a855f7;
+    --nucleus: #fbbf24;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1c1917 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px;
+    font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #fcd34d; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #f59e0b, #fbbf24, #fcd34d); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(245,158,11,.4); color: #1c1917; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .mode-section.hidden, .hidden { display: none !important; }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .stage > * { min-width: 0; } /* 允许 grid 子项收缩，避免 canvas 撑开列 */
+  /* 窄屏折行（小平板/横屏手机提前到 1100px） */
+  @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1c1917 0%, #0f172a 100%); touch-action: none; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #cbd5e1; flex-wrap: wrap; }
+  .legend span::before { content: '●'; margin-right: 4px; }
+  .l-alpha { color: var(--alpha); }
+  .l-beta { color: var(--beta); }
+  .l-gamma { color: var(--gamma); }
+  .l-nucleus { color: var(--nucleus); }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #fcd34d; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 130px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--primary); min-height: 44px; }
+  .slider-row .val { flex: 0 0 110px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fcd34d; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.alpha { border-color: var(--alpha); }
+  .concept-card.beta { border-color: var(--beta); }
+  .concept-card.gamma { border-color: var(--gamma); }
+  .concept-card.nucleus { border-color: var(--nucleus); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.alpha .title { color: var(--alpha); }
+  .concept-card.beta .title { color: var(--beta); }
+  .concept-card.gamma .title { color: var(--gamma); }
+  .concept-card.nucleus .title { color: var(--nucleus); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 44px; min-width: 44px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: #1c1917; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(245,158,11,0.08); border-radius: 12px; border: 1px solid rgba(245,158,11,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fcd34d; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #1c1917; font-weight: 700; min-height: 44px; min-width: 44px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  #p-status { font-weight: 700; }
+  /* 横屏矮视口适配（手机横屏） */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .container { padding: 10px 14px; }
+    .breadcrumb { padding: 6px 10px; font-size: 12px; margin-bottom: 8px; }
+    header { margin-bottom: 10px; }
+    header h1 { font-size: 1.5rem; }
+    header p { font-size: 12px; margin-top: 2px; }
+    .tabs { gap: 6px; margin-bottom: 10px; }
+    .tab { padding: 6px 14px; font-size: 12px; min-height: 36px; }
+    .canvas-wrap { padding: 8px; border-radius: 12px; }
+    .panel { padding: 12px; border-radius: 12px; }
+    .panel h3 { font-size: 1rem; margin-bottom: 8px; }
+    .equation { padding: 8px; font-size: 0.95rem; margin: 6px 0; }
+    .concept-card { padding: 10px; margin: 6px 0; font-size: 13px; }
+    .slider-row { margin: 6px 0; font-size: 13px; }
+  }
+  /* 窄屏紧凑 */
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    header h1 { font-size: 1.6rem; }
+    .tabs { gap: 6px; }
+    .tab { padding: 8px 12px; font-size: 13px; }
+    .slider-row { flex-wrap: wrap; }
+    .slider-row label { flex: 0 0 auto; }
+    .slider-row .val { flex: 0 0 auto; }
+    .slider-row input[type=range] { flex: 1 1 100%; order: 3; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">🔭 物理</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">大学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">原子核物理</span>
+    <span id="done-mark" style="margin-left:auto;color:#10b981;font-weight:600;"></span>
+  </nav>
+
+  <header>
+    <h1>⚛️ 原子核物理</h1>
+    <p>核结构 · 放射性衰变 · 半衰期 · 结合能 · 裂变与聚变 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 学习</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 学习模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="learnCanvas" width="700" height="420"></canvas>
+        <div class="legend">
+          <span class="l-nucleus">原子核</span>
+          <span class="l-alpha">α 粒子</span>
+          <span class="l-beta">β 粒子</span>
+          <span class="l-gamma">γ 光子</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📐 核心公式</h3>
+        <div class="equation">
+          衰变定律：<b>N(t) = N₀ · (1/2)<sup>t/T½</sup></b><br/>
+          活度：<b>A = λN</b>，λ = ln2 / T½<br/>
+          质能方程：<b>E = Δm · c²</b>（1 u ≈ 931.5 MeV）
+        </div>
+        <div class="slider-row">
+          <label>半衰期 T½ (秒)</label>
+          <input type="range" id="half" min="1" max="20" step="1" value="5" />
+          <span class="val" id="halfv">5 s</span>
+        </div>
+        <div class="slider-row">
+          <label>初始核数 N₀</label>
+          <input type="range" id="n0" min="20" max="200" step="10" value="100" />
+          <span class="val" id="n0v">100</span>
+        </div>
+        <div class="slider-row">
+          <label>衰变类型</label>
+          <input type="range" id="dtype" min="0" max="2" step="1" value="0" />
+          <span class="val" id="dtypev">α 衰变</span>
+        </div>
+        <div class="info-grid">
+          <div>已过时间 t：<b id="calc-t">—</b></div>
+          <div>剩余核数 N(t)：<b id="calc-n">—</b></div>
+          <div>活度 A：<b id="calc-a">—</b></div>
+          <div>衰变代数：<b id="calc-gen">—</b></div>
+        </div>
+        <div class="concept-card alpha">
+          <div class="title">🔴 α 衰变</div>
+          原子核放出 α 粒子（⁴₂He，2 质子 + 2 中子），质量数 A 减 4，电荷数 Z 减 2。例：²³⁸U → ²³⁴Th + α。穿透力弱，电离能力强。
+        </div>
+        <div class="concept-card beta">
+          <div class="title">🔵 β 衰变</div>
+          中子转化为质子并放出电子（β⁻）和反中微子：n → p + e⁻ + ν̄ₑ。A 不变，Z 加 1。例：¹⁴C → ¹⁴N + e⁻ + ν̄ₑ。
+        </div>
+        <div class="concept-card gamma">
+          <div class="title">🟣 γ 衰变</div>
+          激发态原子核跃迁到基态，放出高能光子 γ。A 和 Z 均不变。穿透力最强，需铅板或厚混凝土屏蔽。
+        </div>
+        <div class="concept-card nucleus">
+          <div class="title">🟡 结合能与裂变/聚变</div>
+          比结合能曲线在 Fe-56 处达极大（≈ 8.8 MeV/核子）。重核裂变（²³⁵U + n → ¹⁴¹Ba + ⁹²Kr + 3n + 200 MeV）与轻核聚变（²H + ³H → ⁴He + n + 17.6 MeV）都释放能量。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🧪 实验目标</h3>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-target="half-life">观察到 N = N₀/2</button>
+          <button class="mode-btn" data-target="quarter">N 降至 N₀/8 以下</button>
+          <button class="mode-btn" data-target="activity">活度 A ≥ 10 Bq</button>
+        </div>
+        <p id="p-hint" style="font-size:13px;color:#cbd5e1;margin:8px 0;line-height:1.6;"></p>
+        <div class="slider-row">
+          <label>半衰期 T½ (秒)</label>
+          <input type="range" id="phalf" min="1" max="20" step="1" value="5" />
+          <span class="val" id="phalfv">5 s</span>
+        </div>
+        <div class="slider-row">
+          <label>初始核数 N₀</label>
+          <input type="range" id="pn0" min="20" max="200" step="10" value="100" />
+          <span class="val" id="pn0v">100</span>
+        </div>
+        <div class="info-grid">
+          <div>剩余核数：<b id="p-n">—</b></div>
+          <div>当前活度：<b id="p-a">—</b></div>
+          <div>已过时间：<b id="p-t">—</b></div>
+          <div>状态：<span id="p-status">未达成</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="quizCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🎯 知识测验（4 题 · 答对 3 题合格）</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q">题目加载中…</div>
+          <div class="quiz-opts" id="quiz-opts"></div>
+          <div class="quiz-feedback" id="quiz-fb"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev">⬅ 上一题</button>
+            <button id="quiz-next">下一题 ➡</button>
+            <button id="quiz-submit" class="hidden">✅ 提交</button>
+            <button id="quiz-retry" class="hidden">🔄 重试</button>
+          </div>
+          <div class="quiz-result hidden" id="quiz-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+let mode = 'learn';
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+  if (mode === 'quiz') renderQuiz();
+  draw();
+}));
+
+/* ============================================================
+ * 衰变模拟状态
+ * ============================================================ */
+const DTYPE_NAMES = ['α 衰变', 'β 衰变', 'γ 衰变'];
+const DTYPE_COLORS = ['#ef4444', '#3b82f6', '#a855f7'];
+// 学习模式粒子数组：{x, y, vx, vy, type, life}
+let particles = [];
+let learnNuclei = [];   // 每个核：{x, y, alive, decayT}
+let learnStartT = Date.now();
+
+function resetLearn(N0) {
+  learnNuclei = [];
+  const cols = Math.ceil(Math.sqrt(N0));
+  const rows = Math.ceil(N0 / cols);
+  const w = 320, h = 220;
+  const x0 = 60, y0 = 60;
+  for (let i = 0; i < N0; i++) {
+    const r = Math.floor(i / cols);
+    const c = i % cols;
+    learnNuclei.push({
+      x: x0 + c * (w / cols),
+      y: y0 + r * (h / rows),
+      alive: true
+    });
+  }
+  learnStartT = Date.now();
+  particles = [];
+}
+
+function decayState(N0, half, elapsedSec) {
+  const N = N0 * Math.pow(0.5, elapsedSec / half);
+  const lambda = Math.LN2 / half;
+  const A = lambda * N; // 单位：Bq（每秒衰变数）
+  const gen = elapsedSec / half;
+  return { N, A, gen, t: elapsedSec };
+}
+
+/* ============================================================
+ * 学习模式
+ * ============================================================ */
+const halfEl = document.getElementById('half');
+const n0El = document.getElementById('n0');
+const dtypeEl = document.getElementById('dtype');
+let lastN0 = +n0El.value;
+resetLearn(lastN0);
+
+function updLearn() {
+  document.getElementById('halfv').textContent = halfEl.value + ' s';
+  document.getElementById('n0v').textContent = n0El.value;
+  document.getElementById('dtypev').textContent = DTYPE_NAMES[+dtypeEl.value];
+  const N0 = +n0El.value;
+  if (N0 !== lastN0) { lastN0 = N0; resetLearn(N0); }
+  const half = +halfEl.value;
+  const t = (Date.now() - learnStartT) / 1000;
+  const d = decayState(N0, half, t);
+  document.getElementById('calc-t').textContent = d.t.toFixed(1) + ' s';
+  document.getElementById('calc-n').textContent = Math.round(d.N) + ' / ' + N0;
+  document.getElementById('calc-a').textContent = d.A.toFixed(2) + ' Bq';
+  document.getElementById('calc-gen').textContent = d.gen.toFixed(2) + ' T½';
+}
+[halfEl, n0El, dtypeEl].forEach(el => el.addEventListener('input', () => { updLearn(); }));
+updLearn();
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const phalf = document.getElementById('phalf');
+const pn0 = document.getElementById('pn0');
+let practiceStartT = Date.now();
+let practiceTarget = 'half-life';
+const targetDesc = {
+  'half-life': {
+    hint: '调节滑块让剩余核数刚好约为初始值的一半（误差 ±5%）。提示：t = T½ 时 N = N₀/2。',
+    check: (d, N0) => Math.abs(d.N - N0 / 2) <= N0 * 0.05
+  },
+  'quarter': {
+    hint: '让剩余核数降到初始值的 1/8 以下。提示：经过 3 个半衰期后 N = N₀/8。',
+    check: (d, N0) => d.N <= N0 / 8
+  },
+  'activity': {
+    hint: '让当前活度 A ≥ 10 Bq。提示：A = λN，λ = ln2/T½，T½ 越小活度越大。',
+    check: (d) => d.A >= 10
+  }
+};
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    practiceTarget = btn.dataset.target;
+    document.getElementById('p-hint').textContent = targetDesc[practiceTarget].hint;
+    practiceStartT = Date.now();
+    updPractice();
+  });
+});
+document.getElementById('p-hint').textContent = targetDesc[practiceTarget].hint;
+
+function updPractice() {
+  document.getElementById('phalfv').textContent = phalf.value + ' s';
+  document.getElementById('pn0v').textContent = pn0.value;
+  const N0 = +pn0.value;
+  const half = +phalf.value;
+  const t = (Date.now() - practiceStartT) / 1000;
+  const d = decayState(N0, half, t);
+  document.getElementById('p-t').textContent = t.toFixed(1) + ' s';
+  document.getElementById('p-n').textContent = Math.round(d.N) + ' / ' + N0;
+  document.getElementById('p-a').textContent = d.A.toFixed(2) + ' Bq';
+  const ok = targetDesc[practiceTarget].check(d, N0);
+  document.getElementById('p-status').textContent = ok ? '✅ 达成！' : '未达成';
+  document.getElementById('p-status').style.color = ok ? '#10b981' : '#f59e0b';
+}
+[phalf, pn0].forEach(el => el.addEventListener('input', () => { practiceStartT = Date.now(); updPractice(); }));
+updPractice();
+
+/* ============================================================
+ * Canvas 绘制
+ * ============================================================ */
+function drawLearnScene(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  const half = +halfEl.value;
+  const N0 = +n0El.value;
+  const dtype = +dtypeEl.value;
+  const t = (Date.now() - learnStartT) / 1000;
+  const d = decayState(N0, half, t);
+  const aliveCount = Math.round(d.N);
+
+  // 根据存活数更新原子核（保持衰变的核不再存活）
+  let toKill = learnNuclei.filter(n => n.alive).length - aliveCount;
+  if (toKill > 0) {
+    const alive = learnNuclei.filter(n => n.alive);
+    for (let i = 0; i < toKill && alive.length > 0; i++) {
+      const idx = Math.floor(Math.random() * alive.length);
+      const n = alive.splice(idx, 1)[0];
+      n.alive = false;
+      // 发射粒子
+      const angle = Math.random() * Math.PI * 2;
+      const speed = dtype === 2 ? 6 : 3 + Math.random();
+      particles.push({
+        x: n.x, y: n.y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        type: dtype,
+        life: 60
+      });
+    }
+  }
+
+  // 绘制原子核
+  learnNuclei.forEach(n => {
+    if (n.alive) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fill();
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(148,163,184,0.2)';
+      ctx.fill();
+    }
+  });
+
+  // 绘制并更新粒子
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+    const alpha = p.life / 60;
+    const color = DTYPE_COLORS[p.type];
+    if (p.type === 2) {
+      // γ 波：画波浪线
+      ctx.strokeStyle = color.replace(')', `,${alpha})`).replace('rgb', 'rgba').replace('#', '');
+      ctx.strokeStyle = `rgba(168,85,247,${alpha})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < 20; i++) {
+        const px = p.x - i * p.vx * 0.5;
+        const py = p.y - i * p.vy * 0.5 + Math.sin(i * 0.5) * 3;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.type === 0 ? 5 : 3, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.globalAlpha = alpha;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // 右侧衰变曲线
+  const cx0 = 420, cy0 = 60, cw = 260, ch = 200;
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx0, cy0, cw, ch);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('N(t)', cx0 + 4, cy0 - 6);
+  ctx.fillText('t', cx0 + cw - 12, cy0 + ch + 16);
+
+  // 网格
+  ctx.strokeStyle = 'rgba(148,163,184,0.15)';
+  for (let i = 1; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(cx0, cy0 + ch * i / 5);
+    ctx.lineTo(cx0 + cw, cy0 + ch * i / 5);
+    ctx.stroke();
+  }
+
+  // 曲线：N(t) = N0 * 0.5^(t/T)，横轴 0~5 个半衰期
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  const tMax = half * 5;
+  for (let i = 0; i <= 100; i++) {
+    const tt = (i / 100) * tMax;
+    const nn = N0 * Math.pow(0.5, tt / half);
+    const px = cx0 + (tt / tMax) * cw;
+    const py = cy0 + ch - (nn / N0) * ch;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // 当前位置
+  const curX = cx0 + Math.min(t / tMax, 1) * cw;
+  const curY = cy0 + ch - (d.N / N0) * ch;
+  ctx.beginPath();
+  ctx.arc(curX, curY, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#ef4444';
+  ctx.fill();
+
+  // 半衰期参考线
+  ctx.strokeStyle = 'rgba(239,68,68,0.4)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(cx0 + cw / 5, cy0); ctx.lineTo(cx0 + cw / 5, cy0 + ch);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#ef4444';
+  ctx.font = '11px sans-serif';
+  ctx.fillText('T½', cx0 + cw / 5 - 8, cy0 + ch + 14);
+
+  // 信息
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText('t = ' + t.toFixed(1) + ' s', 20, 30);
+  ctx.fillText('N = ' + Math.round(d.N) + ' / ' + N0, 20, 50);
+  ctx.fillText('A = ' + d.A.toFixed(2) + ' Bq', 20, 70);
+  ctx.fillText('t/T½ = ' + d.gen.toFixed(2), 20, 90);
+}
+
+function drawPracticeScene(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  const N0 = +pn0.value;
+  const half = +phalf.value;
+  const t = (Date.now() - practiceStartT) / 1000;
+  const d = decayState(N0, half, t);
+
+  // 大字体显示核心数据
+  ctx.fillStyle = '#fcd34d';
+  ctx.font = 'bold 60px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(Math.round(d.N), W / 2, 120);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('剩余核数（初始 ' + N0 + '）', W / 2, 150);
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.fillText('t = ' + t.toFixed(1) + ' s', W / 2, 200);
+  ctx.fillText('t/T½ = ' + d.gen.toFixed(2), W / 2, 235);
+  ctx.fillText('A = ' + d.A.toFixed(2) + ' Bq', W / 2, 270);
+
+  // 进度条：相对初始值的剩余比例
+  const bw = W - 80, bh = 24, bx = 40, by = 320;
+  ctx.strokeStyle = '#475569';
+  ctx.strokeRect(bx, by, bw, bh);
+  const frac = d.N / N0;
+  ctx.fillStyle = frac > 0.5 ? '#10b981' : (frac > 0.2 ? '#f59e0b' : '#ef4444');
+  ctx.fillRect(bx, by, bw * frac, bh);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '12px sans-serif';
+  ctx.fillText((frac * 100).toFixed(1) + '%', W / 2, by + bh + 18);
+
+  // 提示
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '13px sans-serif';
+  ctx.fillText(targetDesc[practiceTarget].hint, W / 2, by + bh + 45);
+}
+
+function drawQuizScene(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#fcd34d';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('🎯 第 ' + (quizIdx + 1) + ' / ' + quizData.length + ' 题', 30, 40);
+
+  // 画一个核素符号装饰
+  const cx = W / 2, cy = 200, R = 80;
+  // 电子轨道
+  for (let i = 0; i < 3; i++) {
+    ctx.strokeStyle = 'rgba(148,163,184,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, R + i * 30, (R + i * 30) * 0.4, i * Math.PI / 3, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // 核
+  const t = Date.now() / 1000;
+  for (let i = 0; i < 17; i++) {
+    const a = (i / 17) * Math.PI * 2 + t * 0.2;
+    const r = 20 + (i % 3) * 8;
+    const x = cx + Math.cos(a) * r * 0.6;
+    const y = cy + Math.sin(a) * r * 0.6;
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = i % 2 === 0 ? '#ef4444' : '#94a3b8';
+    ctx.fill();
+  }
+  ctx.fillStyle = '#fcd34d';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('²³⁸U 核模型示意', cx, cy + R + 50);
+}
+
+const learnCtx = document.getElementById('learnCanvas').getContext('2d');
+const practiceCtx = document.getElementById('practiceCanvas').getContext('2d');
+const quizCtx = document.getElementById('quizCanvas').getContext('2d');
+
+function draw() {
+  if (mode === 'learn') { updLearn(); drawLearnScene(learnCtx, 700, 420); }
+  else if (mode === 'practice') { updPractice(); drawPracticeScene(practiceCtx, 700, 420); }
+  else drawQuizScene(quizCtx, 700, 420);
+}
+setInterval(draw, 100);
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const quizData = [
+  {
+    q: '1️⃣ ²³⁸₉₂U 经过一次 α 衰变后，产物是？',
+    opts: ['²³⁴₉₀Th', '²³⁴₉₁Pa', '²³⁸₉₃Np', '²³²₉₀Th'],
+    ans: 0,
+    fb: 'α 衰变放出 ⁴₂He，A 减 4（238→234），Z 减 2（92→90），即 ²³⁴₉₀Th。'
+  },
+  {
+    q: '2️⃣ 某放射性核素半衰期为 5 天，初始 100 g，经过 15 天后剩余多少？',
+    opts: ['25 g', '12.5 g', '6.25 g', '33.3 g'],
+    ans: 1,
+    fb: '15 天 = 3 个半衰期，N = 100 × (1/2)³ = 100/8 = 12.5 g。'
+  },
+  {
+    q: '3️⃣ 关于 α、β、γ 三种射线，穿透能力由强到弱排序正确的是？',
+    opts: ['α > β > γ', 'γ > β > α', 'β > γ > α', 'γ > α > β'],
+    ans: 1,
+    fb: 'γ 光子无质量无电荷，穿透最强；α 粒子质量大电荷多，一张纸就能挡住。所以 γ > β > α。'
+  },
+  {
+    q: '4️⃣ 核电站利用的是哪种核反应？',
+    opts: ['²H + ³H 聚变', '²³⁵U 裂变', '¹⁴C 衰变', '⁶⁰Co γ 衰变'],
+    ans: 1,
+    fb: '当前商用核电站均使用 ²³⁵U 裂变：²³⁵U + n → ¹⁴¹Ba + ⁹²Kr + 3n + ~200 MeV，链式反应由控制棒调节。聚变电站（如 ITER）仍在研发。'
+  }
+];
+let quizIdx = 0;
+let quizAnswers = new Array(quizData.length).fill(-1);
+let quizSubmitted = false;
+
+const qEl = document.getElementById('quiz-q');
+const qOpts = document.getElementById('quiz-opts');
+const qFb = document.getElementById('quiz-fb');
+const qPrev = document.getElementById('quiz-prev');
+const qNext = document.getElementById('quiz-next');
+const qSubmit = document.getElementById('quiz-submit');
+const qRetry = document.getElementById('quiz-retry');
+const qResult = document.getElementById('quiz-result');
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  qEl.textContent = q.q;
+  qOpts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = String.fromCharCode(65 + i) + '. ' + opt;
+    if (quizAnswers[quizIdx] === i) div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+    if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) div.classList.add('correct');
+    div.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizAnswers[quizIdx] = i;
+      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
+      [...qOpts.children].forEach((ch, j) => {
+        ch.classList.remove('correct', 'wrong');
+        if (quizAnswers[quizIdx] === j) ch.classList.add('correct');
+      });
+    });
+    qOpts.appendChild(div);
+  });
+  qFb.textContent = quizAnswers[quizIdx] === -1 ? '' : (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
+  qPrev.disabled = quizIdx === 0;
+  qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
+  qSubmit.classList.toggle('hidden', quizIdx !== quizData.length - 1 || quizSubmitted);
+  qRetry.classList.toggle('hidden', !quizSubmitted);
+}
+qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+qSubmit.addEventListener('click', () => {
+  quizSubmitted = true;
+  const score = quizData.reduce((s, q, i) => s + (quizAnswers[i] === q.ans ? 1 : 0), 0);
+  const pass = score >= 3;
+  qResult.classList.remove('hidden');
+  qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
+  qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  qResult.textContent = pass ? '🎉 得分 ' + score + '/4，合格！本知识点已标记完成' : '😅 得分 ' + score + '/4，未达到 3/4，请复习后重试';
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('nuclear');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+  renderQuiz();
+});
+qRetry.addEventListener('click', () => {
+  quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
+  qResult.classList.add('hidden');
+  renderQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('nuclear')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+renderQuiz();
+draw();
+</script>
+</body>
+</html>

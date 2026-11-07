@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>矢量分析 · 梯度 散度 旋度 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #06b6d4;
+    --grad: #10b981;
+    --div: #f59e0b;
+    --curl: #a855f7;
+    --field: #38bdf8;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #082f3a 0%, #0f172a 60%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px;
+    font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #67e8f9; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #06b6d4, #67e8f9, #a5f3fc); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(6,182,212,.4); color: #082f3a; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); touch-action: none; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #67e8f9; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 100px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #67e8f9; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.g { border-color: var(--grad); }
+  .concept-card.d { border-color: var(--div); }
+  .concept-card.c { border-color: var(--curl); }
+  .concept-card.f { border-color: var(--field); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.g .title { color: var(--grad); }
+  .concept-card.d .title { color: var(--div); }
+  .concept-card.c .title { color: var(--curl); }
+  .concept-card.f .title { color: var(--field); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 36px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: #082f3a; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(6,182,212,0.08); border-radius: 12px; border: 1px solid rgba(6,182,212,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #67e8f9; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #082f3a; font-weight: 700; min-height: 36px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">📐 数学</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">大学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">矢量分析</span>
+  </nav>
+
+  <header>
+    <h1>🌊 矢量分析 · 梯度 散度 旋度</h1>
+    <p>∇ 算子 · 三大微分运算 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 学习</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 学习模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="learnCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>📐 核心公式</h3>
+        <div class="equation">
+          梯度：<b>grad φ = ∇φ = (∂φ/∂x, ∂φ/∂y, ∂φ/∂z)</b><br/>
+          散度：<b>div F = ∇·F = ∂P/∂x + ∂Q/∂y + ∂R/∂z</b><br/>
+          旋度：<b>curl F = ∇×F</b>
+        </div>
+        <div class="slider-row">
+          <label>场类型</label>
+          <select id="fieldType" style="flex:1;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:#e2e8f0;">
+            <option value="source">源（正散度）</option>
+            <option value="sink">汇（负散度）</option>
+            <option value="vortex">涡旋（旋度≠0）</option>
+            <option value="uniform">均匀场（div=0, curl=0）</option>
+          </select>
+        </div>
+        <div class="slider-row">
+          <label>强度 k</label>
+          <input type="range" id="k" min="1" max="10" step="0.5" value="4" />
+          <span class="val" id="kv">4.0</span>
+        </div>
+        <div class="info-grid">
+          <div>散度 div F = <b id="calc-div">0.00</b></div>
+          <div>旋度 |curl F| = <b id="calc-curl">0.00</b></div>
+        </div>
+        <div class="concept-card g">
+          <div class="title">🟢 梯度 grad φ</div>
+          标量场的最大增长方向，方向导数最大值 = |∇φ|。垂直于等值面。
+        </div>
+        <div class="concept-card d">
+          <div class="title">🟡 散度 div F</div>
+          单位体积的净通量。正 = 源，负 = 汇，零 = 无源（不可压缩）。
+        </div>
+        <div class="concept-card c">
+          <div class="title">🟣 旋度 curl F</div>
+          场的旋转强度与方向（右手定则）。curl F = 0 时场为保守场。
+        </div>
+        <div class="concept-card f">
+          <div class="title">🔵 关系</div>
+          curl(grad φ) = 0（梯度无旋）；div(curl F) = 0（旋度无源）。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🧪 练习：识别场类型</h3>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-target="source">源</button>
+          <button class="mode-btn" data-target="sink">汇</button>
+          <button class="mode-btn" data-target="vortex">涡旋</button>
+          <button class="mode-btn" data-target="uniform">均匀场</button>
+        </div>
+        <p style="font-size:13px;color:#94a3b8;margin:8px 0;">
+          调节下方 k 值，观察矢量场形态，判断当前场是否为所选类型。
+        </p>
+        <div class="slider-row">
+          <label>强度 k</label>
+          <input type="range" id="pk" min="1" max="10" step="0.5" value="4" />
+          <span class="val" id="pkv">4.0</span>
+        </div>
+        <div class="info-grid">
+          <div>散度 = <b id="p-div">0.00</b></div>
+          <div>旋度 = <b id="p-curl">0.00</b></div>
+          <div>判断：<b id="p-status">—</b></div>
+        </div>
+        <div class="concept-card f">
+          <div class="title">💡 提示</div>
+          <span id="p-hint">源：散度 &gt; 0，矢量向外发散；汇：散度 &lt; 0，矢量向内汇聚；涡旋：旋度 &gt; 0，矢量绕中心旋转；均匀场：散度=旋度=0。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="quizCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🎯 随堂测验（4 题，3/4 合格）</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q">题目加载中…</div>
+          <div class="quiz-opts" id="quiz-opts"></div>
+          <div class="quiz-feedback" id="quiz-fb"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev">⬅ 上一题</button>
+            <button id="quiz-next">下一题 ➡</button>
+            <button id="quiz-submit" class="hidden">📊 提交评分</button>
+            <button id="quiz-retry" class="hidden">🔄 重新测验</button>
+          </div>
+          <div class="quiz-result hidden" id="quiz-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Knowledge Visual · 大学数学 · 矢量分析 · <span id="done-mark"></span></footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+let mode = 'learn';
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    mode = t.dataset.mode;
+    Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+    if (mode === 'quiz') renderQuiz();
+    draw();
+  });
+});
+
+/* ============================================================
+ * 矢量场计算
+ * ============================================================ */
+function field(type, k, x, y) {
+  // 返回 [Fx, Fy, div, curl]，k 为强度系数
+  const r2 = x*x + y*y + 0.01;
+  switch(type) {
+    case 'source':   // F = k·r̂ = (kx, ky)/r²，div = 2k/r², curl = 0
+      return [k*x/r2, k*y/r2, 2*k/r2, 0];
+    case 'sink':     // F = -k·r̂，div = -2k/r²
+      return [-k*x/r2, -k*y/r2, -2*k/r2, 0];
+    case 'vortex':   // F = k·(-y, x)/r²，div = 0, curl = 2k/r²
+      return [-k*y/r2, k*x/r2, 0, 2*k/r2];
+    case 'uniform':  // F = (k, 0)，div = 0, curl = 0
+      return [k, 0, 0, 0];
+    default: return [0,0,0,0];
+  }
+}
+
+/* ============================================================
+ * 学习模式
+ * ============================================================ */
+const fieldTypeEl = document.getElementById('fieldType');
+const kEl = document.getElementById('k');
+function updLearn() {
+  document.getElementById('kv').textContent = (+kEl.value).toFixed(1);
+  const type = fieldTypeEl.value;
+  const k = +kEl.value;
+  // 在 (1,1) 处采样 div 和 curl
+  const [, , d, c] = field(type, k, 1, 1);
+  document.getElementById('calc-div').textContent = d.toFixed(2);
+  document.getElementById('calc-curl').textContent = Math.abs(c).toFixed(2);
+}
+[fieldTypeEl, kEl].forEach(el => el.addEventListener('input', () => { updLearn(); draw(); }));
+updLearn();
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const pkEl = document.getElementById('pk');
+let practiceTarget = 'source';
+const targetDesc = {
+  source:  { text: '源',     check: (d,c) => d > 0.1,  hint: '源：散度 > 0，矢量向外发散。' },
+  sink:    { text: '汇',     check: (d,c) => d < -0.1, hint: '汇：散度 < 0，矢量向内汇聚。' },
+  vortex:  { text: '涡旋',   check: (d,c) => c > 0.1,  hint: '涡旋：旋度 > 0，矢量绕中心旋转。' },
+  uniform: { text: '均匀场', check: (d,c) => Math.abs(d) < 0.01 && Math.abs(c) < 0.01, hint: '均匀场：散度=旋度=0。' }
+};
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    practiceTarget = btn.dataset.target;
+    document.getElementById('p-hint').textContent = targetDesc[practiceTarget].hint;
+    updPractice(); draw();
+  });
+});
+function updPractice() {
+  document.getElementById('pkv').textContent = (+pkEl.value).toFixed(1);
+  const type = fieldTypeEl.value;
+  const k = +pkEl.value;
+  const [, , d, c] = field(type, k, 1, 1);
+  document.getElementById('p-div').textContent = d.toFixed(2);
+  document.getElementById('p-curl').textContent = Math.abs(c).toFixed(2);
+  const ok = targetDesc[practiceTarget].check(d, Math.abs(c));
+  const stateLabel = d > 0.1 ? '源' : (d < -0.1 ? '汇' : (Math.abs(c) > 0.1 ? '涡旋' : '均匀场'));
+  document.getElementById('p-status').textContent = ok ? `✅ 匹配：${stateLabel}` : `当前：${stateLabel}`;
+  document.getElementById('p-status').style.color = ok ? '#10b981' : '#67e8f9';
+}
+[pkEl].forEach(el => el.addEventListener('input', () => { updPractice(); draw(); }));
+fieldTypeEl.addEventListener('input', () => { updPractice(); draw(); });
+updPractice();
+
+/* ============================================================
+ * Canvas：矢量场可视化
+ * ============================================================ */
+function drawScene(ctx, W, H, type, k, showLabels) {
+  ctx.clearRect(0, 0, W, H);
+  const padL = 40, padR = 20, padT = 20, padB = 30;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const xMin = -2, xMax = 2, yMin = -1.5, yMax = 1.5;
+  const x2c = x => padL + ((x - xMin) / (xMax - xMin)) * plotW;
+  const y2c = y => padT + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+  // 网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let x = -2; x <= 2; x += 0.5) {
+    ctx.beginPath(); ctx.moveTo(x2c(x), padT); ctx.lineTo(x2c(x), padT + plotH); ctx.stroke();
+  }
+  for (let y = -1.5; y <= 1.5; y += 0.5) {
+    ctx.beginPath(); ctx.moveTo(padL, y2c(y)); ctx.lineTo(padL + plotW, y2c(y)); ctx.stroke();
+  }
+
+  // 坐标轴
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.beginPath(); ctx.moveTo(x2c(0), padT); ctx.lineTo(x2c(0), padT + plotH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(padL, y2c(0)); ctx.lineTo(padL + plotW, y2c(0)); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('x', padL + plotW - 12, y2c(0) - 6);
+  ctx.fillText('y', x2c(0) + 6, padT + 12);
+
+  // 绘制矢量箭头
+  const step = 0.35;
+  for (let x = xMin + step/2; x < xMax; x += step) {
+    for (let y = yMin + step/2; y < yMax; y += step) {
+      const [fx, fy] = field(type, k, x, y);
+      const mag = Math.sqrt(fx*fx + fy*fy);
+      if (mag < 0.05) continue;
+      const scale = 0.12 / Math.max(mag, 0.5);
+      const dx = fx * scale, dy = fy * scale;
+      const px = x2c(x), py = y2c(y);
+      const ex = x2c(x + dx), ey = y2c(y + dy);
+
+      // 颜色映射：源红、汇蓝、涡旋紫、均匀青
+      let color = '#38bdf8';
+      if (type === 'source') color = '#f87171';
+      else if (type === 'sink') color = '#60a5fa';
+      else if (type === 'vortex') color = '#a78bfa';
+
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ex, ey); ctx.stroke();
+
+      // 箭头头部
+      const angle = Math.atan2(ey - py, ex - px);
+      const headLen = 4;
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex - headLen * Math.cos(angle - Math.PI/6), ey - headLen * Math.sin(angle - Math.PI/6));
+      ctx.lineTo(ex - headLen * Math.cos(angle + Math.PI/6), ey - headLen * Math.sin(angle + Math.PI/6));
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // 中心标记
+  ctx.beginPath();
+  ctx.arc(x2c(0), y2c(0), 4, 0, Math.PI*2);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fill();
+
+  if (showLabels) {
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(`场类型：${fieldTypeEl.options[fieldTypeEl.selectedIndex].text}`, padL + 10, padT + 20);
+  }
+}
+
+const learnCtx = document.getElementById('learnCanvas').getContext('2d');
+const practiceCtx = document.getElementById('practiceCanvas').getContext('2d');
+const quizCtx = document.getElementById('quizCanvas').getContext('2d');
+
+function draw() {
+  if (mode === 'learn') drawScene(learnCtx, 700, 420, fieldTypeEl.value, +kEl.value, true);
+  else if (mode === 'practice') drawScene(practiceCtx, 700, 420, fieldTypeEl.value, +pkEl.value, true);
+  else drawQuizScene(quizCtx, 700, 420);
+}
+
+function drawQuizScene(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`🎯 第 ${quizIdx + 1}/${quizData.length} 题`, 30, 40);
+  drawScene(ctx, W, H - 50, 'vortex', 4, false);
+}
+
+/* ============================================================
+ * 测验
+ * ============================================================ */
+const quizData = [
+  {
+    q: '1️⃣ 标量场 φ 的梯度 grad φ 是一个？',
+    opts: ['标量', '矢量', '张量', '无法确定'],
+    ans: 1,
+    fb: '梯度是矢量，方向为最大增长方向，模长为最大方向导数。'
+  },
+  {
+    q: '2️⃣ 若矢量场 F 的散度 div F > 0，则该点称为？',
+    opts: ['汇', '源', '涡旋', '保守点'],
+    ans: 1,
+    fb: 'div F > 0 表示净流出，该点为源。'
+  },
+  {
+    q: '3️⃣ 保守场的充要条件是？',
+    opts: ['div F = 0', 'curl F = 0', 'div F > 0', 'curl F ≠ 0'],
+    ans: 1,
+    fb: 'curl F = 0（无旋场）是保守场的充要条件。'
+  },
+  {
+    q: '4️⃣ 矢量恒等式 div(curl F) = ？',
+    opts: ['0', '1', '∇²F', '无法确定'],
+    ans: 0,
+    fb: 'div(curl F) = 0，旋度场无源，是矢量分析基本恒等式。'
+  }
+];
+let quizIdx = 0;
+let quizAnswers = new Array(quizData.length).fill(-1);
+let quizSubmitted = false;
+
+const qEl = document.getElementById('quiz-q');
+const qOpts = document.getElementById('quiz-opts');
+const qFb = document.getElementById('quiz-fb');
+const qPrev = document.getElementById('quiz-prev');
+const qNext = document.getElementById('quiz-next');
+const qSubmit = document.getElementById('quiz-submit');
+const qRetry = document.getElementById('quiz-retry');
+const qResult = document.getElementById('quiz-result');
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  qEl.textContent = q.q;
+  qOpts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+    if (quizAnswers[quizIdx] === i) div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+    if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) div.classList.add('correct');
+    div.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizAnswers[quizIdx] = i;
+      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
+      [...qOpts.children].forEach((c, j) => {
+        c.classList.remove('correct', 'wrong');
+        if (quizAnswers[quizIdx] === j) c.classList.add('correct');
+      });
+    });
+    qOpts.appendChild(div);
+  });
+  qFb.textContent = quizAnswers[quizIdx] === -1 ? '' : (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
+  qPrev.disabled = quizIdx === 0;
+  qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
+  qSubmit.classList.toggle('hidden', quizIdx !== quizData.length - 1 || quizSubmitted);
+  qRetry.classList.toggle('hidden', !quizSubmitted);
+}
+qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+qSubmit.addEventListener('click', () => {
+  quizSubmitted = true;
+  const score = quizData.reduce((s, q, i) => s + (quizAnswers[i] === q.ans ? 1 : 0), 0);
+  const pass = score >= 3;
+  qResult.classList.remove('hidden');
+  qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
+  qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  qResult.textContent = pass ? `🎉 得分 ${score}/4，合格！本知识点已标记完成` : `😅 得分 ${score}/4，未达到 3/4，请复习后重试`;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('vector-calculus');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+  renderQuiz();
+});
+qRetry.addEventListener('click', () => {
+  quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
+  qResult.classList.add('hidden');
+  renderQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('vector-calculus')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+renderQuiz();
+draw();
+</script>
+</body>
+</html>

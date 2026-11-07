@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>数理统计 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --accent: #06b6d4;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: var(--text);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 {
+    font-size: 2rem;
+    background: linear-gradient(90deg, var(--primary), var(--accent), var(--success));
+    -webkit-background-clip: text;
+    color: transparent;
+    margin-bottom: 6px;
+  }
+  header p { color: var(--muted); font-size: 14px; }
+
+  .tabs {
+    display: flex; gap: 8px; justify-content: center;
+    margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .tab {
+    padding: 10px 18px; border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    cursor: pointer; transition: all .25s;
+    border: 1px solid var(--border);
+    font-size: 14px; user-select: none;
+  }
+  .tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 4px 20px rgba(139,92,246,.4);
+  }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .section { display: none; }
+  .section.active { display: block; }
+  .stage {
+    display: grid; grid-template-columns: 1.2fr 1fr;
+    gap: 20px; margin-bottom: 20px;
+  }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 16px;
+    backdrop-filter: blur(10px);
+  }
+  canvas {
+    width: 100%; height: auto; display: block;
+    border-radius: 10px;
+    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+    backdrop-filter: blur(10px);
+  }
+  .panel h3 {
+    font-size: 1.1rem; margin-bottom: 12px;
+    color: var(--accent);
+  }
+  .panel p, .panel li { color: var(--muted); font-size: 14px; line-height: 1.7; }
+  .panel ul { padding-left: 18px; }
+
+  .controls {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-top: 14px; align-items: center;
+  }
+  .controls label { font-size: 13px; color: var(--muted); }
+  .controls input[type="range"] {
+    flex: 1; min-width: 120px;
+    accent-color: var(--primary);
+  }
+  .controls select, .controls button {
+    padding: 8px 16px; border-radius: 8px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border);
+    color: var(--text); font-size: 13px;
+    cursor: pointer; transition: all .2s;
+  }
+  .controls button {
+    background: var(--primary);
+    border-color: var(--primary);
+    font-weight: 600;
+  }
+  .controls button:hover { opacity: .85; }
+  .controls button.secondary {
+    background: rgba(255,255,255,0.08);
+    border-color: var(--border);
+  }
+
+  .stat-row {
+    display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap;
+  }
+  .stat-box {
+    flex: 1; min-width: 100px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px;
+    text-align: center;
+  }
+  .stat-box .val {
+    font-size: 1.3rem; font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-box .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .formula {
+    background: rgba(139,92,246,0.08);
+    border: 1px solid rgba(139,92,246,0.2);
+    border-radius: 10px; padding: 12px 16px;
+    margin: 10px 0; font-size: 15px;
+    text-align: center; color: var(--text);
+    font-family: "Times New Roman", serif;
+  }
+
+  .result-box {
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 10px; padding: 14px;
+    margin-top: 12px;
+  }
+  .result-box.reject {
+    background: rgba(239,68,68,0.08);
+    border-color: rgba(239,68,68,0.2);
+  }
+
+  .quiz-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px;
+    margin-bottom: 16px;
+  }
+  .quiz-card h4 { color: var(--accent); margin-bottom: 10px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .quiz-opt {
+    padding: 12px 16px; border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    cursor: pointer; transition: all .2s;
+    font-size: 14px;
+  }
+  .quiz-opt:hover { background: rgba(255,255,255,0.08); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.15); border-color: var(--success); }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.15); border-color: var(--danger); }
+  .quiz-explain {
+    margin-top: 12px; padding: 12px;
+    background: rgba(6,182,212,0.06);
+    border-radius: 8px; font-size: 13px;
+    color: var(--muted); display: none;
+  }
+
+  .badge {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 4px; font-size: 11px;
+    font-weight: 600; margin-left: 6px;
+  }
+  .badge-info { background: rgba(6,182,212,0.15); color: var(--accent); }
+  .badge-warn { background: rgba(245,158,11,0.15); color: var(--warning); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📊 数理统计</h1>
+    <p>参数估计 · 置信区间 · 假设检验 · 互动练习 <span id="done-mark" style="display:none;margin-left:8px;padding:2px 8px;border-radius:999px;background:#34C759;color:#fff;font-size:12px;font-weight:700;vertical-align:middle;">✓ 已完成</span></p>
+  </header>
+  <script src="assets/common.js"></script>
+
+  <div class="tabs">
+    <div class="tab active" data-sec="estimation">点估计</div>
+    <div class="tab" data-sec="confidence">置信区间</div>
+    <div class="tab" data-sec="hypothesis">假设检验</div>
+    <div class="tab" data-sec="quiz">综合练习</div>
+  </div>
+
+  <!-- ============ 1. 点估计 ============ -->
+  <div class="section active" id="sec-estimation">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvEstimation" width="600" height="420"></canvas>
+        <div class="controls">
+          <label>样本量 n:</label>
+          <input type="range" id="estN" min="3" max="100" value="10" />
+          <span id="estNVal">10</span>
+          <button id="btnResample">重新抽样</button>
+          <button id="btnAddSample" class="secondary">追加10次</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📐 点估计</h3>
+        <p>从总体中抽取样本，用<strong>统计量</strong>来估计总体参数。</p>
+        <div class="formula">
+          样本均值 X̄ = (1/n) Σ Xᵢ &nbsp;→&nbsp; 估计 μ<br/>
+          样本方差 S² = (1/(n-1)) Σ(Xᵢ - X̄)² &nbsp;→&nbsp; 估计 σ²
+        </div>
+        <div class="stat-row">
+          <div class="stat-box"><div class="val" id="estMean">—</div><div class="lbl">样本均值 X̄</div></div>
+          <div class="stat-box"><div class="val" id="estVar">—</div><div class="lbl">样本方差 S²</div></div>
+          <div class="stat-box"><div class="val" id="estTrue">μ=50, σ²=100</div><div class="lbl">总体参数</div></div>
+        </div>
+        <h3 style="margin-top:16px">估计量评价</h3>
+        <ul>
+          <li><strong>无偏性</strong>：E(X̄) = μ，样本均值是总体均值的无偏估计</li>
+          <li><strong>有效性</strong>：在所有无偏估计中，X̄ 方差最小</li>
+          <li><strong>一致性</strong>：n→∞ 时，X̄ → μ（依概率收敛）</li>
+        </ul>
+        <div class="result-box" id="estBiasBox">
+          <strong>📊 模拟统计</strong>（点击"追加10次"观察）<br/>
+          <span id="estBiasInfo">多次抽样的均值将趋近总体均值 μ=50</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 2. 置信区间 ============ -->
+  <div class="section" id="sec-confidence">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvConfidence" width="600" height="420"></canvas>
+        <div class="controls">
+          <label>置信水平:</label>
+          <select id="confLevel">
+            <option value="0.90">90%</option>
+            <option value="0.95" selected>95%</option>
+            <option value="0.99">99%</option>
+          </select>
+          <label>样本量 n:</label>
+          <input type="range" id="confN" min="5" max="200" value="30" />
+          <span id="confNVal">30</span>
+          <button id="btnConfDraw">抽取20组</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📏 置信区间</h3>
+        <p>用样本构造一个<strong>随机区间</strong>，使其以指定概率包含总体参数。</p>
+        <div class="formula">
+          μ 的 (1-α) 置信区间：<br/>
+          X̄ ± z<sub>α/2</sub> · σ/√n &nbsp;（σ已知）<br/>
+          X̄ ± t<sub>α/2</sub>(n-1) · S/√n &nbsp;（σ未知）
+        </div>
+        <div class="stat-row">
+          <div class="stat-box"><div class="val" id="confLower">—</div><div class="lbl">区间下限</div></div>
+          <div class="stat-box"><div class="val" id="confUpper">—</div><div class="lbl">区间上限</div></div>
+          <div class="stat-box"><div class="val" id="confWidth">—</div><div class="lbl">区间宽度</div></div>
+        </div>
+        <div class="result-box" id="confResultBox">
+          <strong>🎯 覆盖率</strong><br/>
+          <span id="confCoverage">点击"抽取20组"观察置信区间的覆盖率</span>
+        </div>
+        <p style="margin-top:12px;font-size:13px">
+          💡 <strong>直觉理解</strong>：95%置信意味着——重复抽样100次，约95次构造的区间包含真值。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 3. 假设检验 ============ -->
+  <div class="section" id="sec-hypothesis">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvHypothesis" width="600" height="420"></canvas>
+        <div class="controls">
+          <label>假设类型:</label>
+          <select id="hypType">
+            <option value="twoside">双侧检验</option>
+            <option value="left">左侧检验</option>
+            <option value="right">右侧检验</option>
+          </select>
+          <label>显著性 α:</label>
+          <select id="hypAlpha">
+            <option value="0.01">0.01</option>
+            <option value="0.05" selected>0.05</option>
+            <option value="0.10">0.10</option>
+          </select>
+          <label>真实μ:</label>
+          <input type="range" id="hypTrueMu" min="40" max="60" value="52" step="0.5" />
+          <span id="hypTrueMuVal">52</span>
+          <button id="btnHypTest">抽样检验</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🔬 假设检验</h3>
+        <p>先假设总体参数，再用样本判断假设是否合理。</p>
+        <div class="formula">
+          H₀: μ = μ₀ &nbsp;vs&nbsp; H₁: μ ≠ μ₀（双侧）<br/>
+          检验统计量：Z = (X̄ - μ₀) / (σ/√n)
+        </div>
+        <div class="stat-row">
+          <div class="stat-box"><div class="val" id="hypZ">—</div><div class="lbl">检验统计量 Z</div></div>
+          <div class="stat-box"><div class="val" id="hypP">—</div><div class="lbl">P值</div></div>
+          <div class="stat-box"><div class="val" id="hypCrit">—</div><div class="lbl">临界值</div></div>
+        </div>
+        <div class="result-box" id="hypResultBox">
+          <strong>📋 检验结论</strong><br/>
+          <span id="hypConclusion">设置参数后点击"抽样检验"</span>
+        </div>
+        <p style="margin-top:12px;font-size:13px">
+          ⚠️ <strong>P值</strong>：在H₀成立时，观察到当前或更极端结果的概率。P < α 则拒绝H₀。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 4. 综合练习 ============ -->
+  <div class="section" id="sec-quiz">
+    <div id="quizContainer"></div>
+    <div style="text-align:center;margin-top:16px">
+      <button id="btnResetQuiz" class="controls" style="padding:10px 24px;border-radius:10px;background:var(--primary);border:none;color:#fff;cursor:pointer;font-size:14px">
+        🔄 重新开始
+      </button>
+      <span id="quizScore" style="margin-left:16px;font-size:15px;color:var(--accent)"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 进度追踪 =====
+const SLUG = 'statistics';
+const ALL_TABS = ['estimation', 'confidence', 'hypothesis', 'quiz'];
+const visitedTabs = new Set(['estimation']);
+const quizFirstTryCorrect = new Set();
+
+function maybeMarkDone() {
+  if (typeof PageProgress === 'undefined') return;
+  const tabsOk = ALL_TABS.every(t => visitedTabs.has(t));
+  const quizOk = quizFirstTryCorrect.size === quizData.length;
+  if (tabsOk && quizOk && !PageProgress.isDone(SLUG)) {
+    PageProgress.markDone(SLUG);
+    const m = document.getElementById('done-mark');
+    if (m) m.style.display = 'inline-block';
+  }
+}
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone(SLUG)) {
+  const m = document.getElementById('done-mark');
+  if (m) m.style.display = 'inline-block';
+}
+
+// ========== Tab switching ==========
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('sec-' + tab.dataset.sec).classList.add('active');
+    visitedTabs.add(tab.dataset.sec);
+    maybeMarkDone();
+  });
+});
+
+// ========== Utility ==========
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function sampleNormal(n, mu, sigma) {
+  return Array.from({length: n}, () => mu + sigma * randn());
+}
+function mean(arr) { return arr.reduce((a,b) => a+b, 0) / arr.length; }
+function variance(arr) {
+  const m = mean(arr);
+  return arr.reduce((s,x) => s + (x-m)**2, 0) / (arr.length - 1);
+}
+function normalCDF(z) {
+  const a1=0.254829592, a2=-0.284496736, a3=1.421413741, a4=-1.453152027, a5=1.061405429;
+  const p=0.3275911;
+  const sign = z < 0 ? -1 : 1;
+  z = Math.abs(z) / Math.SQRT2;
+  const t = 1 / (1 + p * z);
+  const y = 1 - (((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t * Math.exp(-z*z);
+  return 0.5 * (1 + sign * y);
+}
+function normalPDF(x) { return Math.exp(-0.5*x*x) / Math.sqrt(2*Math.PI); }
+
+// ========== 1. 点估计 ==========
+const TRUE_MU = 50, TRUE_SIGMA = 10;
+const cvEst = document.getElementById('cvEstimation');
+const ctxEst = cvEst.getContext('2d');
+let estSamples = []; // array of {data, mean}
+const estNSlider = document.getElementById('estN');
+const estNVal = document.getElementById('estNVal');
+estNSlider.addEventListener('input', () => { estNVal.textContent = estNSlider.value; });
+
+function drawEstimation() {
+  const W = cvEst.width, H = cvEst.height;
+  ctxEst.clearRect(0,0,W,H);
+
+  // Background grid
+  ctxEst.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctxEst.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) { ctxEst.beginPath(); ctxEst.moveTo(x,0); ctxEst.lineTo(x,H); ctxEst.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctxEst.beginPath(); ctxEst.moveTo(0,y); ctxEst.lineTo(W,y); ctxEst.stroke(); }
+
+  // True distribution curve
+  const curveY = 60, curveH = 120;
+  const xMin = TRUE_MU - 4*TRUE_SIGMA, xMax = TRUE_MU + 4*TRUE_SIGMA;
+  const toX = v => (v - xMin) / (xMax - xMin) * (W - 60) + 30;
+  const maxPDF = normalPDF(0);
+
+  // Fill distribution
+  ctxEst.beginPath();
+  ctxEst.moveTo(toX(xMin), curveY + curveH);
+  for (let px = 0; px <= W-60; px++) {
+    const v = xMin + (px / (W-60)) * (xMax - xMin);
+    const y = curveY + curveH - (normalPDF((v-TRUE_MU)/TRUE_SIGMA) / maxPDF) * curveH;
+    ctxEst.lineTo(30 + px, y);
+  }
+  ctxEst.lineTo(toX(xMax), curveY + curveH);
+  ctxEst.closePath();
+  const grad = ctxEst.createLinearGradient(0, curveY, 0, curveY+curveH);
+  grad.addColorStop(0, 'rgba(139,92,246,0.3)');
+  grad.addColorStop(1, 'rgba(139,92,246,0.02)');
+  ctxEst.fillStyle = grad;
+  ctxEst.fill();
+
+  // Curve line
+  ctxEst.beginPath();
+  for (let px = 0; px <= W-60; px++) {
+    const v = xMin + (px / (W-60)) * (xMax - xMin);
+    const y = curveY + curveH - (normalPDF((v-TRUE_MU)/TRUE_SIGMA) / maxPDF) * curveH;
+    px === 0 ? ctxEst.moveTo(30+px, y) : ctxEst.lineTo(30+px, y);
+  }
+  ctxEst.strokeStyle = '#8b5cf6';
+  ctxEst.lineWidth = 2;
+  ctxEst.stroke();
+
+  // True mu line
+  ctxEst.setLineDash([5,5]);
+  ctxEst.beginPath();
+  ctxEst.moveTo(toX(TRUE_MU), curveY);
+  ctxEst.lineTo(toX(TRUE_MU), curveY+curveH+10);
+  ctxEst.strokeStyle = '#ef4444';
+  ctxEst.lineWidth = 1.5;
+  ctxEst.stroke();
+  ctxEst.setLineDash([]);
+  ctxEst.fillStyle = '#ef4444';
+  ctxEst.font = '12px sans-serif';
+  ctxEst.fillText('μ=50', toX(TRUE_MU)+4, curveY+12);
+
+  // Sample points (last sample highlighted)
+  if (estSamples.length > 0) {
+    const last = estSamples[estSamples.length-1];
+    const dotY = curveY + curveH + 30;
+
+    // Sample mean line
+    ctxEst.setLineDash([3,3]);
+    ctxEst.beginPath();
+    ctxEst.moveTo(toX(last.mean), curveY);
+    ctxEst.lineTo(toX(last.mean), dotY + 30);
+    ctxEst.strokeStyle = 'rgba(6,182,212,0.5)';
+    ctxEst.lineWidth = 1;
+    ctxEst.stroke();
+    ctxEst.setLineDash([]);
+
+    // Data points
+    last.data.forEach(v => {
+      const x = toX(v);
+      ctxEst.beginPath();
+      ctxEst.arc(x, dotY, 4, 0, Math.PI*2);
+      ctxEst.fillStyle = 'rgba(6,182,212,0.7)';
+      ctxEst.fill();
+    });
+
+    // Mean marker
+    ctxEst.beginPath();
+    ctxEst.arc(toX(last.mean), dotY + 20, 6, 0, Math.PI*2);
+    ctxEst.fillStyle = '#06b6d4';
+    ctxEst.fill();
+    ctxEst.fillStyle = '#06b6d4';
+    ctxEst.font = 'bold 13px sans-serif';
+    ctxEst.fillText('X̄=' + last.mean.toFixed(1), toX(last.mean)+10, dotY+24);
+
+    // Update stats
+    document.getElementById('estMean').textContent = last.mean.toFixed(2);
+    document.getElementById('estVar').textContent = variance(last.data).toFixed(2);
+  }
+
+  // Histogram of all sample means
+  if (estSamples.length >= 2) {
+    const histY = 280, histH = 120;
+    const means = estSamples.map(s => s.mean);
+    const mMin = Math.min(...means) - 2, mMax = Math.max(...means) + 2;
+    const nBins = 15;
+    const binW = (mMax - mMin) / nBins;
+    const bins = new Array(nBins).fill(0);
+    means.forEach(m => {
+      const idx = Math.min(Math.floor((m - mMin) / binW), nBins-1);
+      if (idx >= 0) bins[idx]++;
+    });
+    const maxBin = Math.max(...bins, 1);
+
+    ctxEst.fillStyle = 'rgba(255,255,255,0.06)';
+    ctxEst.font = '11px sans-serif';
+    ctxEst.fillText('样本均值分布 (共' + estSamples.length + '次)', 30, histY - 6);
+
+    bins.forEach((c, i) => {
+      const x = toX(mMin + i * binW);
+      const w = toX(mMin + (i+1) * binW) - x;
+      const h = (c / maxBin) * histH;
+      const grd = ctxEst.createLinearGradient(0, histY+histH-h, 0, histY+histH);
+      grd.addColorStop(0, 'rgba(16,185,129,0.6)');
+      grd.addColorStop(1, 'rgba(16,185,129,0.15)');
+      ctxEst.fillStyle = grd;
+      ctxEst.fillRect(x, histY + histH - h, Math.max(w-1, 2), h);
+    });
+
+    // Mean of means
+    const grandMean = mean(means);
+    ctxEst.setLineDash([4,4]);
+    ctxEst.beginPath();
+    ctxEst.moveTo(toX(grandMean), histY);
+    ctxEst.lineTo(toX(grandMean), histY+histH);
+    ctxEst.strokeStyle = '#f59e0b';
+    ctxEst.lineWidth = 1.5;
+    ctxEst.stroke();
+    ctxEst.setLineDash([]);
+    ctxEst.fillStyle = '#f59e0b';
+    ctxEst.font = '12px sans-serif';
+    ctxEst.fillText('均值=' + grandMean.toFixed(1), toX(grandMean)+4, histY+12);
+
+    // Update bias info
+    const biasInfo = document.getElementById('estBiasInfo');
+    biasInfo.textContent = `${estSamples.length}次抽样：X̄的均值=${grandMean.toFixed(2)}，偏差=${(grandMean-TRUE_MU).toFixed(2)}。n越大，X̄越接近μ。`;
+  }
+}
+
+function doResample() {
+  const n = parseInt(estNSlider.value);
+  const data = sampleNormal(n, TRUE_MU, TRUE_SIGMA);
+  estSamples.push({data, mean: mean(data)});
+  drawEstimation();
+}
+
+document.getElementById('btnResample').addEventListener('click', () => {
+  estSamples = [];
+  doResample();
+});
+document.getElementById('btnAddSample').addEventListener('click', () => {
+  for (let i = 0; i < 10; i++) {
+    const n = parseInt(estNSlider.value);
+    const data = sampleNormal(n, TRUE_MU, TRUE_SIGMA);
+    estSamples.push({data, mean: mean(data)});
+  }
+  drawEstimation();
+});
+
+// Initial draw
+doResample();
+
+// ========== 2. 置信区间 ==========
+const cvConf = document.getElementById('cvConfidence');
+const ctxConf = cvConf.getContext('2d');
+let confIntervals = [];
+const confLevelSel = document.getElementById('confLevel');
+const confNSlider = document.getElementById('confN');
+const confNValEl = document.getElementById('confNVal');
+confNSlider.addEventListener('input', () => { confNValEl.textContent = confNSlider.value; });
+
+function zAlpha(alpha) {
+  // simple bisection for z
+  let lo = 0, hi = 4;
+  const target = 1 - alpha/2;
+  for (let i = 0; i < 50; i++) {
+    const mid = (lo+hi)/2;
+    normalCDF(mid) < target ? lo = mid : hi = mid;
+  }
+  return (lo+hi)/2;
+}
+
+function drawConfidence() {
+  const W = cvConf.width, H = cvConf.height;
+  ctxConf.clearRect(0,0,W,H);
+
+  // Grid
+  ctxConf.strokeStyle = 'rgba(255,255,255,0.04)';
+  for (let x = 0; x < W; x += 40) { ctxConf.beginPath(); ctxConf.moveTo(x,0); ctxConf.lineTo(x,H); ctxConf.stroke(); }
+
+  const level = parseFloat(confLevelSel.value);
+  const n = parseInt(confNSlider.value);
+  const alpha = 1 - level;
+  const z = zAlpha(alpha);
+  const se = TRUE_SIGMA / Math.sqrt(n);
+
+  // Draw axis
+  const axisY = 30;
+  const xMin = TRUE_MU - 5*se, xMax = TRUE_MU + 5*se;
+  const toX = v => (v - xMin) / (xMax - xMin) * (W - 80) + 40;
+
+  // True mu line
+  ctxConf.setLineDash([6,4]);
+  ctxConf.beginPath();
+  ctxConf.moveTo(toX(TRUE_MU), axisY);
+  ctxConf.lineTo(toX(TRUE_MU), H - 20);
+  ctxConf.strokeStyle = 'rgba(239,68,68,0.6)';
+  ctxConf.lineWidth = 2;
+  ctxConf.stroke();
+  ctxConf.setLineDash([]);
+  ctxConf.fillStyle = '#ef4444';
+  ctxConf.font = 'bold 12px sans-serif';
+  ctxConf.fillText('μ=50', toX(TRUE_MU)+4, axisY+14);
+
+  // Draw intervals
+  const maxShow = Math.min(confIntervals.length, 20);
+  const rowH = Math.min(18, (H - axisY - 40) / Math.max(maxShow, 1));
+  let coverCount = 0;
+
+  for (let i = 0; i < maxShow; i++) {
+    const iv = confIntervals[confIntervals.length - 1 - i];
+    const y = axisY + 24 + i * rowH;
+    const covers = iv.lower <= TRUE_MU && TRUE_MU <= iv.upper;
+    if (covers) coverCount++;
+
+    // Interval line
+    ctxConf.beginPath();
+    ctxConf.moveTo(toX(iv.lower), y);
+    ctxConf.lineTo(toX(iv.upper), y);
+    ctxConf.strokeStyle = covers ? 'rgba(16,185,129,0.7)' : 'rgba(239,68,68,0.7)';
+    ctxConf.lineWidth = 2;
+    ctxConf.stroke();
+
+    // End caps
+    [iv.lower, iv.upper].forEach(v => {
+      ctxConf.beginPath();
+      ctxConf.moveTo(toX(v), y-4);
+      ctxConf.lineTo(toX(v), y+4);
+      ctxConf.stroke();
+    });
+
+    // Sample mean dot
+    ctxConf.beginPath();
+    ctxConf.arc(toX(iv.xbar), y, 3, 0, Math.PI*2);
+    ctxConf.fillStyle = covers ? '#10b981' : '#ef4444';
+    ctxConf.fill();
+  }
+
+  // Update stats
+  if (confIntervals.length > 0) {
+    const last = confIntervals[confIntervals.length-1];
+    document.getElementById('confLower').textContent = last.lower.toFixed(2);
+    document.getElementById('confUpper').textContent = last.upper.toFixed(2);
+    document.getElementById('confWidth').textContent = (last.upper - last.lower).toFixed(2);
+
+    const total = confIntervals.length;
+    const covered = confIntervals.filter(iv => iv.lower <= TRUE_MU && TRUE_MU <= iv.upper).length;
+    document.getElementById('confCoverage').textContent =
+      `${total}组中 ${covered}组覆盖μ，覆盖率 ${(covered/total*100).toFixed(0)}%（理论=${(level*100).toFixed(0)}%）`;
+  }
+
+  // Info text
+  ctxConf.fillStyle = 'rgba(255,255,255,0.3)';
+  ctxConf.font = '11px sans-serif';
+  ctxConf.fillText(`置信水平=${(level*100).toFixed(0)}%  z=${z.toFixed(3)}  n=${n}  SE=${se.toFixed(2)}`, 40, H - 8);
+}
+
+document.getElementById('btnConfDraw').addEventListener('click', () => {
+  const level = parseFloat(confLevelSel.value);
+  const n = parseInt(confNSlider.value);
+  const alpha = 1 - level;
+  const z = zAlpha(alpha);
+  const se = TRUE_SIGMA / Math.sqrt(n);
+
+  for (let i = 0; i < 20; i++) {
+    const data = sampleNormal(n, TRUE_MU, TRUE_SIGMA);
+    const xbar = mean(data);
+    confIntervals.push({
+      xbar,
+      lower: xbar - z * se,
+      upper: xbar + z * se
+    });
+  }
+  drawConfidence();
+});
+
+// Initial
+drawConfidence();
+
+// ========== 3. 假设检验 ==========
+const cvHyp = document.getElementById('cvHypothesis');
+const ctxHyp = cvHyp.getContext('2d');
+let hypResult = null;
+
+const hypTypeSel = document.getElementById('hypType');
+const hypAlphaSel = document.getElementById('hypAlpha');
+const hypTrueMuSlider = document.getElementById('hypTrueMu');
+const hypTrueMuValEl = document.getElementById('hypTrueMuVal');
+hypTrueMuSlider.addEventListener('input', () => { hypTrueMuValEl.textContent = hypTrueMuSlider.value; });
+
+function drawHypothesis() {
+  const W = cvHyp.width, H = cvHyp.height;
+  ctxHyp.clearRect(0,0,W,H);
+
+  // Grid
+  ctxHyp.strokeStyle = 'rgba(255,255,255,0.04)';
+  for (let x = 0; x < W; x += 40) { ctxHyp.beginPath(); ctxHyp.moveTo(x,0); ctxHyp.lineTo(x,H); ctxHyp.stroke(); }
+
+  const mu0 = 50;
+  const n = 30;
+  const se = TRUE_SIGMA / Math.sqrt(n);
+  const alpha = parseFloat(hypAlphaSel.value);
+  const type = hypTypeSel.value;
+  const zCrit = zAlpha(type === 'twoside' ? alpha : 2*alpha);
+
+  // Draw null distribution (standard normal)
+  const plotXMin = -4, plotXMax = 4;
+  const plotY = 40, plotH = 180;
+  const toXZ = z => (z - plotXMin) / (plotXMax - plotXMin) * (W - 80) + 40;
+  const maxP = normalPDF(0);
+
+  // Fill rejection region
+  ctxHyp.beginPath();
+  if (type === 'twoside') {
+    // Right tail
+    ctxHyp.moveTo(toXZ(zCrit), plotY + plotH);
+    for (let z = zCrit; z <= plotXMax; z += 0.05) {
+      ctxHyp.lineTo(toXZ(z), plotY + plotH - (normalPDF(z)/maxP)*plotH);
+    }
+    ctxHyp.lineTo(toXZ(plotXMax), plotY+plotH);
+    // Left tail
+    ctxHyp.moveTo(toXZ(-plotXMax), plotY + plotH);
+    for (let z = -plotXMax; z <= -zCrit; z += 0.05) {
+      ctxHyp.lineTo(toXZ(z), plotY + plotH - (normalPDF(z)/maxP)*plotH);
+    }
+    ctxHyp.lineTo(toXZ(-zCrit), plotY+plotH);
+  } else if (type === 'right') {
+    ctxHyp.moveTo(toXZ(zCrit), plotY + plotH);
+    for (let z = zCrit; z <= plotXMax; z += 0.05) {
+      ctxHyp.lineTo(toXZ(z), plotY + plotH - (normalPDF(z)/maxP)*plotH);
+    }
+    ctxHyp.lineTo(toXZ(plotXMax), plotY+plotH);
+  } else {
+    ctxHyp.moveTo(toXZ(-plotXMax), plotY + plotH);
+    for (let z = -plotXMax; z <= -zCrit; z += 0.05) {
+      ctxHyp.lineTo(toXZ(z), plotY + plotH - (normalPDF(z)/maxP)*plotH);
+    }
+    ctxHyp.lineTo(toXZ(-zCrit), plotY+plotH);
+  }
+  ctxHyp.closePath();
+  ctxHyp.fillStyle = 'rgba(239,68,68,0.2)';
+  ctxHyp.fill();
+
+  // Normal curve
+  ctxHyp.beginPath();
+  for (let px = 0; px <= W-80; px++) {
+    const z = plotXMin + (px/(W-80)) * (plotXMax - plotXMin);
+    const y = plotY + plotH - (normalPDF(z)/maxP)*plotH;
+    px === 0 ? ctxHyp.moveTo(40+px, y) : ctxHyp.lineTo(40+px, y);
+  }
+  ctxHyp.strokeStyle = '#8b5cf6';
+  ctxHyp.lineWidth = 2;
+  ctxHyp.stroke();
+
+  // Critical value lines
+  ctxHyp.setLineDash([4,4]);
+  ctxHyp.strokeStyle = 'rgba(239,68,68,0.6)';
+  ctxHyp.lineWidth = 1.5;
+  if (type === 'twoside') {
+    [zCrit, -zCrit].forEach(zc => {
+      ctxHyp.beginPath(); ctxHyp.moveTo(toXZ(zc), plotY); ctxHyp.lineTo(toXZ(zc), plotY+plotH+10); ctxHyp.stroke();
+    });
+  } else if (type === 'right') {
+    ctxHyp.beginPath(); ctxHyp.moveTo(toXZ(zCrit), plotY); ctxHyp.lineTo(toXZ(zCrit), plotY+plotH+10); ctxHyp.stroke();
+  } else {
+    ctxHyp.beginPath(); ctxHyp.moveTo(toXZ(-zCrit), plotY); ctxHyp.lineTo(toXZ(-zCrit), plotY+plotH+10); ctxHyp.stroke();
+  }
+  ctxHyp.setLineDash([]);
+
+  // Labels
+  ctxHyp.fillStyle = '#94a3b8';
+  ctxHyp.font = '11px sans-serif';
+  for (let z = -3; z <= 3; z++) {
+    ctxHyp.fillText(z.toString(), toXZ(z)-4, plotY+plotH+24);
+  }
+  ctxHyp.fillText('Z', toXZ(plotXMax)+4, plotY+plotH+4);
+  ctxHyp.fillStyle = 'rgba(239,68,68,0.6)';
+  ctxHyp.font = '11px sans-serif';
+  if (type === 'twoside') {
+    ctxHyp.fillText('拒绝域', toXZ(zCrit)+4, plotY+10);
+    ctxHyp.fillText('拒绝域', toXZ(-zCrit)-50, plotY+10);
+  } else if (type === 'right') {
+    ctxHyp.fillText('拒绝域 →', toXZ(zCrit)+4, plotY+10);
+  } else {
+    ctxHyp.fillText('← 拒绝域', toXZ(-zCrit)-60, plotY+10);
+  }
+
+  // Test statistic marker
+  if (hypResult) {
+    const zStat = hypResult.z;
+    const clampedZ = Math.max(plotXMin, Math.min(plotXMax, zStat));
+    ctxHyp.beginPath();
+    ctxHyp.moveTo(toXZ(clampedZ), plotY - 5);
+    ctxHyp.lineTo(toXZ(clampedZ), plotY + plotH + 10);
+    ctxHyp.strokeStyle = '#06b6d4';
+    ctxHyp.lineWidth = 2.5;
+    ctxHyp.setLineDash([]);
+    ctxHyp.stroke();
+
+    ctxHyp.beginPath();
+    ctxHyp.arc(toXZ(clampedZ), plotY - 10, 5, 0, Math.PI*2);
+    ctxHyp.fillStyle = '#06b6d4';
+    ctxHyp.fill();
+    ctxHyp.fillStyle = '#06b6d4';
+    ctxHyp.font = 'bold 12px sans-serif';
+    ctxHyp.fillText('Z=' + zStat.toFixed(2), toXZ(clampedZ)+8, plotY-8);
+
+    // P-value shading
+    ctxHyp.globalAlpha = 0.3;
+    ctxHyp.beginPath();
+    if (type === 'twoside') {
+      const dir = zStat >= 0 ? 1 : -1;
+      const absZ = Math.abs(zStat);
+      ctxHyp.moveTo(toXZ(dir * absZ), plotY+plotH);
+      for (let z = dir*absZ; dir*z <= plotXMax; z += dir*0.05) {
+        ctxHyp.lineTo(toXZ(z), plotY+plotH - (normalPDF(z)/maxP)*plotH);
+      }
+      ctxHyp.lineTo(toXZ(dir*plotXMax), plotY+plotH);
+    } else if (type === 'right') {
+      ctxHyp.moveTo(toXZ(zStat), plotY+plotH);
+      for (let z = zStat; z <= plotXMax; z += 0.05) {
+        ctxHyp.lineTo(toXZ(z), plotY+plotH - (normalPDF(z)/maxP)*plotH);
+      }
+      ctxHyp.lineTo(toXZ(plotXMax), plotY+plotH);
+    } else {
+      ctxHyp.moveTo(toXZ(-plotXMax), plotY+plotH);
+      for (let z = -plotXMax; z <= zStat; z += 0.05) {
+        ctxHyp.lineTo(toXZ(z), plotY+plotH - (normalPDF(z)/maxP)*plotH);
+      }
+      ctxHyp.lineTo(toXZ(zStat), plotY+plotH);
+    }
+    ctxHyp.closePath();
+    ctxHyp.fillStyle = '#f59e0b';
+    ctxHyp.fill();
+    ctxHyp.globalAlpha = 1;
+
+    // Power illustration - true mu distribution
+    const trueMu = parseFloat(hypTrueMuSlider.value);
+    const trueZ = (trueMu - mu0) / se;
+    const clampedTrueZ = Math.max(plotXMin, Math.min(plotXMax, trueZ));
+
+    // Draw alternative distribution (shifted)
+    ctxHyp.globalAlpha = 0.25;
+    ctxHyp.beginPath();
+    for (let px = 0; px <= W-80; px++) {
+      const z = plotXMin + (px/(W-80)) * (plotXMax - plotXMin);
+      const shifted = z - trueZ;
+      const y = plotY + plotH - (normalPDF(shifted)/maxP)*plotH;
+      px === 0 ? ctxHyp.moveTo(40+px, y) : ctxHyp.lineTo(40+px, y);
+    }
+    ctxHyp.strokeStyle = '#10b981';
+    ctxHyp.lineWidth = 1.5;
+    ctxHyp.stroke();
+    ctxHyp.globalAlpha = 1;
+
+    ctxHyp.fillStyle = 'rgba(16,185,129,0.5)';
+    ctxHyp.font = '11px sans-serif';
+    if (clampedTrueZ > plotXMin + 1 && clampedTrueZ < plotXMax - 1) {
+      ctxHyp.fillText('真实分布', toXZ(clampedTrueZ)-20, plotY+plotH+40);
+    }
+  }
+
+  // Axis label
+  ctxHyp.fillStyle = 'rgba(255,255,255,0.3)';
+  ctxHyp.font = '11px sans-serif';
+  ctxHyp.fillText('H₀: μ = 50 (σ=10, n=30)', 40, H - 8);
+}
+
+document.getElementById('btnHypTest').addEventListener('click', () => {
+  const mu0 = 50;
+  const n = 30;
+  const se = TRUE_SIGMA / Math.sqrt(n);
+  const alpha = parseFloat(hypAlphaSel.value);
+  const type = hypTypeSel.value;
+  const trueMu = parseFloat(hypTrueMuSlider.value);
+
+  const data = sampleNormal(n, trueMu, TRUE_SIGMA);
+  const xbar = mean(data);
+  const z = (xbar - mu0) / se;
+
+  let pValue, zCrit;
+  if (type === 'twoside') {
+    pValue = 2 * (1 - normalCDF(Math.abs(z)));
+    zCrit = zAlpha(alpha);
+  } else if (type === 'right') {
+    pValue = 1 - normalCDF(z);
+    zCrit = zAlpha(2*alpha);
+  } else {
+    pValue = normalCDF(z);
+    zCrit = zAlpha(2*alpha);
+  }
+
+  const reject = pValue < alpha;
+  hypResult = {z, pValue, reject, xbar};
+
+  document.getElementById('hypZ').textContent = z.toFixed(3);
+  document.getElementById('hypP').textContent = pValue < 0.001 ? '<0.001' : pValue.toFixed(4);
+  document.getElementById('hypCrit').textContent = type === 'twoside' ? `±${zCrit.toFixed(3)}` : (type === 'right' ? zCrit.toFixed(3) : `-${zCrit.toFixed(3)}`);
+
+  const box = document.getElementById('hypResultBox');
+  const conc = document.getElementById('hypConclusion');
+  box.className = 'result-box' + (reject ? ' reject' : '');
+  if (reject) {
+    conc.innerHTML = `<strong style="color:#ef4444">❌ 拒绝 H₀</strong><br/>
+      P=${pValue.toFixed(4)} < α=${alpha}，有充分证据拒绝 H₀: μ=50。<br/>
+      <span style="font-size:12px;color:#94a3b8">（真实μ=${trueMu}，检验正确${reject?'识别':'未识别'}了差异）</span>`;
+  } else {
+    conc.innerHTML = `<strong style="color:#10b981">✅ 不拒绝 H₀</strong><br/>
+      P=${pValue.toFixed(4)} ≥ α=${alpha}，没有充分证据拒绝 H₀: μ=50。<br/>
+      <span style="font-size:12px;color:#94a3b8">（真实μ=${trueMu}，样本量可能不足以检测此差异）</span>`;
+  }
+
+  drawHypothesis();
+});
+
+drawHypothesis();
+
+// ========== 4. 综合练习 ==========
+const quizData = [
+  {
+    q: '设 X₁,...,Xₙ 来自正态总体 N(μ,σ²)，以下哪个是 μ 的无偏估计？',
+    opts: ['样本均值 X̄', '样本中位数', 'X₁', '以上都是'],
+    ans: 3,
+    explain: 'X̄、中位数、单个X₁ 的期望都等于μ，都是无偏估计，但X̄最有效。'
+  },
+  {
+    q: '95%置信区间的正确理解是：',
+    opts: [
+      '总体参数有95%概率在这个区间内',
+      '重复抽样100次，约95次构造的区间包含真值',
+      '有95%的样本落在区间内',
+      '区间覆盖了95%的总体'
+    ],
+    ans: 1,
+    explain: '置信区间是频率派概念：重复抽样时，构造的区间以(1-α)频率覆盖真参数。不能说"参数有95%概率在某个特定区间内"。'
+  },
+  {
+    q: '假设检验中，P值的含义是：',
+    opts: [
+      'H₀成立的概率',
+      'H₁成立的概率',
+      '在H₀成立时，观察到当前或更极端结果的概率',
+      '犯第一类错误的概率'
+    ],
+    ans: 2,
+    explain: 'P值是在H₀成立的前提下，获得当前统计量或更极端值的概率。P越小，说明H₀越不合理。'
+  },
+  {
+    q: '增大样本量n，置信区间宽度会：',
+    opts: ['变宽', '变窄', '不变', '不确定'],
+    ans: 1,
+    explain: '置信区间宽度 ∝ 1/√n，n增大则区间变窄，估计更精确。'
+  },
+  {
+    q: '在H₀: μ=50 vs H₁: μ>50 的右侧检验中，Z=1.96，α=0.05，结论是：',
+    opts: [
+      '拒绝H₀（1.96 > 1.645）',
+      '不拒绝H₀',
+      '接受H₁: μ>50',
+      '需要更多信息'
+    ],
+    ans: 0,
+    explain: '右侧检验α=0.05的临界值z₀.₀₅=1.645。Z=1.96>1.645，落入拒绝域，拒绝H₀。'
+  },
+  {
+    q: '样本方差 S² = Σ(Xᵢ-X̄²)/(n-1) 中除以(n-1)而不是n的原因是：',
+    opts: [
+      '计算更方便',
+      '使S²成为σ²的无偏估计',
+      '传统习惯',
+      '使方差更小'
+    ],
+    ans: 1,
+    explain: '除以(n-1)称为Bessel校正，使E(S²)=σ²，即S²是σ²的无偏估计。除以n会低估方差。'
+  }
+];
+
+let quizAnswered = {};
+
+function renderQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  quizData.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.innerHTML = `
+      <h4>第${qi+1}题</h4>
+      <p style="color:var(--text);font-size:15px">${q.q}</p>
+      <div class="quiz-options">
+        ${q.opts.map((o, oi) => `
+          <div class="quiz-opt" data-qi="${qi}" data-oi="${oi}">${String.fromCharCode(65+oi)}. ${o}</div>
+        `).join('')}
+      </div>
+      <div class="quiz-explain" id="qe-${qi}">${q.explain}</div>
+    `;
+    container.appendChild(card);
+  });
+
+  container.querySelectorAll('.quiz-opt').forEach(el => {
+    el.addEventListener('click', () => {
+      const qi = parseInt(el.dataset.qi);
+      const oi = parseInt(el.dataset.oi);
+      if (quizAnswered[qi] !== undefined) return;
+      quizAnswered[qi] = oi;
+      if (oi === quizData[qi].ans) quizFirstTryCorrect.add(qi);
+      maybeMarkDone();
+
+      const opts = el.parentElement.querySelectorAll('.quiz-opt');
+      opts.forEach((o, idx) => {
+        if (idx === quizData[qi].ans) o.classList.add('correct');
+        else if (idx === oi && oi !== quizData[qi].ans) o.classList.add('wrong');
+      });
+      document.getElementById('qe-' + qi).style.display = 'block';
+
+      const correct = Object.entries(quizAnswered).filter(([k,v]) => v === quizData[k].ans).length;
+      const total = Object.keys(quizAnswered).length;
+      document.getElementById('quizScore').textContent = `得分：${correct}/${total}`;
+    });
+  });
+}
+
+document.getElementById('btnResetQuiz').addEventListener('click', () => {
+  quizAnswered = {};
+  quizFirstTryCorrect.clear();
+  renderQuiz();
+  document.getElementById('quizScore').textContent = '';
+});
+
+renderQuiz();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

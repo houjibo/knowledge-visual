@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>声现象 · 初中物理互动可视化</title>
+<style>
+  :root {
+    --primary: #06b6d4;
+    --wave: #3b82f6;
+    --vibrate: #f59e0b;
+    --echo: #a855f7;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0c1a2e 0%, #1a1040 50%, #0c1a2e 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.4rem; background: linear-gradient(90deg, var(--wave), var(--vibrate), var(--echo)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 1rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab { padding: 12px 24px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(6,182,212,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); cursor: pointer; }
+  .hint { text-align: center; font-size: 13px; color: #94a3b8; margin-top: 8px; }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 680px; }
+  .panel h3 { font-size: 1.15rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .concept-box { font-size: 1.05rem; text-align: left; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 12px 0; line-height: 1.9; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--wave); font-weight: 600; }
+  .concept-box .hl2 { color: var(--vibrate); font-weight: 600; }
+  .concept-box .hl3 { color: var(--echo); font-weight: 600; }
+  .concept-box .hlg { color: #22c55e; font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--vibrate); font-weight: 600; font-size: 13px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 16px; border-radius: 10px; background: rgba(59,130,246,0.1); border: 2px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 14px; color: #93c5fd; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .formula { text-align: center; padding: 14px; background: rgba(59,130,246,0.08); border-radius: 12px; margin: 14px 0; font-size: 1.2rem; font-family: "Times New Roman", serif; color: #93c5fd; border: 1px solid rgba(59,130,246,0.2); }
+  .formula .var { color: var(--vibrate); font-style: italic; }
+  .formula .eq { color: #e2e8f0; }
+
+  .quiz { margin-top: 16px; padding: 18px; background: rgba(6,182,212,0.1); border-radius: 14px; border: 2px solid rgba(6,182,212,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 10px; }
+  .quiz-opt { padding: 12px 16px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(34,197,94,.2); border-color: #22c55e; }
+  .quiz-opt.wrong { background: rgba(239,68,68,.15); border-color: #ef4444; }
+  .quiz-result { margin-top: 12px; font-size: 14px; font-weight: 600; min-height: 20px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔊 声现象</h1>
+    <p>振动产生声音 · 声波传播 · 音调与响度 · 回声测距</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="vibration">🎵 振动与声波</div>
+    <div class="tab" data-tab="speed">📏 声速测量</div>
+    <div class="tab" data-tab="tone">🎹 音调与响度</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="700" height="520"></canvas>
+      <div class="hint" id="hint">点击鼓面敲击，观察振动产生声波</div>
+    </div>
+    <div class="panel">
+      <!-- 振动与声波 -->
+      <div class="section active" id="sec-vibration">
+        <h3>🎵 振动产生声音</h3>
+        <div class="concept-box">
+          声音是由物体 <span class="hl2">振动</span> 产生的！<br>
+          敲击鼓面 → 鼓面 <span class="hl2">上下振动</span> → 推动周围空气 → 形成 <span class="hl">声波</span> → 传到耳朵<br>
+          声音需要 <span class="hlg">介质</span>（固体、液体、气体）才能传播，<span class="hl3">真空中不能传声</span>！
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-medium="air">🌬️ 空气</div>
+          <div class="mode-btn" data-medium="water">💧 水</div>
+          <div class="mode-btn" data-medium="solid">🧱 固体</div>
+          <div class="mode-btn" data-medium="vacuum">🚫 真空</div>
+        </div>
+        <div class="info-grid">
+          <div><b>空气传声：</b>约 340 m/s（常温）</div>
+          <div><b>水传声：</b>约 1500 m/s（更快！）</div>
+          <div><b>固体传声：</b>约 5000 m/s（最快）</div>
+          <div><b>真空：</b>不能传声！没有介质</div>
+        </div>
+      </div>
+
+      <!-- 声速测量 -->
+      <div class="section" id="sec-speed">
+        <h3>📏 声速测量</h3>
+        <div class="concept-box">
+          声音在不同介质中传播速度不同：<br>
+          <span class="hl">固体 > 液体 > 气体</span><br>
+          15°C 空气中声速 = <span class="hl2">340 m/s</span><br>
+          利用回声可以测量距离：<span class="hl3">s = vt/2</span>
+        </div>
+        <div class="formula">
+          <span class="var">距离</span> <span class="eq">= 声速 × 时间 ÷ 2</span><br>
+          <span class="var">s</span> <span class="eq">=</span> <span class="var">v</span> <span class="eq">×</span> <span class="var">t</span> <span class="eq">÷ 2</span>
+        </div>
+        <div class="slider-row">
+          <label>🏔️ 障碍物距离</label>
+          <input type="range" id="distSlider" min="50" max="500" value="170" />
+          <span class="val" id="distVal">170 m</span>
+        </div>
+        <div class="slider-row">
+          <label>🌡️ 气温</label>
+          <input type="range" id="tempSlider" min="-10" max="40" value="15" />
+          <span class="val" id="tempVal">15°C</span>
+        </div>
+        <div class="info-grid">
+          <div><b>声速公式：</b>v = 331 + 0.6t (m/s)</div>
+          <div><b>回声条件：</b>障碍物距人 ≥ 17m</div>
+          <div><b>应用：</b>声呐、B超、测距仪</div>
+          <div><b>点击画布：</b>发出声波，观察回声！</div>
+        </div>
+      </div>
+
+      <!-- 音调与响度 -->
+      <div class="section" id="sec-tone">
+        <h3>🎹 音调与响度</h3>
+        <div class="concept-box">
+          <span class="hl">音调</span>：声音的高低，由 <span class="hl2">频率</span> 决定<br>
+          频率越高 → 音调越高（尖细的声音）<br>
+          <span class="hl3">响度</span>：声音的大小，由 <span class="hl2">振幅</span> 决定<br>
+          振幅越大 → 响度越大（声音越响）
+        </div>
+        <div class="slider-row">
+          <label>📊 频率(Hz)</label>
+          <input type="range" id="freqSlider" min="100" max="1000" value="300" />
+          <span class="val" id="freqVal">300 Hz</span>
+        </div>
+        <div class="slider-row">
+          <label>📢 振幅</label>
+          <input type="range" id="ampSlider" min="10" max="100" value="50" />
+          <span class="val" id="ampVal">50</span>
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-wave="sine">〰️ 正弦波</div>
+          <div class="mode-btn" data-wave="square">⊓ 方波</div>
+          <div class="mode-btn" data-wave="saw">⩘ 锯齿波</div>
+        </div>
+        <div class="info-grid">
+          <div><b>人耳范围：</b>20 Hz ~ 20000 Hz</div>
+          <div><b>超声波：</b>> 20000 Hz</div>
+          <div><b>次声波：</b>< 20 Hz</div>
+          <div><b>音色：</b>由波形决定，区分不同乐器</div>
+        </div>
+      </div>
+
+      <!-- 测验 -->
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">🤔 声音在下列哪种介质中传播最快？</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-result" id="quizResult"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+let currentTab = 'vibration';
+let time = 0;
+
+// Vibration state
+let medium = 'air';
+let waveRings = [];
+let drumHit = 0;
+let particles = [];
+
+// Speed state
+let distance = 170;
+let temperature = 15;
+let soundPulse = null;
+let echoPulse = null;
+
+// Tone state
+let frequency = 300;
+let amplitude = 50;
+let waveType = 'sine';
+
+// ─── Tabs ───
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    currentTab = t.dataset.tab;
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('sec-' + currentTab).classList.add('active');
+    updateHint();
+    resetScene();
+  });
+});
+
+function updateHint() {
+  const hints = {
+    vibration: '点击画布敲击鼓面，观察振动产生声波',
+    speed: '调整距离和温度，点击画布发出声波测量回声',
+    tone: '调整频率和振幅，观察波形变化'
+  };
+  document.getElementById('hint').textContent = hints[currentTab];
+}
+
+function resetScene() {
+  waveRings = [];
+  soundPulse = null;
+  echoPulse = null;
+  drumHit = 0;
+  particles = [];
+}
+
+// ─── Medium buttons ───
+document.querySelectorAll('.mode-btn[data-medium]').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn[data-medium]').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    medium = b.dataset.medium;
+  });
+});
+
+// ─── Wave type buttons ───
+document.querySelectorAll('.mode-btn[data-wave]').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn[data-wave]').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    waveType = b.dataset.wave;
+  });
+});
+
+// ─── Sliders ───
+document.getElementById('distSlider')?.addEventListener('input', e => {
+  distance = +e.target.value;
+  document.getElementById('distVal').textContent = distance + ' m';
+});
+document.getElementById('tempSlider')?.addEventListener('input', e => {
+  temperature = +e.target.value;
+  document.getElementById('tempVal').textContent = temperature + '°C';
+});
+document.getElementById('freqSlider')?.addEventListener('input', e => {
+  frequency = +e.target.value;
+  document.getElementById('freqVal').textContent = frequency + ' Hz';
+});
+document.getElementById('ampSlider')?.addEventListener('input', e => {
+  amplitude = +e.target.value;
+  document.getElementById('ampVal').textContent = amplitude;
+});
+
+// ─── Canvas click ───
+cv.addEventListener('click', e => {
+  const rect = cv.getBoundingClientRect();
+  const sx = W / rect.width;
+  const x = (e.clientX - rect.left) * sx;
+  const y = (e.clientY - rect.top) * sx;
+
+  if (currentTab === 'vibration') {
+    drumHit = 1;
+    // Add wave rings
+    const speed = medium === 'vacuum' ? 0 : medium === 'solid' ? 5 : medium === 'water' ? 3 : 2;
+    if (speed > 0) {
+      waveRings.push({ r: 20, maxR: 350, speed, alpha: 0.8 });
+    }
+    // Add particles
+    for (let i = 0; i < 15; i++) {
+      particles.push({
+        x: 120 + Math.random() * 60,
+        y: 260 + (Math.random() - 0.5) * 100,
+        vx: 1 + Math.random() * 2,
+        vy: (Math.random() - 0.5) * 2,
+        life: 1
+      });
+    }
+  } else if (currentTab === 'speed') {
+    soundPulse = { x: 100, alpha: 1 };
+  }
+});
+
+// ─── Draw Vibration ───
+function drawVibration() {
+  // Drum
+  const drumX = 100, drumY = 260;
+  const drumVibrate = drumHit * Math.sin(time * 30) * 8;
+
+  // Drum body
+  ctx.fillStyle = '#92400e';
+  ctx.beginPath();
+  ctx.ellipse(drumX, drumY + 60, 50, 20, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#b45309';
+  ctx.fillRect(drumX - 50, drumY - 20 + drumVibrate, 100, 80);
+  ctx.fillStyle = '#d97706';
+  ctx.beginPath();
+  ctx.ellipse(drumX, drumY - 20 + drumVibrate, 50, 20, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Drum surface highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.beginPath();
+  ctx.ellipse(drumX, drumY - 20 + drumVibrate, 35, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drumHit *= 0.97;
+
+  // Wave rings
+  const mediumColors = { air: '#3b82f6', water: '#06b6d4', solid: '#f59e0b', vacuum: '#64748b' };
+  const color = mediumColors[medium];
+
+  waveRings.forEach(ring => {
+    ctx.globalAlpha = ring.alpha;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(drumX + 100, drumY, ring.r, -Math.PI * 0.4, Math.PI * 0.4);
+    ctx.stroke();
+    ring.r += ring.speed;
+    ring.alpha -= 0.008;
+  });
+  waveRings = waveRings.filter(r => r.alpha > 0);
+  ctx.globalAlpha = 1;
+
+  // Particles (air molecules)
+  particles.forEach(p => {
+    ctx.globalAlpha = p.life * 0.6;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= 0.01;
+  });
+  particles = particles.filter(p => p.life > 0);
+  ctx.globalAlpha = 1;
+
+  // Medium label
+  const labels = { air: '🌬️ 空气', water: '💧 水', solid: '🧱 固体', vacuum: '🚫 真空' };
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '16px sans-serif';
+  ctx.fillText(labels[medium], 300, 50);
+
+  // Vacuum: no sound
+  if (medium === 'vacuum' && waveRings.length === 0 && drumHit > 0.1) {
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('❌ 真空中不能传声！', 400, 260);
+    ctx.textAlign = 'start';
+  }
+
+  // Ear
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '40px sans-serif';
+  ctx.fillText('👂', 600, 275);
+
+  // Speed info
+  const speeds = { air: '340', water: '1500', solid: '5000', vacuum: '0' };
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px monospace';
+  ctx.fillText(`声速: ${speeds[medium]} m/s`, 300, 80);
+}
+
+// ─── Draw Speed ───
+function drawSpeed() {
+  const speed = 331 + 0.6 * temperature;
+  const wallX = 600;
+  const personX = 100;
+
+  // Person
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '40px sans-serif';
+  ctx.fillText('🧑', personX - 20, 290);
+
+  // Wall
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(wallX, 150, 20, 250);
+  ctx.fillStyle = '#64748b';
+  for (let y = 150; y < 400; y += 30) {
+    ctx.fillRect(wallX, y, 20, 2);
+  }
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('🏔️ 障碍物', wallX - 15, 140);
+
+  // Distance line
+  ctx.setLineDash([5, 5]);
+  ctx.strokeStyle = 'rgba(148,163,184,0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(personX + 30, 350);
+  ctx.lineTo(wallX, 350);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${distance} m`, (personX + wallX) / 2, 370);
+  ctx.textAlign = 'start';
+
+  // Sound pulse
+  if (soundPulse) {
+    // Outgoing wave
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = soundPulse.alpha;
+    ctx.beginPath();
+    ctx.arc(personX + 30, 260, soundPulse.x - personX, -0.3, 0.3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(personX + 30, 260, soundPulse.x - personX + 15, -0.3, 0.3);
+    ctx.stroke();
+
+    soundPulse.x += speed / 50;
+    if (soundPulse.x >= wallX && !echoPulse) {
+      echoPulse = { x: wallX, alpha: 0.8 };
+      soundPulse.alpha = 0;
+    }
+    soundPulse.alpha -= 0.003;
+  }
+
+  // Echo pulse
+  if (echoPulse) {
+    ctx.strokeStyle = '#a855f7';
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = echoPulse.alpha;
+    ctx.beginPath();
+    ctx.arc(wallX, 260, wallX - echoPulse.x, Math.PI - 0.3, Math.PI + 0.3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(wallX, 260, wallX - echoPulse.x + 15, Math.PI - 0.3, Math.PI + 0.3);
+    ctx.stroke();
+
+    echoPulse.x -= speed / 50;
+    echoPulse.alpha -= 0.004;
+
+    if (echoPulse.x <= personX + 30) {
+      // Echo received
+      ctx.fillStyle = '#22c55e';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('✅ 听到回声！', 350, 130);
+      const echoTime = (2 * distance / speed).toFixed(2);
+      ctx.fillText(`t = ${echoTime} s`, 350, 155);
+      ctx.textAlign = 'start';
+      echoPulse.alpha = 0;
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // Info display
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px monospace';
+  ctx.fillText(`声速 v = ${speed.toFixed(1)} m/s`, 250, 450);
+  ctx.fillText(`回声时间 t = 2s/v = ${(2 * distance / speed).toFixed(2)} s`, 250, 475);
+}
+
+// ─── Draw Tone ───
+function drawTone() {
+  const centerY = 260;
+  const ampScale = amplitude / 100;
+
+  // Draw waveform
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let x = 50; x < 650; x++) {
+    const t = (x - 50) / 600;
+    let y;
+    const phase = t * frequency / 50 + time * 3;
+    if (waveType === 'sine') {
+      y = centerY + Math.sin(phase * Math.PI * 2) * 80 * ampScale;
+    } else if (waveType === 'square') {
+      y = centerY + (Math.sin(phase * Math.PI * 2) > 0 ? 1 : -1) * 60 * ampScale;
+    } else {
+      const p = ((phase % 1) + 1) % 1;
+      y = centerY + (2 * p - 1) * 70 * ampScale;
+    }
+    if (x === 50) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Center line
+  ctx.setLineDash([5, 5]);
+  ctx.strokeStyle = 'rgba(148,163,184,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(50, centerY);
+  ctx.lineTo(650, centerY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Amplitude indicator
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(660, centerY - 80 * ampScale);
+  ctx.lineTo(670, centerY - 80 * ampScale);
+  ctx.lineTo(670, centerY);
+  ctx.lineTo(660, centerY);
+  ctx.stroke();
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('振幅', 672, centerY - 30);
+
+  // Frequency indicator
+  const waveCount = Math.floor(frequency / 100);
+  ctx.fillStyle = '#3b82f6';
+  ctx.font = '13px sans-serif';
+  ctx.fillText(`频率: ${frequency} Hz`, 50, 50);
+  ctx.fillText(`振幅: ${amplitude}`, 50, 70);
+
+  // Tone description
+  let toneDesc = '';
+  if (frequency < 200) toneDesc = '🔉 低沉（低音）';
+  else if (frequency < 500) toneDesc = '🔊 中等';
+  else toneDesc = '🔔 尖锐（高音）';
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '16px sans-serif';
+  ctx.fillText(toneDesc, 300, 50);
+
+  // Volume description
+  let volDesc = '';
+  if (amplitude < 30) volDesc = '🤫 轻声';
+  else if (amplitude < 70) volDesc = '🗣️ 正常';
+  else volDesc = '📢 大声';
+  ctx.fillText(volDesc, 300, 75);
+
+  // Wavelength marker
+  const wavelength = 600 / (frequency / 100);
+  if (wavelength > 20 && wavelength < 300) {
+    ctx.strokeStyle = '#22c55e';
+    ctx.lineWidth = 1.5;
+    const startX = 200;
+    ctx.beginPath();
+    ctx.moveTo(startX, 480);
+    ctx.lineTo(startX + wavelength, 480);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(startX, 475);
+    ctx.lineTo(startX, 485);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(startX + wavelength, 475);
+    ctx.lineTo(startX + wavelength, 485);
+    ctx.stroke();
+    ctx.fillStyle = '#22c55e';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('λ 波长', startX + wavelength / 2, 498);
+    ctx.textAlign = 'start';
+  }
+}
+
+// ─── Quiz ───
+const quizzes = [
+  { q: '🤔 声音在下列哪种介质中传播最快？', opts: ['空气', '水', '钢铁', '真空'], ans: 2 },
+  { q: '🤔 声音是由什么产生的？', opts: ['光线', '振动', '电流', '磁场'], ans: 1 },
+  { q: '🤔 音调的高低由什么决定？', opts: ['振幅', '频率', '距离', '介质'], ans: 1 },
+  { q: '🤔 人对着山崖喊话，经过2秒听到回声，山崖距人多远？（声速340m/s）', opts: ['680m', '340m', '170m', '100m'], ans: 1 },
+  { q: '🤔 下列哪个说法正确？', opts: ['声音在真空中传播最快', '响度由频率决定', '声音在固体中比空气中传播快', '音调由振幅决定'], ans: 2 },
+];
+let quizIdx = 0;
+let quizAnswered = false;
+
+// ─── PageProgress 接线（r100）───
+let totalCorrect = 0, soundDone = false;
+function bumpSoundCorrect() {
+  totalCorrect++;
+  if (!soundDone && totalCorrect >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('sound')) {
+    soundDone = true;
+    PageProgress.markDone('sound');
+    showSoundToast('🎉 「声现象」知识地图已点亮！');
+  }
+}
+function showSoundToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(52,199,89,.95);color:#fff;padding:12px 24px;border-radius:12px;font-size:15px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:opacity .3s';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2600);
+}
+
+function loadQuiz() {
+  const q = quizzes[quizIdx];
+  document.getElementById('quizQ').textContent = q.q;
+  const optsEl = document.getElementById('quizOpts');
+  optsEl.innerHTML = '';
+  quizAnswered = false;
+  document.getElementById('quizResult').textContent = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      if (i === q.ans) {
+        div.classList.add('correct');
+        document.getElementById('quizResult').textContent = '✅ 答对了！';
+        bumpSoundCorrect();
+        document.getElementById('quizResult').style.color = '#22c55e';
+      } else {
+        div.classList.add('wrong');
+        document.getElementById('quizResult').textContent = '❌ 再想想～正确答案已标出';
+        document.getElementById('quizResult').style.color = '#ef4444';
+        optsEl.children[q.ans].classList.add('correct');
+      }
+      setTimeout(() => { quizIdx = (quizIdx + 1) % quizzes.length; loadQuiz(); }, 2500);
+    });
+    optsEl.appendChild(div);
+  });
+}
+loadQuiz();
+
+// ─── Main Loop ───
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  time += 0.016;
+
+  if (currentTab === 'vibration') {
+    drawVibration();
+  } else if (currentTab === 'speed') {
+    drawSpeed();
+  } else if (currentTab === 'tone') {
+    drawTone();
+  }
+
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中物理"></script>
+</body>
+</html>

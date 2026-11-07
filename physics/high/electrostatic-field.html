@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>静电场 - 高中物理互动可视化</title>
+<style>
+:root {
+  --primary: #1565c0;
+  --accent: #ff6f00;
+  --positive: #e53935;
+  --negative: #1e88e5;
+  --field-line: #fdd835;
+  --bg-dark: #0a1a2e;
+  --bg-card: #1a2e4a;
+  --text: #e3f2fd;
+  --text-dim: #90caf9;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-dark);
+  color: var(--text);
+  overflow-x: hidden;
+}
+.header {
+  background: linear-gradient(135deg, #0a1a2e 0%, #1565c0 100%);
+  padding: 20px 24px;
+  text-align: center;
+  border-bottom: 2px solid var(--primary);
+}
+.header h1 { font-size: 1.6em; margin-bottom: 4px; }
+.header p { color: var(--text-dim); font-size: 0.9em; }
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  flex-wrap: wrap;
+}
+.tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.3s;
+}
+.tab.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.section { display: none; padding: 20px 16px; max-width: 800px; margin: 0 auto; }
+.section.active { display: block; }
+.section-title {
+  font-size: 1.2em;
+  margin-bottom: 16px;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+canvas {
+  width: 100%;
+  border-radius: 8px;
+  background: #050f1a;
+  touch-action: none;
+}
+.controls {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.control-group label {
+  font-size: 0.85em;
+  color: var(--text-dim);
+}
+input[type="range"] {
+  width: 100px;
+  accent-color: var(--primary);
+}
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.2s;
+}
+.btn:hover { opacity: 0.8; }
+.btn.active { background: var(--accent); }
+.info-box {
+  background: rgba(21, 101, 192, 0.2);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+  font-size: 0.9em;
+}
+.formula {
+  font-family: 'Times New Roman', serif;
+  font-style: italic;
+  color: var(--field-line);
+}
+.charge-display {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 12px;
+}
+.charge-item {
+  text-align: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+}
+.charge-item.positive { border: 1px solid var(--positive); }
+.charge-item.negative { border: 1px solid var(--negative); }
+.value { font-size: 1.2em; font-weight: bold; }
+.hint {
+  font-size: 0.8em;
+  color: var(--text-dim);
+  margin-top: 8px;
+  text-align: center;
+}
+.quiz-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.quiz-option:hover { background: rgba(255,255,255,0.1); }
+.quiz-option.correct { background: rgba(76, 175, 80, 0.3); border-color: #4caf50; }
+.quiz-option.wrong { background: rgba(244, 67, 54, 0.3); border-color: #f44336; }
+.result {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚡ 静电场</h1>
+  <p>高中物理 · 互动可视化</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="coulomb">库仑定律</div>
+  <div class="tab" data-tab="field">电场线</div>
+  <div class="tab" data-tab="potential">电势分布</div>
+  <div class="tab" data-tab="quiz">互动练习</div>
+</div>
+
+<!-- 库仑定律 -->
+<div class="section active" id="coulomb">
+  <h2 class="section-title">🔬 库仑定律</h2>
+  <div class="card">
+    <canvas id="coulombCanvas" width="700" height="400"></canvas>
+    <div class="controls">
+      <div class="control-group">
+        <label>q₁:</label>
+        <input type="range" id="q1Slider" min="-10" max="10" value="5">
+        <span id="q1Value">+5μC</span>
+      </div>
+      <div class="control-group">
+        <label>q₂:</label>
+        <input type="range" id="q2Slider" min="-10" max="10" value="-3">
+        <span id="q2Value">-3μC</span>
+      </div>
+      <div class="control-group">
+        <label>距离:</label>
+        <input type="range" id="distSlider" min="50" max="300" value="150">
+        <span id="distValue">150px</span>
+      </div>
+    </div>
+    <div class="charge-display">
+      <div class="charge-item positive">
+        <div>F = <span class="value" id="forceValue">0.00</span> N</div>
+        <div style="font-size:0.8em;color:var(--text-dim)">库仑力</div>
+      </div>
+    </div>
+    <div class="info-box">
+      <strong>库仑定律：</strong><span class="formula">F = k · |q₁q₂| / r²</span><br>
+      k = 9×10⁹ N·m²/C²，同种电荷相斥，异种电荷相吸
+    </div>
+    <p class="hint">💡 拖动滑块改变电荷量和距离，观察力的变化</p>
+  </div>
+</div>
+
+<!-- 电场线 -->
+<div class="section" id="field">
+  <h2 class="section-title">🌐 电场线可视化</h2>
+  <div class="card">
+    <canvas id="fieldCanvas" width="700" height="500"></canvas>
+    <div class="controls">
+      <button class="btn" id="addPositive">+ 正电荷</button>
+      <button class="btn" id="addNegative">- 负电荷</button>
+      <button class="btn" id="clearCharges">清空</button>
+      <button class="btn" id="toggleLines" class="active">显示电场线</button>
+    </div>
+    <div class="info-box">
+      <strong>电场线特性：</strong>
+      <ul style="margin-top:8px;padding-left:20px;font-size:0.9em">
+        <li>从正电荷出发，终止于负电荷</li>
+        <li>电场线不相交</li>
+        <li>疏密表示电场强弱</li>
+      </ul>
+    </div>
+    <p class="hint">💡 点击画布添加电荷，拖动电荷改变位置</p>
+  </div>
+</div>
+
+<!-- 电势分布 -->
+<div class="section" id="potential">
+  <h2 class="section-title">🗺️ 电势分布</h2>
+  <div class="card">
+    <canvas id="potentialCanvas" width="700" height="500"></canvas>
+    <div class="controls">
+      <div class="control-group">
+        <label>电荷类型:</label>
+        <button class="btn" id="singlePositive">正电荷</button>
+        <button class="btn" id="singleNegative">负电荷</button>
+        <button class="btn" id="dipole">电偶极子</button>
+      </div>
+    </div>
+    <div class="info-box">
+      <strong>电势：</strong><span class="formula">V = kq/r</span><br>
+      等势面与电场线垂直，电势沿电场线方向降低
+    </div>
+    <p class="hint">💡 颜色表示电势高低：红色=高电势，蓝色=低电势</p>
+  </div>
+</div>
+
+<!-- 互动练习 -->
+<div class="section" id="quiz">
+  <h2 class="section-title">📝 互动练习</h2>
+  <div class="card">
+    <div id="quizContainer"></div>
+    <div id="quizResult" class="result" style="display:none"></div>
+  </div>
+</div>
+
+<script src="assets/touch.js"></script>
+<script src="assets/common.js"></script>
+<script>
+// 进度追踪：累计答对 3 题点亮「静电场」
+let totalCorrect = 0;
+function bumpTotalCorrect() {
+  totalCorrect++;
+  if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('electrostatic-field')) {
+    PageProgress.markDone('electrostatic-field');
+    if (typeof showToast === 'function') showToast('🎉 「静电场」知识地图已点亮！');
+  }
+}
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+  });
+});
+
+// Coulomb's Law
+const coulombCanvas = document.getElementById('coulombCanvas');
+const coulombCtx = coulombCanvas.getContext('2d');
+let q1 = 5, q2 = -3, dist = 150;
+
+function drawCoulomb() {
+  const w = coulombCanvas.width, h = coulombCanvas.height;
+  coulombCtx.clearRect(0, 0, w, h);
+  
+  const cx = w / 2, cy = h / 2;
+  const x1 = cx - dist / 2, x2 = cx + dist / 2;
+  
+  // Draw charges
+  drawCharge(x1, cy, q1, 'q₁');
+  drawCharge(x2, cy, q2, 'q₂');
+  
+  // Draw force arrows
+  const force = 9e9 * Math.abs(q1 * q2) / (dist * dist * 1e-12) * 1e-6;
+  document.getElementById('forceValue').textContent = force.toFixed(2);
+  
+  const arrowLen = Math.min(force * 20, 80);
+  if (q1 * q2 < 0) {
+    // Attractive
+    drawArrow(x1 + 30, cy, x1 + 30 + arrowLen, cy, '#4caf50');
+    drawArrow(x2 - 30, cy, x2 - 30 - arrowLen, cy, '#4caf50');
+  } else {
+    // Repulsive
+    drawArrow(x1 - 30, cy, x1 - 30 - arrowLen, cy, '#f44336');
+    drawArrow(x2 + 30, cy, x2 + 30 + arrowLen, cy, '#f44336');
+  }
+  
+  // Draw distance
+  coulombCtx.strokeStyle = '#fdd835';
+  coulombCtx.setLineDash([5, 5]);
+  coulombCtx.beginPath();
+  coulombCtx.moveTo(x1, cy + 50);
+  coulombCtx.lineTo(x2, cy + 50);
+  coulombCtx.stroke();
+  coulombCtx.setLineDash([]);
+  coulombCtx.fillStyle = '#fdd835';
+  coulombCtx.font = '14px sans-serif';
+  coulombCtx.textAlign = 'center';
+  coulombCtx.fillText(`r = ${dist}px`, cx, cy + 70);
+}
+
+function drawCharge(x, y, q, label) {
+  const radius = 25;
+  const color = q > 0 ? '#e53935' : '#1e88e5';
+  
+  // Glow
+  const gradient = coulombCtx.createRadialGradient(x, y, 0, x, y, radius * 2);
+  gradient.addColorStop(0, color + '80');
+  gradient.addColorStop(1, 'transparent');
+  coulombCtx.fillStyle = gradient;
+  coulombCtx.beginPath();
+  coulombCtx.arc(x, y, radius * 2, 0, Math.PI * 2);
+  coulombCtx.fill();
+  
+  // Charge
+  coulombCtx.fillStyle = color;
+  coulombCtx.beginPath();
+  coulombCtx.arc(x, y, radius, 0, Math.PI * 2);
+  coulombCtx.fill();
+  
+  // Symbol
+  coulombCtx.fillStyle = 'white';
+  coulombCtx.font = 'bold 20px sans-serif';
+  coulombCtx.textAlign = 'center';
+  coulombCtx.textBaseline = 'middle';
+  coulombCtx.fillText(q > 0 ? '+' : '-', x, y);
+  
+  // Label
+  coulombCtx.fillStyle = '#90caf9';
+  coulombCtx.font = '12px sans-serif';
+  coulombCtx.fillText(`${label}=${q>0?'+':''}${q}μC`, x, y - 40);
+}
+
+function drawArrow(x1, y1, x2, y2, color) {
+  const headLen = 10;
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  
+  coulombCtx.strokeStyle = color;
+  coulombCtx.fillStyle = color;
+  coulombCtx.lineWidth = 3;
+  coulombCtx.beginPath();
+  coulombCtx.moveTo(x1, y1);
+  coulombCtx.lineTo(x2, y2);
+  coulombCtx.stroke();
+  
+  coulombCtx.beginPath();
+  coulombCtx.moveTo(x2, y2);
+  coulombCtx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+  coulombCtx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+  coulombCtx.closePath();
+  coulombCtx.fill();
+}
+
+document.getElementById('q1Slider').addEventListener('input', e => {
+  q1 = parseInt(e.target.value);
+  document.getElementById('q1Value').textContent = `${q1>0?'+':''}${q1}μC`;
+  drawCoulomb();
+});
+
+document.getElementById('q2Slider').addEventListener('input', e => {
+  q2 = parseInt(e.target.value);
+  document.getElementById('q2Value').textContent = `${q2>0?'+':''}${q2}μC`;
+  drawCoulomb();
+});
+
+document.getElementById('distSlider').addEventListener('input', e => {
+  dist = parseInt(e.target.value);
+  document.getElementById('distValue').textContent = `${dist}px`;
+  drawCoulomb();
+});
+
+drawCoulomb();
+
+// Electric Field Lines
+const fieldCanvas = document.getElementById('fieldCanvas');
+const fieldCtx = fieldCanvas.getContext('2d');
+let charges = [
+  { x: 250, y: 250, q: 5 },
+  { x: 450, y: 250, q: -5 }
+];
+let showLines = true;
+let dragCharge = null;
+
+function drawField() {
+  const w = fieldCanvas.width, h = fieldCanvas.height;
+  fieldCtx.clearRect(0, 0, w, h);
+  
+  if (showLines) {
+    // Draw field lines
+    const numLines = 16;
+    charges.forEach(charge => {
+      if (charge.q > 0) {
+        for (let i = 0; i < numLines; i++) {
+          const angle = (i / numLines) * Math.PI * 2;
+          traceFieldLine(charge.x + Math.cos(angle) * 30, charge.y + Math.sin(angle) * 30, angle);
+        }
+      }
+    });
+  }
+  
+  // Draw charges
+  charges.forEach(charge => {
+    drawChargeOnCanvas(fieldCtx, charge.x, charge.y, charge.q);
+  });
+}
+
+function traceFieldLine(startX, startY, startAngle) {
+  let x = startX, y = startY;
+  let angle = startAngle;
+  const step = 5;
+  const maxSteps = 200;
+  
+  fieldCtx.strokeStyle = '#fdd83580';
+  fieldCtx.lineWidth = 1.5;
+  fieldCtx.beginPath();
+  fieldCtx.moveTo(x, y);
+  
+  for (let i = 0; i < maxSteps; i++) {
+    const Ex = calculateEx(x, y);
+    const Ey = calculateEy(x, y);
+    const E = Math.sqrt(Ex * Ex + Ey * Ey);
+    
+    if (E < 0.01) break;
+    
+    angle = Math.atan2(Ey, Ex);
+    x += Math.cos(angle) * step;
+    y += Math.sin(angle) * step;
+    
+    if (x < 0 || x > fieldCanvas.width || y < 0 || y > fieldCanvas.height) break;
+    
+    // Check if hit negative charge
+    let hitNegative = false;
+    charges.forEach(charge => {
+      if (charge.q < 0) {
+        const dx = x - charge.x, dy = y - charge.y;
+        if (Math.sqrt(dx * dx + dy * dy) < 20) hitNegative = true;
+      }
+    });
+    if (hitNegative) break;
+    
+    fieldCtx.lineTo(x, y);
+  }
+  fieldCtx.stroke();
+}
+
+function calculateEx(x, y) {
+  let Ex = 0;
+  charges.forEach(charge => {
+    const dx = x - charge.x, dy = y - charge.y;
+    const r2 = dx * dx + dy * dy;
+    const r = Math.sqrt(r2);
+    if (r > 5) {
+      Ex += charge.q * dx / (r2 * r);
+    }
+  });
+  return Ex;
+}
+
+function calculateEy(x, y) {
+  let Ey = 0;
+  charges.forEach(charge => {
+    const dx = x - charge.x, dy = y - charge.y;
+    const r2 = dx * dx + dy * dy;
+    const r = Math.sqrt(r2);
+    if (r > 5) {
+      Ey += charge.q * dy / (r2 * r);
+    }
+  });
+  return Ey;
+}
+
+function drawChargeOnCanvas(ctx, x, y, q) {
+  const radius = 20;
+  const color = q > 0 ? '#e53935' : '#1e88e5';
+  
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(q > 0 ? '+' : '-', x, y);
+}
+
+fieldCanvas.addEventListener('mousedown', e => {
+  const rect = fieldCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * fieldCanvas.width / rect.width;
+  const y = (e.clientY - rect.top) * fieldCanvas.height / rect.height;
+  
+  charges.forEach((charge, i) => {
+    const dx = x - charge.x, dy = y - charge.y;
+    if (Math.sqrt(dx * dx + dy * dy) < 25) {
+      dragCharge = i;
+    }
+  });
+});
+
+fieldCanvas.addEventListener('mousemove', e => {
+  if (dragCharge !== null) {
+    const rect = fieldCanvas.getBoundingClientRect();
+    charges[dragCharge].x = (e.clientX - rect.left) * fieldCanvas.width / rect.width;
+    charges[dragCharge].y = (e.clientY - rect.top) * fieldCanvas.height / rect.height;
+    drawField();
+  }
+});
+
+fieldCanvas.addEventListener('mouseup', () => { dragCharge = null; });
+
+fieldCanvas.addEventListener('click', e => {
+  if (dragCharge !== null) return;
+  const rect = fieldCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * fieldCanvas.width / rect.width;
+  const y = (e.clientY - rect.top) * fieldCanvas.height / rect.height;
+  
+  // Check if clicked on existing charge
+  let clicked = false;
+  charges.forEach(charge => {
+    const dx = x - charge.x, dy = y - charge.y;
+    if (Math.sqrt(dx * dx + dy * dy) < 25) clicked = true;
+  });
+  
+  if (!clicked) {
+    charges.push({ x, y, q: 5 });
+    drawField();
+  }
+});
+
+document.getElementById('addPositive').addEventListener('click', () => {
+  charges.push({ x: 350 + Math.random() * 100 - 50, y: 250 + Math.random() * 100 - 50, q: 5 });
+  drawField();
+});
+
+document.getElementById('addNegative').addEventListener('click', () => {
+  charges.push({ x: 350 + Math.random() * 100 - 50, y: 250 + Math.random() * 100 - 50, q: -5 });
+  drawField();
+});
+
+document.getElementById('clearCharges').addEventListener('click', () => {
+  charges = [];
+  drawField();
+});
+
+document.getElementById('toggleLines').addEventListener('click', e => {
+  showLines = !showLines;
+  e.target.classList.toggle('active');
+  drawField();
+});
+
+drawField();
+
+// Potential Distribution
+const potentialCanvas = document.getElementById('potentialCanvas');
+const potentialCtx = potentialCanvas.getContext('2d');
+let potentialConfig = 'dipole';
+
+function drawPotential() {
+  const w = potentialCanvas.width, h = potentialCanvas.height;
+  const imageData = potentialCtx.createImageData(w, h);
+  
+  let chargeConfig;
+  if (potentialConfig === 'singlePositive') {
+    chargeConfig = [{ x: w / 2, y: h / 2, q: 10 }];
+  } else if (potentialConfig === 'singleNegative') {
+    chargeConfig = [{ x: w / 2, y: h / 2, q: -10 }];
+  } else {
+    chargeConfig = [
+      { x: w / 2 - 100, y: h / 2, q: 10 },
+      { x: w / 2 + 100, y: h / 2, q: -10 }
+    ];
+  }
+  
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let V = 0;
+      chargeConfig.forEach(charge => {
+        const dx = x - charge.x, dy = y - charge.y;
+        const r = Math.sqrt(dx * dx + dy * dy);
+        if (r > 10) {
+          V += charge.q / r;
+        }
+      });
+      
+      const idx = (y * w + x) * 4;
+      const normalized = Math.tanh(V * 0.5);
+      
+      if (normalized > 0) {
+        imageData.data[idx] = 255;
+        imageData.data[idx + 1] = Math.floor(255 * (1 - normalized));
+        imageData.data[idx + 2] = 0;
+      } else {
+        imageData.data[idx] = 0;
+        imageData.data[idx + 1] = Math.floor(255 * (1 + normalized));
+        imageData.data[idx + 2] = 255;
+      }
+      imageData.data[idx + 3] = 200;
+    }
+  }
+  
+  potentialCtx.putImageData(imageData, 0, 0);
+  
+  // Draw equipotential lines
+  potentialCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+  potentialCtx.lineWidth = 1;
+  for (let level = -2; level <= 2; level += 0.5) {
+    drawEquipotential(chargeConfig, level);
+  }
+  
+  // Draw charges
+  chargeConfig.forEach(charge => {
+    drawChargeOnCanvas(potentialCtx, charge.x, charge.y, charge.q);
+  });
+}
+
+function drawEquipotential(chargeConfig, level) {
+  const w = potentialCanvas.width, h = potentialCanvas.height;
+  const step = 10;
+  
+  potentialCtx.beginPath();
+  for (let y = 0; y < h; y += step) {
+    for (let x = 0; x < w; x += step) {
+      let V = 0;
+      chargeConfig.forEach(charge => {
+        const dx = x - charge.x, dy = y - charge.y;
+        const r = Math.sqrt(dx * dx + dy * dy);
+        if (r > 10) {
+          V += charge.q / r;
+        }
+      });
+      
+      if (Math.abs(V - level) < 0.3) {
+        potentialCtx.rect(x, y, 2, 2);
+      }
+    }
+  }
+  potentialCtx.fill();
+}
+
+document.getElementById('singlePositive').addEventListener('click', () => {
+  potentialConfig = 'singlePositive';
+  drawPotential();
+});
+
+document.getElementById('singleNegative').addEventListener('click', () => {
+  potentialConfig = 'singleNegative';
+  drawPotential();
+});
+
+document.getElementById('dipole').addEventListener('click', () => {
+  potentialConfig = 'dipole';
+  drawPotential();
+});
+
+drawPotential();
+
+// Quiz
+const quizQuestions = [
+  {
+    q: '两个点电荷之间的库仑力与它们距离的关系是？',
+    options: ['正比于距离', '反比于距离', '反比于距离的平方', '正比于距离的平方'],
+    answer: 2
+  },
+  {
+    q: '电场线的方向是？',
+    options: ['从负电荷指向正电荷', '从正电荷指向负电荷', '与等势面平行', '随机方向'],
+    answer: 1
+  },
+  {
+    q: '沿电场线方向，电势如何变化？',
+    options: ['升高', '降低', '不变', '先升后降'],
+    answer: 1
+  },
+  {
+    q: '关于静电平衡状态下的导体，下列说法错误的是？',
+    options: ['导体内部电场强度为零', '导体是等势体', '电荷只分布在导体表面', '导体内部有净电荷'],
+    answer: 3
+  }
+];
+
+let currentQuiz = 0;
+let score = 0;
+
+function renderQuiz() {
+  const container = document.getElementById('quizContainer');
+  const q = quizQuestions[currentQuiz];
+  
+  container.innerHTML = `
+    <h3 style="margin-bottom:16px">第 ${currentQuiz + 1} / ${quizQuestions.length} 题</h3>
+    <p style="margin-bottom:16px;font-size:1.1em">${q.q}</p>
+    ${q.options.map((opt, i) => `
+      <button class="quiz-option" data-index="${i}">${opt}</button>
+    `).join('')}
+  `;
+  
+  container.querySelectorAll('.quiz-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.index);
+      const result = document.getElementById('quizResult');
+      result.style.display = 'block';
+      
+      if (idx === q.answer) {
+        btn.classList.add('correct');
+        result.textContent = '✓ 正确！';
+        result.style.background = 'rgba(76, 175, 80, 0.2)';
+        result.style.color = '#4caf50';
+        score++;
+        bumpTotalCorrect();
+      } else {
+        btn.classList.add('wrong');
+        container.querySelectorAll('.quiz-option')[q.answer].classList.add('correct');
+        result.textContent = '✗ 错误，正确答案已标出';
+        result.style.background = 'rgba(244, 67, 54, 0.2)';
+        result.style.color = '#f44336';
+      }
+      
+      setTimeout(() => {
+        currentQuiz++;
+        if (currentQuiz < quizQuestions.length) {
+          renderQuiz();
+          result.style.display = 'none';
+        } else {
+          container.innerHTML = `
+            <h3 style="text-align:center;margin-bottom:16px">练习完成！</h3>
+            <p style="text-align:center;font-size:1.5em;color:var(--primary)">
+              得分：${score} / ${quizQuestions.length}
+            </p>
+            <button class="btn" style="margin:20px auto;display:block" onclick="resetQuiz()">重新练习</button>
+          `;
+        }
+      }, 1500);
+    });
+  });
+}
+
+function resetQuiz() {
+  currentQuiz = 0;
+  score = 0;
+  renderQuiz();
+  document.getElementById('quizResult').style.display = 'none';
+}
+
+renderQuiz();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中物理"></script>
+</body>
+</html>

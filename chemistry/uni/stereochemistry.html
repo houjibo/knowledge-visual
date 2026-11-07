@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>立体化学 · 手性与对映异构 · 大学化学互动可视化</title>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --accent: #f59e0b;
+    --c1: #ef4444;
+    --c2: #3b82f6;
+    --c3: #10b981;
+    --c4: #f59e0b;
+    --mirror: #06b6d4;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.3rem; background: linear-gradient(90deg, var(--c1), var(--primary), var(--c3)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 0.95rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 11px 22px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 14px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .legend .l-1::before { background: var(--c1); }
+  .legend .l-2::before { background: var(--c2); }
+  .legend .l-3::before { background: var(--c3); }
+  .legend .l-4::before { background: var(--c4); }
+  .legend .l-m::before { background: var(--mirror); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 660px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 10px; color: #e2e8f0; }
+
+  .concept-box { font-size: 0.98rem; text-align: left; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 10px 0; line-height: 1.85; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--c1); font-weight: 600; }
+  .concept-box .hl2 { color: var(--c2); font-weight: 600; }
+  .concept-box .hl3 { color: var(--c3); font-weight: 600; }
+  .concept-box .hl4 { color: var(--mirror); font-weight: 600; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 7px 14px; border-radius: 10px; background: rgba(139,92,246,0.1); border: 2px solid rgba(139,92,246,0.3); cursor: pointer; font-size: 13px; color: #c4b5fd; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .slider-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 120px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--accent); font-weight: 600; font-size: 12px; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 12px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; line-height: 1.5; }
+  .info-grid b { color: #fbbf24; }
+
+  .formula-box { padding: 12px; background: rgba(139,92,246,0.08); border-radius: 12px; margin: 10px 0; font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; color: #c4b5fd; border: 1px solid rgba(139,92,246,0.2); }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(139,92,246,0.1); border-radius: 14px; border: 2px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 13px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; color: #c4b5fd; min-height: 20px; line-height: 1.5; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 12px; }
+  .quiz-nav button { padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🧬 立体化学</h1>
+    <p>手性分子 · R/S 标记 · 对映异构体<span id="done-mark" style="color:#10b981;font-weight:700;margin-left:8px;font-size:14px;"></span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-section="chiral">手性中心</div>
+    <div class="tab" data-section="rs">R/S 标记</div>
+    <div class="tab" data-section="isomer">异构体类型</div>
+    <div class="tab" data-section="quiz">测试</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="canvas" width="700" height="600"></canvas>
+      <div class="legend">
+        <span class="l-1">基团 1（优先级最高）</span>
+        <span class="l-2">基团 2</span>
+        <span class="l-3">基团 3</span>
+        <span class="l-4">基团 4（优先级最低）</span>
+        <span class="l-m">镜面</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <!-- 手性中心 -->
+      <div class="section active" id="chiral">
+        <h3>手性中心与对映异构</h3>
+        <div class="concept-box">
+          <b>核心概念：</b><br>
+          • <span class="hl">手性碳</span>：连接 4 个不同基团的 sp³ 碳<br>
+          • <span class="hl2">对映异构体</span>：互为镜像，不可重叠<br>
+          • <span class="hl3">旋光性</span>：使偏振光旋转（+/-）<br>
+          • <span class="hl4">外消旋体</span>：等量 R+S 混合物，无旋光
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mol="lactic">乳酸</div>
+          <div class="mode-btn" data-mol="alanine">丙氨酸</div>
+          <div class="mode-btn" data-mol="bromochloro">溴氯氟甲烷</div>
+        </div>
+
+        <div class="slider-row">
+          <label>旋转角度</label>
+          <input type="range" id="chiralAngle" min="0" max="360" value="30" />
+          <span class="val" id="chiralAngleVal">30°</span>
+        </div>
+
+        <div class="info-grid">
+          <div><b>分子：</b><span id="molName">乳酸</span></div>
+          <div><b>手性碳数：</b><span id="chiralCount">1</span></div>
+          <div><b>构型：</b><span id="chiralConfig">R</span></div>
+          <div><b>旋光性：</b><span id="opticalActivity">+3.8°</span></div>
+        </div>
+
+        <div class="formula-box" id="chiralFormula">
+          CH₃-CHOH-COOH（乳酸）
+        </div>
+      </div>
+
+      <!-- R/S 标记 -->
+      <div class="section" id="rs">
+        <h3>Cahn-Ingold-Prelog 规则</h3>
+        <div class="concept-box">
+          <b>R/S 标记步骤：</b><br>
+          1. <span class="hl">优先级排序</span>：原子序数大者优先<br>
+          2. <span class="hl2">最低优先远离</span>：基团 4 指向纸面后方<br>
+          3. <span class="hl3">观察 1→2→3 方向</span>：顺时针=R，逆时针=S<br>
+          4. <span class="hl4">多手性中心</span>：每个中心独立标记
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-cfg="R">R 构型</div>
+          <div class="mode-btn" data-cfg="S">S 构型</div>
+          <div class="mode-btn" data-cfg="meso">内消旋体</div>
+        </div>
+
+        <div class="slider-row">
+          <label>观察角度</label>
+          <input type="range" id="rsAngle" min="0" max="360" value="0" />
+          <span class="val" id="rsAngleVal">0°</span>
+        </div>
+
+        <div class="info-grid">
+          <div><b>优先级 1：</b><span id="pri1">OH</span></div>
+          <div><b>优先级 2：</b><span id="pri2">COOH</span></div>
+          <div><b>优先级 3：</b><span id="pri3">CH₃</span></div>
+          <div><b>优先级 4：</b><span id="pri4">H</span></div>
+        </div>
+
+        <div class="formula-box" id="rsFormula">
+          1→2→3 顺时针 = R 构型
+        </div>
+      </div>
+
+      <!-- 异构体类型 -->
+      <div class="section" id="isomer">
+        <h3>立体异构体分类</h3>
+        <div class="concept-box">
+          <b>异构体关系图谱：</b><br>
+          • <span class="hl">对映异构体</span>：镜像关系，物理性质相同（除旋光）<br>
+          • <span class="hl2">非对映异构体</span>：非镜像，物理性质不同<br>
+          • <span class="hl3">内消旋体</span>：含对称面，无旋光性<br>
+          • <span class="hl4">构象异构</span>：单键旋转产生，可互变
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-iso="enantio">对映异构</div>
+          <div class="mode-btn" data-iso="diastereo">非对映异构</div>
+          <div class="mode-btn" data-iso="meso2">内消旋</div>
+          <div class="mode-btn" data-iso="conform">构象异构</div>
+        </div>
+
+        <div class="slider-row">
+          <label>翻转进度</label>
+          <input type="range" id="isoProgress" min="0" max="100" value="0" />
+          <span class="val" id="isoProgressVal">0%</span>
+        </div>
+
+        <div class="info-grid">
+          <div><b>类型：</b><span id="isoType">对映异构体</span></div>
+          <div><b>熔点：</b><span id="isoMp">相同</span></div>
+          <div><b>沸点：</b><span id="isoBp">相同</span></div>
+          <div><b>旋光：</b><span id="isoOpt">相反</span></div>
+        </div>
+
+        <div class="formula-box" id="isoFormula">
+          酒石酸：2 个手性碳 → 3 种立体异构体
+        </div>
+      </div>
+
+      <!-- 测试 -->
+      <div class="section" id="quiz">
+        <h3>立体化学测试</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quizQuestion">题目加载中...</div>
+          <div class="quiz-opts" id="quizOptions"></div>
+          <div class="quiz-feedback" id="quizFeedback"></div>
+          <div class="quiz-nav">
+            <button id="quizPrev">← 上一题</button>
+            <button id="quizNext">下一题 →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ===== 数据 ===== */
+const molecules = {
+  lactic: { name: '乳酸', formula: 'CH₃-CHOH-COOH', chiral: 1, config: 'R', optical: '+3.8°',
+    groups: ['OH', 'COOH', 'CH₃', 'H'] },
+  alanine: { name: '丙氨酸', formula: 'CH₃-CHNH₂-COOH', chiral: 1, config: 'S', optical: '+8.5°',
+    groups: ['NH₂', 'COOH', 'CH₃', 'H'] },
+  bromochloro: { name: '溴氯氟甲烷', formula: 'CHBrClF', chiral: 1, config: 'R', optical: '—',
+    groups: ['Br', 'Cl', 'F', 'H'] }
+};
+
+const isomers = {
+  enantio: { type: '对映异构体', mp: '相同', bp: '相同', opt: '相反', formula: '如：R-乳酸 vs S-乳酸' },
+  diastereo: { type: '非对映异构体', mp: '不同', bp: '不同', opt: '不同', formula: '如：(2R,3R) vs (2R,3S) 酒石酸' },
+  meso2: { type: '内消旋体', mp: '不同', bp: '不同', opt: '无', formula: '如：meso-酒石酸（有对称面）' },
+  conform: { type: '构象异构', mp: '—', bp: '—', opt: '—', formula: '如：乙烷交叉式 vs 重叠式' }
+};
+
+const quizData = [
+  { q: '下列哪种分子具有手性？', opts: ['CH₄', 'CH₃Cl', 'CHBrClF', 'CCl₄'], ans: 2,
+    explain: 'CHBrClF 中心碳连接 4 个不同基团，是手性分子。' },
+  { q: 'CIP 规则中优先级最高的基团是？', opts: ['CH₃', 'H', 'OH', 'COOH'], ans: 2,
+    explain: 'O 原子序数最大，OH 优先级最高。' },
+  { q: 'R/S 标记时，最低优先级基团应指向？', opts: ['纸面前方', '纸面后方', '左侧', '右侧'], ans: 1,
+    explain: '最低优先级基团（通常是 H）指向纸面后方，再观察 1→2→3 方向。' },
+  { q: '1→2→3 为顺时针方向时，构型为？', opts: ['R', 'S', 'E', 'Z'], ans: 0,
+    explain: '顺时针 = R（Rectus），逆时针 = S（Sinister）。' },
+  { q: '内消旋体的特征是？', opts: ['有旋光性', '含对称面，无旋光性', '一定是液体', '含 4 个手性碳'], ans: 1,
+    explain: '内消旋体含对称面，分子内部旋光抵消，无净旋光性。' },
+  { q: '对映异构体之间的区别在于？', opts: ['熔点不同', '沸点不同', '旋光方向相反', '密度不同'], ans: 2,
+    explain: '对映异构体物理性质几乎相同，仅旋光方向相反。' },
+  { q: '酒石酸有几个立体异构体？', opts: ['2 个', '3 个', '4 个', '5 个'], ans: 1,
+    explain: '酒石酸有 2 个手性碳，理论 4 个，但 meso 体与自身镜像重叠，实际 3 个。' },
+  { q: '外消旋体的旋光度为？', opts: ['+', '-', '0', '不确定'], ans: 2,
+    explain: '等量 R 和 S 混合，旋光相互抵消，净旋光度为 0。' }
+];
+
+/* ===== 状态 ===== */
+let currentMol = 'lactic';
+let currentCfg = 'R';
+let currentIso = 'enantio';
+let currentQuiz = 0;
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+/* ===== Tab 切换 ===== */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.section).classList.add('active');
+    draw();
+  });
+});
+
+/* ===== 手性中心 ===== */
+document.querySelectorAll('[data-mol]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-mol]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMol = btn.dataset.mol;
+    updateMolInfo();
+    draw();
+  });
+});
+
+document.getElementById('chiralAngle').addEventListener('input', e => {
+  document.getElementById('chiralAngleVal').textContent = e.target.value + '°';
+  draw();
+});
+
+function updateMolInfo() {
+  const m = molecules[currentMol];
+  document.getElementById('molName').textContent = m.name;
+  document.getElementById('chiralCount').textContent = m.chiral;
+  document.getElementById('chiralConfig').textContent = m.config;
+  document.getElementById('opticalActivity').textContent = m.optical;
+  document.getElementById('chiralFormula').textContent = m.formula;
+}
+
+/* ===== R/S 标记 ===== */
+document.querySelectorAll('[data-cfg]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-cfg]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCfg = btn.dataset.cfg;
+    updateRSInfo();
+    draw();
+  });
+});
+
+document.getElementById('rsAngle').addEventListener('input', e => {
+  document.getElementById('rsAngleVal').textContent = e.target.value + '°';
+  draw();
+});
+
+function updateRSInfo() {
+  const m = molecules.lactic;
+  document.getElementById('pri1').textContent = m.groups[0];
+  document.getElementById('pri2').textContent = m.groups[1];
+  document.getElementById('pri3').textContent = m.groups[2];
+  document.getElementById('pri4').textContent = m.groups[3];
+  if (currentCfg === 'meso') {
+    document.getElementById('rsFormula').textContent = '内消旋体：含对称面，无 R/S 标记';
+  } else {
+    document.getElementById('rsFormula').textContent = currentCfg === 'R'
+      ? '1→2→3 顺时针 = R 构型' : '1→2→3 逆时针 = S 构型';
+  }
+}
+
+/* ===== 异构体类型 ===== */
+document.querySelectorAll('[data-iso]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-iso]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentIso = btn.dataset.iso;
+    updateIsoInfo();
+    draw();
+  });
+});
+
+document.getElementById('isoProgress').addEventListener('input', e => {
+  document.getElementById('isoProgressVal').textContent = e.target.value + '%';
+  draw();
+});
+
+function updateIsoInfo() {
+  const i = isomers[currentIso];
+  document.getElementById('isoType').textContent = i.type;
+  document.getElementById('isoMp').textContent = i.mp;
+  document.getElementById('isoBp').textContent = i.bp;
+  document.getElementById('isoOpt').textContent = i.opt;
+  document.getElementById('isoFormula').textContent = i.formula;
+}
+
+/* ===== 绘制 ===== */
+function draw() {
+  const active = document.querySelector('.section.active').id;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (active === 'chiral') drawChiral();
+  else if (active === 'rs') drawRS();
+  else if (active === 'isomer') drawIsomer();
+}
+
+function drawTetrahedron(cx, cy, size, angle, labels, colors, showMirror, mirrorX) {
+  // 四面体顶点（投影到 2D）
+  const rad = angle * Math.PI / 180;
+  const cos = Math.cos(rad), sin = Math.sin(rad);
+
+  // 中心碳
+  ctx.fillStyle = '#f8fafc';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('C', cx, cy);
+
+  // 4 个基团位置（四面体投影）
+  const positions = [
+    { x: cx, y: cy - size },                    // 上（楔形，指向纸面前）
+    { x: cx + size * 0.866, y: cy + size * 0.5 },  // 右下（实线）
+    { x: cx - size * 0.866, y: cy + size * 0.5 },  // 左下（实线）
+    { x: cx, y: cy + size * 0.3 }               // 后（虚线，指向纸面后）
+  ];
+
+  // 旋转上方两个点
+  const p1 = positions[0];
+  const p2 = positions[3];
+  const dx = p1.x - cx, dy = p1.y - cy;
+  positions[0] = { x: cx + dx * cos - dy * sin * 0.3, y: cy + dx * sin * 0.3 + dy * cos };
+  const dx2 = p2.x - cx, dy2 = p2.y - cy;
+  positions[3] = { x: cx + dx2 * cos * 0.5, y: cy + dy2 * cos * 0.5 };
+
+  // 绘制键
+  const bondStyles = ['wedge', 'solid', 'solid', 'dash'];
+  const groupColors = [colors[0], colors[1], colors[2], colors[3]];
+  const groupLabels = [labels[0], labels[1], labels[2], labels[3]];
+
+  for (let i = 0; i < 4; i++) {
+    const p = positions[i];
+    ctx.strokeStyle = groupColors[i];
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    if (bondStyles[i] === 'dash') {
+      ctx.setLineDash([5, 5]);
+    } else {
+      ctx.setLineDash([]);
+    }
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 基团球
+    ctx.fillStyle = groupColors[i];
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText(groupLabels[i], p.x, p.y);
+
+    // 优先级编号
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillText(i + 1, p.x + 18, p.y - 10);
+  }
+
+  // 镜面
+  if (showMirror && mirrorX !== undefined) {
+    ctx.strokeStyle = 'rgba(6,182,212,0.6)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(mirrorX, 50);
+    ctx.lineTo(mirrorX, canvas.height - 50);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#06b6d4';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('镜面', mirrorX, 40);
+  }
+}
+
+function drawChiral() {
+  const angle = parseInt(document.getElementById('chiralAngle').value);
+  const m = molecules[currentMol];
+  const cx1 = 220, cx2 = 500, cy = 300, size = 90;
+
+  // 左：原分子
+  drawTetrahedron(cx1, cy, size, angle, m.groups, ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'], false);
+
+  // 右：镜像
+  drawTetrahedron(cx2, cy, size, -angle, m.groups, ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'], true, 360);
+
+  // 标签
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(m.name + '（' + m.config + ' 构型）', cx1, 80);
+  ctx.fillText('镜像（不可重叠）', cx2, 80);
+
+  // 底部说明
+  ctx.fillStyle = '#c4b5fd';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('旋转分子观察：镜像无法通过旋转与原分子重合', canvas.width / 2, canvas.height - 40);
+}
+
+function drawRS() {
+  const angle = parseInt(document.getElementById('rsAngle').value);
+  const m = molecules.lactic;
+  const cx = canvas.width / 2, cy = canvas.height / 2, size = 110;
+
+  if (currentCfg === 'meso') {
+    // 画内消旋体（两个手性碳，对称面）
+    drawTetrahedron(cx - 150, cy, size, 0, m.groups, ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'], false);
+    drawTetrahedron(cx + 150, cy, size, 180, m.groups, ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'], true, cx);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('meso-酒石酸：含对称面，无旋光性', cx, 80);
+  } else {
+    const cfgAngle = currentCfg === 'R' ? angle : angle + 180;
+    drawTetrahedron(cx, cy, size, cfgAngle, m.groups, ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'], false);
+
+    // 优先级箭头
+    const rad = cfgAngle * Math.PI / 180;
+    const positions = [
+      { x: cx, y: cy - size },
+      { x: cx + size * 0.866, y: cy + size * 0.5 },
+      { x: cx - size * 0.866, y: cy + size * 0.5 }
+    ];
+
+    // 旋转
+    const cos = Math.cos(rad), sin = Math.sin(rad);
+    const rotated = positions.map(p => {
+      const dx = p.x - cx, dy = p.y - cy;
+      return { x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos };
+    });
+
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    for (let i = 0; i < 3; i++) {
+      const p1 = rotated[i], p2 = rotated[(i + 1) % 3];
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.quadraticCurveTo(cx, cy, p2.x, p2.y);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // 方向标注
+    ctx.fillStyle = currentCfg === 'R' ? '#10b981' : '#ef4444';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText(currentCfg === 'R' ? '顺时针 → R' : '逆时针 → S', cx, cy + size + 60);
+  }
+}
+
+function drawIsomer() {
+  const progress = parseInt(document.getElementById('isoProgress').value) / 100;
+  const cx = canvas.width / 2, cy = canvas.height / 2, size = 90;
+
+  if (currentIso === 'conform') {
+    // 构象异构：纽曼投影
+    const angle = progress * 120; // 0-120度旋转
+    drawNewman(cx, cy, size, angle);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('乙烷构象：交叉式（稳定）→ 重叠式（高能）', cx, 80);
+  } else {
+    // 画两个分子表示关系
+    const m = molecules.lactic;
+    const flip = currentIso === 'enantio' ? progress * 180 : progress * 90;
+    drawTetrahedron(cx - 180, cy, size, 0, m.groups, ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'], false);
+    drawTetrahedron(cx + 180, cy, size, flip, m.groups, ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'], false);
+
+    // 关系标注
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 14px sans-serif';
+    const rel = { enantio: '镜像关系', diastereo: '非镜像', meso2: '对称面', conform: '单键旋转' };
+    ctx.fillText(rel[currentIso], cx, cy + size + 50);
+  }
+}
+
+function drawNewman(cx, cy, size, angle) {
+  // 后碳（大圆）
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // 后碳上的 3 个基团
+  const backGroups = ['H', 'H', 'H'];
+  for (let i = 0; i < 3; i++) {
+    const a = (i * 120 + angle) * Math.PI / 180;
+    const x = cx + size * 0.7 * Math.cos(a);
+    const y = cy + size * 0.7 * Math.sin(a);
+    ctx.fillStyle = '#3b82f6';
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(backGroups[i], x, y);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // 前碳（小圆）
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.4, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // 前碳上的 3 个基团
+  const frontGroups = ['H', 'H', 'H'];
+  for (let i = 0; i < 3; i++) {
+    const a = (i * 120) * Math.PI / 180;
+    const x = cx + size * 0.4 * 0.7 * Math.cos(a);
+    const y = cy + size * 0.4 * 0.7 * Math.sin(a);
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '9px sans-serif';
+    ctx.fillText(frontGroups[i], x, y);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // 中心碳
+  ctx.fillStyle = '#f8fafc';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 10px sans-serif';
+  ctx.fillText('C', cx, cy);
+}
+
+/* ===== Quiz ===== */
+const quizQuestion = document.getElementById('quizQuestion');
+const quizOptions = document.getElementById('quizOptions');
+const quizFeedback = document.getElementById('quizFeedback');
+const quizPrev = document.getElementById('quizPrev');
+const quizNext = document.getElementById('quizNext');
+
+function showQuiz() {
+  const data = quizData[currentQuiz];
+  quizQuestion.textContent = data.q;
+  quizOptions.innerHTML = '';
+  quizFeedback.textContent = '';
+  data.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.addEventListener('click', () => {
+      if (!quizTried[currentQuiz]) {
+        quizTried[currentQuiz] = true;
+        if (i === data.ans) quizFirstTryCorrect[currentQuiz] = true;
+      }
+      document.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+      if (i === data.ans) {
+        div.classList.add('correct');
+        quizFeedback.textContent = '✓ ' + data.explain;
+        quizFeedback.style.color = '#10b981';
+      } else {
+        div.classList.add('wrong');
+        quizFeedback.textContent = '✗ 正确答案是 ' + data.opts[data.ans] + '。' + data.explain;
+        quizFeedback.style.color = '#ef4444';
+      }
+      if (!quizFirstTryCorrect[currentQuiz]) quizTried[currentQuiz] = false;
+      maybeMarkDone();
+    });
+    quizOptions.appendChild(div);
+  });
+  quizPrev.disabled = currentQuiz === 0;
+  quizNext.disabled = currentQuiz === quizData.length - 1;
+}
+
+quizPrev.addEventListener('click', () => { if (currentQuiz > 0) { currentQuiz--; showQuiz(); } });
+quizNext.addEventListener('click', () => { if (currentQuiz < quizData.length - 1) { currentQuiz++; showQuiz(); } });
+
+showQuiz();
+
+/* ===== Progress tracking ===== */
+const ALL_TABS = ['chiral', 'rs', 'isomer', 'quiz'];
+const visitedTabs = new Set(['chiral']);
+const quizFirstTryCorrect = new Array(quizData.length).fill(false);
+const quizTried = new Array(quizData.length).fill(false);
+
+function maybeMarkDone() {
+  const tabsOk = ALL_TABS.every(t => visitedTabs.has(t));
+  const quizOk = quizFirstTryCorrect.every(v => v);
+  if (tabsOk && quizOk && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('stereochemistry');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('stereochemistry')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    visitedTabs.add(tab.dataset.section);
+    maybeMarkDone();
+  });
+});
+
+/* ===== Init ===== */
+updateMolInfo();
+updateRSInfo();
+updateIsoInfo();
+draw();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学化学"></script>
+</body>
+</html>

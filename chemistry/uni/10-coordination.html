@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>配位化学 · 大学化学互动可视化</title>
+<style>
+  :root {
+    --primary: #0ea5e9;
+    --accent: #f59e0b;
+    --ligand1: #10b981;
+    --ligand2: #8b5cf6;
+    --ligand3: #ef4444;
+    --ligand4: #f472b6;
+    --metal: #fbbf24;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.78);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0c4a6e 0%, #164e63 50%, #0c4a6e 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.3rem; background: linear-gradient(90deg, var(--ligand1), var(--primary), var(--ligand2)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 0.95rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 11px 22px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 14px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(14,165,233,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; }
+  @media (max-width: 1000px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 680px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 10px; color: #e2e8f0; }
+
+  .concept-box { font-size: 0.95rem; text-align: left; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 10px 0; line-height: 1.85; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--ligand1); font-weight: 600; }
+  .concept-box .hl2 { color: var(--primary); font-weight: 600; }
+  .concept-box .hl3 { color: var(--ligand2); font-weight: 600; }
+  .concept-box .hl4 { color: var(--metal); font-weight: 600; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 7px 14px; border-radius: 10px; background: rgba(14,165,233,0.1); border: 2px solid rgba(14,165,233,0.3); cursor: pointer; font-size: 13px; color: #7dd3fc; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .slider-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 120px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--accent); font-weight: 600; font-size: 12px; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 12px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; line-height: 1.5; }
+  .info-grid b { color: #fbbf24; }
+
+  .formula-box { padding: 12px; background: rgba(14,165,233,0.08); border-radius: 12px; margin: 10px 0; font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; color: #7dd3fc; border: 1px solid rgba(14,165,233,0.2); }
+
+  .play-btn { display: block; margin: 12px auto; padding: 10px 28px; border-radius: 12px; background: var(--primary); color: white; border: none; cursor: pointer; font-size: 15px; font-weight: 600; transition: all .2s; }
+  .play-btn:hover { transform: scale(1.05); box-shadow: 0 4px 20px rgba(14,165,233,.4); }
+
+  .complex-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+  .complex-opt { padding: 10px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 12px; transition: all .2s; border: 2px solid transparent; text-align: center; }
+  .complex-opt:hover { background: rgba(255,255,255,0.12); }
+  .complex-opt.active { border-color: var(--primary); background: rgba(14,165,233,0.15); }
+  .complex-opt b { display: block; font-size: 14px; margin-bottom: 4px; color: var(--metal); }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(14,165,233,0.1); border-radius: 14px; border: 2px solid rgba(14,165,233,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 13px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.2); border-color: #ef4444; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 10px; font-size: 13px; text-align: center; font-weight: 600; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🧪 配位化学互动可视化</h1>
+    <p>配位化合物结构 · 配位平衡 · 实际应用 <span id="done-mark" style="display:none;margin-left:8px;padding:2px 8px;border-radius:999px;background:#34C759;color:#fff;font-size:12px;font-weight:700;vertical-align:middle;">✓ 已完成</span></p>
+  </header>
+  <script src="assets/common.js"></script>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="structure">🔷 配位结构</div>
+    <div class="tab" data-tab="equilibrium">⚖️ 配位平衡</div>
+    <div class="tab" data-tab="application">💡 应用案例</div>
+    <div class="tab" data-tab="quiz">📝 知识测验</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="700" height="520"></canvas>
+      <div class="legend" id="legendArea"></div>
+    </div>
+    <div class="panel" id="controlPanel"></div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('controlPanel');
+const legendArea = document.getElementById('legendArea');
+
+// ===== 全局状态 =====
+let currentTab = 'structure';
+let animId = null;
+let time = 0;
+
+// ===== 配位化合物数据 =====
+const complexes = [
+  { name: '[Cu(NH₃)₄]²⁺', geo: '平面正方形', cn: 4, metal: 'Cu²⁺', ligands: '4 NH₃', color: '#3b82f6', dElectron: 9, hybridization: 'dsp²' },
+  { name: '[Fe(CN)₆]⁴⁻', geo: '八面体', cn: 6, metal: 'Fe²⁺', ligands: '6 CN⁻', color: '#fbbf24', dElectron: 6, hybridization: 'd²sp³' },
+  { name: '[ZnCl₄]²⁻', geo: '四面体', cn: 4, metal: 'Zn²⁺', ligands: '4 Cl⁻', color: '#10b981', dElectron: 10, hybridization: 'sp³' },
+  { name: '[Ag(NH₃)₂]⁺', geo: '直线形', cn: 2, metal: 'Ag⁺', ligands: '2 NH₃', color: '#f472b6', dElectron: 10, hybridization: 'sp' },
+  { name: '[Co(H₂O)₆]²⁺', geo: '八面体', cn: 6, metal: 'Co²⁺', ligands: '6 H₂O', color: '#ef4444', dElectron: 7, hybridization: 'sp³d²' },
+  { name: '[PtCl₆]²⁻', geo: '八面体', cn: 6, metal: 'Pt⁴⁺', ligands: '6 Cl⁻', color: '#8b5cf6', dElectron: 6, hybridization: 'd²sp³' }
+];
+
+let selectedComplex = 0;
+
+// ===== 进度追踪 =====
+const SLUG = '10-coordination';
+const ALL_TABS = ['structure', 'equilibrium', 'application', 'quiz'];
+const visitedTabs = new Set(['structure']);
+const quizFirstTryCorrect = new Set();
+let quizTriedCurrent = false;
+
+function maybeMarkDone() {
+  const tabsOk = ALL_TABS.every(t => visitedTabs.has(t));
+  const quizOk = quizFirstTryCorrect.size === quizData.length;
+  if (tabsOk && quizOk && !PageProgress.isDone(SLUG)) {
+    PageProgress.markDone(SLUG);
+    const m = document.getElementById('done-mark');
+    if (m) m.style.display = 'inline-block';
+  }
+}
+
+if (PageProgress.isDone(SLUG)) {
+  const m = document.getElementById('done-mark');
+  if (m) m.style.display = 'inline-block';
+}
+
+// ===== Tab 切换 =====
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    visitedTabs.add(currentTab);
+    maybeMarkDone();
+    setupTab();
+  });
+});
+
+function setupTab() {
+  if (animId) cancelAnimationFrame(animId);
+  if (currentTab === 'structure') setupStructure();
+  else if (currentTab === 'equilibrium') setupEquilibrium();
+  else if (currentTab === 'application') setupApplication();
+  else if (currentTab === 'quiz') setupQuiz();
+}
+
+// ===== 模块1: 配位结构 =====
+function setupStructure() {
+  panel.innerHTML = `
+    <h3>🔷 配位化合物几何结构</h3>
+    <div class="concept-box">
+      配位化合物由 <span class="hl4">中心金属离子</span> 和围绕它的 <span class="hl">配体</span> 组成。<br>
+      配位数决定几何构型：<span class="hl2">2→直线形</span>、<span class="hl2">4→四面体/平面正方形</span>、<span class="hl2">6→八面体</span>
+    </div>
+    <div class="complex-selector" id="complexSelector"></div>
+    <div class="info-grid" id="complexInfo"></div>
+    <div class="formula-box" id="formulaBox"></div>
+  `;
+  const sel = document.getElementById('complexSelector');
+  complexes.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'complex-opt' + (i === selectedComplex ? ' active' : '');
+    div.innerHTML = `<b>${c.name}</b>${c.geo}`;
+    div.onclick = () => { selectedComplex = i; setupStructure(); };
+    sel.appendChild(div);
+  });
+  updateComplexInfo();
+  drawStructure();
+}
+
+function updateComplexInfo() {
+  const c = complexes[selectedComplex];
+  const info = document.getElementById('complexInfo');
+  info.innerHTML = `
+    <div><b>中心离子</b><br>${c.metal}</div>
+    <div><b>配位数</b><br>${c.cn}</div>
+    <div><b>几何构型</b><br>${c.geo}</div>
+    <div><b>杂化方式</b><br>${c.hybridization}</div>
+    <div><b>d 电子数</b><br>${c.dElectron}</div>
+    <div><b>配体</b><br>${c.ligands}</div>
+  `;
+  document.getElementById('formulaBox').innerHTML = `
+    ${c.name}<br><small>稳定常数 K<sub>稳</sub> = [${c.name}] / ([${c.metal}][${c.ligands}]${c.cn > 1 ? '^' + c.cn : ''})</small>
+  `;
+}
+
+function drawStructure() {
+  const c = complexes[selectedComplex];
+  ctx.clearRect(0, 0, 700, 520);
+
+  // 背景网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 700; i += 30) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 520); ctx.stroke(); }
+  for (let i = 0; i < 520; i += 30) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(700, i); ctx.stroke(); }
+
+  const cx = 350, cy = 260;
+  const rotAngle = time * 0.008;
+
+  // 根据几何构型绘制
+  if (c.cn === 2) drawLinear(cx, cy, c, rotAngle);
+  else if (c.cn === 4 && c.geo === '四面体') drawTetrahedral(cx, cy, c, rotAngle);
+  else if (c.cn === 4 && c.geo === '平面正方形') drawSquarePlanar(cx, cy, c, rotAngle);
+  else if (c.cn === 6) drawOctahedral(cx, cy, c, rotAngle);
+
+  time++;
+  animId = requestAnimationFrame(drawStructure);
+}
+
+function drawMetal(cx, cy, color, radius = 28) {
+  const grad = ctx.createRadialGradient(cx - 8, cy - 8, 2, cx, cy, radius);
+  grad.addColorStop(0, '#fef3c7');
+  grad.addColorStop(0.5, color);
+  grad.addColorStop(1, '#92400e');
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function drawLigand(x, y, color, size = 18) {
+  const grad = ctx.createRadialGradient(x - 4, y - 4, 1, x, y, size);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.5, color);
+  grad.addColorStop(1, '#064e3b');
+  ctx.beginPath();
+  ctx.arc(x, y, size, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+function drawBond(x1, y1, x2, y2) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = 'rgba(14,165,233,0.5)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  // 配位键箭头
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+  ctx.beginPath();
+  ctx.moveTo(mx + 8 * Math.cos(angle), my + 8 * Math.sin(angle));
+  ctx.lineTo(mx + 8 * Math.cos(angle + 2.5), my + 8 * Math.sin(angle + 2.5));
+  ctx.lineTo(mx + 8 * Math.cos(angle - 2.5), my + 8 * Math.sin(angle - 2.5));
+  ctx.fillStyle = 'rgba(14,165,233,0.7)';
+  ctx.fill();
+}
+
+function drawLinear(cx, cy, c, rot) {
+  const dist = 120;
+  const positions = [
+    { x: cx - dist, y: cy },
+    { x: cx + dist, y: cy }
+  ];
+  positions.forEach(p => {
+    drawBond(cx, cy, p.x, p.y);
+    drawLigand(p.x, p.y, c.color);
+  });
+  drawMetal(cx, cy, '#fbbf24');
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('直线形 · 配位数 2', cx, cy + 80);
+  ctx.fillText(`键角 180°`, cx, cy + 100);
+}
+
+function drawTetrahedral(cx, cy, c, rot) {
+  const r = 110;
+  // 四面体顶点
+  const vertices = [
+    { x: cx + r * Math.cos(rot) * 0.9, y: cy - r * 0.7, z: r * Math.sin(rot) * 0.5 },
+    { x: cx + r * Math.cos(rot + 2.094) * 0.9, y: cy - r * 0.2, z: r * Math.sin(rot + 2.094) * 0.5 },
+    { x: cx + r * Math.cos(rot + 4.189) * 0.9, y: cy + r * 0.5, z: r * Math.sin(rot + 4.189) * 0.5 },
+    { x: cx, y: cy + r * 0.3, z: -r * 0.5 }
+  ];
+  // 按z排序
+  const sorted = vertices.map((v, i) => ({ ...v, i })).sort((a, b) => a.z - b.z);
+  sorted.forEach(v => {
+    const scale = 1 + v.z * 0.002;
+    const sx = v.x, sy = v.y;
+    drawBond(cx, cy, sx, sy);
+    drawLigand(sx, sy, c.color, 16 * scale);
+  });
+  drawMetal(cx, cy, '#fbbf24');
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('四面体 · 配位数 4', cx, cy + 120);
+  ctx.fillText('键角 109.5° · sp³ 杂化', cx, cy + 140);
+}
+
+function drawSquarePlanar(cx, cy, c, rot) {
+  const dist = 110;
+  const positions = [
+    { x: cx + dist * Math.cos(rot), y: cy + dist * Math.sin(rot) * 0.3 },
+    { x: cx - dist * Math.cos(rot), y: cy - dist * Math.sin(rot) * 0.3 },
+    { x: cx + dist * Math.sin(rot) * 0.3, y: cy + dist * Math.cos(rot) },
+    { x: cx - dist * Math.sin(rot) * 0.3, y: cy - dist * Math.cos(rot) }
+  ];
+  positions.forEach(p => {
+    drawBond(cx, cy, p.x, p.y);
+    drawLigand(p.x, p.y, c.color);
+  });
+  drawMetal(cx, cy, '#fbbf24');
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('平面正方形 · 配位数 4', cx, cy + 100);
+  ctx.fillText('键角 90° · dsp² 杂化', cx, cy + 120);
+}
+
+function drawOctahedral(cx, cy, c, rot) {
+  const dist = 110;
+  // 6个顶点: 上下 + 4个赤道
+  const positions = [
+    { x: cx, y: cy - dist, z: 0 },          // 上
+    { x: cx, y: cy + dist, z: 0 },          // 下
+    { x: cx + dist * Math.cos(rot), y: cy, z: dist * Math.sin(rot) },   // 赤道1
+    { x: cx - dist * Math.cos(rot), y: cy, z: -dist * Math.sin(rot) },  // 赤道3
+    { x: cx + dist * Math.sin(rot) * 0.5, y: cy, z: dist * Math.cos(rot) },  // 赤道2
+    { x: cx - dist * Math.sin(rot) * 0.5, y: cy, z: -dist * Math.cos(rot) } // 赤道4
+  ];
+  const sorted = positions.map((v, i) => ({ ...v, i })).sort((a, b) => a.z - b.z);
+  sorted.forEach(v => {
+    const scale = 1 + v.z * 0.0015;
+    drawBond(cx, cy, v.x, v.y);
+    drawLigand(v.x, v.y, c.color, 16 * scale);
+  });
+  drawMetal(cx, cy, '#fbbf24', 30);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('八面体 · 配位数 6', cx, cy + 140);
+  ctx.fillText('键角 90°/180° · d²sp³/sp³d² 杂化', cx, cy + 160);
+}
+
+// ===== 模块2: 配位平衡 =====
+let eqConc = { metal: 0.1, ligand: 0.4, complex: 0, kf: 1e10 };
+let eqMode = 'concentration';
+
+function setupEquilibrium() {
+  panel.innerHTML = `
+    <h3>⚖️ 配位平衡可视化</h3>
+    <div class="concept-box">
+      配位平衡：<span class="hl4">M + nL ⇌ ML<sub>n</sub></span><br>
+      稳定常数 <span class="hl">K<sub>稳</sub> = [ML<sub>n</sub>] / ([M][L]<sup>n</sup>)</span><br>
+      K<sub>稳</sub> 越大，配离子越稳定
+    </div>
+    <div class="mode-switch">
+      <div class="mode-btn ${eqMode === 'concentration' ? 'active' : ''}" onclick="eqMode='concentration';setupEquilibrium()">浓度变化</div>
+      <div class="mode-btn ${eqMode === 'kf' ? 'active' : ''}" onclick="eqMode='kf';setupEquilibrium()">K稳影响</div>
+      <div class="mode-btn ${eqMode === 'competition' ? 'active' : ''}" onclick="eqMode='competition';setupEquilibrium()">配体竞争</div>
+    </div>
+    <div id="eqControls"></div>
+    <div class="formula-box" id="eqFormula"></div>
+  `;
+  const ctrl = document.getElementById('eqControls');
+  if (eqMode === 'concentration') {
+    ctrl.innerHTML = `
+      <div class="slider-row"><label>金属离子 [M]</label><input type="range" min="0" max="100" value="${eqConc.metal * 500}" oninput="eqConc.metal=this.value/500;updateEq()"><span class="val" id="vMetal">${(eqConc.metal*1000).toFixed(1)} mM</span></div>
+      <div class="slider-row"><label>配体 [L]</label><input type="range" min="0" max="100" value="${eqConc.ligand * 250}" oninput="eqConc.ligand=this.value/250;updateEq()"><span class="val" id="vLigand">${(eqConc.ligand*1000).toFixed(1)} mM</span></div>
+      <div class="slider-row"><label>lg K<sub>稳</sub></label><input type="range" min="2" max="20" value="${Math.log10(eqConc.kf)}" oninput="eqConc.kf=Math.pow(10,this.value);updateEq()"><span class="val" id="vKf">${Math.log10(eqConc.kf).toFixed(1)}</span></div>
+    `;
+  } else if (eqMode === 'kf') {
+    ctrl.innerHTML = `
+      <div class="concept-box">
+        比较不同 K<sub>稳</sub> 的配位化合物：<br>
+        <span class="hl">[Ca(EDTA)]²⁻</span> lgK = 10.7<br>
+        <span class="hl2">[Fe(CN)₆]⁴⁻</span> lgK = 24.0<br>
+        <span class="hl3">[Ag(CN)₂]⁻</span> lgK = 21.1<br>
+        <span class="hl4">[Cu(NH₃)₄]²⁺</span> lgK = 13.2
+      </div>
+      <div class="slider-row"><label>初始 [M]</label><input type="range" min="10" max="100" value="50" oninput="eqConc.metal=this.value/500;updateEq()"><span class="val">${(eqConc.metal*1000).toFixed(1)} mM</span></div>
+    `;
+  } else {
+    ctrl.innerHTML = `
+      <div class="concept-box">
+        配体竞争：向 <span class="hl4">[Cu(NH₃)₄]²⁺</span> 中加入 EDTA<br>
+        由于 Cu-EDTA 的 K<sub>稳</sub> 更大（lgK=18.8），<br>
+        平衡向生成 Cu-EDTA 方向移动
+      </div>
+      <div class="slider-row"><label>EDTA 加入量</label><input type="range" min="0" max="100" value="0" oninput="updateCompetition(this.value)"><span class="val" id="vEdta">0%</span></div>
+    `;
+  }
+  updateEq();
+}
+
+function updateEq() {
+  document.getElementById('vMetal') && (document.getElementById('vMetal').textContent = (eqConc.metal * 1000).toFixed(1) + ' mM');
+  document.getElementById('vLigand') && (document.getElementById('vLigand').textContent = (eqConc.ligand * 1000).toFixed(1) + ' mM');
+  document.getElementById('vKf') && (document.getElementById('vKf').textContent = Math.log10(eqConc.kf).toFixed(1));
+
+  // 计算平衡浓度
+  const M0 = eqConc.metal, L0 = eqConc.ligand, K = eqConc.kf;
+  const n = 4; // 简化为1:4配位
+  let x = 0; // 生成的配合物
+  // 简化计算
+  if (K > 1e15) x = Math.min(M0, L0 / n);
+  else {
+    for (let i = 0; i < 100; i++) {
+      const M = M0 - x, L = L0 - n * x;
+      if (M <= 0 || L <= 0) break;
+      const Q = x / (M * Math.pow(L, n));
+      if (Q < K) x += 0.0001; else break;
+    }
+  }
+  eqConc.complex = x;
+  const M_eq = M0 - x;
+  const L_eq = L0 - n * x;
+
+  document.getElementById('eqFormula').innerHTML = `
+    [M] = ${(M_eq * 1000).toFixed(2)} mM &nbsp;&nbsp; [L] = ${(L_eq * 1000).toFixed(2)} mM &nbsp;&nbsp; [ML₄] = ${(x * 1000).toFixed(2)} mM<br>
+    K<sub>稳</sub> = 10<sup>${Math.log10(K).toFixed(1)}</sup> &nbsp;&nbsp; 配位率 = ${(x / M0 * 100).toFixed(1)}%
+  `;
+
+  drawEquilibrium(M_eq, L_eq, x);
+}
+
+function updateCompetition(pct) {
+  document.getElementById('vEdta').textContent = pct + '%';
+  const edta = pct / 100;
+  // Cu(NH3)4 -> Cu(EDTA) 转化
+  const cu_nh3 = 1 - edta;
+  const cu_edta = edta;
+  drawCompetition(cu_nh3, cu_edta);
+}
+
+function drawEquilibrium(M, L, ML) {
+  ctx.clearRect(0, 0, 700, 520);
+  const total = M + L + ML || 1;
+  const barY = 80, barH = 60;
+
+  // 浓度条形图
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(50, barY, 600, barH);
+
+  const wM = (M / total) * 600;
+  const wL = (L / total) * 600;
+  const wML = (ML / total) * 600;
+
+  // 金属离子
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillRect(50, barY, wM, barH);
+  ctx.fillStyle = '#fff';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'center';
+  if (wM > 30) ctx.fillText(`M: ${(M*1000).toFixed(1)}mM`, 50 + wM/2, barY + 35);
+
+  // 配体
+  ctx.fillStyle = '#10b981';
+  ctx.fillRect(50 + wM, barY, wL, barH);
+  if (wL > 30) ctx.fillText(`L: ${(L*1000).toFixed(1)}mM`, 50 + wM + wL/2, barY + 35);
+
+  // 配合物
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillRect(50 + wM + wL, barY, wML, barH);
+  if (wML > 30) ctx.fillText(`ML₄: ${(ML*1000).toFixed(1)}mM`, 50 + wM + wL + wML/2, barY + 35);
+
+  // 粒子动画
+  const particles = [];
+  const nM = Math.round(M * 200);
+  const nL = Math.round(L * 200);
+  const nML = Math.round(ML * 200);
+
+  for (let i = 0; i < nM; i++) particles.push({ type: 'M', x: Math.random() * 650 + 25, y: Math.random() * 280 + 180, vx: (Math.random() - 0.5) * 0.8, vy: (Math.random() - 0.5) * 0.8 });
+  for (let i = 0; i < nL; i++) particles.push({ type: 'L', x: Math.random() * 650 + 25, y: Math.random() * 280 + 180, vx: (Math.random() - 0.5) * 1.2, vy: (Math.random() - 0.5) * 1.2 });
+  for (let i = 0; i < nML; i++) particles.push({ type: 'ML', x: Math.random() * 650 + 25, y: Math.random() * 280 + 180, vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5 });
+
+  function animateEq() {
+    ctx.clearRect(0, 0, 700, 520);
+    // 重绘条形图
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(50, barY, 600, barH);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(50, barY, wM, barH);
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(50 + wM, barY, wL, barH);
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(50 + wM + wL, barY, wML, barH);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('浓度分布', 350, barY - 10);
+
+    // 粒子
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 20 || p.x > 680) p.vx *= -1;
+      if (p.y < 180 || p.y > 500) p.vy *= -1;
+
+      if (p.type === 'M') {
+        ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#fbbf24'; ctx.fill();
+      } else if (p.type === 'L') {
+        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#10b981'; ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = '#3b82f6'; ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#fbbf24'; ctx.fill();
+      }
+    });
+
+    animId = requestAnimationFrame(animateEq);
+  }
+  animateEq();
+}
+
+function drawCompetition(ratio1, ratio2) {
+  ctx.clearRect(0, 0, 700, 520);
+  const cx = 350, cy = 280;
+
+  // 左侧 Cu(NH3)4
+  const leftX = cx - 150, leftY = cy;
+  const leftSize = ratio1 * 80 + 20;
+  ctx.beginPath(); ctx.arc(leftX, leftY, leftSize, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(59,130,246,${0.3 + ratio1 * 0.5})`;
+  ctx.fill();
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // 中心 Cu
+  drawMetal(leftX, leftY, '#fbbf24', 20);
+
+  // NH3 配体
+  if (ratio1 > 0.1) {
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2 + time * 0.02;
+      const lx = leftX + Math.cos(angle) * (leftSize + 15);
+      const ly = leftY + Math.sin(angle) * (leftSize + 15);
+      drawLigand(lx, ly, '#3b82f6', 12);
+      drawBond(leftX, leftY, lx, ly);
+    }
+  }
+
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('[Cu(NH₃)₄]²⁺', leftX, leftY + leftSize + 50);
+  ctx.fillText(`lgK = 13.2`, leftX, leftY + leftSize + 70);
+
+  // 右侧 Cu(EDTA)
+  const rightX = cx + 150, rightY = cy;
+  const rightSize = ratio2 * 80 + 20;
+  ctx.beginPath(); ctx.arc(rightX, rightY, rightSize, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(139,92,246,${0.3 + ratio2 * 0.5})`;
+  ctx.fill();
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  drawMetal(rightX, rightY, '#fbbf24', 20);
+
+  if (ratio2 > 0.1) {
+    // EDTA 六齿配体
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2 + time * 0.015;
+      const lx = rightX + Math.cos(angle) * (rightSize + 12);
+      const ly = rightY + Math.sin(angle) * (rightSize + 12);
+      drawLigand(lx, ly, '#8b5cf6', 10);
+      drawBond(rightX, rightY, lx, ly);
+    }
+  }
+
+  ctx.fillStyle = '#e2e8f0';
+  ctx.fillText('[Cu(EDTA)]²⁻', rightX, rightY + rightSize + 50);
+  ctx.fillText(`lgK = 18.8`, rightX, rightY + rightSize + 70);
+
+  // 箭头
+  ctx.beginPath();
+  ctx.moveTo(cx - 40, cy);
+  ctx.lineTo(cx + 40, cy);
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 30, cy - 10);
+  ctx.lineTo(cx + 45, cy);
+  ctx.lineTo(cx + 30, cy + 10);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fill();
+
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('加入 EDTA', cx, cy - 20);
+
+  time++;
+  animId = requestAnimationFrame(() => drawCompetition(ratio1, ratio2));
+}
+
+// ===== 模块3: 应用案例 =====
+let appMode = 'bio';
+
+function setupApplication() {
+  panel.innerHTML = `
+    <h3>💡 配位化学应用</h3>
+    <div class="concept-box">
+      配位化学在 <span class="hl">生物医学</span>、<span class="hl2">工业催化</span>、<span class="hl3">环境治理</span> 等领域有广泛应用
+    </div>
+    <div class="mode-switch">
+      <div class="mode-btn ${appMode === 'bio' ? 'active' : ''}" onclick="appMode='bio';setupApplication()">🧬 生物医学</div>
+      <div class="mode-btn ${appMode === 'catalysis' ? 'active' : ''}" onclick="appMode='catalysis';setupApplication()">⚗️ 工业催化</div>
+      <div class="mode-btn ${appMode === 'env' ? 'active' : ''}" onclick="appMode='env';setupApplication()">🌍 环境治理</div>
+    </div>
+    <div id="appContent"></div>
+  `;
+  const content = document.getElementById('appContent');
+  if (appMode === 'bio') {
+    content.innerHTML = `
+      <div class="concept-box">
+        <b style="color:#10b981">血红蛋白 — 铁卟啉配合物</b><br>
+        Fe²⁺ 与卟啉环配位，第6个配位点可逆结合 O₂<br>
+        协同效应：结合一个 O₂ 后，构型变化促进后续结合
+      </div>
+      <div class="concept-box">
+        <b style="color:#3b82f6">顺铂 — 抗癌药物</b><br>
+        cis-[Pt(NH₃)₂Cl₂] 与 DNA 鸟嘌呤配位<br>
+        阻断 DNA 复制，抑制癌细胞分裂
+      </div>
+      <div class="concept-box">
+        <b style="color:#8b5cf6">EDTA 解毒</b><br>
+        EDTA 与 Pb²⁺、Hg²⁺ 等重金属形成稳定配合物<br>
+        用于重金属中毒的螯合治疗
+      </div>
+    `;
+  } else if (appMode === 'catalysis') {
+    content.innerHTML = `
+      <div class="concept-box">
+        <b style="color:#10b981">Wilkinson 催化剂</b><br>
+        [RhCl(PPh₃)₃] 用于烯烃加氢<br>
+        均相催化，选择性高
+      </div>
+      <div class="concept-box">
+        <b style="color:#3b82f6">Ziegler-Natta 催化剂</b><br>
+        TiCl₄/AlEt₃ 用于烯烃定向聚合<br>
+        生产高密度聚乙烯、聚丙烯
+      </div>
+      <div class="concept-box">
+        <b style="color:#8b5cf6">羰基合成</b><br>
+        [Co₂(CO)₈] 催化烯烃 + CO + H₂ → 醛<br>
+        工业制备增塑剂醇类
+      </div>
+    `;
+  } else {
+    content.innerHTML = `
+      <div class="concept-box">
+        <b style="color:#10b981">EDTA 处理重金属废水</b><br>
+        与 Pb²⁺、Cd²⁺、Hg²⁺ 形成稳定水溶性配合物<br>
+        便于后续离子交换或沉淀去除
+      </div>
+      <div class="concept-box">
+        <b style="color:#3b82f6">氰化物提金</b><br>
+        4Au + 8CN⁻ + O₂ + 2H₂O → 4[Au(CN)₂]⁻ + 4OH⁻<br>
+        利用配位溶解从矿石中提取金
+      </div>
+      <div class="concept-box">
+        <b style="color:#8b5cf6">离子交换法软化水</b><br>
+        EDTA 或磷酸盐与 Ca²⁺、Mg²⁺ 配位<br>
+        防止锅炉结垢，提高热效率
+      </div>
+    `;
+  }
+  drawApplication();
+}
+
+function drawApplication() {
+  ctx.clearRect(0, 0, 700, 520);
+
+  if (appMode === 'bio') drawHemoglobin();
+  else if (appMode === 'catalysis') drawCatalysis();
+  else drawEnvApplication();
+}
+
+function drawHemoglobin() {
+  const cx = 350, cy = 260;
+
+  // 卟啉环简化表示
+  ctx.beginPath();
+  ctx.arc(cx, cy, 100, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(239,68,68,0.3)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // 四个吡咯环
+  const colors = ['#ef4444', '#f97316', '#ef4444', '#f97316'];
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    const rx = cx + Math.cos(angle) * 70;
+    const ry = cy + Math.sin(angle) * 70;
+    ctx.beginPath();
+    ctx.arc(rx, ry, 30, 0, Math.PI * 2);
+    ctx.fillStyle = colors[i] + '40';
+    ctx.fill();
+    ctx.strokeStyle = colors[i];
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // N 原子
+    const nx = cx + Math.cos(angle) * 45;
+    const ny = cy + Math.sin(angle) * 45;
+    ctx.beginPath();
+    ctx.arc(nx, ny, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#3b82f6';
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('N', nx, ny + 4);
+
+    // 配位键
+    drawBond(nx, ny, cx, cy);
+  }
+
+  // 中心 Fe
+  drawMetal(cx, cy, '#ef4444', 22);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('Fe²⁺', cx, cy + 5);
+
+  // O2 结合位点
+  const o2Y = cy - 130 - Math.sin(time * 0.05) * 15;
+  ctx.beginPath();
+  ctx.arc(cx - 10, o2Y, 12, 0, Math.PI * 2);
+  ctx.fillStyle = '#ef4444';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx + 10, o2Y, 12, 0, Math.PI * 2);
+  ctx.fillStyle = '#ef4444';
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('O', cx - 10, o2Y + 4);
+  ctx.fillText('O', cx + 10, o2Y + 4);
+
+  // 虚线表示可逆结合
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 25);
+  ctx.lineTo(cx, o2Y + 15);
+  ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('血红蛋白 — 氧合/脱氧可逆配位', cx, 480);
+
+  time++;
+  animId = requestAnimationFrame(drawHemoglobin);
+}
+
+function drawCatalysis() {
+  const cx = 350, cy = 260;
+
+  // 催化循环
+  const steps = [
+    { label: '烯烃配位', angle: -Math.PI / 2, color: '#10b981' },
+    { label: '插入反应', angle: 0, color: '#3b82f6' },
+    { label: 'H₂氧化加成', angle: Math.PI / 2, color: '#8b5cf6' },
+    { label: '还原消除', angle: Math.PI, color: '#f59e0b' }
+  ];
+
+  const r = 140;
+  steps.forEach((s, i) => {
+    const x = cx + Math.cos(s.angle) * r;
+    const y = cy + Math.sin(s.angle) * r;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 45, 0, Math.PI * 2);
+    ctx.fillStyle = s.color + '30';
+    ctx.fill();
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.fillStyle = s.color;
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(s.label, x, y + 5);
+  });
+
+  // 中心 Rh
+  drawMetal(cx, cy, '#fbbf24', 35);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('Rh', cx, cy + 6);
+
+  // 循环箭头
+  for (let i = 0; i < 4; i++) {
+    const a1 = steps[i].angle + 0.3;
+    const a2 = steps[(i + 1) % 4].angle - 0.3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, a1, a2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // 高亮当前步骤
+  const currentStep = Math.floor(time / 60) % 4;
+  const sx = cx + Math.cos(steps[currentStep].angle) * r;
+  const sy = cy + Math.sin(steps[currentStep].angle) * r;
+  ctx.beginPath();
+  ctx.arc(sx, sy, 50, 0, Math.PI * 2);
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('Wilkinson 催化剂循环', cx, 480);
+
+  time++;
+  animId = requestAnimationFrame(drawCatalysis);
+}
+
+function drawEnvApplication() {
+  const cx = 350, cy = 260;
+
+  // 废水中的重金属离子
+  const metals = [
+    { x: 100, y: 200, symbol: 'Pb²⁺', color: '#8b5cf6' },
+    { x: 200, y: 350, symbol: 'Cd²⁺', color: '#ef4444' },
+    { x: 500, y: 200, symbol: 'Hg²⁺', color: '#f97316' },
+    { x: 600, y: 350, symbol: 'Cu²⁺', color: '#3b82f6' }
+  ];
+
+  // EDTA 分子
+  const edtaX = cx + Math.sin(time * 0.02) * 50;
+  const edtaY = cy + Math.cos(time * 0.02) * 30;
+
+  // 绘制 EDTA
+  ctx.beginPath();
+  ctx.arc(edtaX, edtaY, 40, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(16,185,129,0.3)';
+  ctx.fill();
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = '#10b981';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('EDTA', edtaX, edtaY + 5);
+
+  // 绘制金属离子
+  metals.forEach((m, i) => {
+    const captured = i < Math.floor(time / 80) % 5;
+    if (captured && captured < 4) {
+      // 被捕获 - 画线连接
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(edtaX, edtaY);
+      ctx.lineTo(m.x, m.y);
+      ctx.strokeStyle = 'rgba(16,185,129,0.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, 20, 0, Math.PI * 2);
+    ctx.fillStyle = m.color + '60';
+    ctx.fill();
+    ctx.strokeStyle = m.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = m.color;
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(m.symbol, m.x, m.y + 4);
+  });
+
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('EDTA 螯合重金属 — 废水处理', cx, 480);
+
+  time++;
+  animId = requestAnimationFrame(drawEnvApplication);
+}
+
+// ===== 模块4: 知识测验 =====
+const quizData = [
+  { q: '[Fe(CN)₆]⁴⁻ 的几何构型是？', opts: ['四面体', '平面正方形', '八面体', '直线形'], ans: 2 },
+  { q: '下列哪个配体是强场配体？', opts: ['H₂O', 'NH₃', 'CN⁻', 'Cl⁻'], ans: 2 },
+  { q: 'dsp² 杂化对应的几何构型是？', opts: ['四面体', '平面正方形', '八面体', '三角双锥'], ans: 1 },
+  { q: '顺铂的化学式是？', opts: ['trans-[Pt(NH₃)₂Cl₂]', 'cis-[Pt(NH₃)₂Cl₂]', '[Pt(NH₃)₄]Cl₂', '[PtCl₆]²⁻'], ans: 1 },
+  { q: 'EDTA 是几齿配体？', opts: ['二齿', '四齿', '六齿', '单齿'], ans: 2 },
+  { q: '血红蛋白中的金属离子是？', opts: ['Cu²⁺', 'Zn²⁺', 'Fe²⁺', 'Mg²⁺'], ans: 2 },
+  { q: '[Cu(NH₃)₄]²⁺ 的颜色是？', opts: ['无色', '黄色', '深蓝色', '红色'], ans: 2 },
+  { q: '配位数 4 不可能出现的构型是？', opts: ['四面体', '平面正方形', '八面体', '以上都可以'], ans: 2 }
+];
+
+let quizIdx = 0, quizScore = 0, quizAnswered = false;
+
+function setupQuiz() {
+  quizIdx = 0; quizScore = 0;
+  showQuizQuestion();
+}
+
+function showQuizQuestion() {
+  if (quizIdx >= quizData.length) {
+    panel.innerHTML = `
+      <h3>📝 测验完成</h3>
+      <div class="concept-box" style="text-align:center;font-size:1.3rem">
+        得分：<span class="hl4">${quizScore} / ${quizData.length}</span><br>
+        正确率：${(quizScore / quizData.length * 100).toFixed(0)}%
+      </div>
+      <button class="play-btn" onclick="setupQuiz()">重新测验</button>
+    `;
+    drawQuizResult();
+    return;
+  }
+
+  const q = quizData[quizIdx];
+  quizAnswered = false;
+  quizTriedCurrent = false;
+  panel.innerHTML = `
+    <h3>📝 第 ${quizIdx + 1} / ${quizData.length} 题</h3>
+    <div class="quiz">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts" id="quizOpts"></div>
+      <div id="quizFeedback"></div>
+    </div>
+  `;
+  const optsDiv = document.getElementById('quizOpts');
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.onclick = () => answerQuiz(i);
+    optsDiv.appendChild(div);
+  });
+  drawQuizProgress();
+}
+
+function answerQuiz(idx) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = quizData[quizIdx];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts[q.ans].classList.add('correct');
+  if (idx === q.ans) {
+    quizScore++;
+    if (!quizTriedCurrent) quizFirstTryCorrect.add(quizIdx);
+  } else {
+    opts[idx].classList.add('wrong');
+  }
+  quizTriedCurrent = true;
+  maybeMarkDone();
+  document.getElementById('quizFeedback').innerHTML = `
+    <div class="quiz-result" style="background:${idx === q.ans ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}">
+      ${idx === q.ans ? '✅ 正确！' : '❌ 错误，正确答案已标出'}
+    </div>
+    <button class="play-btn" onclick="quizIdx++;showQuizQuestion()">下一题</button>
+  `;
+}
+
+function drawQuizProgress() {
+  ctx.clearRect(0, 0, 700, 520);
+  const cx = 350, cy = 260;
+
+  // 进度圆环
+  ctx.beginPath();
+  ctx.arc(cx, cy, 120, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 20;
+  ctx.stroke();
+
+  const progress = quizIdx / quizData.length;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 120, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+  ctx.strokeStyle = '#0ea5e9';
+  ctx.lineWidth = 20;
+  ctx.stroke();
+
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 48px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${quizIdx + 1}`, cx, cy + 15);
+  ctx.font = '16px sans-serif';
+  ctx.fillText(`/ ${quizData.length}`, cx, cy + 45);
+
+  // 得分
+  ctx.fillStyle = '#10b981';
+  ctx.font = '18px sans-serif';
+  ctx.fillText(`得分: ${quizScore}`, cx, cy + 180);
+}
+
+function drawQuizResult() {
+  ctx.clearRect(0, 0, 700, 520);
+  const cx = 350, cy = 260;
+  const pct = quizScore / quizData.length;
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, 120, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 20;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, 120, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+  ctx.strokeStyle = pct >= 0.8 ? '#10b981' : pct >= 0.6 ? '#f59e0b' : '#ef4444';
+  ctx.lineWidth = 20;
+  ctx.stroke();
+
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 56px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${quizScore}`, cx, cy + 10);
+  ctx.font = '20px sans-serif';
+  ctx.fillText(`/ ${quizData.length}`, cx, cy + 45);
+
+  let msg = pct >= 0.8 ? '🎉 优秀！' : pct >= 0.6 ? '👍 不错！' : '💪 继续加油！';
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = '24px sans-serif';
+  ctx.fillText(msg, cx, cy + 180);
+}
+
+// ===== 初始化 =====
+setupTab();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学化学"></script>
+</body>
+</html>

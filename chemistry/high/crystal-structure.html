@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>晶体结构 · 高中化学互动可视化</title>
+<style>
+  :root {
+    --primary: #a78bfa;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #2e1065 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #c4b5fd; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #8b5cf6, #a78bfa, #c4b5fd); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(167,139,250,.4); color: #2e1065; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .hidden { display: none !important; }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .stage > * { min-width: 0; }
+  @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e1545 0%, #0f172a 100%); touch-action: none; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #cbd5e1; flex-wrap: wrap; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #c4b5fd; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--primary); min-height: 44px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #c4b5fd; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid var(--primary); line-height: 1.7; font-size: 14px; }
+  .concept-card.warn { border-color: #f59e0b; }
+  .concept-card .title { font-weight: 700; margin-bottom: 4px; color: var(--primary); }
+  .concept-card.warn .title { color: #f59e0b; }
+  .demo-btns { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .demo-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 44px; min-width: 44px; }
+  .demo-btn.active { background: var(--primary); border-color: var(--primary); color: #2e1065; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(167,139,250,0.08); border-radius: 12px; border: 1px solid rgba(167,139,250,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #c4b5fd; min-height: 18px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #2e1065; font-weight: 700; min-height: 44px; min-width: 44px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  .practice-item { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+  .practice-item h4 { color: #e2e8f0; margin-bottom: 10px; font-size: 15px; line-height: 1.6; }
+  .calc-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .calc-row input { width: 140px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: var(--light); font-size: 15px; min-height: 44px; }
+  .calc-row button { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; background: var(--primary); color: #2e1065; font-weight: 700; font-size: 14px; min-height: 44px; }
+  .practice-fb { margin-top: 8px; font-size: 13px; min-height: 18px; line-height: 1.6; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 28px; }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .container { padding: 10px 14px; }
+    .breadcrumb { padding: 6px 10px; font-size: 12px; margin-bottom: 8px; }
+    header { margin-bottom: 10px; }
+    header h1 { font-size: 1.5rem; }
+    header p { font-size: 12px; margin-top: 2px; }
+    .tabs { gap: 6px; margin-bottom: 10px; }
+    .tab { padding: 6px 14px; font-size: 12px; min-height: 36px; }
+    .canvas-wrap, .panel { padding: 10px; border-radius: 12px; }
+    .panel h3 { font-size: 1rem; margin-bottom: 8px; }
+    .equation { padding: 8px; font-size: 0.95rem; margin: 6px 0; }
+    .concept-card { padding: 10px; margin: 6px 0; font-size: 13px; }
+    .slider-row { margin: 6px 0; font-size: 13px; }
+  }
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    header h1 { font-size: 1.6rem; }
+    .tabs { gap: 6px; }
+    .tab { padding: 8px 12px; font-size: 13px; }
+    .slider-row { flex-wrap: wrap; }
+    .slider-row label { flex: 0 0 auto; }
+    .slider-row .val { flex: 0 0 auto; }
+    .slider-row input[type=range] { flex: 1 1 100%; order: 3; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">⚗️ 化学</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">高中</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">晶体结构</span>
+    <span id="done-mark" style="margin-left:auto;color:#10b981;font-weight:600;"></span>
+  </nav>
+
+  <header>
+    <h1>💎 晶体结构</h1>
+    <p>晶体类型 · 晶胞 · 均摊法 · 配位数 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 探究</div>
+    <div class="tab" data-mode="practice">🧪 计算</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 探究模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div>
+        <div class="canvas-wrap">
+          <canvas id="crystalCanvas" width="720" height="460"></canvas>
+          <div class="legend">
+            <span id="legendLabel">体心立方：顶点 8×1/8 + 体心 1 = 2 个原子</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>选择晶胞类型</h3>
+        <div class="demo-btns" id="cellBtns">
+          <button class="demo-btn" data-cell="simple">简单立方</button>
+          <button class="demo-btn active" data-cell="bcc">体心立方</button>
+          <button class="demo-btn" data-cell="fcc">面心立方</button>
+          <button class="demo-btn" data-cell="nacl">NaCl 型</button>
+        </div>
+        <div class="slider-row">
+          <label>旋转角度</label>
+          <input type="range" id="sliderRot" min="0" max="90" step="5" value="30">
+          <span class="val" id="valRot">30°</span>
+        </div>
+        <div class="info-grid">
+          <div id="infoCount">晶胞原子数<br><b>2</b></div>
+          <div id="infoCn">配位数<br><b>8</b></div>
+        </div>
+        <div class="equation">均摊法：<b>顶点 ×1/8　棱上 ×1/4　面上 ×1/2　体内 ×1</b><br><span style="font-size:0.85em;color:#94a3b8">简单立方=1　体心立方=2　面心立方=4　NaCl 型=4 对离子</span></div>
+        <div class="concept-card">
+          <div class="title">四类晶体</div>
+          <b>分子晶体</b>（如干冰、冰）：熔点低、硬度小；<b>原子晶体</b>（如金刚石、SiO₂）：共价键空间网状，熔点高；<b>金属晶体</b>：金属键，导电导热延展；<b>离子晶体</b>（如 NaCl）：离子键，熔点较高、水溶液/熔融导电。
+        </div>
+        <div class="concept-card">
+          <div class="title">NaCl 型晶胞</div>
+          Na⁺ 与 Cl⁻ 交替排列：Cl⁻ 在顶点+面心（4 个），Na⁺ 在棱心+体心（4 个）→ 一个晶胞含 <b>4 个 NaCl</b>；每个离子的配位数都是 6。
+        </div>
+        <div class="concept-card warn">
+          <div class="title">⚠️ 易错点</div>
+          ① 均摊法数的是"晶胞分摊到的粒子数"，不是晶胞里画了几个球；② 金刚石是原子晶体，一个碳连 4 个碳；干冰是分子晶体，一个 CO₂ 周围 12 个紧邻分子；③ 熔点一般：原子晶体 &gt; 离子晶体 &gt; 分子晶体；④ 离子晶体固态不导电，熔融或溶于水才导电。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 计算模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="practice-item">
+      <h4>1️⃣ 某金属为体心立方堆积，用均摊法计算一个晶胞中含有的原子数。</h4>
+      <div class="calc-row">
+        <input type="number" id="a1" placeholder="? 个" step="any">
+        <button data-check="a1">提交</button>
+      </div>
+      <div class="practice-fb" id="fb-a1"></div>
+    </div>
+    <div class="practice-item">
+      <h4>2️⃣ 某金属为面心立方堆积（顶点+六个面心），一个晶胞中含有的原子数是多少？</h4>
+      <div class="calc-row">
+        <input type="number" id="a2" placeholder="? 个" step="any">
+        <button data-check="a2">提交</button>
+      </div>
+      <div class="practice-fb" id="fb-a2"></div>
+    </div>
+    <div class="practice-item">
+      <h4>3️⃣ NaCl 晶胞中：Cl⁻ 位于顶点和面心（共 4 个），Na⁺ 位于 12 条棱的棱心和体心。用均摊法求一个晶胞中 Na⁺ 的个数。</h4>
+      <div class="calc-row">
+        <input type="number" id="a3" placeholder="? 个" step="any">
+        <button data-check="a3">提交</button>
+      </div>
+      <div class="practice-fb" id="fb-a3"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="panel">
+      <h3>🎯 晶体结构 · 小测验（5 题，≥80% 通关）</h3>
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">点击「开始答题」</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFb"></div>
+        <div class="quiz-nav">
+          <button id="quizStart">开始答题</button>
+          <button id="quizPrev" disabled>上一题</button>
+          <button id="quizNext" disabled>下一题</button>
+        </div>
+        <div class="quiz-result hidden" id="quizResult"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>高中化学 · 晶体结构 · 互动可视化 | 知识可视化全学科项目</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+let mode = 'learn';
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+}));
+
+/* ============================================================
+ * 探究模式：晶胞可视化（简单等轴投影）
+ * ============================================================ */
+const canvas = document.getElementById('crystalCanvas');
+const ctx = canvas.getContext('2d');
+let cell = 'bcc';
+const sRot = document.getElementById('sliderRot');
+const CELLS = {
+  simple: { name: '简单立方', count: '8×1/8 = 1', n: 1, cn: 6,
+    legend: '简单立方：顶点 8×1/8 = 1 个原子' },
+  bcc: { name: '体心立方', count: '8×1/8+1 = 2', n: 2, cn: 8,
+    legend: '体心立方：顶点 8×1/8 + 体心 1 = 2 个原子' },
+  fcc: { name: '面心立方', count: '8×1/8+6×1/2 = 4', n: 4, cn: 12,
+    legend: '面心立方：顶点 8×1/8 + 面心 6×1/2 = 4 个原子' },
+  nacl: { name: 'NaCl 型', count: '4 Na⁺ + 4 Cl⁻', n: '4+4', cn: 6,
+    legend: 'NaCl 型：Cl⁻ 顶点+面心 = 4；Na⁺ 棱心+体心 = 4' }
+};
+document.querySelectorAll('#cellBtns .demo-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#cellBtns .demo-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  cell = b.dataset.cell;
+  draw();
+}));
+sRot.addEventListener('input', draw);
+
+function project(x, y, z, rot) {
+  // 绕竖直轴旋转 + 轻微俯视
+  const a = rot * Math.PI / 180;
+  const rx = x * Math.cos(a) - z * Math.sin(a);
+  const rz = x * Math.sin(a) + z * Math.cos(a);
+  const s = 150, cx = 330, cy = 250;
+  return [cx + rx * s + rz * s * 0.35, cy - y * s + rz * s * 0.30];
+}
+function drawAtom(px, py, r, color, edge) {
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath(); ctx.arc(px - r * 0.3, py - r * 0.3, r * 0.35, 0, Math.PI * 2); ctx.fill();
+  if (edge) { ctx.strokeStyle = edge; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.stroke(); }
+}
+function draw() {
+  if (mode !== 'learn') return;
+  const C = CELLS[cell];
+  const rot = +sRot.value;
+  document.getElementById('valRot').textContent = rot + '°';
+  document.getElementById('infoCount').innerHTML = `晶胞原子数<br><b>${C.count}</b>`;
+  document.getElementById('infoCn').innerHTML = `配位数<br><b>${C.cn}</b>`;
+  document.getElementById('legendLabel').textContent = C.legend;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // 8 个顶点
+  const corners = [];
+  for (const x of [0, 1]) for (const y of [0, 1]) for (const z of [0, 1]) {
+    corners.push({ p: project(x - 0.5, y - 0.5, z - 0.5, rot), x, y, z });
+  }
+  // 晶胞棱线
+  ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2;
+  const edges = [];
+  for (let i = 0; i < 8; i++) for (let j = i + 1; j < 8; j++) {
+    const a = corners[i], b = corners[j];
+    const diff = (a.x !== b.x) + (a.y !== b.y) + (a.z !== b.z);
+    if (diff === 1) edges.push([a.p, b.p]);
+  }
+  edges.forEach(([p1, p2]) => {
+    ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.stroke();
+  });
+  // 收集要画的原子（带深度排序）
+  const atoms = [];
+  const mainColor = cell === 'nacl' ? '#34d399' : '#a78bfa';
+  corners.forEach(c => atoms.push({ p: c.p, r: 20, color: mainColor, tag: '顶点×1/8', depth: c.p[1] }));
+  if (cell === 'bcc') {
+    atoms.push({ p: project(0, 0, 0, rot), r: 22, color: '#fbbf24', tag: '体心×1', depth: 999 });
+  }
+  if (cell === 'fcc' || cell === 'nacl') {
+    const faces = [[0.5, 0.5, 0], [0.5, 0.5, 1], [0.5, 0, 0.5], [0.5, 1, 0.5], [0, 0.5, 0.5], [1, 0.5, 0.5]];
+    faces.forEach(f => {
+      const p = project(f[0] - 0.5, f[1] - 0.5, f[2] - 0.5, rot);
+      atoms.push({ p, r: 18, color: cell === 'nacl' ? '#34d399' : '#f472b6', tag: '面心×1/2', depth: p[1] });
+    });
+  }
+  if (cell === 'nacl') {
+    const edgesC = [[0.5, 0, 0], [0.5, 1, 0], [0.5, 0, 1], [0.5, 1, 1], [0, 0.5, 0], [1, 0.5, 0], [0, 0.5, 1], [1, 0.5, 1], [0, 0, 0.5], [1, 0, 0.5], [0, 1, 0.5], [1, 1, 0.5]];
+    edgesC.forEach(e => {
+      const p = project(e[0] - 0.5, e[1] - 0.5, e[2] - 0.5, rot);
+      atoms.push({ p, r: 13, color: '#60a5fa', tag: '棱心×1/4', depth: p[1] });
+    });
+    atoms.push({ p: project(0, 0, 0, rot), r: 13, color: '#60a5fa', tag: '体心×1', depth: 999 });
+  }
+  // 按深度排序（体心最后画在最上层）
+  atoms.sort((a, b) => a.depth - b.depth);
+  atoms.forEach(a => drawAtom(a.p[0], a.p[1], a.r, a.color, 'rgba(255,255,255,0.25)'));
+  // 图例
+  ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(C.name, 40, 44);
+  ctx.font = '13px sans-serif';
+  let ly = 70;
+  const seen = new Set();
+  atoms.forEach(a => {
+    if (seen.has(a.tag + a.color)) return;
+    seen.add(a.tag + a.color);
+    ctx.fillStyle = a.color;
+    ctx.beginPath(); ctx.arc(50, ly - 5, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillText(a.tag + (cell === 'nacl' ? (a.color === '#34d399' ? '（Cl⁻）' : '（Na⁺）') : ''), 66, ly);
+    ly += 24;
+  });
+  ctx.fillStyle = '#64748b'; ctx.font = '12px sans-serif';
+  ctx.fillText('拖动「旋转角度」查看不同视角', 420, 440);
+}
+draw();
+
+/* ============================================================
+ * 计算模式
+ * ============================================================ */
+const CHECKS = {
+  a1: { test: v => Math.abs(v - 2) <= 0.01,
+        ok: '✅ 正确！8 个顶点 ×1/8 + 体心 ×1 = 1 + 1 = 2 个。',
+        no: '❌ 提示：顶点 8×1/8 = 1，再加体心的 1 个。' },
+  a2: { test: v => Math.abs(v - 4) <= 0.01,
+        ok: '✅ 正确！8×1/8 + 6×1/2 = 1 + 3 = 4 个。',
+        no: '❌ 提示：顶点 8×1/8 = 1，面心 6×1/2 = 3。' },
+  a3: { test: v => Math.abs(v - 4) <= 0.01,
+        ok: '✅ 正确！棱心 12×1/4 + 体心 1 = 3 + 1 = 4 个 Na⁺（与 4 个 Cl⁻ 对应 4 个 NaCl）。',
+        no: '❌ 提示：棱上算 1/4：12×1/4 = 3，再加体心 1。' }
+};
+document.querySelectorAll('[data-check]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = btn.dataset.check;
+    const inp = document.getElementById(id);
+    const fb = document.getElementById('fb-' + id);
+    const rule = CHECKS[id];
+    const v = parseFloat(inp.value);
+    const ok = !isNaN(v) && rule.test(v);
+    fb.style.color = ok ? '#10b981' : '#ef4444';
+    fb.textContent = ok ? rule.ok : rule.no;
+  });
+});
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const QUIZ = [
+  { q: '用均摊法计算，面心立方晶胞中的原子数为（　　）',
+    opts: ['1', '2', '4', '6'],
+    ans: 2, ex: '顶点 8×1/8 = 1，面心 6×1/2 = 3，共 4 个。' },
+  { q: '下列晶体中，属于原子晶体的是（　　）',
+    opts: ['干冰', '金刚石', '氯化钠', '铜'],
+    ans: 1, ex: '金刚石由碳原子通过共价键形成空间网状结构；干冰是分子晶体，NaCl 是离子晶体，铜是金属晶体。' },
+  { q: 'NaCl 晶胞中，每个 Na⁺ 周围距离最近且相等的 Cl⁻ 有（　　）',
+    opts: ['4 个', '6 个', '8 个', '12 个'],
+    ans: 1, ex: 'NaCl 型晶体中阴阳离子配位数均为 6（上下前后左右）。' },
+  { q: '一般情况下，三类晶体熔点由高到低的顺序是（　　）',
+    opts: ['分子晶体>离子晶体>原子晶体', '原子晶体>离子晶体>分子晶体', '离子晶体>原子晶体>分子晶体', '原子晶体>分子晶体>离子晶体'],
+    ans: 1, ex: '共价键最强（原子晶体），离子键次之，分子间作用力最弱 → 原子晶体>离子晶体>分子晶体。' },
+  { q: '关于离子晶体，下列说法正确的是（　　）',
+    opts: ['固态时能导电', '熔融状态能导电', '硬度都很小', '都易溶于有机溶剂'],
+    ans: 1, ex: '离子晶体固态时离子不能自由移动，不导电；熔融或溶于水后电离出自由移动的离子才导电。' }
+];
+let qi = 0, qScore = 0, qAnswered = false;
+const quizQ = document.getElementById('quizQ');
+const quizOpts = document.getElementById('quizOpts');
+const quizFb = document.getElementById('quizFb');
+const quizResult = document.getElementById('quizResult');
+const btnStart = document.getElementById('quizStart');
+const btnPrev = document.getElementById('quizPrev');
+const btnNext = document.getElementById('quizNext');
+
+function renderQ() {
+  const q = QUIZ[qi];
+  qAnswered = false;
+  quizQ.textContent = `第${qi + 1}题 / 共${QUIZ.length}题：${q.q}`;
+  quizFb.textContent = '';
+  quizOpts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const d = document.createElement('div');
+    d.className = 'quiz-opt';
+    d.textContent = o;
+    d.addEventListener('click', () => {
+      if (qAnswered) return;
+      qAnswered = true;
+      const ok = i === q.ans;
+      if (ok) qScore++;
+      quizOpts.children[q.ans].classList.add('correct');
+      if (!ok) d.classList.add('wrong');
+      quizFb.textContent = (ok ? '✅ ' : '❌ ') + q.ex;
+    });
+    quizOpts.appendChild(d);
+  });
+  btnPrev.disabled = qi === 0;
+  btnNext.disabled = false;
+  btnNext.textContent = qi === QUIZ.length - 1 ? '查看成绩' : '下一题';
+}
+function finishQuiz() {
+  const pass = qScore >= Math.ceil(QUIZ.length * 0.8);
+  quizQ.textContent = '测验完成！';
+  quizOpts.innerHTML = '';
+  quizFb.textContent = '';
+  quizResult.classList.remove('hidden');
+  quizResult.innerHTML = `得分：<b>${qScore} / ${QUIZ.length}</b>　${pass ? '🎉 通关！' : '继续加油，再试一次！'}`;
+  btnNext.disabled = true;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('crystal-structure');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+btnStart.addEventListener('click', () => {
+  qi = 0; qScore = 0;
+  quizResult.classList.add('hidden');
+  btnStart.textContent = '重新答题';
+  renderQ();
+});
+btnPrev.addEventListener('click', () => { if (qi > 0) { qi--; renderQ(); } });
+btnNext.addEventListener('click', () => {
+  if (qi < QUIZ.length - 1) { qi++; renderQ(); }
+  else finishQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('crystal-structure')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+</body>
+</html>

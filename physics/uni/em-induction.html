@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>电磁感应 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #6366f1;
+    --accent: #f59e0b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: var(--text);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 {
+    font-size: 2rem;
+    background: linear-gradient(90deg, var(--primary), var(--accent), var(--success));
+    -webkit-background-clip: text; color: transparent; margin-bottom: 6px;
+  }
+  header p { color: var(--muted); font-size: 14px; }
+
+  .tabs {
+    display: flex; gap: 8px; justify-content: center;
+    margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .tab {
+    padding: 10px 18px; border-radius: 999px;
+    background: rgba(255,255,255,0.06); cursor: pointer;
+    transition: all .25s; border: 1px solid var(--border);
+    font-size: 14px; user-select: none;
+  }
+  .tab.active {
+    background: var(--primary); border-color: var(--primary);
+    box-shadow: 0 4px 20px rgba(99,102,241,.4);
+  }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .section { display: none; }
+  .section.active { display: block; }
+  .stage {
+    display: grid; grid-template-columns: 1.2fr 1fr;
+    gap: 20px; margin-bottom: 20px;
+  }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 16px; backdrop-filter: blur(10px);
+  }
+  canvas {
+    width: 100%; height: auto; display: block; border-radius: 10px;
+    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px; backdrop-filter: blur(10px);
+  }
+  .panel h3 { font-size: 16px; margin-bottom: 12px; color: var(--accent); }
+  .panel p { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 8px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .btn {
+    padding: 8px 16px; border-radius: 8px; border: none;
+    cursor: pointer; font-size: 13px; transition: all .2s;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: #4f46e5; }
+  .btn-accent { background: var(--accent); color: #000; }
+  .btn-accent:hover { background: #d97706; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #059669; }
+
+  .slider-group { margin-top: 12px; }
+  .slider-group label {
+    display: flex; justify-content: space-between;
+    font-size: 13px; color: var(--muted); margin-bottom: 4px;
+  }
+  .slider-group input[type=range] {
+    width: 100%; accent-color: var(--primary);
+  }
+
+  .formula {
+    background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 10px; padding: 12px; margin: 10px 0;
+    font-size: 15px; text-align: center; letter-spacing: 1px;
+  }
+
+  .info-box {
+    background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 10px; padding: 12px; margin: 10px 0;
+    font-size: 13px; color: var(--accent);
+  }
+
+  /* Quiz */
+  .quiz-area { margin-top: 16px; }
+  .quiz-q { font-size: 15px; margin-bottom: 12px; font-weight: 600; }
+  .quiz-opt {
+    display: block; padding: 12px 16px; margin: 8px 0;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    border-radius: 10px; cursor: pointer; transition: all .2s;
+    font-size: 14px;
+  }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.2); border-color: var(--success); }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.2); border-color: var(--danger); }
+  .quiz-result { margin-top: 12px; font-size: 14px; min-height: 24px; }
+
+  .maxwell-eq {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0;
+  }
+  .eq-card {
+    background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 12px; padding: 14px; cursor: pointer; transition: all .3s;
+  }
+  .eq-card:hover, .eq-card.active {
+    background: rgba(99,102,241,0.2); border-color: var(--primary);
+    box-shadow: 0 0 20px rgba(99,102,241,0.3);
+  }
+  .eq-card h4 { font-size: 13px; color: var(--accent); margin-bottom: 6px; }
+  .eq-card .eq { font-size: 18px; text-align: center; margin: 8px 0; }
+  .eq-card p { font-size: 12px; color: var(--muted); }
+
+  .legend { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚡ 电磁感应</h1>
+    <p>大学物理 · 法拉第定律 · 楞次定律 · 麦克斯韦方程组 <span id="done-mark" style="margin-left:8px;color:#10b981;font-weight:600"></span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-sec="sec1">🧲 电磁感应实验</div>
+    <div class="tab" data-sec="sec2">📐 麦克斯韦方程</div>
+    <div class="tab" data-sec="sec3">🔄 涡流与自感</div>
+    <div class="tab" data-sec="sec4">📝 互动练习</div>
+  </div>
+
+  <!-- Section 1: Faraday Experiment -->
+  <div class="section active" id="sec1">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="c1" width="600" height="420"></canvas>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#6366f1"></div>磁场 B</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>感应电流 I</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>磁通量 Φ</div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>法拉第电磁感应实验</h3>
+        <p>拖动磁铁改变位置，观察线圈中感应电流的变化。感应电动势与磁通量变化率成正比。</p>
+        <div class="formula">ε = −dΦ/dt = −N · d(BA·cosθ)/dt</div>
+        <div class="slider-group">
+          <label><span>磁铁速度</span><span id="speedVal">5</span></label>
+          <input type="range" id="speed" min="1" max="15" value="5">
+        </div>
+        <div class="slider-group">
+          <label><span>线圈匝数 N</span><span id="turnsVal">5</span></label>
+          <input type="range" id="turns" min="1" max="15" value="5">
+        </div>
+        <div class="controls">
+          <button class="btn btn-primary" id="autoMove">▶ 自动运动</button>
+          <button class="btn btn-accent" id="resetMagnet">↺ 重置</button>
+        </div>
+        <div class="info-box" id="emfInfo">EMF: 0.00 V | Φ: 0.00 Wb</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Maxwell's Equations -->
+  <div class="section" id="sec2">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="c2" width="600" height="420"></canvas>
+        <div class="info-box" id="eqDesc">点击左侧方程查看可视化</div>
+      </div>
+      <div class="panel">
+        <h3>麦克斯韦方程组</h3>
+        <p>四个方程统一了电与磁，预言了电磁波的存在。</p>
+        <div class="maxwell-eq">
+          <div class="eq-card" data-eq="gauss-e">
+            <h4>① 高斯定律（电）</h4>
+            <div class="eq">∇·E = ρ/ε₀</div>
+            <p>电荷产生电场</p>
+          </div>
+          <div class="eq-card" data-eq="gauss-b">
+            <h4>② 高斯定律（磁）</h4>
+            <div class="eq">∇·B = 0</div>
+            <p>无磁单极</p>
+          </div>
+          <div class="eq-card" data-eq="faraday">
+            <h4>③ 法拉第定律</h4>
+            <div class="eq">∇×E = −∂B/∂t</div>
+            <p>变化磁场产生电场</p>
+          </div>
+          <div class="eq-card" data-eq="ampere">
+            <h4>④ 安培-麦克斯韦</h4>
+            <div class="eq">∇×B = μ₀J + μ₀ε₀∂E/∂t</div>
+            <p>电流和变化电场产生磁场</p>
+          </div>
+        </div>
+        <div class="controls">
+          <button class="btn btn-primary" id="animateEq">▶ 动画演示</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Eddy Current & Self-induction -->
+  <div class="section" id="sec3">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="c3" width="600" height="420"></canvas>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#6366f1"></div>磁场</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>涡流</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>自感 EMF</div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>涡流与自感现象</h3>
+        <p>变化的磁场在导体中产生涡旋电流（涡流），自感是线圈对自身电流变化的"抵抗"。</p>
+        <div class="formula">ε_L = −L · dI/dt</div>
+        <div class="slider-group">
+          <label><span>频率 f (Hz)</span><span id="freqVal">2</span></label>
+          <input type="range" id="freq" min="0.5" max="8" value="2" step="0.5">
+        </div>
+        <div class="slider-group">
+          <label><span>自感系数 L (H)</span><span id="indVal">2</span></label>
+          <input type="range" id="ind" min="0.5" max="5" value="2" step="0.5">
+        </div>
+        <div class="controls">
+          <button class="btn btn-primary" id="toggleMode">切换：涡流 / 自感</button>
+        </div>
+        <div class="info-box" id="eddyInfo">模式：涡流 | 频率: 2 Hz</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Quiz -->
+  <div class="section" id="sec4">
+    <div class="panel" style="max-width:700px;margin:0 auto;">
+      <h3>📝 电磁感应练习</h3>
+      <div class="quiz-area" id="quizArea"></div>
+      <div class="controls" style="margin-top:16px;">
+        <button class="btn btn-success" id="nextQuiz">下一题 →</button>
+      </div>
+      <div class="quiz-result" id="quizScore"></div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.sec).classList.add('active');
+  });
+});
+
+// ========== Section 1: Faraday Experiment ==========
+const c1 = document.getElementById('c1'), ctx1 = c1.getContext('2d');
+let magnetX = 100, magnetY = 210, magnetVX = 0, autoMode = false;
+let emf = 0, prevFlux = 0, time1 = 0;
+const coilX = 350, coilW = 60, coilH = 160;
+
+const speedSlider = document.getElementById('speed');
+const turnsSlider = document.getElementById('turns');
+const speedVal = document.getElementById('speedVal');
+const turnsVal = document.getElementById('turnsVal');
+const emfInfo = document.getElementById('emfInfo');
+
+speedSlider.oninput = () => speedVal.textContent = speedSlider.value;
+turnsSlider.oninput = () => turnsVal.textContent = turnsSlider.value;
+
+document.getElementById('autoMove').onclick = () => { autoMode = !autoMode; };
+document.getElementById('resetMagnet').onclick = () => {
+  magnetX = 100; magnetVX = 0; autoMode = false;
+};
+
+// Drag magnet
+let dragging = false;
+c1.addEventListener('mousedown', e => {
+  const r = c1.getBoundingClientRect();
+  const mx = (e.clientX - r.left) * 600 / r.width;
+  const my = (e.clientY - r.top) * 420 / r.height;
+  if (Math.abs(mx - magnetX) < 40 && Math.abs(my - magnetY) < 25) dragging = true;
+});
+c1.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const r = c1.getBoundingClientRect();
+  magnetX = (e.clientX - r.left) * 600 / r.width;
+  magnetY = (e.clientY - r.top) * 420 / r.height;
+});
+c1.addEventListener('mouseup', () => dragging = false);
+c1.addEventListener('mouseleave', () => dragging = false);
+
+// Touch support
+c1.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const r = c1.getBoundingClientRect();
+  const t = e.touches[0];
+  const mx = (t.clientX - r.left) * 600 / r.width;
+  const my = (t.clientY - r.top) * 420 / r.height;
+  if (Math.abs(mx - magnetX) < 50 && Math.abs(my - magnetY) < 35) dragging = true;
+}, {passive: false});
+c1.addEventListener('touchmove', e => {
+  if (!dragging) return;
+  e.preventDefault();
+  const r = c1.getBoundingClientRect();
+  const t = e.touches[0];
+  magnetX = (t.clientX - r.left) * 600 / r.width;
+  magnetY = (t.clientY - r.top) * 420 / r.height;
+}, {passive: false});
+c1.addEventListener('touchend', () => dragging = false);
+
+function calcFlux(mx) {
+  const N = parseInt(turnsSlider.value);
+  const dist = Math.abs(mx - coilX);
+  return N * 50 / (dist * dist + 400);
+}
+
+function drawSec1(dt) {
+  ctx1.clearRect(0, 0, 600, 420);
+
+  // Auto mode
+  if (autoMode && !dragging) {
+    const spd = parseInt(speedSlider.value);
+    magnetX += spd * Math.sin(time1 * 2) * dt * 60;
+    magnetX = Math.max(30, Math.min(570, magnetX));
+  }
+
+  // Flux & EMF
+  const flux = calcFlux(magnetX);
+  emf = -(flux - prevFlux) / Math.max(dt, 0.001);
+  prevFlux = flux;
+  time1 += dt;
+
+  // Background field lines
+  ctx1.strokeStyle = 'rgba(99,102,241,0.15)';
+  ctx1.lineWidth = 1;
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2;
+    ctx1.beginPath();
+    ctx1.moveTo(magnetX, magnetY);
+    const ex = magnetX + Math.cos(angle) * 120;
+    const ey = magnetY + Math.sin(angle) * 80;
+    ctx1.quadraticCurveTo(
+      magnetX + Math.cos(angle) * 60 + Math.sin(angle) * 20,
+      magnetY + Math.sin(angle) * 40,
+      ex, ey
+    );
+    ctx1.stroke();
+  }
+
+  // Magnet
+  const grad = ctx1.createLinearGradient(magnetX - 35, 0, magnetX + 35, 0);
+  grad.addColorStop(0, '#ef4444');
+  grad.addColorStop(0.5, '#666');
+  grad.addColorStop(1, '#3b82f6');
+  ctx1.fillStyle = grad;
+  ctx1.beginPath();
+  ctx1.roundRect(magnetX - 35, magnetY - 18, 70, 36, 6);
+  ctx1.fill();
+  ctx1.fillStyle = '#fff';
+  ctx1.font = 'bold 16px sans-serif';
+  ctx1.textAlign = 'center';
+  ctx1.fillText('N', magnetX - 18, magnetY + 6);
+  ctx1.fillText('S', magnetX + 18, magnetY + 6);
+
+  // Coil
+  const N = parseInt(turnsSlider.value);
+  ctx1.strokeStyle = '#f59e0b';
+  ctx1.lineWidth = 2;
+  for (let i = 0; i < N; i++) {
+    const offset = (i - N/2) * (coilW / N);
+    ctx1.beginPath();
+    ctx1.ellipse(coilX + offset, 210, 8, coilH/2, 0, 0, Math.PI * 2);
+    ctx1.stroke();
+  }
+
+  // Current arrow (proportional to EMF)
+  const currentStrength = Math.min(Math.abs(emf) * 0.5, 1);
+  if (currentStrength > 0.05) {
+    const dir = emf > 0 ? 1 : -1;
+    ctx1.strokeStyle = `rgba(245,158,11,${currentStrength})`;
+    ctx1.lineWidth = 3;
+    ctx1.setLineDash([8, 4]);
+    ctx1.beginPath();
+    const arrowY = 210 + dir * 90;
+    ctx1.moveTo(coilX - 40, arrowY);
+    ctx1.lineTo(coilX + 40, arrowY);
+    ctx1.stroke();
+    ctx1.setLineDash([]);
+    // Arrowhead
+    ctx1.fillStyle = `rgba(245,158,11,${currentStrength})`;
+    ctx1.beginPath();
+    ctx1.moveTo(coilX + dir * 40, arrowY - 8);
+    ctx1.lineTo(coilX + dir * 55, arrowY);
+    ctx1.lineTo(coilX + dir * 40, arrowY + 8);
+    ctx1.fill();
+  }
+
+  // Flux bar
+  const barH = Math.min(flux * 200, 180);
+  ctx1.fillStyle = 'rgba(16,185,129,0.3)';
+  ctx1.fillRect(540, 400 - barH, 40, barH);
+  ctx1.strokeStyle = '#10b981';
+  ctx1.lineWidth = 1;
+  ctx1.strokeRect(540, 400 - barH, 40, barH);
+  ctx1.fillStyle = '#10b981';
+  ctx1.font = '11px sans-serif';
+  ctx1.textAlign = 'center';
+  ctx1.fillText('Φ', 560, 415);
+
+  // Info
+  emfInfo.textContent = `EMF: ${emf.toFixed(2)} V | Φ: ${flux.toFixed(3)} Wb | N: ${N}`;
+}
+
+// ========== Section 2: Maxwell Equations ==========
+const c2 = document.getElementById('c2'), ctx2 = c2.getContext('2d');
+let activeEq = 'faraday', eqAnimT = 0, animatingEq = false;
+const eqDesc = document.getElementById('eqDesc');
+
+const eqDescs = {
+  'gauss-e': '高斯定律：正电荷向外发出电场线，电场通量与包围电荷成正比。闭合曲面上 E·dA = Q/ε₀',
+  'gauss-b': '高斯定律（磁）：磁力线总是闭合的，不存在磁单极。任何闭合曲面的磁通量为零。',
+  'faraday': '法拉第定律：变化的磁场产生涡旋电场。这是电磁感应的本质——磁通量变化率决定感应电动势。',
+  'ampere': '安培-麦克斯韦定律：电流和变化的电场都能产生磁场。位移电流项 ε₀∂E/∂t 是麦克斯韦的关键贡献。'
+};
+
+document.querySelectorAll('.eq-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.eq-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    activeEq = card.dataset.eq;
+    eqAnimT = 0;
+    eqDesc.textContent = eqDescs[activeEq];
+  });
+});
+document.getElementById('animateEq').onclick = () => { animatingEq = !animatingEq; };
+
+function drawSec2(dt) {
+  ctx2.clearRect(0, 0, 600, 420);
+  if (animatingEq) eqAnimT += dt;
+
+  const cx = 300, cy = 210;
+
+  if (activeEq === 'gauss-e') {
+    // Point charge with field lines radiating out
+    ctx2.fillStyle = '#ef4444';
+    ctx2.beginPath();
+    ctx2.arc(cx, cy, 12, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.fillStyle = '#fff';
+    ctx2.font = 'bold 14px sans-serif';
+    ctx2.textAlign = 'center';
+    ctx2.fillText('+q', cx, cy + 5);
+
+    // Field lines
+    const nLines = 16;
+    for (let i = 0; i < nLines; i++) {
+      const angle = (i / nLines) * Math.PI * 2;
+      const len = 80 + 40 * Math.sin(eqAnimT * 3 + i);
+      ctx2.strokeStyle = `rgba(99,102,241,${0.4 + 0.3 * Math.sin(eqAnimT * 2 + i)})`;
+      ctx2.lineWidth = 2;
+      ctx2.beginPath();
+      ctx2.moveTo(cx + Math.cos(angle) * 18, cy + Math.sin(angle) * 18);
+      ctx2.lineTo(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len);
+      ctx2.stroke();
+      // Arrow
+      const ax = cx + Math.cos(angle) * len;
+      const ay = cy + Math.sin(angle) * len;
+      ctx2.fillStyle = ctx2.strokeStyle;
+      ctx2.beginPath();
+      ctx2.moveTo(ax, ay);
+      ctx2.lineTo(ax - Math.cos(angle - 0.3) * 10, ay - Math.sin(angle - 0.3) * 10);
+      ctx2.lineTo(ax - Math.cos(angle + 0.3) * 10, ay - Math.sin(angle + 0.3) * 10);
+      ctx2.fill();
+    }
+
+    // Gaussian surface
+    ctx2.strokeStyle = 'rgba(16,185,129,0.5)';
+    ctx2.lineWidth = 2;
+    ctx2.setLineDash([6, 4]);
+    ctx2.beginPath();
+    ctx2.arc(cx, cy, 100 + 10 * Math.sin(eqAnimT * 2), 0, Math.PI * 2);
+    ctx2.stroke();
+    ctx2.setLineDash([]);
+    ctx2.fillStyle = '#10b981';
+    ctx2.font = '13px sans-serif';
+    ctx2.fillText('高斯面', cx + 110, cy - 10);
+
+  } else if (activeEq === 'gauss-b') {
+    // Magnetic dipole - field lines form closed loops
+    // N pole
+    ctx2.fillStyle = '#ef4444';
+    ctx2.beginPath();
+    ctx2.arc(cx - 40, cy, 14, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.fillStyle = '#fff';
+    ctx2.font = 'bold 14px sans-serif';
+    ctx2.fillText('N', cx - 40, cy + 5);
+    // S pole
+    ctx2.fillStyle = '#3b82f6';
+    ctx2.beginPath();
+    ctx2.arc(cx + 40, cy, 14, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.fillStyle = '#fff';
+    ctx2.fillText('S', cx + 40, cy + 5);
+
+    // Closed field lines
+    for (let i = 0; i < 8; i++) {
+      const r = 40 + i * 18;
+      const phase = eqAnimT * 1.5 + i * 0.3;
+      ctx2.strokeStyle = `rgba(99,102,241,${0.3 + 0.15 * Math.sin(phase)})`;
+      ctx2.lineWidth = 1.5;
+      ctx2.beginPath();
+      ctx2.ellipse(cx, cy, r, r * 0.6, 0, 0, Math.PI * 2);
+      ctx2.stroke();
+      // Moving dot on field line
+      const dotAngle = phase * 2;
+      const dx = cx + Math.cos(dotAngle) * r;
+      const dy = cy + Math.sin(dotAngle) * r * 0.6;
+      ctx2.fillStyle = '#f59e0b';
+      ctx2.beginPath();
+      ctx2.arc(dx, dy, 3, 0, Math.PI * 2);
+      ctx2.fill();
+    }
+
+    ctx2.fillStyle = '#10b981';
+    ctx2.font = '13px sans-serif';
+    ctx2.textAlign = 'center';
+    ctx2.fillText('磁力线闭合 → ∇·B = 0', cx, cy + 180);
+
+  } else if (activeEq === 'faraday') {
+    // Changing B field → circulating E field
+    const bStrength = Math.sin(eqAnimT * 3);
+
+    // B field (into/out of page)
+    for (let x = cx - 80; x <= cx + 80; x += 40) {
+      for (let y = cy - 60; y <= cy + 60; y += 40) {
+        if (bStrength > 0) {
+          // Into page (cross)
+          ctx2.strokeStyle = `rgba(99,102,241,${Math.abs(bStrength) * 0.6})`;
+          ctx2.lineWidth = 2;
+          ctx2.beginPath();
+          ctx2.moveTo(x - 6, y - 6); ctx2.lineTo(x + 6, y + 6);
+          ctx2.moveTo(x + 6, y - 6); ctx2.lineTo(x - 6, y + 6);
+          ctx2.stroke();
+        } else {
+          // Out of page (dot)
+          ctx2.fillStyle = `rgba(99,102,241,${Math.abs(bStrength) * 0.6})`;
+          ctx2.beginPath();
+          ctx2.arc(x, y, 4, 0, Math.PI * 2);
+          ctx2.fill();
+        }
+      }
+    }
+
+    // Circulating E field
+    const eRadius = 120;
+    ctx2.strokeStyle = `rgba(245,158,11,${0.5 + 0.3 * Math.abs(bStrength)})`;
+    ctx2.lineWidth = 2.5;
+    ctx2.setLineDash([8, 4]);
+    ctx2.beginPath();
+    ctx2.arc(cx, cy, eRadius, 0, Math.PI * 2);
+    ctx2.stroke();
+    ctx2.setLineDash([]);
+
+    // E field arrows
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 + eqAnimT * 2;
+      const dir = bStrength > 0 ? -1 : 1;
+      const ax = cx + Math.cos(angle) * eRadius;
+      const ay = cy + Math.sin(angle) * eRadius;
+      const tangent = angle + dir * Math.PI / 2;
+      ctx2.fillStyle = '#f59e0b';
+      ctx2.beginPath();
+      ctx2.moveTo(ax + Math.cos(tangent) * 10, ay + Math.sin(tangent) * 10);
+      ctx2.lineTo(ax + Math.cos(tangent + 2.5) * 8, ay + Math.sin(tangent + 2.5) * 8);
+      ctx2.lineTo(ax + Math.cos(tangent - 2.5) * 8, ay + Math.sin(tangent - 2.5) * 8);
+      ctx2.fill();
+    }
+
+    ctx2.fillStyle = '#f59e0b';
+    ctx2.font = '13px sans-serif';
+    ctx2.textAlign = 'center';
+    ctx2.fillText('E (涡旋电场)', cx + eRadius + 10, cy - 20);
+    ctx2.fillStyle = '#6366f1';
+    ctx2.fillText(`B (${bStrength > 0 ? '⊗ 向里' : '⊙ 向外'})`, cx, cy + 100);
+
+  } else if (activeEq === 'ampere') {
+    // Wire with current + displacement current
+    const currentPhase = Math.sin(eqAnimT * 2);
+
+    // Wire
+    ctx2.strokeStyle = '#94a3b8';
+    ctx2.lineWidth = 6;
+    ctx2.beginPath();
+    ctx2.moveTo(cx, 40);
+    ctx2.lineTo(cx, 380);
+    ctx2.stroke();
+
+    // Current arrow
+    ctx2.fillStyle = '#f59e0b';
+    ctx2.beginPath();
+    ctx2.moveTo(cx, 60);
+    ctx2.lineTo(cx - 10, 80);
+    ctx2.lineTo(cx + 10, 80);
+    ctx2.fill();
+    ctx2.fillStyle = '#f59e0b';
+    ctx2.font = '13px sans-serif';
+    ctx2.textAlign = 'left';
+    ctx2.fillText('I (传导电流)', cx + 15, 70);
+
+    // B field circles around wire
+    for (let r = 30; r <= 150; r += 30) {
+      const alpha = 0.4 - r * 0.002;
+      ctx2.strokeStyle = `rgba(99,102,241,${alpha})`;
+      ctx2.lineWidth = 1.5;
+      ctx2.beginPath();
+      ctx2.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx2.stroke();
+
+      // Moving dot
+      const dotA = eqAnimT * 3 + r * 0.05;
+      ctx2.fillStyle = `rgba(99,102,241,${alpha + 0.2})`;
+      ctx2.beginPath();
+      ctx2.arc(cx + Math.cos(dotA) * r, cy + Math.sin(dotA) * r, 3, 0, Math.PI * 2);
+      ctx2.fill();
+    }
+
+    // Displacement current (changing E)
+    if (Math.abs(currentPhase) > 0.1) {
+      ctx2.fillStyle = `rgba(239,68,68,${Math.abs(currentPhase) * 0.5})`;
+      ctx2.font = '12px sans-serif';
+      ctx2.textAlign = 'center';
+      ctx2.fillText(`ε₀∂E/∂t ${currentPhase > 0 ? '↑' : '↓'}`, cx - 80, cy);
+    }
+  }
+}
+
+// ========== Section 3: Eddy Current & Self-induction ==========
+const c3 = document.getElementById('c3'), ctx3 = c3.getContext('2d');
+let mode3 = 'eddy', time3 = 0;
+const freqSlider = document.getElementById('freq');
+const indSlider = document.getElementById('ind');
+const freqVal = document.getElementById('freqVal');
+const indVal = document.getElementById('indVal');
+const eddyInfo = document.getElementById('eddyInfo');
+
+freqSlider.oninput = () => freqVal.textContent = freqSlider.value;
+indSlider.oninput = () => indVal.textContent = indSlider.value;
+
+document.getElementById('toggleMode').onclick = () => {
+  mode3 = mode3 === 'eddy' ? 'self' : 'eddy';
+  eddyInfo.textContent = mode3 === 'eddy'
+    ? `模式：涡流 | 频率: ${freqSlider.value} Hz`
+    : `模式：自感 | L: ${indSlider.value} H`;
+};
+
+function drawSec3(dt) {
+  ctx3.clearRect(0, 0, 600, 420);
+  time3 += dt;
+  const f = parseFloat(freqSlider.value);
+  const L = parseFloat(indSlider.value);
+  const cx = 300, cy = 210;
+
+  if (mode3 === 'eddy') {
+    // Metal plate with eddy currents
+    // External B field (varying)
+    const bVal = Math.sin(time3 * f * Math.PI * 2);
+
+    // Metal plate
+    ctx3.fillStyle = 'rgba(148,163,184,0.3)';
+    ctx3.beginPath();
+    ctx3.roundRect(cx - 120, cy - 100, 240, 200, 12);
+    ctx3.fill();
+    ctx3.strokeStyle = 'rgba(148,163,184,0.5)';
+    ctx3.lineWidth = 2;
+    ctx3.stroke();
+
+    // Eddy current loops
+    const nLoops = 5;
+    for (let i = 0; i < nLoops; i++) {
+      const lx = cx - 80 + i * 40;
+      const ly = cy;
+      const r = 15 + 5 * Math.abs(bVal);
+      const alpha = 0.3 + 0.5 * Math.abs(bVal);
+
+      ctx3.strokeStyle = `rgba(239,68,68,${alpha})`;
+      ctx3.lineWidth = 2;
+      ctx3.beginPath();
+      if (bVal > 0) {
+        ctx3.arc(lx, ly, r, 0, Math.PI * 2);
+      } else {
+        ctx3.arc(lx, ly, r, Math.PI, Math.PI * 3);
+      }
+      ctx3.stroke();
+
+      // Arrow on loop
+      const arrowAngle = time3 * f * 4 + i;
+      const dir = bVal > 0 ? 1 : -1;
+      const ax = lx + Math.cos(arrowAngle) * r;
+      const ay = ly + Math.sin(arrowAngle) * r * dir;
+      ctx3.fillStyle = `rgba(239,68,68,${alpha})`;
+      ctx3.beginPath();
+      ctx3.arc(ax, ay, 3, 0, Math.PI * 2);
+      ctx3.fill();
+    }
+
+    // B field indicators
+    for (let x = cx - 100; x <= cx + 100; x += 50) {
+      for (let y = cy - 70; y <= cy + 70; y += 50) {
+        if (bVal > 0.1) {
+          ctx3.strokeStyle = `rgba(99,102,241,${bVal * 0.5})`;
+          ctx3.lineWidth = 1.5;
+          ctx3.beginPath();
+          ctx3.moveTo(x - 4, y - 4); ctx3.lineTo(x + 4, y + 4);
+          ctx3.moveTo(x + 4, y - 4); ctx3.lineTo(x - 4, y + 4);
+          ctx3.stroke();
+        } else if (bVal < -0.1) {
+          ctx3.fillStyle = `rgba(99,102,241,${-bVal * 0.5})`;
+          ctx3.beginPath();
+          ctx3.arc(x, y, 3, 0, Math.PI * 2);
+          ctx3.fill();
+        }
+      }
+    }
+
+    // Labels
+    ctx3.fillStyle = '#ef4444';
+    ctx3.font = '13px sans-serif';
+    ctx3.textAlign = 'center';
+    ctx3.fillText('涡流 (Eddy Current)', cx, cy + 130);
+    ctx3.fillStyle = '#6366f1';
+    ctx3.fillText(`B = ${bVal.toFixed(2)} T (${bVal > 0 ? '⊗' : '⊙'})`, cx, cy - 120);
+
+    eddyInfo.textContent = `模式：涡流 | B: ${bVal.toFixed(2)} T | f: ${f} Hz`;
+
+  } else {
+    // Self-induction: LR circuit
+    const tau = L / 2; // L/R with R=2
+    // Current ramp
+    const switchT = (time3 * f) % 3;
+    let I;
+    if (switchT < 1.5) {
+      I = 1 - Math.exp(-switchT / tau); // charging
+    } else {
+      const decayT = switchT - 1.5;
+      I = Math.exp(-decayT / tau); // discharging
+    }
+
+    // Circuit diagram
+    ctx3.strokeStyle = '#94a3b8';
+    ctx3.lineWidth = 3;
+    // Battery
+    ctx3.beginPath();
+    ctx3.moveTo(100, 300); ctx3.lineTo(100, 120);
+    ctx3.stroke();
+    ctx3.beginPath();
+    ctx3.moveTo(100, 120); ctx3.lineTo(250, 120);
+    ctx3.stroke();
+
+    // Inductor coil
+    ctx3.strokeStyle = '#6366f1';
+    ctx3.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+      ctx3.beginPath();
+      ctx3.arc(280 + i * 20, 120, 10, Math.PI, 0);
+      ctx3.stroke();
+    }
+    ctx3.fillStyle = '#6366f1';
+    ctx3.font = '13px sans-serif';
+    ctx3.textAlign = 'center';
+    ctx3.fillText(`L = ${L} H`, 340, 100);
+
+    // Resistor
+    ctx3.strokeStyle = '#f59e0b';
+    ctx3.lineWidth = 2;
+    ctx3.beginPath();
+    ctx3.moveTo(420, 120); ctx3.lineTo(500, 120);
+    ctx3.stroke();
+    // Zigzag
+    ctx3.beginPath();
+    ctx3.moveTo(430, 120);
+    for (let i = 0; i < 5; i++) {
+      ctx3.lineTo(436 + i * 12, 110 + (i % 2 === 0 ? 0 : 20));
+    }
+    ctx3.lineTo(490, 120);
+    ctx3.stroke();
+
+    // Return wire
+    ctx3.strokeStyle = '#94a3b8';
+    ctx3.lineWidth = 3;
+    ctx3.beginPath();
+    ctx3.moveTo(500, 120); ctx3.lineTo(500, 300);
+    ctx3.lineTo(100, 300);
+    ctx3.stroke();
+
+    // Battery symbol
+    ctx3.lineWidth = 3;
+    ctx3.beginPath();
+    ctx3.moveTo(90, 280); ctx3.lineTo(110, 280);
+    ctx3.stroke();
+    ctx3.lineWidth = 2;
+    ctx3.beginPath();
+    ctx3.moveTo(85, 295); ctx3.lineTo(115, 295);
+    ctx3.stroke();
+    ctx3.fillStyle = '#94a3b8';
+    ctx3.font = '12px sans-serif';
+    ctx3.textAlign = 'center';
+    ctx3.fillText('ε', 75, 290);
+
+    // Current flow animation
+    const currentAlpha = 0.3 + I * 0.7;
+    ctx3.strokeStyle = `rgba(245,158,11,${currentAlpha})`;
+    ctx3.lineWidth = 4;
+    ctx3.setLineDash([6, 8]);
+    ctx3.lineDashOffset = -time3 * 60 * I;
+    ctx3.beginPath();
+    ctx3.moveTo(100, 300); ctx3.lineTo(100, 120);
+    ctx3.lineTo(250, 120);
+    ctx3.stroke();
+    ctx3.beginPath();
+    ctx3.moveTo(420, 120);
+    ctx3.lineTo(500, 120); ctx3.lineTo(500, 300);
+    ctx3.lineTo(100, 300);
+    ctx3.stroke();
+    ctx3.setLineDash([]);
+
+    // I-t graph
+    ctx3.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx3.lineWidth = 1;
+    ctx3.strokeRect(120, 320, 360, 80);
+    ctx3.fillStyle = '#94a3b8';
+    ctx3.font = '11px sans-serif';
+    ctx3.textAlign = 'left';
+    ctx3.fillText('I(t)', 125, 335);
+
+    // Draw I curve
+    ctx3.strokeStyle = '#f59e0b';
+    ctx3.lineWidth = 2;
+    ctx3.beginPath();
+    for (let px = 0; px < 340; px++) {
+      const t = (px / 340) * 3;
+      let val;
+      const phase = (time3 * f * 2) % 3;
+      const localT = ((t + time3 * f * 2) % 3);
+      if (localT < 1.5) {
+        val = 1 - Math.exp(-localT / tau);
+      } else {
+        val = Math.exp(-(localT - 1.5) / tau);
+      }
+      const gy = 395 - val * 65;
+      if (px === 0) ctx3.moveTo(130 + px, gy);
+      else ctx3.lineTo(130 + px, gy);
+    }
+    ctx3.stroke();
+
+    // EMF indicator
+    const emfL = -L * I * (switchT < 1.5 ? 1/tau : -1/tau) * 0.5;
+    ctx3.fillStyle = '#f59e0b';
+    ctx3.font = '14px sans-serif';
+    ctx3.textAlign = 'center';
+    ctx3.fillText(`ε_L = ${emfL.toFixed(2)} V`, 300, 355);
+    ctx3.fillText(`I = ${I.toFixed(3)} A`, 300, 375);
+
+    eddyInfo.textContent = `模式：自感 | L: ${L} H | τ: ${tau.toFixed(1)} s | I: ${I.toFixed(3)} A`;
+  }
+}
+
+// ========== Section 4: Quiz ==========
+const quizzes = [
+  {
+    q: '一根导体棒在均匀磁场中匀速运动，以下哪种情况不会产生感应电动势？',
+    opts: ['导体棒垂直于磁场方向运动', '导体棒平行于磁场方向运动', '导体棒与磁场成45°角运动', '磁场强度随时间变化'],
+    ans: 1
+  },
+  {
+    q: '根据楞次定律，感应电流的方向总是：',
+    opts: ['与引起它的磁通量变化相同', '阻碍引起它的磁通量变化', '垂直于磁场方向', '沿磁场方向'],
+    ans: 1
+  },
+  {
+    q: '一个线圈的自感系数为 2H，电流在 0.5s 内从 3A 均匀降到 0A，自感电动势为：',
+    opts: ['3V', '6V', '12V', '1.5V'],
+    ans: 2
+  },
+  {
+    q: '麦克斯韦方程组中，哪个方程说明了"不存在磁单极"？',
+    opts: ['高斯定律（电）', '高斯定律（磁）', '法拉第定律', '安培-麦克斯韦定律'],
+    ans: 1
+  },
+  {
+    q: '一块铜板放在变化的磁场中，涡流产生的效果是：',
+    opts: ['加速磁场变化', '产生热量并阻碍磁场变化', '使磁场变为零', '产生永久磁场'],
+    ans: 1
+  },
+  {
+    q: '法拉第电磁感应定律的数学表达式 ε = -dΦ/dt 中，负号代表：',
+    opts: ['磁通量是负的', '感应电动势总是负的', '感应电动势阻碍磁通量变化（楞次定律）', '数学惯例，无物理意义'],
+    ans: 2
+  },
+  {
+    q: '在麦克斯韦方程中，位移电流密度 ε₀∂E/∂t 的物理意义是：',
+    opts: ['导体中的自由电流', '变化的电场等效为电流，产生磁场', '电荷的运动', '磁场的变化率'],
+    ans: 1
+  },
+  {
+    q: '一个闭合线圈在均匀磁场中旋转，产生的感应电动势是：',
+    opts: ['恒定的直流', '正弦交流', '锯齿波', '方波'],
+    ans: 1
+  }
+];
+
+let quizIdx = 0, quizCorrect = 0, quizAnswered = false, quizDone = false;
+const quizArea = document.getElementById('quizArea');
+const quizScore = document.getElementById('quizScore');
+
+function maybeMarkDone() {
+  if (quizDone) return;
+  // 完成条件：至少答过所有题且答对 ≥7/9
+  if (quizIdx + 1 >= quizzes.length && quizCorrect >= 7) {
+    quizDone = true;
+    if (typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('em-induction');
+      const dm = document.getElementById('done-mark');
+      if (dm) dm.textContent = '✓ 已完成';
+      quizScore.innerHTML += `<div style="margin-top:8px;color:var(--success);font-weight:600">🎉 太棒了！「电磁感应」知识地图已点亮！</div>`;
+    }
+  }
+}
+
+function renderQuiz() {
+  if (quizIdx >= quizzes.length) quizIdx = 0;
+  const q = quizzes[quizIdx];
+  quizAnswered = false;
+  quizArea.innerHTML = `
+    <div class="quiz-q">${quizIdx + 1}. ${q.q}</div>
+    ${q.opts.map((o, i) => `<div class="quiz-opt" data-i="${i}">${String.fromCharCode(65+i)}. ${o}</div>`).join('')}
+  `;
+  quizArea.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const chosen = parseInt(opt.dataset.i);
+      if (chosen === q.ans) {
+        opt.classList.add('correct');
+        quizCorrect++;
+        quizScore.innerHTML = `<span style="color:var(--success)">✅ 正确！</span> 得分: ${quizCorrect}/${quizIdx + 1}`;
+        maybeMarkDone();
+      } else {
+        opt.classList.add('wrong');
+        quizArea.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        quizScore.innerHTML = `<span style="color:var(--danger)">❌ 错误，正确答案已标出。</span> 得分: ${quizCorrect}/${quizIdx + 1}`;
+        maybeMarkDone();
+      }
+    });
+  });
+}
+document.getElementById('nextQuiz').onclick = () => { quizIdx++; renderQuiz(); };
+renderQuiz();
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('em-induction')) {
+  quizDone = true;
+  const dm = document.getElementById('done-mark');
+  if (dm) dm.textContent = '✓ 已完成';
+}
+
+// ========== Main Loop ==========
+let lastT = 0;
+function loop(ts) {
+  const dt = Math.min((ts - lastT) / 1000, 0.05);
+  lastT = ts;
+
+  const activeSec = document.querySelector('.section.active');
+  if (activeSec.id === 'sec1') drawSec1(dt);
+  else if (activeSec.id === 'sec2') drawSec2(dt);
+  else if (activeSec.id === 'sec3') drawSec3(dt);
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学物理"></script>
+</body>
+</html>

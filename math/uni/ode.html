@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>常微分方程 · 概念、求解与应用互动可视化</title>
+<link rel="stylesheet" href="assets/common.css" />
+<script src="assets/common.js"></script>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --curve: #3b82f6;
+    --field: #10b981;
+    --solution: #f59e0b;
+    --phase: #ec4899;
+    --dark: #1e293b;
+    --light: #f1f5f9;
+  }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--field), var(--solution), var(--phase)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; }
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 20px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 10px; font-size: 1.1rem; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.2rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 13px; color: #e2e8f0; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .ode-select { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .ode-btn { padding: 6px 12px; border-radius: 8px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 13px; color: #93c5fd; }
+  .ode-btn.active { background: var(--curve); border-color: var(--curve); color: white; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-curve::before { background: var(--curve); }
+  .legend .l-field::before { background: var(--field); }
+  .legend .l-sol::before { background: var(--solution); }
+  .legend .l-phase::before { background: var(--phase); }
+  .prop-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.6; border-left: 3px solid var(--primary); }
+  .prop-card .prop-title { font-weight: 600; color: #c4b5fd; margin-bottom: 4px; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📐 常微分方程 Interactive</h1>
+    <p>方向场 · 数值求解 · 相平面 · 应用模型</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="concept">📖 微分方程概念</div>
+    <div class="tab" data-mode="field">🎯 方向场与解</div>
+    <div class="tab" data-mode="numeric">🔢 数值方法</div>
+    <div class="tab" data-mode="phase">🌀 相平面分析</div>
+    <div class="tab" data-mode="application">🌍 应用模型</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="720" height="600"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="panel">
+      <h3 id="panelTitle">📖 微分方程基本概念</h3>
+      <div id="panelContent"></div>
+    </div>
+  </div>
+</div>
+
+<footer>大学数学 · 常微分方程互动可视化 · 知识可视化项目</footer>
+
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+let currentMode = 'concept';
+let animFrame = null;
+
+// ODE presets
+const odePresets = {
+  exponential: { name: '指数增长', eq: "dy/dt = ky", f: (t, y, k) => k * y, k: 0.5, y0: 1, tRange: [-2, 4], yRange: [0, 10] },
+  logistic: { name: 'Logistic增长', eq: "dy/dt = ry(1-y/K)", f: (t, y, params) => params.r * y * (1 - y / params.K), params: {r: 1.5, K: 10}, y0: 1, tRange: [0, 8], yRange: [0, 12] },
+  harmonic: { name: '简谐振动', eq: "d²y/dt² + ω²y = 0", f: (t, y, w) => -w * w * y, w: 2, y0: 1, yp0: 0, tRange: [0, 6], yRange: [-1.5, 1.5] },
+  predator: { name: '捕食者-猎物', eq: "Lotka-Volterra", f: null, alpha: 1.1, beta: 0.4, delta: 0.1, gamma: 0.4, x0: 10, y0: 5, tRange: [0, 30], xRange: [0, 20], yRange: [0, 15] }
+};
+
+let currentODE = 'exponential';
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    updatePanel();
+    draw();
+  });
+});
+
+function updatePanel() {
+  const title = document.getElementById('panelTitle');
+  const content = document.getElementById('panelContent');
+  
+  switch(currentMode) {
+    case 'concept':
+      title.textContent = '📖 微分方程基本概念';
+      content.innerHTML = `
+        <div class="prop-card">
+          <div class="prop-title">什么是微分方程？</div>
+          含有未知函数及其导数的方程称为<b>微分方程</b>。
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">阶数</div>
+          微分方程中出现的<b>最高阶导数</b>的阶数称为方程的阶。
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">常微分方程 (ODE)</div>
+          未知函数是<b>一元函数</b>的微分方程。
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">通解与特解</div>
+          <b>通解</b>：含有任意常数的解<br>
+          <b>特解</b>：满足初始条件的特定解
+        </div>
+        <div class="equation">一阶线性方程：dy/dx + P(x)y = Q(x)</div>
+        <div class="equation">二阶常系数：y'' + py' + qy = 0</div>
+      `;
+      break;
+      
+    case 'field':
+      title.textContent = '🎯 方向场与解曲线';
+      content.innerHTML = `
+        <div class="prop-card">
+          <div class="prop-title">方向场</div>
+          在每个点画出斜率方向，形成向量场，直观展示解的走向。
+        </div>
+        <div class="ode-select">
+          <div class="ode-btn active" data-ode="exponential">指数增长</div>
+          <div class="ode-btn" data-ode="logistic">Logistic</div>
+          <div class="ode-btn" data-ode="harmonic">简谐振动</div>
+        </div>
+        <div class="slider-row">
+          <label>初始值 y₀:</label>
+          <input type="range" id="y0Slider" min="-3" max="3" step="0.1" value="1">
+          <span class="val" id="y0Val">1.0</span>
+        </div>
+        <div class="slider-row">
+          <label>参数 k:</label>
+          <input type="range" id="kSlider" min="-2" max="2" step="0.1" value="0.5">
+          <span class="val" id="kVal">0.5</span>
+        </div>
+        <div class="info-grid">
+          <div>方程: <b id="eqDisplay">dy/dt = ky</b></div>
+          <div>类型: <b>一阶线性</b></div>
+        </div>
+      `;
+      document.querySelectorAll('.ode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.ode-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentODE = btn.dataset.ode;
+          draw();
+        });
+      });
+      document.getElementById('y0Slider').addEventListener('input', e => {
+        document.getElementById('y0Val').textContent = parseFloat(e.target.value).toFixed(1);
+        draw();
+      });
+      document.getElementById('kSlider').addEventListener('input', e => {
+        document.getElementById('kVal').textContent = parseFloat(e.target.value).toFixed(1);
+        draw();
+      });
+      break;
+      
+    case 'numeric':
+      title.textContent = '🔢 数值求解方法';
+      content.innerHTML = `
+        <div class="prop-card">
+          <div class="prop-title">欧拉法 (Euler)</div>
+          y<sub>n+1</sub> = y<sub>n</sub> + h·f(t<sub>n</sub>, y<sub>n</sub>)<br>
+          最简单的一阶方法，精度 O(h)
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">改进欧拉法 (Heun)</div>
+          预测-校正方法，精度 O(h²)
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">四阶龙格-库塔法 (RK4)</div>
+          经典方法，精度 O(h⁴)，工程计算标准
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-method="euler">欧拉法</div>
+          <div class="mode-btn" data-method="heun">改进欧拉</div>
+          <div class="mode-btn" data-method="rk4">RK4</div>
+        </div>
+        <div class="slider-row">
+          <label>步数 N:</label>
+          <input type="range" id="nSlider" min="5" max="50" step="1" value="15">
+          <span class="val" id="nVal">15</span>
+        </div>
+        <div class="info-grid">
+          <div>步长 h: <b id="hDisplay">0.27</b></div>
+          <div>精度阶: <b id="orderDisplay">O(h)</b></div>
+        </div>
+      `;
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          draw();
+        });
+      });
+      document.getElementById('nSlider').addEventListener('input', e => {
+        document.getElementById('nVal').textContent = e.target.value;
+        draw();
+      });
+      break;
+      
+    case 'phase':
+      title.textContent = '🌀 相平面分析';
+      content.innerHTML = `
+        <div class="prop-card">
+          <div class="prop-title">相平面</div>
+          以 y 和 y' 为坐标轴，展示二阶方程的轨迹。
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">平衡点类型</div>
+          <b>节点</b>：稳定/不稳定<br>
+          <b>焦点</b>：螺旋收敛/发散<br>
+          <b>鞍点</b>：不稳定<br>
+          <b>中心</b>：周期轨道
+        </div>
+        <div class="slider-row">
+          <label>阻尼 γ:</label>
+          <input type="range" id="gammaSlider" min="-1" max="1" step="0.05" value="0.2">
+          <span class="val" id="gammaVal">0.20</span>
+        </div>
+        <div class="slider-row">
+          <label>频率 ω:</label>
+          <input type="range" id="omegaSlider" min="0.5" max="3" step="0.1" value="1.5">
+          <span class="val" id="omegaVal">1.50</span>
+        </div>
+        <div class="equation">y'' + 2γy' + ω²y = 0</div>
+        <div class="info-grid">
+          <div>特征根: <b id="rootsDisplay">-0.2±1.48i</b></div>
+          <div>类型: <b id="typeDisplay">稳定焦点</b></div>
+        </div>
+      `;
+      document.getElementById('gammaSlider').addEventListener('input', e => {
+        document.getElementById('gammaVal').textContent = parseFloat(e.target.value).toFixed(2);
+        draw();
+      });
+      document.getElementById('omegaSlider').addEventListener('input', e => {
+        document.getElementById('omegaVal').textContent = parseFloat(e.target.value).toFixed(2);
+        draw();
+      });
+      break;
+      
+    case 'application':
+      title.textContent = '🌍 应用模型';
+      content.innerHTML = `
+        <div class="prop-card">
+          <div class="prop-title">人口增长模型</div>
+          <b>Malthus</b>: dP/dt = rP<br>
+          <b>Logistic</b>: dP/dt = rP(1-P/K)
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">牛顿冷却定律</div>
+          dT/dt = -k(T - T<sub>env</sub>)
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">弹簧振动</div>
+          mx'' + cx' + kx = 0
+        </div>
+        <div class="ode-select">
+          <div class="ode-btn active" data-app="population">人口模型</div>
+          <div class="ode-btn" data-app="cooling">冷却定律</div>
+          <div class="ode-btn" data-app="spring">弹簧振动</div>
+        </div>
+        <div class="slider-row">
+          <label>参数调节:</label>
+          <input type="range" id="appSlider" min="0.1" max="2" step="0.1" value="1">
+          <span class="val" id="appVal">1.0</span>
+        </div>
+      `;
+      document.querySelectorAll('.ode-btn[data-app]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.ode-btn[data-app]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          draw();
+        });
+      });
+      document.getElementById('appSlider').addEventListener('input', e => {
+        document.getElementById('appVal').textContent = parseFloat(e.target.value).toFixed(1);
+        draw();
+      });
+      break;
+      
+    case 'quiz':
+      title.textContent = '🎯 互动练习';
+      showQuiz();
+      break;
+  }
+}
+
+let quizIdx = 0, quizScore = 0, quizTotal = 0;
+const ODE_QUIZZES = [
+  {
+    q: "方程 y'' + 3y' + 2y = 0 的特征根是？",
+    opts: ["-1, -2", "1, 2", "-1, 2", "1, -2"],
+    ans: 0
+  },
+  {
+    q: "dy/dx = 2xy 的通解是？",
+    opts: ["y = Ce^(x²)", "y = Ce^(-x²)", "y = Cx²", "y = C/x"],
+    ans: 0
+  },
+  {
+    q: "Logistic方程 dP/dt = rP(1-P/K) 的平衡点是？",
+    opts: ["P = 0", "P = K", "P = 0 和 P = K", "P = r"],
+    ans: 2
+  }
+];
+
+function showQuiz() {
+  const content = document.getElementById('panelContent');
+  quizIdx = 0;
+  quizScore = 0;
+  quizTotal = 0;
+  renderOdeQuiz(content);
+}
+
+function renderOdeQuiz(content) {
+  const quiz = ODE_QUIZZES[quizIdx];
+  const doneTag = (typeof PageProgress !== 'undefined' && PageProgress.isDone('ode')) ? ' · ✅ 已记录完成' : '';
+  content.innerHTML = `
+    <div class="quiz">
+      <div class="quiz-q">(${quizIdx+1}/${ODE_QUIZZES.length}) ${quiz.q}</div>
+      <div class="quiz-opts">
+        ${quiz.opts.map((opt, i) => `<div class="quiz-opt" data-ans="${i}">${opt}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="feedback"></div>
+      <div style="margin-top:8px;font-size:12px;color:#94a3b8">已答 ${quizTotal}/${ODE_QUIZZES.length} · 答对 ${quizScore}${doneTag}</div>
+    </div>
+  `;
+
+  let answered = false;
+  document.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (answered) return;
+      answered = true;
+      quizTotal++;
+      const selected = parseInt(opt.dataset.ans);
+      const feedback = document.getElementById('feedback');
+      if (selected === quiz.ans) {
+        quizScore++;
+        opt.classList.add('correct');
+        feedback.textContent = '✓ 正确！';
+        feedback.style.color = '#10b981';
+      } else {
+        opt.classList.add('wrong');
+        document.querySelectorAll('.quiz-opt')[quiz.ans].classList.add('correct');
+        feedback.textContent = '✗ 再看想想，正确答案已标出';
+        feedback.style.color = '#ef4444';
+      }
+      if (typeof PageProgress !== 'undefined' && quizScore >= Math.ceil(ODE_QUIZZES.length * 0.6) && !PageProgress.isDone('ode')) {
+        PageProgress.markDone('ode');
+      }
+      if (quizIdx < ODE_QUIZZES.length - 1) {
+        feedback.innerHTML += `<br><button id="nextq" style="margin-top:10px;padding:8px 20px;border-radius:8px;background:var(--primary);color:white;border:none;cursor:pointer;font-size:14px">下一题 →</button>`;
+        document.getElementById('nextq').addEventListener('click', () => { quizIdx++; renderOdeQuiz(content); });
+      } else {
+        feedback.innerHTML += `<br><span style="color:#fbbf24;display:block;margin-top:8px">🎉 全部完成！得分 ${quizScore}/${ODE_QUIZZES.length}</span>`;
+      }
+    });
+  });
+}
+
+// Drawing functions
+function draw() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  ctx.clearRect(0, 0, W, H);
+  
+  switch(currentMode) {
+    case 'concept': drawConcept(); break;
+    case 'field': drawField(); break;
+    case 'numeric': drawNumeric(); break;
+    case 'phase': drawPhase(); break;
+    case 'application': drawApplication(); break;
+    case 'quiz': drawQuiz(); break;
+  }
+}
+
+function drawConcept() {
+  // Draw a conceptual visualization
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0, 0, W, H);
+  
+  // Title
+  ctx.fillStyle = '#c4b5fd';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('微分方程的核心思想', W/2, 60);
+  
+  // Flow diagram
+  const boxes = [
+    {x: 100, y: 150, w: 180, h: 80, text: '实际问题', color: '#3b82f6'},
+    {x: 360, y: 150, w: 180, h: 80, text: '建立微分方程', color: '#8b5cf6'},
+    {x: 620, y: 150, w: 180, h: 80, text: '求解', color: '#10b981'},
+    {x: 360, y: 300, w: 180, h: 80, text: '分析解的性质', color: '#f59e0b'},
+    {x: 620, y: 300, w: 180, h: 80, text: '解释实际问题', color: '#ec4899'}
+  ];
+  
+  boxes.forEach(box => {
+    ctx.fillStyle = box.color + '20';
+    ctx.strokeStyle = box.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(box.x, box.y, box.w, box.h, 10);
+    ctx.fill();
+    ctx.stroke();
+    
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '16px sans-serif';
+    ctx.fillText(box.text, box.x + box.w/2, box.y + box.h/2 + 6);
+  });
+  
+  // Arrows
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  
+  // Arrow 1->2
+  drawArrow(280, 190, 360, 190);
+  // Arrow 2->3
+  drawArrow(540, 190, 620, 190);
+  // Arrow 3->4
+  drawArrow(710, 230, 540, 300);
+  // Arrow 4->5
+  drawArrow(540, 340, 620, 340);
+  
+  ctx.setLineDash([]);
+  
+  // Example
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('例：人口增长 → dP/dt = rP → P(t) = P₀eʳᵗ → 预测未来人口', W/2, 450);
+  
+  // Key concepts
+  ctx.fillStyle = '#c4b5fd';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('关键概念', W/2, 510);
+  
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('• 阶数：最高导数的阶  • 线性/非线性  • 常系数/变系数', W/2, 540);
+  ctx.fillText('• 通解：含任意常数  • 特解：满足初始条件  • 定解问题', W/2, 565);
+}
+
+function drawArrow(x1, y1, x2, y2) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 10 * Math.cos(angle - 0.5), y2 - 10 * Math.sin(angle - 0.5));
+  ctx.lineTo(x2 - 10 * Math.cos(angle + 0.5), y2 - 10 * Math.sin(angle + 0.5));
+  ctx.closePath();
+  ctx.fillStyle = '#64748b';
+  ctx.fill();
+}
+
+function drawField() {
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0, 0, W, H);
+  
+  const preset = odePresets[currentODE];
+  const y0 = parseFloat(document.getElementById('y0Slider')?.value || 1);
+  const k = parseFloat(document.getElementById('kSlider')?.value || 0.5);
+  
+  const tMin = preset.tRange[0], tMax = preset.tRange[1];
+  const yMin = preset.yRange[0], yMax = preset.yRange[1];
+  
+  const margin = 60;
+  const plotW = W - 2 * margin;
+  const plotH = H - 2 * margin;
+  
+  // Coordinate transform
+  const toX = t => margin + (t - tMin) / (tMax - tMin) * plotW;
+  const toY = y => margin + (1 - (y - yMin) / (yMax - yMin)) * plotH;
+  
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let t = Math.ceil(tMin); t <= tMax; t++) {
+    ctx.beginPath();
+    ctx.moveTo(toX(t), margin);
+    ctx.lineTo(toX(t), H - margin);
+    ctx.stroke();
+  }
+  for (let y = Math.ceil(yMin); y <= yMax; y++) {
+    ctx.beginPath();
+    ctx.moveTo(margin, toY(y));
+    ctx.lineTo(W - margin, toY(y));
+    ctx.stroke();
+  }
+  
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(margin, toY(0));
+  ctx.lineTo(W - margin, toY(0));
+  ctx.moveTo(toX(0), margin);
+  ctx.lineTo(toX(0), H - margin);
+  ctx.stroke();
+  
+  // Direction field
+  const step = 30;
+  for (let i = 0; i < plotW; i += step) {
+    for (let j = 0; j < plotH; j += step) {
+      const t = tMin + (i / plotW) * (tMax - tMin);
+      const y = yMin + (1 - j / plotH) * (yMax - yMin);
+      
+      let dydt;
+      if (currentODE === 'exponential') {
+        dydt = k * y;
+      } else if (currentODE === 'logistic') {
+        dydt = preset.params.r * y * (1 - y / preset.params.K);
+      } else {
+        dydt = -preset.w * preset.w * y;
+      }
+      
+      const len = 15;
+      const angle = Math.atan(dydt);
+      const dx = len * Math.cos(angle);
+      const dy = len * Math.sin(angle);
+      
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(margin + i - dx/2, margin + j + dy/2);
+      ctx.lineTo(margin + i + dx/2, margin + j - dy/2);
+      ctx.stroke();
+    }
+  }
+  
+  // Solution curve using RK4
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  
+  const dt = 0.05;
+  let t = tMin, y = y0;
+  ctx.moveTo(toX(t), toY(y));
+  
+  for (let i = 0; i < 200; i++) {
+    let dydt;
+    if (currentODE === 'exponential') {
+      dydt = k * y;
+    } else if (currentODE === 'logistic') {
+      dydt = preset.params.r * y * (1 - y / preset.params.K);
+    } else {
+      dydt = -preset.w * preset.w * y;
+    }
+    
+    const k1 = dydt * dt;
+    const k2 = (dydt + 0.5 * k1) * dt;
+    
+    y += k1;
+    t += dt;
+    
+    if (t > tMax || y > yMax || y < yMin) break;
+    ctx.lineTo(toX(t), toY(y));
+  }
+  ctx.stroke();
+  
+  // Labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('t', W - margin + 20, toY(0) + 4);
+  ctx.fillText('y', toX(0) - 4, margin - 10);
+  
+  // Update legend
+  document.getElementById('legend').innerHTML = `
+    <span class="l-field">方向场</span>
+    <span class="l-sol">解曲线 (y₀=${y0.toFixed(1)})</span>
+  `;
+}
+
+function drawNumeric() {
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0, 0, W, H);
+  
+  const method = document.querySelector('.mode-btn.active')?.dataset.method || 'euler';
+  const N = parseInt(document.getElementById('nSlider')?.value || 15);
+  
+  const tMin = 0, tMax = 4, yMin = 0, yMax = 10;
+  const margin = 60;
+  const plotW = W - 2 * margin;
+  const plotH = H - 2 * margin;
+  
+  const toX = t => margin + (t - tMin) / (tMax - tMin) * plotW;
+  const toY = y => margin + (1 - (y - yMin) / (yMax - yMin)) * plotH;
+  
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let t = 0; t <= tMax; t++) {
+    ctx.beginPath();
+    ctx.moveTo(toX(t), margin);
+    ctx.lineTo(toX(t), H - margin);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= yMax; y += 2) {
+    ctx.beginPath();
+    ctx.moveTo(margin, toY(y));
+    ctx.lineTo(W - margin, toY(y));
+    ctx.stroke();
+  }
+  
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(margin, toY(0));
+  ctx.lineTo(W - margin, toY(0));
+  ctx.moveTo(toX(0), margin);
+  ctx.lineTo(toX(0), H - margin);
+  ctx.stroke();
+  
+  // Exact solution: y = e^(0.5t)
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  for (let t = tMin; t <= tMax; t += 0.01) {
+    const y = Math.exp(0.5 * t);
+    if (t === tMin) ctx.moveTo(toX(t), toY(y));
+    else ctx.lineTo(toX(t), toY(y));
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Numerical solution
+  const h = (tMax - tMin) / N;
+  let t = tMin, y = 1;
+  
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(toX(t), toY(y));
+  
+  const points = [{t, y}];
+  
+  for (let i = 0; i < N; i++) {
+    const f = (t, y) => 0.5 * y;
+    
+    if (method === 'euler') {
+      y = y + h * f(t, y);
+      t = t + h;
+    } else if (method === 'heun') {
+      const k1 = f(t, y);
+      const k2 = f(t + h, y + h * k1);
+      y = y + h * (k1 + k2) / 2;
+      t = t + h;
+    } else { // rk4
+      const k1 = f(t, y);
+      const k2 = f(t + h/2, y + h*k1/2);
+      const k3 = f(t + h/2, y + h*k2/2);
+      const k4 = f(t + h, y + h*k3);
+      y = y + h * (k1 + 2*k2 + 2*k3 + k4) / 6;
+      t = t + h;
+    }
+    
+    points.push({t, y});
+    ctx.lineTo(toX(t), toY(Math.min(y, yMax)));
+  }
+  ctx.stroke();
+  
+  // Draw points
+  ctx.fillStyle = '#f59e0b';
+  points.forEach(p => {
+    if (p.y <= yMax) {
+      ctx.beginPath();
+      ctx.arc(toX(p.t), toY(p.y), 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+  
+  // Labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('t', W - margin + 20, toY(0) + 4);
+  ctx.fillText('y', toX(0) - 4, margin - 10);
+  
+  // Update display
+  const hDisplay = document.getElementById('hDisplay');
+  const orderDisplay = document.getElementById('orderDisplay');
+  if (hDisplay) hDisplay.textContent = h.toFixed(2);
+  if (orderDisplay) {
+    if (method === 'euler') orderDisplay.textContent = 'O(h)';
+    else if (method === 'heun') orderDisplay.textContent = 'O(h²)';
+    else orderDisplay.textContent = 'O(h⁴)';
+  }
+  
+  document.getElementById('legend').innerHTML = `
+    <span class="l-curve">精确解 y=e^(0.5t)</span>
+    <span class="l-sol">数值解 (${method.toUpperCase()}, N=${N})</span>
+  `;
+}
+
+function drawPhase() {
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0, 0, W, H);
+  
+  const gamma = parseFloat(document.getElementById('gammaSlider')?.value || 0.2);
+  const omega = parseFloat(document.getElementById('omegaSlider')?.value || 1.5);
+  
+  const margin = 80;
+  const plotW = W - 2 * margin;
+  const plotH = H - 2 * margin;
+  const range = 3;
+  
+  const toX = y => margin + (y + range) / (2 * range) * plotW;
+  const toY = yp => margin + (1 - (yp + range) / (2 * range)) * plotH;
+  
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = -range; i <= range; i++) {
+    ctx.beginPath();
+    ctx.moveTo(toX(i), margin);
+    ctx.lineTo(toX(i), H - margin);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(margin, toY(i));
+    ctx.lineTo(W - margin, toY(i));
+    ctx.stroke();
+  }
+  
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(margin, toY(0));
+  ctx.lineTo(W - margin, toY(0));
+  ctx.moveTo(toX(0), margin);
+  ctx.lineTo(toX(0), H - margin);
+  ctx.stroke();
+  
+  // Phase trajectories
+  const dt = 0.02;
+  const initialConditions = [
+    {y0: 2, yp0: 0}, {y0: -2, yp0: 0}, {y0: 0, yp0: 2}, {y0: 0, yp0: -2},
+    {y0: 1.5, yp0: 1.5}, {y0: -1.5, yp0: 1.5}, {y0: 1.5, yp0: -1.5}, {y0: -1.5, yp0: -1.5}
+  ];
+  
+  initialConditions.forEach(ic => {
+    ctx.strokeStyle = 'rgba(236, 72, 153, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    let y = ic.y0, yp = ic.yp0;
+    ctx.moveTo(toX(y), toY(yp));
+    
+    for (let i = 0; i < 500; i++) {
+      const ypp = -2 * gamma * yp - omega * omega * y;
+      yp = yp + ypp * dt;
+      y = y + yp * dt;
+      
+      if (Math.abs(y) > range || Math.abs(yp) > range) break;
+      ctx.lineTo(toX(y), toY(yp));
+    }
+    ctx.stroke();
+  });
+  
+  // Equilibrium point
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath();
+  ctx.arc(toX(0), toY(0), 8, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('y', W - margin + 30, toY(0) + 4);
+  ctx.fillText("y'", toX(0) - 4, margin - 15);
+  
+  // Update displays
+  const disc = gamma * gamma - omega * omega;
+  let roots, type;
+  if (disc > 0) {
+    const r1 = -gamma + Math.sqrt(disc);
+    const r2 = -gamma - Math.sqrt(disc);
+    roots = `${r1.toFixed(2)}, ${r2.toFixed(2)}`;
+    type = gamma > 0 ? '稳定节点' : '不稳定节点';
+  } else if (disc < 0) {
+    const real = -gamma;
+    const imag = Math.sqrt(-disc);
+    roots = `${real.toFixed(2)}±${imag.toFixed(2)}i`;
+    type = gamma > 0 ? '稳定焦点' : (gamma < 0 ? '不稳定焦点' : '中心');
+  } else {
+    roots = `-${gamma} (重根)`;
+    type = '临界节点';
+  }
+  
+  const rootsDisplay = document.getElementById('rootsDisplay');
+  const typeDisplay = document.getElementById('typeDisplay');
+  if (rootsDisplay) rootsDisplay.textContent = roots;
+  if (typeDisplay) typeDisplay.textContent = type;
+  
+  document.getElementById('legend').innerHTML = `
+    <span class="l-phase">相轨迹</span>
+    <span class="l-field">平衡点 (0,0)</span>
+  `;
+}
+
+function drawApplication() {
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0, 0, W, H);
+  
+  const app = document.querySelector('.ode-btn.active')?.dataset.app || 'population';
+  const param = parseFloat(document.getElementById('appSlider')?.value || 1);
+  
+  const margin = 60;
+  const plotW = W - 2 * margin;
+  const plotH = H - 2 * margin;
+  
+  if (app === 'population') {
+    // Logistic growth
+    const r = param * 0.5;
+    const K = 10;
+    const tMin = 0, tMax = 10, yMin = 0, yMax = 12;
+    
+    const toX = t => margin + (t - tMin) / (tMax - tMin) * plotW;
+    const toY = y => margin + (1 - (y - yMin) / (yMax - yMin)) * plotH;
+    
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    for (let t = 0; t <= tMax; t += 2) {
+      ctx.beginPath();
+      ctx.moveTo(toX(t), margin);
+      ctx.lineTo(toX(t), H - margin);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= yMax; y += 2) {
+      ctx.beginPath();
+      ctx.moveTo(margin, toY(y));
+      ctx.lineTo(W - margin, toY(y));
+      ctx.stroke();
+    }
+    
+    // Axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(margin, toY(0));
+    ctx.lineTo(W - margin, toY(0));
+    ctx.moveTo(toX(0), margin);
+    ctx.lineTo(toX(0), H - margin);
+    ctx.stroke();
+    
+    // Carrying capacity line
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(margin, toY(K));
+    ctx.lineTo(W - margin, toY(K));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(`K = ${K}`, W - margin + 30, toY(K) + 4);
+    
+    // Solutions for different initial values
+    const y0Values = [1, 5, 10, 15];
+    y0Values.forEach((y0, idx) => {
+      ctx.strokeStyle = `hsl(${idx * 60 + 200}, 70%, 60%)`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      let t = 0, y = y0;
+      ctx.moveTo(toX(t), toY(y));
+      
+      const dt = 0.05;
+      for (let i = 0; i < 200; i++) {
+        const dydt = r * y * (1 - y / K);
+        y = y + dydt * dt;
+        t = t + dt;
+        if (t > tMax) break;
+        ctx.lineTo(toX(t), toY(y));
+      }
+      ctx.stroke();
+    });
+    
+    // Labels
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('t (时间)', W - margin + 40, toY(0) + 4);
+    ctx.fillText('P (人口)', toX(0) - 4, margin - 10);
+    
+    document.getElementById('legend').innerHTML = `
+      <span class="l-curve">不同初始人口的增长曲线</span>
+      <span style="color:#ef4444">--- 环境容纳量 K</span>
+    `;
+    
+  } else if (app === 'cooling') {
+    // Newton's cooling
+    const k = param * 0.3;
+    const Tenv = 20;
+    const tMin = 0, tMax = 10, TMin = 0, TMax = 100;
+    
+    const toX = t => margin + (t - tMin) / (tMax - tMin) * plotW;
+    const toY = T => margin + (1 - (T - TMin) / (TMax - TMin)) * plotH;
+    
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    for (let t = 0; t <= tMax; t += 2) {
+      ctx.beginPath();
+      ctx.moveTo(toX(t), margin);
+      ctx.lineTo(toX(t), H - margin);
+      ctx.stroke();
+    }
+    for (let T = 0; T <= TMax; T += 20) {
+      ctx.beginPath();
+      ctx.moveTo(margin, toY(T));
+      ctx.lineTo(W - margin, toY(T));
+      ctx.stroke();
+    }
+    
+    // Axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(margin, toY(Tenv));
+    ctx.lineTo(W - margin, toY(Tenv));
+    ctx.moveTo(toX(0), margin);
+    ctx.lineTo(toX(0), H - margin);
+    ctx.stroke();
+    
+    // Environment temperature line
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(margin, toY(Tenv));
+    ctx.lineTo(W - margin, toY(Tenv));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    ctx.fillStyle = '#10b981';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(`T_env = ${Tenv}°C`, W - margin + 50, toY(Tenv) + 4);
+    
+    // Cooling curves
+    const T0Values = [90, 70, 50, 30];
+    T0Values.forEach((T0, idx) => {
+      ctx.strokeStyle = `hsl(${idx * 60 + 10}, 70%, 60%)`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      let t = 0, T = T0;
+      ctx.moveTo(toX(t), toY(T));
+      
+      const dt = 0.05;
+      for (let i = 0; i < 200; i++) {
+        const dTdt = -k * (T - Tenv);
+        T = T + dTdt * dt;
+        t = t + dt;
+        if (t > tMax) break;
+        ctx.lineTo(toX(t), toY(T));
+      }
+      ctx.stroke();
+    });
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('t (时间)', W - margin + 40, toY(Tenv) + 4);
+    ctx.fillText('T (温度)', toX(0) - 4, margin - 10);
+    
+    document.getElementById('legend').innerHTML = `
+      <span class="l-curve">不同初始温度的冷却曲线</span>
+      <span style="color:#10b981">--- 环境温度</span>
+    `;
+    
+  } else {
+    // Spring vibration
+    const m = 1, c = param * 0.5, k = 4;
+    const tMin = 0, tMax = 10, yMin = -2, yMax = 2;
+    
+    const toX = t => margin + (t - tMin) / (tMax - tMin) * plotW;
+    const toY = y => margin + (1 - (y - yMin) / (yMax - yMin)) * plotH;
+    
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    for (let t = 0; t <= tMax; t += 2) {
+      ctx.beginPath();
+      ctx.moveTo(toX(t), margin);
+      ctx.lineTo(toX(t), H - margin);
+      ctx.stroke();
+    }
+    for (let y = -2; y <= 2; y += 0.5) {
+      ctx.beginPath();
+      ctx.moveTo(margin, toY(y));
+      ctx.lineTo(W - margin, toY(y));
+      ctx.stroke();
+    }
+    
+    // Axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(margin, toY(0));
+    ctx.lineTo(W - margin, toY(0));
+    ctx.moveTo(toX(0), margin);
+    ctx.lineTo(toX(0), H - margin);
+    ctx.stroke();
+    
+    // Spring solutions for different damping
+    const dampingValues = [0, 0.3, 0.8, 2];
+    dampingValues.forEach((c_val, idx) => {
+      ctx.strokeStyle = `hsl(${idx * 60 + 260}, 70%, 60%)`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      let t = 0, y = 1, yp = 0;
+      ctx.moveTo(toX(t), toY(y));
+      
+      const dt = 0.02;
+      for (let i = 0; i < 500; i++) {
+        const ypp = (-c_val * yp - k * y) / m;
+        yp = yp + ypp * dt;
+        y = y + yp * dt;
+        t = t + dt;
+        if (t > tMax) break;
+        ctx.lineTo(toX(t), toY(y));
+      }
+      ctx.stroke();
+    });
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('t (时间)', W - margin + 40, toY(0) + 4);
+    ctx.fillText('x (位移)', toX(0) - 4, margin - 10);
+    
+    document.getElementById('legend').innerHTML = `
+      <span class="l-curve">不同阻尼的振动曲线</span>
+    `;
+  }
+}
+
+function drawQuiz() {
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0, 0, W, H);
+  
+  ctx.fillStyle = '#c4b5fd';
+  ctx.font = 'bold 28px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🎯 常微分方程练习', W/2, 100);
+  
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('选择右侧面板中的题目进行练习', W/2, 150);
+  
+  // Draw some decorative elements
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(W/2, 300, 80, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '40px sans-serif';
+  ctx.fillText('∫', W/2, 320);
+  
+  ctx.fillStyle = '#64748b';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('微分方程是描述自然规律的重要数学工具', W/2, 450);
+  ctx.fillText('从物理到生物，从工程到经济，无处不在', W/2, 480);
+}
+
+// Initialize
+updatePanel();
+draw();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

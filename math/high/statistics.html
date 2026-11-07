@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>统计 - 高中数学互动可视化</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #1a237e, #283593, #1565c0);
+  color: #e0e0e0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.header {
+  text-align: center;
+  padding: 24px 16px 8px;
+}
+.header h1 {
+  font-size: 28px;
+  background: linear-gradient(90deg, #00e5ff, #1de9b6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 6px;
+}
+.header p { font-size: 14px; color: #8899aa; }
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+}
+.tab {
+  padding: 8px 18px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #aab;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  user-select: none;
+}
+.tab:hover { background: rgba(255,255,255,0.14); }
+.tab.active {
+  background: linear-gradient(135deg, #00e5ff, #1de9b6);
+  color: #1a237e;
+  font-weight: 700;
+  border-color: transparent;
+}
+.panel {
+  display: none;
+  padding: 16px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+.panel.active { display: block; animation: fadeUp 0.4s; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.card {
+  background: rgba(255,255,255,0.05);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card h3 {
+  font-size: 17px;
+  color: #1de9b6;
+  margin-bottom: 10px;
+}
+.formula-box {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  padding: 14px;
+  background: rgba(0,229,255,0.1);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  margin: 12px 0;
+}
+.btn {
+  padding: 10px 22px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #00e5ff, #1de9b6);
+  color: #1a237e;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,229,255,0.3); }
+.btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: #e0e0e0;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.btn-secondary:hover { background: rgba(255,255,255,0.18); }
+canvas {
+  display: block;
+  margin: 12px auto;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.2);
+}
+.info-text {
+  font-size: 13px;
+  color: #8899aa;
+  line-height: 1.6;
+  margin: 8px 0;
+}
+.highlight { color: #00e5ff; font-weight: 600; }
+.highlight-green { color: #1de9b6; font-weight: 600; }
+
+/* 抽样动画区域 */
+.sampling-area {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 16px 0;
+}
+@media (max-width: 600px) {
+  .sampling-area { grid-template-columns: 1fr; }
+}
+.sampling-box {
+  background: rgba(0,0,0,0.2);
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+}
+.sampling-box h4 {
+  font-size: 14px;
+  color: #1de9b6;
+  margin-bottom: 10px;
+}
+.population-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  margin: 8px 0;
+}
+.pop-item {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(255,255,255,0.08);
+  color: #aab;
+  transition: all 0.3s;
+}
+.pop-item.selected {
+  background: linear-gradient(135deg, #00e5ff, #1de9b6);
+  color: #1a237e;
+  transform: scale(1.1);
+}
+.pop-item.layer-a { border: 2px solid #ff6b6b; }
+.pop-item.layer-b { border: 2px solid #ffd93d; }
+.pop-item.layer-c { border: 2px solid #6bcf7f; }
+
+/* 直方图交互 */
+.hist-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+.slider-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.slider-group label {
+  font-size: 13px;
+  color: #8899aa;
+}
+.slider-group input[type="range"] {
+  width: 120px;
+  accent-color: #00e5ff;
+}
+.stats-display {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 12px 0;
+}
+@media (max-width: 500px) {
+  .stats-display { grid-template-columns: repeat(2, 1fr); }
+}
+.stat-item {
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+.stat-item .label { font-size: 11px; color: #8899aa; }
+.stat-item .value { font-size: 18px; font-weight: 700; color: #00e5ff; margin-top: 4px; }
+
+/* 回归分析 */
+.regression-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+.data-point-info {
+  text-align: center;
+  font-size: 13px;
+  color: #8899aa;
+  margin: 8px 0;
+}
+.equation-display {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  padding: 12px;
+  background: rgba(29,233,182,0.1);
+  border: 1px solid rgba(29,233,182,0.2);
+  border-radius: 10px;
+  margin: 12px 0;
+}
+
+/* 练习 */
+.quiz-question {
+  font-size: 15px;
+  color: #fff;
+  margin-bottom: 14px;
+  line-height: 1.6;
+}
+.quiz-options {
+  display: grid;
+  gap: 10px;
+}
+.quiz-option {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+  color: #e0e0e0;
+}
+.quiz-option:hover { background: rgba(255,255,255,0.12); }
+.quiz-option.correct {
+  background: rgba(29,233,182,0.2);
+  border-color: #1de9b6;
+  color: #1de9b6;
+}
+.quiz-option.wrong {
+  background: rgba(255,107,107,0.2);
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+}
+.quiz-feedback {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  display: none;
+}
+.quiz-feedback.show { display: block; animation: fadeUp 0.3s; }
+.quiz-feedback.correct { background: rgba(29,233,182,0.1); color: #1de9b6; }
+.quiz-feedback.wrong { background: rgba(255,107,107,0.1); color: #ff6b6b; }
+
+.progress-bar {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin: 12px 0;
+}
+.progress-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+}
+.progress-dot.done { background: #1de9b6; }
+.progress-dot.current { background: #00e5ff; }
+
+.score-display {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1de9b6;
+  margin: 16px 0;
+}
+</style>
+<script src="../assets/js/common.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 统计</h1>
+  <p>高中数学 · 抽样方法 · 数据描述 · 回归分析</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(0)">抽样方法</div>
+  <div class="tab" onclick="switchTab(1)">数据描述</div>
+  <div class="tab" onclick="switchTab(2)">回归分析</div>
+  <div class="tab" onclick="switchTab(3)">互动练习</div>
+</div>
+
+<!-- 面板0: 抽样方法 -->
+<div class="panel active" id="panel0">
+  <div class="card">
+    <h3>🎯 三种抽样方法对比</h3>
+    <p class="info-text">
+      从总体中抽取样本是统计的基础。<span class="highlight">简单随机抽样</span>每个个体等概率被选中；
+      <span class="highlight">系统抽样</span>按固定间隔抽取；<span class="highlight">分层抽样</span>按各层比例抽取。
+    </p>
+    <div class="formula-box">
+      抽样核心：样本要能代表总体
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🎲 简单随机抽样</h3>
+    <p class="info-text">点击"随机抽样"按钮，观察如何从40个个体中随机抽取8个样本。</p>
+    <div class="sampling-box">
+      <h4>总体 (N=40) → 样本 (n=8)</h4>
+      <div class="population-grid" id="srsGrid"></div>
+      <div style="margin-top:12px">
+        <button class="btn btn-primary" onclick="doSRS()">🎲 随机抽样</button>
+        <button class="btn btn-secondary" onclick="resetSRS()">重置</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>⏱️ 系统抽样</h3>
+    <p class="info-text">
+      将总体均分为若干段，等间隔抽取。先随机确定起始号，再每隔 k 个抽取一个。
+    </p>
+    <div class="sampling-box">
+      <h4>系统抽样 (间隔 k=5)</h4>
+      <div class="population-grid" id="sysGrid"></div>
+      <div style="margin-top:12px">
+        <button class="btn btn-primary" onclick="doSystematic()">⏱️ 系统抽样</button>
+        <button class="btn btn-secondary" onclick="resetSys()">重置</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📊 分层抽样</h3>
+    <p class="info-text">
+      总体分为三层（红/黄/绿），各层按比例抽取样本，确保各层都有代表。
+    </p>
+    <div class="sampling-box">
+      <h4>分层抽样（按比例）</h4>
+      <div class="population-grid" id="stratGrid"></div>
+      <div style="margin-top:12px">
+        <button class="btn btn-primary" onclick="doStratified()">📊 分层抽样</button>
+        <button class="btn btn-secondary" onclick="resetStrat()">重置</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 面板1: 数据描述 -->
+<div class="panel" id="panel1">
+  <div class="card">
+    <h3>📈 频率分布直方图</h3>
+    <p class="info-text">
+      拖动滑块调整<span class="highlight">组数</span>和<span class="highlight">数据量</span>，
+      观察直方图如何随分组变化。纵轴为 <span class="highlight-green">频率/组距</span>。
+    </p>
+    <div class="hist-controls">
+      <div class="slider-group">
+        <label>组数:</label>
+        <input type="range" id="binSlider" min="4" max="16" value="8" oninput="updateHistogram()">
+        <span id="binCount">8</span>
+      </div>
+      <div class="slider-group">
+        <label>数据量:</label>
+        <input type="range" id="dataSlider" min="50" max="500" step="50" value="200" oninput="updateHistogram()">
+        <span id="dataCount">200</span>
+      </div>
+    </div>
+    <canvas id="histCanvas" width="780" height="340"></canvas>
+    <div class="stats-display" id="statsDisplay"></div>
+  </div>
+
+  <div class="card">
+    <h3>🌿 茎叶图</h3>
+    <p class="info-text">
+      茎叶图保留原始数据信息，便于比较两组数据。点击"生成数据"查看茎叶图展示。
+    </p>
+    <div style="text-align:center;margin:12px 0">
+      <button class="btn btn-primary" onclick="generateStemLeaf()">🌿 生成茎叶图</button>
+    </div>
+    <canvas id="stemCanvas" width="780" height="300"></canvas>
+  </div>
+</div>
+
+<!-- 面板2: 回归分析 -->
+<div class="panel" id="panel2">
+  <div class="card">
+    <h3>📉 线性回归分析</h3>
+    <p class="info-text">
+      在散点图上<span class="highlight">点击添加数据点</span>，系统自动计算回归直线。
+      观察回归方程和相关系数的变化。
+    </p>
+    <div class="formula-box">
+      ŷ = b̂x + â &nbsp;&nbsp; b̂ = Σ(xᵢ-x̄)(yᵢ-ȳ) / Σ(xᵢ-x̄)²
+    </div>
+    <canvas id="regCanvas" width="780" height="400"></canvas>
+    <div class="equation-display" id="regEquation">点击画布添加数据点...</div>
+    <div class="regression-controls">
+      <button class="btn btn-primary" onclick="addRandomPoints()">🎲 随机生成数据</button>
+      <button class="btn btn-secondary" onclick="clearRegression()">清除</button>
+      <button class="btn btn-secondary" onclick="toggleResiduals()">📐 残差显示</button>
+    </div>
+    <div class="data-point-info" id="regInfo">已添加 0 个数据点</div>
+  </div>
+
+  <div class="card">
+    <h3>📊 相关系数 r</h3>
+    <p class="info-text">
+      相关系数 r 衡量两变量线性相关程度。<span class="highlight">|r| 越接近 1</span>，线性相关性越强。
+    </p>
+    <div class="formula-box">
+      r = Σ(xᵢ-x̄)(yᵢ-ȳ) / √[Σ(xᵢ-x̄)² · Σ(yᵢ-ȳ)²]
+    </div>
+    <div class="stats-display">
+      <div class="stat-item">
+        <div class="label">相关系数 r</div>
+        <div class="value" id="rValue">--</div>
+      </div>
+      <div class="stat-item">
+        <div class="label">R²</div>
+        <div class="value" id="r2Value">--</div>
+      </div>
+      <div class="stat-item">
+        <div class="label">相关强度</div>
+        <div class="value" id="rStrength" style="font-size:14px">--</div>
+      </div>
+      <div class="stat-item">
+        <div class="label">相关方向</div>
+        <div class="value" id="rDirection" style="font-size:14px">--</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 面板3: 互动练习 -->
+<div class="panel" id="panel3">
+  <div class="card">
+    <h3>📝 统计知识练习</h3>
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="score-display">得分: <span id="quizScore">0</span> / <span id="quizTotal">0</span></div>
+    <div id="quizArea"></div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-primary" onclick="startQuiz()">🔄 重新开始</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Tab 切换
+function switchTab(idx) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===idx));
+  if (idx === 1) updateHistogram();
+}
+
+// ===== 抽样方法 =====
+function initGrid(id, count) {
+  const grid = document.getElementById(id);
+  grid.innerHTML = '';
+  for (let i = 1; i <= count; i++) {
+    const item = document.createElement('div');
+    item.className = 'pop-item';
+    item.textContent = i;
+    item.dataset.idx = i;
+    grid.appendChild(item);
+  }
+}
+
+function doSRS() {
+  resetSRS();
+  const items = document.querySelectorAll('#srsGrid .pop-item');
+  const indices = Array.from({length: 40}, (_, i) => i);
+  // Fisher-Yates shuffle
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  const selected = indices.slice(0, 8).sort((a,b) => a-b);
+  let delay = 0;
+  selected.forEach(idx => {
+    setTimeout(() => {
+      items[idx].classList.add('selected');
+    }, delay);
+    delay += 150;
+  });
+}
+function resetSRS() {
+  document.querySelectorAll('#srsGrid .pop-item').forEach(i => i.classList.remove('selected'));
+}
+
+function doSystematic() {
+  resetSys();
+  const items = document.querySelectorAll('#sysGrid .pop-item');
+  const k = 5;
+  const start = Math.floor(Math.random() * k);
+  const selected = [];
+  for (let i = start; i < 40; i += k) selected.push(i);
+  let delay = 0;
+  selected.forEach(idx => {
+    setTimeout(() => {
+      items[idx].classList.add('selected');
+    }, delay);
+    delay += 200;
+  });
+}
+function resetSys() {
+  document.querySelectorAll('#sysGrid .pop-item').forEach(i => i.classList.remove('selected'));
+}
+
+function doStratified() {
+  resetStrat();
+  const items = document.querySelectorAll('#stratGrid .pop-item');
+  // 分层: 1-14 层A, 15-28 层B, 29-40 层C
+  // 按比例抽: 层A抽4个, 层B抽3个, 层C抽1个 (共8个)
+  const layers = [
+    {range: [0,14], count: 4, cls: 'layer-a'},
+    {range: [14,28], count: 3, cls: 'layer-b'},
+    {range: [28,40], count: 1, cls: 'layer-c'}
+  ];
+  let delay = 0;
+  layers.forEach(layer => {
+    const indices = [];
+    for (let i = layer.range[0]; i < layer.range[1]; i++) indices.push(i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    const sel = indices.slice(0, layer.count);
+    sel.forEach(idx => {
+      setTimeout(() => {
+        items[idx].classList.add('selected', layer.cls);
+      }, delay);
+      delay += 180;
+    });
+  });
+}
+function resetStrat() {
+  document.querySelectorAll('#stratGrid .pop-item').forEach(i => {
+    i.classList.remove('selected', 'layer-a', 'layer-b', 'layer-c');
+  });
+}
+
+// 初始化抽样网格
+initGrid('srsGrid', 40);
+initGrid('sysGrid', 40);
+// 分层抽样网格 - 标记层颜色
+(function() {
+  const grid = document.getElementById('stratGrid');
+  for (let i = 1; i <= 40; i++) {
+    const item = document.createElement('div');
+    item.className = 'pop-item';
+    item.textContent = i;
+    item.dataset.idx = i - 1;
+    if (i <= 14) item.style.borderColor = '#ff6b6b';
+    else if (i <= 28) item.style.borderColor = '#ffd93d';
+    else item.style.borderColor = '#6bcf7f';
+    item.style.borderWidth = '2px';
+    grid.appendChild(item);
+  }
+})();
+
+// ===== 数据描述 =====
+let histData = [];
+function generateData(n) {
+  // 正态分布 (Box-Muller)
+  const data = [];
+  for (let i = 0; i < n; i++) {
+    const u1 = Math.random(), u2 = Math.random();
+    const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    data.push(50 + z * 15); // 均值50, 标准差15
+  }
+  return data;
+}
+
+function updateHistogram() {
+  const bins = parseInt(document.getElementById('binSlider').value);
+  const n = parseInt(document.getElementById('dataSlider').value);
+  document.getElementById('binCount').textContent = bins;
+  document.getElementById('dataCount').textContent = n;
+
+  histData = generateData(n);
+  const min = Math.min(...histData), max = Math.max(...histData);
+  const range = max - min;
+  const binWidth = range / bins;
+
+  // 计算频率
+  const counts = new Array(bins).fill(0);
+  histData.forEach(v => {
+    let idx = Math.floor((v - min) / binWidth);
+    if (idx >= bins) idx = bins - 1;
+    counts[idx]++;
+  });
+  const frequencies = counts.map(c => c / n);
+  const density = frequencies.map(f => f / binWidth);
+  const maxDensity = Math.max(...density);
+
+  // 计算统计量
+  const mean = histData.reduce((a,b) => a+b, 0) / n;
+  const sorted = [...histData].sort((a,b) => a-b);
+  const median = n % 2 === 0 ? (sorted[n/2-1] + sorted[n/2]) / 2 : sorted[Math.floor(n/2)];
+  const variance = histData.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+  const std = Math.sqrt(variance);
+
+  // 绘制直方图
+  const canvas = document.getElementById('histCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = {top: 20, right: 30, bottom: 50, left: 60};
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  // 坐标轴
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.left, pad.top);
+  ctx.lineTo(pad.left, H - pad.bottom);
+  ctx.lineTo(W - pad.right, H - pad.bottom);
+  ctx.stroke();
+
+  // 绘制柱状图
+  const barW = plotW / bins;
+  for (let i = 0; i < bins; i++) {
+    const barH = (density[i] / maxDensity) * plotH;
+    const x = pad.left + i * barW;
+    const y = H - pad.bottom - barH;
+
+    const gradient = ctx.createLinearGradient(x, y, x, H - pad.bottom);
+    gradient.addColorStop(0, 'rgba(0, 229, 255, 0.8)');
+    gradient.addColorStop(1, 'rgba(29, 233, 182, 0.4)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(x + 1, y, barW - 2, barH);
+
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.5)';
+    ctx.strokeRect(x + 1, y, barW - 2, barH);
+  }
+
+  // X轴标签
+  ctx.fillStyle = '#8899aa';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= bins; i += Math.max(1, Math.floor(bins/6))) {
+    const val = (min + i * binWidth).toFixed(1);
+    const x = pad.left + i * barW;
+    ctx.fillText(val, x, H - pad.bottom + 18);
+  }
+
+  // Y轴标签 (密度)
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const val = (maxDensity * i / 4).toFixed(3);
+    const y = H - pad.bottom - (i / 4) * plotH;
+    ctx.fillText(val, pad.left - 8, y + 4);
+  }
+
+  // 轴标题
+  ctx.fillStyle = '#aab';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('数据值', W/2, H - 8);
+  ctx.save();
+  ctx.translate(14, H/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('频率/组距', 0, 0);
+  ctx.restore();
+
+  // 更新统计量显示
+  document.getElementById('statsDisplay').innerHTML = `
+    <div class="stat-item"><div class="label">均值 x̄</div><div class="value">${mean.toFixed(2)}</div></div>
+    <div class="stat-item"><div class="label">中位数</div><div class="value">${median.toFixed(2)}</div></div>
+    <div class="stat-item"><div class="label">标准差 s</div><div class="value">${std.toFixed(2)}</div></div>
+    <div class="stat-item"><div class="label">方差 s²</div><div class="value">${variance.toFixed(2)}</div></div>
+  `;
+}
+
+// 茎叶图
+function generateStemLeaf() {
+  const canvas = document.getElementById('stemCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // 生成两组数据
+  const dataA = [], dataB = [];
+  for (let i = 0; i < 20; i++) {
+    dataA.push(Math.floor(40 + Math.random() * 50));
+    dataB.push(Math.floor(45 + Math.random() * 45));
+  }
+
+  // 分组
+  const stems = [4, 5, 6, 7, 8];
+  const leavesA = {}, leavesB = {};
+  stems.forEach(s => { leavesA[s] = []; leavesB[s] = []; });
+  dataA.forEach(v => { const s = Math.floor(v/10); if (leavesA[s]) leavesA[s].push(v%10); });
+  dataB.forEach(v => { const s = Math.floor(v/10); if (leavesB[s]) leavesB[s].push(v%10); });
+  Object.keys(leavesA).forEach(k => leavesA[k].sort((a,b) => a-b));
+  Object.keys(leavesB).forEach(k => leavesB[k].sort((a,b) => a-b));
+
+  // 绘制
+  const centerX = W / 2;
+  const startY = 50;
+  const rowH = 40;
+
+  ctx.font = 'bold 14px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#1de9b6';
+  ctx.fillText('A组', 150, 25);
+  ctx.fillStyle = '#00e5ff';
+  ctx.fillText('B组', W - 150, 25);
+  ctx.fillStyle = '#fff';
+  ctx.fillText('茎', centerX, 25);
+
+  stems.forEach((stem, i) => {
+    const y = startY + i * rowH;
+
+    // 茎
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 16px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(stem, centerX, y + 5);
+
+    // A组叶子 (左侧，逆序)
+    ctx.fillStyle = '#1de9b6';
+    ctx.font = '14px monospace';
+    ctx.textAlign = 'right';
+    const aLeaves = leavesA[stem].reverse().join(' ');
+    ctx.fillText(aLeaves, centerX - 40, y + 5);
+    leavesA[stem].reverse(); // restore
+
+    // B组叶子 (右侧)
+    ctx.fillStyle = '#00e5ff';
+    ctx.textAlign = 'left';
+    const bLeaves = leavesB[stem].join(' ');
+    ctx.fillText(bLeaves, centerX + 40, y + 5);
+  });
+
+  // 分隔线
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(centerX, startY - 10);
+  ctx.lineTo(centerX, startY + stems.length * rowH - 10);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+// ===== 回归分析 =====
+let regPoints = [];
+let showResiduals = false;
+
+const regCanvas = document.getElementById('regCanvas');
+const regCtx = regCanvas.getContext('2d');
+
+regCanvas.addEventListener('click', function(e) {
+  const rect = regCanvas.getBoundingClientRect();
+  const scaleX = regCanvas.width / rect.width;
+  const scaleY = regCanvas.height / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+
+  // 转换到数据坐标 (画布范围: pad左60, 右W-30, 上20, 下H-50)
+  const pad = {top: 30, right: 30, bottom: 50, left: 60};
+  const plotW = regCanvas.width - pad.left - pad.right;
+  const plotH = regCanvas.height - pad.top - pad.bottom;
+
+  const dataX = ((x - pad.left) / plotW) * 100;
+  const dataY = ((plotH - (y - pad.top)) / plotH) * 100;
+
+  if (dataX >= 0 && dataX <= 100 && dataY >= 0 && dataY <= 100) {
+    regPoints.push({x: dataX, y: dataY});
+    drawRegression();
+  }
+});
+
+function addRandomPoints() {
+  regPoints = [];
+  const n = 12 + Math.floor(Math.random() * 8);
+  const slope = 0.5 + Math.random() * 1;
+  const intercept = 10 + Math.random() * 20;
+  for (let i = 0; i < n; i++) {
+    const x = 10 + Math.random() * 80;
+    const y = slope * x + intercept + (Math.random() - 0.5) * 30;
+    regPoints.push({x, y: Math.max(0, Math.min(100, y))});
+  }
+  drawRegression();
+}
+
+function clearRegression() {
+  regPoints = [];
+  showResiduals = false;
+  drawRegression();
+}
+
+function toggleResiduals() {
+  showResiduals = !showResiduals;
+  drawRegression();
+}
+
+function drawRegression() {
+  const canvas = regCanvas;
+  const ctx = regCtx;
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = {top: 30, right: 30, bottom: 50, left: 60};
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  // 坐标转换
+  function toCanvasX(v) { return pad.left + (v / 100) * plotW; }
+  function toCanvasY(v) { return pad.top + plotH - (v / 100) * plotH; }
+
+  // 网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    const x = toCanvasX(i * 10);
+    const y = toCanvasY(i * 10);
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+  }
+
+  // 坐标轴
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.beginPath();
+  ctx.moveTo(pad.left, pad.top);
+  ctx.lineTo(pad.left, H - pad.bottom);
+  ctx.lineTo(W - pad.right, H - pad.bottom);
+  ctx.stroke();
+
+  // 轴标签
+  ctx.fillStyle = '#8899aa';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= 10; i += 2) {
+    ctx.fillText(i * 10, toCanvasX(i * 10), H - pad.bottom + 18);
+  }
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 10; i += 2) {
+    ctx.fillText(i * 10, pad.left - 8, toCanvasY(i * 10) + 4);
+  }
+
+  if (regPoints.length === 0) {
+    ctx.fillStyle = '#8899aa';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('点击画布添加数据点 或 点击"随机生成数据"', W/2, H/2);
+    document.getElementById('regEquation').textContent = '点击画布添加数据点...';
+    document.getElementById('regInfo').textContent = '已添加 0 个数据点';
+    document.getElementById('rValue').textContent = '--';
+    document.getElementById('r2Value').textContent = '--';
+    document.getElementById('rStrength').textContent = '--';
+    document.getElementById('rDirection').textContent = '--';
+    return;
+  }
+
+  // 计算回归
+  const n = regPoints.length;
+  const sumX = regPoints.reduce((s, p) => s + p.x, 0);
+  const sumY = regPoints.reduce((s, p) => s + p.y, 0);
+  const meanX = sumX / n;
+  const meanY = sumY / n;
+
+  let num = 0, den = 0, numR = 0, denX = 0, denY = 0;
+  regPoints.forEach(p => {
+    const dx = p.x - meanX;
+    const dy = p.y - meanY;
+    num += dx * dy;
+    den += dx * dx;
+    denX += dx * dx;
+    denY += dy * dy;
+  });
+
+  const b = den === 0 ? 0 : num / den;
+  const a = meanY - b * meanX;
+  const r = (denX === 0 || denY === 0) ? 0 : num / Math.sqrt(denX * denY);
+  const r2 = r * r;
+
+  // 绘制残差
+  if (showResiduals) {
+    ctx.strokeStyle = 'rgba(255, 107, 107, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    regPoints.forEach(p => {
+      const yPred = b * p.x + a;
+      ctx.beginPath();
+      ctx.moveTo(toCanvasX(p.x), toCanvasY(p.y));
+      ctx.lineTo(toCanvasX(p.x), toCanvasY(yPred));
+      ctx.stroke();
+    });
+    ctx.setLineDash([]);
+  }
+
+  // 绘制回归线
+  ctx.strokeStyle = '#ff6b6b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  const x0 = 0, x1 = 100;
+  const y0 = b * x0 + a, y1 = b * x1 + a;
+  ctx.moveTo(toCanvasX(x0), toCanvasY(Math.max(0, Math.min(100, y0))));
+  ctx.lineTo(toCanvasX(x1), toCanvasY(Math.max(0, Math.min(100, y1))));
+  ctx.stroke();
+
+  // 绘制数据点
+  regPoints.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(toCanvasX(p.x), toCanvasY(p.y), 6, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.8)';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  // 更新信息
+  document.getElementById('regEquation').textContent = `ŷ = ${b.toFixed(3)}x + ${a.toFixed(3)}`;
+  document.getElementById('regInfo').textContent = `已添加 ${n} 个数据点`;
+  document.getElementById('rValue').textContent = r.toFixed(4);
+  document.getElementById('r2Value').textContent = r2.toFixed(4);
+
+  const absR = Math.abs(r);
+  let strength = '无相关';
+  if (absR > 0.8) strength = '强相关';
+  else if (absR > 0.5) strength = '中等相关';
+  else if (absR > 0.3) strength = '弱相关';
+  document.getElementById('rStrength').textContent = strength;
+  document.getElementById('rDirection').textContent = r > 0 ? '正相关 ↑' : r < 0 ? '负相关 ↓' : '无';
+}
+
+// 初始化回归图
+drawRegression();
+
+// ===== 互动练习 =====
+const quizQuestions = [
+  {
+    q: '某校高一有400人，高二有320人，高三有280人。用分层抽样方法抽取100人，高一应抽取多少人？',
+    opts: ['25人', '40人', '32人', '28人'],
+    ans: 1,
+    explain: '分层抽样按比例：高一占比 400/1000 = 40%，所以抽取 100×40% = 40人。'
+  },
+  {
+    q: '在频率分布直方图中，纵轴表示的是？',
+    opts: ['频数', '频率', '频率/组距', '组距'],
+    ans: 2,
+    explain: '频率分布直方图的纵轴为频率/组距（密度），这样每个小矩形的面积 = 频率。'
+  },
+  {
+    q: '一组数据的方差为4，若将这组数据每个都乘以2，新数据的方差为？',
+    opts: ['4', '8', '16', '2'],
+    ans: 2,
+    explain: '数据乘以常数a，方差变为原来的a²倍。2² × 4 = 16。'
+  },
+  {
+    q: '系统抽样中，从100个个体中抽取10个，抽样间隔为？',
+    opts: ['5', '10', '20', '100'],
+    ans: 1,
+    explain: '系统抽样间隔 k = N/n = 100/10 = 10。'
+  },
+  {
+    q: '相关系数 r = -0.95，说明两变量之间？',
+    opts: ['弱正相关', '弱负相关', '强正相关', '强负相关'],
+    ans: 3,
+    explain: '|r| = 0.95 > 0.8，为强相关；r < 0，为负相关。所以是强负相关。'
+  },
+  {
+    q: '回归直线 ŷ = b̂x + â 一定经过哪个点？',
+    opts: ['原点 (0,0)', '样本中心 (x̄, ȳ)', '任意数据点', '(1,1)'],
+    ans: 1,
+    explain: '回归直线一定经过样本中心点 (x̄, ȳ)，这是最小二乘法的性质。'
+  },
+  {
+    q: '茎叶图与频率分布直方图相比，优点是？',
+    opts: ['更美观', '保留原始数据', '计算更简单', '适用范围更广'],
+    ans: 1,
+    explain: '茎叶图的优点是可以保留原始数据信息，而直方图会丢失组内数据的具体值。'
+  },
+  {
+    q: '某样本数据：2, 3, 5, 7, 8，中位数为？',
+    opts: ['3', '5', '7', '4'],
+    ans: 1,
+    explain: '数据已排序，共5个，中位数为第3个数 = 5。'
+  }
+];
+
+let currentQuiz = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+function startQuiz() {
+  currentQuiz = 0;
+  quizScore = 0;
+  quizAnswered = false;
+  renderQuiz();
+}
+
+function renderQuiz() {
+  if (currentQuiz >= quizQuestions.length) {
+    document.getElementById('quizArea').innerHTML = `
+      <div style="text-align:center;padding:30px">
+        <div style="font-size:48px;margin-bottom:16px">🎉</div>
+        <div class="score-display">最终得分: ${quizScore} / ${quizQuestions.length}</div>
+        <p class="info-text">${quizScore >= 6 ? '太棒了！统计知识掌握得很好！' : quizScore >= 4 ? '不错，继续加油！' : '建议回顾前面的内容，多练习几次。'}${quizScore >= Math.ceil(quizQuestions.length * 0.6) ? ' ✅ 已记录完成' : ''}</p>
+      </div>
+    `;
+    document.getElementById('quizScore').textContent = quizScore;
+    document.getElementById('quizTotal').textContent = quizQuestions.length;
+    if (quizScore >= Math.ceil(quizQuestions.length * 0.6) && typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('statistics');
+    }
+    return;
+  }
+
+  const q = quizQuestions[currentQuiz];
+  // Progress dots
+  let dots = '';
+  for (let i = 0; i < quizQuestions.length; i++) {
+    let cls = 'progress-dot';
+    if (i < currentQuiz) cls += ' done';
+    else if (i === currentQuiz) cls += ' current';
+    dots += `<div class="${cls}"></div>`;
+  }
+  document.getElementById('progressBar').innerHTML = dots;
+  document.getElementById('quizScore').textContent = quizScore;
+  document.getElementById('quizTotal').textContent = quizQuestions.length;
+
+  let optsHtml = '';
+  q.opts.forEach((opt, i) => {
+    optsHtml += `<div class="quiz-option" onclick="checkAnswer(${i})" id="opt${i}">${String.fromCharCode(65+i)}. ${opt}</div>`;
+  });
+
+  document.getElementById('quizArea').innerHTML = `
+    <div class="quiz-question">第 ${currentQuiz + 1} 题: ${q.q}</div>
+    <div class="quiz-options">${optsHtml}</div>
+    <div class="quiz-feedback" id="quizFeedback"></div>
+  `;
+  quizAnswered = false;
+}
+
+function checkAnswer(idx) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+
+  const q = quizQuestions[currentQuiz];
+  const feedback = document.getElementById('quizFeedback');
+
+  if (idx === q.ans) {
+    quizScore++;
+    document.getElementById(`opt${idx}`).classList.add('correct');
+    feedback.className = 'quiz-feedback show correct';
+    feedback.textContent = `✅ 正确！${q.explain}`;
+  } else {
+    document.getElementById(`opt${idx}`).classList.add('wrong');
+    document.getElementById(`opt${q.ans}`).classList.add('correct');
+    feedback.className = 'quiz-feedback show wrong';
+    feedback.textContent = `❌ 错误。${q.explain}`;
+  }
+
+  document.getElementById('quizScore').textContent = quizScore;
+
+  setTimeout(() => {
+    currentQuiz++;
+    renderQuiz();
+  }, 2500);
+}
+
+// 初始化练习
+startQuiz();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中数学"></script>
+</body>
+</html>

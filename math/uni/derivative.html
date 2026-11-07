@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>导数与微分 · 大学数学互动可视化</title>
+<script src="assets/common.js"></script>
+<style>
+  :root {
+    --primary: #7c3aed;
+    --curve: #3b82f6;
+    --tangent: #ef4444;
+    --deriv: #10b981;
+    --deriv2: #f59e0b;
+    --deriv3: #ec4899;
+    --diff: #06b6d4;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.7);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1a1040 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 22px; }
+  header h1 { font-size: 2.1rem; background: linear-gradient(90deg, var(--curve), var(--deriv), var(--deriv2)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; font-size: 0.95rem; margin-top: 4px; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 22px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(124,58,237,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .stage { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-f::before { background: var(--curve); }
+  .legend .l-tan::before { background: var(--tangent); }
+  .legend .l-d1::before { background: var(--deriv); }
+  .legend .l-d2::before { background: var(--deriv2); }
+  .legend .l-d3::before { background: var(--deriv3); }
+  .legend .l-df::before { background: var(--diff); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 680px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .equation { font-family: "Times New Roman", "STSong", serif; font-size: 1.1rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .eq-hl { color: var(--deriv); font-weight: 600; }
+  .eq-hl2 { color: var(--deriv2); font-weight: 600; }
+  .eq-hlr { color: var(--tangent); font-weight: 600; }
+  .eq-hlb { color: var(--diff); font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--deriv); font-weight: 600; font-size: 13px; }
+
+  .func-select, .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .func-btn, .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 13px; color: #93c5fd; transition: all .2s; user-select: none; }
+  .func-btn.active, .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .func-btn:hover:not(.active), .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.1); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .steps { margin: 12px 0; }
+  .step { padding: 10px 14px; margin: 6px 0; background: rgba(255,255,255,0.04); border-radius: 8px; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--primary); transition: all .3s; }
+  .step.active { background: rgba(124,58,237,0.12); border-left-color: var(--deriv); }
+  .step .sn { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: white; text-align: center; line-height: 22px; font-size: 11px; margin-right: 8px; font-weight: 700; }
+  .step.active .sn { background: var(--deriv); }
+
+  .desc { font-size: 13px; color: #94a3b8; line-height: 1.7; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(124,58,237,0.08); border-radius: 12px; border: 1px solid rgba(124,58,237,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; min-height: 20px; line-height: 1.5; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 12px; }
+  .quiz-nav button { padding: 6px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; }
+  .quiz-nav button:hover { opacity: 0.85; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-score { font-size: 13px; color: #94a3b8; margin-top: 8px; }
+
+  .formula-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+  .formula-table th { background: rgba(124,58,237,0.15); padding: 8px; text-align: left; color: #c4b5fd; font-weight: 600; }
+  .formula-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .formula-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+  footer { text-align: center; color: #475569; font-size: 12px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>∂ 导数与微分 Interactive</h1>
+    <p>导数定义 · 求导公式推导 · 高阶导数 · 微分 · 互动练习</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="definition">📐 导数定义</div>
+    <div class="tab" data-mode="derive">📝 公式推导</div>
+    <div class="tab" data-mode="higher">📊 高阶导数</div>
+    <div class="tab" data-mode="differential">💧 微分</div>
+    <div class="tab" data-mode="quiz">🏆 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="780" height="620"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>大学数学 · 导数与微分 · 从极限定义到微分应用的完整探索</footer>
+</div>
+
+<script>
+(() => {
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const panel = document.getElementById('panel');
+  const legendEl = document.getElementById('legend');
+
+  let mode = 'definition';
+  let animId = null;
+
+  const fmt = (v, d=4) => Number(v).toFixed(d);
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  /* 视图状态 */
+  const V = { xMin: -4, xMax: 4, yMin: -3, yMax: 5 };
+
+  function toP(x, y) {
+    return [(x - V.xMin) / (V.xMax - V.xMin) * W, H - (y - V.yMin) / (V.yMax - V.yMin) * H];
+  }
+
+  function clearCV() { ctx.clearRect(0, 0, W, H); }
+
+  function drawGrid() {
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    for (let x = Math.ceil(V.xMin); x <= V.xMax; x++) {
+      const [px] = toP(x, 0);
+      ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+    }
+    for (let y = Math.ceil(V.yMin); y <= V.yMax; y++) {
+      const [, py] = toP(0, y);
+      ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1.5;
+    const [ox, oy] = toP(0, 0);
+    ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(W, oy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, H); ctx.stroke();
+    ctx.fillStyle = '#64748b'; ctx.font = '11px monospace'; ctx.textAlign = 'center';
+    for (let x = Math.ceil(V.xMin); x <= V.xMax; x++) {
+      if (x === 0) continue;
+      const [px] = toP(x, 0);
+      ctx.fillText(x, px, oy + 14);
+    }
+    ctx.textAlign = 'right';
+    for (let y = Math.ceil(V.yMin); y <= V.yMax; y++) {
+      if (y === 0) continue;
+      const [, py] = toP(0, y);
+      ctx.fillText(y, ox - 6, py + 4);
+    }
+  }
+
+  function drawFunc(f, color, lw=2.5, dash=[]) {
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash);
+    ctx.beginPath();
+    let first = true;
+    for (let i = 0; i <= 800; i++) {
+      const x = V.xMin + (V.xMax - V.xMin) * i / 800;
+      const y = f(x);
+      if (!isFinite(y) || Math.abs(y) > 200) { first = true; continue; }
+      const [px, py] = toP(x, y);
+      if (first) { ctx.moveTo(px, py); first = false; } else { ctx.lineTo(px, py); }
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  function drawPoint(x, y, r, color, label='', lp='top') {
+    const [px, py] = toP(x, y);
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1; ctx.stroke();
+    if (label) {
+      ctx.fillStyle = '#e2e8f0'; ctx.font = '12px "PingFang SC"'; ctx.textAlign = 'center';
+      ctx.fillText(label, px, py + (lp === 'top' ? -r - 6 : r + 14));
+    }
+  }
+
+  function drawLine(x1, y1, x2, y2, color, lw=1.5, dash=[]) {
+    const [px1, py1] = toP(x1, y1);
+    const [px2, py2] = toP(x2, y2);
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(px1, py1); ctx.lineTo(px2, py2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /* ========== 函数库 ========== */
+  const funcs = {
+    'x³': {
+      f: x => x*x*x,
+      df: x => 3*x*x,
+      d2f: x => 6*x,
+      d3f: x => 6,
+      label: 'f(x) = x³',
+      dfLabel: "f'(x) = 3x²",
+      d2fLabel: "f''(x) = 6x",
+      d3fLabel: "f'''(x) = 6"
+    },
+    'sin(x)': {
+      f: x => Math.sin(x),
+      df: x => Math.cos(x),
+      d2f: x => -Math.sin(x),
+      d3f: x => -Math.cos(x),
+      label: 'f(x) = sin(x)',
+      dfLabel: "f'(x) = cos(x)",
+      d2fLabel: "f''(x) = −sin(x)",
+      d3fLabel: "f'''(x) = −cos(x)"
+    },
+    'e^x': {
+      f: x => Math.exp(x),
+      df: x => Math.exp(x),
+      d2f: x => Math.exp(x),
+      d3f: x => Math.exp(x),
+      label: 'f(x) = eˣ',
+      dfLabel: "f'(x) = eˣ",
+      d2fLabel: "f''(x) = eˣ",
+      d3fLabel: "f'''(x) = eˣ"
+    },
+    'ln(x)': {
+      f: x => x > 0 ? Math.log(x) : NaN,
+      df: x => x > 0 ? 1/x : NaN,
+      d2f: x => x > 0 ? -1/(x*x) : NaN,
+      d3f: x => x > 0 ? 2/(x*x*x) : NaN,
+      label: 'f(x) = ln(x)',
+      dfLabel: "f'(x) = 1/x",
+      d2fLabel: "f''(x) = −1/x²",
+      d3fLabel: "f'''(x) = 2/x³"
+    },
+    'x·e⁻ˣ': {
+      f: x => x * Math.exp(-x),
+      df: x => (1 - x) * Math.exp(-x),
+      d2f: x => (x - 2) * Math.exp(-x),
+      d3f: x => (3 - x) * Math.exp(-x),
+      label: 'f(x) = x·e⁻ˣ',
+      dfLabel: "f'(x) = (1−x)e⁻ˣ",
+      d2fLabel: "f''(x) = (x−2)e⁻ˣ",
+      d3fLabel: "f'''(x) = (3−x)e⁻ˣ"
+    }
+  };
+
+  /* ========== 模式 1: 导数定义 ========== */
+  let defState = { x0: 1, dx: 1.5, funcKey: 'x³', animating: false };
+
+  function renderDefinition() {
+    clearCV(); drawGrid();
+    const fd = funcs[defState.funcKey];
+    const { x0, f, df } = fd;
+    const dx = defState.dx;
+    const slope = df(x0);
+
+    /* 绘制 f(x) */
+    drawFunc(f, '#3b82f6', 2.5);
+
+    /* 割线 (secant) */
+    const x1 = x0 + dx;
+    const y0 = f(x0), y1 = f(x1);
+    const secSlope = (y1 - y0) / dx;
+    const secExtend = 6;
+    const sy1 = y0 + secSlope * (-secExtend - x0);
+    const sy2 = y0 + secSlope * (secExtend - x0);
+    drawLine(-secExtend, sy1, secExtend, sy2, 'rgba(251,191,36,0.6)', 2, [6,4]);
+
+    /* 切线 (tangent) */
+    const ty1 = y0 + slope * (-secExtend - x0);
+    const ty2 = y0 + slope * (secExtend - x0);
+    drawLine(-secExtend, ty1, secExtend, ty2, '#ef4444', 2.5);
+
+    /* Δx 和 Δy 标注 */
+    if (dx > 0.05) {
+      drawLine(x0, y0, x1, y0, 'rgba(251,191,36,0.5)', 1, [3,3]);
+      drawLine(x1, y0, x1, y1, 'rgba(239,68,68,0.5)', 1, [3,3]);
+      const [px0, py0] = toP(x0, y0);
+      const [px1p, py1p] = toP(x1, y1);
+      const [pxm, pym] = toP(x1, y0);
+      ctx.fillStyle = '#fbbf24'; ctx.font = '12px "PingFang SC"'; ctx.textAlign = 'center';
+      ctx.fillText('Δx', (px0 + pxm)/2, pym + 16);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillText('Δy', pxm + 20, (pym + py1p)/2);
+    }
+
+    /* 标注点 */
+    drawPoint(x0, y0, 6, '#ef4444', `(${fmt(x0,1)}, ${fmt(y0,2)})`, 'bottom');
+    if (dx > 0.1) {
+      drawPoint(x1, y1, 5, '#fbbf24', `(${fmt(x1,2)}, ${fmt(y1,2)})`, 'top');
+    }
+
+    /* 动画粒子 */
+    if (defState.animating) {
+      const t = (Date.now() / 3000) % 1;
+      const adx = 2.5 * (1 - t);
+      const ax = x0 + adx;
+      const ay = f(ax);
+      if (isFinite(ay)) drawPoint(ax, ay, 4, 'rgba(124,58,237,0.8)');
+    }
+
+    legendEl.innerHTML = '<span class="l-f">f(x)</span><span class="l-tan">切线 (斜率=f\'(x₀))</span><span class="l-df">割线 (斜率=Δy/Δx)</span>';
+
+    panel.innerHTML = `
+      <h3>📐 导数的极限定义</h3>
+      <div class="equation">
+        f'(x₀) = lim<sub>Δx→0</sub> <span class="eq-hlr">Δy</span>/<span class="eq-hl">Δx</span>
+        = lim<sub>Δx→0</sub> [f(x₀+Δx) − f(x₀)] / Δx
+      </div>
+      <div class="func-select">
+        ${Object.keys(funcs).map(k => `<div class="func-btn ${defState.funcKey===k?'active':''}" data-fk="${k}">${k}</div>`).join('')}
+      </div>
+      <div class="slider-row">
+        <label>x₀ =</label>
+        <input type="range" min="-2" max="2" step="0.1" value="${x0}" id="x0Slider" />
+        <span class="val">${fmt(x0, 1)}</span>
+      </div>
+      <div class="slider-row">
+        <label>Δx =</label>
+        <input type="range" min="0.01" max="2.5" step="0.01" value="${fmt(dx,2)}" id="dxSlider" />
+        <span class="val" style="color:var(--deriv2)">${fmt(dx, 2)}</span>
+      </div>
+      <div class="mode-switch">
+        <div class="mode-btn ${defState.animating?'active':''}" id="animBtn">▶ 动画趋近</div>
+        <div class="mode-btn ${!defState.animating?'active':''}" id="stopBtn">⏸ 暂停</div>
+      </div>
+      <div class="info-grid">
+        <div><b>f(x₀)</b> = ${fmt(y0, 4)}</div>
+        <div><b>f'(x₀)</b> = ${fmt(slope, 4)}</div>
+        <div><b>割线斜率</b> = ${fmt(secSlope, 4)}</div>
+        <div><b>误差</b> = ${fmt(Math.abs(secSlope - slope), 6)}</div>
+      </div>
+      <div class="desc">
+        💡 <b>核心思想：</b>当 Δx → 0 时，割线（黄色虚线）的斜率 Δy/Δx 趋近于切线（红色）的斜率 f'(x₀)。拖动 Δx 滑块观察这个过程。
+      </div>
+    `;
+
+    /* 事件 */
+    const x0s = document.getElementById('x0Slider');
+    const dxs = document.getElementById('dxSlider');
+    if (x0s) x0s.addEventListener('input', e => { defState.x0 = parseFloat(e.target.value); renderDefinition(); });
+    if (dxs) dxs.addEventListener('input', e => { defState.dx = parseFloat(e.target.value); defState.animating = false; renderDefinition(); });
+    panel.querySelectorAll('.func-btn').forEach(b => b.addEventListener('click', () => { defState.funcKey = b.dataset.fk; renderDefinition(); }));
+    document.getElementById('animBtn')?.addEventListener('click', () => { defState.animating = true; });
+    document.getElementById('stopBtn')?.addEventListener('click', () => { defState.animating = false; renderDefinition(); });
+  }
+
+  /* ========== 模式 2: 公式推导 ========== */
+  const derivations = [
+    {
+      title: '(xⁿ)\' = n·xⁿ⁻¹',
+      steps: [
+        '由定义：(xⁿ)\' = lim(Δx→0) [(x+Δx)ⁿ − xⁿ] / Δx',
+        '二项式展开：(x+Δx)ⁿ = xⁿ + n·xⁿ⁻¹·Δx + C(n,2)·xⁿ⁻²·Δx² + ...',
+        '代入：[(x+Δx)ⁿ − xⁿ]/Δx = n·xⁿ⁻¹ + C(n,2)·xⁿ⁻²·Δx + ...',
+        '令 Δx→0，高阶项消失',
+        '∴ (xⁿ)\' = n·xⁿ⁻¹'
+      ],
+      example: '例：(x⁵)\' = 5x⁴',
+      f: x => Math.pow(x, 5),
+      df: x => 5 * Math.pow(x, 4)
+    },
+    {
+      title: '(sin x)\' = cos x',
+      steps: [
+        '由定义：(sin x)\' = lim(Δx→0) [sin(x+Δx) − sin(x)] / Δx',
+        '和差化积：sin(x+Δx) − sin(x) = 2cos(x+Δx/2)·sin(Δx/2)',
+        '代入：= lim(Δx→0) 2cos(x+Δx/2)·sin(Δx/2) / Δx',
+        '= lim(Δx→0) cos(x+Δx/2) · [sin(Δx/2)/(Δx/2)]',
+        '利用 lim(u→0) sin(u)/u = 1',
+        '∴ (sin x)\' = cos(x) · 1 = cos x'
+      ],
+      example: '例：(sin(π/4))\' = cos(π/4) = √2/2',
+      f: x => Math.sin(x),
+      df: x => Math.cos(x)
+    },
+    {
+      title: '(eˣ)\' = eˣ',
+      steps: [
+        '由定义：(eˣ)\' = lim(Δx→0) [e^(x+Δx) − eˣ] / Δx',
+        '= lim(Δx→0) eˣ · [e^Δx − 1] / Δx',
+        '关键极限：lim(h→0) (eʰ−1)/h = 1（这是 e 的定义之一）',
+        '∴ (eˣ)\' = eˣ · 1 = eˣ',
+        '✨ eˣ 是唯一等于自身导数的函数（除常数倍）'
+      ],
+      example: 'eˣ 的任意阶导数都是 eˣ',
+      f: x => Math.exp(x),
+      df: x => Math.exp(x)
+    },
+    {
+      title: '(ln x)\' = 1/x',
+      steps: [
+        '由定义：(ln x)\' = lim(Δx→0) [ln(x+Δx) − ln(x)] / Δx',
+        '= lim(Δx→0) ln(1 + Δx/x) / Δx',
+        '令 t = Δx/x：= lim(t→0) ln(1+t) / (xt)',
+        '= (1/x) · lim(t→0) ln(1+t)/t',
+        '利用 lim(t→0) ln(1+t)/t = 1',
+        '∴ (ln x)\' = 1/x'
+      ],
+      example: '例：(ln 2)\' = 1/2（在 x=2 处）',
+      f: x => x > 0 ? Math.log(x) : NaN,
+      df: x => x > 0 ? 1/x : NaN
+    }
+  ];
+  let derivIdx = 0, derivStep = 0;
+
+  function renderDerive() {
+    clearCV(); drawGrid();
+    const d = derivations[derivIdx];
+    drawFunc(d.f, '#3b82f6', 2.5);
+    drawFunc(d.df, '#10b981', 2, [5,5]);
+
+    /* 在 x=1 处画切线 */
+    const x0 = 1;
+    const y0 = d.f(x0);
+    const slope = d.df(x0);
+    if (isFinite(y0) && isFinite(slope)) {
+      const ext = 3;
+      drawLine(x0 - ext, y0 - slope*ext, x0 + ext, y0 + slope*ext, '#ef4444', 2);
+      drawPoint(x0, y0, 5, '#ef4444', `x₀=1`, 'bottom');
+    }
+
+    legendEl.innerHTML = '<span class="l-f">f(x)</span><span class="l-d1">f\'(x)</span><span class="l-tan">切线</span>';
+
+    panel.innerHTML = `
+      <h3>📝 求导公式推导</h3>
+      <div class="equation" style="font-size:1.3rem; color:#c4b5fd;">${d.title}</div>
+      <div class="func-select">
+        ${derivations.map((dd, i) => `<div class="func-btn ${i===derivIdx?'active':''}" data-di="${i}">${dd.title.split('=')[0].trim()}</div>`).join('')}
+      </div>
+      <div class="steps">
+        ${d.steps.map((s, i) => `<div class="step ${i<=derivStep?'active':''}"><span class="sn">${i+1}</span>${s}</div>`).join('')}
+      </div>
+      <div class="quiz-nav">
+        <button id="prevS" ${derivStep<=0?'disabled':''} style="padding:6px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;background:var(--primary);color:white;">◀ 上一步</button>
+        <button id="nextS" ${derivStep>=d.steps.length-1?'disabled':''} style="padding:6px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;background:var(--primary);color:white;">下一步 ▶</button>
+      </div>
+      <div class="desc" style="margin-top:12px;">${d.example}</div>
+      <div class="desc">
+        📋 <b>常用导数公式表：</b>
+        <table class="formula-table">
+          <tr><th>f(x)</th><th>f'(x)</th></tr>
+          <tr><td>xⁿ</td><td>n·xⁿ⁻¹</td></tr>
+          <tr><td>sin x</td><td>cos x</td></tr>
+          <tr><td>cos x</td><td>−sin x</td></tr>
+          <tr><td>eˣ</td><td>eˣ</td></tr>
+          <tr><td>aˣ</td><td>aˣ·ln a</td></tr>
+          <tr><td>ln x</td><td>1/x</td></tr>
+          <tr><td>log_a(x)</td><td>1/(x·ln a)</td></tr>
+          <tr><td>tan x</td><td>sec²x</td></tr>
+          <tr><td>arcsin x</td><td>1/√(1−x²)</td></tr>
+          <tr><td>arctan x</td><td>1/(1+x²)</td></tr>
+        </table>
+      </div>
+    `;
+
+    panel.querySelectorAll('.func-btn').forEach(b => b.addEventListener('click', () => { derivIdx = parseInt(b.dataset.di); derivStep = 0; renderDerive(); }));
+    document.getElementById('prevS')?.addEventListener('click', () => { if (derivStep > 0) { derivStep--; renderDerive(); }});
+    document.getElementById('nextS')?.addEventListener('click', () => { if (derivStep < d.steps.length - 1) { derivStep++; renderDerive(); }});
+  }
+
+  /* ========== 模式 3: 高阶导数 ========== */
+  let higherState = { funcKey: 'sin(x)', showD1: true, showD2: true, showD3: false, x0: 1 };
+
+  function renderHigher() {
+    clearCV(); drawGrid();
+    const fd = funcs[higherState.funcKey];
+
+    drawFunc(fd.f, '#3b82f6', 2.5);
+    if (higherState.showD1) drawFunc(fd.df, '#10b981', 2);
+    if (higherState.showD2) drawFunc(fd.d2f, '#f59e0b', 2, [5,5]);
+    if (higherState.showD3) drawFunc(fd.d3f, '#ec4899', 1.5, [3,3]);
+
+    /* 在 x0 处标注各阶导数值 */
+    const { x0 } = higherState;
+    const y0 = fd.f(x0), d1 = fd.df(x0), d2 = fd.d2f(x0), d3 = fd.d3f(x0);
+
+    if (isFinite(y0)) drawPoint(x0, y0, 5, '#3b82f6');
+    if (higherState.showD1 && isFinite(d1)) drawPoint(x0, d1, 4, '#10b981', `f'=${fmt(d1,2)}`, 'top');
+    if (higherState.showD2 && isFinite(d2)) drawPoint(x0, d2, 4, '#f59e0b', `f''=${fmt(d2,2)}`, 'bottom');
+
+    /* 曲率标注 */
+    const kappa = isFinite(d2) && isFinite(d1) ? Math.abs(d2) / Math.pow(1 + d1*d1, 1.5) : 0;
+
+    legendEl.innerHTML = '<span class="l-f">f(x)</span><span class="l-d1">f\'(x)</span><span class="l-d2">f\'\'(x)</span><span class="l-d3">f\'\'\'(x)</span>';
+
+    panel.innerHTML = `
+      <h3>📊 高阶导数可视化</h3>
+      <div class="equation">
+        f''(x) = <span class="eq-hl2">(f'(x))'</span> = lim<sub>h→0</sub> [f'(x+h) − f'(x)] / h<br/>
+        <span style="font-size:0.85em; color:#94a3b8">f''(x) 反映 f(x) 的凹凸性（曲率方向）</span>
+      </div>
+      <div class="func-select">
+        ${Object.keys(funcs).map(k => `<div class="func-btn ${higherState.funcKey===k?'active':''}" data-fk="${k}">${k}</div>`).join('')}
+      </div>
+      <div class="slider-row">
+        <label>x₀ =</label>
+        <input type="range" min="-2" max="2" step="0.1" value="${x0}" id="x0Slider2" />
+        <span class="val">${fmt(x0, 1)}</span>
+      </div>
+      <div class="mode-switch">
+        <div class="mode-btn ${higherState.showD1?'active':''}" id="tD1">f'(x)</div>
+        <div class="mode-btn ${higherState.showD2?'active':''}" id="tD2">f''(x)</div>
+        <div class="mode-btn ${higherState.showD3?'active':''}" id="tD3">f'''(x)</div>
+      </div>
+      <div class="info-grid">
+        <div><b>f(${fmt(x0,1)})</b> = ${isFinite(y0) ? fmt(y0,4) : '未定义'}</div>
+        <div><b>f'(${fmt(x0,1)})</b> = ${isFinite(d1) ? fmt(d1,4) : '未定义'}</div>
+        <div><b>f''(${fmt(x0,1)})</b> = ${isFinite(d2) ? fmt(d2,4) : '未定义'}</div>
+        <div><b>f'''(${fmt(x0,1)})</b> = ${isFinite(d3) ? fmt(d3,4) : '未定义'}</div>
+        <div><b>曲率 κ</b> = ${fmt(kappa, 4)}<br/><span style="font-size:11px;color:#64748b">|f''|/(1+f'²)^(3/2)</span></div>
+        <div><b>凹凸性</b><br/>${isFinite(d2) ? (d2 > 0.01 ? '⬆️ 凹 (f\'\'>0)' : d2 < -0.01 ? '⬇️ 凸 (f\'\'<0)' : '➡️ 拐点附近') : '—'}</div>
+      </div>
+      <div class="desc">
+        💡 <b>几何意义：</b><br/>
+        • <b>f'(x)</b> > 0 → 递增，< 0 → 递减<br/>
+        • <b>f''(x)</b> > 0 → 凹（开口朝上），< 0 → 凸<br/>
+        • <b>f''(x₀) = 0</b> 且变号 → 拐点<br/>
+        • <b>f'(x₀) = 0</b> 且 f''(x₀) < 0 → 极大值<br/>
+        • <b>f'(x₀) = 0</b> 且 f''(x₀) > 0 → 极小值
+      </div>
+    `;
+
+    panel.querySelectorAll('.func-btn').forEach(b => b.addEventListener('click', () => { higherState.funcKey = b.dataset.fk; renderHigher(); }));
+    document.getElementById('x0Slider2')?.addEventListener('input', e => { higherState.x0 = parseFloat(e.target.value); renderHigher(); });
+    document.getElementById('tD1')?.addEventListener('click', () => { higherState.showD1 = !higherState.showD1; renderHigher(); });
+    document.getElementById('tD2')?.addEventListener('click', () => { higherState.showD2 = !higherState.showD2; renderHigher(); });
+    document.getElementById('tD3')?.addEventListener('click', () => { higherState.showD3 = !higherState.showD3; renderHigher(); });
+  }
+
+  /* ========== 模式 4: 微分 ========== */
+  let diffState = { x0: 1, dx: 0.8, funcKey: 'x³' };
+
+  function renderDifferential() {
+    clearCV(); drawGrid();
+    const fd = funcs[diffState.funcKey];
+    const { x0, f, df } = fd;
+    const dx = diffState.dx;
+    const y0 = f(x0);
+    const dy_exact = f(x0 + dx) - y0;
+    const dy_approx = df(x0) * dx;
+
+    /* 绘制函数 */
+    drawFunc(f, '#3b82f6', 2.5);
+
+    /* 切线 */
+    const slope = df(x0);
+    const ext = 4;
+    drawLine(x0 - ext, y0 - slope*ext, x0 + ext, y0 + slope*ext, '#ef4444', 2);
+
+    /* Δx 标注 */
+    drawLine(x0, y0, x0 + dx, y0, 'rgba(6,182,212,0.5)', 1.5, [3,3]);
+    /* dy (切线上的增量) */
+    drawLine(x0 + dx, y0, x0 + dx, y0 + dy_approx, '#06b6d4', 2.5);
+    /* 实际增量 */
+    const yActual = f(x0 + dx);
+    if (isFinite(yActual)) {
+      drawLine(x0 + dx, y0 + dy_approx, x0 + dx, yActual, '#f59e0b', 2);
+      drawPoint(x0 + dx, yActual, 4, '#f59e0b');
+    }
+
+    drawPoint(x0, y0, 6, '#ef4444', `(${fmt(x0,1)}, ${fmt(y0,2)})`, 'bottom');
+
+    /* 标注 */
+    const [pxDx] = toP(x0 + dx/2, 0);
+    const [, pyDx] = toP(0, y0);
+    ctx.fillStyle = '#06b6d4'; ctx.font = '13px "PingFang SC"'; ctx.textAlign = 'center';
+    ctx.fillText('dx = Δx', toP(x0 + dx/2, y0)[0], pyDx + 18);
+
+    legendEl.innerHTML = '<span class="l-f">f(x)</span><span class="l-tan">切线</span><span class="l-df">dy = f\'(x₀)·dx</span><span class="l-d2">Δy − dy（误差）</span>';
+
+    panel.innerHTML = `
+      <h3>💧 微分的概念</h3>
+      <div class="equation">
+        <span class="eq-hlb">dy</span> = f'(x₀) · dx<br/>
+        <span style="font-size:0.85em; color:#94a3b8">微分 dy 是增量 Δy 的线性主部</span>
+      </div>
+      <div class="func-select">
+        ${Object.keys(funcs).map(k => `<div class="func-btn ${diffState.funcKey===k?'active':''}" data-fk="${k}">${k}</div>`).join('')}
+      </div>
+      <div class="slider-row">
+        <label>x₀ =</label>
+        <input type="range" min="-2" max="2" step="0.1" value="${x0}" id="x0Slider3" />
+        <span class="val">${fmt(x0, 1)}</span>
+      </div>
+      <div class="slider-row">
+        <label>dx =</label>
+        <input type="range" min="0.01" max="1.5" step="0.01" value="${fmt(dx,2)}" id="dxSlider3" />
+        <span class="val" style="color:var(--diff)">${fmt(dx, 2)}</span>
+      </div>
+      <div class="info-grid">
+        <div><b>Δy</b> = f(x₀+dx) − f(x₀)<br/>= ${fmt(dy_exact, 6)}</div>
+        <div><b>dy</b> = f'(x₀)·dx<br/>= ${fmt(dy_approx, 6)}</div>
+        <div><b>误差</b> = |Δy − dy|<br/>= ${fmt(Math.abs(dy_exact - dy_approx), 6)}</div>
+        <div><b>相对误差</b><br/>= ${dy_exact !== 0 ? fmt(Math.abs(dy_exact - dy_approx)/Math.abs(dy_exact)*100, 2) + '%' : '—'}</div>
+      </div>
+      <div class="desc">
+        💡 <b>微分的本质：</b>用切线（直线）近似代替曲线。当 dx 很小时，dy ≈ Δy，误差是 dx 的高阶无穷小。<br/><br/>
+        <b>应用：</b><br/>
+        • 近似计算：f(x₀+dx) ≈ f(x₀) + f'(x₀)·dx<br/>
+        • 微分形式不变性：dy = f'(u)·du 对复合函数也成立<br/>
+        • 链式法则的基础：dy/dx = (dy/du)·(du/dx)
+      </div>
+    `;
+
+    panel.querySelectorAll('.func-btn').forEach(b => b.addEventListener('click', () => { diffState.funcKey = b.dataset.fk; renderDifferential(); }));
+    document.getElementById('x0Slider3')?.addEventListener('input', e => { diffState.x0 = parseFloat(e.target.value); renderDifferential(); });
+    document.getElementById('dxSlider3')?.addEventListener('input', e => { diffState.dx = parseFloat(e.target.value); renderDifferential(); });
+  }
+
+  /* ========== 模式 5: 互动练习 ========== */
+  const quizBank = [
+    { q: 'f(x) = x·ln(x)，则 f\'(x) = ?', opts: ['ln(x)', '1 + ln(x)', 'x/x', 'ln(x) + 1/x'], ans: 1, explain: '乘法法则：f\'(x) = 1·ln(x) + x·(1/x) = ln(x) + 1' },
+    { q: 'd/dx [sin(x²)] = ?', opts: ['cos(x²)', '2x·cos(x²)', 'x²·cos(x²)', '−cos(x²)'], ans: 1, explain: '链式法则：cos(x²)·(x²)\' = 2x·cos(x²)' },
+    { q: 'd/dx [e^(3x)] = ?', opts: ['e^(3x)', '3e^(3x)', '3xe^(3x)', 'e^(3x)/3'], ans: 1, explain: '链式法则：e^(3x)·(3x)\' = 3e^(3x)' },
+    { q: 'f(x) = ln(sin(x))，则 f\'(x) = ?', opts: ['1/sin(x)', 'cos(x)/sin(x)', 'cot(x)', 'B 和 C 都对'], ans: 3, explain: '链式法则：cos(x)/sin(x) = cot(x)，B 和 C 是等价的' },
+    { q: 'd²/dx² [x·eˣ] = ?', opts: ['eˣ', '(x+2)eˣ', '(x+1)eˣ', 'xeˣ'], ans: 1, explain: 'f\' = (1+x)eˣ，f\'\' = eˣ + (1+x)eˣ = (2+x)eˣ' },
+    { q: 'f(x) = |x| 在 x=0 处？', opts: ['可导，f\'(0)=0', '可导，f\'(0)=1', '不可导', '不连续'], ans: 2, explain: '左导数 = −1，右导数 = 1，不相等，所以不可导（但连续）' },
+    { q: 'dy = f\'(x)dx 表示什么？', opts: ['函数的增量', '函数的微分（切线增量）', '导数', '极限'], ans: 1, explain: '微分 dy 是切线上的增量，是 Δy 的线性近似' },
+    { q: 'lim(Δx→0) [f(x₀+Δx)−f(x₀)]/Δx 是？', opts: ['Δy', 'dy', 'f\'(x₀)', 'f(x₀)'], ans: 2, explain: '这正是导数 f\'(x₀) 的极限定义' }
+  ];
+  let qIdx = 0, qAnswered = false, qScore = 0, qTotal = 0;
+
+  function renderQuiz() {
+    clearCV();
+    V.xMin = -4; V.xMax = 4; V.yMin = -3; V.yMax = 5;
+    drawGrid();
+
+    /* 装饰 */
+    const t = Date.now() / 2000;
+    ctx.globalAlpha = 0.12;
+    for (let i = 0; i < 6; i++) {
+      const a = t + i * Math.PI / 3;
+      ctx.beginPath();
+      ctx.arc(W/2 + Math.cos(a)*160, H/2 + Math.sin(a)*130, 25, 0, Math.PI*2);
+      ctx.fillStyle = ['#7c3aed','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899'][i];
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 26px "PingFang SC"'; ctx.textAlign = 'center';
+    ctx.fillText(`第 ${qIdx+1} / ${quizBank.length} 题`, W/2, H/2 - 15);
+    ctx.font = '16px "PingFang SC"'; ctx.fillStyle = '#94a3b8';
+    ctx.fillText(`得分：${qScore} / ${qTotal}`, W/2, H/2 + 15);
+
+    legendEl.innerHTML = '';
+    const q = quizBank[qIdx];
+
+    panel.innerHTML = `
+      <h3>🏆 导数与微分 — 互动练习</h3>
+      <div class="quiz">
+        <div class="quiz-q" style="font-size:15px; font-weight:600;">${q.q}</div>
+        <div class="quiz-opts">
+          ${q.opts.map((o, i) => `<div class="quiz-opt" data-oi="${i}">${String.fromCharCode(65+i)}. ${o}</div>`).join('')}
+        </div>
+        <div class="quiz-feedback" id="qFb"></div>
+        <div class="quiz-nav">
+          <button id="prevQ" ${qIdx<=0?'disabled':''}>◀ 上一题</button>
+          <button id="nextQ" ${qIdx>=quizBank.length-1?'disabled':''}>下一题 ▶</button>
+          <button id="resetQ">🔄 重置</button>
+        </div>
+        <div class="quiz-score">进度：${qIdx+1}/${quizBank.length} | 正确率：${qTotal > 0 ? Math.round(qScore/qTotal*100) : 0}%${typeof PageProgress !== 'undefined' && PageProgress.isDone('derivative') ? ' · ✅ 已记录完成' : ''}</div>
+      </div>
+    `;
+
+    qAnswered = false;
+    panel.querySelectorAll('.quiz-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        if (qAnswered) return;
+        qAnswered = true; qTotal++;
+        const oi = parseInt(opt.dataset.oi);
+        const fb = document.getElementById('qFb');
+        if (oi === q.ans) {
+          opt.classList.add('correct'); qScore++;
+          fb.innerHTML = `✅ 正确！${q.explain}`; fb.style.color = '#10b981';
+        } else {
+          opt.classList.add('wrong');
+          panel.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+          fb.innerHTML = `❌ 错误。${q.explain}`; fb.style.color = '#ef4444';
+        }
+        if (typeof PageProgress !== 'undefined' && qScore >= Math.ceil(quizBank.length * 0.6) && !PageProgress.isDone('derivative')) {
+          PageProgress.markDone('derivative');
+        }
+      });
+    });
+    document.getElementById('prevQ')?.addEventListener('click', () => { if (qIdx > 0) { qIdx--; renderQuiz(); }});
+    document.getElementById('nextQ')?.addEventListener('click', () => { if (qIdx < quizBank.length - 1) { qIdx++; renderQuiz(); }});
+    document.getElementById('resetQ')?.addEventListener('click', () => { qIdx = 0; qScore = 0; qTotal = 0; renderQuiz(); });
+  }
+
+  /* ========== 主循环 ========== */
+  function switchMode(m) {
+    mode = m;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+    V.xMin = -4; V.xMax = 4; V.yMin = -3; V.yMax = 5;
+    render();
+  }
+
+  function render() {
+    if (animId) cancelAnimationFrame(animId);
+    animId = null;
+    switch (mode) {
+      case 'definition': renderDefinition(); break;
+      case 'derive': renderDerive(); break;
+      case 'higher': renderHigher(); break;
+      case 'differential': renderDifferential(); break;
+      case 'quiz': renderQuiz(); break;
+    }
+  }
+
+  function animLoop() {
+    render();
+    animId = requestAnimationFrame(animLoop);
+  }
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => switchMode(tab.dataset.mode));
+  });
+
+  render();
+  animLoop();
+})();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

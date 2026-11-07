@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>偏微分方程 · 热方程、波动方程与拉普拉斯方程互动可视化</title>
+<link rel="stylesheet" href="assets/common.css" />
+<script src="assets/common.js"></script>
+<style>
+  :root {
+    --primary: #06b6d4;
+    --heat: #ef4444;
+    --wave: #3b82f6;
+    --laplace: #8b5cf6;
+    --dark: #0f172a;
+    --light: #f1f5f9;
+  }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1a2340 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--heat), var(--wave), var(--laplace)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; }
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 20px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(6,182,212,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); touch-action: manipulation; }
+  .panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 10px; font-size: 1.1rem; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 13px; color: #e2e8f0; min-height: 36px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(6,182,212,0.08); border-radius: 12px; border: 1px solid rgba(6,182,212,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 36px; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-heat::before { background: var(--heat); }
+  .legend .l-wave::before { background: var(--wave); }
+  .legend .l-lap::before { background: var(--laplace); }
+  .prop-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.6; border-left: 3px solid var(--primary); }
+  .prop-card .prop-title { font-weight: 600; color: #67e8f9; margin-bottom: 4px; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🌊 偏微分方程 Interactive</h1>
+    <p>热传导 · 波动传播 · 平衡场 · 三大类 PDE 一网打尽</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="concept">📖 PDE 分类</div>
+    <div class="tab" data-mode="heat">🔥 热方程</div>
+    <div class="tab" data-mode="wave">🌊 波动方程</div>
+    <div class="tab" data-mode="laplace">⚡ 拉普拉斯方程</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="800" height="600"></canvas>
+      <div class="legend">
+        <span class="l-heat">抛物型（热）</span>
+        <span class="l-wave">双曲型（波）</span>
+        <span class="l-lap">椭圆型（势）</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div id="panelContent"></div>
+    </div>
+  </div>
+
+  <footer>Knowledge Visual · 大学数学 · 偏微分方程</footer>
+</div>
+
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+let currentMode = 'concept';
+let animFrame = null;
+let t = 0;
+
+// ==== 模拟状态 ====
+// 热方程 1D 杆温度
+const NX = 80;
+let uHeat = new Float32Array(NX);
+let alpha = 0.18;
+let heatInit = 'step';
+// 波动方程 1D 弦
+let uWave = new Float32Array(NX);
+let uWavePrev = new Float32Array(NX);
+let c = 0.5;
+let waveInit = 'pluck';
+// 拉普拉斯方程 2D 网格（粗）
+const NL = 32;
+let phi = new Float32Array(NL * NL);
+let bcMode = 'hot-top';
+
+function resetHeat() {
+  for (let i = 0; i < NX; i++) {
+    const x = i / (NX - 1);
+    if (heatInit === 'step') uHeat[i] = (x < 0.5) ? 1 : 0;
+    else if (heatInit === 'gauss') uHeat[i] = Math.exp(-Math.pow((x - 0.5) / 0.08, 2));
+    else uHeat[i] = Math.sin(Math.PI * x);
+  }
+  uHeat[0] = 0; uHeat[NX - 1] = 0;
+}
+function resetWave() {
+  for (let i = 0; i < NX; i++) {
+    const x = i / (NX - 1);
+    if (waveInit === 'pluck') uWave[i] = (x < 0.3) ? x / 0.3 : (1 - x) / 0.7;
+    else if (waveInit === 'pulse') uWave[i] = Math.exp(-Math.pow((x - 0.5) / 0.06, 2));
+    else uWave[i] = Math.sin(2 * Math.PI * x);
+  }
+  uWave[0] = 0; uWave[NX - 1] = 0;
+  uWavePrev.set(uWave);
+}
+function resetLaplace() {
+  phi.fill(0);
+  for (let j = 0; j < NL; j++) {
+    for (let i = 0; i < NL; i++) {
+      const k = j * NL + i;
+      if (j === NL - 1) phi[k] = (bcMode === 'hot-top') ? 1 : 0;   // top
+      if (j === 0)      phi[k] = (bcMode === 'corner') ? 0 : 0;   // bottom
+      if (i === 0)      phi[k] = (bcMode === 'corner') ? 1 : 0;   // left
+      if (i === NL - 1) phi[k] = (bcMode === 'corner') ? 1 : 0;   // right
+      if (bcMode === 'dipole' && i === Math.floor(NL/2) && Math.abs(j - NL/2) < 2) phi[k] = 1;
+    }
+  }
+}
+resetHeat(); resetWave(); resetLaplace();
+
+// ==== 数值推进 ====
+function stepHeat() {
+  const dx = 1 / (NX - 1), dt = 0.4 * dx * dx / alpha;
+  const r = alpha * dt / (dx * dx);
+  const next = new Float32Array(uHeat);
+  for (let i = 1; i < NX - 1; i++) next[i] = uHeat[i] + r * (uHeat[i+1] - 2*uHeat[i] + uHeat[i-1]);
+  uHeat = next;
+}
+function stepWave() {
+  const dx = 1 / (NX - 1), dt = 0.3 * dx / c;
+  const r = (c * dt / dx) ** 2;
+  const next = new Float32Array(NX);
+  for (let i = 1; i < NX - 1; i++) next[i] = 2*uWave[i] - uWavePrev[i] + r * (uWave[i+1] - 2*uWave[i] + uWave[i-1]);
+  next[0] = 0; next[NX-1] = 0;
+  uWavePrev = uWave; uWave = next;
+}
+function stepLaplace(iters = 30) {
+  for (let it = 0; it < iters; it++) {
+    for (let j = 1; j < NL - 1; j++) {
+      for (let i = 1; i < NL - 1; i++) {
+        const k = j * NL + i;
+        let isBC = false;
+        if (bcMode === 'dipole' && i === Math.floor(NL/2) && Math.abs(j - NL/2) < 2) isBC = true;
+        if (isBC) continue;
+        phi[k] = 0.25 * (phi[k+1] + phi[k-1] + phi[k+NL] + phi[k-NL]);
+      }
+    }
+  }
+}
+
+// ==== 颜色映射 ====
+function tempColor(v) {
+  v = Math.max(0, Math.min(1, v));
+  // blue → cyan → yellow → red
+  const r = Math.floor(255 * Math.min(1, Math.max(0, 1.5*v - 0.2)));
+  const g = Math.floor(255 * Math.min(1, Math.max(0, v < 0.5 ? 2*v : 2 - 1.4*v)));
+  const b = Math.floor(255 * Math.min(1, Math.max(0, 1 - 1.6*v)));
+  return `rgb(${r},${g},${b})`;
+}
+
+// ==== 绘制 ====
+function draw() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
+  switch (currentMode) {
+    case 'concept': drawConcept(); break;
+    case 'heat': drawHeat(); break;
+    case 'wave': drawWave(); break;
+    case 'laplace': drawLaplace(); break;
+    case 'quiz': drawQuizCanvas(); break;
+  }
+}
+
+function drawConcept() {
+  ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('PDE 三大类', W/2, 50);
+  const cats = [
+    { x: 130, y: 130, color: '#ef4444', name: '抛物型', eq: '∂u/∂t = α·∂²u/∂x²', ex: '热传导、扩散', prop: '随时间平滑、耗散' },
+    { x: 400, y: 130, color: '#3b82f6', name: '双曲型', eq: '∂²u/∂t² = c²·∂²u/∂x²', ex: '波、振动', prop: '保持波形、能量守恒' },
+    { x: 670, y: 130, color: '#8b5cf6', name: '椭圆型', eq: '∂²u/∂x² + ∂²u/∂y² = 0', ex: '静电场、稳态温度', prop: '空间平滑、极值原理' }
+  ];
+  cats.forEach(c2 => {
+    ctx.fillStyle = c2.color + '20';
+    ctx.strokeStyle = c2.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(c2.x - 120, c2.y - 40, 240, 220, 12); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = c2.color; ctx.font = 'bold 20px sans-serif';
+    ctx.fillText(c2.name, c2.x, c2.y);
+    ctx.fillStyle = '#e2e8f0'; ctx.font = 'italic 14px "Times New Roman", serif';
+    ctx.fillText(c2.eq, c2.x, c2.y + 30);
+    ctx.font = '13px sans-serif'; ctx.fillStyle = '#94a3b8';
+    ctx.fillText(c2.ex, c2.x, c2.y + 60);
+    ctx.fillText(c2.prop, c2.x, c2.y + 85);
+    ctx.fillStyle = '#cbd5e1'; ctx.font = '12px sans-serif';
+    const disc = (c2.name === '抛物型') ? 'B²-AC = 0' : (c2.name === '双曲型' ? 'B²-AC > 0' : 'B²-AC < 0');
+    ctx.fillText('判别式 ' + disc, c2.x, c2.y + 130);
+    ctx.fillText('时间维度：' + (c2.name === '椭圆型' ? '无（稳态）' : '有'), c2.x, c2.y + 155);
+  });
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '15px sans-serif';
+  ctx.fillText('判断 PDE 类型 → 选合适的解法（分离变量/特征线/格林函数/数值法）', W/2, 480);
+  ctx.fillText('与 ODE 区别：未知函数 u(x,y,t) 含多个自变量', W/2, 510);
+}
+
+function drawHeat() {
+  for (let s = 0; s < 4; s++) stepHeat();
+  t += 1;
+  // Title
+  ctx.fillStyle = '#fca5a5'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('一维热传导  ∂u/∂t = α·∂²u/∂x²', W/2, 30);
+  // 杆示意（彩色横条）
+  const barY = 100, barH = 50;
+  for (let i = 0; i < NX - 1; i++) {
+    const x0 = 60 + i * (W - 120) / (NX - 1);
+    ctx.fillStyle = tempColor(uHeat[i]);
+    ctx.fillRect(x0, barY, (W - 120) / (NX - 1) + 1, barH);
+  }
+  ctx.strokeStyle = '#475569'; ctx.lineWidth = 2; ctx.strokeRect(60, barY, W - 120, barH);
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText('x = 0', 60, barY + barH + 18);
+  ctx.fillText('x = 1', W - 60, barY + barH + 18);
+  ctx.fillText(`t = ${(t * 0.001).toFixed(3)} · α = ${alpha.toFixed(2)}`, W/2, barY + barH + 18);
+  // 曲线
+  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3; ctx.beginPath();
+  for (let i = 0; i < NX; i++) {
+    const x = 60 + i * (W - 120) / (NX - 1);
+    const y = 480 - uHeat[i] * 240;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  // 坐标轴
+  ctx.strokeStyle = '#475569'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(60, 480); ctx.lineTo(W - 60, 480); ctx.moveTo(60, 480); ctx.lineTo(60, 240); ctx.stroke();
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '12px sans-serif';
+  ctx.fillText('u(x,t)', 40, 250); ctx.fillText('1.0', 35, 245); ctx.fillText('0', 50, 485);
+  // 关键点
+  ctx.fillStyle = '#fca5a5'; ctx.font = '14px sans-serif';
+  ctx.fillText('🔥 热从高温区流向低温区，逐渐均匀化（熵增）', W/2, 540);
+  ctx.fillText('解析解：分离变量 → u(x,t) = Σ bₙ e^(-αn²π²t) sin(nπx)', W/2, 565);
+}
+
+function drawWave() {
+  for (let s = 0; s < 3; s++) stepWave();
+  t += 1;
+  ctx.fillStyle = '#93c5fd'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('一维波动  ∂²u/∂t² = c²·∂²u/∂x²', W/2, 30);
+  // 弦
+  ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 3; ctx.beginPath();
+  for (let i = 0; i < NX; i++) {
+    const x = 60 + i * (W - 120) / (NX - 1);
+    const y = 280 - uWave[i] * 140;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  // 端点
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillRect(50, 240, 10, 80); ctx.fillRect(W - 60, 240, 10, 80);
+  // 平衡线
+  ctx.strokeStyle = '#475569'; ctx.lineWidth = 1; ctx.setLineDash([5,5]);
+  ctx.beginPath(); ctx.moveTo(60, 280); ctx.lineTo(W - 60, 280); ctx.stroke(); ctx.setLineDash([]);
+  // 能量
+  let E = 0;
+  for (let i = 1; i < NX - 1; i++) {
+    const v = (uWave[i] - uWavePrev[i]) / 0.001;
+    E += 0.5 * v * v * 1e-4 + 0.5 * c * c * Math.pow((uWave[i+1] - uWave[i]) * NX, 2) * 1e-3;
+  }
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText(`t = ${(t * 0.002).toFixed(2)} · c = ${c.toFixed(2)}`, W/2, 460);
+  ctx.fillStyle = '#93c5fd'; ctx.font = '14px sans-serif';
+  ctx.fillText('🌊 扰动以速度 c 双向传播，端点反射叠加形成驻波', W/2, 520);
+  ctx.fillText("达朗贝尔解：u(x,t) = ½[f(x−ct) + f(x+ct)]", W/2, 545);
+  ctx.fillText('特征线 x±ct = const 决定信息传播方向', W/2, 570);
+}
+
+function drawLaplace() {
+  stepLaplace(20);
+  ctx.fillStyle = '#c4b5fd'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('二维拉普拉斯方程  ∇²φ = 0  （稳态温度 / 静电势）', W/2, 30);
+  // 2D 网格
+  const size = Math.min(W, H) - 200;
+  const cell = size / NL;
+  const x0 = (W - size) / 2, y0 = 70;
+  for (let j = 0; j < NL; j++) {
+    for (let i = 0; i < NL; i++) {
+      ctx.fillStyle = tempColor(phi[j * NL + i]);
+      ctx.fillRect(x0 + i * cell, y0 + j * cell, cell + 1, cell + 1);
+    }
+  }
+  ctx.strokeStyle = '#475569'; ctx.lineWidth = 2; ctx.strokeRect(x0, y0, size, size);
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText('边界条件：' + (bcMode === 'hot-top' ? '顶边 φ=1，其他边 φ=0' : (bcMode === 'corner' ? '左、右边 φ=1，其他边 φ=0' : '中心线源 φ=1')), W/2, y0 + size + 24);
+  ctx.fillStyle = '#c4b5fd'; ctx.font = '14px sans-serif';
+  ctx.fillText('⚡ 调和函数：任意点 = 邻域平均值（无局部极值）', W/2, y0 + size + 50);
+  ctx.fillText('物理解：稳态温度分布 / 无源区电势 / 不可压缩无旋流', W/2, y0 + size + 75);
+  ctx.fillText('解法：分离变量（矩形域）/ 格林函数 / 数值迭代（雅可比）', W/2, y0 + size + 100);
+}
+
+// ==== 面板 ====
+const PANEL_HTML = {
+  concept: `
+    <h3>📖 什么是 PDE？</h3>
+    <div class="equation">含未知多元函数 u(x,y,t,…) 及其偏导数的方程</div>
+    <div class="prop-card"><div class="prop-title">阶数</div>最高阶偏导的阶。例：∂²u/∂x² + ∂u/∂t = 0 是二阶。</div>
+    <div class="prop-card"><div class="prop-title">线性 vs 非线性</div>关于 u 及其偏导是否线性。NS 方程是非线性的。</div>
+    <div class="prop-card"><div class="prop-title">齐次 vs 非齐次</div>右端是否为零。f ≠ 0 表示有源/有外力。</div>
+    <div class="prop-card"><div class="prop-title">定解条件</div>初始条件（时间）+ 边界条件（空间）→ 唯一解</div>
+    <div class="prop-card"><div class="prop-title">著名 PDE</div>热方程、波动方程、拉普拉斯方程、薛定谔方程、NS 方程、麦克斯韦方程组。</div>
+  `,
+  heat: `
+    <h3>🔥 热方程（抛物型）</h3>
+    <div class="equation">∂u/∂t = α · ∂²u/∂x²</div>
+    <div class="slider-row"><label>扩散系数 α</label><input type="range" id="alphaSlider" min="0.05" max="0.4" step="0.01" value="0.18"><span class="val" id="alphaVal">0.18</span></div>
+    <div class="mode-switch">
+      <div class="mode-btn" data-hinit="step">阶梯初始</div>
+      <div class="mode-btn" data-hinit="gauss">高斯脉冲</div>
+      <div class="mode-btn" data-hinit="sin">正弦模式</div>
+    </div>
+    <div class="prop-card"><div class="prop-title">物理意义</div>温度 u(x,t) 在杆上扩散，高温→低温，最终均匀。傅里叶 1822 年提出。</div>
+    <div class="prop-card"><div class="prop-title">解的特性</div>• 任意初始瞬间光滑化<br>• 最大值原理：max u 出现在 t=0 或边界<br>• 不可逆：无法倒推 t&lt;0</div>
+    <div class="prop-card"><div class="prop-title">解析解（分离变量）</div>u(x,t) = Σ bₙ e^(−αn²π²t) · sin(nπx)<br>高频分量衰减更快 → 平滑化</div>
+    <div class="prop-card"><div class="prop-title">应用</div>热传导、布朗运动、期权定价（Black-Scholes 可化为热方程）</div>
+  `,
+  wave: `
+    <h3>🌊 波动方程（双曲型）</h3>
+    <div class="equation">∂²u/∂t² = c² · ∂²u/∂x²</div>
+    <div class="slider-row"><label>波速 c</label><input type="range" id="cSlider" min="0.2" max="0.9" step="0.05" value="0.5"><span class="val" id="cVal">0.50</span></div>
+    <div class="mode-switch">
+      <div class="mode-btn" data-winit="pluck">拨弦（三角）</div>
+      <div class="mode-btn" data-winit="pulse">高斯脉冲</div>
+      <div class="mode-btn" data-winit="sin">正弦驻波</div>
+    </div>
+    <div class="prop-card"><div class="prop-title">物理意义</div>描述振动弦、声波、电磁波等以有限速度 c 传播的现象。</div>
+    <div class="prop-card"><div class="prop-title">达朗贝尔解</div>u(x,t) = ½[f(x−ct) + f(x+ct)] + (1/2c)∫ g(s) ds<br>初始形状分裂为左右两列行波。</div>
+    <div class="prop-card"><div class="prop-title">特征线</div>x − ct = const 与 x + ct = const 是信息传播的"轨迹"。依赖区间 / 影响区域由特征线决定。</div>
+    <div class="prop-card"><div class="prop-title">能量守恒</div>E = ½ ∫ (u_t² + c² u_x²) dx 守恒。可逆，t → −t 仍是解。</div>
+  `,
+  laplace: `
+    <h3>⚡ 拉普拉斯方程（椭圆型）</h3>
+    <div class="equation">∇²φ = ∂²φ/∂x² + ∂²φ/∂y² = 0</div>
+    <div class="mode-switch">
+      <div class="mode-btn" data-bc="hot-top">顶边加热</div>
+      <div class="mode-btn" data-bc="corner">左右加热</div>
+      <div class="mode-btn" data-bc="dipole">中心线源</div>
+    </div>
+    <div class="prop-card"><div class="prop-title">物理意义</div>无源场：稳态温度分布、无电荷区电势、不可压缩无旋流体速度势。</div>
+    <div class="prop-card"><div class="prop-title">调和函数性质</div>• 平均值定理：φ(P) = 圆周/球面平均<br>• 极值原理：max/min 必在边界取到<br>• 内部无穷次可微</div>
+    <div class="prop-card"><div class="prop-title">泊松方程</div>∇²φ = f  （有源版），例如有电荷 ρ 时 ∇²φ = −ρ/ε₀</div>
+    <div class="prop-card"><div class="prop-title">数值求解</div>五点差分 → 雅可比 / 高斯-赛德尔 / SOR / 多重网格迭代</div>
+  `
+};
+
+function renderPanel() {
+  const content = document.getElementById('panelContent');
+  if (currentMode === 'quiz') { showQuiz(); return; }
+  content.innerHTML = PANEL_HTML[currentMode] || '';
+  // 事件绑定
+  if (currentMode === 'heat') {
+    const s = document.getElementById('alphaSlider');
+    if (s) s.addEventListener('input', () => { alpha = parseFloat(s.value); document.getElementById('alphaVal').textContent = alpha.toFixed(2); });
+    document.querySelectorAll('[data-hinit]').forEach(b => b.addEventListener('click', () => {
+      heatInit = b.dataset.hinit; resetHeat();
+      document.querySelectorAll('[data-hinit]').forEach(x => x.classList.remove('active')); b.classList.add('active');
+    }));
+  } else if (currentMode === 'wave') {
+    const s = document.getElementById('cSlider');
+    if (s) s.addEventListener('input', () => { c = parseFloat(s.value); document.getElementById('cVal').textContent = c.toFixed(2); });
+    document.querySelectorAll('[data-winit]').forEach(b => b.addEventListener('click', () => {
+      waveInit = b.dataset.winit; resetWave();
+      document.querySelectorAll('[data-winit]').forEach(x => x.classList.remove('active')); b.classList.add('active');
+    }));
+  } else if (currentMode === 'laplace') {
+    document.querySelectorAll('[data-bc]').forEach(b => b.addEventListener('click', () => {
+      bcMode = b.dataset.bc; resetLaplace();
+      document.querySelectorAll('[data-bc]').forEach(x => x.classList.remove('active')); b.classList.add('active');
+    }));
+  }
+}
+
+// ==== Tab ====
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t2 => t2.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    renderPanel(); draw();
+  });
+});
+
+// ==== 测验 ====
+const PDE_QUIZZES = [
+  { q: '∂u/∂t = α·∂²u/∂x² 属于哪类 PDE？', opts: ['椭圆型', '抛物型', '双曲型', '非线性型'], ans: 1 },
+  { q: '∂²u/∂t² = c²·∂²u/∂x² 描述的物理现象是？', opts: ['热传导', '静电场', '波传播', '流体扩散'], ans: 2 },
+  { q: '拉普拉斯方程 ∇²φ = 0 的解称为？', opts: ['解析函数', '调和函数', '特征函数', '格林函数'], ans: 1 },
+  { q: '热方程解随时间的特性是？', opts: ['保持初始形状', '不断振荡', '逐渐平滑（耗散）', '能量守恒'], ans: 2 },
+  { q: '波动方程达朗贝尔解中 u(x,t) = ½[f(x−ct) + f(x+ct)] 表示？', opts: ['一个驻波', '两列反向行波', '扩散', '衰减'], ans: 1 },
+  { q: '调和函数的极值原理表明：max/min 出现在？', opts: ['区域内部', '边界上', '初始时刻', '任意点'], ans: 1 },
+  { q: '二阶线性 PDE 分类的判别式是？', opts: ['A+B+C', 'B²−AC', 'A·B·C', 'A²+B²'], ans: 1 },
+  { q: '∇²φ = f（f≠0）称为？', opts: ['拉普拉斯方程', '泊松方程', '亥姆霍兹方程', '扩散方程'], ans: 1 }
+];
+
+let quizIdx = 0, quizScore = 0, quizTotal = 0;
+
+function drawQuizCanvas() {
+  ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('🎯 PDE 知识小测', W/2, 60);
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '15px sans-serif';
+  const lines = [
+    '在右侧面板答题，共 ' + PDE_QUIZZES.length + ' 题',
+    '• PDE 分类（抛物/双曲/椭圆）',
+    '• 三大类方程的物理意义',
+    '• 解的特性（耗散 / 行波 / 极值原理）',
+    '• 判别式 B²−AC',
+    '',
+    '答对 ≥60% 即可在知识地图点亮 ✓'
+  ];
+  lines.forEach((l, i) => ctx.fillText(l, W/2, 130 + i * 32));
+}
+
+function showQuiz() {
+  const content = document.getElementById('panelContent');
+  quizIdx = 0; quizScore = 0; quizTotal = 0;
+  renderPdeQuiz(content);
+}
+
+function renderPdeQuiz(content) {
+  const quiz = PDE_QUIZZES[quizIdx];
+  const doneTag = (typeof PageProgress !== 'undefined' && PageProgress.isDone('pde')) ? ' · ✅ 已记录完成' : '';
+  content.innerHTML = `
+    <div class="quiz">
+      <div class="quiz-q">(${quizIdx+1}/${PDE_QUIZZES.length}) ${quiz.q}</div>
+      <div class="quiz-opts">
+        ${quiz.opts.map((opt, i) => `<div class="quiz-opt" data-ans="${i}">${opt}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="feedback"></div>
+      <div style="margin-top:8px;font-size:12px;color:#94a3b8">已答 ${quizTotal}/${PDE_QUIZZES.length} · 答对 ${quizScore}${doneTag}</div>
+    </div>
+  `;
+  let answered = false;
+  document.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (answered) return;
+      answered = true;
+      quizTotal++;
+      const selected = parseInt(opt.dataset.ans);
+      const feedback = document.getElementById('feedback');
+      if (selected === quiz.ans) {
+        quizScore++;
+        opt.classList.add('correct');
+        feedback.textContent = '✓ 正确！';
+        feedback.style.color = '#10b981';
+      } else {
+        opt.classList.add('wrong');
+        document.querySelectorAll('.quiz-opt')[quiz.ans].classList.add('correct');
+        feedback.textContent = '✗ 正确答案已标出';
+        feedback.style.color = '#ef4444';
+      }
+      if (typeof PageProgress !== 'undefined' && quizScore >= Math.ceil(PDE_QUIZZES.length * 0.6) && !PageProgress.isDone('pde')) {
+        PageProgress.markDone('pde');
+      }
+      if (quizIdx < PDE_QUIZZES.length - 1) {
+        feedback.innerHTML += `<br><button id="nextq" style="margin-top:10px;padding:8px 20px;border-radius:8px;background:var(--primary);color:white;border:none;cursor:pointer;font-size:14px">下一题 →</button>`;
+        document.getElementById('nextq').addEventListener('click', () => { quizIdx++; renderPdeQuiz(content); });
+      } else {
+        feedback.innerHTML += `<br><span style="color:#fbbf24;display:block;margin-top:8px">🎉 全部完成！得分 ${quizScore}/${PDE_QUIZZES.length}</span>`;
+      }
+    });
+  });
+}
+
+// ==== 动画循环 ====
+function loop() {
+  draw();
+  animFrame = requestAnimationFrame(loop);
+}
+
+// 初始
+renderPanel();
+loop();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

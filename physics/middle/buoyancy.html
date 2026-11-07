@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>浮力 · 初中物理互动可视化</title>
+<link rel="stylesheet" href="assets/common.css" />
+<style>
+  :root {
+    --primary: #0891b2;
+    --buoyancy: #3b82f6;
+    --gravity: #ef4444;
+    --liquid: #06b6d4;
+    --object: #f59e0b;
+    --dark: #0f172a;
+    --light: #f1f5f9;
+  }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; margin: 0; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--buoyancy), var(--liquid), var(--object)); -webkit-background-clip: text; color: transparent; margin: 0; }
+  header p { color: #94a3b8; margin: 6px 0 0; font-size: 14px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 8px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; color: #cbd5e1; }
+  .tab.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 20px rgba(8,145,178,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); overflow-y: auto; max-height: 640px; }
+  .panel h3 { margin: 0 0 10px; font-size: 1.05rem; color: #e2e8f0; }
+  .eq { font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 8px 0; }
+  .eq .highlight { color: #fbbf24; font-weight: 600; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 75px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--primary); }
+  .card .ct { font-weight: 600; color: #67e8f9; margin-bottom: 4px; }
+  .result-box { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(6,182,212,0.15)); border: 1px solid rgba(59,130,246,0.3); border-radius: 12px; padding: 14px; margin: 10px 0; }
+  .result-box .label { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+  .result-box .value { font-size: 1.3rem; font-weight: 700; color: #67e8f9; font-family: monospace; }
+  .result-box .unit { font-size: 0.9rem; color: #cbd5e1; margin-left: 4px; }
+  .status-indicator { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; margin: 10px 0; font-size: 13px; font-weight: 600; }
+  .status-indicator.float { background: rgba(16,185,129,0.2); border: 1px solid #10b981; color: #6ee7b7; }
+  .status-indicator.sink { background: rgba(239,68,68,0.2); border: 1px solid #ef4444; color: #fca5a5; }
+  .status-indicator.suspend { background: rgba(251,191,36,0.2); border: 1px solid #fbbf24; color: #fde68a; }
+  .status-indicator::before { content: ""; width: 12px; height: 12px; border-radius: 50%; }
+  .status-indicator.float::before { background: #10b981; }
+  .status-indicator.sink::before { background: #ef4444; }
+  .status-indicator.suspend::before { background: #fbbf24; }
+  .quiz { margin-top: 10px; padding: 12px; background: rgba(8,145,178,0.08); border-radius: 12px; border: 1px solid rgba(8,145,178,0.3); }
+  .quiz-q { font-size: 13px; margin-bottom: 8px; }
+  .quiz-opts { display: grid; gap: 5px; }
+  .quiz-opt { padding: 7px 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 12px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-fb { margin-top: 6px; font-size: 12px; min-height: 16px; }
+  .legend { display: flex; gap: 12px; justify-content: center; font-size: 11px; color: #cbd5e1; margin-top: 6px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
+  .legend .l-b::before { background: var(--buoyancy); }
+  .legend .l-g::before { background: var(--gravity); }
+  .legend .l-l::before { background: var(--liquid); }
+  .legend .l-o::before { background: var(--object); }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 16px; }
+  .liquid-selector { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+  .liquid-btn { padding: 6px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 12px; color: #e2e8f0; transition: all .2s; }
+  .liquid-btn.active { background: var(--liquid); border-color: var(--liquid); }
+  .info-table { width: 100%; font-size: 12px; border-collapse: collapse; margin: 10px 0; }
+  .info-table th, .info-table td { padding: 6px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .info-table th { color: #94a3b8; font-weight: 500; }
+  .info-table td { color: #e2e8f0; }
+  .info-table .highlight { color: #fbbf24; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🚢 浮力 Interactive</h1>
+    <p>浮力产生原因 · 阿基米德原理 · 浮沉条件</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="cause">💡 浮力产生</div>
+    <div class="tab" data-mode="archimedes">📐 阿基米德原理</div>
+    <div class="tab" data-mode="condition">⚖️ 浮沉条件</div>
+    <div class="tab" data-mode="experiment">🧪 互动实验</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="600" height="500"></canvas>
+      <div class="legend">
+        <span class="l-b">浮力 F↑</span>
+        <span class="l-g">重力 G↓</span>
+        <span class="l-l">液体</span>
+        <span class="l-o">物体</span>
+      </div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>初中物理 · 浮力互动可视化 · 八年级</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const panel = document.getElementById('panel');
+let mode = 'cause';
+let animFrame;
+
+// 状态
+const state = {
+  // 浮力产生原因
+  depth: 50,        // 物体深度
+  objectSize: 60,   // 物体边长
+  
+  // 阿基米德原理
+  liquidDensity: 1.0,  // 液体密度 g/cm³
+  objectVolume: 100,   // 物体体积 cm³
+  submergedRatio: 0.5, // 浸入比例
+  
+  // 浮沉条件
+  objectDensity: 0.8,  // 物体密度 g/cm³
+  
+  // 动画
+  time: 0,
+  bubbles: []
+};
+
+// 液体选项
+const liquids = [
+  { name: '水', density: 1.0, color: '#06b6d4' },
+  { name: '酒精', density: 0.8, color: '#a78bfa' },
+  { name: '盐水', density: 1.1, color: '#34d399' },
+  { name: '水银', density: 13.6, color: '#94a3b8' }
+];
+
+// 初始化气泡
+function initBubbles() {
+  state.bubbles = [];
+  for (let i = 0; i < 8; i++) {
+    state.bubbles.push({
+      x: 100 + Math.random() * 400,
+      y: 400 + Math.random() * 100,
+      r: 2 + Math.random() * 4,
+      speed: 0.5 + Math.random() * 1
+    });
+  }
+}
+
+// 绘制液体
+function drawLiquid(color = '#06b6d4') {
+  const grad = ctx.createLinearGradient(0, 200, 0, 500);
+  grad.addColorStop(0, color + '40');
+  grad.addColorStop(1, color + '80');
+  ctx.fillStyle = grad;
+  ctx.fillRect(50, 200, 500, 300);
+  
+  // 液面波纹
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let x = 50; x < 550; x += 5) {
+    const y = 200 + Math.sin((x + state.time * 2) * 0.05) * 3;
+    if (x === 50) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+// 绘制气泡
+function drawBubbles() {
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  state.bubbles.forEach(b => {
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+    b.y -= b.speed;
+    if (b.y < 200) {
+      b.y = 450;
+      b.x = 100 + Math.random() * 400;
+    }
+  });
+}
+
+// 绘制物体
+function drawObject(x, y, size, color = '#f59e0b') {
+  ctx.fillStyle = color;
+  ctx.fillRect(x - size/2, y - size/2, size, size);
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x - size/2, y - size/2, size, size);
+}
+
+// 绘制力箭头
+function drawArrow(x, y, length, color, label, direction = 'up') {
+  const dir = direction === 'up' ? -1 : 1;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 3;
+  
+  // 箭头线
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x, y + dir * length);
+  ctx.stroke();
+  
+  // 箭头头部
+  ctx.beginPath();
+  ctx.moveTo(x, y + dir * length);
+  ctx.lineTo(x - 8, y + dir * (length - 12));
+  ctx.lineTo(x + 8, y + dir * (length - 12));
+  ctx.closePath();
+  ctx.fill();
+  
+  // 标签
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(label, x + 10, y + dir * length / 2);
+}
+
+// 绘制压力箭头
+function drawPressureArrow(x, y, length, color, label) {
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2;
+  
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x, y + length);
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(x, y + length);
+  ctx.lineTo(x - 5, y + length - 8);
+  ctx.lineTo(x + 5, y + length - 8);
+  ctx.closePath();
+  ctx.fill();
+  
+  ctx.font = '11px sans-serif';
+  ctx.fillText(label, x + 8, y + length / 2 + 4);
+}
+
+// 模式1: 浮力产生原因
+function drawCause() {
+  ctx.clearRect(0, 0, 600, 500);
+  
+  // 容器
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(50, 100, 500, 400);
+  
+  // 液体
+  drawLiquid('#06b6d4');
+  drawBubbles();
+  
+  // 物体
+  const objY = 200 + state.depth;
+  const objSize = state.objectSize;
+  drawObject(300, objY, objSize);
+  
+  // 压力箭头 - 上表面（向下）
+  const p1 = state.depth * 0.5;
+  drawPressureArrow(280, objY - objSize/2 - 30, 25 + p1 * 0.3, '#3b82f6', 'F₁↓');
+  drawPressureArrow(320, objY - objSize/2 - 30, 25 + p1 * 0.3, '#3b82f6', 'F₁↓');
+  
+  // 压力箭头 - 下表面（向上）
+  const p2 = (state.depth + objSize) * 0.5;
+  drawPressureArrow(280, objY + objSize/2 + 30, -(25 + p2 * 0.3), '#10b981', 'F₂↑');
+  drawPressureArrow(320, objY + objSize/2 + 30, -(25 + p2 * 0.3), '#10b981', 'F₂↑');
+  
+  // 标注
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('深度 h₁', 420, objY - objSize/2);
+  ctx.fillText('深度 h₂ = h₁ + a', 420, objY + objSize/2);
+  
+  // 深度标注线
+  ctx.setLineDash([5, 5]);
+  ctx.strokeStyle = '#64748b';
+  ctx.beginPath();
+  ctx.moveTo(380, 200);
+  ctx.lineTo(380, objY - objSize/2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(380, 200);
+  ctx.lineTo(380, objY + objSize/2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  state.time++;
+}
+
+// 模式2: 阿基米德原理
+function drawArchimedes() {
+  ctx.clearRect(0, 0, 600, 500);
+  
+  const liquid = liquids.find(l => l.density === state.liquidDensity) || liquids[0];
+  
+  // 容器
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(50, 100, 500, 400);
+  
+  // 液体
+  drawLiquid(liquid.color);
+  drawBubbles();
+  
+  // 计算浸入深度
+  const objSize = 80;
+  const submergedDepth = objSize * state.submergedRatio;
+  const objY = 200 + submergedDepth;
+  
+  // 物体（部分浸入）
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(300 - objSize/2, objY - objSize/2, objSize, objSize);
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(300 - objSize/2, objY - objSize/2, objSize, objSize);
+  
+  // 浸入部分高亮
+  ctx.fillStyle = 'rgba(6,182,212,0.3)';
+  ctx.fillRect(300 - objSize/2, 200, objSize, submergedDepth);
+  
+  // 浮力箭头
+  const buoyancy = state.liquidDensity * state.objectVolume * state.submergedRatio * 0.01;
+  const arrowLen = Math.min(buoyancy * 30, 120);
+  if (arrowLen > 5) {
+    drawArrow(300, objY, arrowLen, '#3b82f6', `F浮=${buoyancy.toFixed(2)}N`, 'up');
+  }
+  
+  // 重力箭头
+  const gravity = state.objectVolume * 0.02;  // 假设物体密度0.2
+  const gArrowLen = Math.min(gravity * 30, 120);
+  drawArrow(300, objY, gArrowLen, '#ef4444', `G=${gravity.toFixed(2)}N`, 'down');
+  
+  // 排开液体体积标注
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#67e8f9';
+  const v排 = state.objectVolume * state.submergedRatio;
+  ctx.fillText(`V排 = ${v排.toFixed(0)} cm³`, 420, 250);
+  
+  // 刻度线
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    const y = 200 + i * 30;
+    ctx.beginPath();
+    ctx.moveTo(50, y);
+    ctx.lineTo(60, y);
+    ctx.stroke();
+  }
+  
+  state.time++;
+}
+
+// 模式3: 浮沉条件
+function drawCondition() {
+  ctx.clearRect(0, 0, 600, 500);
+  
+  // 容器
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(50, 100, 500, 400);
+  
+  // 液体
+  drawLiquid('#06b6d4');
+  drawBubbles();
+  
+  // 计算浮沉状态
+  const liquidDensity = 1.0;  // 水
+  const objectDensity = state.objectDensity;
+  const objSize = 70;
+  
+  let objY, status;
+  if (objectDensity < liquidDensity) {
+    // 漂浮
+    const submergedRatio = objectDensity / liquidDensity;
+    objY = 200 + objSize * submergedRatio / 2;
+    status = 'float';
+  } else if (objectDensity === liquidDensity) {
+    // 悬浮
+    objY = 300;
+    status = 'suspend';
+  } else {
+    // 下沉
+    objY = 430 - objSize/2;
+    status = 'sink';
+  }
+  
+  // 物体
+  drawObject(300, objY, objSize);
+  
+  // 力箭头
+  const buoyancy = Math.min(liquidDensity, objectDensity) * 0.8;
+  const gravity = objectDensity * 0.8;
+  
+  drawArrow(280, objY, buoyancy * 50, '#3b82f6', `F浮`, 'up');
+  drawArrow(320, objY, gravity * 50, '#ef4444', `G`, 'down');
+  
+  // 状态标注
+  ctx.font = 'bold 16px sans-serif';
+  if (status === 'float') {
+    ctx.fillStyle = '#10b981';
+    ctx.fillText('漂浮', 450, 180);
+    ctx.font = '12px sans-serif';
+    ctx.fillText('F浮 = G', 450, 200);
+    ctx.fillText('ρ物 < ρ液', 450, 220);
+  } else if (status === 'suspend') {
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillText('悬浮', 450, 280);
+    ctx.font = '12px sans-serif';
+    ctx.fillText('F浮 = G', 450, 300);
+    ctx.fillText('ρ物 = ρ液', 450, 320);
+  } else {
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText('下沉', 450, 380);
+    ctx.font = '12px sans-serif';
+    ctx.fillText('F浮 < G', 450, 400);
+    ctx.fillText('ρ物 > ρ液', 450, 420);
+  }
+  
+  state.time++;
+}
+
+// 模式4: 互动实验
+function drawExperiment() {
+  ctx.clearRect(0, 0, 600, 500);
+  
+  const liquid = liquids.find(l => l.density === state.liquidDensity) || liquids[0];
+  
+  // 容器
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(50, 100, 500, 400);
+  
+  // 液体
+  drawLiquid(liquid.color);
+  drawBubbles();
+  
+  // 计算浮沉
+  const objSize = 70;
+  let objY, status;
+  
+  if (state.objectDensity < state.liquidDensity) {
+    const submergedRatio = state.objectDensity / state.liquidDensity;
+    objY = 200 + objSize * submergedRatio / 2;
+    status = 'float';
+  } else if (state.objectDensity === state.liquidDensity) {
+    objY = 300;
+    status = 'suspend';
+  } else {
+    objY = 430 - objSize/2;
+    status = 'sink';
+  }
+  
+  // 物体
+  drawObject(300, objY, objSize);
+  
+  // 力箭头
+  const buoyancy = Math.min(state.liquidDensity, state.objectDensity) * 0.8;
+  const gravity = state.objectDensity * 0.8;
+  
+  drawArrow(280, objY, buoyancy * 50, '#3b82f6', `F浮`, 'up');
+  drawArrow(320, objY, gravity * 50, '#ef4444', `G`, 'down');
+  
+  // 状态
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = status === 'float' ? '#10b981' : status === 'suspend' ? '#fbbf24' : '#ef4444';
+  ctx.fillText(status === 'float' ? '漂浮' : status === 'suspend' ? '悬浮' : '下沉', 450, 180);
+  
+  state.time++;
+}
+
+// 模式5: 练习
+function drawQuiz() {
+  ctx.clearRect(0, 0, 600, 500);
+  
+  // 装饰性背景
+  drawLiquid('#06b6d4');
+  drawBubbles();
+  
+  // 中央图标
+  ctx.font = '80px sans-serif';
+  ctx.fillText('🎯', 260, 300);
+  
+  state.time++;
+}
+
+// 面板内容
+function updatePanel() {
+  if (mode === 'cause') {
+    panel.innerHTML = `
+      <h3>💡 浮力产生的原因</h3>
+      <div class="card">
+        <div class="ct">核心概念</div>
+        浮力是由液体对物体上下表面的<b>压力差</b>产生的。
+      </div>
+      <div class="eq">
+        F<sub>浮</sub> = F<sub>向上</sub> - F<sub>向下</sub>
+      </div>
+      <div class="slider-row">
+        <label>物体深度 h</label>
+        <input type="range" min="20" max="200" value="${state.depth}" id="depthSlider">
+        <span class="val" id="depthVal">${state.depth} cm</span>
+      </div>
+      <div class="slider-row">
+        <label>物体边长 a</label>
+        <input type="range" min="30" max="100" value="${state.objectSize}" id="sizeSlider">
+        <span class="val" id="sizeVal">${state.objectSize} cm</span>
+      </div>
+      <div class="result-box">
+        <div class="label">压力差分析</div>
+        <div style="font-size: 13px; margin-top: 8px;">
+          • 上表面深度 h₁ = <b>${state.depth}</b> cm<br>
+          • 下表面深度 h₂ = <b>${state.depth + state.objectSize}</b> cm<br>
+          • 压强差 Δp = ρg(h₂ - h₁) = ρga<br>
+          • 浮力 F = Δp × S = <b>ρgV</b>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct">观察要点</div>
+        • 拖动滑块改变深度，观察上下表面压力变化<br>
+        • 深度增加时，上下表面压力都增大，但<b>压力差不变</b><br>
+        • 浮力只与液体密度和排开体积有关，与深度无关
+      </div>
+    `;
+    document.getElementById('depthSlider').oninput = e => {
+      state.depth = +e.target.value;
+      document.getElementById('depthVal').textContent = state.depth + ' cm';
+    };
+    document.getElementById('sizeSlider').oninput = e => {
+      state.objectSize = +e.target.value;
+      document.getElementById('sizeVal').textContent = state.objectSize + ' cm';
+    };
+  } else if (mode === 'archimedes') {
+    const v排 = state.objectVolume * state.submergedRatio;
+    const f浮 = state.liquidDensity * v排 * 0.01;
+    panel.innerHTML = `
+      <h3>📐 阿基米德原理</h3>
+      <div class="card">
+        <div class="ct">原理内容</div>
+        浸在液体中的物体受到向上的浮力，浮力大小等于它<b>排开液体的重力</b>。
+      </div>
+      <div class="eq">
+        F<sub>浮</sub> = <span class="highlight">ρ<sub>液</sub></span> · g · <span class="highlight">V<sub>排</sub></span>
+      </div>
+      <div class="liquid-selector">
+        <span style="font-size: 12px; color: #94a3b8; margin-right: 8px;">选择液体：</span>
+        ${liquids.map(l => `
+          <div class="liquid-btn ${state.liquidDensity === l.density ? 'active' : ''}" data-density="${l.density}">
+            ${l.name} (${l.density})
+          </div>
+        `).join('')}
+      </div>
+      <div class="slider-row">
+        <label>物体体积 V</label>
+        <input type="range" min="50" max="300" value="${state.objectVolume}" id="volumeSlider">
+        <span class="val" id="volumeVal">${state.objectVolume} cm³</span>
+      </div>
+      <div class="slider-row">
+        <label>浸入比例</label>
+        <input type="range" min="0" max="100" value="${state.submergedRatio * 100}" id="submergedSlider">
+        <span class="val" id="submergedVal">${(state.submergedRatio * 100).toFixed(0)}%</span>
+      </div>
+      <div class="result-box">
+        <div class="label">计算结果</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+          <div>
+            <div style="font-size: 11px; color: #94a3b8;">排开体积 V<sub>排</sub></div>
+            <div style="font-size: 1.1rem; font-weight: 600; color: #67e8f9;">${v排.toFixed(0)} cm³</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: #94a3b8;">浮力 F<sub>浮</sub></div>
+            <div style="font-size: 1.1rem; font-weight: 600; color: #3b82f6;">${f浮.toFixed(2)} N</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct">关键理解</div>
+        • 浮力只与<b>液体密度</b>和<b>排开体积</b>有关<br>
+        • 与物体形状、质量、深度无关<br>
+        • 完全浸没时 V<sub>排</sub> = V<sub>物</sub>，浮力最大
+      </div>
+    `;
+    document.querySelectorAll('.liquid-btn').forEach(btn => {
+      btn.onclick = () => {
+        state.liquidDensity = +btn.dataset.density;
+        updatePanel();
+      };
+    });
+    document.getElementById('volumeSlider').oninput = e => {
+      state.objectVolume = +e.target.value;
+      document.getElementById('volumeVal').textContent = state.objectVolume + ' cm³';
+      updatePanel();
+    };
+    document.getElementById('submergedSlider').oninput = e => {
+      state.submergedRatio = +e.target.value / 100;
+      document.getElementById('submergedVal').textContent = (state.submergedRatio * 100).toFixed(0) + '%';
+      updatePanel();
+    };
+  } else if (mode === 'condition') {
+    let status, statusClass;
+    if (state.objectDensity < 1) {
+      status = '漂浮';
+      statusClass = 'float';
+    } else if (state.objectDensity === 1) {
+      status = '悬浮';
+      statusClass = 'suspend';
+    } else {
+      status = '下沉';
+      statusClass = 'sink';
+    }
+    panel.innerHTML = `
+      <h3>⚖️ 物体的浮沉条件</h3>
+      <div class="card">
+        <div class="ct">浮沉判据</div>
+        物体在液体中的浮沉取决于<b>浮力与重力的关系</b>，或<b>物体密度与液体密度的关系</b>。
+      </div>
+      <div class="slider-row">
+        <label>物体密度 ρ</label>
+        <input type="range" min="0.3" max="2.0" step="0.1" value="${state.objectDensity}" id="densitySlider">
+        <span class="val" id="densityVal">${state.objectDensity.toFixed(1)} g/cm³</span>
+      </div>
+      <div class="status-indicator ${statusClass}">
+        状态：${status}
+      </div>
+      <table class="info-table">
+        <tr>
+          <th>条件</th>
+          <th>状态</th>
+          <th>力的关系</th>
+        </tr>
+        <tr>
+          <td>ρ<sub>物</sub> < ρ<sub>液</sub></td>
+          <td class="highlight">漂浮</td>
+          <td>F<sub>浮</sub> = G</td>
+        </tr>
+        <tr>
+          <td>ρ<sub>物</sub> = ρ<sub>液</sub></td>
+          <td class="highlight">悬浮</td>
+          <td>F<sub>浮</sub> = G</td>
+        </tr>
+        <tr>
+          <td>ρ<sub>物</sub> > ρ<sub>液</sub></td>
+          <td class="highlight">下沉</td>
+          <td>F<sub>浮</sub> < G</td>
+        </tr>
+      </table>
+      <div class="card">
+        <div class="ct">生活应用</div>
+        • <b>轮船</b>：空心结构增大排开体积，获得足够浮力<br>
+        • <b>潜水艇</b>：通过改变自身重力（水舱充水/排水）实现浮沉<br>
+        • <b>密度计</b>：利用漂浮条件测量液体密度
+      </div>
+    `;
+    document.getElementById('densitySlider').oninput = e => {
+      state.objectDensity = +e.target.value;
+      document.getElementById('densityVal').textContent = state.objectDensity.toFixed(1) + ' g/cm³';
+      updatePanel();
+    };
+  } else if (mode === 'experiment') {
+    const liquid = liquids.find(l => l.density === state.liquidDensity) || liquids[0];
+    const status = state.objectDensity < state.liquidDensity ? '漂浮' : 
+                   state.objectDensity === state.liquidDensity ? '悬浮' : '下沉';
+    panel.innerHTML = `
+      <h3>🧪 互动实验：自制密度计</h3>
+      <div class="card">
+        <div class="ct">实验目标</div>
+        通过改变液体密度和物体密度，观察浮沉现象，理解密度计原理。
+      </div>
+      <div class="liquid-selector">
+        <span style="font-size: 12px; color: #94a3b8; margin-right: 8px;">液体：</span>
+        ${liquids.map(l => `
+          <div class="liquid-btn ${state.liquidDensity === l.density ? 'active' : ''}" data-density="${l.density}">
+            ${l.name}
+          </div>
+        `).join('')}
+      </div>
+      <div class="slider-row">
+        <label>物体密度</label>
+        <input type="range" min="0.3" max="2.0" step="0.1" value="${state.objectDensity}" id="expDensitySlider">
+        <span class="val" id="expDensityVal">${state.objectDensity.toFixed(1)} g/cm³</span>
+      </div>
+      <div class="result-box">
+        <div class="label">实验现象</div>
+        <div style="font-size: 13px; margin-top: 8px;">
+          • 液体：<b>${liquid.name}</b>（ρ = ${liquid.density} g/cm³）<br>
+          • 物体密度：ρ = <b>${state.objectDensity.toFixed(1)}</b> g/cm³<br>
+          • 现象：物体<b style="color: ${status === '漂浮' ? '#10b981' : status === '悬浮' ? '#fbbf24' : '#ef4444'}">${status}</b>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct">实验思考</div>
+        • 如何让下沉的物体浮起来？<br>
+        • 密度计为什么能测量液体密度？<br>
+        • 同一密度计在不同液体中浸入深度相同吗？
+      </div>
+    `;
+    document.querySelectorAll('.liquid-btn').forEach(btn => {
+      btn.onclick = () => {
+        state.liquidDensity = +btn.dataset.density;
+        updatePanel();
+      };
+    });
+    document.getElementById('expDensitySlider').oninput = e => {
+      state.objectDensity = +e.target.value;
+      document.getElementById('expDensityVal').textContent = state.objectDensity.toFixed(1) + ' g/cm³';
+      updatePanel();
+    };
+  } else if (mode === 'quiz') {
+    panel.innerHTML = `
+      <h3>🎯 浮力互动练习</h3>
+      <div class="quiz" id="quiz1">
+        <div class="quiz-q">1. 一个铁块在水中下沉，在酒精中会：</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="false">A. 上浮</div>
+          <div class="quiz-opt" data-correct="false">B. 悬浮</div>
+          <div class="quiz-opt" data-correct="true">C. 仍然下沉</div>
+          <div class="quiz-opt" data-correct="false">D. 无法判断</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+      <div class="quiz" id="quiz2">
+        <div class="quiz-q">2. 物体浸没在水中越深，受到的浮力：</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="false">A. 越大</div>
+          <div class="quiz-opt" data-correct="true">B. 不变</div>
+          <div class="quiz-opt" data-correct="false">C. 越小</div>
+          <div class="quiz-opt" data-correct="false">D. 先变大后不变</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+      <div class="quiz" id="quiz3">
+        <div class="quiz-q">3. 轮船从江河驶入大海，会：</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="true">A. 上浮一些</div>
+          <div class="quiz-opt" data-correct="false">B. 下沉一些</div>
+          <div class="quiz-opt" data-correct="false">C. 保持不变</div>
+          <div class="quiz-opt" data-correct="false">D. 无法判断</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+      <div class="quiz" id="quiz4">
+        <div class="quiz-q">4. 阿基米德原理适用于：</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="false">A. 只适用于液体</div>
+          <div class="quiz-opt" data-correct="true">B. 液体和气体都适用</div>
+          <div class="quiz-opt" data-correct="false">C. 只适用于气体</div>
+          <div class="quiz-opt" data-correct="false">D. 只适用于漂浮物体</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+    `;
+    document.querySelectorAll('.quiz-opt').forEach(opt => {
+      opt.onclick = () => {
+        const quiz = opt.closest('.quiz');
+        const isCorrect = opt.dataset.correct === 'true';
+        const fb = quiz.querySelector('.quiz-fb');
+        
+        quiz.querySelectorAll('.quiz-opt').forEach(o => {
+          o.classList.remove('correct', 'wrong');
+          if (o.dataset.correct === 'true') o.classList.add('correct');
+        });
+        
+let totalCorrect = 0, buoyancyDone = false;
+function bumpBuoyancyCorrect() {
+  totalCorrect++;
+  if (!buoyancyDone && totalCorrect >= 4 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('buoyancy')) {
+    buoyancyDone = true;
+    PageProgress.markDone('buoyancy');
+    showBuoyancyToast('🎉 「浮力」知识地图已点亮！');
+  }
+}
+function showBuoyancyToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(52,199,89,.95);color:#fff;padding:12px 24px;border-radius:12px;font-size:15px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:opacity .3s';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2600);
+}
+
+        if (isCorrect) {
+          opt.classList.add('correct');
+          fb.innerHTML = '<span style="color: #10b981">✓ 正确！</span>';
+          bumpBuoyancyCorrect();
+        } else {
+          opt.classList.add('wrong');
+          fb.innerHTML = '<span style="color: #ef4444">✗ 再想想，看看为什么错</span>';
+        }
+      };
+    });
+  }
+}
+
+// 动画循环
+function animate() {
+  if (mode === 'cause') drawCause();
+  else if (mode === 'archimedes') drawArchimedes();
+  else if (mode === 'condition') drawCondition();
+  else if (mode === 'experiment') drawExperiment();
+  else if (mode === 'quiz') drawQuiz();
+  
+  animFrame = requestAnimationFrame(animate);
+}
+
+// Tab 切换
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    updatePanel();
+  };
+});
+
+// 初始化
+initBubbles();
+updatePanel();
+animate();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中物理"></script>
+</body>
+</html>

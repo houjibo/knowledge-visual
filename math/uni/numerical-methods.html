@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>数值分析 · 大学数学互动可视化</title>
+<script src="assets/common.js"></script>
+<style>
+  :root {
+    --primary: #0891b2;
+    --curve: #3b82f6;
+    --tangent: #ef4444;
+    --deriv: #10b981;
+    --deriv2: #f59e0b;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.7);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #083344 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 22px; }
+  header h1 { font-size: 2.1rem; background: linear-gradient(90deg, var(--curve), var(--deriv), var(--deriv2)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; font-size: 0.95rem; margin-top: 4px; }
+  .nav-back { text-align: center; margin-bottom: 14px; }
+  .nav-back a { color: #67e8f9; text-decoration: none; font-size: 14px; }
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 22px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(8,145,178,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 680px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 12px; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", "STSong", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--deriv); font-weight: 600; font-size: 13px; }
+  .func-select { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .func-btn { padding: 6px 14px; border-radius: 8px; background: rgba(8,145,178,0.12); border: 1px solid rgba(8,145,178,0.4); cursor: pointer; font-size: 13px; color: #67e8f9; transition: all .2s; user-select: none; }
+  .func-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .func-btn:hover:not(.active) { background: rgba(255,255,255,0.1); }
+  .btn-row { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; background: var(--primary); color: white; transition: all .2s; }
+  .btn:hover { opacity: 0.85; }
+  .btn.secondary { background: rgba(255,255,255,0.08); color: #cbd5e1; }
+  .desc { font-size: 13px; color: #94a3b8; line-height: 1.7; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; }
+  .iter-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; font-family: monospace; }
+  .iter-table th { background: rgba(8,145,178,0.18); padding: 6px; text-align: right; color: #67e8f9; font-weight: 600; }
+  .iter-table td { padding: 5px 6px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: right; }
+  .iter-table tr.cur td { background: rgba(16,185,129,0.12); color: #6ee7b7; }
+  .iter-wrap { max-height: 240px; overflow-y: auto; border-radius: 8px; }
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(8,145,178,0.08); border-radius: 12px; border: 1px solid rgba(8,145,178,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; min-height: 20px; line-height: 1.5; }
+  .quiz-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+  .quiz-bar > div { height: 100%; background: var(--primary); transition: width .3s; }
+  footer { text-align: center; color: #475569; font-size: 12px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav-back"><a href="index.html">← 返回大学数学</a></div>
+  <header>
+    <h1>🔢 数值分析 Interactive</h1>
+    <p>方程求根 · 数值积分 · 迭代收敛 · 互动练习</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="bisect">✂️ 二分法</div>
+    <div class="tab" data-mode="newton">🎯 牛顿迭代</div>
+    <div class="tab" data-mode="integrate">∫ 数值积分</div>
+    <div class="tab" data-mode="quiz">🏆 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="780" height="620"></canvas>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>大学数学 · 数值分析 · 在误差与效率之间寻找平衡</footer>
+</div>
+
+<script>
+(() => {
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const panel = document.getElementById('panel');
+
+  let mode = 'bisect';
+
+  const fmt = (v, d=6) => Number(v).toFixed(d);
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  /* 视图状态 */
+  let V = { xMin: -3, xMax: 4, yMin: -5, yMax: 8 };
+
+  function toP(x, y) {
+    return [(x - V.xMin) / (V.xMax - V.xMin) * W, H - (y - V.yMin) / (V.yMax - V.yMin) * H];
+  }
+
+  function clearCV() { ctx.clearRect(0, 0, W, H); }
+
+  function drawGrid() {
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+    for (let x = Math.ceil(V.xMin); x <= V.xMax; x++) {
+      const [px] = toP(x, 0);
+      ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+    }
+    for (let y = Math.ceil(V.yMin); y <= V.yMax; y++) {
+      const [, py] = toP(0, y);
+      ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1.5;
+    const [ox, oy] = toP(0, 0);
+    ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(W, oy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, H); ctx.stroke();
+    ctx.fillStyle = '#64748b'; ctx.font = '11px monospace'; ctx.textAlign = 'center';
+    for (let x = Math.ceil(V.xMin); x <= V.xMax; x++) {
+      if (x === 0) continue;
+      const [px] = toP(x, 0);
+      ctx.fillText(x, px, oy + 14);
+    }
+    ctx.textAlign = 'right';
+    for (let y = Math.ceil(V.yMin); y <= V.yMax; y++) {
+      if (y === 0) continue;
+      const [, py] = toP(0, y);
+      ctx.fillText(y, ox - 6, py + 4);
+    }
+  }
+
+  function drawFunc(f, color, lw=2.5) {
+    ctx.strokeStyle = color; ctx.lineWidth = lw;
+    ctx.beginPath();
+    let first = true;
+    for (let i = 0; i <= 600; i++) {
+      const x = V.xMin + (V.xMax - V.xMin) * i / 600;
+      const y = f(x);
+      if (!isFinite(y) || Math.abs(y) > 100) { first = true; continue; }
+      const [px, py] = toP(x, y);
+      if (first) { ctx.moveTo(px, py); first = false; } else { ctx.lineTo(px, py); }
+    }
+    ctx.stroke();
+  }
+
+  function drawPoint(x, y, r, color, label='') {
+    const [px, py] = toP(x, y);
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1; ctx.stroke();
+    if (label) {
+      ctx.fillStyle = '#e2e8f0'; ctx.font = '12px "PingFang SC"'; ctx.textAlign = 'center';
+      ctx.fillText(label, px, py - r - 6);
+    }
+  }
+
+  function drawVLine(x, color, dash=[]) {
+    const [px] = toP(x, 0);
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawSeg(x1, y1, x2, y2, color, lw=2, dash=[]) {
+    const [px1, py1] = toP(x1, y1);
+    const [px2, py2] = toP(x2, y2);
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(px1, py1); ctx.lineTo(px2, py2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /* ========== 函数库 ========== */
+  const rootFuncs = {
+    'x³−x−2': { f: x => x*x*x - x - 2, df: x => 3*x*x - 1, label: 'f(x) = x³ − x − 2', a: 1, b: 2, x0: 2 },
+    'cos(x)−x': { f: x => Math.cos(x) - x, df: x => -Math.sin(x) - 1, label: 'f(x) = cos(x) − x', a: 0, b: 1, x0: 0.5 },
+    'eˣ−3x': { f: x => Math.exp(x) - 3*x, df: x => Math.exp(x) - 3, label: 'f(x) = eˣ − 3x', a: 0, b: 1, x0: 0.5 }
+  };
+
+  const intFuncs = {
+    'x²': { f: x => x*x, label: 'f(x) = x²', exact: (a,b) => (b*b*b - a*a*a)/3 },
+    'sin(x)': { f: x => Math.sin(x), label: 'f(x) = sin(x)', exact: (a,b) => -Math.cos(b) + Math.cos(a) },
+    'e⁻ˣ²': { f: x => Math.exp(-x*x), label: 'f(x) = e^(−x²)', exact: null },
+    '1/(1+x²)': { f: x => 1/(1+x*x), label: 'f(x) = 1/(1+x²)', exact: (a,b) => Math.atan(b) - Math.atan(a) }
+  };
+
+  /* ========== 模式 1: 二分法 ========== */
+  let biState = { fk: 'x³−x−2', steps: [], iters: 0 };
+
+  function bisectRun(fk, maxN) {
+    const { f, a: a0, b: b0 } = rootFuncs[fk];
+    let a = a0, b = b0, fa = f(a);
+    const rows = [];
+    for (let i = 0; i < maxN; i++) {
+      const c = (a + b) / 2, fc = f(c);
+      rows.push({ n: i, a, b, c, fc, err: (b - a) / 2 });
+      if (fa * fc <= 0) { b = c; } else { a = c; fa = fc; }
+    }
+    return rows;
+  }
+
+  function renderBisect() {
+    const fk = biState.fk;
+    const F = rootFuncs[fk];
+    clearCV(); drawGrid();
+    drawFunc(F.f, '#3b82f6', 2.5);
+
+    const steps = biState.steps;
+    if (steps.length > 0) {
+      const cur = steps[steps.length - 1];
+      /* 当前区间 */
+      drawSeg(cur.a, 0, cur.b, 0, 'rgba(245,158,11,0.9)', 5);
+      drawVLine(cur.a, 'rgba(245,158,11,0.4)', [4,4]);
+      drawVLine(cur.b, 'rgba(245,158,11,0.4)', [4,4]);
+      drawPoint(cur.c, 0, 6, '#10b981', `c=${fmt(cur.c,4)}`);
+      drawPoint(cur.c, cur.fc, 5, '#ef4444');
+      /* 历史中点（淡） */
+      for (let i = 0; i < steps.length - 1; i++) {
+        drawPoint(steps[i].c, 0, 3, 'rgba(16,185,129,0.35)');
+      }
+    }
+
+    panel.innerHTML = `
+      <h3>✂️ 二分法（Bisection Method）</h3>
+      <div class="equation">${F.label} = 0<br>
+        若 f(a)·f(b) &lt; 0，则 (a, b) 内有根</div>
+      <div class="func-select">
+        ${Object.keys(rootFuncs).map(k => `<div class="func-btn ${k===fk?'active':''}" data-fk="${k}">${k}</div>`).join('')}
+      </div>
+      <div class="slider-row">
+        <label>迭代次数 N</label>
+        <input type="range" id="biN" min="0" max="20" value="${steps.length}" />
+        <span class="val">${steps.length}</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="biStep">单步</button>
+        <button class="btn secondary" id="biReset">重置</button>
+      </div>
+      <div class="desc">
+        每次取中点 c=(a+b)/2，根据 f(c) 符号保留含根的一半区间。
+        误差 |x−c| ≤ (b−a)/2，每次迭代误差减半（线性收敛，速度 1/2）。
+      </div>
+      <div class="iter-wrap">
+        <table class="iter-table">
+          <thead><tr><th>n</th><th>a</th><th>b</th><th>c</th><th>f(c)</th><th>误差界</th></tr></thead>
+          <tbody>${steps.map((s,i) => `<tr class="${i===steps.length-1?'cur':''}"><td>${s.n}</td><td>${fmt(s.a,4)}</td><td>${fmt(s.b,4)}</td><td>${fmt(s.c,4)}</td><td>${s.fc.toExponential(2)}</td><td>${s.err.toExponential(2)}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    `;
+    panel.querySelectorAll('.func-btn').forEach(btn => {
+      btn.onclick = () => { biState = { fk: btn.dataset.fk, steps: [], iters: 0 }; renderBisect(); };
+    });
+    const slider = panel.querySelector('#biN');
+    slider.oninput = () => { biState.steps = bisectRun(fk, +slider.value); renderBisect(); };
+    panel.querySelector('#biStep').onclick = () => { biState.steps = bisectRun(fk, biState.steps.length + 1); renderBisect(); };
+    panel.querySelector('#biReset').onclick = () => { biState.steps = []; renderBisect(); };
+  }
+
+  /* ========== 模式 2: 牛顿迭代 ========== */
+  let nwState = { fk: 'x³−x−2', steps: [] };
+
+  function newtonRun(fk, maxN) {
+    const { f, df, x0 } = rootFuncs[fk];
+    let x = x0;
+    const rows = [];
+    for (let i = 0; i < maxN; i++) {
+      const fx = f(x), dfx = df(x);
+      rows.push({ n: i, x, fx, dfx });
+      if (Math.abs(dfx) < 1e-12) break;
+      x = x - fx / dfx;
+    }
+    return rows;
+  }
+
+  function renderNewton() {
+    const fk = nwState.fk;
+    const F = rootFuncs[fk];
+    clearCV(); drawGrid();
+    drawFunc(F.f, '#3b82f6', 2.5);
+
+    const steps = nwState.steps;
+    /* 历史切线（淡） */
+    for (let i = 0; i < steps.length; i++) {
+      const s = steps[i];
+      const last = i === steps.length - 1;
+      const col = last ? '#ef4444' : 'rgba(239,68,68,0.25)';
+      const lw = last ? 2.5 : 1.2;
+      if (Math.abs(s.dfx) > 1e-12) {
+        const xNext = s.x - s.fx / s.dfx;
+        const x1 = s.x - 1.5, x2 = s.x + 1.5;
+        drawSeg(x1, s.fx + s.dfx*(x1 - s.x), x2, s.fx + s.dfx*(x2 - s.x), col, lw);
+        drawSeg(xNext, 0, xNext, F.f(xNext), col, 1, [3,3]);
+        drawPoint(xNext, 0, 4, last ? '#10b981' : 'rgba(16,185,129,0.35)', last ? `x${i+1}=${fmt(xNext,4)}` : '');
+      }
+      drawPoint(s.x, s.fx, 4, col);
+    }
+    if (steps.length > 0) {
+      const s0 = steps[0];
+      drawPoint(s0.x, 0, 5, '#f59e0b', `x₀=${fmt(s0.x,2)}`);
+    }
+
+    panel.innerHTML = `
+      <h3>🎯 牛顿迭代法（Newton–Raphson）</h3>
+      <div class="equation">x<sub>n+1</sub> = x<sub>n</sub> − f(x<sub>n</sub>) / f′(x<sub>n</sub>)<br>
+        <span style="font-size:0.85em; color:#94a3b8">用切线零点逼近曲线零点</span></div>
+      <div class="func-select">
+        ${Object.keys(rootFuncs).map(k => `<div class="func-btn ${k===fk?'active':''}" data-fk="${k}">${k}</div>`).join('')}
+      </div>
+      <div class="slider-row">
+        <label>迭代次数 N</label>
+        <input type="range" id="nwN" min="0" max="10" value="${steps.length}" />
+        <span class="val">${steps.length}</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="nwStep">单步</button>
+        <button class="btn secondary" id="nwReset">重置</button>
+      </div>
+      <div class="desc">
+        每次在 (x<sub>n</sub>, f(x<sub>n</sub>)) 作切线，取切线与 x 轴交点为下一个近似根。
+        若初值合适且 f′(根)≠0，则<strong style="color:#10b981">二阶收敛</strong>（每步误差平方缩小），远快于二分法。
+      </div>
+      <div class="iter-wrap">
+        <table class="iter-table">
+          <thead><tr><th>n</th><th>xₙ</th><th>f(xₙ)</th><th>f′(xₙ)</th></tr></thead>
+          <tbody>${steps.map((s,i) => `<tr class="${i===steps.length-1?'cur':''}"><td>${s.n}</td><td>${fmt(s.x,6)}</td><td>${s.fx.toExponential(3)}</td><td>${s.dfx.toExponential(3)}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    `;
+    panel.querySelectorAll('.func-btn').forEach(btn => {
+      btn.onclick = () => { nwState = { fk: btn.dataset.fk, steps: [] }; renderNewton(); };
+    });
+    const slider = panel.querySelector('#nwN');
+    slider.oninput = () => { nwState.steps = newtonRun(fk, +slider.value); renderNewton(); };
+    panel.querySelector('#nwStep').onclick = () => { nwState.steps = newtonRun(fk, nwState.steps.length + 1); renderNewton(); };
+    panel.querySelector('#nwReset').onclick = () => { nwState.steps = []; renderNewton(); };
+  }
+
+  /* ========== 模式 3: 数值积分 ========== */
+  let igState = { fk: 'sin(x)', a: 0, b: 3.14, n: 4, method: 'trapezoid' };
+
+  function trapInt(f, a, b, n) {
+    const h = (b - a) / n;
+    let s = (f(a) + f(b)) / 2;
+    for (let i = 1; i < n; i++) s += f(a + i * h);
+    return s * h;
+  }
+  function simpsonInt(f, a, b, n) {
+    if (n % 2) n++;
+    const h = (b - a) / n;
+    let s = f(a) + f(b);
+    for (let i = 1; i < n; i++) s += (i % 2 === 0 ? 2 : 4) * f(a + i * h);
+    return s * h / 3;
+  }
+
+  function renderIntegrate() {
+    const { fk, a, b, n, method } = igState;
+    const F = intFuncs[fk];
+    /* 调整视图以包含 [a,b] */
+    V = { xMin: a - 0.5, xMax: b + 0.5, yMin: -0.5, yMax: Math.max(2, F.f(a) * 1.2, F.f(b) * 1.2, 1.5) };
+    let maxY = 0;
+    for (let i = 0; i <= 200; i++) maxY = Math.max(maxY, F.f(a + (b - a) * i / 200));
+    V.yMax = maxY * 1.2;
+
+    clearCV(); drawGrid();
+
+    const h = (b - a) / n;
+    /* 绘制梯形/Simpson 区域 */
+    if (method === 'trapezoid') {
+      for (let i = 0; i < n; i++) {
+        const x0 = a + i * h, x1 = x0 + h;
+        const y0 = F.f(x0), y1 = F.f(x1);
+        const [px0, py0] = toP(x0, 0);
+        const [px1, py1] = toP(x1, 0);
+        const [px0y, py0y] = toP(x0, y0);
+        const [px1y, py1y] = toP(x1, y1);
+        ctx.fillStyle = 'rgba(245,158,11,0.18)';
+        ctx.beginPath();
+        ctx.moveTo(px0, py0); ctx.lineTo(px0y, py0y); ctx.lineTo(px1y, py1y); ctx.lineTo(px1, py1);
+        ctx.closePath(); ctx.fill();
+        drawSeg(x0, y0, x1, y1, 'rgba(245,158,11,0.9)', 2);
+      }
+    } else {
+      /* Simpson: 显示抛物线段 */
+      const nSim = n % 2 === 0 ? n : n + 1;
+      const hh = (b - a) / nSim;
+      for (let i = 0; i < nSim; i += 2) {
+        const x0 = a + i * hh, x1 = x0 + hh, x2 = x0 + 2 * hh;
+        const y0 = F.f(x0), y1 = F.f(x1), y2 = F.f(x2);
+        /* 抛物线拟合 */
+        ctx.fillStyle = 'rgba(16,185,129,0.15)';
+        ctx.beginPath();
+        const [pa0, pb0] = toP(x0, 0);
+        ctx.moveTo(pa0, pb0);
+        for (let j = 0; j <= 20; j++) {
+          const xx = x0 + (x2 - x0) * j / 20;
+          /* Lagrange 抛物线 */
+          const L0 = (xx - x1) * (xx - x2) / ((x0 - x1) * (x0 - x2));
+          const L1 = (xx - x0) * (xx - x2) / ((x1 - x0) * (x1 - x2));
+          const L2 = (xx - x0) * (xx - x1) / ((x2 - x0) * (x2 - x1));
+          const yy = L0 * y0 + L1 * y1 + L2 * y2;
+          const [pxx, pyy] = toP(xx, yy);
+          ctx.lineTo(pxx, pyy);
+        }
+        const [pa2, pb2] = toP(x2, 0);
+        ctx.lineTo(pa2, pb2);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(16,185,129,0.9)'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let j = 0; j <= 20; j++) {
+          const xx = x0 + (x2 - x0) * j / 20;
+          const L0 = (xx - x1) * (xx - x2) / ((x0 - x1) * (x0 - x2));
+          const L1 = (xx - x0) * (xx - x2) / ((x1 - x0) * (x1 - x2));
+          const L2 = (xx - x0) * (xx - x1) / ((x2 - x0) * (x2 - x1));
+          const yy = L0 * y0 + L1 * y1 + L2 * y2;
+          const [pxx, pyy] = toP(xx, yy);
+          if (j === 0) ctx.moveTo(pxx, pyy); else ctx.lineTo(pxx, pyy);
+        }
+        ctx.stroke();
+      }
+    }
+    /* 真曲线 */
+    drawFunc(F.f, '#3b82f6', 2.5);
+
+    /* 计算数值 */
+    const trapVal = trapInt(F.f, a, b, n);
+    const simpVal = simpsonInt(F.f, a, b, n);
+    const exactVal = F.exact ? F.exact(a, b) : null;
+
+    panel.innerHTML = `
+      <h3>∫ 数值积分（Numerical Quadrature）</h3>
+      <div class="equation">∫<sub>${fmt(a,2)}</sub><sup>${fmt(b,2)}</sup> ${F.label} dx ≈ ?</div>
+      <div class="func-select">
+        ${Object.keys(intFuncs).map(k => `<div class="func-btn ${k===fk?'active':''}" data-fk="${k}">${k}</div>`).join('')}
+      </div>
+      <div class="slider-row">
+        <label>区间 [a, b]</label>
+        <input type="range" id="igB" min="${a+0.5}" max="${a+8}" step="0.1" value="${b}" />
+        <span class="val">b=${fmt(b,2)}</span>
+      </div>
+      <div class="slider-row">
+        <label>分段数 N</label>
+        <input type="range" id="igN" min="1" max="32" value="${n}" />
+        <span class="val">${n}</span>
+      </div>
+      <div class="func-select">
+        <div class="func-btn ${method==='trapezoid'?'active':''}" data-m="trapezoid">梯形法</div>
+        <div class="func-btn ${method==='simpson'?'active':''}" data-m="simpson">Simpson 法</div>
+      </div>
+      <div class="iter-wrap">
+        <table class="iter-table">
+          <thead><tr><th>方法</th><th>近似值</th><th>误差</th></tr></thead>
+          <tbody>
+            <tr class="${method==='trapezoid'?'cur':''}">
+              <td>梯形法</td><td>${fmt(trapVal,6)}</td>
+              <td>${exactVal!==null ? Math.abs(trapVal-exactVal).toExponential(2) : '—'}</td>
+            </tr>
+            <tr class="${method==='simpson'?'cur':''}">
+              <td>Simpson</td><td>${fmt(simpVal,6)}</td>
+              <td>${exactVal!==null ? Math.abs(simpVal-exactVal).toExponential(2) : '—'}</td>
+            </tr>
+            ${exactVal!==null ? `<tr><td>精确值</td><td>${fmt(exactVal,6)}</td><td>0</td></tr>` : '<tr><td>精确值</td><td>无解析解</td><td>—</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+      <div class="desc">
+        <strong style="color:#f59e0b">梯形法</strong>：用直线连接相邻点，误差 O(h²)。
+        <strong style="color:#10b981">Simpson 法</strong>：用抛物线拟合三点，误差 O(h⁴)，对光滑函数精度高得多。
+      </div>
+    `;
+    panel.querySelectorAll('[data-fk]').forEach(btn => {
+      btn.onclick = () => { igState.fk = btn.dataset.fk; renderIntegrate(); };
+    });
+    panel.querySelectorAll('[data-m]').forEach(btn => {
+      btn.onclick = () => { igState.method = btn.dataset.m; renderIntegrate(); };
+    });
+    panel.querySelector('#igB').oninput = e => { igState.b = +e.target.value; renderIntegrate(); };
+    panel.querySelector('#igN').oninput = e => { igState.n = +e.target.value; renderIntegrate(); };
+  }
+
+  /* ========== 模式 4: Quiz ========== */
+  const quizData = [
+    { q: '二分法每次迭代，含根区间长度变为原来的多少？', opts: ['1/4', '1/2', '不变', '2 倍'], ans: 1,
+      explain: '二分法每次取中点，区间长度减半 → 误差 (b−a)/2ⁿ。' },
+    { q: '用牛顿法求 f(x)=0 的根，迭代公式是？', opts: [
+      'xₙ₊₁ = xₙ − f(xₙ)/f′(xₙ)',
+      'xₙ₊₁ = xₙ + f(xₙ)/f′(xₙ)',
+      'xₙ₊₁ = (a+b)/2',
+      'xₙ₊₁ = xₙ · f(xₙ)'
+    ], ans: 0, explain: '切线 y=f(xₙ)+f′(xₙ)(x−xₙ)=0 解出 x = xₙ − f(xₙ)/f′(xₙ)。' },
+    { q: '在初值合适且单根条件下，牛顿法的收敛阶是？', opts: ['线性（一阶）', '二阶（平方）', '三阶', '不收敛'], ans: 1,
+      explain: '牛顿法在单根附近二阶收敛，每步误差大致平方缩小。' },
+    { q: '梯形法数值积分的整体误差阶为？', opts: ['O(h)', 'O(h²)', 'O(h⁴)', 'O(h⁵)'], ans: 1,
+      explain: '梯形法整体误差 O(h²)，N 加倍误差约变 1/4。' },
+    { q: 'Simpson 法要求分段数 N 满足什么条件？', opts: ['N 为任意正整数', 'N 必须为偶数', 'N 必须为 3 的倍数', 'N ≤ 10'], ans: 1,
+      explain: 'Simpson 法每次取两个子区间拟合抛物线，故 N 必须为偶数。' },
+    { q: '与梯形法相比，Simpson 法的主要优势是？', opts: [
+      '编程更简单', '对光滑函数精度更高（O(h⁴)）', '不需要函数值', '只能用于多项式'
+    ], ans: 1, explain: 'Simpson 用抛物线拟合，对光滑函数精度比梯形法高两阶。' },
+    { q: '下列哪种情况二分法 <em>失效</em>？', opts: [
+      'f(a)·f(b) < 0', '函数在 [a,b] 不连续', '区间内有偶数个根但 f(a)·f(b) > 0', '区间长度很大'
+    ], ans: 2, explain: '二分法前提是端点异号；偶数个根同号端点会"漏根"。' },
+    { q: '设二分法初始区间长度 1，要使误差 < 10⁻³，至少需迭代几次？', opts: ['5', '10', '20', '50'], ans: 1,
+      explain: '(1/2)ⁿ < 10⁻³ → n ≥ log₂(1000) ≈ 9.97，故 n=10。' }
+  ];
+  let quizIdx = 0, quizScore = 0, quizDone = false;
+
+  function renderQuiz() {
+    clearCV();
+    if (quizIdx >= quizData.length) {
+      const passed = quizScore >= Math.ceil(quizData.length * 0.6);
+      panel.innerHTML = `
+        <h3>🏆 完成！</h3>
+        <div class="equation" style="font-size:1.4rem">得分：${quizScore} / ${quizData.length}</div>
+        <p style="text-align:center; color:#94a3b8">${passed ? '🎉 数值分析已掌握！' : '💪 再练练，加油！'}</p>
+        <div class="btn-row" style="justify-content:center">
+          <button class="btn" onclick="location.reload()">重新开始</button>
+        </div>
+      `;
+      if (passed && typeof PageProgress !== 'undefined') {
+        PageProgress.markDone('numerical-methods');
+      }
+      ctx.fillStyle = '#cbd5e1'; ctx.font = 'bold 48px "PingFang SC"'; ctx.textAlign = 'center';
+      ctx.fillText(passed ? '🎉' : '💪', W/2, H/2 - 20);
+      ctx.font = '24px "PingFang SC"';
+      ctx.fillText(`${quizScore} / ${quizData.length}`, W/2, H/2 + 30);
+      return;
+    }
+    const q = quizData[quizIdx];
+    ctx.fillStyle = '#cbd5e1'; ctx.font = 'bold 36px "PingFang SC"'; ctx.textAlign = 'center';
+    ctx.fillText(`第 ${quizIdx + 1} / ${quizData.length} 题`, W/2, H/2 - 40);
+    ctx.font = '18px "PingFang SC"'; ctx.fillStyle = '#94a3b8';
+    ctx.fillText('请在右侧选择答案', W/2, H/2 + 10);
+
+    panel.innerHTML = `
+      <div class="quiz">
+        <div class="quiz-bar"><div style="width:${(quizIdx/quizData.length)*100}%"></div></div>
+        <div class="quiz-q"><strong>Q${quizIdx+1}.</strong> ${q.q}</div>
+        <div class="quiz-opts" id="opts">
+          ${q.opts.map((o,i) => `<div class="quiz-opt" data-i="${i}">${String.fromCharCode(65+i)}. ${o}</div>`).join('')}
+        </div>
+        <div class="quiz-feedback" id="fb"></div>
+      </div>
+      <div class="desc" style="margin-top:10px">当前得分：<strong style="color:#fbbf24">${quizScore}</strong> / ${quizIdx}</div>
+    `;
+    panel.querySelectorAll('.quiz-opt').forEach(el => {
+      el.onclick = () => {
+        if (quizDone) return;
+        quizDone = true;
+        const i = +el.dataset.i;
+        const correct = i === q.ans;
+        if (correct) { el.classList.add('correct'); quizScore++; }
+        else {
+          el.classList.add('wrong');
+          panel.querySelector(`[data-i="${q.ans}"]`).classList.add('correct');
+        }
+        panel.querySelector('#fb').innerHTML = (correct ? '✅ 正确！' : '❌ 错误。') + ' ' + q.explain;
+        setTimeout(() => { quizIdx++; quizDone = false; renderQuiz(); }, 1800);
+      };
+    });
+  }
+
+  /* ========== Tab 切换 ========== */
+  function render() {
+    if (mode === 'bisect') renderBisect();
+    else if (mode === 'newton') renderNewton();
+    else if (mode === 'integrate') renderIntegrate();
+    else if (mode === 'quiz') renderQuiz();
+  }
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      mode = t.dataset.mode;
+      render();
+    };
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

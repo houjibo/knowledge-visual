@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>不等式 · 性质、解集与均值不等式互动可视化</title>
+<link rel="stylesheet" href="assets/common.css" />
+<script src="../assets/js/common.js"></script>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --solution: #3b82f6;
+    --boundary: #ef4444;
+    --am: #10b981;
+    --gm: #f59e0b;
+    --dark: #1e293b;
+    --light: #f1f5f9;
+  }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--solution), var(--am), var(--gm)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; }
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 20px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 10px; font-size: 1.1rem; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.2rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 90px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 13px; color: #e2e8f0; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-sol::before { background: var(--solution); }
+  .legend .l-bnd::before { background: var(--boundary); }
+  .legend .l-am::before { background: var(--am); }
+  .legend .l-gm::before { background: var(--gm); }
+  .prop-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.6; border-left: 3px solid var(--primary); }
+  .prop-card .prop-title { font-weight: 600; color: #c4b5fd; margin-bottom: 4px; }
+  .prop-card .prop-formula { font-family: "Times New Roman", serif; font-size: 1.1rem; color: #fbbf24; text-align: center; margin: 6px 0; }
+  .highlight { color: #fbbf24; font-weight: 600; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚖️ 不等式 Interactive</h1>
+    <p>不等式性质 · 一元二次不等式 · 均值不等式</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="properties">📜 不等式性质</div>
+    <div class="tab" data-mode="quadratic">📐 一元二次不等式</div>
+    <div class="tab" data-mode="amgm">🔵 均值不等式</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="720" height="600"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="panel">
+      <h3 id="panelTitle">📜 不等式基本性质</h3>
+      <div id="panelContent"></div>
+    </div>
+  </div>
+</div>
+
+<footer>高中数学 · 不等式互动可视化 · 知识可视化项目</footer>
+
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+/* ===== STATE ===== */
+let currentMode = 'properties';
+let propIndex = 0;
+let quadA = 1, quadB = -2, quadC = -3;
+let amA = 3, amB = 5;
+let quizIndex = 0, quizScore = 0;
+let quizRounds = 0; // 已完成的完整轮次，用于满分判定
+const PASS_THRESHOLD = 8; // 满分通过才标记掌握
+
+/* ===== TABS ===== */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    updatePanel();
+    draw();
+  });
+});
+
+/* ===== COLORS ===== */
+const C = {
+  primary: '#8b5cf6', solution: '#3b82f6', boundary: '#ef4444',
+  am: '#10b981', gm: '#f59e0b', grid: '#334155', axis: '#64748b',
+  text: '#e2e8f0', dim: '#94a3b8', bg: '#0f172a'
+};
+
+/* ===== HELPERS ===== */
+function clearCanvas() {
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function drawGrid(ox, oy, sx, sy, xRange, yRange) {
+  ctx.strokeStyle = C.grid;
+  ctx.lineWidth = 0.5;
+  for (let x = -xRange; x <= xRange; x++) {
+    const px = ox + x * sx;
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+  }
+  for (let y = -yRange; y <= yRange; y++) {
+    const py = oy + y * sy;
+    ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+  }
+  // axes
+  ctx.strokeStyle = C.axis;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(W, oy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, H); ctx.stroke();
+}
+
+function drawArrow(x1, y1, x2, y2, color, lw) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw || 2;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  ctx.lineTo(x2 - 10 * Math.cos(angle - 0.3), y2 - 10 * Math.sin(angle - 0.3));
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 10 * Math.cos(angle + 0.3), y2 - 10 * Math.sin(angle + 0.3));
+  ctx.stroke();
+}
+
+function text(str, x, y, color, size, align) {
+  ctx.fillStyle = color || C.text;
+  ctx.font = (size || 14) + 'px -apple-system, "PingFang SC", sans-serif';
+  ctx.textAlign = align || 'center';
+  ctx.fillText(str, x, y);
+}
+
+function mathText(str, x, y, color, size) {
+  ctx.fillStyle = color || '#fbbf24';
+  ctx.font = 'italic ' + (size || 16) + 'px "Times New Roman", serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(str, x, y);
+}
+
+/* =========================================
+   MODE 1: 不等式性质
+   ========================================= */
+const properties = [
+  {
+    title: '对称性',
+    formula: 'a > b ⟺ b < a',
+    desc: '不等式两边可以交换位置，同时改变不等号方向。',
+    demo: (t) => {
+      clearCanvas();
+      const y1 = 150, y2 = 350;
+      // 数轴
+      const ox = 360, sx = 50;
+      ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(60, y1); ctx.lineTo(660, y1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(60, y2); ctx.lineTo(660, y2); ctx.stroke();
+
+      const a = 3, b = -1;
+      const pa = ox + a * sx, pb = ox + b * sx;
+
+      // 动画过渡
+      const progress = (Math.sin(t * 0.002) + 1) / 2;
+      const ax1 = 60 + (pa - 60) * (1 - progress) + (pb - 60) * progress;
+      const bx1 = 60 + (pb - 60) * (1 - progress) + (pa - 60) * progress;
+
+      // a > b 行
+      ctx.fillStyle = C.solution;
+      ctx.beginPath(); ctx.arc(ax1, y1, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = C.boundary;
+      ctx.beginPath(); ctx.arc(bx1, y1, 8, 0, Math.PI * 2); ctx.fill();
+      text('a', ax1, y1 - 20, C.solution, 16);
+      text('b', bx1, y1 - 20, C.boundary, 16);
+      text('a > b', 120, y1 - 50, '#c4b5fd', 18);
+
+      // b < a 行
+      ctx.fillStyle = C.boundary;
+      ctx.beginPath(); ctx.arc(bx1, y2, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = C.solution;
+      ctx.beginPath(); ctx.arc(ax1, y2, 8, 0, Math.PI * 2); ctx.fill();
+      text('b', bx1, y2 - 20, C.boundary, 16);
+      text('a', ax1, y2 - 20, C.solution, 16);
+      text('b < a', 120, y2 - 50, '#c4b5fd', 18);
+
+      // 双向箭头
+      drawArrow(300, y1 + 50, 300, y2 - 50, '#fbbf24', 2);
+      drawArrow(420, y2 - 50, 420, y1 + 50, '#fbbf24', 2);
+      text('⟺', 360, (y1 + y2) / 2 + 5, '#fbbf24', 28);
+    }
+  },
+  {
+    title: '传递性',
+    formula: 'a > b, b > c ⟹ a > c',
+    desc: '如果 a 大于 b，b 大于 c，则 a 大于 c。',
+    demo: (t) => {
+      clearCanvas();
+      const y = 250;
+      const ox = 100, sx = 80;
+      ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(660, y); ctx.stroke();
+
+      const a = 3, b = 1.5, c = 0;
+      const pulse = Math.sin(t * 0.003) * 0.3 + 0.7;
+
+      // 点
+      [[a, 'a', C.solution], [b, 'b', C.am], [c, 'c', C.gm]].forEach(([v, name, col]) => {
+        ctx.fillStyle = col;
+        ctx.beginPath(); ctx.arc(ox + v * sx, y, 10, 0, Math.PI * 2); ctx.fill();
+        text(name, ox + v * sx, y - 25, col, 18);
+      });
+
+      // 区间高亮
+      ctx.globalAlpha = 0.15 * pulse;
+      ctx.fillStyle = C.solution;
+      ctx.fillRect(ox + c * sx, y - 30, (a - c) * sx, 60);
+      ctx.globalAlpha = 1;
+
+      // 箭头链
+      drawArrow(ox + a * sx, y + 50, ox + b * sx, y + 50, C.solution, 2);
+      text('>', (ox + a * sx + ox + b * sx) / 2, y + 40, C.solution, 16);
+      drawArrow(ox + b * sx, y + 80, ox + c * sx, y + 80, C.am, 2);
+      text('>', (ox + b * sx + ox + c * sx) / 2, y + 70, C.am, 16);
+
+      // 结论
+      drawArrow(ox + a * sx, y + 120, ox + c * sx, y + 120, '#fbbf24', 3);
+      text('a > c', (ox + a * sx + ox + c * sx) / 2, y + 150, '#fbbf24', 20);
+    }
+  },
+  {
+    title: '加法性质',
+    formula: 'a > b ⟹ a + c > b + c',
+    desc: '不等式两边同时加上同一个数，不等号方向不变。',
+    demo: (t) => {
+      clearCanvas();
+      const y1 = 200, y2 = 400;
+      const ox = 160, sx = 60;
+      const c = (Math.sin(t * 0.002) + 1) / 2 * 4 - 2; // c 在 -2 到 2 之间
+
+      // 上方：原始
+      ctx.strokeStyle = C.axis; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(60, y1); ctx.lineTo(660, y1); ctx.stroke();
+      const a1 = 2, b1 = -1;
+      ctx.fillStyle = C.solution; ctx.beginPath(); ctx.arc(ox + a1 * sx, y1, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = C.boundary; ctx.beginPath(); ctx.arc(ox + b1 * sx, y1, 8, 0, Math.PI * 2); ctx.fill();
+      text('a', ox + a1 * sx, y1 - 20, C.solution, 16);
+      text('b', ox + b1 * sx, y1 - 20, C.boundary, 16);
+      text('a > b', 100, y1 - 50, '#c4b5fd', 16);
+
+      // 下方：加 c
+      ctx.beginPath(); ctx.moveTo(60, y2); ctx.lineTo(660, y2); ctx.stroke();
+      const a2 = a1 + c, b2 = b1 + c;
+      ctx.fillStyle = C.solution; ctx.beginPath(); ctx.arc(ox + a2 * sx, y2, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = C.boundary; ctx.beginPath(); ctx.arc(ox + b2 * sx, y2, 8, 0, Math.PI * 2); ctx.fill();
+      text('a+c', ox + a2 * sx, y2 - 20, C.solution, 16);
+      text('b+c', ox + b2 * sx, y2 - 20, C.boundary, 16);
+      text('a+c > b+c', 100, y2 - 50, '#c4b5fd', 16);
+
+      // 箭头连接
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = C.am;
+      ctx.beginPath(); ctx.moveTo(ox + a1 * sx, y1 + 15); ctx.lineTo(ox + a2 * sx, y2 - 15); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ox + b1 * sx, y1 + 15); ctx.lineTo(ox + b2 * sx, y2 - 15); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // c 值
+      text('c = ' + c.toFixed(1), 580, 300, '#fbbf24', 18);
+      text('+c', 580, 325, C.am, 14);
+    }
+  },
+  {
+    title: '乘法性质（正数）',
+    formula: 'a > b, c > 0 ⟹ ac > bc',
+    desc: '不等式两边同乘正数，不等号方向不变。',
+    demo: (t) => {
+      clearCanvas();
+      const y1 = 200, y2 = 400;
+      const ox = 200, sx = 50;
+      const c = (Math.sin(t * 0.002) + 1) / 2 * 3 + 0.5;
+
+      ctx.strokeStyle = C.axis; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(60, y1); ctx.lineTo(660, y1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(60, y2); ctx.lineTo(660, y2); ctx.stroke();
+
+      const a = 3, b = -1;
+      // 上
+      ctx.fillStyle = C.solution; ctx.beginPath(); ctx.arc(ox + a * sx, y1, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = C.boundary; ctx.beginPath(); ctx.arc(ox + b * sx, y1, 8, 0, Math.PI * 2); ctx.fill();
+      text('a=' + a, ox + a * sx, y1 - 20, C.solution, 14);
+      text('b=' + b, ox + b * sx, y1 - 20, C.boundary, 14);
+
+      // 下
+      const ac = a * c, bc = b * c;
+      ctx.fillStyle = C.solution; ctx.beginPath(); ctx.arc(ox + ac * sx, y2, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = C.boundary; ctx.beginPath(); ctx.arc(ox + bc * sx, y2, 8, 0, Math.PI * 2); ctx.fill();
+      text('ac=' + ac.toFixed(1), ox + ac * sx, y2 - 20, C.solution, 14);
+      text('bc=' + bc.toFixed(1), ox + bc * sx, y2 - 20, C.boundary, 14);
+
+      text('c = ' + c.toFixed(1) + ' > 0', 580, 300, C.am, 18);
+      text('方向不变 ✓', 580, 330, '#10b981', 14);
+
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = C.gm;
+      ctx.beginPath(); ctx.moveTo(ox + a * sx, y1 + 15); ctx.lineTo(ox + ac * sx, y2 - 15); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ox + b * sx, y1 + 15); ctx.lineTo(ox + bc * sx, y2 - 15); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  },
+  {
+    title: '乘法性质（负数）',
+    formula: 'a > b, c < 0 ⟹ ac < bc',
+    desc: '不等式两边同乘负数，不等号方向反转！',
+    demo: (t) => {
+      clearCanvas();
+      const y1 = 200, y2 = 400;
+      const ox = 360, sx = 50;
+      const c = -(Math.sin(t * 0.002) + 1) / 2 * 3 - 0.5;
+
+      ctx.strokeStyle = C.axis; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(60, y1); ctx.lineTo(660, y1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(60, y2); ctx.lineTo(660, y2); ctx.stroke();
+
+      const a = 2, b = -2;
+      ctx.fillStyle = C.solution; ctx.beginPath(); ctx.arc(ox + a * sx, y1, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = C.boundary; ctx.beginPath(); ctx.arc(ox + b * sx, y1, 8, 0, Math.PI * 2); ctx.fill();
+      text('a=' + a, ox + a * sx, y1 - 20, C.solution, 14);
+      text('b=' + b, ox + b * sx, y1 - 20, C.boundary, 14);
+
+      const ac = a * c, bc = b * c;
+      ctx.fillStyle = C.solution; ctx.beginPath(); ctx.arc(ox + ac * sx, y2, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = C.boundary; ctx.beginPath(); ctx.arc(ox + bc * sx, y2, 8, 0, Math.PI * 2); ctx.fill();
+      text('ac=' + ac.toFixed(1), ox + ac * sx, y2 - 20, C.solution, 14);
+      text('bc=' + bc.toFixed(1), ox + bc * sx, y2 - 20, C.boundary, 14);
+
+      text('c = ' + c.toFixed(1) + ' < 0', 580, 300, C.boundary, 18);
+
+      // 闪烁的"反转"
+      const flash = Math.sin(t * 0.005) > 0;
+      if (flash) {
+        text('⚠️ 方向反转！', 360, 520, '#ef4444', 22);
+      }
+      text('ac < bc', 360, 550, '#fbbf24', 18);
+
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = '#ef4444';
+      ctx.beginPath(); ctx.moveTo(ox + a * sx, y1 + 15); ctx.lineTo(ox + ac * sx, y2 - 15); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ox + b * sx, y1 + 15); ctx.lineTo(ox + bc * sx, y2 - 15); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+];
+
+function drawProperties(t) {
+  properties[propIndex].demo(t);
+}
+
+function updatePropertiesPanel() {
+  const p = properties[propIndex];
+  document.getElementById('panelTitle').textContent = '📜 ' + p.title;
+  let html = `
+    <div class="equation">${p.formula}</div>
+    <p style="font-size:14px;color:#cbd5e1;line-height:1.6">${p.desc}</p>
+    <div class="mode-switch">
+      ${properties.map((pp, i) => `<div class="mode-btn ${i === propIndex ? 'active' : ''}" data-pidx="${i}">${pp.title}</div>`).join('')}
+    </div>
+    <div class="prop-card">
+      <div class="prop-title">💡 观察画布</div>
+      <p style="font-size:13px;color:#94a3b8">动画展示了性质在数轴上的效果。注意观察点的位置变化和不等号方向。</p>
+    </div>
+  `;
+  document.getElementById('panelContent').innerHTML = html;
+  document.querySelectorAll('[data-pidx]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      propIndex = parseInt(btn.dataset.pidx);
+      updatePropertiesPanel();
+    });
+  });
+}
+
+/* =========================================
+   MODE 2: 一元二次不等式
+   ========================================= */
+function quad(x) { return quadA * x * x + quadB * x + quadC; }
+
+function getQuadraticRoots() {
+  const disc = quadB * quadB - 4 * quadA * quadC;
+  if (disc < 0) return { type: 'empty', roots: [] };
+  if (disc === 0) return { type: 'equal', roots: [-quadB / (2 * quadA)] };
+  const r1 = (-quadB - Math.sqrt(disc)) / (2 * quadA);
+  const r2 = (-quadB + Math.sqrt(disc)) / (2 * quadA);
+  return { type: 'two', roots: [Math.min(r1, r2), Math.max(r1, r2)] };
+}
+
+function drawQuadratic() {
+  clearCanvas();
+  const ox = W / 2, oy = H * 0.55;
+  const sx = 40, sy = 20;
+  const xRange = 8, yRange = 12;
+
+  drawGrid(ox, oy, sx, sy, xRange, yRange);
+
+  // 刻度
+  for (let x = -xRange; x <= xRange; x++) {
+    if (x === 0) continue;
+    text(x, ox + x * sx, oy + 18, C.dim, 11);
+  }
+  for (let y = -yRange; y <= yRange; y++) {
+    if (y === 0) continue;
+    text(y, ox - 20, oy - y * sy + 4, C.dim, 11);
+  }
+
+  // 抛物线
+  ctx.strokeStyle = C.primary;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  let first = true;
+  for (let px = 0; px < W; px += 1) {
+    const x = (px - ox) / sx;
+    const y = quad(x);
+    const py = oy - y * sy;
+    if (py < -50 || py > H + 50) { first = true; continue; }
+    if (first) { ctx.moveTo(px, py); first = false; }
+    else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // 解集区域高亮
+  const info = getQuadraticRoots();
+  if (info.type === 'two') {
+    const [r1, r2] = info.roots;
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = C.solution;
+    // ax² + bx + c > 0 的解集
+    if (quadA > 0) {
+      // 外部：x < r1 或 x > r2
+      ctx.fillRect(0, 0, ox + r1 * sx, H);
+      ctx.fillRect(ox + r2 * sx, 0, W - ox - r2 * sx, H);
+    } else {
+      // 内部：r1 < x < r2
+      ctx.fillRect(ox + r1 * sx, 0, (r2 - r1) * sx, H);
+    }
+    ctx.globalAlpha = 1;
+
+    // 根点
+    info.roots.forEach(r => {
+      ctx.fillStyle = C.boundary;
+      ctx.beginPath(); ctx.arc(ox + r * sx, oy, 6, 0, Math.PI * 2); ctx.fill();
+      text(r.toFixed(1), ox + r * sx, oy + 35, C.boundary, 13);
+    });
+  }
+
+  // 数轴解集表示
+  const nlY = 60;
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(60, nlY); ctx.lineTo(660, nlY); ctx.stroke();
+
+  if (info.type === 'two') {
+    const [r1, r2] = info.roots;
+    const nr1 = ox + r1 * sx, nr2 = ox + r2 * sx;
+    // 解集线
+    ctx.strokeStyle = C.solution; ctx.lineWidth = 4;
+    if (quadA > 0) {
+      ctx.beginPath(); ctx.moveTo(60, nlY); ctx.lineTo(nr1, nlY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(nr2, nlY); ctx.lineTo(660, nlY); ctx.stroke();
+      // 空心圆
+      ctx.strokeStyle = C.boundary; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(nr1, nlY, 5, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(nr2, nlY, 5, 0, Math.PI * 2); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(nr1, nlY); ctx.lineTo(nr2, nlY); ctx.stroke();
+      ctx.strokeStyle = C.boundary; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(nr1, nlY, 5, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(nr2, nlY, 5, 0, Math.PI * 2); ctx.stroke();
+    }
+    text('x₁=' + r1.toFixed(1), nr1, nlY - 15, C.boundary, 12);
+    text('x₂=' + r2.toFixed(1), nr2, nlY - 15, C.boundary, 12);
+  }
+
+  // 公式
+  const signB = quadB >= 0 ? '+' : '';
+  const signC = quadC >= 0 ? '+' : '';
+  text(`${quadA}x² ${signB}${quadB}x ${signC}${quadC} = 0`, 360, H - 30, '#fbbf24', 16);
+
+  // Δ
+  const disc = quadB * quadB - 4 * quadA * quadC;
+  text(`Δ = ${disc.toFixed(1)}`, 600, H - 30, disc > 0 ? C.am : C.boundary, 14);
+}
+
+function updateQuadraticPanel() {
+  document.getElementById('panelTitle').textContent = '📐 一元二次不等式';
+  const info = getQuadraticRoots();
+  const disc = quadB * quadB - 4 * quadA * quadC;
+  let solutionText = '';
+  if (info.type === 'empty') {
+    solutionText = quadA > 0 ? '解集为 ℝ（全体实数）' : '解集为 ∅（空集）';
+  } else if (info.type === 'equal') {
+    solutionText = `x ≠ ${info.roots[0].toFixed(2)}`;
+  } else {
+    const [r1, r2] = info.roots;
+    solutionText = quadA > 0
+      ? `x < ${r1.toFixed(2)} 或 x > ${r2.toFixed(2)}`
+      : `${r1.toFixed(2)} < x < ${r2.toFixed(2)}`;
+  }
+
+  let html = `
+    <div class="equation">ax² + bx + c > 0</div>
+    <div class="slider-row"><label>a =</label><input type="range" min="-3" max="3" step="0.5" value="${quadA}" id="slA"><span class="val">${quadA}</span></div>
+    <div class="slider-row"><label>b =</label><input type="range" min="-5" max="5" step="0.5" value="${quadB}" id="slB"><span class="val">${quadB}</span></div>
+    <div class="slider-row"><label>c =</label><input type="range" min="-5" max="5" step="0.5" value="${quadC}" id="slC"><span class="val">${quadC}</span></div>
+    <div class="info-grid">
+      <div>判别式 Δ = <b>${disc.toFixed(1)}</b></div>
+      <div>开口 <b>${quadA > 0 ? '向上 ↑' : quadA < 0 ? '向下 ↓' : '—'}</b></div>
+      <div style="grid-column:1/3">解集: <b>${solutionText}</b></div>
+    </div>
+    <div class="prop-card" style="margin-top:12px">
+      <div class="prop-title">📖 解题步骤</div>
+      <p style="font-size:13px;color:#94a3b8;line-height:1.6">
+        1. 计算 Δ = b² - 4ac<br>
+        2. Δ > 0 → 两个实根 x₁, x₂<br>
+        3. a > 0 开口向上，> 0 取两边<br>
+        4. a < 0 开口向下，> 0 取中间
+      </p>
+    </div>
+  `;
+  document.getElementById('panelContent').innerHTML = html;
+
+  ['slA', 'slB', 'slC'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => {
+      quadA = parseFloat(document.getElementById('slA').value);
+      quadB = parseFloat(document.getElementById('slB').value);
+      quadC = parseFloat(document.getElementById('slC').value);
+      if (quadA === 0) quadA = 0.5;
+      updateQuadraticPanel();
+    });
+  });
+}
+
+/* =========================================
+   MODE 3: 均值不等式 (AM-GM)
+   ========================================= */
+function drawAMGM(t) {
+  clearCanvas();
+
+  const a = amA, b = amB;
+  const am = (a + b) / 2;
+  const gm = Math.sqrt(a * b);
+
+  // === 几何证明：半圆中的 AM-GM ===
+  const cx = 360, cy = 260;
+  const R = 180; // 半圆半径 = (a+b)/2 按比例
+
+  // 半圆
+  ctx.strokeStyle = C.dim;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, Math.PI, 0);
+  ctx.stroke();
+
+  // 直径
+  const leftX = cx - R, rightX = cx + R;
+  ctx.strokeStyle = C.axis;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(leftX, cy); ctx.lineTo(rightX, cy); ctx.stroke();
+
+  // 分界点：a 和 b 的分界
+  const ratio = a / (a + b);
+  const divX = leftX + ratio * 2 * R;
+
+  // 垂直线到半圆（几何平均）
+  const h = Math.sqrt((divX - leftX) * (rightX - divX));
+  ctx.strokeStyle = C.gm;
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath(); ctx.moveTo(divX, cy); ctx.lineTo(divX, cy - h); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 半径 = 算术平均
+  ctx.strokeStyle = C.am;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - R); ctx.stroke();
+
+  // 标注 a 段和 b 段
+  ctx.fillStyle = C.solution;
+  ctx.fillRect(leftX, cy + 10, divX - leftX, 8);
+  ctx.fillStyle = C.boundary;
+  ctx.fillRect(divX, cy + 10, rightX - divX, 8);
+
+  text('a', (leftX + divX) / 2, cy + 35, C.solution, 16);
+  text('b', (divX + rightX) / 2, cy + 35, C.boundary, 16);
+
+  // AM 标注
+  text('AM = (a+b)/2', cx + 60, cy - R / 2, C.am, 14);
+  // GM 标注
+  text('GM = √(ab)', divX + 60, cy - h / 2, C.gm, 14);
+
+  // 分界点
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath(); ctx.arc(divX, cy, 5, 0, Math.PI * 2); ctx.fill();
+
+  // GM 端点
+  ctx.fillStyle = C.gm;
+  ctx.beginPath(); ctx.arc(divX, cy - h, 5, 0, Math.PI * 2); ctx.fill();
+
+  // AM 端点
+  ctx.fillStyle = C.am;
+  ctx.beginPath(); ctx.arc(cx, cy - R, 5, 0, Math.PI * 2); ctx.fill();
+
+  // 不等式关系
+  const pulse = Math.sin(t * 0.003) * 0.1 + 0.9;
+  ctx.globalAlpha = pulse;
+  text('AM ≥ GM', cx, cy + 80, '#fbbf24', 24);
+  ctx.globalAlpha = 1;
+  text(`(a+b)/2 ≥ √(ab)`, cx, cy + 110, C.dim, 16);
+
+  // 数值
+  text(`AM = ${am.toFixed(2)}`, 160, cy - R - 30, C.am, 16);
+  text(`GM = ${gm.toFixed(2)}`, 560, cy - R - 30, C.gm, 16);
+  text(`AM - GM = ${(am - gm).toFixed(3)}`, 360, cy + 145, am === gm ? '#10b981' : '#fbbf24', 15);
+
+  // 等号条件提示
+  if (Math.abs(a - b) < 0.1) {
+    text('✨ a = b 时等号成立！', cx, cy + 180, '#10b981', 18);
+  }
+
+  // === 矩形面积 vs 正方形面积 对比 ===
+  const barY = 480;
+  const barW = 280, barH = 50;
+  // 矩形 a×b
+  const rw = a / (a + b) * barW * 1.5;
+  const rh = b / (a + b) * barH * 1.5;
+  ctx.fillStyle = 'rgba(245,158,11,0.2)';
+  ctx.strokeStyle = C.gm;
+  ctx.lineWidth = 1.5;
+  ctx.fillRect(100, barY, rw, rh);
+  ctx.strokeRect(100, barY, rw, rh);
+  text(`矩形 a×b = ${(a*b).toFixed(1)}`, 100 + rw / 2, barY + rh + 20, C.gm, 12);
+
+  // 正方形 (GM)²
+  const gs = Math.sqrt(a * b) / (a + b) * barW * 1.5;
+  ctx.fillStyle = 'rgba(16,185,129,0.2)';
+  ctx.strokeStyle = C.am;
+  ctx.fillRect(420, barY, gs, gs);
+  ctx.strokeRect(420, barY, gs, gs);
+  text(`正方形 (√ab)² = ${(a*b).toFixed(1)}`, 420 + gs / 2, barY + gs + 20, C.am, 12);
+}
+
+function updateAMGMPanel() {
+  document.getElementById('panelTitle').textContent = '🔵 均值不等式';
+  const am = (amA + amB) / 2;
+  const gm = Math.sqrt(amA * amB);
+
+  let html = `
+    <div class="equation">(a+b)/2 ≥ √(ab)</div>
+    <div class="slider-row"><label>a =</label><input type="range" min="0.5" max="8" step="0.1" value="${amA}" id="slA2"><span class="val">${amA.toFixed(1)}</span></div>
+    <div class="slider-row"><label>b =</label><input type="range" min="0.5" max="8" step="0.1" value="${amB}" id="slB2"><span class="val">${amB.toFixed(1)}</span></div>
+    <div class="info-grid">
+      <div>算术平均 AM = <b>${am.toFixed(3)}</b></div>
+      <div>几何平均 GM = <b>${gm.toFixed(3)}</b></div>
+      <div>AM - GM = <b>${(am - gm).toFixed(3)}</b></div>
+      <div>等号条件: <b>${Math.abs(amA - amB) < 0.1 ? '✅ 成立' : '❌ a≠b'}</b></div>
+    </div>
+    <div class="prop-card" style="margin-top:12px">
+      <div class="prop-title">📐 几何直觉</div>
+      <p style="font-size:13px;color:#94a3b8;line-height:1.6">
+        半圆中：<br>
+        • <span style="color:#10b981">绿色半径</span> = AM = (a+b)/2<br>
+        • <span style="color:#f59e0b">黄色垂线</span> = GM = √(ab)<br>
+        半径永远 ≥ 垂线长度，直观展示 AM ≥ GM！
+      </p>
+    </div>
+    <div class="prop-card">
+      <div class="prop-title">🎯 常用变形</div>
+      <p style="font-size:13px;color:#94a3b8;line-height:1.6">
+        • a + b ≥ 2√(ab)（和 ≥ 积的函数）<br>
+        • ab ≤ (a+b)²/4（积 ≤ 和的函数）<br>
+        • x + 1/x ≥ 2（x > 0 时）
+      </p>
+    </div>
+  `;
+  document.getElementById('panelContent').innerHTML = html;
+
+  document.getElementById('slA2').addEventListener('input', (e) => {
+    amA = parseFloat(e.target.value);
+    updateAMGMPanel();
+  });
+  document.getElementById('slB2').addEventListener('input', (e) => {
+    amB = parseFloat(e.target.value);
+    updateAMGMPanel();
+  });
+}
+
+/* =========================================
+   MODE 4: 互动练习
+   ========================================= */
+const quizzes = [
+  {
+    q: '不等式 2x - 3 > 5 的解集是？',
+    opts: ['x > 4', 'x > 1', 'x < 4', 'x > 8'],
+    ans: 0,
+    explain: '2x > 8 → x > 4'
+  },
+  {
+    q: '不等式 x² - 5x + 6 < 0 的解集是？',
+    opts: ['x < 2 或 x > 3', '2 < x < 3', 'x < -2 或 x < -3', '无解'],
+    ans: 1,
+    explain: 'x² - 5x + 6 = (x-2)(x-3) < 0，开口向上，< 0 取中间：2 < x < 3'
+  },
+  {
+    q: '若 a > b > 0，下列哪个一定成立？',
+    opts: ['a² > b²', '1/a > 1/b', 'a + c > b + c（c < 0）', 'ac > bc'],
+    ans: 0,
+    explain: 'a > b > 0 → a² > b²（正数平方保序）。B 反了，C 对但不依赖条件，D 需 c > 0。'
+  },
+  {
+    q: '函数 f(x) = x + 1/x (x > 0) 的最小值是？',
+    opts: ['1', '2', '3', '没有最小值'],
+    ans: 1,
+    explain: '由均值不等式：x + 1/x ≥ 2√(x·1/x) = 2，等号在 x = 1 时成立。'
+  },
+  {
+    q: '若 a, b > 0 且 a + b = 4，则 ab 的最大值是？',
+    opts: ['2', '3', '4', '8'],
+    ans: 2,
+    explain: '由均值不等式：ab ≤ (a+b)²/4 = 16/4 = 4，等号在 a = b = 2 时成立。'
+  },
+  {
+    q: '不等式 -x² + 4x - 3 ≥ 0 的解集是？',
+    opts: ['x ≤ 1 或 x ≥ 3', '1 ≤ x ≤ 3', 'x < -1 或 x > -3', '∅'],
+    ans: 1,
+    explain: 'x² - 4x + 3 ≤ 0 → (x-1)(x-3) ≤ 0 → 1 ≤ x ≤ 3'
+  },
+  {
+    q: '已知 a > b，c < 0，则下列正确的是？',
+    opts: ['ac > bc', 'ac < bc', 'a/c > b/c', 'a - c < b - c'],
+    ans: 1,
+    explain: 'c < 0 时乘以 c 要变号：a > b → ac < bc。'
+  },
+  {
+    q: '若 x > 0，y > 0 且 xy = 9，则 x + y 的最小值是？',
+    opts: ['3', '6', '9', '18'],
+    ans: 1,
+    explain: 'x + y ≥ 2√(xy) = 2√9 = 6，等号在 x = y = 3 时成立。'
+  }
+];
+
+function drawQuiz() {
+  clearCanvas();
+  const q = quizzes[quizIndex];
+
+  // 题目
+  text(`第 ${quizIndex + 1}/${quizzes.length} 题`, 360, 50, C.dim, 14);
+
+  // 进度条
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.fillRect(160, 70, 400, 6);
+  ctx.fillStyle = C.primary;
+  ctx.fillRect(160, 70, 400 * (quizIndex / quizzes.length), 6);
+
+  // 分数
+  text(`得分: ${quizScore}/${quizzes.length}`, 600, 50, '#fbbf24', 16);
+
+  // 题目文字（自动换行）
+  ctx.fillStyle = C.text;
+  ctx.font = '18px -apple-system, "PingFang SC", sans-serif';
+  ctx.textAlign = 'center';
+  const words = q.q;
+  const maxWidth = 560;
+  let line = '';
+  let y = 160;
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i];
+    if (ctx.measureText(testLine).width > maxWidth) {
+      ctx.fillText(line, 360, y);
+      line = words[i];
+      y += 28;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, 360, y);
+
+  // 选项框
+  const optY = y + 60;
+  q.opts.forEach((opt, i) => {
+    const bx = 120, by = optY + i * 65, bw = 480, bh = 50;
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    roundRect(bx, by, bw, bh, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    // 选项标签
+    ctx.fillStyle = C.primary;
+    ctx.font = 'bold 16px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(String.fromCharCode(65 + i), bx + 25, by + 30);
+
+    // 选项内容
+    ctx.fillStyle = C.text;
+    ctx.font = '16px -apple-system, "PingFang SC", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(opt, bx + 55, by + 30);
+  });
+
+  // 点击区域存储
+  cv._quizOpts = q.opts.map((_, i) => ({
+    x: 120, y: optY + i * 65, w: 480, h: 50
+  }));
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function updateQuizPanel() {
+  document.getElementById('panelTitle').textContent = '🎯 互动练习';
+  const q = quizzes[quizIndex];
+  let html = `
+    <div class="equation" style="font-style:normal;font-family:inherit;font-size:14px;color:#cbd5e1">${q.q}</div>
+    <div class="quiz-opts">
+      ${q.opts.map((opt, i) => `<div class="quiz-opt" data-qi="${i}">${String.fromCharCode(65 + i)}. ${opt}</div>`).join('')}
+    </div>
+    <div class="quiz-feedback" id="quizFb"></div>
+    <div class="prop-card" style="margin-top:12px">
+      <div class="prop-title">💡 提示</div>
+      <p style="font-size:13px;color:#94a3b8">点击选项或画布上的选项区域作答。答对自动进入下一题。</p>
+    </div>
+  `;
+  document.getElementById('panelContent').innerHTML = html;
+
+  document.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const idx = parseInt(opt.dataset.qi);
+      handleQuizAnswer(idx);
+    });
+  });
+}
+
+function handleQuizAnswer(idx) {
+  const q = quizzes[quizIndex];
+  const opts = document.querySelectorAll('.quiz-opt');
+  const fb = document.getElementById('quizFb');
+
+  if (idx === q.ans) {
+    opts[idx].classList.add('correct');
+    fb.textContent = '✅ 正确！' + q.explain;
+    fb.style.color = '#10b981';
+    quizScore++;
+    setTimeout(() => {
+      const isLastInRound = (quizIndex === quizzes.length - 1);
+      quizIndex = (quizIndex + 1) % quizzes.length;
+      if (quizIndex === 0) {
+        // 完成一轮：满分则标记掌握
+        if (isLastInRound && quizScore === PASS_THRESHOLD && typeof PageProgress !== 'undefined') {
+          PageProgress.markDone('inequality');
+        }
+        quizScore = 0;
+      }
+      updateQuizPanel();
+    }, 2000);
+  } else {
+    opts[idx].classList.add('wrong');
+    opts[q.ans].classList.add('correct');
+    fb.textContent = '❌ 错误。' + q.explain;
+    fb.style.color = '#ef4444';
+    setTimeout(() => {
+      updateQuizPanel();
+    }, 3000);
+  }
+}
+
+// Canvas click for quiz
+cv.addEventListener('click', (e) => {
+  if (currentMode !== 'quiz' || !cv._quizOpts) return;
+  const rect = cv.getBoundingClientRect();
+  const scaleX = W / rect.width;
+  const scaleY = H / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
+
+  cv._quizOpts.forEach((box, i) => {
+    if (mx >= box.x && mx <= box.x + box.w && my >= box.y && my <= box.y + box.h) {
+      handleQuizAnswer(i);
+    }
+  });
+});
+
+/* =========================================
+   LEGEND & MAIN LOOP
+   ========================================= */
+function updateLegend() {
+  const legends = {
+    properties: '',
+    quadratic: '<span class="l-sol">解集区域</span><span class="l-bnd">根/边界</span>',
+    amgm: '<span class="l-am">算术平均 AM</span><span class="l-gm">几何平均 GM</span><span class="l-sol">a 段</span><span class="l-bnd">b 段</span>',
+    quiz: ''
+  };
+  document.getElementById('legend').innerHTML = legends[currentMode] || '';
+}
+
+function updatePanel() {
+  updateLegend();
+  switch (currentMode) {
+    case 'properties': updatePropertiesPanel(); break;
+    case 'quadratic': updateQuadraticPanel(); break;
+    case 'amgm': updateAMGMPanel(); break;
+    case 'quiz': updateQuizPanel(); break;
+  }
+}
+
+function draw() {
+  switch (currentMode) {
+    case 'properties': break; // handled in animation loop
+    case 'quadratic': drawQuadratic(); break;
+    case 'amgm': break; // handled in animation loop
+    case 'quiz': drawQuiz(); break;
+  }
+}
+
+let animFrame;
+function animate(t) {
+  if (currentMode === 'properties') drawProperties(t);
+  else if (currentMode === 'amgm') drawAMGM(t);
+  animFrame = requestAnimationFrame(animate);
+}
+
+updatePanel();
+animate(0);
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中数学"></script>
+</body>
+</html>

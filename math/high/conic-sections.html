@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>圆锥曲线 · 椭圆/双曲线/抛物线互动可视化</title>
+<link rel="stylesheet" href="assets/common.css" />
+<style>
+  :root {
+    --primary: #6366f1;
+    --ellipse: #ec4899;
+    --hyperbola: #10b981;
+    --parabola: #f59e0b;
+    --dark: #1e293b;
+    --light: #f1f5f9;
+  }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--ellipse), var(--hyperbola), var(--parabola)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; }
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 20px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(99,102,241,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 10px; font-size: 1.1rem; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.3rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 80px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 60px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 13px; color: #e2e8f0; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(99,102,241,0.08); border-radius: 12px; border: 1px solid rgba(99,102,241,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-ellipse::before { background: var(--ellipse); }
+  .legend .l-hyperbola::before { background: var(--hyperbola); }
+  .legend .l-parabola::before { background: var(--parabola); }
+  .legend .l-focus::before { background: #fbbf24; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🌠 圆锥曲线 Interactive</h1>
+    <p>椭圆 · 双曲线 · 抛物线 — 定义、方程与几何性质</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab" data-curve="ellipse">🔴 椭圆</div>
+    <div class="tab" data-curve="hyperbola">🟢 双曲线</div>
+    <div class="tab active" data-curve="all">✨ 综合对比</div>
+    <div class="tab" data-curve="parabola">🟡 抛物线</div>
+    <div class="tab" data-curve="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="720" height="600"></canvas>
+      <div class="legend">
+        <span class="l-ellipse">椭圆</span>
+        <span class="l-hyperbola">双曲线</span>
+        <span class="l-parabola">抛物线</span>
+        <span class="l-focus">焦点/顶点</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 id="panelTitle">📐 当前曲线</h3>
+      <div class="equation" id="equation">x²/a² + y²/b² = 1</div>
+
+      <div class="mode-switch">
+        <div class="mode-btn active" data-mode="explore">🔍 探索模式</div>
+        <div class="mode-btn" data-mode="generate">🎬 生成动画</div>
+        <div class="mode-btn" data-mode="focus">🎯 焦点轨迹</div>
+      </div>
+
+      <div id="controls"></div>
+
+      <div class="info-grid" id="infoGrid"></div>
+
+      <div class="quiz" id="quizBox" style="display:none;">
+        <div class="quiz-q" id="quizQ"></div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFb"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>高中数学 · 圆锥曲线 · 拖动滑块探索参数变化</footer>
+</div>
+
+<script src="assets/animation.js"></script>
+<script src="assets/touch.js"></script>
+<script src="../assets/js/common.js"></script>
+<script>
+(() => {
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const cx = W/2, cy = H/2;
+  const scale = 40; // 1 unit = 40 px
+
+  let curve = 'all';
+  let mode = 'explore';
+  let a = 5, b = 3; // ellipse / hyperbola params
+  let p = 2; // parabola param (y² = 2px)
+  let animT = 0;
+  let focusTrail = [];
+
+  const colors = { ellipse: '#ec4899', hyperbola: '#10b981', parabola: '#f59e0b', focus: '#fbbf24', axis: '#475569', grid: '#1e293b' };
+
+  // ---------- drawing helpers ----------
+  function toScreen(x, y) { return [cx + x*scale, cy - y*scale]; }
+  function drawGrid() {
+    ctx.strokeStyle = colors.grid; ctx.lineWidth = 1;
+    for (let i = -10; i <= 10; i++) {
+      const [x1, y1] = toScreen(i, -10), [x2, y2] = toScreen(i, 10);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      const [x3, y3] = toScreen(-10, i), [x4, y4] = toScreen(10, i);
+      ctx.beginPath(); ctx.moveTo(x3, y3); ctx.lineTo(x4, y4); ctx.stroke();
+    }
+    ctx.strokeStyle = colors.axis; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+    // arrows
+    ctx.fillStyle = colors.axis;
+    ctx.beginPath(); ctx.moveTo(W-5, cy-4); ctx.lineTo(W, cy); ctx.lineTo(W-5, cy+4); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx-4, 5); ctx.lineTo(cx, 0); ctx.lineTo(cx+4, 5); ctx.fill();
+  }
+  function drawPoint(x, y, color, label, r=5) {
+    const [sx, sy] = toScreen(x, y);
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI*2); ctx.fill();
+    if (label) {
+      ctx.fillStyle = color; ctx.font = '13px sans-serif';
+      ctx.fillText(label, sx + 8, sy - 8);
+    }
+  }
+  function drawEllipse(a, b, color, progress=1) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    const steps = 200;
+    for (let i = 0; i <= steps*progress; i++) {
+      const t = (i/steps) * Math.PI*2;
+      const [x, y] = toScreen(a*Math.cos(t), b*Math.sin(t));
+      if (i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  function drawHyperbola(a, b, color, progress=1) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    // two branches
+    for (const sgn of [1, -1]) {
+      ctx.beginPath();
+      const steps = 150;
+      const tRange = 2.2;
+      for (let i = 0; i <= steps*progress; i++) {
+        const t = -tRange + (i/steps) * 2*tRange;
+        const x = sgn * a * Math.cosh(t);
+        const y = b * Math.sinh(t);
+        if (Math.abs(x) > 12) continue;
+        const [sx, sy] = toScreen(x, y);
+        if (i===0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+      }
+      ctx.stroke();
+    }
+    // asymptotes
+    ctx.setLineDash([5,5]); ctx.strokeStyle = color+'80'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    const [x1, y1] = toScreen(-10, -10*b/a), [x2, y2] = toScreen(10, 10*b/a);
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.beginPath();
+    const [x3, y3] = toScreen(-10, 10*b/a), [x4, y4] = toScreen(10, -10*b/a);
+    ctx.moveTo(x3, y3); ctx.lineTo(x4, y4); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  function drawParabola(p, color, progress=1) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    const steps = 200;
+    const yRange = 8;
+    let started = false;
+    for (let i = 0; i <= steps*progress; i++) {
+      const y = -yRange + (i/steps) * 2*yRange;
+      const x = y*y / (2*p);
+      if (x > 10) continue;
+      const [sx, sy] = toScreen(x, y);
+      if (!started) { ctx.moveTo(sx, sy); started = true; } else ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+  }
+
+  // ---------- render ----------
+  function render() {
+    ctx.clearRect(0, 0, W, H);
+    drawGrid();
+
+    if (curve === 'all' || curve === 'ellipse') drawEllipse(a, b, colors.ellipse, mode==='generate' ? animT : 1);
+    if (curve === 'all' || curve === 'hyperbola') drawHyperbola(a, b, colors.hyperbola, mode==='generate' ? animT : 1);
+    if (curve === 'all' || curve === 'parabola') drawParabola(p, colors.parabola, mode==='generate' ? animT : 1);
+
+    // foci
+    if (curve !== 'parabola') {
+      const c = Math.sqrt(Math.abs(a*a - b*b));
+      if (curve === 'ellipse' || curve === 'all') {
+        drawPoint(c, 0, colors.focus, curve==='all'?'F₁':'F₁', 6);
+        drawPoint(-c, 0, colors.focus, curve==='all'?'F₂':'F₂', 6);
+      }
+      if (curve === 'hyperbola') {
+        drawPoint(c, 0, colors.focus, 'F₁', 6);
+        drawPoint(-c, 0, colors.focus, 'F₂', 6);
+      }
+    } else {
+      drawPoint(p/2, 0, colors.focus, 'F', 6);
+      // directrix
+      ctx.setLineDash([4,4]); ctx.strokeStyle = colors.parabola+'90';
+      ctx.beginPath();
+      const [dx, dy1] = toScreen(-p/2, -8), [_, dy2] = toScreen(-p/2, 8);
+      ctx.moveTo(dx, dy1); ctx.lineTo(dx, dy2); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // focus trail mode
+    if (mode === 'focus' && focusTrail.length > 1) {
+      ctx.strokeStyle = colors.focus + 'aa'; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      focusTrail.forEach((pt, i) => {
+        const [sx, sy] = toScreen(pt[0], pt[1]);
+        if (i===0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+      });
+      ctx.stroke();
+    }
+
+    // animating
+    if (mode === 'generate' && animT < 1) {
+      animT = Math.min(1, animT + 0.012);
+    }
+  }
+
+  // ---------- UI ----------
+  function updatePanel() {
+    const title = document.getElementById('panelTitle');
+    const eq = document.getElementById('equation');
+    const ctrl = document.getElementById('controls');
+    const info = document.getElementById('infoGrid');
+    const quiz = document.getElementById('quizBox');
+    quiz.style.display = 'none';
+
+    if (curve === 'all') {
+      title.textContent = '🌠 三种圆锥曲线对比';
+      eq.innerHTML = '椭圆 x²/a²+y²/b²=1 · 双曲线 x²/a²−y²/b²=1 · 抛物线 y²=2px';
+      ctrl.innerHTML = `
+        <div class="slider-row"><label>a (椭圆/双曲线)</label><input type="range" min="1" max="8" step="0.1" value="${a}"><span class="val">${a.toFixed(1)}</span></div>
+        <div class="slider-row"><label>b</label><input type="range" min="1" max="6" step="0.1" value="${b}"><span class="val">${b.toFixed(1)}</span></div>
+        <div class="slider-row"><label>p (抛物线)</label><input type="range" min="0.5" max="5" step="0.1" value="${p}"><span class="val">${p.toFixed(1)}</span></div>`;
+      const ceEllipse = Math.sqrt(Math.max(0, a*a - b*b));
+      const ceHyperbola = Math.sqrt(a*a + b*b);
+      info.innerHTML = `
+        <div>椭圆离心率 <b>${(ceEllipse/a).toFixed(3)}</b></div>
+        <div>双曲线离心率 <b>${(ceHyperbola/a).toFixed(3)}</b></div>
+        <div>椭圆焦点 (±<b>${ceEllipse.toFixed(2)}</b>, 0)</div>
+        <div>抛物线焦点 (<b>${(p/2).toFixed(2)}</b>, 0)</div>`;
+    } else if (curve === 'ellipse') {
+      const c = Math.sqrt(a*a - b*b);
+      const e = c/a;
+      title.textContent = '🔴 椭圆';
+      eq.innerHTML = `x²/${a.toFixed(1)}² + y²/${b.toFixed(1)}² = 1`;
+      ctrl.innerHTML = `
+        <div class="slider-row"><label>半长轴 a</label><input type="range" min="1" max="8" step="0.1" value="${a}"><span class="val">${a.toFixed(1)}</span></div>
+        <div class="slider-row"><label>半短轴 b</label><input type="range" min="1" max="${a.toFixed(1)}" step="0.1" value="${b}"><span class="val">${b.toFixed(1)}</span></div>`;
+      info.innerHTML = `
+        <div>焦距 c = <b>${c.toFixed(2)}</b></div>
+        <div>离心率 e = <b>${e.toFixed(3)}</b> (0&lt;e&lt;1)</div>
+        <div>焦点 (±<b>${c.toFixed(2)}</b>, 0)</div>
+        <div>准线 x = ±<b>${(a*a/c).toFixed(2)}</b></div>`;
+    } else if (curve === 'hyperbola') {
+      const c = Math.sqrt(a*a + b*b);
+      const e = c/a;
+      title.textContent = '🟢 双曲线';
+      eq.innerHTML = `x²/${a.toFixed(1)}² − y²/${b.toFixed(1)}² = 1`;
+      ctrl.innerHTML = `
+        <div class="slider-row"><label>实半轴 a</label><input type="range" min="1" max="6" step="0.1" value="${a}"><span class="val">${a.toFixed(1)}</span></div>
+        <div class="slider-row"><label>虚半轴 b</label><input type="range" min="1" max="6" step="0.1" value="${b}"><span class="val">${b.toFixed(1)}</span></div>`;
+      info.innerHTML = `
+        <div>焦距 c = <b>${c.toFixed(2)}</b></div>
+        <div>离心率 e = <b>${e.toFixed(3)}</b> (e&gt;1)</div>
+        <div>渐近线 y = ±<b>${(b/a).toFixed(2)}</b>x</div>
+        <div>焦点 (±<b>${c.toFixed(2)}</b>, 0)</div>`;
+    } else if (curve === 'parabola') {
+      title.textContent = '🟡 抛物线';
+      eq.innerHTML = `y² = 2·${p.toFixed(1)}·x`;
+      ctrl.innerHTML = `<div class="slider-row"><label>参数 p</label><input type="range" min="0.5" max="5" step="0.1" value="${p}"><span class="val">${p.toFixed(1)}</span></div>`;
+      info.innerHTML = `
+        <div>焦点 (<b>${(p/2).toFixed(2)}</b>, 0)</div>
+        <div>准线 x = −<b>${(p/2).toFixed(2)}</b></div>
+        <div>顶点 (0, 0)</div>
+        <div>开口方向 → <b>右</b></div>`;
+    } else if (curve === 'quiz') {
+      title.textContent = '🎯 互动练习';
+      eq.innerHTML = '测试你对圆锥曲线的理解';
+      ctrl.innerHTML = '';
+      info.innerHTML = '';
+      quiz.style.display = 'block';
+      loadQuiz();
+      return;
+    }
+
+    // bind sliders
+    ctrl.querySelectorAll('input[type=range]').forEach((sl, i) => {
+      sl.addEventListener('input', () => {
+        const v = parseFloat(sl.value);
+        sl.nextElementSibling.textContent = v.toFixed(1);
+        if (curve === 'all') {
+          if (i === 0) a = v; else if (i === 1) b = v; else p = v;
+        } else if (curve === 'ellipse') {
+          if (i === 0) { a = v; if (b > a) b = a; } else { b = v; }
+        } else if (curve === 'hyperbola') {
+          if (i === 0) a = v; else b = v;
+        } else if (curve === 'parabola') {
+          p = v;
+        }
+        focusTrail = [];
+        updatePanel();
+      });
+    });
+  }
+
+  // ---------- quiz ----------
+  const quizzes = [
+    { q: '椭圆 x²/25 + y²/9 = 1 的离心率是？', opts: ['3/5', '4/5', '5/3', '√3/2'], ans: 1 },
+    { q: '双曲线 x²/16 − y²/9 = 1 的渐近线方程是？', opts: ['y=±3x/4', 'y=±4x/3', 'y=±9x/16', 'y=±16x/9'], ans: 0 },
+    { q: '抛物线 y² = 8x 的焦点坐标是？', opts: ['(2,0)', '(4,0)', '(0,2)', '(8,0)'], ans: 0 },
+    { q: '离心率 e = √2 的圆锥曲线是？', opts: ['椭圆', '双曲线', '抛物线', '圆'], ans: 1 },
+    { q: '椭圆上任意一点到两焦点距离之和等于？', opts: ['a', 'b', '2a', '2b'], ans: 2 },
+    { q: '抛物线 y² = 4x 的准线方程是？', opts: ['x=−1', 'x=1', 'y=−1', 'y=1'], ans: 0 },
+  ];
+  const totalQuestions = quizzes.length; // 6
+  const answeredCorrect = new Set();
+  function checkAllDone() {
+    const done = answeredCorrect.size;
+    return { done, total: totalQuestions, allDone: done === totalQuestions };
+  }
+  let curQuiz = 0;
+  let answeredThis = false;
+  function loadQuiz() {
+    const q = quizzes[curQuiz % quizzes.length];
+    answeredThis = false;
+    document.getElementById('quizQ').textContent = q.q;
+    const opts = document.getElementById('quizOpts');
+    opts.innerHTML = '';
+    q.opts.forEach((o, i) => {
+      const d = document.createElement('div');
+      d.className = 'quiz-opt';
+      d.textContent = String.fromCharCode(65+i) + '. ' + o;
+      d.onclick = () => {
+        opts.querySelectorAll('.quiz-opt').forEach(x => x.classList.remove('correct','wrong'));
+        if (i === q.ans) {
+          d.classList.add('correct');
+          if (!answeredThis) {
+            answeredThis = true;
+            answeredCorrect.add(curQuiz % quizzes.length);
+            const prog = checkAllDone();
+            let msg = `✅ 正确！（已掌握 ${prog.done}/${prog.total}）`;
+            if (prog.allDone && typeof PageProgress !== 'undefined') {
+              PageProgress.markDone('conic-sections');
+              msg += ' 🎉 全部掌握，已标记完成！';
+            }
+            document.getElementById('quizFb').textContent = msg;
+          } else {
+            document.getElementById('quizFb').textContent = '✅ 正确！';
+          }
+        } else {
+          d.classList.add('wrong');
+          opts.children[q.ans].classList.add('correct');
+          document.getElementById('quizFb').textContent = '❌ 再看一眼，正确答案已标出。';
+        }
+        setTimeout(() => { curQuiz++; loadQuiz(); }, 1600);
+      };
+      opts.appendChild(d);
+    });
+    document.getElementById('quizFb').textContent = '';
+  }
+
+  // ---------- events ----------
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      curve = t.dataset.curve;
+      animT = 0; focusTrail = [];
+      updatePanel();
+    };
+  });
+  document.querySelectorAll('.mode-btn').forEach(m => {
+    m.onclick = () => {
+      document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('active'));
+      m.classList.add('active');
+      mode = m.dataset.mode;
+      animT = 0; focusTrail = [];
+      if (mode === 'focus') {
+        // precompute a focus-related trajectory
+        if (curve === 'ellipse') {
+          const c = Math.sqrt(a*a - b*b);
+          for (let i = 0; i <= 200; i++) {
+            const t = (i/200) * Math.PI*2;
+            focusTrail.push([c*Math.cos(t), b*Math.sin(t)]);
+          }
+        } else if (curve === 'hyperbola') {
+          for (let i = -100; i <= 100; i++) {
+            const t = (i/100) * 2;
+            focusTrail.push([a*Math.cosh(t), b*Math.sinh(t)]);
+          }
+        } else if (curve === 'parabola') {
+          for (let i = -80; i <= 80; i++) {
+            const y = (i/80)*6;
+            focusTrail.push([y*y/(2*p), y]);
+          }
+        } else {
+          for (let i = 0; i <= 200; i++) {
+            const t = (i/200) * Math.PI*2;
+            focusTrail.push([a*Math.cos(t), b*Math.sin(t)]);
+          }
+        }
+      }
+    };
+  });
+
+  // touch/click to add focus point
+  cv.addEventListener('click', (e) => {
+    const rect = cv.getBoundingClientRect();
+    const sx = (e.clientX - rect.left) * (W/rect.width);
+    const sy = (e.clientY - rect.top) * (H/rect.height);
+    const x = (sx - cx)/scale, y = -(sy - cy)/scale;
+    if (mode === 'focus') focusTrail.push([x, y]);
+  });
+
+  // loop
+  function loop() {
+    render();
+    requestAnimationFrame(loop);
+  }
+  updatePanel();
+  loop();
+})();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中数学"></script>
+</body>
+</html>

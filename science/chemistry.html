@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>神奇的化学 · 小学科学互动可视化</title>
+<style>
+  :root {
+    --primary: #a855f7;
+    --acid: #ef4444;
+    --base: #3b82f6;
+    --neutral: #22c55e;
+    --water: #06b6d4;
+    --fizz: #fbbf24;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1a1040 0%, #2d1b4e 40%, #1e3a5f 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.4rem; background: linear-gradient(90deg, var(--acid), var(--fizz), var(--base)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 1rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab { padding: 12px 24px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(168,85,247,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); cursor: pointer; }
+  .hint { text-align: center; font-size: 13px; color: #94a3b8; margin-top: 8px; }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 680px; }
+  .panel h3 { font-size: 1.15rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .concept-box { font-size: 1.05rem; text-align: left; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 12px 0; line-height: 1.9; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--acid); font-weight: 600; }
+  .concept-box .hlb { color: var(--base); font-weight: 600; }
+  .concept-box .hlg { color: var(--neutral); font-weight: 600; }
+  .concept-box .hlw { color: var(--water); font-weight: 600; }
+  .concept-box .hly { color: var(--fizz); font-weight: 600; }
+
+  .btn-row { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+  .exp-btn { padding: 10px 20px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.15); cursor: pointer; font-size: 14px; transition: all .2s; user-select: none; font-weight: 500; }
+  .exp-btn.active { box-shadow: 0 0 16px rgba(255,255,255,.15); }
+  .exp-btn.red { background: rgba(239,68,68,.15); color: #fca5a5; border-color: rgba(239,68,68,.4); }
+  .exp-btn.red.active { background: var(--acid); color: #fff; }
+  .exp-btn.blue { background: rgba(59,130,246,.15); color: #93c5fd; border-color: rgba(59,130,246,.4); }
+  .exp-btn.blue.active { background: var(--base); color: #fff; }
+  .exp-btn.green { background: rgba(34,197,94,.15); color: #86efac; border-color: rgba(34,197,94,.4); }
+  .exp-btn.green.active { background: var(--neutral); color: #fff; }
+  .exp-btn.yellow { background: rgba(251,191,36,.15); color: #fde68a; border-color: rgba(251,191,36,.4); }
+  .exp-btn.yellow.active { background: var(--fizz); color: #1e293b; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--fizz); font-weight: 600; font-size: 13px; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .quiz { margin-top: 16px; padding: 18px; background: rgba(168,85,247,0.1); border-radius: 14px; border: 2px solid rgba(168,85,247,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 10px; }
+  .quiz-opt { padding: 12px 16px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(34,197,94,.2); border-color: var(--neutral); }
+  .quiz-opt.wrong { background: rgba(239,68,68,.15); border-color: var(--acid); }
+  .quiz-result { margin-top: 12px; font-size: 14px; font-weight: 600; min-height: 20px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🧪 神奇的化学</h1>
+    <p>溶解 · 酸碱变色 · 气泡反应 — 动手做化学实验！</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="dissolve">🧂 溶解实验</div>
+    <div class="tab" data-tab="indicator">🌈 酸碱变色</div>
+    <div class="tab" data-tab="reaction">💥 气泡反应</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="700" height="520"></canvas>
+      <div class="hint" id="hint">点击或拖拽物质放入水中</div>
+    </div>
+    <div class="panel">
+      <!-- 溶解 -->
+      <div class="section active" id="sec-dissolve">
+        <h3>🧂 溶解实验</h3>
+        <div class="concept-box">
+          把 <span class="hly">糖</span> 或 <span class="hly">盐</span> 放入水中，它们会 <span class="hlw">慢慢消失</span>，但水变甜/变咸了！<br>
+          这就是 <span class="hl">溶解</span>：固体颗粒分散到水中，变成肉眼看不见的微小粒子。
+        </div>
+        <div class="btn-row">
+          <div class="exp-btn yellow" data-mat="sugar">🍬 加糖</div>
+          <div class="exp-btn green" data-mat="salt">🧂 加盐</div>
+          <div class="exp-btn blue" data-mat="sand">⏳ 加沙子</div>
+          <div class="exp-btn red" data-mat="oil">🫗 加油</div>
+        </div>
+        <div class="slider-row">
+          <label>🌡️ 水温</label>
+          <input type="range" id="tempSlider" min="5" max="90" value="25" />
+          <span class="val" id="tempVal">25°C</span>
+        </div>
+        <div class="info-grid">
+          <div><b>能溶解：</b>糖、盐、小苏打……它们在水中"消失"了</div>
+          <div><b>不能溶解：</b>沙子、油……会沉底或浮在水面</div>
+          <div><b>温度影响：</b>水温越高，溶解速度越快！</div>
+          <div><b>搅拌：</b>点击水面可以搅拌，加速溶解</div>
+        </div>
+      </div>
+
+      <!-- 酸碱 -->
+      <div class="section" id="sec-indicator">
+        <h3>🌈 酸碱指示剂变色</h3>
+        <div class="concept-box">
+          <span class="hl">酸性</span> 物质（如柠檬汁）让石蕊变 <span class="hl">红色</span><br>
+          <span class="hlb">碱性</span> 物质（如肥皂水）让石蕊变 <span class="hlb">蓝色</span><br>
+          中性物质（如纯水）石蕊保持 <span class="hlg">紫色</span>
+        </div>
+        <div class="btn-row">
+          <div class="exp-btn red" data-liquid="lemon">🍋 柠檬汁</div>
+          <div class="exp-btn blue" data-liquid="soap">🧴 肥皂水</div>
+          <div class="exp-btn green" data-liquid="water">💧 纯水</div>
+          <div class="exp-btn yellow" data-liquid="vinegar">🫙 白醋</div>
+        </div>
+        <div class="info-grid">
+          <div><b>pH < 7：</b>酸性，石蕊变红</div>
+          <div><b>pH = 7：</b>中性，石蕊紫色</div>
+          <div><b>pH > 7：</b>碱性，石蕊变蓝</div>
+          <div><b>生活例子：</b>醋是酸的，小苏打水是碱性的</div>
+        </div>
+      </div>
+
+      <!-- 反应 -->
+      <div class="section" id="sec-reaction">
+        <h3>💥 气泡反应</h3>
+        <div class="concept-box">
+          把 <span class="hly">小苏打</span> 倒入 <span class="hly">白醋</span> 中，会冒出大量 <span class="hlw">气泡</span>！<br>
+          这是因为产生了 <span class="hl">二氧化碳</span> 气体——一种新物质！<br>
+          像这样产生新物质的变化叫做 <span class="hly">化学反应</span>。
+        </div>
+        <div class="btn-row">
+          <div class="exp-btn yellow" data-rxn="soda">🧂 加小苏打</div>
+          <div class="exp-btn green" data-rxn="mint">🍬 加薄荷糖</div>
+          <div class="exp-btn blue" data-rxn="reset">🔄 重置</div>
+        </div>
+        <div class="slider-row">
+          <label>🌡️ 液体温度</label>
+          <input type="range" id="rxnTemp" min="5" max="80" value="25" />
+          <span class="val" id="rxnTempVal">25°C</span>
+        </div>
+        <div class="info-grid">
+          <div><b>小苏打+醋：</b>产生 CO₂ 气泡（化学反应）</div>
+          <div><b>薄荷糖+可乐：</b>大量气泡（物理释放）</div>
+          <div><b>温度越高：</b>反应越剧烈</div>
+          <div><b>思考：</b>哪种是化学反应？哪种是物理变化？</div>
+        </div>
+      </div>
+
+      <!-- 测验 -->
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">🤔 下面哪个是化学反应？</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-result" id="quizResult"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+// ─── State ───
+let currentTab = 'dissolve';
+let waterTemp = 25;
+let rxnTemp = 25;
+
+// Dissolve state
+let dissolveParticles = [];
+let dissolved = 0;
+let stirAngle = 0;
+let stirring = false;
+let addedMats = [];
+
+// Indicator state
+let indicatorLiquid = null;
+let indicatorColor = '#a855f7';
+let indicatorTarget = '#a855f7';
+let drops = [];
+
+// Reaction state
+let rxnActive = false;
+let rxnType = null;
+let bubbles = [];
+let rxnIntensity = 0;
+
+// ─── Tabs ───
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    currentTab = t.dataset.tab;
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('sec-' + currentTab).classList.add('active');
+    resetScene();
+    updateHint();
+  });
+});
+
+function updateHint() {
+  const hints = {
+    dissolve: '点击物质按钮加入水中，拖动滑块调温度，点击水面搅拌',
+    indicator: '选择不同液体，观察石蕊试纸变色',
+    reaction: '加入物质观察气泡反应，调温度看反应速度变化'
+  };
+  document.getElementById('hint').textContent = hints[currentTab];
+}
+
+function resetScene() {
+  dissolveParticles = [];
+  dissolved = 0;
+  addedMats = [];
+  indicatorLiquid = null;
+  indicatorColor = '#a855f7';
+  indicatorTarget = '#a855f7';
+  drops = [];
+  rxnActive = false;
+  rxnType = null;
+  bubbles = [];
+  rxnIntensity = 0;
+}
+
+// ─── Dissolve ───
+document.querySelectorAll('.exp-btn[data-mat]').forEach(b => {
+  b.addEventListener('click', () => {
+    const mat = b.dataset.mat;
+    addedMats.push(mat);
+    // Add particles
+    const count = mat === 'sand' ? 30 : mat === 'oil' ? 15 : 40;
+    for (let i = 0; i < count; i++) {
+      dissolveParticles.push({
+        x: 250 + Math.random() * 200,
+        y: 140 + Math.random() * 30,
+        vx: (Math.random() - 0.5) * 2,
+        vy: mat === 'oil' ? -0.5 : (mat === 'sand' ? 1.5 : 0.8),
+        size: mat === 'sand' ? 4 : mat === 'oil' ? 8 : 3,
+        color: mat === 'sugar' ? '#fde68a' : mat === 'salt' ? '#e2e8f0' : mat === 'sand' ? '#d97706' : '#fbbf24',
+        type: mat,
+        alpha: 1,
+        dissolving: false
+      });
+    }
+  });
+});
+
+document.getElementById('tempSlider').addEventListener('input', e => {
+  waterTemp = +e.target.value;
+  document.getElementById('tempVal').textContent = waterTemp + '°C';
+});
+
+// Stir on canvas click
+cv.addEventListener('click', e => {
+  if (currentTab !== 'dissolve') return;
+  const rect = cv.getBoundingClientRect();
+  const sx = W / rect.width;
+  const x = (e.clientX - rect.left) * sx;
+  const y = (e.clientY - rect.top) * sx;
+  if (y > 180 && y < 440 && x > 150 && x < 550) {
+    stirring = true;
+    stirAngle += 0.5;
+    setTimeout(() => stirring = false, 500);
+  }
+});
+
+function updateDissolve() {
+  const speedFactor = waterTemp / 25;
+  const stirBoost = stirring ? 3 : 1;
+
+  dissolveParticles.forEach(p => {
+    if (p.type === 'sand') {
+      // Sink to bottom
+      p.y += p.vy;
+      if (p.y > 420) { p.y = 420; p.vy = 0; }
+      p.x += p.vx * 0.3;
+    } else if (p.type === 'oil') {
+      // Float up
+      p.y += p.vy;
+      if (p.y < 190) { p.y = 190; p.vy = 0; }
+      p.x += p.vx * 0.2;
+    } else {
+      // Dissolvable: sink slowly then dissolve
+      if (!p.dissolving && p.y < 380) {
+        p.y += p.vy * speedFactor * 0.5;
+        p.x += p.vx;
+      } else {
+        p.dissolving = true;
+        p.alpha -= 0.008 * speedFactor * stirBoost;
+        p.x += (Math.random() - 0.5) * 2 * stirBoost;
+        p.y += (Math.random() - 0.5) * 1.5 * stirBoost;
+      }
+    }
+    // Boundary
+    if (p.x < 170) p.vx = Math.abs(p.vx);
+    if (p.x > 530) p.vx = -Math.abs(p.vx);
+  });
+
+  dissolveParticles = dissolveParticles.filter(p => p.alpha > 0.01);
+}
+
+function drawBeaker() {
+  // Beaker outline
+  ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(160, 160);
+  ctx.lineTo(160, 440);
+  ctx.lineTo(540, 440);
+  ctx.lineTo(540, 160);
+  ctx.stroke();
+
+  // Water
+  const waterGrad = ctx.createLinearGradient(160, 180, 160, 440);
+  waterGrad.addColorStop(0, 'rgba(6,182,212,0.15)');
+  waterGrad.addColorStop(1, 'rgba(6,182,212,0.25)');
+  ctx.fillStyle = waterGrad;
+  ctx.fillRect(163, 180, 374, 258);
+
+  // Water surface wave
+  ctx.beginPath();
+  ctx.moveTo(163, 180);
+  for (let x = 163; x <= 537; x += 5) {
+    const wave = Math.sin((x + Date.now() * 0.002) * 0.05) * 3;
+    ctx.lineTo(x, 180 + wave);
+  }
+  ctx.strokeStyle = 'rgba(6,182,212,0.4)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Temperature indicator
+  const tempColor = waterTemp > 60 ? '#ef4444' : waterTemp > 35 ? '#f59e0b' : '#06b6d4';
+  ctx.fillStyle = tempColor;
+  ctx.font = '14px monospace';
+  ctx.fillText(`🌡️ ${waterTemp}°C`, 170, 170);
+
+  // Stirring visual
+  if (stirring) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const cx = 350, cy = 310;
+    for (let a = 0; a < Math.PI * 4; a += 0.1) {
+      const r = 30 + a * 8;
+      ctx.lineTo(cx + Math.cos(a + stirAngle) * r * 0.4, cy + Math.sin(a + stirAngle) * r * 0.2);
+    }
+    ctx.stroke();
+  }
+}
+
+function drawDissolveParticles() {
+  dissolveParticles.forEach(p => {
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Show dissolved count
+  const dissolvedCount = addedMats.filter(m => m === 'sugar' || m === 'salt').length;
+  if (dissolvedCount > 0 && dissolveParticles.length < 10) {
+    ctx.fillStyle = '#22c55e';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✅ 完全溶解！', 350, 470);
+    ctx.textAlign = 'start';
+  }
+}
+
+// ─── Indicator ───
+document.querySelectorAll('.exp-btn[data-liquid]').forEach(b => {
+  b.addEventListener('click', () => {
+    indicatorLiquid = b.dataset.liquid;
+    const colors = {
+      lemon: '#ef4444',
+      vinegar: '#f97316',
+      water: '#a855f7',
+      soap: '#3b82f6'
+    };
+    indicatorTarget = colors[indicatorLiquid];
+    // Add drops
+    for (let i = 0; i < 8; i++) {
+      drops.push({
+        x: 300 + Math.random() * 100,
+        y: 100 + Math.random() * 40,
+        vy: 2 + Math.random() * 2,
+        size: 6 + Math.random() * 4,
+        alpha: 0.8
+      });
+    }
+  });
+});
+
+function lerpColor(a, b, t) {
+  const ah = parseInt(a.slice(1), 16), bh = parseInt(b.slice(1), 16);
+  const ar = (ah >> 16) & 0xff, ag = (ah >> 8) & 0xff, ab = ah & 0xff;
+  const br = (bh >> 16) & 0xff, bg = (bh >> 8) & 0xff, bb = bh & 0xff;
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const b2 = Math.round(ab + (bb - ab) * t);
+  return `rgb(${r},${g},${b2})`;
+}
+
+function updateIndicator() {
+  // Smooth color transition
+  indicatorColor = lerpColor(indicatorColor, indicatorTarget, 0.03);
+
+  drops.forEach(d => {
+    d.y += d.vy;
+    d.alpha -= 0.005;
+  });
+  drops = drops.filter(d => d.alpha > 0);
+}
+
+function drawIndicator() {
+  // Test tube
+  ctx.strokeStyle = 'rgba(148,163,184,0.6)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(280, 100);
+  ctx.lineTo(280, 400);
+  ctx.arc(350, 400, 70, Math.PI, 0);
+  ctx.lineTo(420, 100);
+  ctx.stroke();
+
+  // Liquid in tube
+  const liqColor = indicatorColor;
+  const grad = ctx.createLinearGradient(280, 150, 280, 400);
+  grad.addColorStop(0, liqColor.replace('rgb', 'rgba').replace(')', ',0.5)'));
+  grad.addColorStop(1, liqColor.replace('rgb', 'rgba').replace(')', ',0.8)'));
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(283, 200);
+  ctx.lineTo(283, 398);
+  ctx.arc(350, 398, 67, Math.PI, 0);
+  ctx.lineTo(417, 200);
+  ctx.closePath();
+  ctx.fill();
+
+  // Surface wave
+  ctx.beginPath();
+  ctx.moveTo(283, 200);
+  for (let x = 283; x <= 417; x += 4) {
+    ctx.lineTo(x, 200 + Math.sin((x + Date.now() * 0.003) * 0.08) * 3);
+  }
+  ctx.strokeStyle = liqColor.replace('rgb', 'rgba').replace(')', ',0.6)');
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Drops
+  drops.forEach(d => {
+    ctx.globalAlpha = d.alpha;
+    ctx.fillStyle = indicatorTarget;
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // pH label
+  const phLabels = { lemon: 'pH ≈ 2 (酸性)', vinegar: 'pH ≈ 3 (酸性)', water: 'pH = 7 (中性)', soap: 'pH ≈ 10 (碱性)' };
+  if (indicatorLiquid) {
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(phLabels[indicatorLiquid], 350, 470);
+    ctx.textAlign = 'start';
+  }
+
+  // Litmus strip
+  ctx.fillStyle = indicatorColor;
+  ctx.fillRect(500, 180, 30, 180);
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.strokeRect(500, 180, 30, 180);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('石蕊', 515, 170);
+  ctx.fillText('试纸', 515, 380);
+  ctx.textAlign = 'start';
+}
+
+// ─── Reaction ───
+document.querySelectorAll('.exp-btn[data-rxn]').forEach(b => {
+  b.addEventListener('click', () => {
+    const rxn = b.dataset.rxn;
+    if (rxn === 'reset') {
+      rxnActive = false;
+      rxnType = null;
+      bubbles = [];
+      rxnIntensity = 0;
+      return;
+    }
+    rxnActive = true;
+    rxnType = rxn;
+    rxnIntensity = rxnTemp / 25;
+  });
+});
+
+document.getElementById('rxnTemp').addEventListener('input', e => {
+  rxnTemp = +e.target.value;
+  document.getElementById('rxnTempVal').textContent = rxnTemp + '°C';
+  if (rxnActive) rxnIntensity = rxnTemp / 25;
+});
+
+function updateReaction() {
+  if (rxnActive) {
+    // Generate bubbles
+    const rate = rxnType === 'soda' ? 3 : 2;
+    for (let i = 0; i < rate * rxnIntensity; i++) {
+      bubbles.push({
+        x: 250 + Math.random() * 200,
+        y: 400,
+        vy: -(2 + Math.random() * 3) * rxnIntensity,
+        vx: (Math.random() - 0.5) * 1.5,
+        size: 3 + Math.random() * 6,
+        alpha: 0.8
+      });
+    }
+  }
+
+  bubbles.forEach(b => {
+    b.y += b.vy;
+    b.x += b.vx + Math.sin(b.y * 0.05) * 0.5;
+    b.alpha -= 0.005;
+    b.size *= 0.999;
+  });
+  bubbles = bubbles.filter(b => b.alpha > 0 && b.y > 100);
+}
+
+function drawReaction() {
+  // Bottle / glass
+  ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+  ctx.lineWidth = 3;
+  // Glass shape
+  ctx.beginPath();
+  ctx.moveTo(220, 140);
+  ctx.lineTo(200, 430);
+  ctx.lineTo(500, 430);
+  ctx.lineTo(480, 140);
+  ctx.stroke();
+
+  // Liquid (vinegar / cola)
+  const liqColor = rxnType === 'mint' ? 'rgba(139,69,19,0.3)' : 'rgba(251,191,36,0.2)';
+  ctx.fillStyle = liqColor;
+  ctx.beginPath();
+  ctx.moveTo(215, 200);
+  ctx.lineTo(203, 428);
+  ctx.lineTo(497, 428);
+  ctx.lineTo(485, 200);
+  ctx.closePath();
+  ctx.fill();
+
+  // Liquid surface
+  ctx.beginPath();
+  ctx.moveTo(215, 200);
+  for (let x = 215; x <= 485; x += 4) {
+    const wave = Math.sin((x + Date.now() * 0.003) * 0.06) * (rxnActive ? 5 : 2);
+    ctx.lineTo(x, 200 + wave);
+  }
+  ctx.strokeStyle = rxnActive ? 'rgba(251,191,36,0.5)' : 'rgba(148,163,184,0.3)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Bubbles
+  bubbles.forEach(b => {
+    ctx.globalAlpha = b.alpha;
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+    ctx.stroke();
+    // Highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.beginPath();
+    ctx.arc(b.x - b.size * 0.3, b.y - b.size * 0.3, b.size * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Label
+  if (rxnActive) {
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'center';
+    const label = rxnType === 'soda' ? '⚗️ 小苏打 + 醋 → CO₂↑' : '🍬 薄荷糖 + 可乐 → 气泡↑';
+    ctx.fillText(label, 350, 470);
+    ctx.textAlign = 'start';
+  }
+
+  // Temperature
+  ctx.fillStyle = rxnTemp > 50 ? '#ef4444' : '#06b6d4';
+  ctx.font = '14px monospace';
+  ctx.fillText(`🌡️ ${rxnTemp}°C`, 210, 190);
+}
+
+// ─── Quiz ───
+const quizzes = [
+  { q: '🤔 下面哪个是化学反应？', opts: ['糖溶解在水中', '小苏打和醋混合冒气泡', '沙子沉入水底', '冰融化成水'], ans: 1 },
+  { q: '🤔 酸碱指示剂遇到醋会变成什么颜色？', opts: ['蓝色', '绿色', '红色', '黄色'], ans: 2 },
+  { q: '🤔 怎样让糖溶解得更快？', opts: ['加冰块降温', '用热水并搅拌', '放在黑暗中', '加更多糖'], ans: 1 },
+  { q: '🤔 下面哪种物质不能溶解在水中？', opts: ['食盐', '白糖', '食用油', '小苏打'], ans: 2 },
+  { q: '🤔 肥皂水是什么性质的？', opts: ['酸性', '碱性', '中性', '腐蚀性'], ans: 1 },
+];
+let quizIdx = 0;
+let quizAnswered = false;
+
+// ─── PageProgress 接线（r100）───
+let totalCorrect = 0, chemDone = false;
+function bumpChemCorrect() {
+  totalCorrect++;
+  if (!chemDone && totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('chemistry')) {
+    chemDone = true;
+    PageProgress.markDone('chemistry');
+    showChemToast('🎉 「神奇的化学」知识地图已点亮！');
+  }
+}
+function showChemToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(52,199,89,.95);color:#fff;padding:12px 24px;border-radius:12px;font-size:15px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:opacity .3s';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2600);
+}
+
+function loadQuiz() {
+  const q = quizzes[quizIdx];
+  document.getElementById('quizQ').textContent = q.q;
+  const optsEl = document.getElementById('quizOpts');
+  optsEl.innerHTML = '';
+  quizAnswered = false;
+  document.getElementById('quizResult').textContent = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      if (i === q.ans) {
+        div.classList.add('correct');
+        document.getElementById('quizResult').textContent = '✅ 答对了！真棒！';
+        document.getElementById('quizResult').style.color = '#22c55e';
+        bumpChemCorrect();
+      } else {
+        div.classList.add('wrong');
+        document.getElementById('quizResult').textContent = '❌ 再想想看～正确答案已标出';
+        document.getElementById('quizResult').style.color = '#ef4444';
+        optsEl.children[q.ans].classList.add('correct');
+      }
+      setTimeout(() => {
+        quizIdx = (quizIdx + 1) % quizzes.length;
+        loadQuiz();
+      }, 2500);
+    });
+    optsEl.appendChild(div);
+  });
+}
+loadQuiz();
+
+// ─── Main Loop ───
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  if (currentTab === 'dissolve') {
+    updateDissolve();
+    drawBeaker();
+    drawDissolveParticles();
+  } else if (currentTab === 'indicator') {
+    updateIndicator();
+    drawIndicator();
+  } else if (currentTab === 'reaction') {
+    updateReaction();
+    drawReaction();
+  }
+
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+  <script src="assets/nav.js" data-home="../index.html" data-back="index.html" data-label="小学科学"></script>
+</body>
+</html>

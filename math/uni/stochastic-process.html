@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>随机过程入门 · 马尔可夫链 / 泊松过程 / 布朗运动</title>
+<script src="assets/common.js"></script>
+<link rel="stylesheet" href="assets/common.css" />
+<style>
+  :root {
+    --primary: #6366f1;
+    --accent: #06b6d4;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --pink: #ec4899;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --state-a: #06b6d4;
+    --state-b: #f59e0b;
+    --state-c: #ec4899;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    color: var(--text);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 {
+    font-size: 2rem;
+    background: linear-gradient(90deg, var(--primary), var(--accent), var(--pink));
+    -webkit-background-clip: text;
+    color: transparent;
+    margin-bottom: 6px;
+  }
+  header p { color: var(--muted); font-size: 14px; }
+
+  .tabs {
+    display: flex; gap: 8px; justify-content: center;
+    margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .tab {
+    padding: 10px 18px; border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    cursor: pointer; transition: all .25s;
+    border: 1px solid var(--border);
+    font-size: 14px; user-select: none;
+  }
+  .tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 4px 20px rgba(99,102,241,.4);
+  }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .stage {
+    display: grid; grid-template-columns: 1.2fr 1fr;
+    gap: 20px; margin-bottom: 20px;
+  }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 16px;
+    backdrop-filter: blur(10px);
+  }
+  canvas {
+    width: 100%; height: auto; display: block;
+    border-radius: 10px;
+    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  }
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 16px;
+    backdrop-filter: blur(10px);
+  }
+  .panel h3 {
+    color: var(--accent); font-size: 1.05rem; margin-bottom: 10px;
+    border-bottom: 1px solid var(--border); padding-bottom: 6px;
+  }
+  .panel p, .panel li { font-size: 13px; line-height: 1.7; color: #cbd5e1; }
+  .panel ul, .panel ol { margin: 8px 0 8px 20px; }
+  .panel code {
+    background: rgba(6,182,212,0.15); padding: 1px 6px;
+    border-radius: 4px; font-family: monospace; color: #67e8f9;
+  }
+  .formula {
+    font-family: "Times New Roman", serif; font-size: 1.15rem;
+    text-align: center; padding: 10px;
+    background: rgba(6,182,212,0.1); border-radius: 10px;
+    margin: 10px 0; color: #67e8f9;
+  }
+  .controls { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  .controls label { font-size: 13px; color: #cbd5e1; }
+  .controls select, .controls button {
+    padding: 6px 12px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06); color: #e2e8f0;
+    font-size: 13px; cursor: pointer;
+  }
+  .controls button:hover { background: rgba(255,255,255,0.12); }
+  .btn {
+    padding: 6px 14px; border-radius: 8px; background: var(--primary);
+    border: none; color: #fff; font-weight: 600; cursor: pointer; font-size: 13px;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 60px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+
+  .info-bar { display: flex; gap: 12px; justify-content: center; font-size: 12px; color: #94a3b8; margin: 8px 0; flex-wrap: wrap; }
+  .info-bar b { color: #fbbf24; }
+
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before {
+    content: ""; display: inline-block; width: 10px; height: 10px;
+    border-radius: 50%; margin-right: 4px; vertical-align: middle;
+  }
+  .legend .l-a::before { background: var(--state-a); }
+  .legend .l-b::before { background: var(--state-b); }
+  .legend .l-c::before { background: var(--state-c); }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+  .stat-box { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px; text-align: center; }
+  .stat-box .stat-val { font-size: 1.3rem; font-weight: 700; color: var(--primary); font-family: monospace; }
+  .stat-box .stat-label { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+  .matrix-wrap { overflow-x: auto; }
+  .prob-matrix {
+    border-collapse: collapse; margin: 8px auto; font-size: 13px;
+    font-family: monospace;
+  }
+  .prob-matrix th, .prob-matrix td {
+    padding: 6px 10px; text-align: center; border: 1px solid rgba(255,255,255,0.1);
+  }
+  .prob-matrix th { background: rgba(99,102,241,0.2); color: #c7d2fe; font-weight: 600; }
+  .prob-matrix td { background: rgba(255,255,255,0.03); }
+  .prob-matrix td.cell-a { background: rgba(6,182,212,0.15); color: #67e8f9; }
+  .prob-matrix td.cell-b { background: rgba(245,158,11,0.15); color: #fbbf24; }
+  .prob-matrix td.cell-c { background: rgba(236,72,153,0.15); color: #f9a8d4; }
+
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(6,182,212,0.08); border-radius: 12px; border: 1px solid rgba(6,182,212,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; font-weight: 600; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .quiz-progress { text-align: center; font-size: 12px; color: #94a3b8; margin-top: 12px; }
+  .quiz-final { text-align: center; padding: 20px; }
+  .quiz-final .score { font-size: 3rem; font-weight: 800; color: var(--success); }
+  .quiz-final .msg { font-size: 1.1rem; margin-top: 10px; color: #cbd5e1; }
+
+  .breadcrumb { font-size: 13px; color: #94a3b8; margin-bottom: 14px; }
+  .breadcrumb a { color: #94a3b8; text-decoration: none; }
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb .sep { margin: 0 6px; }
+
+  .hint { font-size: 12px; color: #94a3b8; font-style: italic; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb">
+    <a href="../../index.html">🏠 首页</a><span class="sep">›</span>
+    <a href="../index.html">📐 数学</a><span class="sep">›</span>
+    <a href="index.html">大学</a><span class="sep">›</span>
+    <span>随机过程</span>
+  </div>
+
+  <header>
+    <h1>📈 随机过程入门 · Stochastic Process</h1>
+    <p>从马尔可夫链到布朗运动 —— 时间中的随机演化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="markov">马尔可夫链</div>
+    <div class="tab" data-tab="poisson">泊松过程</div>
+    <div class="tab" data-tab="brown">布朗运动</div>
+    <div class="tab" data-tab="quiz">互动练习</div>
+  </div>
+
+  <!-- ============ 1. 马尔可夫链 ============ -->
+  <div class="section active" id="sec-markov">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvMarkov" width="600" height="420"></canvas>
+        <div class="legend">
+          <span class="l-a">状态 S₁（晴）</span>
+          <span class="l-b">状态 S₂（阴）</span>
+          <span class="l-c">状态 S₃（雨）</span>
+        </div>
+        <div class="controls">
+          <button class="btn" id="btnStep">单步 ▶</button>
+          <button class="btn btn-secondary" id="btnAuto">自动 ⏵</button>
+          <button class="btn btn-secondary" id="btnReset">重置</button>
+          <label>速度：</label>
+          <input type="range" id="speedMarkov" min="1" max="10" value="3" />
+          <span class="val" id="speedVal">3</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>马尔可夫性质</h3>
+        <p><b>无记忆性：</b>下一状态只依赖当前状态，与历史无关。</p>
+        <div class="formula">
+          P(Xₙ₊₁ = j | Xₙ = i, Xₙ₋₁, …, X₀) = P(Xₙ₊₁ = j | Xₙ = i) = pᵢⱼ
+        </div>
+        <div class="matrix-wrap">
+          <table class="prob-matrix" id="probTable">
+            <thead><tr><th>P</th><th>S₁晴</th><th>S₂阴</th><th>S₃雨</th></tr></thead>
+            <tbody>
+              <tr><th>S₁晴</th><td class="cell-a">0.60</td><td>0.30</td><td>0.10</td></tr>
+              <tr><th>S₂阴</th><td class="cell-b">0.30</td><td>0.40</td><td>0.30</td></tr>
+              <tr><th>S₃雨</th><td class="cell-c">0.20</td><td>0.40</td><td>0.40</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="info-bar">
+          <span>当前状态：<b id="curState">S₁</b></span>
+          <span>步数：<b id="stepCnt">0</b></span>
+          <span>历史：<b id="stateHist">S₁</b></span>
+        </div>
+        <h3 style="margin-top:14px">稳态分布 π</h3>
+        <p>当 n→∞，分布收敛到 <code>πP = π</code>：</p>
+        <div class="formula">π = (0.391, 0.348, 0.261)</div>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="stat-val" id="freqA">0.000</div><div class="stat-label">S₁ 频率</div></div>
+          <div class="stat-box"><div class="stat-val" id="freqB">0.000</div><div class="stat-label">S₂ 频率</div></div>
+          <div class="stat-box"><div class="stat-val" id="freqC">0.000</div><div class="stat-label">S₃ 频率</div></div>
+          <div class="stat-box"><div class="stat-val" id="convErr">—</div><div class="stat-label">与稳态距离</div></div>
+        </div>
+        <p class="hint">▶ 提示：观察"自动"模式下频率如何逼近稳态分布。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 2. 泊松过程 ============ -->
+  <div class="section" id="sec-poisson">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvPoisson" width="600" height="420"></canvas>
+        <div class="legend">
+          <span class="l-a">到达事件</span>
+          <span class="l-b">计数 N(t)</span>
+        </div>
+        <div class="slider-row">
+          <label>强度 λ（次/秒）：</label>
+          <input type="range" id="lambda" min="0.5" max="10" step="0.5" value="3" />
+          <span class="val" id="lambdaVal">3.0</span>
+        </div>
+        <div class="controls">
+          <button class="btn" id="btnRunPoisson">▶ 模拟 30 秒</button>
+          <button class="btn btn-secondary" id="btnResetPoisson">重置</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>泊松过程三大公理</h3>
+        <ol>
+          <li>N(0) = 0（从零开始）</li>
+          <li>独立增量（不重叠区间独立）</li>
+          <li>平稳增量（速率 λ 恒定）</li>
+        </ol>
+        <div class="formula">
+          P(N(t) = k) = (λt)ᵏ e^(−λt) / k!
+        </div>
+        <p><b>间隔时间：</b>服从指数分布 <code>T ~ Exp(λ)</code>，均值 <code>1/λ</code>。</p>
+        <p><b>合并与拆分：</b>两个独立泊松过程合并后强度为 λ₁+λ₂；按概率 p 拆分后是强度 λp 的泊松过程。</p>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="stat-val" id="pCount">0</div><div class="stat-label">实际事件数</div></div>
+          <div class="stat-box"><div class="stat-val" id="pTheory">0.0</div><div class="stat-label">理论期望 λt</div></div>
+          <div class="stat-box"><div class="stat-val" id="pMeanInt">—</div><div class="stat-label">平均间隔（秒）</div></div>
+          <div class="stat-box"><div class="stat-val" id="pTheoryInt">—</div><div class="stat-label">理论 1/λ</div></div>
+        </div>
+        <h3 style="margin-top:14px">应用</h3>
+        <ul>
+          <li>呼叫中心：每分钟来电数</li>
+          <li>放射性衰变：盖革计数器</li>
+          <li>网络流量：包到达</li>
+          <li>排队论：M/M/1 队列的到达</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 3. 布朗运动 ============ -->
+  <div class="section" id="sec-brown">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvBrown" width="600" height="420"></canvas>
+        <div class="legend">
+          <span class="l-a">布朗粒子</span>
+          <span class="l-b">轨迹</span>
+        </div>
+        <div class="slider-row">
+          <label>步长 σ：</label>
+          <input type="range" id="sigma" min="0.5" max="5" step="0.1" value="2" />
+          <span class="val" id="sigmaVal">2.0</span>
+        </div>
+        <div class="slider-row">
+          <label>粒子数：</label>
+          <input type="range" id="nParticles" min="1" max="50" value="8" />
+          <span class="val" id="nParticlesVal">8</span>
+        </div>
+        <div class="controls">
+          <button class="btn" id="btnBrownRun">▶ 开始</button>
+          <button class="btn btn-secondary" id="btnBrownPause">⏸ 暂停</button>
+          <button class="btn btn-secondary" id="btnBrownReset">重置</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>标准布朗运动 W(t)</h3>
+        <ol>
+          <li>W(0) = 0</li>
+          <li>独立增量</li>
+          <li>W(t) − W(s) ~ N(0, t−s)（正态增量）</li>
+          <li>样本路径处处连续但处处不可微</li>
+        </ol>
+        <div class="formula">
+          E[W(t)] = 0,  Var(W(t)) = t
+        </div>
+        <p><b>维纳过程：</b>爱因斯坦 1905 年解释布朗（花粉）运动的数学模型。</p>
+        <p><b>标度性质：</b>W(αt)/√α 与 W(t) 同分布 —— 自相似性。</p>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="stat-val" id="bTime">0.0</div><div class="stat-label">时间 t</div></div>
+          <div class="stat-box"><div class="stat-val" id="bMeanDist">0.00</div><div class="stat-label">平均 |W(t)|</div></div>
+          <div class="stat-box"><div class="stat-val" id="bTheoryDist">0.00</div><div class="stat-label">理论 √(2t/π)</div></div>
+          <div class="stat-box"><div class="stat-val" id="bMaxDist">0.00</div><div class="stat-label">最大 |W|</div></div>
+        </div>
+        <h3 style="margin-top:14px">应用</h3>
+        <ul>
+          <li>金融：Black–Scholes 期权定价</li>
+          <li>物理：扩散方程、热传导</li>
+          <li>生物：种群动态</li>
+          <li>滤波：Kalman–Bucy 滤波</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 4. 互动练习 ============ -->
+  <div class="section" id="sec-quiz">
+    <div class="panel">
+      <h3>📝 8 题互动练习</h3>
+      <div id="quizBox"></div>
+      <div class="quiz-progress" id="quizProg">第 1 / 8 题</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==================== 通用 Tab 切换 ==================== */
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('sec-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+/* ==================== 1. 马尔可夫链 ==================== */
+(function() {
+  const P = [
+    [0.6, 0.3, 0.1],
+    [0.3, 0.4, 0.3],
+    [0.2, 0.4, 0.4]
+  ];
+  const PI = [0.391, 0.348, 0.261];
+  const COLORS = ['#06b6d4', '#f59e0b', '#ec4899'];
+  const NAMES = ['S₁', 'S₂', 'S₃'];
+  const POS = [{x:200, y:130}, {x:400, y:130}, {x:300, y:300}];
+
+  const cv = document.getElementById('cvMarkov');
+  const ctx = cv.getContext('2d');
+  let cur = 0, steps = 0, counts = [1, 0, 0];
+  let hist = ['S₁'];
+  let auto = false, timer = null, speed = 3;
+
+  function drawState() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    // draw edges with probabilities
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        if (P[i][j] < 0.05) continue;
+        const a = POS[i], b = POS[j];
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.font = '11px monospace';
+        if (i === j) {
+          // self-loop
+          ctx.beginPath();
+          ctx.arc(a.x, a.y - 35, 18, -0.4, Math.PI + 0.4);
+          ctx.stroke();
+          ctx.fillText(P[i][j].toFixed(1), a.x - 8, a.y - 60);
+        } else {
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const len = Math.hypot(dx, dy);
+          const ux = dx / len, uy = dy / len;
+          const sx = a.x + ux * 30, sy = a.y + uy * 30;
+          const ex = b.x - ux * 35, ey = b.y - uy * 35;
+          // perpendicular offset for arrow separation
+          const px = -uy * 6, py = ux * 6;
+          ctx.beginPath();
+          ctx.moveTo(sx + px, sy + py);
+          ctx.lineTo(ex + px, ey + py);
+          ctx.stroke();
+          // arrowhead
+          const ang = Math.atan2(ey - sy, ex - sx);
+          ctx.beginPath();
+          ctx.moveTo(ex + px, ey + py);
+          ctx.lineTo(ex + px - 10 * Math.cos(ang - 0.4), ey + py - 10 * Math.sin(ang - 0.4));
+          ctx.moveTo(ex + px, ey + py);
+          ctx.lineTo(ex + px - 10 * Math.cos(ang + 0.4), ey + py - 10 * Math.sin(ang + 0.4));
+          ctx.stroke();
+          // label
+          const mx = (sx + ex) / 2 + px * 2.5, my = (sy + ey) / 2 + py * 2.5;
+          ctx.fillText(P[i][j].toFixed(1), mx - 8, my - 4);
+        }
+      }
+    }
+    // draw nodes
+    for (let i = 0; i < 3; i++) {
+      const p = POS[i];
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 28, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS[i];
+      ctx.fill();
+      ctx.lineWidth = i === cur ? 4 : 2;
+      ctx.strokeStyle = i === cur ? '#fff' : 'rgba(255,255,255,0.3)';
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(NAMES[i], p.x, p.y);
+      // counts
+      ctx.font = '11px monospace';
+      ctx.fillText('n=' + counts[i], p.x, p.y + 45);
+    }
+    ctx.textAlign = 'left';
+  }
+
+  function step() {
+    const r = Math.random();
+    let acc = 0;
+    for (let j = 0; j < 3; j++) {
+      acc += P[cur][j];
+      if (r < acc) { cur = j; break; }
+    }
+    counts[cur]++;
+    steps++;
+    hist.push(NAMES[cur]);
+    if (hist.length > 18) hist.shift();
+    update();
+  }
+
+  function update() {
+    drawState();
+    document.getElementById('curState').textContent = NAMES[cur];
+    document.getElementById('stepCnt').textContent = steps;
+    document.getElementById('stateHist').textContent = hist.join('→');
+    const total = counts[0] + counts[1] + counts[2];
+    const f = counts.map(c => c / total);
+    document.getElementById('freqA').textContent = f[0].toFixed(3);
+    document.getElementById('freqB').textContent = f[1].toFixed(3);
+    document.getElementById('freqC').textContent = f[2].toFixed(3);
+    const err = Math.sqrt(f.reduce((s, x, i) => s + (x - PI[i]) ** 2, 0));
+    document.getElementById('convErr').textContent = steps < 5 ? '—' : err.toFixed(3);
+  }
+
+  document.getElementById('btnStep').addEventListener('click', step);
+  document.getElementById('btnAuto').addEventListener('click', () => {
+    auto = !auto;
+    document.getElementById('btnAuto').textContent = auto ? '暂停 ⏸' : '自动 ⏵';
+    if (auto) {
+      timer = setInterval(step, 1100 - speed * 100);
+    } else {
+      clearInterval(timer);
+    }
+  });
+  document.getElementById('btnReset').addEventListener('click', () => {
+    clearInterval(timer); auto = false;
+    document.getElementById('btnAuto').textContent = '自动 ⏵';
+    cur = 0; steps = 0; counts = [1, 0, 0]; hist = ['S₁'];
+    update();
+  });
+  document.getElementById('speedMarkov').addEventListener('input', e => {
+    speed = parseInt(e.target.value);
+    document.getElementById('speedVal').textContent = speed;
+    if (auto) { clearInterval(timer); timer = setInterval(step, 1100 - speed * 100); }
+  });
+  update();
+})();
+
+/* ==================== 2. 泊松过程 ==================== */
+(function() {
+  const cv = document.getElementById('cvPoisson');
+  const ctx = cv.getContext('2d');
+  let lambda = 3;
+  let events = [];
+  let running = false;
+  const T_MAX = 30;
+
+  function reset() {
+    events = [];
+    running = false;
+    draw();
+    document.getElementById('pCount').textContent = '0';
+    document.getElementById('pTheory').textContent = (lambda * T_MAX).toFixed(1);
+    document.getElementById('pMeanInt').textContent = '—';
+    document.getElementById('pTheoryInt').textContent = (1 / lambda).toFixed(2);
+  }
+
+  function simulate() {
+    reset();
+    running = true;
+    let t = 0;
+    while (t < T_MAX) {
+      t += -Math.log(1 - Math.random()) / lambda;
+      if (t < T_MAX) events.push(t);
+    }
+    draw();
+    running = false;
+    document.getElementById('pCount').textContent = events.length;
+    if (events.length > 1) {
+      let sum = 0;
+      for (let i = 1; i < events.length; i++) sum += events[i] - events[i - 1];
+      document.getElementById('pMeanInt').textContent = (sum / (events.length - 1)).toFixed(2);
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    const W = cv.width, H = cv.height;
+    const margin = { l: 50, r: 20, t: 30, b: 50 };
+    const pw = W - margin.l - margin.r, ph = H - margin.t - margin.b;
+    // axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(margin.l, margin.t);
+    ctx.lineTo(margin.l, H - margin.b);
+    ctx.lineTo(W - margin.r, H - margin.b);
+    ctx.stroke();
+    // labels
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('时间 t (s)', margin.l + pw / 2, H - margin.b + 30);
+    ctx.save();
+    ctx.translate(15, margin.t + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('计数 N(t)', 0, 0);
+    ctx.restore();
+    // grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px monospace';
+    for (let t = 0; t <= T_MAX; t += 5) {
+      const x = margin.l + (t / T_MAX) * pw;
+      ctx.beginPath();
+      ctx.moveTo(x, margin.t); ctx.lineTo(x, H - margin.b); ctx.stroke();
+      ctx.fillText(t, x, H - margin.b + 14);
+    }
+    const maxN = Math.max(events.length, lambda * T_MAX * 1.2, 5);
+    for (let n = 0; n <= maxN; n += Math.max(1, Math.floor(maxN / 6))) {
+      const y = H - margin.b - (n / maxN) * ph;
+      ctx.beginPath();
+      ctx.moveTo(margin.l, y); ctx.lineTo(W - margin.r, y); ctx.stroke();
+      ctx.fillText(n, margin.l - 12, y + 3);
+    }
+    // theoretical expectation line λt
+    ctx.strokeStyle = 'rgba(245,158,11,0.5)';
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.moveTo(margin.l, H - margin.b);
+    ctx.lineTo(margin.l + pw, H - margin.b - (lambda * T_MAX / maxN) * ph);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#fbbf24';
+    ctx.textAlign = 'right';
+    ctx.fillText('λt = ' + (lambda * T_MAX).toFixed(1), W - margin.r - 5, H - margin.b - (lambda * T_MAX / maxN) * ph - 6);
+    // step function
+    if (events.length > 0) {
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      let lastY = H - margin.b;
+      ctx.moveTo(margin.l, lastY);
+      for (let i = 0; i < events.length; i++) {
+        const x = margin.l + (events[i] / T_MAX) * pw;
+        ctx.lineTo(x, lastY);
+        const y = H - margin.b - ((i + 1) / maxN) * ph;
+        ctx.lineTo(x, y);
+        lastY = y;
+      }
+      ctx.lineTo(W - margin.r, lastY);
+      ctx.stroke();
+      // event dots
+      ctx.fillStyle = '#06b6d4';
+      for (let i = 0; i < events.length; i++) {
+        const x = margin.l + (events[i] / T_MAX) * pw;
+        const y = H - margin.b - ((i + 1) / maxN) * ph;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.textAlign = 'left';
+  }
+
+  document.getElementById('lambda').addEventListener('input', e => {
+    lambda = parseFloat(e.target.value);
+    document.getElementById('lambdaVal').textContent = lambda.toFixed(1);
+    document.getElementById('pTheory').textContent = (lambda * T_MAX).toFixed(1);
+    document.getElementById('pTheoryInt').textContent = (1 / lambda).toFixed(2);
+    if (!running) draw();
+  });
+  document.getElementById('btnRunPoisson').addEventListener('click', simulate);
+  document.getElementById('btnResetPoisson').addEventListener('click', reset);
+  reset();
+})();
+
+/* ==================== 3. 布朗运动 ==================== */
+(function() {
+  const cv = document.getElementById('cvBrown');
+  const ctx = cv.getContext('2d');
+  let sigma = 2, N = 8;
+  let particles = [];
+  let t = 0;
+  let running = false;
+  let raf = null;
+  const DT = 0.05;
+
+  function gaussian() {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  function reset() {
+    if (raf) cancelAnimationFrame(raf);
+    running = false;
+    t = 0;
+    particles = [];
+    for (let i = 0; i < N; i++) {
+      particles.push({ x: 0, y: 0, trail: [[0, 0]] });
+    }
+    draw();
+  }
+
+  function step() {
+    t += DT;
+    const sd = sigma * Math.sqrt(DT);
+    for (const p of particles) {
+      p.x += gaussian() * sd;
+      p.y += gaussian() * sd;
+      p.trail.push([p.x, p.y]);
+      if (p.trail.length > 800) p.trail.shift();
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    const cx = cv.width / 2, cy = cv.height / 2;
+    // grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 12; i++) {
+      ctx.beginPath(); ctx.moveTo(0, i * 40); ctx.lineTo(cv.width, i * 40); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(i * 50, 0); ctx.lineTo(i * 50, cv.height); ctx.stroke();
+    }
+    // axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(cv.width, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, cv.height); ctx.stroke();
+    // scale
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px monospace';
+    ctx.fillText('0', cx + 4, cy + 12);
+    ctx.fillText('+5σ', cx + 5 * sigma * 10, cy + 12);
+    ctx.fillText('−5σ', cx - 5 * sigma * 10 - 18, cy + 12);
+
+    const SCALE = 10;
+    const colors = ['#06b6d4', '#f59e0b', '#ec4899', '#10b981', '#a855f7', '#f97316', '#84cc16', '#14b8a6'];
+    let sumDist = 0, maxDist = 0;
+    particles.forEach((p, i) => {
+      const col = colors[i % colors.length];
+      // trail
+      ctx.strokeStyle = col;
+      ctx.globalAlpha = 0.5;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(cx + p.trail[0][0] * SCALE, cy + p.trail[0][1] * SCALE);
+      for (let k = 1; k < p.trail.length; k++) {
+        ctx.lineTo(cx + p.trail[k][0] * SCALE, cy + p.trail[k][1] * SCALE);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      // head
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(cx + p.x * SCALE, cy + p.y * SCALE, 4, 0, Math.PI * 2);
+      ctx.fill();
+      const d = Math.hypot(p.x, p.y);
+      sumDist += d;
+      if (d > maxDist) maxDist = d;
+    });
+    // stats
+    const meanDist = particles.length ? sumDist / particles.length : 0;
+    const theory = Math.sqrt(2 * t / Math.PI);
+    document.getElementById('bTime').textContent = t.toFixed(1);
+    document.getElementById('bMeanDist').textContent = meanDist.toFixed(2);
+    document.getElementById('bTheoryDist').textContent = theory.toFixed(2);
+    document.getElementById('bMaxDist').textContent = maxDist.toFixed(2);
+  }
+
+  function loop() {
+    if (!running) return;
+    step();
+    draw();
+    raf = requestAnimationFrame(loop);
+  }
+
+  document.getElementById('sigma').addEventListener('input', e => {
+    sigma = parseFloat(e.target.value);
+    document.getElementById('sigmaVal').textContent = sigma.toFixed(1);
+  });
+  document.getElementById('nParticles').addEventListener('input', e => {
+    N = parseInt(e.target.value);
+    document.getElementById('nParticlesVal').textContent = N;
+    reset();
+  });
+  document.getElementById('btnBrownRun').addEventListener('click', () => {
+    if (!running) { running = true; loop(); }
+  });
+  document.getElementById('btnBrownPause').addEventListener('click', () => {
+    running = false;
+    if (raf) cancelAnimationFrame(raf);
+  });
+  document.getElementById('btnBrownReset').addEventListener('click', reset);
+  reset();
+})();
+
+/* ==================== 4. 互动练习 ==================== */
+(function() {
+  const QUIZ = [
+    {
+      q: '马尔可夫链的"无记忆性"是指：',
+      opts: [
+        'A. 下一状态与所有历史状态无关',
+        'B. 下一状态只依赖当前状态，与更早历史无关',
+        'C. 系统完全随机，没有任何规律',
+        'D. 转移概率矩阵是对称的'
+      ],
+      ans: 1,
+      expl: '马尔可夫性质：P(Xₙ₊₁|Xₙ, Xₙ₋₁,…,X₀) = P(Xₙ₊₁|Xₙ)。当前状态已包含所有预测未来的信息。'
+    },
+    {
+      q: '某马尔可夫链转移矩阵 P 满足 πP = π，则 π 称为：',
+      opts: [
+        'A. 初始分布',
+        'B. 条件分布',
+        'C. 稳态分布（不变分布）',
+        'D. 边缘分布'
+      ],
+      ans: 2,
+      expl: '稳态分布 π 是 P 的左特征向量（特征值1），长时间后状态分布收敛到 π。'
+    },
+    {
+      q: '泊松过程的间隔时间服从：',
+      opts: [
+        'A. 正态分布',
+        'B. 均匀分布',
+        'C. 二项分布',
+        'D. 指数分布'
+      ],
+      ans: 3,
+      expl: '泊松过程的间隔时间 T ~ Exp(λ)，均值 1/λ，且具有无记忆性。'
+    },
+    {
+      q: '泊松过程 N(t) 中，P(N(t)=k) 的公式为：',
+      opts: [
+        'A. (λt)ᵏ e^(−λt) / k!',
+        'B. C(n,k) pᵏ (1−p)ⁿ⁻ᵏ',
+        'C. e^(−λ) λᵏ / k!（与 t 无关）',
+        'D. 1 / √(2πσ²) · e^(−k²/2σ²)'
+      ],
+      ans: 0,
+      expl: 'P(N(t)=k) = (λt)ᵏ e^(−λt) / k!。注意是 λt 的函数，不是单独的 λ。'
+    },
+    {
+      q: '两个独立泊松过程（强度 λ₁=2、λ₂=3）合并后强度为：',
+      opts: [
+        'A. max(λ₁,λ₂)=3',
+        'B. λ₁+λ₂=5',
+        'C. λ₁·λ₂=6',
+        'D. (λ₁+λ₂)/2=2.5'
+      ],
+      ans: 1,
+      expl: '独立泊松过程合并仍是泊松过程，强度相加：λ = λ₁ + λ₂ = 5。'
+    },
+    {
+      q: '标准布朗运动 W(t) 的方差 Var(W(t)) 等于：',
+      opts: [
+        'A. 0',
+        'B. 1',
+        'C. t',
+        'D. t²'
+      ],
+      ans: 2,
+      expl: '标准布朗运动 W(t) ~ N(0, t)，方差随时间线性增长。'
+    },
+    {
+      q: '布朗运动样本路径的性质是：',
+      opts: [
+        'A. 处处连续且处处可微',
+        'B. 处处不连续',
+        'C. 处处连续但处处不可微',
+        'D. 仅在有限个点不可微'
+      ],
+      ans: 2,
+      expl: '布朗运动路径连续（无跳跃），但由于增量涨落太快（标度 √Δt），处处不可微。'
+    },
+    {
+      q: 'Black–Scholes 期权定价模型基于：',
+      opts: [
+        'A. 泊松过程',
+        'B. 马尔可夫链',
+        'C. 几何布朗运动',
+        'D. 二项分布'
+      ],
+      ans: 2,
+      expl: 'B-S 模型假设股价 dS = μS dt + σS dW，即 S 服从几何布朗运动（对数正态）。'
+    }
+  ];
+
+  let idx = 0, score = 0;
+  const box = document.getElementById('quizBox');
+  const prog = document.getElementById('quizProg');
+
+  function render() {
+    if (idx >= QUIZ.length) {
+      const pass = score >= 5;
+      box.innerHTML = `
+        <div class="quiz-final">
+          <div class="score">${score} / ${QUIZ.length}</div>
+          <div class="msg">${pass ? '🎉 通过！已标记完成' : '继续加油，再看一遍讲解吧'}</div>
+          <button class="btn" id="btnRetry" style="margin-top:14px">🔄 重新挑战</button>
+        </div>`;
+      prog.textContent = `最终得分 ${score} / ${QUIZ.length}`;
+      if (pass && typeof PageProgress !== 'undefined' && !PageProgress.isDone('stochastic-process')) {
+        PageProgress.markDone('stochastic-process');
+      }
+      document.getElementById('btnRetry').addEventListener('click', () => {
+        idx = 0; score = 0; render();
+      });
+      return;
+    }
+    const q = QUIZ[idx];
+    box.innerHTML = `
+      <div class="quiz">
+        <div class="quiz-q">${idx + 1}. ${q.q}</div>
+        <div class="quiz-opts">
+          ${q.opts.map((o, i) => `<div class="quiz-opt" data-i="${i}">${o}</div>`).join('')}
+        </div>
+        <div class="quiz-feedback" id="fb"></div>
+      </div>`;
+    prog.textContent = `第 ${idx + 1} / ${QUIZ.length} 题 · 已答对 ${score}`;
+    box.querySelectorAll('.quiz-opt').forEach(el => {
+      el.addEventListener('click', () => {
+        const chosen = parseInt(el.dataset.i);
+        box.querySelectorAll('.quiz-opt').forEach(x => x.style.pointerEvents = 'none');
+        if (chosen === q.ans) {
+          el.classList.add('correct');
+          score++;
+          document.getElementById('fb').textContent = '✓ 正确！' + q.expl;
+        } else {
+          el.classList.add('wrong');
+          box.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+          document.getElementById('fb').textContent = '✗ 答错。' + q.expl;
+        }
+        setTimeout(() => { idx++; render(); }, 2400);
+      });
+    });
+  }
+  render();
+})();
+</script>
+</body>
+</html>

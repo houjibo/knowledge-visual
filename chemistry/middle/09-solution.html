@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>溶液 - 互动可视化</title>
+<link rel="stylesheet" href="assets/common.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 50%, #80deea 100%);
+    min-height: 100vh;
+    color: #004d40;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+header {
+    text-align: center;
+    padding: 30px 20px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 32px rgba(0,77,64,0.1);
+}
+header h1 { font-size: 2.2em; color: #00695c; margin-bottom: 8px; }
+header p { color: #00897b; font-size: 1.1em; }
+
+.section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 32px rgba(0,77,64,0.1);
+}
+.section h2 {
+    font-size: 1.6em;
+    color: #00695c;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #80cbc4;
+}
+.section h3 { color: #00796b; margin: 15px 0 10px; }
+
+/* 溶液形成动画 */
+.mixing-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+.beaker {
+    width: 180px;
+    height: 240px;
+    position: relative;
+    border: 4px solid #4dd0e1;
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.3);
+}
+.beaker::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -15px;
+    right: -15px;
+    height: 4px;
+    background: #4dd0e1;
+    border-radius: 2px;
+}
+.water {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: linear-gradient(180deg, rgba(77,208,225,0.4) 0%, rgba(38,166,154,0.6) 100%);
+    transition: all 0.5s;
+}
+.water.salty {
+    background: linear-gradient(180deg, rgba(100,181,246,0.5) 0%, rgba(30,136,229,0.7) 100%);
+}
+.salt-particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+.salt-grain {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 2px;
+    opacity: 0.9;
+}
+.stirrer {
+    width: 12px;
+    height: 180px;
+    background: linear-gradient(90deg, #78909c, #b0bec5);
+    border-radius: 6px;
+    position: absolute;
+    left: 50%;
+    top: 20px;
+    transform-origin: top center;
+    z-index: 10;
+}
+.controls { text-align: center; margin: 20px 0; }
+.btn {
+    padding: 12px 28px;
+    font-size: 1em;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    margin: 5px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+.btn-primary { background: #26a69a; color: white; }
+.btn-primary:hover { background: #00897b; transform: translateY(-2px); }
+.btn-secondary { background: #80cbc4; color: #004d40; }
+.btn-secondary:hover { background: #4db6ac; }
+
+/* 溶解度曲线 */
+.chart-container {
+    width: 100%;
+    max-width: 700px;
+    height: 400px;
+    margin: 20px auto;
+    position: relative;
+    background: #f5f5f5;
+    border-radius: 15px;
+    padding: 20px;
+}
+canvas { width: 100%; height: 100%; }
+
+/* 浓度计算 */
+.concentration-sim {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+.conc-beaker {
+    width: 160px;
+    height: 200px;
+    border: 4px solid #4dd0e1;
+    border-top: none;
+    border-radius: 0 0 15px 15px;
+    position: relative;
+    overflow: hidden;
+    background: rgba(255,255,255,0.3);
+}
+.conc-liquid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, rgba(100,181,246,0.4) 0%, rgba(30,136,229,0.7) 100%);
+    transition: height 0.5s, background 0.5s;
+}
+.solute-blocks {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    justify-content: center;
+}
+.solute-block {
+    width: 12px;
+    height: 12px;
+    background: #1565c0;
+    border-radius: 2px;
+    opacity: 0.8;
+}
+.slider-group {
+    margin: 15px 0;
+}
+.slider-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #00695c;
+}
+input[type="range"] {
+    width: 100%;
+    max-width: 300px;
+    height: 8px;
+    -webkit-appearance: none;
+    background: #b2dfdb;
+    border-radius: 4px;
+    outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    background: #26a69a;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* 练习区 */
+.quiz-area {
+    background: #e0f2f1;
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px 0;
+}
+.quiz-question {
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    color: #004d40;
+}
+.quiz-input {
+    padding: 10px 15px;
+    font-size: 1em;
+    border: 2px solid #80cbc4;
+    border-radius: 10px;
+    width: 150px;
+    text-align: center;
+    margin: 10px 5px;
+}
+.quiz-input:focus { border-color: #26a69a; outline: none; }
+.feedback {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    display: none;
+}
+.feedback.correct { background: #c8e6c9; color: #2e7d32; display: block; }
+.feedback.wrong { background: #ffcdd2; color: #c62828; display: block; }
+
+.info-box {
+    background: #e8f5e9;
+    border-left: 4px solid #66bb6a;
+    padding: 15px 20px;
+    border-radius: 0 10px 10px 0;
+    margin: 15px 0;
+}
+.info-box strong { color: #2e7d32; }
+
+.formula {
+    background: #fff3e0;
+    padding: 12px 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 1.2em;
+    color: #e65100;
+    margin: 15px 0;
+    font-weight: 600;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.tab-btn {
+    padding: 10px 20px;
+    background: #e0f2f1;
+    border: 2px solid #80cbc4;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #00695c;
+    transition: all 0.3s;
+}
+.tab-btn.active {
+    background: #26a69a;
+    color: white;
+    border-color: #26a69a;
+}
+
+.substance-select {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 15px 0;
+}
+.substance-btn {
+    padding: 8px 16px;
+    background: #fff;
+    border: 2px solid #4dd0e1;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s;
+}
+.substance-btn.active {
+    background: #00acc1;
+    color: white;
+    border-color: #00acc1;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>🧪 溶液</h1>
+        <p>探索溶液的奥秘：从溶解到浓度计算</p>
+    </header>
+
+    <!-- 第一部分：溶液的形成 -->
+    <div class="section">
+        <h2>一、溶液的形成</h2>
+        <div class="info-box">
+            <strong>溶液：</strong>由<strong>溶质</strong>和<strong>溶剂</strong>组成的均一、稳定的混合物。
+            均一性：各部分性质相同；稳定性：条件不变时不会分层。
+        </div>
+        
+        <h3>🔬 互动实验：食盐溶解</h3>
+        <p>点击按钮观察食盐（NaCl）在水中的溶解过程</p>
+        
+        <div class="mixing-area">
+            <div class="beaker" id="beaker1">
+                <div class="water" id="water1"></div>
+                <div class="salt-particles" id="salt1"></div>
+                <div class="stirrer" id="stirrer1"></div>
+            </div>
+            <div style="text-align: center;">
+                <div id="mixStatus" style="font-size: 1.2em; color: #00695c; margin-bottom: 15px;">
+                    准备开始实验...
+                </div>
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="addSalt()">加入食盐</button>
+                    <button class="btn btn-primary" onclick="stir()">搅拌</button>
+                    <button class="btn btn-secondary" onclick="resetMixing()">重置</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>💡 关键概念：</strong>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li><strong>溶质：</strong>被溶解的物质（如食盐、糖）</li>
+                <li><strong>溶剂：</strong>能溶解其他物质的物质（最常见的是水）</li>
+                <li><strong>溶液 = 溶质 + 溶剂</strong></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 第二部分：溶解度 -->
+    <div class="section">
+        <h2>二、溶解度曲线</h2>
+        <div class="info-box">
+            <strong>溶解度：</strong>在一定温度下，某固体物质在100g溶剂（通常是水）中达到饱和状态时所能溶解的最大质量（g）。
+        </div>
+
+        <h3>📊 互动溶解度曲线</h3>
+        <p>选择不同物质，观察其溶解度随温度的变化</p>
+        
+        <div class="substance-select">
+            <button class="substance-btn active" onclick="selectSubstance('kno3')">KNO₃ 硝酸钾</button>
+            <button class="substance-btn" onclick="selectSubstance('nacl')">NaCl 氯化钠</button>
+            <button class="substance-btn" onclick="selectSubstance('caoh2')">Ca(OH)₂ 氢氧化钙</button>
+            <button class="substance-btn" onclick="selectSubstance('kcl')">KCl 氯化钾</button>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="solChart"></canvas>
+        </div>
+
+        <div class="slider-group" style="text-align: center;">
+            <label>🌡️ 拖动滑块查看不同温度下的溶解度</label>
+            <input type="range" id="tempSlider" min="0" max="100" value="20" oninput="updateTemp(this.value)">
+            <div id="tempDisplay" style="font-size: 1.2em; margin-top: 10px; color: #00695c;">
+                温度：20°C | 溶解度：31.6 g
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>💡 规律总结：</strong>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>大多数固体物质的溶解度随温度升高而<strong>增大</strong>（如KNO₃）</li>
+                <li>少数物质溶解度受温度影响<strong>很小</strong>（如NaCl）</li>
+                <li>极少数物质溶解度随温度升高而<strong>减小</strong>（如Ca(OH)₂）</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 第三部分：溶质质量分数 -->
+    <div class="section">
+        <h2>三、溶质质量分数</h2>
+        
+        <div class="formula">
+            溶质质量分数 = (溶质质量 ÷ 溶液质量) × 100%
+        </div>
+        <div class="formula" style="background: #e3f2fd; color: #1565c0;">
+            溶液质量 = 溶质质量 + 溶剂质量
+        </div>
+
+        <h3>🧪 互动浓度调节</h3>
+        <p>拖动滑块改变溶质和溶剂的量，观察浓度变化</p>
+
+        <div class="concentration-sim">
+            <div class="conc-beaker">
+                <div class="conc-liquid" id="concLiquid" style="height: 60%;">
+                    <div class="solute-blocks" id="soluteBlocks"></div>
+                </div>
+            </div>
+            <div style="flex: 1; min-width: 250px;">
+                <div class="slider-group">
+                    <label>溶质质量：<span id="soluteVal">20</span> g</label>
+                    <input type="range" id="soluteSlider" min="0" max="100" value="20" oninput="updateConc()">
+                </div>
+                <div class="slider-group">
+                    <label>溶剂质量：<span id="solventVal">80</span> g</label>
+                    <input type="range" id="solventSlider" min="20" max="200" value="80" oninput="updateConc()">
+                </div>
+                <div style="background: #e0f7fa; padding: 15px; border-radius: 10px; margin-top: 15px;">
+                    <div>溶液质量：<strong id="solutionMass">100</strong> g</div>
+                    <div style="font-size: 1.3em; color: #00695c; margin-top: 8px;">
+                        质量分数：<strong id="concPercent">20%</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>💡 注意：</strong>
+            <ul style="margin-top: 8px; padding-left: 20px;">
+                <li>溶质质量分数表示溶液中溶质的含量</li>
+                <li>饱和溶液的浓度 = 溶解度 ÷ (100 + 溶解度) × 100%</li>
+                <li>稀释公式：m₁ × w₁ = m₂ × w₂（溶质守恒）</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 第四部分：浓度计算练习 -->
+    <div class="section">
+        <h2>四、浓度计算练习</h2>
+        
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="switchQuiz(0)">基础题</button>
+            <button class="tab-btn" onclick="switchQuiz(1)">进阶题</button>
+            <button class="tab-btn" onclick="switchQuiz(2)">挑战题</button>
+        </div>
+
+        <div class="quiz-area" id="quizArea">
+            <div class="quiz-question" id="quizQuestion"></div>
+            <div id="quizContent"></div>
+            <div class="feedback" id="quizFeedback"></div>
+            <div class="controls" style="margin-top: 15px;">
+                <button class="btn btn-primary" onclick="checkAnswer()">检查答案</button>
+                <button class="btn btn-secondary" onclick="nextQuestion()">换一题</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="assets/animation.js"></script>
+<script src="assets/common.js"></script>
+<script>
+/* ===== PageProgress: markDone wiring =====
+   完成条件（4 项核心互动全部达成）：
+   ① 食盐溶解实验完成（dissolved）
+   ② 切换查看 ≥2 种物质的溶解度曲线
+   ③ 拖动浓度滑块调节溶液浓度
+   ④ 测验至少答对 1 题 */
+const ppMilestones = { dissolve: false, solubility: false, concentration: false, quiz: false };
+const ppSeenSubstances = new Set(['kno3']);  // 默认已选中 kno3
+function ppCheckDone() {
+    if (!(ppMilestones.dissolve && ppMilestones.solubility && ppMilestones.concentration && ppMilestones.quiz)) return;
+    if (typeof PageProgress !== 'undefined' && !PageProgress.isDone('09-solution')) {
+        PageProgress.markDone('09-solution');
+    }
+}
+
+// ===== 第一部分：溶液形成动画 =====
+let mixState = { saltAdded: false, stirring: false, dissolved: false };
+let saltGrains = [];
+let stirAngle = 0;
+let animFrame = null;
+
+function addSalt() {
+    if (mixState.saltAdded) return;
+    mixState.saltAdded = true;
+    document.getElementById('mixStatus').textContent = '食盐已加入水中，正在溶解...';
+    
+    const container = document.getElementById('salt1');
+    container.innerHTML = '';
+    saltGrains = [];
+    
+    for (let i = 0; i < 20; i++) {
+        const grain = document.createElement('div');
+        grain.className = 'salt-grain';
+        const x = 30 + Math.random() * 120;
+        const y = 20 + Math.random() * 40;
+        grain.style.left = x + 'px';
+        grain.style.top = y + 'px';
+        container.appendChild(grain);
+        saltGrains.push({ el: grain, x, y, oy: y, dissolved: false });
+    }
+    
+    startDissolving();
+}
+
+function startDissolving() {
+    let progress = 0;
+    function animate() {
+        progress += 0.02;
+        saltGrains.forEach((g, i) => {
+            if (!g.dissolved) {
+                const dissolveAt = i / saltGrains.length;
+                if (progress > dissolveAt) {
+                    g.y += 2;
+                    g.el.style.top = g.y + 'px';
+                    g.el.style.opacity = Math.max(0, 1 - (progress - dissolveAt) * 2);
+                    if (parseFloat(g.el.style.opacity) <= 0) {
+                        g.dissolved = true;
+                        g.el.style.display = 'none';
+                    }
+                }
+            }
+        });
+        
+        if (progress < 1.5) {
+            animFrame = requestAnimationFrame(animate);
+        } else {
+            document.getElementById('water1').classList.add('salty');
+            document.getElementById('mixStatus').textContent = '✅ 食盐完全溶解！形成均一透明的溶液';
+            mixState.dissolved = true;
+            ppMilestones.dissolve = true;
+            ppCheckDone();
+        }
+    }
+    animate();
+}
+
+function stir() {
+    if (!mixState.saltAdded) return;
+    const stirrer = document.getElementById('stirrer1');
+    let angle = 0;
+    
+    function stirAnim() {
+        angle += 8;
+        stirrer.style.transform = `rotate(${Math.sin(angle * Math.PI / 180) * 15}deg)`;
+        if (angle < 720) {
+            requestAnimationFrame(stirAnim);
+        } else {
+            stirrer.style.transform = 'rotate(0deg)';
+        }
+    }
+    stirAnim();
+    
+    if (!mixState.dissolved) {
+        cancelAnimationFrame(animFrame);
+        startDissolving();
+    }
+}
+
+function resetMixing() {
+    cancelAnimationFrame(animFrame);
+    mixState = { saltAdded: false, stirring: false, dissolved: false };
+    document.getElementById('salt1').innerHTML = '';
+    document.getElementById('water1').classList.remove('salty');
+    document.getElementById('mixStatus').textContent = '准备开始实验...';
+    document.getElementById('stirrer1').style.transform = 'rotate(0deg)';
+}
+
+// ===== 第二部分：溶解度曲线 =====
+const solubilityData = {
+    kno3: { name: 'KNO₃', color: '#e53935', data: [13.3, 20.9, 31.6, 45.8, 63.9, 85.5, 110, 138, 169, 202, 246] },
+    nacl: { name: 'NaCl', color: '#1e88e5', data: [35.7, 35.8, 36.0, 36.3, 36.6, 37.0, 37.3, 37.8, 38.4, 39.0, 39.8] },
+    caoh2: { name: 'Ca(OH)₂', color: '#43a047', data: [0.185, 0.176, 0.165, 0.153, 0.141, 0.129, 0.116, 0.106, 0.095, 0.085, 0.074] },
+    kcl: { name: 'KCl', color: '#ff8f00', data: [27.6, 31.0, 34.0, 37.0, 40.0, 42.6, 45.5, 48.3, 51.1, 54.0, 56.7] }
+};
+let currentSubstance = 'kno3';
+
+function selectSubstance(key) {
+    currentSubstance = key;
+    ppSeenSubstances.add(key);
+    if (ppSeenSubstances.size >= 2) { ppMilestones.solubility = true; ppCheckDone(); }
+    document.querySelectorAll('.substance-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.querySelector(`.substance-btn[onclick*="'${key}'"]`);
+    if (btn) btn.classList.add('active');
+    drawSolubilityChart();
+    updateTemp(document.getElementById('tempSlider').value);
+}
+
+function drawSolubilityChart() {
+    const canvas = document.getElementById('solChart');
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width - 40;
+    canvas.height = rect.height - 40;
+    
+    const w = canvas.width;
+    const h = canvas.height;
+    const padding = { top: 20, right: 30, bottom: 50, left: 60 };
+    const plotW = w - padding.left - padding.right;
+    const plotH = h - padding.top - padding.bottom;
+    
+    ctx.clearRect(0, 0, w, h);
+    
+    // 背景网格
+    ctx.strokeStyle = '#e0e0e0';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 10; i++) {
+        const x = padding.left + (plotW / 10) * i;
+        const y = padding.top + (plotH / 10) * i;
+        ctx.beginPath(); ctx.moveTo(x, padding.top); ctx.lineTo(x, h - padding.bottom); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(w - padding.right, y); ctx.stroke();
+    }
+    
+    // 坐标轴
+    ctx.strokeStyle = '#455a64';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, padding.top);
+    ctx.lineTo(padding.left, h - padding.bottom);
+    ctx.lineTo(w - padding.right, h - padding.bottom);
+    ctx.stroke();
+    
+    // 刻度标签
+    ctx.fillStyle = '#455a64';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    for (let t = 0; t <= 100; t += 10) {
+        const x = padding.left + (t / 100) * plotW;
+        ctx.fillText(t + '°C', x, h - padding.bottom + 20);
+    }
+    ctx.textAlign = 'right';
+    const maxSol = 250;
+    for (let s = 0; s <= maxSol; s += 50) {
+        const y = h - padding.bottom - (s / maxSol) * plotH;
+        ctx.fillText(s + 'g', padding.left - 8, y + 4);
+    }
+    
+    // 轴标签
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('温度 (°C)', w / 2, h - 5);
+    ctx.save();
+    ctx.translate(15, h / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('溶解度 (g/100g水)', 0, 0);
+    ctx.restore();
+    
+    // 绘制曲线
+    const data = solubilityData[currentSubstance];
+    ctx.strokeStyle = data.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    
+    for (let i = 0; i < data.data.length; i++) {
+        const temp = i * 10;
+        const sol = data.data[i];
+        const x = padding.left + (temp / 100) * plotW;
+        const y = h - padding.bottom - (sol / maxSol) * plotH;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    
+    // 数据点
+    ctx.fillStyle = data.color;
+    for (let i = 0; i < data.data.length; i++) {
+        const temp = i * 10;
+        const sol = data.data[i];
+        const x = padding.left + (temp / 100) * plotW;
+        const y = h - padding.bottom - (sol / maxSol) * plotH;
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // 标题
+    ctx.fillStyle = data.color;
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(data.name + ' 溶解度曲线', padding.left + 10, padding.top + 20);
+    
+    // 当前温度标记线
+    const currentTemp = parseInt(document.getElementById('tempSlider').value);
+    const markerX = padding.left + (currentTemp / 100) * plotW;
+    ctx.strokeStyle = '#ff5722';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(markerX, padding.top);
+    ctx.lineTo(markerX, h - padding.bottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+function updateTemp(val) {
+    const temp = parseInt(val);
+    const data = solubilityData[currentSubstance];
+    const idx = Math.floor(temp / 10);
+    const frac = (temp % 10) / 10;
+    let sol;
+    if (idx >= data.data.length - 1) {
+        sol = data.data[data.data.length - 1];
+    } else {
+        sol = data.data[idx] + (data.data[idx + 1] - data.data[idx]) * frac;
+    }
+    document.getElementById('tempDisplay').textContent = 
+        `温度：${temp}°C | 溶解度：${sol.toFixed(1)} g/100g水`;
+    drawSolubilityChart();
+}
+
+// ===== 第三部分：浓度调节 =====
+function updateConc() {
+    const solute = parseInt(document.getElementById('soluteSlider').value);
+    const solvent = parseInt(document.getElementById('solventSlider').value);
+    const solution = solute + solvent;
+    const percent = solution > 0 ? ((solute / solution) * 100).toFixed(1) : 0;
+    
+    document.getElementById('soluteVal').textContent = solute;
+    document.getElementById('solventVal').textContent = solvent;
+    document.getElementById('solutionMass').textContent = solution;
+    document.getElementById('concPercent').textContent = percent + '%';
+    
+    // 更新视觉
+    const liquidHeight = Math.min(90, 30 + (solution / 300) * 60);
+    const liquid = document.getElementById('concLiquid');
+    liquid.style.height = liquidHeight + '%';
+    
+    const intensity = Math.min(1, solute / 100);
+    liquid.style.background = `linear-gradient(180deg, 
+        rgba(${100 - intensity * 50}, ${181 - intensity * 80}, ${246 - intensity * 100}, ${0.4 + intensity * 0.3}) 0%, 
+        rgba(${30}, ${136 - intensity * 30}, ${229 - intensity * 50}, ${0.6 + intensity * 0.3}) 100%)`;
+    
+    // 更新溶质粒子
+    const blocks = document.getElementById('soluteBlocks');
+    blocks.innerHTML = '';
+    const numBlocks = Math.floor(solute / 5);
+    for (let i = 0; i < numBlocks; i++) {
+        const block = document.createElement('div');
+        block.className = 'solute-block';
+        blocks.appendChild(block);
+    }
+}
+
+// ===== 第四部分：练习 =====
+const quizzes = [
+    [
+        { q: '将10g食盐溶解在90g水中，求溶质质量分数。', answer: '10%', unit: '%' },
+        { q: '200g 10%的食盐水中，含食盐多少克？', answer: '20', unit: 'g' },
+        { q: '将25g硫酸铜溶解在75g水中，质量分数是多少？', answer: '25%', unit: '%' }
+    ],
+    [
+        { q: '20°C时NaCl溶解度为36g，求饱和溶液的质量分数。', answer: '26.5%', unit: '%' },
+        { q: '将100g 20%的溶液稀释到10%，需加水多少克？', answer: '100', unit: 'g' },
+        { q: '50g 15%的溶液中加入10g溶质，新质量分数是多少？（保留1位小数）', answer: '29.2%', unit: '%' }
+    ],
+    [
+        { q: '某温度下KNO₃溶解度为50g。将40g KNO₃加入80g水中，所得溶液质量分数？', answer: '33.3%', unit: '%' },
+        { q: '将200g 30%的溶液蒸发掉50g水（无晶体析出），新质量分数？', answer: '40%', unit: '%' },
+        { q: '配制500g 5%的食盐水，需要10%的食盐水多少克？', answer: '250', unit: 'g' }
+    ]
+];
+let currentQuiz = 0;
+let currentQIdx = 0;
+
+function switchQuiz(idx) {
+    currentQuiz = idx;
+    currentQIdx = 0;
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+        b.classList.toggle('active', i === idx);
+    });
+    showQuestion();
+}
+
+function showQuestion() {
+    const quiz = quizzes[currentQuiz];
+    const q = quiz[currentQIdx];
+    document.getElementById('quizQuestion').textContent = `第${currentQIdx + 1}题：${q.q}`;
+    document.getElementById('quizContent').innerHTML = 
+        `<input class="quiz-input" id="answerInput" placeholder="输入答案" onkeydown="if(event.key==='Enter')checkAnswer()"> <span style="color:#00695c;font-weight:600;">${q.unit}</span>`;
+    document.getElementById('quizFeedback').className = 'feedback';
+    document.getElementById('quizFeedback').textContent = '';
+}
+
+function checkAnswer() {
+    const input = document.getElementById('answerInput');
+    if (!input.value.trim()) return;
+    
+    const quiz = quizzes[currentQuiz];
+    const q = quiz[currentQIdx];
+    const userAns = input.value.trim().replace('%', '');
+    const correctAns = q.answer.replace('%', '').replace('g', '');
+    
+    const feedback = document.getElementById('quizFeedback');
+    if (Math.abs(parseFloat(userAns) - parseFloat(correctAns)) < 0.5) {
+        feedback.className = 'feedback correct';
+        feedback.textContent = '✅ 正确！';
+        ppMilestones.quiz = true;
+        ppCheckDone();
+    } else {
+        feedback.className = 'feedback wrong';
+        feedback.textContent = `❌ 答案是 ${q.answer}，再想想看！`;
+    }
+}
+
+function nextQuestion() {
+    currentQIdx = (currentQIdx + 1) % quizzes[currentQuiz].length;
+    showQuestion();
+}
+
+// 初始化
+window.onload = function() {
+    drawSolubilityChart();
+    updateConc();
+    showQuestion();
+    // 浓度滑块：用户首次拖动即达成 concentration 里程碑
+    ['soluteSlider', 'solventSlider'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', () => {
+            if (!ppMilestones.concentration) { ppMilestones.concentration = true; ppCheckDone(); }
+        });
+    });
+};
+
+window.addEventListener('resize', drawSolubilityChart);
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中化学"></script>
+</body>
+</html>

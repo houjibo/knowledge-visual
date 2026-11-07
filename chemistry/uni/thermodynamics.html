@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>化学热力学 · 大学化学互动可视化</title>
+<style>
+  :root {
+    --primary: #f59e0b;
+    --heat: #ef4444;
+    --cool: #06b6d4;
+    --work: #a855f7;
+    --energy: #10b981;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.7);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e3a5f 0%, #2d1b4e 50%, #1e3a5f 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.4rem; background: linear-gradient(90deg, var(--heat), var(--primary), var(--energy)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 1rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab { padding: 12px 24px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(245,158,11,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 16px; justify-content: center; font-size: 13px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .legend .l-heat::before { background: var(--heat); }
+  .legend .l-cool::before { background: var(--cool); }
+  .legend .l-work::before { background: var(--work); }
+  .legend .l-energy::before { background: var(--energy); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 680px; }
+  .panel h3 { font-size: 1.15rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .concept-box { font-size: 1.05rem; text-align: left; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 12px 0; line-height: 1.9; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--heat); font-weight: 600; }
+  .concept-box .hl2 { color: var(--cool); font-weight: 600; }
+  .concept-box .hl3 { color: var(--work); font-weight: 600; }
+  .concept-box .hl4 { color: var(--energy); font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 120px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; font-size: 13px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 16px; border-radius: 10px; background: rgba(59,130,246,0.1); border: 2px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 14px; color: #93c5fd; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .formula-box { padding: 14px; background: rgba(245,158,11,0.08); border-radius: 12px; margin: 12px 0; font-family: "Times New Roman", serif; font-size: 1.1rem; text-align: center; color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+
+  .quiz { margin-top: 16px; padding: 18px; background: rgba(245,158,11,0.1); border-radius: 14px; border: 2px solid rgba(245,158,11,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 10px; }
+  .quiz-opt { padding: 12px 16px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 12px; font-size: 14px; color: #fbbf24; min-height: 22px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 14px; }
+  .quiz-nav button { padding: 8px 18px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .calc-input { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .calc-input label { flex: 0 0 140px; color: #cbd5e1; }
+  .calc-input input[type=number] { flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: var(--light); font-size: 14px; }
+  .calc-input .unit { flex: 0 0 50px; color: #94a3b8; font-size: 13px; }
+  .calc-result { padding: 14px; background: rgba(16,185,129,0.1); border-radius: 12px; margin-top: 12px; font-size: 14px; line-height: 1.8; border-left: 4px solid var(--energy); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔥 化学热力学</h1>
+    <p>探索能量转化、状态方程与反应热的奥秘<span id="done-mark" style="color:#10b981;font-weight:700;margin-left:8px;font-size:14px;"></span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="0">🎈 气体状态方程</div>
+    <div class="tab" data-tab="1">⚡ 热力学第一定律</div>
+    <div class="tab" data-tab="2">🔬 反应热计算</div>
+    <div class="tab" data-tab="3">📝 知识测验</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="700" height="500"></canvas>
+      <div class="legend">
+        <span class="l-heat">热量 Q</span>
+        <span class="l-cool">温度 T</span>
+        <span class="l-work">功 W</span>
+        <span class="l-energy">内能 U</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <!-- Section 0: 气体状态方程 -->
+      <div class="section active" data-section="0">
+        <h3>🎈 理想气体状态方程</h3>
+        <div class="concept-box">
+          理想气体状态方程描述了<span class="hl">压强 P</span>、<span class="hl2">体积 V</span>、<span class="hl2">温度 T</span> 和<span class="hl4">物质的量 n</span> 之间的关系：<br>
+          <b>PV = nRT</b><br>
+          其中 R = 8.314 J/(mol·K) 为理想气体常数。
+        </div>
+
+        <div class="formula-box">PV = nRT</div>
+
+        <div class="slider-row">
+          <label>🌡️ 温度 T</label>
+          <input type="range" id="tempSlider" min="100" max="500" value="300" step="10">
+          <span class="val" id="tempVal">300 K</span>
+        </div>
+        <div class="slider-row">
+          <label>📦 体积 V</label>
+          <input type="range" id="volSlider" min="5" max="50" value="20" step="1">
+          <span class="val" id="volVal">20 L</span>
+        </div>
+        <div class="slider-row">
+          <label>⚗️ 物质的量 n</label>
+          <input type="range" id="molSlider" min="1" max="10" value="2" step="1">
+          <span class="val" id="molVal">2 mol</span>
+        </div>
+
+        <div class="info-grid">
+          <div><b>🌡️ 温度</b><br>分子平均动能的量度，温度越高分子运动越剧烈</div>
+          <div><b>📦 体积</b><br>气体占据的空间大小，可压缩膨胀</div>
+          <div><b>⚗️ 物质的量</b><br>气体分子的数量，1 mol ≈ 6.02×10²³ 个分子</div>
+          <div><b>📊 压强</b><br>分子碰撞容器壁产生的力，P = nRT/V</div>
+        </div>
+      </div>
+
+      <!-- Section 1: 热力学第一定律 -->
+      <div class="section" data-section="1">
+        <h3>⚡ 热力学第一定律</h3>
+        <div class="concept-box">
+          <span class="hl4">能量守恒定律</span>在热力学中的表述：<br>
+          系统内能的变化等于吸收的热量减去对外做的功：<br>
+          <b>ΔU = Q - W</b><br>
+          其中 <span class="hl">Q > 0</span> 表示吸热，<span class="hl3">W > 0</span> 表示系统对外做功。
+        </div>
+
+        <div class="formula-box">ΔU = Q - W</div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-process="isothermal">等温过程</div>
+          <div class="mode-btn" data-process="adiabatic">绝热过程</div>
+          <div class="mode-btn" data-process="isobaric">等压过程</div>
+          <div class="mode-btn" data-process="isochoric">等容过程</div>
+        </div>
+
+        <div class="info-grid">
+          <div><b>🌡️ 等温过程</b><br>温度不变，ΔU = 0，Q = W<br>气体缓慢膨胀时近似等温</div>
+          <div><b>🔒 绝热过程</b><br>无热交换，Q = 0，ΔU = -W<br>快速压缩/膨胀近似绝热</div>
+          <div><b>📊 等压过程</b><br>压强不变，W = PΔV<br>敞口容器中的反应近似等压</div>
+          <div><b>📦 等容过程</b><br>体积不变，W = 0，ΔU = Q<br>密闭刚性容器中的过程</div>
+        </div>
+      </div>
+
+      <!-- Section 2: 反应热计算 -->
+      <div class="section" data-section="2">
+        <h3>🔬 反应热与焓变</h3>
+        <div class="concept-box">
+          化学反应伴随能量变化，等压条件下的反应热等于<span class="hl4">焓变 ΔH</span>：<br>
+          <span class="hl">ΔH < 0</span>：放热反应（如燃烧）<br>
+          <span class="hl2">ΔH > 0</span>：吸热反应（如分解）<br>
+          <b>盖斯定律</b>：反应热只与始末状态有关，与路径无关。
+        </div>
+
+        <div class="formula-box">ΔH = ΣH(产物) - ΣH(反应物)</div>
+
+        <div class="calc-input">
+          <label>反应物总焓 H₁</label>
+          <input type="number" id="h1Input" value="100" step="10">
+          <span class="unit">kJ/mol</span>
+        </div>
+        <div class="calc-input">
+          <label>产物总焓 H₂</label>
+          <input type="number" id="h2Input" value="-200" step="10">
+          <span class="unit">kJ/mol</span>
+        </div>
+
+        <div class="calc-result" id="calcResult">
+          📊 <b>焓变 ΔH = H₂ - H₁ = -300 kJ/mol</b><br>
+          🔥 该反应为<span style="color:#ef4444;font-weight:600;">放热反应</span>，释放 300 kJ/mol 能量。
+        </div>
+
+        <div class="info-grid">
+          <div><b>🔥 放热反应</b><br>ΔH < 0，能量释放到环境<br>如：燃烧、中和、化合反应</div>
+          <div><b>❄️ 吸热反应</b><br>ΔH > 0，从环境吸收能量<br>如：分解、水解、光合作用</div>
+          <div><b>📐 盖斯定律</b><br>反应热只取决于始末状态<br>可通过已知反应热计算未知反应热</div>
+          <div><b>⚖️ 键能与焓变</b><br>ΔH = Σ(断键能) - Σ(成键能)<br>断键吸热，成键放热</div>
+        </div>
+      </div>
+
+      <!-- Section 3: 知识测验 -->
+      <div class="section" data-section="3">
+        <h3>📝 知识测验</h3>
+        <div class="concept-box">
+          测试你对化学热力学的理解！<br>
+          共 6 道题目，涵盖状态方程、热力学定律和反应热计算。
+        </div>
+
+        <div class="quiz" id="quiz3">
+          <div class="quiz-q"></div>
+          <div class="quiz-opts"></div>
+          <div class="quiz-feedback"></div>
+          <div class="quiz-nav">
+            <button onclick="quizPrev()">上一题</button>
+            <button onclick="quizNext()">下一题</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize() {
+  const r = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  W = canvas.width = rect.width * r;
+  H = canvas.height = rect.height * r;
+  ctx.setTransform(r, 0, 0, r, 0, 0);
+}
+resize();
+window.addEventListener('resize', resize);
+const cW = () => canvas.getBoundingClientRect().width;
+const cH = () => canvas.getBoundingClientRect().height;
+
+let currentTab = 0;
+let currentProcess = 'isothermal';
+let T = 300, V = 20, n = 2;
+let h1 = 100, h2 = -200;
+
+// Particles for gas simulation
+const NUM = 40;
+let particles = [];
+function initParticles() {
+  particles = [];
+  for (let i = 0; i < NUM; i++) {
+    particles.push({
+      x: Math.random(),
+      y: Math.random(),
+      vx: (Math.random() - 0.5) * 0.01,
+      vy: (Math.random() - 0.5) * 0.01,
+      r: 4 + Math.random() * 3
+    });
+  }
+}
+initParticles();
+
+function getPressure() {
+  const R = 8.314;
+  return (n * R * T) / (V * 0.001); // Pa, V in L -> m³
+}
+
+function drawGasSimulation() {
+  const w = cW(), h = cH();
+  ctx.clearRect(0, 0, w, h);
+
+  // Container size based on volume
+  const maxW = w * 0.7, maxH = h * 0.7;
+  const containerW = maxW * (V / 50);
+  const containerH = maxH * (V / 50);
+  const cx = (w - containerW) / 2;
+  const cy = (h - containerH) / 2;
+
+  // Draw container
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(cx, cy, containerW, containerH, 8);
+  ctx.stroke();
+
+  // Temperature color
+  const tempRatio = (T - 100) / 400;
+  const hue = 240 - tempRatio * 240; // blue to red
+  const particleColor = `hsl(${hue}, 80%, 60%)`;
+
+  // Update and draw particles
+  const speed = Math.sqrt(T / 300) * 2;
+  particles.forEach(p => {
+    p.x += p.vx * speed;
+    p.y += p.vy * speed;
+
+    // Bounce off walls
+    if (p.x < 0 || p.x > 1) { p.vx *= -1; p.x = Math.max(0, Math.min(1, p.x)); }
+    if (p.y < 0 || p.y > 1) { p.vy *= -1; p.y = Math.max(0, Math.min(1, p.y)); }
+
+    // Random direction change
+    if (Math.random() < 0.02) {
+      p.vx += (Math.random() - 0.5) * 0.003;
+      p.vy += (Math.random() - 0.5) * 0.003;
+    }
+
+    const px = cx + p.x * containerW;
+    const py = cy + p.y * containerH;
+
+    ctx.beginPath();
+    ctx.arc(px, py, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = particleColor;
+    ctx.fill();
+
+    // Glow
+    ctx.beginPath();
+    ctx.arc(px, py, p.r * 2, 0, Math.PI * 2);
+    ctx.fillStyle = particleColor.replace('60%', '60%').replace(')', ',0.2)').replace('hsl', 'hsla');
+    ctx.fill();
+  });
+
+  // Draw pressure indicator
+  const P = getPressure();
+  const PkPa = P / 1000;
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 16px "PingFang SC", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`P = ${PkPa.toFixed(1)} kPa`, cx + 10, cy - 20);
+  ctx.fillText(`T = ${T} K`, cx + containerW - 80, cy - 20);
+
+  // Draw piston if volume changes
+  if (currentTab === 0) {
+    const pistonX = cx + containerW;
+    ctx.fillStyle = 'rgba(168,85,247,0.3)';
+    ctx.fillRect(pistonX, cy, 20, containerH);
+    ctx.strokeStyle = '#a855f7';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(pistonX, cy, 20, containerH);
+
+    // Arrows showing pressure
+    const arrowLen = Math.min(50, PkPa / 5);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 3; i++) {
+      const ay = cy + containerH * (0.25 + i * 0.25);
+      ctx.beginPath();
+      ctx.moveTo(pistonX + 20 + arrowLen, ay);
+      ctx.lineTo(pistonX + 20, ay);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(pistonX + 20, ay);
+      ctx.lineTo(pistonX + 28, ay - 5);
+      ctx.moveTo(pistonX + 20, ay);
+      ctx.lineTo(pistonX + 28, ay + 5);
+      ctx.stroke();
+    }
+  }
+}
+
+function drawThermodynamicProcess() {
+  const w = cW(), h = cH();
+  ctx.clearRect(0, 0, w, h);
+
+  // Draw PV diagram
+  const margin = 60;
+  const graphW = w - margin * 2;
+  const graphH = h - margin * 2;
+
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(margin, margin);
+  ctx.lineTo(margin, h - margin);
+  ctx.lineTo(w - margin, h - margin);
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 16px "PingFang SC", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('V (体积)', w / 2, h - 20);
+  ctx.save();
+  ctx.translate(20, h / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('P (压强)', 0, 0);
+  ctx.restore();
+
+  // Draw process curve
+  const P0 = 100; // Initial pressure (kPa)
+  const V0 = 10;  // Initial volume (L)
+  const V1 = 30;  // Final volume (L)
+
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+
+  let points = [];
+  for (let i = 0; i <= 100; i++) {
+    const t = i / 100;
+    const V = V0 + t * (V1 - V0);
+    let P;
+
+    if (currentProcess === 'isothermal') {
+      P = P0 * V0 / V; // PV = const
+    } else if (currentProcess === 'adiabatic') {
+      P = P0 * Math.pow(V0 / V, 1.4); // PV^γ = const
+    } else if (currentProcess === 'isobaric') {
+      P = P0; // P = const
+    } else { // isochoric
+      P = P0 + t * 50; // V = const, P increases
+    }
+
+    const x = margin + ((V - 5) / 45) * graphW;
+    const y = h - margin - ((P - 0) / 150) * graphH;
+    points.push({x, y, P, V});
+
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Draw points
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.arc(points[0].x, points[0].y, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#06b6d4';
+  ctx.beginPath();
+  ctx.arc(points[100].x, points[100].y, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Labels
+  ctx.fillStyle = '#f1f5f9';
+  ctx.font = '14px "PingFang SC", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('始态', points[0].x + 10, points[0].y - 10);
+  ctx.fillText('终态', points[100].x + 10, points[100].y - 10);
+
+  // Process info
+  const processNames = {
+    isothermal: '等温过程 (T = const)',
+    adiabatic: '绝热过程 (Q = 0)',
+    isobaric: '等压过程 (P = const)',
+    isochoric: '等容过程 (V = const)'
+  };
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 18px "PingFang SC", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(processNames[currentProcess], w / 2, 30);
+
+  // Calculate and display work
+  let W = 0;
+  if (currentProcess === 'isothermal') {
+    W = P0 * V0 * Math.log(V1 / V0);
+  } else if (currentProcess === 'isobaric') {
+    W = P0 * (V1 - V0);
+  } else if (currentProcess === 'adiabatic') {
+    W = (P0 * V0 - P0 * Math.pow(V0 / V1, 0.4) * V1) / 0.4;
+  }
+  ctx.fillStyle = '#a855f7';
+  ctx.font = '14px "PingFang SC", sans-serif';
+  ctx.fillText(`W = ${W.toFixed(1)} kJ`, w / 2, 55);
+}
+
+function drawReactionHeat() {
+  const w = cW(), h = cH();
+  ctx.clearRect(0, 0, w, h);
+
+  const deltaH = h2 - h1;
+  const isExothermic = deltaH < 0;
+
+  // Energy level diagram
+  const centerX = w / 2;
+  const topY = h * 0.2;
+  const bottomY = h * 0.8;
+  const barWidth = 120;
+
+  // Reactants level
+  const reactantY = isExothermic ? topY : bottomY;
+  const productY = isExothermic ? bottomY : topY;
+
+  // Draw energy axis
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(80, h * 0.1);
+  ctx.lineTo(80, h * 0.9);
+  ctx.stroke();
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('能量', 70, h * 0.1);
+  ctx.fillText('↑', 70, h * 0.15);
+
+  // Reactants bar
+  ctx.fillStyle = 'rgba(239,68,68,0.3)';
+  ctx.fillRect(centerX - barWidth - 40, reactantY, barWidth, 20);
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(centerX - barWidth - 40, reactantY, barWidth, 20);
+  ctx.fillStyle = '#f1f5f9';
+  ctx.font = 'bold 16px "PingFang SC", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('反应物', centerX - barWidth/2 - 40, reactantY - 10);
+  ctx.fillText(`H₁ = ${h1} kJ/mol`, centerX - barWidth/2 - 40, reactantY + 45);
+
+  // Products bar
+  ctx.fillStyle = 'rgba(6,182,212,0.3)';
+  ctx.fillRect(centerX + 40, productY, barWidth, 20);
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(centerX + 40, productY, barWidth, 20);
+  ctx.fillStyle = '#f1f5f9';
+  ctx.fillText('产物', centerX + barWidth/2 + 40, productY - 10);
+  ctx.fillText(`H₂ = ${h2} kJ/mol`, centerX + barWidth/2 + 40, productY + 45);
+
+  // Arrow showing ΔH
+  const arrowX = centerX;
+  ctx.strokeStyle = isExothermic ? '#ef4444' : '#06b6d4';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(arrowX, reactantY + 10);
+  ctx.lineTo(arrowX, productY - 10);
+  ctx.stroke();
+
+  // Arrow head
+  const arrowDir = isExothermic ? 1 : -1;
+  ctx.beginPath();
+  ctx.moveTo(arrowX, productY - 10);
+  ctx.lineTo(arrowX - 8, productY - 10 - arrowDir * 15);
+  ctx.lineTo(arrowX + 8, productY - 10 - arrowDir * 15);
+  ctx.closePath();
+  ctx.fillStyle = isExothermic ? '#ef4444' : '#06b6d4';
+  ctx.fill();
+
+  // ΔH label
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 18px "PingFang SC", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`ΔH = ${deltaH} kJ/mol`, arrowX + 15, (reactantY + productY) / 2);
+
+  // Heat flow indicators
+  if (isExothermic) {
+    // Heat released - draw flames
+    for (let i = 0; i < 5; i++) {
+      const fx = centerX - 60 + i * 30;
+      const fy = h * 0.85;
+      ctx.fillStyle = `rgba(239,68,68,${0.3 + Math.random() * 0.3})`;
+      ctx.beginPath();
+      ctx.arc(fx, fy, 8 + Math.random() * 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '14px "PingFang SC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🔥 放热', centerX, h * 0.92);
+  } else {
+    // Heat absorbed - draw snowflakes
+    for (let i = 0; i < 5; i++) {
+      const fx = centerX - 60 + i * 30;
+      const fy = h * 0.85;
+      ctx.fillStyle = `rgba(6,182,212,${0.3 + Math.random() * 0.3})`;
+      ctx.beginPath();
+      ctx.arc(fx, fy, 8 + Math.random() * 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#06b6d4';
+    ctx.font = '14px "PingFang SC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('❄️ 吸热', centerX, h * 0.92);
+  }
+}
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = parseInt(tab.dataset.tab);
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelector(`.section[data-section="${currentTab}"]`).classList.add('active');
+  });
+});
+
+// Process buttons
+document.querySelectorAll('.mode-btn[data-process]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn[data-process]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentProcess = btn.dataset.process;
+  });
+});
+
+// Sliders
+document.getElementById('tempSlider').addEventListener('input', e => {
+  T = parseInt(e.target.value);
+  document.getElementById('tempVal').textContent = T + ' K';
+});
+document.getElementById('volSlider').addEventListener('input', e => {
+  V = parseInt(e.target.value);
+  document.getElementById('volVal').textContent = V + ' L';
+});
+document.getElementById('molSlider').addEventListener('input', e => {
+  n = parseInt(e.target.value);
+  document.getElementById('molVal').textContent = n + ' mol';
+});
+
+// Reaction heat inputs
+document.getElementById('h1Input').addEventListener('input', e => {
+  h1 = parseFloat(e.target.value) || 0;
+  updateCalcResult();
+});
+document.getElementById('h2Input').addEventListener('input', e => {
+  h2 = parseFloat(e.target.value) || 0;
+  updateCalcResult();
+});
+
+function updateCalcResult() {
+  const deltaH = h2 - h1;
+  const isExothermic = deltaH < 0;
+  const resultDiv = document.getElementById('calcResult');
+  resultDiv.innerHTML = `📊 <b>焓变 ΔH = H₂ - H₁ = ${h2} - ${h1} = ${deltaH} kJ/mol</b><br>` +
+    (isExothermic
+      ? `🔥 该反应为<span style="color:#ef4444;font-weight:600;">放热反应</span>，释放 ${Math.abs(deltaH)} kJ/mol 能量。`
+      : `❄️ 该反应为<span style="color:#06b6d4;font-weight:600;">吸热反应</span>，吸收 ${deltaH} kJ/mol 能量。`);
+}
+
+// Animation loop
+function animate() {
+  if (currentTab === 0) {
+    drawGasSimulation();
+  } else if (currentTab === 1) {
+    drawThermodynamicProcess();
+  } else if (currentTab === 2) {
+    drawReactionHeat();
+  }
+  requestAnimationFrame(animate);
+}
+animate();
+
+// Quiz
+const quizzes = [
+  { q: '理想气体状态方程 PV = nRT 中，R 的单位是？', opts: ['J/(mol·K)', 'Pa·L', 'kJ/mol', '无单位'], ans: 0, exp: 'R = 8.314 J/(mol·K)，是理想气体常数。' },
+  { q: '热力学第一定律的表达式是？', opts: ['ΔU = Q + W', 'ΔU = Q - W', 'Q = ΔU + W', 'W = Q + ΔU'], ans: 1, exp: 'ΔU = Q - W，系统内能变化等于吸收的热量减去对外做的功。' },
+  { q: '等温过程中，理想气体的内能变化 ΔU =？', opts: ['> 0', '< 0', '= 0', '不确定'], ans: 2, exp: '等温过程温度不变，理想气体内能只与温度有关，所以 ΔU = 0。' },
+  { q: '放热反应的焓变 ΔH 是？', opts: ['> 0', '< 0', '= 0', '无法判断'], ans: 1, exp: '放热反应释放能量，产物焓小于反应物焓，ΔH < 0。' },
+  { q: '盖斯定律说明反应热与什么无关？', opts: ['温度', '压强', '反应路径', '物质种类'], ans: 2, exp: '盖斯定律：反应热只与始末状态有关，与反应路径无关。' },
+  { q: '绝热过程中，系统与外界？', opts: ['无物质交换', '无热量交换', '无功交换', '无任何交换'], ans: 1, exp: '绝热过程 Q = 0，系统与外界无热量交换，但可以做功。' }
+];
+
+let quizIdx = 0;
+function renderQuiz() {
+  const container = document.getElementById('quiz3');
+  const q = quizzes[quizIdx];
+  container.querySelector('.quiz-q').textContent = `Q${quizIdx + 1}/${quizzes.length}: ${q.q}`;
+  const optsDiv = container.querySelector('.quiz-opts');
+  optsDiv.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.onclick = () => {
+      if (optsDiv.querySelector('.correct') || optsDiv.querySelector('.wrong')) return;
+      div.classList.add(i === q.ans ? 'correct' : 'wrong');
+      if (i !== q.ans) optsDiv.children[q.ans].classList.add('correct');
+      container.querySelector('.quiz-feedback').textContent = (i === q.ans ? '✅ 正确！' : '❌ 错误。') + q.exp;
+    };
+    optsDiv.appendChild(div);
+  });
+  container.querySelector('.quiz-feedback').textContent = '';
+}
+
+function quizNext() {
+  if (quizIdx < quizzes.length - 1) { quizIdx++; renderQuiz(); }
+}
+function quizPrev() {
+  if (quizIdx > 0) { quizIdx--; renderQuiz(); }
+}
+
+// 进度追踪：每题首次答对记录，全部答对 → markDone
+const quizFirstTryCorrect = new Array(quizzes.length).fill(false);
+const quizTried = new Array(quizzes.length).fill(false);
+
+function checkAllDone() {
+  if (quizFirstTryCorrect.every(v => v) && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('thermodynamics');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+
+// 包装 renderQuiz 注入追踪：在 opt click 内已加 correct/wrong class，借 answer 事件钩子
+document.addEventListener('click', (e) => {
+  const opt = e.target.closest('.quiz-opt');
+  if (!opt) return;
+  const container = opt.closest('.quiz');
+  if (!container || container.id !== 'quiz3') return;
+  if (quizTried[quizIdx]) return; // 本题已答过
+  quizTried[quizIdx] = true;
+  const opts = Array.from(container.querySelectorAll('.quiz-opt'));
+  const chosenIdx = opts.indexOf(opt);
+  if (chosenIdx === quizzes[quizIdx].ans) {
+    quizFirstTryCorrect[quizIdx] = true;
+  }
+  // 答错也允许 retry —— 重置本题标记让用户可再试一次才解锁
+  setTimeout(() => {
+    if (!quizFirstTryCorrect[quizIdx]) {
+      quizTried[quizIdx] = false; // 答错可再试
+    }
+    checkAllDone();
+  }, 50);
+});
+
+renderQuiz();
+
+// 进入时若已完成则回填角标
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('thermodynamics')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学化学"></script>
+</body>
+</html>

@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>集合 - 互动可视化</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  color: #fff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.header {
+  text-align: center;
+  padding: 24px 16px 12px;
+}
+.header h1 {
+  font-size: 28px;
+  background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 6px;
+}
+.header p { font-size: 14px; color: #aaa; }
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+}
+.tab {
+  padding: 8px 18px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  user-select: none;
+}
+.tab:hover { background: rgba(255,255,255,0.15); }
+.tab.active {
+  background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+  color: #fff;
+  font-weight: 600;
+  border-color: transparent;
+}
+.panel {
+  display: none;
+  padding: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.panel.active { display: block; }
+.card {
+  background: rgba(255,255,255,0.06);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card h3 {
+  font-size: 18px;
+  color: #00d2ff;
+  margin-bottom: 12px;
+}
+.formula {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  padding: 14px;
+  background: rgba(0,210,255,0.1);
+  border-radius: 12px;
+  margin: 12px 0;
+}
+canvas { display: block; margin: 0 auto; }
+.btn {
+  display: inline-block;
+  padding: 8px 20px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin: 4px;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+.btn:active { transform: scale(0.96); }
+.btn.cyan { background: linear-gradient(135deg, #00d2ff, #3a7bd5); }
+.btn.green { background: linear-gradient(135deg, #11998e, #38ef7d); }
+.btn.orange { background: linear-gradient(135deg, #f7971e, #ffd200); color: #1a1a2e; }
+.info-text { font-size: 14px; color: #bbb; line-height: 1.8; margin: 8px 0; }
+.highlight { color: #00d2ff; font-weight: 600; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+.set-builder {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.set-element {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+.set-element:hover { transform: scale(1.1); }
+.set-element.in-A { background: rgba(0,210,255,0.4); border-color: #00d2ff; }
+.set-element.in-B { background: rgba(255,107,107,0.4); border-color: #ff6b6b; }
+.set-element.in-both { background: linear-gradient(135deg, #00d2ff, #ff6b6b); }
+.set-element.in-none { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+.result-box {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(56,239,125,0.12);
+  border: 1px solid rgba(56,239,125,0.3);
+  margin: 10px 0;
+  font-size: 15px;
+  color: #38ef7d;
+  text-align: center;
+}
+.result-box.error {
+  background: rgba(235,51,73,0.12);
+  border-color: rgba(235,51,73,0.3);
+  color: #f45c43;
+}
+.venn-container {
+  position: relative;
+  width: 320px;
+  height: 220px;
+  margin: 16px auto;
+}
+.venn-circle {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 3px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+  transition: all 0.5s;
+}
+.venn-a {
+  left: 40px;
+  top: 30px;
+  background: rgba(0,210,255,0.2);
+  border-color: #00d2ff;
+  color: #00d2ff;
+}
+.venn-b {
+  left: 120px;
+  top: 30px;
+  background: rgba(255,107,107,0.2);
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+}
+.venn-label {
+  position: absolute;
+  font-size: 12px;
+  color: #aaa;
+}
+.op-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.op-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.op-btn:hover { background: rgba(255,255,255,0.15); }
+.op-btn.active { border-color: #00d2ff; background: rgba(0,210,255,0.2); }
+.quiz-option {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.15);
+  margin: 8px 0;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 15px;
+}
+.quiz-option:hover { background: rgba(255,255,255,0.12); border-color: #00d2ff; }
+.quiz-option.correct { background: rgba(56,239,125,0.2); border-color: #38ef7d; }
+.quiz-option.wrong { background: rgba(235,51,73,0.2); border-color: #f45c43; }
+.quiz-question {
+  font-size: 16px;
+  color: #fff;
+  margin: 12px 0;
+  line-height: 1.6;
+}
+.quiz-feedback {
+  padding: 12px;
+  border-radius: 8px;
+  margin: 10px 0;
+  font-size: 14px;
+  display: none;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.correct { background: rgba(56,239,125,0.15); color: #38ef7d; }
+.quiz-feedback.wrong { background: rgba(235,51,73,0.15); color: #f45c43; }
+.progress-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  margin: 12px 0;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+  border-radius: 3px;
+  transition: width 0.5s;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📦 集合</h1>
+  <p>高一 · 基础 | 集合概念与运算</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-panel="concept">集合概念</div>
+  <div class="tab" data-panel="venn">Venn图</div>
+  <div class="tab" data-panel="operations">集合运算</div>
+  <div class="tab" data-panel="practice">互动练习</div>
+</div>
+
+<!-- Panel 1: 集合概念 -->
+<div class="panel active" id="panel-concept">
+  <div class="card">
+    <h3>📚 什么是集合？</h3>
+    <p class="info-text">
+      <span class="highlight">集合</span>是数学中最基本的概念之一。
+      把一些<span class="highlight">确定的、互不相同的对象</span>看作一个整体，就是集合。
+    </p>
+    <div class="formula">
+      集合 = { 元素1, 元素2, 元素3, ... }
+    </div>
+    <p class="info-text">
+      例如：{1, 2, 3, 4, 5} 是由 1~5 这五个数字组成的集合。
+    </p>
+  </div>
+  
+  <div class="card">
+    <h3>🎯 集合的表示方法</h3>
+    <div class="grid-2">
+      <div>
+        <p class="info-text"><span class="highlight">列举法</span></p>
+        <p class="info-text">把元素一一列出来</p>
+        <div class="formula" style="font-size:16px;">{1, 2, 3, 4, 5}</div>
+      </div>
+      <div>
+        <p class="info-text"><span class="highlight">描述法</span></p>
+        <p class="info-text">用条件描述元素特征</p>
+        <div class="formula" style="font-size:16px;">{x | 1≤x≤5, x∈Z}</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h3>🔢 常见数集符号</h3>
+    <div class="info-text" style="font-size:15px; line-height:2;">
+      <span class="highlight">N</span> — 自然数集 {0, 1, 2, 3, ...}<br>
+      <span class="highlight">N*</span> 或 <span class="highlight">N₊</span> — 正整数集 {1, 2, 3, ...}<br>
+      <span class="highlight">Z</span> — 整数集 {..., -2, -1, 0, 1, 2, ...}<br>
+      <span class="highlight">Q</span> — 有理数集<br>
+      <span class="highlight">R</span> — 实数集
+    </div>
+  </div>
+  
+  <div class="card">
+    <h3>👆 元素与集合的关系</h3>
+    <p class="info-text">
+      元素 <span class="highlight">属于</span> 集合：a ∈ A（读作"a属于A"）<br>
+      元素 <span class="highlight">不属于</span> 集合：a ∉ A（读作"a不属于A"）
+    </p>
+    <p class="info-text">点击下面的数字，判断它是否属于集合 A = {2, 4, 6, 8, 10}：</p>
+    <div class="set-builder" id="elementCheck"></div>
+    <div id="elementResult" class="result-box" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Panel 2: Venn图 -->
+<div class="panel" id="panel-venn">
+  <div class="card">
+    <h3>📊 Venn图（韦恩图）</h3>
+    <p class="info-text">
+      Venn图用<span class="highlight">封闭曲线</span>表示集合，直观展示集合之间的关系。
+    </p>
+    <div class="venn-container" id="vennContainer">
+      <div class="venn-circle venn-a" id="vennA">A</div>
+      <div class="venn-circle venn-b" id="vennB">B</div>
+      <div class="venn-label" style="left:80px; top:200px;">全集 U</div>
+    </div>
+    <div class="op-buttons">
+      <button class="op-btn" onclick="showVennRelation('subset')">A ⊆ B</button>
+      <button class="op-btn" onclick="showVennRelation('superset')">A ⊇ B</button>
+      <button class="op-btn" onclick="showVennRelation('intersect')">A ∩ B ≠ ∅</button>
+      <button class="op-btn" onclick="showVennRelation('disjoint')">A ∩ B = ∅</button>
+      <button class="op-btn active" onclick="showVennRelation('general')">一般关系</button>
+    </div>
+    <div id="vennDesc" class="info-text" style="text-align:center; min-height:50px;"></div>
+  </div>
+  
+  <div class="card">
+    <h3>📐 子集与真子集</h3>
+    <p class="info-text">
+      如果集合 A 的<span class="highlight">每一个元素</span>都是集合 B 的元素，则 A 是 B 的子集。
+    </p>
+    <div class="formula">
+      A ⊆ B（子集）&nbsp;&nbsp;|&nbsp;&nbsp;A ⊊ B（真子集）
+    </div>
+    <p class="info-text">
+      例如：A = {1, 2}，B = {1, 2, 3, 4}，则 A ⊊ B
+    </p>
+    <canvas id="canvasSubset" width="320" height="180"></canvas>
+    <div style="text-align:center; margin-top:10px;">
+      <button class="btn cyan" onclick="toggleSubsetAnim()">▶ 动画演示</button>
+    </div>
+  </div>
+</div>
+
+<!-- Panel 3: 集合运算 -->
+<div class="panel" id="panel-operations">
+  <div class="card">
+    <h3>∩ 交集</h3>
+    <p class="info-text">
+      由<span class="highlight">既属于A又属于B</span>的所有元素组成的集合。
+    </p>
+    <div class="formula">A ∩ B = {x | x ∈ A 且 x ∈ B}</div>
+    <canvas id="canvasIntersect" width="320" height="160"></canvas>
+    <div class="info-text" style="text-align:center;">
+      A = {1, 2, <span style="color:#ffd200">3, 4</span>, 5}<br>
+      B = {<span style="color:#ffd200">3, 4</span>, 6, 7}<br>
+      A ∩ B = <span class="highlight">{3, 4}</span>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h3>∪ 并集</h3>
+    <p class="info-text">
+      由<span class="highlight">属于A或属于B</span>的所有元素组成的集合。
+    </p>
+    <div class="formula">A ∪ B = {x | x ∈ A 或 x ∈ B}</div>
+    <canvas id="canvasUnion" width="320" height="160"></canvas>
+    <div class="info-text" style="text-align:center;">
+      A = {<span style="color:#00d2ff">1, 2</span>, <span style="color:#ffd200">3, 4</span>, <span style="color:#00d2ff">5</span>}<br>
+      B = {<span style="color:#ffd200">3, 4</span>, <span style="color:#ff6b6b">6, 7</span>}<br>
+      A ∪ B = <span class="highlight">{1, 2, 3, 4, 5, 6, 7}</span>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h3>∁ 补集</h3>
+    <p class="info-text">
+      由<span class="highlight">全集U中不属于A</span>的所有元素组成的集合。
+    </p>
+    <div class="formula">∁ᵤA = {x | x ∈ U 且 x ∉ A}</div>
+    <canvas id="canvasComplement" width="320" height="160"></canvas>
+    <div class="info-text" style="text-align:center;">
+      U = {1, 2, 3, 4, 5, 6, 7, 8}<br>
+      A = {<span style="color:#00d2ff">2, 4, 6</span>}<br>
+      ∁ᵤA = <span class="highlight">{1, 3, 5, 7, 8}</span>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h3>🎮 互动运算</h3>
+    <p class="info-text">选择两个集合的元素，实时查看运算结果：</p>
+    <div class="grid-2">
+      <div>
+        <p class="info-text">集合 A：</p>
+        <div class="set-builder" id="setABuilder"></div>
+      </div>
+      <div>
+        <p class="info-text">集合 B：</p>
+        <div class="set-builder" id="setBBuilder"></div>
+      </div>
+    </div>
+    <div class="op-buttons">
+      <button class="op-btn" onclick="calcSetOp('intersect')">A ∩ B</button>
+      <button class="op-btn" onclick="calcSetOp('union')">A ∪ B</button>
+      <button class="op-btn" onclick="calcSetOp('diffAB')">A - B</button>
+      <button class="op-btn" onclick="calcSetOp('diffBA')">B - A</button>
+    </div>
+    <div id="setOpResult" class="result-box">请选择集合元素</div>
+  </div>
+</div>
+
+<!-- Panel 4: 互动练习 -->
+<div class="panel" id="panel-practice">
+  <div class="card">
+    <h3>📝 集合练习</h3>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <p class="info-text" id="progressText">第 1 题 / 共 5 题</p>
+    <div id="quizContainer"></div>
+    <div id="quizFeedback" class="quiz-feedback"></div>
+    <div style="text-align:center; margin-top:16px;">
+      <button class="btn green" id="nextBtn" onclick="nextQuiz()" style="display:none;">下一题 →</button>
+      <button class="btn cyan" id="retryBtn" onclick="startQuiz()" style="display:none;">重新开始</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Tab Switching =====
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+  });
+});
+</script>
+<script src="../assets/js/common.js"></script>
+<script>
+// ===== Panel 1: 元素判断 =====
+const setA = [2, 4, 6, 8, 10];
+const checkElements = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+function renderElementCheck() {
+  const container = document.getElementById('elementCheck');
+  container.innerHTML = '';
+  checkElements.forEach(n => {
+    const div = document.createElement('div');
+    div.className = 'set-element in-none';
+    div.textContent = n;
+    div.onclick = () => checkElement(n, div);
+    container.appendChild(div);
+  });
+}
+
+function checkElement(n, el) {
+  const result = document.getElementById('elementResult');
+  result.style.display = 'block';
+  if (setA.includes(n)) {
+    el.className = 'set-element in-A';
+    result.className = 'result-box';
+    result.textContent = `${n} ∈ A ✅ ${n} 属于集合 A`;
+  } else {
+    el.className = 'set-element in-none';
+    result.className = 'result-box error';
+    result.textContent = `${n} ∉ A ❌ ${n} 不属于集合 A`;
+  }
+}
+
+renderElementCheck();
+
+// ===== Panel 2: Venn图关系 =====
+function showVennRelation(type) {
+  const a = document.getElementById('vennA');
+  const b = document.getElementById('vennB');
+  const desc = document.getElementById('vennDesc');
+  
+  document.querySelectorAll('.op-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  switch(type) {
+    case 'subset':
+      a.style.left = '100px'; a.style.top = '50px';
+      a.style.width = '100px'; a.style.height = '100px';
+      b.style.left = '60px'; b.style.top = '30px';
+      b.style.width = '180px'; b.style.height = '180px';
+      desc.innerHTML = '<span class="highlight">A ⊆ B</span>：A 是 B 的子集，A 完全包含在 B 内';
+      break;
+    case 'superset':
+      a.style.left = '60px'; a.style.top = '30px';
+      a.style.width = '180px'; a.style.height = '180px';
+      b.style.left = '100px'; b.style.top = '50px';
+      b.style.width = '100px'; b.style.height = '100px';
+      desc.innerHTML = '<span class="highlight">A ⊇ B</span>：A 包含 B，B 是 A 的子集';
+      break;
+    case 'intersect':
+      a.style.left = '40px'; a.style.top = '30px';
+      a.style.width = '140px'; a.style.height = '140px';
+      b.style.left = '140px'; b.style.top = '30px';
+      b.style.width = '140px'; b.style.height = '140px';
+      desc.innerHTML = '<span class="highlight">A ∩ B ≠ ∅</span>：A 和 B 有交集';
+      break;
+    case 'disjoint':
+      a.style.left = '20px'; a.style.top = '30px';
+      a.style.width = '120px'; a.style.height = '120px';
+      b.style.left = '180px'; b.style.top = '30px';
+      b.style.width = '120px'; b.style.height = '120px';
+      desc.innerHTML = '<span class="highlight">A ∩ B = ∅</span>：A 和 B 不相交（互斥）';
+      break;
+    case 'general':
+      a.style.left = '40px'; a.style.top = '30px';
+      a.style.width = '160px'; a.style.height = '160px';
+      b.style.left = '120px'; b.style.top = '30px';
+      b.style.width = '160px'; b.style.height = '160px';
+      desc.innerHTML = '一般关系：A 和 B 有部分重叠';
+      break;
+  }
+}
+
+// ===== 子集动画 =====
+const canvasSubset = document.getElementById('canvasSubset');
+const ctxSub = canvasSubset.getContext('2d');
+let subsetAnimPhase = 0;
+let subsetTimer = null;
+
+function drawSubset(phase) {
+  ctxSub.clearRect(0, 0, 320, 180);
+  const cx = 160, cy = 90;
+  
+  // B (outer)
+  ctxSub.beginPath();
+  ctxSub.ellipse(cx, cy, 120, 70, 0, 0, Math.PI * 2);
+  ctxSub.fillStyle = 'rgba(255,107,107,0.15)';
+  ctxSub.fill();
+  ctxSub.strokeStyle = '#ff6b6b';
+  ctxSub.lineWidth = 2;
+  ctxSub.stroke();
+  ctxSub.fillStyle = '#ff6b6b';
+  ctxSub.font = 'bold 16px sans-serif';
+  ctxSub.fillText('B', cx + 100, cy - 50);
+  
+  // A (inner, animated)
+  const scale = 0.3 + phase * 0.07;
+  const ax = cx - 20 + phase * 2;
+  ctxSub.beginPath();
+  ctxSub.ellipse(ax, cy, 60 * scale, 40 * scale, 0, 0, Math.PI * 2);
+  ctxSub.fillStyle = 'rgba(0,210,255,0.25)';
+  ctxSub.fill();
+  ctxSub.strokeStyle = '#00d2ff';
+  ctxSub.lineWidth = 2;
+  ctxSub.stroke();
+  ctxSub.fillStyle = '#00d2ff';
+  ctxSub.fillText('A', ax - 30 * scale, cy - 20 * scale);
+  
+  // Elements
+  const elements = phase < 5 ? ['1', '2', '3'] : ['1', '2', '3', '4', '5'];
+  ctxSub.font = '14px sans-serif';
+  ctxSub.fillStyle = '#fff';
+  if (phase >= 3) {
+    ctxSub.fillText('1', ax - 10, cy - 5);
+    ctxSub.fillText('2', ax + 10, cy + 5);
+  }
+  if (phase >= 5) {
+    ctxSub.fillText('3', cx + 40, cy - 20);
+    ctxSub.fillText('4', cx + 60, cy + 10);
+    ctxSub.fillText('5', cx - 60, cy + 20);
+  }
+  
+  if (phase >= 8) {
+    ctxSub.fillStyle = '#38ef7d';
+    ctxSub.font = 'bold 14px sans-serif';
+    ctxSub.fillText('A ⊊ B ✓', cx - 30, cy + 60);
+  }
+}
+
+function toggleSubsetAnim() {
+  if (subsetTimer) { clearInterval(subsetTimer); subsetTimer = null; subsetAnimPhase = 0; drawSubset(0); return; }
+  subsetAnimPhase = 0;
+  subsetTimer = setInterval(() => {
+    subsetAnimPhase++;
+    drawSubset(subsetAnimPhase);
+    if (subsetAnimPhase >= 10) { clearInterval(subsetTimer); subsetTimer = null; }
+  }, 300);
+}
+drawSubset(0);
+
+// ===== Panel 3: 集合运算可视化 =====
+function drawVennOp(canvasId, type) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 320, 160);
+  
+  const cx = 160, cy = 80;
+  const r = 50;
+  
+  // U (universal set)
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(20, 10, 280, 140);
+  ctx.fillStyle = '#aaa';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('U', 25, 22);
+  
+  // A
+  ctx.beginPath();
+  ctx.arc(cx - 30, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,210,255,0.2)';
+  ctx.fill();
+  ctx.strokeStyle = '#00d2ff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  // B
+  ctx.beginPath();
+  ctx.arc(cx + 30, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,107,107,0.2)';
+  ctx.fill();
+  ctx.strokeStyle = '#ff6b6b';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  // Highlight based on operation
+  if (type === 'intersect') {
+    ctx.beginPath();
+    ctx.arc(cx - 30, cy, r, -0.7, 0.7);
+    ctx.arc(cx + 30, cy, r, Math.PI - 0.7, Math.PI + 0.7);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,210,0,0.5)';
+    ctx.fill();
+  } else if (type === 'union') {
+    ctx.beginPath();
+    ctx.arc(cx - 30, cy, r, 0, Math.PI * 2);
+    ctx.arc(cx + 30, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,210,0,0.3)';
+    ctx.fill();
+  } else if (type === 'complement') {
+    // A is highlighted, complement is outside A but inside U
+    ctx.beginPath();
+    ctx.arc(cx - 30, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,210,255,0.4)';
+    ctx.fill();
+    // Draw complement area
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(20, 10, 280, 140);
+    ctx.arc(cx - 30, cy, r, 0, Math.PI * 2, true);
+    ctx.fillStyle = 'rgba(56,239,125,0.3)';
+    ctx.fill();
+    ctx.restore();
+  }
+  
+  // Labels
+  ctx.fillStyle = '#00d2ff';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('A', cx - 60, cy - 30);
+  ctx.fillStyle = '#ff6b6b';
+  ctx.fillText('B', cx + 50, cy - 30);
+}
+
+drawVennOp('canvasIntersect', 'intersect');
+drawVennOp('canvasUnion', 'union');
+drawVennOp('canvasComplement', 'complement');
+
+// ===== 互动运算 =====
+const interactiveA = new Set();
+const interactiveB = new Set();
+const universe = [1, 2, 3, 4, 5, 6, 7, 8];
+
+function renderSetBuilders() {
+  ['A', 'B'].forEach(setName => {
+    const container = document.getElementById(`set${setName}Builder`);
+    container.innerHTML = '';
+    universe.forEach(n => {
+      const div = document.createElement('div');
+      div.className = 'set-element in-none';
+      div.textContent = n;
+      const targetSet = setName === 'A' ? interactiveA : interactiveB;
+      if (targetSet.has(n)) {
+        div.className = setName === 'A' ? 'set-element in-A' : 'set-element in-B';
+      }
+      div.onclick = () => {
+        if (targetSet.has(n)) targetSet.delete(n);
+        else targetSet.add(n);
+        renderSetBuilders();
+      };
+      container.appendChild(div);
+    });
+  });
+}
+
+function calcSetOp(op) {
+  const a = [...interactiveA];
+  const b = [...interactiveB];
+  let result = [];
+  let opSymbol = '';
+  
+  switch(op) {
+    case 'intersect':
+      result = a.filter(x => b.includes(x));
+      opSymbol = 'A ∩ B';
+      break;
+    case 'union':
+      result = [...new Set([...a, ...b])].sort((x, y) => x - y);
+      opSymbol = 'A ∪ B';
+      break;
+    case 'diffAB':
+      result = a.filter(x => !b.includes(x));
+      opSymbol = 'A - B';
+      break;
+    case 'diffBA':
+      result = b.filter(x => !a.includes(x));
+      opSymbol = 'B - A';
+      break;
+  }
+  
+  const el = document.getElementById('setOpResult');
+  if (result.length === 0) {
+    el.textContent = `${opSymbol} = ∅（空集）`;
+  } else {
+    el.textContent = `${opSymbol} = {${result.join(', ')}}`;
+  }
+}
+
+renderSetBuilders();
+
+// ===== Panel 4: 练习 =====
+const quizzes = [
+  {
+    q: '下列各组对象能组成集合的是：',
+    options: ['A. 所有好看的花', 'B. 接近 0 的数', 'C. 方程 x²-4=0 的实数解', 'D. 高一年级聪明的学生'],
+    answer: 2,
+    explain: '集合的元素必须具有确定性。"好看""接近""聪明"都是模糊概念，不满足确定性。只有C有明确的判断标准。'
+  },
+  {
+    q: '已知集合 A = {1, 2, 3}，B = {2, 3, 4}，则 A ∩ B = ？',
+    options: ['A. {1, 2, 3, 4}', 'B. {2, 3}', 'C. {1, 4}', 'D. {1}'],
+    answer: 1,
+    explain: '交集是既属于A又属于B的元素。2和3同时在A和B中，所以 A ∩ B = {2, 3}。'
+  },
+  {
+    q: '全集 U = {1, 2, 3, 4, 5}，A = {1, 3, 5}，则 ∁ᵤA = ？',
+    options: ['A. {2, 4}', 'B. {1, 3, 5}', 'C. {1, 2, 3, 4, 5}', 'D. ∅'],
+    answer: 0,
+    explain: '补集是U中不属于A的元素。U中去掉1、3、5，剩下2和4，所以 ∁ᵤA = {2, 4}。'
+  },
+  {
+    q: '若 A ⊆ B，则下列正确的是：',
+    options: ['A. A ∩ B = A', 'B. A ∪ B = A', 'C. A ∩ B = B', 'D. A ∪ B = ∅'],
+    answer: 0,
+    explain: 'A ⊆ B 表示A的所有元素都在B中。所以 A ∩ B = A（交集取较小的），A ∪ B = B（并集取较大的）。'
+  },
+  {
+    q: '集合 {x | x² - 5x + 6 = 0} 等于：',
+    options: ['A. {2, 3}', 'B. {-2, -3}', 'C. {1, 6}', 'D. {-1, -6}'],
+    answer: 0,
+    explain: '解方程 x²-5x+6=0，分解因式得 (x-2)(x-3)=0，所以 x=2 或 x=3，集合为 {2, 3}。'
+  }
+];
+
+let currentQuiz = 0;
+let quizAnswered = false;
+let quizScore = 0;
+
+function startQuiz() {
+  currentQuiz = 0;
+  quizScore = 0;
+  document.getElementById('retryBtn').style.display = 'none';
+  renderQuiz();
+}
+
+function renderQuiz() {
+  quizAnswered = false;
+  const q = quizzes[currentQuiz];
+  document.getElementById('progressText').textContent = `第 ${currentQuiz + 1} 题 / 共 ${quizzes.length} 题`;
+  document.getElementById('progressFill').style.width = `${(currentQuiz / quizzes.length) * 100}%`;
+  
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = `<div class="quiz-question">${q.q}</div>`;
+  
+  q.options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-option';
+    div.textContent = opt;
+    div.onclick = () => answerQuiz(i, div);
+    container.appendChild(div);
+  });
+  
+  document.getElementById('quizFeedback').className = 'quiz-feedback';
+  document.getElementById('quizFeedback').textContent = '';
+  document.getElementById('nextBtn').style.display = 'none';
+}
+
+function answerQuiz(idx, el) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  
+  const q = quizzes[currentQuiz];
+  const feedback = document.getElementById('quizFeedback');
+  
+  document.querySelectorAll('.quiz-option').forEach((opt, i) => {
+    if (i === q.answer) opt.classList.add('correct');
+    else if (i === idx) opt.classList.add('wrong');
+  });
+  
+  if (idx === q.answer) {
+    quizScore++;
+    feedback.className = 'quiz-feedback show correct';
+    feedback.textContent = '✅ 正确！' + q.explain;
+  } else {
+    feedback.className = 'quiz-feedback show wrong';
+    feedback.textContent = '❌ 错误。' + q.explain;
+  }
+  
+  if (currentQuiz < quizzes.length - 1) {
+    document.getElementById('nextBtn').style.display = 'inline-block';
+  } else {
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('retryBtn').style.display = 'inline-block';
+    if (quizScore >= 3 && typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('sets');
+      feedback.textContent += ` 🎉 总得分 ${quizScore}/${quizzes.length}，本知识点已标记完成！`;
+    }
+  }
+}
+
+function nextQuiz() {
+  currentQuiz++;
+  renderQuiz();
+}
+
+startQuiz();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中数学"></script>
+</body>
+</html>

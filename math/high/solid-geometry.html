@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>立体几何初步 · 空间几何体互动可视化</title>
+<link rel="stylesheet" href="assets/common.css" />
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --accent: #06b6d4;
+    --warm: #f59e0b;
+    --pink: #ec4899;
+    --green: #10b981;
+    --dark: #0f172a;
+    --light: #f1f5f9;
+  }
+  body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    color: var(--light);
+    font-family: -apple-system, "PingFang SC", sans-serif;
+    min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 {
+    font-size: 2.2rem;
+    background: linear-gradient(90deg, var(--primary), var(--accent), var(--pink));
+    -webkit-background-clip: text; color: transparent;
+  }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab {
+    padding: 10px 18px; border-radius: 999px;
+    background: rgba(255,255,255,0.06); cursor: pointer;
+    transition: all .25s; border: 1px solid rgba(255,255,255,0.1);
+    font-size: 14px; user-select: none;
+  }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  /* Layout */
+  .stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap {
+    background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 14px; backdrop-filter: blur(10px);
+  }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel {
+    background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 18px; backdrop-filter: blur(10px);
+  }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: var(--accent); }
+
+  /* Shape selector */
+  .shape-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .shape-btn {
+    padding: 10px 8px; border-radius: 10px; text-align: center; cursor: pointer;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    transition: all .25s; font-size: 13px;
+  }
+  .shape-btn .icon { font-size: 1.6rem; display: block; margin-bottom: 4px; }
+  .shape-btn.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 2px 12px rgba(139,92,246,.3); }
+  .shape-btn:hover:not(.active) { background: rgba(255,255,255,0.1); }
+
+  /* Sliders */
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 80px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 50px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+
+  /* Formula */
+  .formula-box {
+    font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center;
+    padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0;
+    border-left: 3px solid var(--accent);
+  }
+  .formula-box .label { font-size: 12px; color: #94a3b8; font-family: -apple-system, sans-serif; margin-bottom: 4px; }
+
+  /* Info grid */
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+
+  /* Three-view */
+  .views-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 10px; }
+  .view-box { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 10px; text-align: center; }
+  .view-box .view-label { font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
+  .view-box canvas { background: rgba(0,0,0,0.3); border-radius: 6px; }
+  .view-main { grid-row: span 2; }
+
+  /* Quiz */
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt {
+    padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px;
+    cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent;
+  }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .quiz-score { font-size: 13px; color: #94a3b8; margin-bottom: 8px; }
+
+  /* Toggle */
+  .toggle-row { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+  .toggle-btn {
+    padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    color: #e2e8f0; transition: all .2s;
+  }
+  .toggle-btn.active { background: var(--accent); border-color: var(--accent); }
+
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📐 立体几何初步 Interactive</h1>
+    <p>棱柱 · 棱锥 · 圆柱 · 圆锥 · 球 — 三视图、展开图、表面积与体积</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="explore">🔍 几何体探索</div>
+    <div class="tab" data-mode="threeview">📏 三视图</div>
+    <div class="tab" data-mode="unfold">📦 展开图</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="720" height="600"></canvas>
+      <div style="text-align:center;margin-top:8px;">
+        <span style="font-size:12px;color:#64748b;">🖱️ 拖拽旋转 · 滚轮缩放</span>
+      </div>
+    </div>
+    <div class="panel" id="panel">
+      <!-- Dynamic content -->
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+// ===================== 3D Engine (minimal) =====================
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+// Camera / rotation state
+let rotX = -0.4, rotY = 0.6, zoom = 1.0;
+let dragging = false, lastMX = 0, lastMY = 0;
+let autoRotate = true;
+
+// ===================== Shape Definitions =====================
+const shapes = {
+  prism: {
+    name: '三棱柱', icon: '🔺',
+    color: '#8b5cf6',
+    genVerts() {
+      const h = 1.6, s = 1.2;
+      const tri = [[0, s*0.58, 0], [-s*0.5, -s*0.29, 0], [s*0.5, -s*0.29, 0]];
+      const verts = [];
+      tri.forEach(v => verts.push([v[0], v[1], -h/2]));
+      tri.forEach(v => verts.push([v[0], v[1], h/2]));
+      return verts;
+    },
+    faces: [[0,1,2],[3,4,5],[0,1,4,3],[1,2,5,4],[0,2,5,3]],
+    faceColors: ['#8b5cf6','#a78bfa','#7c3aed','#6d28d9','#c4b5fd'],
+    sa(a,b) { const s=a, h=b; return s*s*Math.sqrt(3)/4*2 + s*h*3; },
+    vol(a,b) { return a*a*Math.sqrt(3)/4 * b; },
+    saFormula: 'S = 2×(√3/4)a² + 3ah',
+    volFormula: 'V = (√3/4)a²h',
+    params: [{name:'底边长 a',key:'a',min:0.5,max:2,val:1.2}, {name:'高 h',key:'h',min:0.5,max:3,val:1.6}],
+  },
+  pyramid: {
+    name: '四棱锥', icon: '🔺',
+    color: '#ec4899',
+    genVerts() {
+      const s = 1.2, h = 1.8;
+      const half = s/2;
+      return [
+        [-half,-half,0],[half,-half,0],[half,half,0],[-half,half,0], // base
+        [0,0,h] // apex
+      ];
+    },
+    faces: [[0,1,2,3],[0,1,4],[1,2,4],[2,3,4],[3,0,4]],
+    faceColors: ['#ec4899','#f472b6','#db2777','#be185d','#f9a8d4'],
+    sa(a,b) { const s=a,h=b; return s*s + 2*s*Math.sqrt(h*h+s*s/4); },
+    vol(a,b) { return a*a*b/3; },
+    saFormula: 'S = a² + 2a√(h²+a²/4)',
+    volFormula: 'V = a²h/3',
+    params: [{name:'底边长 a',key:'a',min:0.5,max:2,val:1.2}, {name:'高 h',key:'h',min:0.5,max:3,val:1.8}],
+  },
+  cylinder: {
+    name: '圆柱', icon: '🥫',
+    color: '#06b6d4',
+    genVerts() {
+      const r = 0.8, h = 1.8, n = 24;
+      const verts = [];
+      for (let i = 0; i < n; i++) {
+        const a = (i/n)*Math.PI*2;
+        verts.push([r*Math.cos(a), r*Math.sin(a), -h/2]);
+      }
+      for (let i = 0; i < n; i++) {
+        const a = (i/n)*Math.PI*2;
+        verts.push([r*Math.cos(a), r*Math.sin(a), h/2]);
+      }
+      return verts;
+    },
+    faces: (() => {
+      const n = 24;
+      const f = [];
+      // bottom
+      f.push(Array.from({length:n},(_,i)=>i));
+      // top
+      f.push(Array.from({length:n},(_,i)=>n+i));
+      // sides
+      for (let i = 0; i < n; i++) {
+        f.push([i, (i+1)%n, n+(i+1)%n, n+i]);
+      }
+      return f;
+    })(),
+    faceColors: null, // will use gradient
+    baseColor: '#06b6d4',
+    sa(a,b) { return 2*Math.PI*a*a + 2*Math.PI*a*b; },
+    vol(a,b) { return Math.PI*a*a*b; },
+    saFormula: 'S = 2πr² + 2πrh',
+    volFormula: 'V = πr²h',
+    params: [{name:'半径 r',key:'r',min:0.3,max:1.5,val:0.8}, {name:'高 h',key:'h',min:0.5,max:3,val:1.8}],
+  },
+  cone: {
+    name: '圆锥', icon: '🍦',
+    color: '#f59e0b',
+    genVerts() {
+      const r = 0.9, h = 1.8, n = 24;
+      const verts = [[0,0,h/2]]; // apex
+      for (let i = 0; i < n; i++) {
+        const a = (i/n)*Math.PI*2;
+        verts.push([r*Math.cos(a), r*Math.sin(a), -h/2]);
+      }
+      return verts;
+    },
+    faces: (() => {
+      const n = 24;
+      const f = [];
+      // base
+      f.push(Array.from({length:n},(_,i)=>i+1));
+      // sides
+      for (let i = 0; i < n; i++) {
+        f.push([0, i+1, (i+1)%n+1]);
+      }
+      return f;
+    })(),
+    faceColors: null,
+    baseColor: '#f59e0b',
+    sa(a,b) { const r=a,h=b; return Math.PI*r*r + Math.PI*r*Math.sqrt(r*r+h*h); },
+    vol(a,b) { return Math.PI*a*a*b/3; },
+    saFormula: 'S = πr² + πr√(r²+h²)',
+    volFormula: 'V = πr²h/3',
+    params: [{name:'半径 r',key:'r',min:0.3,max:1.5,val:0.9}, {name:'高 h',key:'h',min:0.5,max:3,val:1.8}],
+  },
+  sphere: {
+    name: '球', icon: '🌍',
+    color: '#10b981',
+    genVerts() {
+      const r = 1.0, latN = 16, lonN = 24;
+      const verts = [];
+      for (let i = 0; i <= latN; i++) {
+        const phi = (i/latN)*Math.PI;
+        for (let j = 0; j < lonN; j++) {
+          const theta = (j/lonN)*Math.PI*2;
+          verts.push([r*Math.sin(phi)*Math.cos(theta), r*Math.sin(phi)*Math.sin(theta), r*Math.cos(phi)]);
+        }
+      }
+      return verts;
+    },
+    faces: (() => {
+      const latN = 16, lonN = 24;
+      const f = [];
+      for (let i = 0; i < latN; i++) {
+        for (let j = 0; j < lonN; j++) {
+          const a = i*lonN+j, b = i*lonN+(j+1)%lonN;
+          const c = (i+1)*lonN+(j+1)%lonN, d = (i+1)*lonN+j;
+          f.push([a,b,c,d]);
+        }
+      }
+      return f;
+    })(),
+    faceColors: null,
+    baseColor: '#10b981',
+    sa(a) { return 4*Math.PI*a*a; },
+    vol(a) { return 4*Math.PI*a*a*a/3; },
+    saFormula: 'S = 4πr²',
+    volFormula: 'V = 4πr³/3',
+    params: [{name:'半径 r',key:'r',min:0.3,max:1.5,val:1.0}],
+  },
+};
+
+let currentShape = 'prism';
+let paramValues = {};
+
+function initParams() {
+  const s = shapes[currentShape];
+  paramValues = {};
+  s.params.forEach(p => paramValues[p.key] = p.val);
+}
+initParams();
+
+// ===================== 3D Transform & Render =====================
+function rotateX(v, a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return [v[0], v[1]*c - v[2]*s, v[1]*s + v[2]*c];
+}
+function rotateY(v, a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return [v[0]*c + v[2]*s, v[1], -v[0]*s + v[2]*c];
+}
+function project(v) {
+  const scale = 140 * zoom;
+  const z = v[2] + 4;
+  const factor = scale / z;
+  return [W/2 + v[0]*factor, H/2 - v[1]*factor, z];
+}
+
+function renderShape(shapeKey, overrideVerts) {
+  const s = shapes[shapeKey];
+  let verts = overrideVerts || s.genVerts();
+
+  // Transform
+  const transformed = verts.map(v => {
+    let t = rotateY(v, rotY);
+    t = rotateX(t, rotX);
+    return t;
+  });
+
+  // Project
+  const projected = transformed.map(v => project(v));
+
+  // Sort faces by depth
+  const facesWithDepth = s.faces.map((face, fi) => {
+    const avgZ = face.reduce((sum, vi) => sum + transformed[vi][2], 0) / face.length;
+    return { face, fi, avgZ };
+  });
+  facesWithDepth.sort((a, b) => a.avgZ - b.avgZ);
+
+  // Clear
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let i = -5; i <= 5; i++) {
+    const p1 = project([i*0.5, -2, 0]);
+    const p2 = project([i*0.5, 2, 0]);
+    ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.stroke();
+    const p3 = project([-2, i*0.5, 0]);
+    const p4 = project([2, i*0.5, 0]);
+    ctx.beginPath(); ctx.moveTo(p3[0], p3[1]); ctx.lineTo(p4[0], p4[1]); ctx.stroke();
+  }
+
+  // Draw faces
+  facesWithDepth.forEach(({face, fi}) => {
+    ctx.beginPath();
+    face.forEach((vi, i) => {
+      const p = projected[vi];
+      if (i === 0) ctx.moveTo(p[0], p[1]);
+      else ctx.lineTo(p[0], p[1]);
+    });
+    ctx.closePath();
+
+    // Color
+    let color;
+    if (s.faceColors) {
+      color = s.faceColors[fi % s.faceColors.length];
+    } else {
+      // Compute normal for lighting
+      const v0 = transformed[face[0]], v1 = transformed[face[1]], v2 = transformed[face[2]];
+      const nx = (v1[1]-v0[1])*(v2[2]-v0[2]) - (v1[2]-v0[2])*(v2[1]-v0[1]);
+      const ny = (v1[2]-v0[2])*(v2[0]-v0[0]) - (v1[0]-v0[0])*(v2[2]-v0[2]);
+      const nz = (v1[0]-v0[0])*(v2[1]-v0[1]) - (v1[1]-v0[1])*(v2[0]-v0[0]);
+      const len = Math.sqrt(nx*nx+ny*ny+nz*nz) || 1;
+      const light = Math.abs(nz/len);
+      const base = s.baseColor || '#8b5cf6';
+      const r = parseInt(base.slice(1,3),16), g = parseInt(base.slice(3,5),16), b = parseInt(base.slice(5,7),16);
+      const factor = 0.3 + 0.7 * light;
+      color = `rgb(${Math.round(r*factor)},${Math.round(g*factor)},${Math.round(b*factor)})`;
+    }
+
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.85;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // Draw edges with glow
+  const edgeSet = new Set();
+  s.faces.forEach(face => {
+    for (let i = 0; i < face.length; i++) {
+      const a = face[i], b = face[(i+1)%face.length];
+      const key = Math.min(a,b) + '-' + Math.max(a,b);
+      if (!edgeSet.has(key)) {
+        edgeSet.add(key);
+        const pa = projected[a], pb = projected[b];
+        ctx.beginPath();
+        ctx.moveTo(pa[0], pa[1]);
+        ctx.lineTo(pb[0], pb[1]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+    }
+  });
+}
+
+// ===================== Three-View Rendering =====================
+function renderThreeView(shapeKey) {
+  const s = shapes[shapeKey];
+  const verts = s.genVerts();
+
+  // Front view (XZ plane, looking from +Y)
+  // Side view (YZ plane, looking from +X)
+  // Top view (XY plane, looking from +Z)
+
+  function drawView(viewVerts, canvasEl, label) {
+    const c = canvasEl.getContext('2d');
+    const w = canvasEl.width, h = canvasEl.height;
+    c.clearRect(0, 0, w, h);
+
+    // Find bounds
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    viewVerts.forEach(v => {
+      minX = Math.min(minX, v[0]); maxX = Math.max(maxX, v[0]);
+      minY = Math.min(minY, v[1]); maxY = Math.max(maxY, v[1]);
+    });
+    const rangeX = maxX - minX || 1, rangeY = maxY - minY || 1;
+    const scale = Math.min((w-40)/rangeX, (h-40)/rangeY);
+    const cx = w/2, cy = h/2;
+    const offX = (minX+maxX)/2, offY = (minY+maxY)/2;
+
+    const projected = viewVerts.map(v => [
+      cx + (v[0]-offX)*scale,
+      cy - (v[1]-offY)*scale
+    ]);
+
+    // Draw convex hull
+    c.beginPath();
+    // Simple: draw all faces as lines
+    const faces = s.faces;
+    const edgeSet = new Set();
+    faces.forEach(face => {
+      for (let i = 0; i < face.length; i++) {
+        const a = face[i], b = face[(i+1)%face.length];
+        const key = Math.min(a,b)+'-'+Math.max(a,b);
+        if (!edgeSet.has(key)) {
+          edgeSet.add(key);
+          c.moveTo(projected[a][0], projected[a][1]);
+          c.lineTo(projected[b][0], projected[b][1]);
+        }
+      }
+    });
+    c.strokeStyle = s.color;
+    c.lineWidth = 2;
+    c.stroke();
+
+    // Fill
+    c.fillStyle = s.color + '33';
+    // Simple fill using convex hull of projected points
+    const hull = convexHull(projected);
+    if (hull.length > 2) {
+      c.beginPath();
+      hull.forEach((p, i) => i === 0 ? c.moveTo(p[0], p[1]) : c.lineTo(p[0], p[1]));
+      c.closePath();
+      c.fillStyle = s.color + '22';
+      c.fill();
+      c.strokeStyle = s.color;
+      c.lineWidth = 2;
+      c.stroke();
+    }
+
+    // Label
+    c.fillStyle = '#94a3b8';
+    c.font = '12px sans-serif';
+    c.textAlign = 'center';
+    c.fillText(label, w/2, h - 8);
+  }
+
+  // Front: use x, y (ignore z depth, project to 2D)
+  const frontVerts = verts.map(v => [v[0], v[1]]);
+  // Side: use z, y
+  const sideVerts = verts.map(v => [v[2], v[1]]);
+  // Top: use x, z (flip z for correct orientation)
+  const topVerts = verts.map(v => [v[0], v[2]]);
+
+  return { frontVerts, sideVerts, topVerts };
+}
+
+function convexHull(points) {
+  if (points.length < 3) return points;
+  const sorted = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (O, A, B) => (A[0]-O[0])*(B[1]-O[1]) - (A[1]-O[1])*(B[0]-O[0]);
+  const lower = [];
+  for (const p of sorted) {
+    while (lower.length >= 2 && cross(lower[lower.length-2], lower[lower.length-1], p) <= 0) lower.pop();
+    lower.push(p);
+  }
+  const upper = [];
+  for (let i = sorted.length-1; i >= 0; i--) {
+    const p = sorted[i];
+    while (upper.length >= 2 && cross(upper[upper.length-2], upper[upper.length-1], p) <= 0) upper.pop();
+    upper.push(p);
+  }
+  lower.pop(); upper.pop();
+  return lower.concat(upper);
+}
+
+// ===================== Unfold Animation =====================
+let unfoldProgress = 0;
+let unfoldAnimating = false;
+
+function drawUnfold(shapeKey, progress) {
+  ctx.clearRect(0, 0, W, H);
+  const s = shapes[shapeKey];
+
+  if (shapeKey === 'cylinder') {
+    // Cylinder unfold: 2 circles + rectangle
+    const r = paramValues.r || 0.8, h = paramValues.h || 1.8;
+    const scale = 80 * zoom;
+    const rectW = 2 * Math.PI * r * scale;
+    const rectH = h * scale;
+    const circleR = r * scale;
+
+    // Layout: circle | rectangle | circle
+    const totalW = circleR*2 + 20 + rectW + 20 + circleR*2;
+    let startX = W/2 - totalW/2;
+    const centerY = H/2;
+
+    // Animate: unfold from left to right
+    const p = Math.min(progress * 1.5, 1);
+
+    // Left circle (bottom)
+    ctx.beginPath();
+    ctx.arc(startX + circleR, centerY, circleR, 0, Math.PI*2);
+    ctx.fillStyle = s.baseColor + '44';
+    ctx.fill();
+    ctx.strokeStyle = s.baseColor;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('底面', startX + circleR, centerY + circleR + 18);
+
+    startX += circleR*2 + 20;
+
+    // Rectangle (side)
+    const rw = rectW * p;
+    ctx.fillStyle = s.baseColor + '33';
+    ctx.fillRect(startX, centerY - rectH/2, rw, rectH);
+    ctx.strokeStyle = s.baseColor;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(startX, centerY - rectH/2, rw, rectH);
+    if (p > 0.5) {
+      ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
+      ctx.fillText('侧面 (2πr × h)', startX + rectW/2, centerY + rectH/2 + 18);
+      // Dimension lines
+      ctx.setLineDash([4,4]);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.beginPath(); ctx.moveTo(startX, centerY + rectH/2 + 6); ctx.lineTo(startX + rectW, centerY + rectH/2 + 6); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    startX += rectW + 20;
+
+    // Right circle (top)
+    if (p > 0.3) {
+      const p2 = Math.min((progress - 0.2) * 1.5, 1);
+      ctx.globalAlpha = p2;
+      ctx.beginPath();
+      ctx.arc(startX + circleR, centerY, circleR, 0, Math.PI*2);
+      ctx.fillStyle = s.baseColor + '44';
+      ctx.fill();
+      ctx.strokeStyle = s.baseColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('底面', startX + circleR, centerY + circleR + 18);
+      ctx.globalAlpha = 1;
+    }
+
+  } else if (shapeKey === 'cone') {
+    const r = paramValues.r || 0.9, h = paramValues.h || 1.8;
+    const scale = 70 * zoom;
+    const circleR = r * scale;
+    const slant = Math.sqrt(r*r + h*h);
+    const sectorR = slant * scale;
+    const arcLen = 2 * Math.PI * r * scale;
+    const angle = arcLen / sectorR;
+
+    const p = Math.min(progress * 1.5, 1);
+    const centerY = H/2;
+
+    // Circle (base)
+    const c1x = W/2 - sectorR - 30;
+    ctx.beginPath();
+    ctx.arc(c1x, centerY, circleR, 0, Math.PI*2);
+    ctx.fillStyle = s.baseColor + '44';
+    ctx.fill();
+    ctx.strokeStyle = s.baseColor;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('底面 (πr²)', c1x, centerY + circleR + 18);
+
+    // Sector (side)
+    const c2x = W/2 + 60;
+    const startA = -angle/2 - Math.PI/2;
+    const sweepA = angle * p;
+    ctx.beginPath();
+    ctx.moveTo(c2x, centerY);
+    ctx.arc(c2x, centerY, sectorR, startA, startA + sweepA);
+    ctx.closePath();
+    ctx.fillStyle = s.baseColor + '33';
+    ctx.fill();
+    ctx.strokeStyle = s.baseColor;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    if (p > 0.5) {
+      ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
+      ctx.fillText('侧面 (扇形)', c2x, centerY + sectorR + 18);
+      ctx.fillText(`r=${r} l=${slant.toFixed(2)}`, c2x, centerY + sectorR + 34);
+    }
+
+  } else if (shapeKey === 'prism') {
+    // Triangular prism: 2 triangles + 3 rectangles
+    const a = paramValues.a || 1.2, h = paramValues.h || 1.6;
+    const scale = 70 * zoom;
+    const triH = a * Math.sqrt(3)/2 * scale;
+    const sideW = a * scale;
+    const sideH = h * scale;
+    const p = Math.min(progress * 1.5, 1);
+
+    const centerY = H/2;
+    let x = W/2 - (sideW*3 + sideH + 40)/2;
+
+    // 3 rectangles (sides)
+    for (let i = 0; i < 3; i++) {
+      const rw = sideW * Math.min(p * 4 - i, 1);
+      if (rw > 0) {
+        ctx.fillStyle = shapes.prism.faceColors[i+2] + '55';
+        ctx.fillRect(x, centerY - sideH/2, Math.max(rw,0), sideH);
+        ctx.strokeStyle = shapes.prism.faceColors[i+2];
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, centerY - sideH/2, Math.max(rw,0), sideH);
+      }
+      x += sideW;
+    }
+
+    // 2 triangles
+    if (p > 0.5) {
+      const p2 = Math.min((p - 0.5) * 3, 1);
+      ctx.globalAlpha = p2;
+      // Left triangle
+      const tx1 = W/2 - sideW*1.5 - sideH/2 - 20;
+      ctx.beginPath();
+      ctx.moveTo(tx1, centerY - triH*0.6);
+      ctx.lineTo(tx1 - sideW/2, centerY + triH*0.4);
+      ctx.lineTo(tx1 + sideW/2, centerY + triH*0.4);
+      ctx.closePath();
+      ctx.fillStyle = shapes.prism.faceColors[0] + '55';
+      ctx.fill();
+      ctx.strokeStyle = shapes.prism.faceColors[0];
+      ctx.stroke();
+      ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('底面', tx1, centerY + triH*0.4 + 18);
+
+      // Right triangle
+      const tx2 = W/2 + sideW*1.5 + sideH/2 + 20;
+      ctx.beginPath();
+      ctx.moveTo(tx2, centerY - triH*0.6);
+      ctx.lineTo(tx2 - sideW/2, centerY + triH*0.4);
+      ctx.lineTo(tx2 + sideW/2, centerY + triH*0.4);
+      ctx.closePath();
+      ctx.fillStyle = shapes.prism.faceColors[1] + '55';
+      ctx.fill();
+      ctx.strokeStyle = shapes.prism.faceColors[1];
+      ctx.stroke();
+      ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
+      ctx.fillText('底面', tx2, centerY + triH*0.4 + 18);
+      ctx.globalAlpha = 1;
+    }
+
+  } else if (shapeKey === 'pyramid') {
+    // Pyramid: 1 square base + 4 triangles
+    const a = paramValues.a || 1.2, h = paramValues.h || 1.8;
+    const scale = 65 * zoom;
+    const baseSide = a * scale;
+    const slantH = Math.sqrt(h*h + a*a/4) * scale;
+    const p = Math.min(progress * 1.5, 1);
+    const centerY = H/2;
+
+    // Base square in center
+    ctx.fillStyle = shapes.pyramid.faceColors[0] + '44';
+    ctx.fillRect(W/2 - baseSide/2, centerY - baseSide/2, baseSide, baseSide);
+    ctx.strokeStyle = shapes.pyramid.faceColors[0];
+    ctx.lineWidth = 2;
+    ctx.strokeRect(W/2 - baseSide/2, centerY - baseSide/2, baseSide, baseSide);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('底面 (a²)', W/2, centerY + 4);
+
+    // 4 triangles unfolding outward
+    if (p > 0.2) {
+      const p2 = Math.min((p - 0.2) * 2, 1);
+      const triH = slantH * p2;
+      const triangles = [
+        { cx: W/2, cy: centerY - baseSide/2, dir: 'top' },
+        { cx: W/2, cy: centerY + baseSide/2, dir: 'bottom' },
+        { cx: W/2 - baseSide/2, cy: centerY, dir: 'left' },
+        { cx: W/2 + baseSide/2, cy: centerY, dir: 'right' },
+      ];
+      triangles.forEach((t, i) => {
+        ctx.beginPath();
+        if (t.dir === 'top') {
+          ctx.moveTo(t.cx - baseSide/2, t.cy);
+          ctx.lineTo(t.cx + baseSide/2, t.cy);
+          ctx.lineTo(t.cx, t.cy - triH);
+        } else if (t.dir === 'bottom') {
+          ctx.moveTo(t.cx - baseSide/2, t.cy);
+          ctx.lineTo(t.cx + baseSide/2, t.cy);
+          ctx.lineTo(t.cx, t.cy + triH);
+        } else if (t.dir === 'left') {
+          ctx.moveTo(t.cx, t.cy - baseSide/2);
+          ctx.lineTo(t.cx, t.cy + baseSide/2);
+          ctx.lineTo(t.cx - triH, t.cy);
+        } else {
+          ctx.moveTo(t.cx, t.cy - baseSide/2);
+          ctx.lineTo(t.cx, t.cy + baseSide/2);
+          ctx.lineTo(t.cx + triH, t.cy);
+        }
+        ctx.closePath();
+        ctx.fillStyle = shapes.pyramid.faceColors[i+1] + '55';
+        ctx.fill();
+        ctx.strokeStyle = shapes.pyramid.faceColors[i+1];
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+    }
+
+  } else {
+    // Sphere: show circle + formula
+    const r = paramValues.r || 1.0;
+    const scale = 100 * zoom;
+    const circleR = r * scale;
+    const p = Math.min(progress * 1.5, 1);
+
+    ctx.beginPath();
+    ctx.arc(W/2, H/2, circleR, 0, Math.PI*2);
+    ctx.fillStyle = shapes.sphere.baseColor + '33';
+    ctx.fill();
+    ctx.strokeStyle = shapes.sphere.baseColor;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Latitude lines
+    for (let i = 1; i < 4; i++) {
+      const lr = circleR * Math.sin(i * Math.PI / 4);
+      const ly = H/2 - circleR * Math.cos(i * Math.PI / 4);
+      ctx.beginPath();
+      ctx.ellipse(W/2, ly, lr, lr*0.3, 0, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Radius line
+    ctx.beginPath();
+    ctx.moveTo(W/2, H/2);
+    ctx.lineTo(W/2 + circleR * p, H/2);
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4,4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if (p > 0.5) {
+      ctx.fillStyle = '#fbbf24'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(`r = ${r}`, W/2 + circleR*p/2, H/2 - 10);
+    }
+
+    ctx.fillStyle = '#94a3b8'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('球无法展开为平面图形', W/2, H/2 + circleR + 30);
+    ctx.fillText('S = 4πr²  V = 4πr³/3', W/2, H/2 + circleR + 50);
+  }
+}
+
+// ===================== UI & Panels =====================
+const panel = document.getElementById('panel');
+let currentMode = 'explore';
+
+function buildExplorePanel() {
+  const s = shapes[currentShape];
+  let html = `
+    <h3>${s.icon} ${s.name}</h3>
+    <div class="shape-grid">
+      ${Object.entries(shapes).map(([k,v]) =>
+        `<div class="shape-btn ${k===currentShape?'active':''}" data-shape="${k}">
+          <span class="icon">${v.icon}</span>${v.name}
+        </div>`
+      ).join('')}
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-btn ${autoRotate?'active':''}" id="btnAutoRot">🔄 自动旋转</div>
+      <div class="toggle-btn" id="btnWireframe">🔲 线框模式</div>
+    </div>
+  `;
+
+  s.params.forEach(p => {
+    html += `
+      <div class="slider-row">
+        <label>${p.name}</label>
+        <input type="range" min="${p.min}" max="${p.max}" step="0.1" value="${paramValues[p.key]}" data-param="${p.key}" />
+        <span class="val">${paramValues[p.key].toFixed(1)}</span>
+      </div>
+    `;
+  });
+
+  const sa = s.sa ? s.sa(paramValues.a || paramValues.r, paramValues.h) : 0;
+  const vol = s.vol ? s.vol(paramValues.a || paramValues.r, paramValues.h) : 0;
+
+  html += `
+    <div class="formula-box">
+      <div class="label">表面积公式</div>
+      ${s.saFormula || '—'}
+    </div>
+    <div class="formula-box">
+      <div class="label">体积公式</div>
+      ${s.volFormula || '—'}
+    </div>
+    <div class="info-grid">
+      <div>📐 <b>表面积</b><br>${sa.toFixed(3)}</div>
+      <div>📦 <b>体积</b><br>${vol.toFixed(3)}</div>
+    </div>
+    <div class="quiz" style="margin-top:14px;">
+      <div class="quiz-q" style="font-size:13px;color:#94a3b8;">💡 知识点</div>
+      <div style="font-size:13px;line-height:1.8;">
+        ${getKnowledge(currentShape)}
+      </div>
+    </div>
+  `;
+
+  panel.innerHTML = html;
+
+  // Bind events
+  panel.querySelectorAll('.shape-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentShape = btn.dataset.shape;
+      initParams();
+      buildExplorePanel();
+    });
+  });
+
+  panel.querySelectorAll('input[type=range]').forEach(slider => {
+    slider.addEventListener('input', () => {
+      paramValues[slider.dataset.param] = parseFloat(slider.value);
+      slider.nextElementSibling.textContent = paramValues[slider.dataset.param].toFixed(1);
+      // Update values
+      const sa = s.sa ? s.sa(paramValues.a || paramValues.r, paramValues.h) : 0;
+      const vol = s.vol ? s.vol(paramValues.a || paramValues.r, paramValues.h) : 0;
+      const grid = panel.querySelector('.info-grid');
+      if (grid) grid.innerHTML = `<div>📐 <b>表面积</b><br>${sa.toFixed(3)}</div><div>📦 <b>体积</b><br>${vol.toFixed(3)}</div>`;
+    });
+  });
+
+  const btnAR = panel.querySelector('#btnAutoRot');
+  if (btnAR) btnAR.addEventListener('click', () => { autoRotate = !autoRotate; btnAR.classList.toggle('active'); });
+}
+
+function getKnowledge(key) {
+  const knowledge = {
+    prism: '• 棱柱的两个底面是全等的多边形<br>• 侧面都是平行四边形<br>• 直棱柱的侧面是矩形<br>• 侧面积 = 底面周长 × 高',
+    pyramid: '• 棱锥的底面是多边形，侧面是三角形<br>• 正棱锥的侧面是全等的等腰三角形<br>• 体积 = 底面积 × 高 / 3<br>• 棱锥体积是同底同高柱体的 1/3',
+    cylinder: '• 圆柱的两个底面是全等的圆<br>• 侧面展开是矩形<br>• 侧面积 = 2πrh<br>• 圆柱是旋转体（矩形绕一边旋转）',
+    cone: '• 圆锥的底面是圆，侧面展开是扇形<br>• 母线 l = √(r²+h²)<br>• 侧面积 = πrl<br>• 圆锥是旋转体（直角三角形绕直角边旋转）',
+    sphere: '• 球面上每点到球心距离相等<br>• 球的截面是圆<br>• 球不能展开为平面图形<br>• 球体积 = 4πr³/3（阿基米德发现）',
+  };
+  return knowledge[key] || '';
+}
+
+function buildThreeViewPanel() {
+  const s = shapes[currentShape];
+  let html = `
+    <h3>📏 三视图</h3>
+    <div class="shape-grid">
+      ${Object.entries(shapes).map(([k,v]) =>
+        `<div class="shape-btn ${k===currentShape?'active':''}" data-shape="${k}">
+          <span class="icon">${v.icon}</span>${v.name}
+        </div>`
+      ).join('')}
+    </div>
+    <div style="font-size:13px;color:#94a3b8;margin-bottom:10px;line-height:1.6;">
+      三视图是工程制图的基本方法：<br>
+      <b style="color:#fbbf24">正视图</b>（从前向后看）+ <b style="color:#fbbf24">侧视图</b>（从左向右看）+ <b style="color:#fbbf24">俯视图</b>（从上向下看）
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-btn ${autoRotate?'active':''}" id="btnAutoRot2">🔄 旋转3D</div>
+    </div>
+    <div class="quiz" style="margin-top:10px;">
+      <div class="quiz-q" style="font-size:13px;">🧠 思考题</div>
+      <div style="font-size:13px;line-height:1.6;">
+        ${currentShape === 'cylinder' ? '圆柱的正视图和侧视图是什么形状？俯视图呢？' :
+          currentShape === 'cone' ? '圆锥的正视图是什么形状？如何从三视图还原立体？' :
+          currentShape === 'sphere' ? '球的三视图都是什么形状？这说明什么？' :
+          '这个几何体的三视图中，哪个视图能反映高度信息？'}
+      </div>
+    </div>
+  `;
+  panel.innerHTML = html;
+
+  panel.querySelectorAll('.shape-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentShape = btn.dataset.shape;
+      initParams();
+      buildThreeViewPanel();
+    });
+  });
+
+  const btnAR2 = panel.querySelector('#btnAutoRot2');
+  if (btnAR2) btnAR2.addEventListener('click', () => { autoRotate = !autoRotate; btnAR2.classList.toggle('active'); });
+}
+
+function buildUnfoldPanel() {
+  const s = shapes[currentShape];
+  let html = `
+    <h3>📦 展开图</h3>
+    <div class="shape-grid">
+      ${Object.entries(shapes).map(([k,v]) =>
+        `<div class="shape-btn ${k===currentShape?'active':''}" data-shape="${k}">
+          <span class="icon">${v.icon}</span>${v.name}
+        </div>`
+      ).join('')}
+    </div>
+  `;
+
+  s.params.forEach(p => {
+    html += `
+      <div class="slider-row">
+        <label>${p.name}</label>
+        <input type="range" min="${p.min}" max="${p.max}" step="0.1" value="${paramValues[p.key]}" data-param="${p.key}" />
+        <span class="val">${paramValues[p.key].toFixed(1)}</span>
+      </div>
+    `;
+  });
+
+  html += `
+    <div class="toggle-row">
+      <div class="toggle-btn" id="btnUnfold">▶ 展开动画</div>
+      <div class="toggle-btn" id="btnResetUnfold">↺ 重置</div>
+    </div>
+    <div class="formula-box">
+      <div class="label">表面积 = 各面面积之和</div>
+      ${s.saFormula || 'S = 4πr²'}
+    </div>
+    <div class="quiz" style="margin-top:10px;">
+      <div class="quiz-q" style="font-size:13px;color:#94a3b8;">💡 展开图的意义</div>
+      <div style="font-size:13px;line-height:1.8;">
+        展开图是将立体图形的表面沿某些棱或曲线剪开，铺平为平面图形。<br>
+        • 展开图的面积 = 立体图形的表面积<br>
+        • 不同剪法可得到不同展开图<br>
+        • 展开图是计算表面积的重要工具
+      </div>
+    </div>
+  `;
+  panel.innerHTML = html;
+
+  panel.querySelectorAll('.shape-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentShape = btn.dataset.shape;
+      initParams();
+      unfoldProgress = 0;
+      buildUnfoldPanel();
+    });
+  });
+
+  panel.querySelectorAll('input[type=range]').forEach(slider => {
+    slider.addEventListener('input', () => {
+      paramValues[slider.dataset.param] = parseFloat(slider.value);
+      slider.nextElementSibling.textContent = paramValues[slider.dataset.param].toFixed(1);
+    });
+  });
+
+  const btnUnfold = panel.querySelector('#btnUnfold');
+  const btnReset = panel.querySelector('#btnResetUnfold');
+  if (btnUnfold) btnUnfold.addEventListener('click', () => { unfoldProgress = 0; unfoldAnimating = true; });
+  if (btnReset) btnReset.addEventListener('click', () => { unfoldProgress = 0; unfoldAnimating = false; });
+}
+
+// ===================== Quiz Mode =====================
+const quizBank = [
+  { q: '一个正方体的棱长为 2，则其表面积为？', opts: ['8', '16', '24', '32'], ans: 2, explain: 'S = 6a² = 6×4 = 24' },
+  { q: '圆柱的底面半径为 3，高为 5，其体积为？', opts: ['15π', '30π', '45π', '9π'], ans: 2, explain: 'V = πr²h = π×9×5 = 45π' },
+  { q: '圆锥的侧面展开图是什么形状？', opts: ['矩形', '三角形', '扇形', '圆形'], ans: 2, explain: '圆锥侧面展开为扇形，半径为母线长，弧长为底面周长' },
+  { q: '球的体积公式是？', opts: ['4πr²', '4πr³/3', 'πr³', '2πr³/3'], ans: 1, explain: 'V = 4πr³/3，这是阿基米德的伟大发现' },
+  { q: '正三棱柱的底面边长为 a，高为 h，侧面积为？', opts: ['ah', '2ah', '3ah', 'a²h'], ans: 2, explain: '侧面积 = 底面周长 × 高 = 3a × h = 3ah' },
+  { q: '某几何体的正视图和侧视图都是三角形，俯视图是圆，该几何体是？', opts: ['圆柱', '圆锥', '棱锥', '棱柱'], ans: 1, explain: '正视图三角形+俯视图圆 = 圆锥' },
+  { q: '一个长方体的长宽高分别为 3、4、5，其对角线长为？', opts: ['√32', '√50', '√12', '12'], ans: 1, explain: 'd = √(3²+4²+5²) = √50 = 5√2' },
+  { q: '棱锥的体积是同底同高棱柱体积的？', opts: ['1/2', '1/3', '2/3', '1/4'], ans: 1, explain: 'V锥 = Sh/3，这是积分的基本结论' },
+  { q: '圆柱的侧面展开图是？', opts: ['圆', '矩形', '梯形', '扇形'], ans: 1, explain: '圆柱侧面展开为矩形，长为2πr，宽为h' },
+  { q: '半径为 R 的球的表面积为？', opts: ['2πR²', 'πR²', '4πR²', '4πR³'], ans: 2, explain: 'S = 4πR²，恰好是最大截面面积的4倍' },
+];
+
+let quizIndex = 0, quizScore = 0, quizAnswered = false;
+let roundCorrect = 0;
+const roundTotal = quizBank.length;
+
+function buildQuizPanel() {
+  const q = quizBank[quizIndex % quizBank.length];
+  quizAnswered = false;
+  panel.innerHTML = `
+    <h3>🎯 立体几何练习</h3>
+    <div class="quiz-score">第 ${quizIndex+1} 题 · 已答对 ${quizScore}/${Math.max(quizIndex,1)}</div>
+    <div class="quiz">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-idx="${i}">${String.fromCharCode(65+i)}. ${o}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="feedback"></div>
+    </div>
+    <div class="toggle-row" style="margin-top:12px;">
+      <div class="toggle-btn" id="btnNextQ">下一题 →</div>
+    </div>
+  `;
+
+  panel.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const idx = parseInt(opt.dataset.idx);
+      const fb = panel.querySelector('#feedback');
+      if (idx === q.ans) {
+        opt.classList.add('correct');
+        quizScore++;
+        roundCorrect++;
+        fb.textContent = '✅ 正确！' + q.explain;
+      } else {
+        opt.classList.add('wrong');
+        panel.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        fb.textContent = '❌ 错误。' + q.explain;
+      }
+      const answered = quizIndex + 1;
+      if (answered % roundTotal === 0) {
+        const passed = roundCorrect >= Math.ceil(roundTotal * 0.6);
+        fb.textContent += ` 🎯 本轮得分 ${roundCorrect}/${roundTotal}` + (passed ? '，已记录完成 ✓' : '，继续加油！');
+        if (passed && typeof PageProgress !== 'undefined') {
+          PageProgress.markDone('solid-geometry');
+        }
+        roundCorrect = 0;
+      }
+      panel.querySelector('.quiz-score').textContent = `第 ${quizIndex+1} 题 · 已答对 ${quizScore}/${quizIndex+1}`;
+    });
+  });
+
+  panel.querySelector('#btnNextQ').addEventListener('click', () => {
+    quizIndex++;
+    buildQuizPanel();
+  });
+}
+
+// ===================== Three-View Canvas Layout =====================
+function renderThreeViewMode() {
+  ctx.clearRect(0, 0, W, H);
+  const s = shapes[currentShape];
+  const verts = s.genVerts();
+
+  // Draw 3D preview in top-left
+  const savedZoom = zoom;
+  zoom = 0.6;
+
+  // Draw a mini 3D view
+  const miniW = W * 0.45, miniH = H * 0.45;
+  const offX = 10, offY = 10;
+
+  // Draw 3 axes labels
+  ctx.save();
+  ctx.fillStyle = '#64748b';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🖱️ 3D 预览', W*0.25, 24);
+
+  // Render mini 3D
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(offX, offY, miniW, miniH);
+  ctx.clip();
+
+  // Transform and draw on main canvas but offset
+  const transformed = verts.map(v => {
+    let t = rotateY(v, rotY);
+    t = rotateX(t, rotX);
+    return t;
+  });
+
+  const scale3d = 80 * zoom;
+  const projected = transformed.map(v => {
+    const z = v[2] + 4;
+    const factor = scale3d / z;
+    return [W*0.25 + v[0]*factor, H*0.25 - v[1]*factor, z];
+  });
+
+  // Draw faces
+  const facesWithDepth = s.faces.map((face, fi) => {
+    const avgZ = face.reduce((sum, vi) => sum + transformed[vi][2], 0) / face.length;
+    return { face, fi, avgZ };
+  });
+  facesWithDepth.sort((a, b) => a.avgZ - b.avgZ);
+
+  facesWithDepth.forEach(({face, fi}) => {
+    ctx.beginPath();
+    face.forEach((vi, i) => {
+      const p = projected[vi];
+      if (i === 0) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]);
+    });
+    ctx.closePath();
+    let color;
+    if (s.faceColors) color = s.faceColors[fi % s.faceColors.length];
+    else {
+      const v0 = transformed[face[0]], v1 = transformed[face[1]], v2 = transformed[face[2]];
+      const nz = (v1[0]-v0[0])*(v2[1]-v0[1]) - (v1[1]-v0[1])*(v2[0]-v0[0]);
+      const len = Math.sqrt(((v1[1]-v0[1])*(v2[2]-v0[2])-(v1[2]-v0[2])*(v2[1]-v0[1]))**2 + ((v1[2]-v0[2])*(v2[0]-v0[0])-(v1[0]-v0[0])*(v2[2]-v0[2]))**2 + nz*nz) || 1;
+      const light = Math.abs(nz/len);
+      const base = s.baseColor || '#8b5cf6';
+      const r = parseInt(base.slice(1,3),16), g = parseInt(base.slice(3,5),16), b = parseInt(base.slice(5,7),16);
+      const f = 0.3 + 0.7*light;
+      color = `rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`;
+    }
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.85;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  ctx.restore();
+  zoom = savedZoom;
+
+  // Draw three views on the right side
+  const viewW = 180, viewH = 160;
+  const views = [
+    { label: '正视图 (主视图)', verts: verts.map(v => [v[0], v[1]]), x: W*0.55, y: 30 },
+    { label: '侧视图 (左视图)', verts: verts.map(v => [v[2], v[1]]), x: W*0.55 + viewW + 20, y: 30 },
+    { label: '俯视图', verts: verts.map(v => [v[0], v[2]]), x: W*0.55, y: 30 + viewH + 20 },
+  ];
+
+  views.forEach(view => {
+    // Box
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(view.x, view.y, viewW, viewH);
+
+    // Project 2D verts
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    view.verts.forEach(v => { minX = Math.min(minX,v[0]); maxX = Math.max(maxX,v[0]); minY = Math.min(minY,v[1]); maxY = Math.max(maxY,v[1]); });
+    const rangeX = maxX-minX || 1, rangeY = maxY-minY || 1;
+    const sc = Math.min((viewW-30)/rangeX, (viewH-35)/rangeY);
+    const cx = view.x + viewW/2, cy = view.y + viewH/2 - 8;
+    const offVX = (minX+maxX)/2, offVY = (minY+maxY)/2;
+    const proj2d = view.verts.map(v => [cx + (v[0]-offVX)*sc, cy - (v[1]-offVY)*sc]);
+
+    // Draw edges
+    const edgeSet = new Set();
+    ctx.beginPath();
+    s.faces.forEach(face => {
+      for (let i = 0; i < face.length; i++) {
+        const a = face[i], b = face[(i+1)%face.length];
+        const key = Math.min(a,b)+'-'+Math.max(a,b);
+        if (!edgeSet.has(key)) {
+          edgeSet.add(key);
+          ctx.moveTo(proj2d[a][0], proj2d[a][1]);
+          ctx.lineTo(proj2d[b][0], proj2d[b][1]);
+        }
+      }
+    });
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Fill hull
+    const hull = convexHull(proj2d);
+    if (hull.length > 2) {
+      ctx.beginPath();
+      hull.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+      ctx.closePath();
+      ctx.fillStyle = s.color + '22';
+      ctx.fill();
+    }
+
+    // Label
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(view.label, view.x + viewW/2, view.y + viewH - 4);
+  });
+
+  // Projection lines (dashed)
+  ctx.setLineDash([4,4]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  // Front to side
+  ctx.beginPath();
+  ctx.moveTo(views[0].x + viewW, views[0].y + viewH/2);
+  ctx.lineTo(views[1].x, views[1].y + viewH/2);
+  ctx.stroke();
+  // Front to top
+  ctx.beginPath();
+  ctx.moveTo(views[0].x + viewW/2, views[0].y + viewH);
+  ctx.lineTo(views[2].x + viewW/2, views[2].y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+// ===================== Main Loop =====================
+let wireframeMode = false;
+
+function animate() {
+  if (autoRotate && !dragging) {
+    rotY += 0.008;
+  }
+
+  if (currentMode === 'explore') {
+    renderShape(currentShape);
+  } else if (currentMode === 'threeview') {
+    renderThreeViewMode();
+  } else if (currentMode === 'unfold') {
+    if (unfoldAnimating) {
+      unfoldProgress = Math.min(unfoldProgress + 0.008, 1);
+      if (unfoldProgress >= 1) unfoldAnimating = false;
+    }
+    drawUnfold(currentShape, unfoldProgress);
+  } else if (currentMode === 'quiz') {
+    // Draw decorative 3D shape in background
+    ctx.globalAlpha = 0.3;
+    renderShape(currentShape);
+    ctx.globalAlpha = 1;
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// ===================== Events =====================
+// Mouse drag
+cv.addEventListener('mousedown', e => {
+  dragging = true;
+  lastMX = e.clientX;
+  lastMY = e.clientY;
+});
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  rotY += (e.clientX - lastMX) * 0.01;
+  rotX += (e.clientY - lastMY) * 0.01;
+  rotX = Math.max(-Math.PI/2, Math.min(Math.PI/2, rotX));
+  lastMX = e.clientX;
+  lastMY = e.clientY;
+});
+window.addEventListener('mouseup', () => dragging = false);
+
+// Touch
+cv.addEventListener('touchstart', e => {
+  e.preventDefault();
+  dragging = true;
+  lastMX = e.touches[0].clientX;
+  lastMY = e.touches[0].clientY;
+}, {passive:false});
+cv.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (!dragging) return;
+  rotY += (e.touches[0].clientX - lastMX) * 0.01;
+  rotX += (e.touches[0].clientY - lastMY) * 0.01;
+  rotX = Math.max(-Math.PI/2, Math.min(Math.PI/2, rotX));
+  lastMX = e.touches[0].clientX;
+  lastMY = e.touches[0].clientY;
+}, {passive:false});
+cv.addEventListener('touchend', () => dragging = false);
+
+// Zoom
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  zoom = Math.max(0.4, Math.min(2.5, zoom - e.deltaY * 0.001));
+}, {passive:false});
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+
+    if (currentMode === 'explore') buildExplorePanel();
+    else if (currentMode === 'threeview') buildThreeViewPanel();
+    else if (currentMode === 'unfold') { unfoldProgress = 0; buildUnfoldPanel(); }
+    else if (currentMode === 'quiz') buildQuizPanel();
+  });
+});
+
+// Init
+buildExplorePanel();
+animate();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中数学"></script>
+</body>
+</html>

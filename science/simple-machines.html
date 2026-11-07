@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>简单机械 · 小学科学互动可视化</title>
+<style>
+  :root {
+    --primary: #38bdf8;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #082f49 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #7dd3fc; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #0ea5e9, #38bdf8, #7dd3fc); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(56,189,248,.4); color: #082f49; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .hidden { display: none !important; }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .stage > * { min-width: 0; }
+  @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #0a2a42 0%, #0f172a 100%); touch-action: none; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #cbd5e1; flex-wrap: wrap; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #7dd3fc; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--primary); min-height: 44px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #7dd3fc; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid var(--primary); line-height: 1.7; font-size: 14px; }
+  .concept-card.warn { border-color: #f59e0b; }
+  .concept-card .title { font-weight: 700; margin-bottom: 4px; color: var(--primary); }
+  .concept-card.warn .title { color: #f59e0b; }
+  .demo-btns { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .demo-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 44px; min-width: 44px; }
+  .demo-btn.active { background: var(--primary); border-color: var(--primary); color: #082f49; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(56,189,248,0.08); border-radius: 12px; border: 1px solid rgba(56,189,248,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #7dd3fc; min-height: 18px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #082f49; font-weight: 700; min-height: 44px; min-width: 44px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  .practice-item { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+  .practice-item h4 { color: #e2e8f0; margin-bottom: 10px; font-size: 15px; line-height: 1.6; }
+  .calc-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .calc-row input { width: 140px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: var(--light); font-size: 15px; min-height: 44px; }
+  .calc-row button { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; background: var(--primary); color: #082f49; font-weight: 700; font-size: 14px; min-height: 44px; }
+  .practice-fb { margin-top: 8px; font-size: 13px; min-height: 18px; line-height: 1.6; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 28px; }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .container { padding: 10px 14px; }
+    .breadcrumb { padding: 6px 10px; font-size: 12px; margin-bottom: 8px; }
+    header { margin-bottom: 10px; }
+    header h1 { font-size: 1.5rem; }
+    header p { font-size: 12px; margin-top: 2px; }
+    .tabs { gap: 6px; margin-bottom: 10px; }
+    .tab { padding: 6px 14px; font-size: 12px; min-height: 36px; }
+    .canvas-wrap, .panel { padding: 10px; border-radius: 12px; }
+    .panel h3 { font-size: 1rem; margin-bottom: 8px; }
+    .equation { padding: 8px; font-size: 0.95rem; margin: 6px 0; }
+    .concept-card { padding: 10px; margin: 6px 0; font-size: 13px; }
+    .slider-row { margin: 6px 0; font-size: 13px; }
+  }
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    header h1 { font-size: 1.6rem; }
+    .tabs { gap: 6px; }
+    .tab { padding: 8px 12px; font-size: 13px; }
+    .slider-row { flex-wrap: wrap; }
+    .slider-row label { flex: 0 0 auto; }
+    .slider-row .val { flex: 0 0 auto; }
+    .slider-row input[type=range] { flex: 1 1 100%; order: 3; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">🔬 科学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">简单机械</span>
+    <span id="done-mark" style="margin-left:auto;color:#10b981;font-weight:600;"></span>
+  </nav>
+
+  <header>
+    <h1>⚙️ 简单机械</h1>
+    <p>杠杆 · 杠杆平衡 · 滑轮 · 轮轴斜面 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 探究</div>
+    <div class="tab" data-mode="practice">🧪 计算</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 探究模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div>
+        <div class="canvas-wrap">
+          <canvas id="machCanvas" width="720" height="460"></canvas>
+          <div class="legend">
+            <span id="legendLabel">杠杆平衡：左钩码 × 左格数 = 右钩码 × 右格数</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>选择机械</h3>
+        <div class="demo-btns" id="machBtns">
+          <button class="demo-btn active" data-mach="lever">⚖️ 杠杆</button>
+          <button class="demo-btn" data-mach="pulley">🪢 滑轮</button>
+        </div>
+        <div class="slider-row" id="rowL">
+          <label>左盘钩码数</label>
+          <input type="range" id="sliderL" min="1" max="4" step="1" value="2">
+          <span class="val" id="valL">2 个</span>
+        </div>
+        <div class="slider-row" id="rowLd">
+          <label>左盘位置（格）</label>
+          <input type="range" id="sliderLd" min="1" max="4" step="1" value="3">
+          <span class="val" id="valLd">3 格</span>
+        </div>
+        <div class="slider-row" id="rowR">
+          <label>右盘钩码数</label>
+          <input type="range" id="sliderR" min="1" max="6" step="1" value="3">
+          <span class="val" id="valR">3 个</span>
+        </div>
+        <div class="slider-row" id="rowRd">
+          <label>右盘位置（格）</label>
+          <input type="range" id="sliderRd" min="1" max="4" step="1" value="2">
+          <span class="val" id="valRd">2 格</span>
+        </div>
+        <div class="info-grid">
+          <div id="infoBalance">左×左格 vs 右×右格<br><b>6 = 6 平衡</b></div>
+          <div id="infoState">状态<br><b>⚖️ 水平平衡</b></div>
+        </div>
+        <div class="equation">杠杆平衡条件：<b>动力 × 动力臂 = 阻力 × 阻力臂</b><br><span style="font-size:0.85em;color:#94a3b8">定滑轮不省力能改变方向；动滑轮省一半力；滑轮组更省力</span></div>
+        <div class="concept-card">
+          <div class="title">杠杆三要素与三类杠杆</div>
+          支点、动力、阻力。<b>省力杠杆</b>（动力臂&gt;阻力臂：撬棍、开瓶器）、<b>费力杠杆</b>（镊子、钓鱼竿——省距离）、<b>等臂杠杆</b>（天平——不省力不费力）。
+        </div>
+        <div class="concept-card">
+          <div class="title">滑轮</div>
+          <b>定滑轮</b>：相当于等臂杠杆，不省力，但改变用力方向（国旗杆顶）；<b>动滑轮</b>：省一半力，费一倍距离；<b>滑轮组</b>：既省力又能改变方向。
+        </div>
+        <div class="concept-card warn">
+          <div class="title">⚠️ 易错点</div>
+          ① 天平平衡 ≠ 两边一样重，而是"重 × 距离"相等；② 省力的机械一定费距离——没有既省力又省距离的机械；③ 费力杠杆不是没用：省距离、动作快（筷子、剪刀理发剪）。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 计算模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="practice-item">
+      <h4>1️⃣ 杠杆左边第 2 格挂 3 个钩码，右边第 3 格应挂几个钩码才能平衡？</h4>
+      <div class="calc-row">
+        <input type="number" id="a1" placeholder="? 个" step="any">
+        <button data-check="a1">提交</button>
+      </div>
+      <div class="practice-fb" id="fb-a1"></div>
+    </div>
+    <div class="practice-item">
+      <h4>2️⃣ 用一个动滑轮匀速提起 100 N 的重物（不计滑轮重和摩擦），拉力至少是多少牛？</h4>
+      <div class="calc-row">
+        <input type="number" id="a2" placeholder="F = ? N" step="any">
+        <button data-check="a2">提交</button>
+      </div>
+      <div class="practice-fb" id="fb-a2"></div>
+    </div>
+    <div class="practice-item">
+      <h4>3️⃣ 杠杆左边第 4 格挂 3 个钩码，右边挂 6 个钩码，应挂在第几格才能平衡？</h4>
+      <div class="calc-row">
+        <input type="number" id="a3" placeholder="第 ? 格" step="any">
+        <button data-check="a3">提交</button>
+      </div>
+      <div class="practice-fb" id="fb-a3"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="panel">
+      <h3>🎯 简单机械 · 小测验（5 题，≥80% 通关）</h3>
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">点击「开始答题」</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFb"></div>
+        <div class="quiz-nav">
+          <button id="quizStart">开始答题</button>
+          <button id="quizPrev" disabled>上一题</button>
+          <button id="quizNext" disabled>下一题</button>
+        </div>
+        <div class="quiz-result hidden" id="quizResult"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>小学科学 · 简单机械 · 互动可视化 | 知识可视化全学科项目</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+let mode = 'learn';
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+}));
+
+/* ============================================================
+ * 探究模式：杠杆平衡 / 滑轮
+ * ============================================================ */
+const canvas = document.getElementById('machCanvas');
+const ctx = canvas.getContext('2d');
+let mach = 'lever';
+const sL = document.getElementById('sliderL'), sLd = document.getElementById('sliderLd');
+const sR = document.getElementById('sliderR'), sRd = document.getElementById('sliderRd');
+const leverRows = ['rowL', 'rowLd', 'rowR', 'rowRd'];
+document.querySelectorAll('#machBtns .demo-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#machBtns .demo-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  mach = b.dataset.mach;
+  leverRows.forEach(id => document.getElementById(id).style.display = mach === 'lever' ? 'flex' : 'none');
+  document.getElementById('legendLabel').textContent =
+    mach === 'lever' ? '杠杆平衡：左钩码 × 左格数 = 右钩码 × 右格数' : '定滑轮改变方向，动滑轮省一半力';
+  draw();
+}));
+[sL, sLd, sR, sRd].forEach(s => s.addEventListener('input', draw));
+
+function drawLever() {
+  const L = +sL.value, Ld = +sLd.value, R = +sR.value, Rd = +sRd.value;
+  document.getElementById('valL').textContent = L + ' 个';
+  document.getElementById('valLd').textContent = Ld + ' 格';
+  document.getElementById('valR').textContent = R + ' 个';
+  document.getElementById('valRd').textContent = Rd + ' 格';
+  const lt = L * Ld, rt = R * Rd;
+  const state = lt === rt ? 'balanced' : lt > rt ? 'left' : 'right';
+  document.getElementById('infoBalance').innerHTML = `左 ${lt} vs 右 ${rt}<br><b>${lt === rt ? '相等 → 平衡' : lt > rt ? '左大 → 左沉' : '右大 → 右沉'}</b>`;
+  document.getElementById('infoState').innerHTML = `状态<br><b>${state === 'balanced' ? '⚖️ 水平平衡' : state === 'left' ? '⬅️ 左端下沉' : '➡️ 右端下沉'}</b>`;
+  const cx = 360, cy = 220, tilt = state === 'balanced' ? 0 : state === 'left' ? 0.10 : -0.10;
+  const unit = 70;
+  // 支点
+  ctx.fillStyle = '#94a3b8';
+  ctx.beginPath(); ctx.moveTo(cx - 26, cy + 90); ctx.lineTo(cx + 26, cy + 90); ctx.lineTo(cx, cy + 8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#64748b'; ctx.font = '12px sans-serif';
+  ctx.fillText('支点', cx - 12, cy + 108);
+  // 横杆
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(tilt);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.fillRect(-4.5 * unit, -8, 9 * unit, 16);
+  // 刻度
+  for (let g = -4; g <= 4; g++) {
+    if (g === 0) continue;
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(g * unit - 2, -14, 4, 6);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '11px sans-serif';
+    ctx.fillText(Math.abs(g), g * unit - 3, -20);
+  }
+  // 左右钩码
+  [[-Ld, L, '#f472b6'], [Rd, R, '#60a5fa']].forEach(([g, n, color]) => {
+    const gx = g * unit;
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(gx, 8); ctx.lineTo(gx, 26); ctx.stroke();
+    for (let i = 0; i < n; i++) {
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(gx, 40 + i * 22, 12, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(gx, 40 + i * 22, 12, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.fillStyle = color; ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(`${n}个 × ${Math.abs(g)}格 = ${n * Math.abs(g)}`, gx - 48, 52 + n * 22);
+  });
+  ctx.restore();
+  ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('杠杆尺平衡实验', 60, 50);
+}
+function drawPulley() {
+  document.getElementById('infoBalance').innerHTML = `定滑轮<br><b>不省力，改方向</b>`;
+  document.getElementById('infoState').innerHTML = `动滑轮<br><b>省一半力</b>`;
+  // 定滑轮
+  const px1 = 190, py1 = 130;
+  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(px1, 40); ctx.lineTo(px1, py1 - 40); ctx.stroke();
+  ctx.fillStyle = '#38bdf8';
+  ctx.beginPath(); ctx.arc(px1, py1, 34, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#082f49';
+  ctx.beginPath(); ctx.arc(px1, py1, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(px1 - 34, py1); ctx.lineTo(px1 - 34, py1 + 130); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px1 + 34, py1); ctx.lineTo(px1 + 34, py1 + 100); ctx.stroke();
+  ctx.fillStyle = '#f472b6';
+  ctx.fillRect(px1 - 58, py1 + 130, 48, 48);
+  ctx.fillStyle = '#e2e8f0'; ctx.font = '13px sans-serif';
+  ctx.fillText('重物', px1 - 52, py1 + 160);
+  ctx.fillText('⬇ 向下拉', px1 + 44, py1 + 60);
+  ctx.fillStyle = '#7dd3fc'; ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('定滑轮：拉力 = 重力（只改方向）', px1 - 100, py1 + 220);
+  // 动滑轮
+  const px2 = 510, py2 = 200;
+  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(px2 - 34, 60); ctx.lineTo(px2 - 34, py2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(px2, py2, 34, Math.PI, 0, false); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px2 + 34, py2); ctx.lineTo(px2 + 34, 60); ctx.stroke();
+  ctx.fillStyle = '#34d399';
+  ctx.beginPath(); ctx.arc(px2, py2, 34, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#082f49';
+  ctx.beginPath(); ctx.arc(px2, py2, 10, 0, Math.PI * 2); ctx.fill();
+  // 吊着重物
+  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(px2, py2 + 34); ctx.lineTo(px2, py2 + 60); ctx.stroke();
+  ctx.fillStyle = '#f472b6';
+  ctx.fillRect(px2 - 24, py2 + 60, 48, 48);
+  ctx.fillStyle = '#e2e8f0'; ctx.font = '13px sans-serif';
+  ctx.fillText('重物 100N', px2 - 34, py2 + 90);
+  ctx.fillText('⬆ 向上拉 50N', px2 + 44, 60);
+  ctx.fillStyle = '#7dd3fc'; ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('动滑轮：拉力 = 重力的一半', px2 - 100, py2 + 150);
+  ctx.fillStyle = '#64748b'; ctx.font = '12px sans-serif';
+  ctx.fillText('（一端固定，重物随滑轮一起动）', px2 - 100, py2 + 174);
+}
+function draw() {
+  if (mode !== 'learn') return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (mach === 'lever') drawLever();
+  else drawPulley();
+}
+draw();
+
+/* ============================================================
+ * 计算模式
+ * ============================================================ */
+const CHECKS = {
+  a1: { test: v => Math.abs(v - 2) <= 0.01,
+        ok: '✅ 正确！左 3×2 = 6，右 ?×3 = 6 → 2 个。',
+        no: '❌ 提示：左边 3 个 × 2 格 = 6，右边要 ÷3 格。' },
+  a2: { test: v => Math.abs(v - 50) <= 0.01,
+        ok: '✅ 正确！动滑轮省一半力：F = 100 ÷ 2 = 50 N。',
+        no: '❌ 提示：动滑轮省力一半。' },
+  a3: { test: v => Math.abs(v - 2) <= 0.01,
+        ok: '✅ 正确！左 3×4 = 12，右 6×? = 12 → 第 2 格。',
+        no: '❌ 提示：左 3×4=12，用 12 ÷ 6 个。' }
+};
+document.querySelectorAll('[data-check]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = btn.dataset.check;
+    const inp = document.getElementById(id);
+    const fb = document.getElementById('fb-' + id);
+    const rule = CHECKS[id];
+    const v = parseFloat(inp.value);
+    const ok = !isNaN(v) && rule.test(v);
+    fb.style.color = ok ? '#10b981' : '#ef4444';
+    fb.textContent = ok ? rule.ok : rule.no;
+  });
+});
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const QUIZ = [
+  { q: '下列工具中，属于省力杠杆的是（　　）',
+    opts: ['镊子', '开瓶器', '钓鱼竿', '天平'],
+    ans: 1, ex: '开瓶器动力臂大于阻力臂 → 省力；镊子、钓鱼竿是费力杠杆；天平是等臂杠杆。' },
+  { q: '杠杆平衡的条件是（　　）',
+    opts: ['两边一样重', '动力×动力臂 = 阻力×阻力臂', '两边距离相等', '动力等于阻力'],
+    ans: 1, ex: '平衡看"重 × 距离"的乘积，不是单看重量或单看距离。' },
+  { q: '国旗杆顶的滑轮是定滑轮，它的作用是（　　）',
+    opts: ['省一半力', '改变用力方向', '既省力又省距离', '没有作用'],
+    ans: 1, ex: '定滑轮相当于等臂杠杆：不省力，但能改变用力方向（向下拉，旗向上升）。' },
+  { q: '关于简单机械，下列说法正确的是（　　）',
+    opts: ['省力的机械也省距离', '费力杠杆毫无用处', '没有既省力又省距离的机械', '动滑轮能改变用力方向'],
+    ans: 2, ex: '省力必费距离；费力杠杆省距离（筷子、镊子）；动滑轮不改变方向。' },
+  { q: '杠杆左端第 3 格挂 4 个钩码，右端第 4 格挂 3 个钩码，杠杆会（　　）',
+    opts: ['平衡', '左端下沉', '右端下沉', '无法判断'],
+    ans: 0, ex: '左 4×3=12，右 3×4=12，乘积相等 → 平衡。' }
+];
+let qi = 0, qScore = 0, qAnswered = false;
+const quizQ = document.getElementById('quizQ');
+const quizOpts = document.getElementById('quizOpts');
+const quizFb = document.getElementById('quizFb');
+const quizResult = document.getElementById('quizResult');
+const btnStart = document.getElementById('quizStart');
+const btnPrev = document.getElementById('quizPrev');
+const btnNext = document.getElementById('quizNext');
+
+function renderQ() {
+  const q = QUIZ[qi];
+  qAnswered = false;
+  quizQ.textContent = `第${qi + 1}题 / 共${QUIZ.length}题：${q.q}`;
+  quizFb.textContent = '';
+  quizOpts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const d = document.createElement('div');
+    d.className = 'quiz-opt';
+    d.textContent = o;
+    d.addEventListener('click', () => {
+      if (qAnswered) return;
+      qAnswered = true;
+      const ok = i === q.ans;
+      if (ok) qScore++;
+      quizOpts.children[q.ans].classList.add('correct');
+      if (!ok) d.classList.add('wrong');
+      quizFb.textContent = (ok ? '✅ ' : '❌ ') + q.ex;
+    });
+    quizOpts.appendChild(d);
+  });
+  btnPrev.disabled = qi === 0;
+  btnNext.disabled = false;
+  btnNext.textContent = qi === QUIZ.length - 1 ? '查看成绩' : '下一题';
+}
+function finishQuiz() {
+  const pass = qScore >= Math.ceil(QUIZ.length * 0.8);
+  quizQ.textContent = '测验完成！';
+  quizOpts.innerHTML = '';
+  quizFb.textContent = '';
+  quizResult.classList.remove('hidden');
+  quizResult.innerHTML = `得分：<b>${qScore} / ${QUIZ.length}</b>　${pass ? '🎉 通关！' : '继续加油，再试一次！'}`;
+  btnNext.disabled = true;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('simple-machines');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+btnStart.addEventListener('click', () => {
+  qi = 0; qScore = 0;
+  quizResult.classList.add('hidden');
+  btnStart.textContent = '重新答题';
+  renderQ();
+});
+btnPrev.addEventListener('click', () => { if (qi > 0) { qi--; renderQ(); } });
+btnNext.addEventListener('click', () => {
+  if (qi < QUIZ.length - 1) { qi++; renderQ(); }
+  else finishQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('simple-machines')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+</body>
+</html>

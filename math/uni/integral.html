@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>积分 · 概念、方法与应用互动可视化</title>
+<link rel="stylesheet" href="assets/common.css" />
+<script src="assets/common.js"></script>
+<style>
+  :root {
+    --primary: #7c3aed;
+    --curve: #3b82f6;
+    --area: #10b981;
+    --riemann: #f59e0b;
+    --antideriv: #ec4899;
+    --dark: #1e293b;
+    --light: #f1f5f9;
+  }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--area), var(--riemann), var(--antideriv)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; }
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 20px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(124,58,237,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 10px; font-size: 1.1rem; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.2rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 90px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 13px; color: #e2e8f0; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .func-select { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .func-btn { padding: 6px 12px; border-radius: 8px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 13px; color: #93c5fd; }
+  .func-btn.active { background: var(--curve); border-color: var(--curve); color: white; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(124,58,237,0.08); border-radius: 12px; border: 1px solid rgba(124,58,237,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-curve::before { background: var(--curve); }
+  .legend .l-area::before { background: var(--area); }
+  .legend .l-riem::before { background: var(--riemann); }
+  .legend .l-anti::before { background: var(--antideriv); }
+  .prop-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.6; border-left: 3px solid var(--primary); }
+  .prop-card .prop-title { font-weight: 600; color: #c4b5fd; margin-bottom: 4px; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>∫ 积分 Interactive</h1>
+    <p>定积分概念 · 不定积分 · 积分方法 · 面积应用</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="concept">📐 积分概念</div>
+    <div class="tab" data-mode="ftc">🔗 微积分基本定理</div>
+    <div class="tab" data-mode="methods">🔧 积分方法</div>
+    <div class="tab" data-mode="area">📊 面积应用</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="720" height="600"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="panel">
+      <h3 id="panelTitle">📐 定积分概念</h3>
+      <div id="panelContent"></div>
+    </div>
+  </div>
+</div>
+
+<footer>大学数学 · 积分互动可视化 · 知识可视化项目</footer>
+
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+let currentMode = 'concept';
+let riemannN = 10;
+let fncIdx = 0;
+let areaFrom = -1, areaTo = 2;
+let subU = 1;
+let quizIdx = 0, quizScore = 0;
+
+const C = {
+  primary: '#7c3aed', curve: '#3b82f6', area: '#10b981',
+  riemann: '#f59e0b', anti: '#ec4899', grid: '#334155',
+  axis: '#64748b', text: '#e2e8f0', dim: '#94a3b8', bg: '#0f172a'
+};
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    updatePanel();
+  });
+});
+
+function clear() { ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H); }
+
+function drawGrid(ox, oy, sx, sy, xR, yR) {
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 0.5;
+  for (let x = -xR; x <= xR; x++) { const px = ox + x * sx; ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke(); }
+  for (let y = -yR; y <= yR; y++) { const py = oy + y * sy; ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke(); }
+  ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(W, oy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, H); ctx.stroke();
+}
+
+function text(s, x, y, col, sz, al) {
+  ctx.fillStyle = col || C.text;
+  ctx.font = (sz || 14) + 'px -apple-system, "PingFang SC", sans-serif';
+  ctx.textAlign = al || 'center';
+  ctx.fillText(s, x, y);
+}
+
+function mathT(s, x, y, col, sz) {
+  ctx.fillStyle = col || '#fbbf24';
+  ctx.font = 'italic ' + (sz || 16) + 'px "Times New Roman", serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(s, x, y);
+}
+
+/* ===== Functions ===== */
+const fns = [
+  { name: 'x²', f: x => x * x, F: x => x * x * x / 3, label: 'f(x) = x²' },
+  { name: 'sin(x)', f: x => Math.sin(x), F: x => -Math.cos(x), label: 'f(x) = sin(x)' },
+  { name: 'eˣ', f: x => Math.exp(x), F: x => Math.exp(x), label: 'f(x) = eˣ' },
+  { name: '1/x', f: x => 1 / x, F: x => Math.log(Math.abs(x)), label: 'f(x) = 1/x' },
+  { name: 'cos(x)', f: x => Math.cos(x), F: x => Math.sin(x), label: 'f(x) = cos(x)' },
+  { name: '2x+1', f: x => 2 * x + 1, F: x => x * x + x, label: 'f(x) = 2x+1' }
+];
+
+/* =========================================
+   MODE 1: 积分概念 — 黎曼和
+   ========================================= */
+function drawConcept(t) {
+  clear();
+  const ox = 100, oy = 420, sx = 60, sy = 60;
+  const xR = 9, yR = 5;
+  drawGrid(ox, oy, sx, sy, xR, yR);
+
+  const fn = fns[fncIdx];
+  const a = areaFrom, b = areaTo;
+
+  // 刻度
+  for (let x = -xR; x <= xR; x++) { if (x !== 0) text(x, ox + x * sx, oy + 18, C.dim, 11); }
+  for (let y = -yR; y <= yR; y++) { if (y !== 0) text(y, ox - 20, oy - y * sy + 4, C.dim, 11); }
+
+  // 黎曼矩形（动画：n 逐渐增大）
+  const animN = Math.min(riemannN, Math.floor(3 + (t * 0.003 % 1) * (riemannN - 3)));
+  const dx = (b - a) / Math.max(animN, 1);
+  let riemannSum = 0;
+
+  for (let i = 0; i < Math.max(animN, 1); i++) {
+    const xi = a + i * dx;
+    const xMid = xi + dx / 2;
+    const fv = fn.f(xMid);
+    riemannSum += fv * dx;
+
+    const px = ox + xi * sx;
+    const pw = dx * sx;
+    const ph = fv * sy;
+
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = C.riemann;
+    if (fv >= 0) {
+      ctx.fillRect(px, oy - ph, pw, ph);
+    } else {
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(px, oy, pw, -ph);
+    }
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = C.riemann;
+    ctx.lineWidth = 0.8;
+    if (fv >= 0) ctx.strokeRect(px, oy - ph, pw, ph);
+    else ctx.strokeRect(px, oy, pw, -ph);
+  }
+
+  // 函数曲线
+  ctx.strokeStyle = C.curve;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  let first = true;
+  for (let px = 0; px < W; px += 1) {
+    const x = (px - ox) / sx;
+    const y = fn.f(x);
+    const py = oy - y * sy;
+    if (py < -50 || py > H + 50) { first = true; continue; }
+    if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // 积分区间标记
+  ctx.strokeStyle = C.area;
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(ox + a * sx, oy - 10); ctx.lineTo(ox + a * sx, oy + 10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ox + b * sx, oy - 10); ctx.lineTo(ox + b * sx, oy + 10); ctx.stroke();
+
+  // 标签
+  text('a', ox + a * sx, oy + 30, C.area, 14);
+  text('b', ox + b * sx, oy + 30, C.area, 14);
+  text(fn.label, 580, 50, C.curve, 15);
+  text(`n = ${Math.max(animN, 1)}`, 580, 75, C.riemann, 14);
+
+  // 精确积分值
+  const exact = fn.F(b) - fn.F(a);
+  text(`精确值: ${exact.toFixed(4)}`, 580, 100, C.area, 14);
+  text(`黎曼和: ${riemannSum.toFixed(4)}`, 580, 125, C.riemann, 14);
+  text(`误差: ${Math.abs(exact - riemannSum).toFixed(4)}`, 580, 150, '#fbbf24', 13);
+}
+
+function updateConceptPanel() {
+  document.getElementById('panelTitle').textContent = '📐 定积分概念 — 黎曼和';
+  const fn = fns[fncIdx];
+  const exact = fn.F(areaTo) - fn.F(areaFrom);
+  let html = `
+    <div class="equation">∫<sub>a</sub><sup>b</sup> f(x) dx = lim<sub>n→∞</sub> Σ f(xᵢ)Δx</div>
+    <div class="func-select">
+      ${fns.map((f, i) => `<div class="func-btn ${i === fncIdx ? 'active' : ''}" data-fi="${i}">${f.name}</div>`).join('')}
+    </div>
+    <div class="slider-row"><label>n (矩形数) =</label><input type="range" min="1" max="100" step="1" value="${riemannN}" id="slN"><span class="val">${riemannN}</span></div>
+    <div class="slider-row"><label>a =</label><input type="range" min="-3" max="3" step="0.5" value="${areaFrom}" id="slA"><span class="val">${areaFrom}</span></div>
+    <div class="slider-row"><label>b =</label><input type="range" min="-3" max="5" step="0.5" value="${areaTo}" id="slB"><span class="val">${areaTo}</span></div>
+    <div class="info-grid">
+      <div>精确值 = <b>${exact.toFixed(4)}</b></div>
+      <div>F(x) = <b>${getAntiderivLabel(fncIdx)}</b></div>
+    </div>
+    <div class="prop-card" style="margin-top:12px">
+      <div class="prop-title">💡 核心思想</div>
+      <p style="font-size:13px;color:#94a3b8;line-height:1.6">
+        将区间 [a,b] 分成 n 个小段，<br>
+        用矩形面积之和逼近曲线下面积。<br>
+        当 n→∞ 时，黎曼和 → 定积分。
+      </p>
+    </div>
+  `;
+  document.getElementById('panelContent').innerHTML = html;
+
+  document.querySelectorAll('[data-fi]').forEach(btn => {
+    btn.addEventListener('click', () => { fncIdx = parseInt(btn.dataset.fi); updateConceptPanel(); });
+  });
+  document.getElementById('slN').addEventListener('input', e => { riemannN = parseInt(e.target.value); updateConceptPanel(); });
+  document.getElementById('slA').addEventListener('input', e => { areaFrom = parseFloat(e.target.value); updateConceptPanel(); });
+  document.getElementById('slB').addEventListener('input', e => { areaTo = parseFloat(e.target.value); updateConceptPanel(); });
+}
+
+function getAntiderivLabel(i) {
+  return ['x³/3 + C', '-cos(x) + C', 'eˣ + C', 'ln|x| + C', 'sin(x) + C', 'x² + x + C'][i];
+}
+
+/* =========================================
+   MODE 2: 微积分基本定理
+   ========================================= */
+function drawFTC(t) {
+  clear();
+  const ox = 100, oy = 350, sx = 55, sy = 55;
+  drawGrid(ox, oy, sx, sy, 9, 5);
+
+  const fn = fns[fncIdx];
+  const F = fn.F;
+  const a = areaFrom;
+  const bCursor = a + ((Math.sin(t * 0.001) + 1) / 2) * (areaTo - a);
+
+  // 上方：f(x) 曲线 + 面积
+  for (let px = 0; px < W; px += 1) {
+    const x = (px - ox) / sx;
+    const y = fn.f(x);
+    const py = oy - y * sy;
+    if (py < -50 || py > H + 50) continue;
+  }
+
+  // 面积填充 a 到 bCursor
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = C.area;
+  ctx.beginPath();
+  ctx.moveTo(ox + a * sx, oy);
+  for (let px = ox + a * sx; px <= ox + bCursor * sx; px += 1) {
+    const x = (px - ox) / sx;
+    const y = fn.f(x);
+    ctx.lineTo(px, oy - y * sy);
+  }
+  ctx.lineTo(ox + bCursor * sx, oy);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // f(x) 曲线
+  ctx.strokeStyle = C.curve;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  let first = true;
+  for (let px = 0; px < W; px += 1) {
+    const x = (px - ox) / sx;
+    const y = fn.f(x);
+    const py = oy - y * sy;
+    if (py < -50 || py > H + 50) { first = true; continue; }
+    if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // 移动游标
+  ctx.strokeStyle = C.anti;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(ox + bCursor * sx, 40); ctx.lineTo(ox + bCursor * sx, oy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // F(x) 曲线（下方区域或叠加）
+  ctx.strokeStyle = C.anti;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  first = true;
+  for (let px = 0; px < W; px += 1) {
+    const x = (px - ox) / sx;
+    const y = F(x) - F(a); // 相对值
+    const py = oy - y * sy;
+    if (py < -50 || py > H + 50) { first = true; continue; }
+    if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // 标注
+  text('f(x)', 600, 50, C.curve, 15);
+  text('F(x) - F(a)', 600, 75, C.anti, 15);
+  text(`∫ₐˣ f(t)dt`, 600, 100, C.area, 15);
+
+  const areaVal = F(bCursor) - F(a);
+  text(`当前面积 = ${areaVal.toFixed(3)}`, 360, 550, '#fbbf24', 18);
+  text(`F(${bCursor.toFixed(2)}) - F(${a}) = ${areaVal.toFixed(3)}`, 360, 575, C.anti, 14);
+
+  // 公式
+  text('微积分基本定理：', 360, 30, '#c4b5fd', 16);
+  mathT('d/dx ∫ₐˣ f(t)dt = f(x)', 360, 55, '#fbbf24', 18);
+}
+
+function updateFTCPanel() {
+  document.getElementById('panelTitle').textContent = '🔗 微积分基本定理';
+  const fn = fns[fncIdx];
+  let html = `
+    <div class="equation">
+      d/dx [∫<sub>a</sub><sup>x</sup> f(t)dt] = f(x)<br>
+      <span style="font-size:0.9em;color:#94a3b8">即 F'(x) = f(x)，F 是 f 的原函数</span>
+    </div>
+    <div class="func-select">
+      ${fns.map((f, i) => `<div class="func-btn ${i === fncIdx ? 'active' : ''}" data-fi2="${i}">${f.name}</div>`).join('')}
+    </div>
+    <div class="prop-card">
+      <div class="prop-title">📖 牛顿-莱布尼茨公式</div>
+      <p style="font-size:13px;color:#94a3b8;line-height:1.6">
+        ∫<sub>a</sub><sup>b</sup> f(x)dx = F(b) - F(a)<br>
+        其中 F'(x) = f(x)
+      </p>
+    </div>
+    <div class="prop-card">
+      <div class="prop-title">💡 直觉理解</div>
+      <p style="font-size:13px;color:#94a3b8;line-height:1.6">
+        画布中：<br>
+        • <span style="color:${C.curve}">蓝色</span> = f(x) 原函数<br>
+        • <span style="color:${C.anti}">粉色</span> = F(x) - F(a) 累积面积函数<br>
+        • <span style="color:${C.area}">绿色区域</span> = 从 a 到当前 x 的积分值<br><br>
+        移动游标时，面积变化率 = f(x)！
+      </p>
+    </div>
+    <div class="info-grid">
+      <div>f(x) = <b>${fn.label}</b></div>
+      <div>F(x) = <b>${getAntiderivLabel(fncIdx)}</b></div>
+    </div>
+  `;
+  document.getElementById('panelContent').innerHTML = html;
+  document.querySelectorAll('[data-fi2]').forEach(btn => {
+    btn.addEventListener('click', () => { fncIdx = parseInt(btn.dataset.fi2); updateFTCPanel(); });
+  });
+}
+
+/* =========================================
+   MODE 3: 积分方法 — 换元法 & 分部积分
+   ========================================= */
+let methodIdx = 0;
+const methods = [
+  {
+    title: '换元积分法（凑微分）',
+    example: '∫ 2x·e^(x²) dx',
+    steps: [
+      '令 u = x²，则 du = 2x dx',
+      '原式 = ∫ eᵘ du',
+      '= eᵘ + C',
+      '= e^(x²) + C'
+    ],
+    draw: (t) => {
+      clear();
+      const ox = 360, oy = 300;
+      // 换元映射可视化
+      // 左侧 x 轴
+      ctx.strokeStyle = C.axis; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(60, oy); ctx.lineTo(300, oy); ctx.stroke();
+      text('x 轴', 180, oy + 30, C.dim, 14);
+
+      // 右侧 u 轴
+      ctx.beginPath(); ctx.moveTo(420, oy); ctx.lineTo(660, oy); ctx.stroke();
+      text('u 轴', 540, oy + 30, C.dim, 14);
+
+      // 映射箭头
+      const progress = (Math.sin(t * 0.002) + 1) / 2;
+      const xVal = -1 + progress * 2;
+      const uVal = xVal * xVal;
+
+      // x 点
+      ctx.fillStyle = C.curve;
+      ctx.beginPath(); ctx.arc(180 + xVal * 60, oy, 8, 0, Math.PI * 2); ctx.fill();
+      text('x', 180 + xVal * 60, oy - 20, C.curve, 16);
+
+      // u 点
+      ctx.fillStyle = C.anti;
+      ctx.beginPath(); ctx.arc(540 + uVal * 40, oy, 8, 0, Math.PI * 2); ctx.fill();
+      text('u = x²', 540 + uVal * 40, oy - 20, C.anti, 16);
+
+      // 映射箭头
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(180 + xVal * 60, oy - 40);
+      ctx.quadraticCurveTo(360, oy - 120, 540 + uVal * 40, oy - 40);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      text('u = x²', 360, oy - 100, '#fbbf24', 16);
+
+      // 步骤展示
+      const stepIdx = Math.floor(t * 0.001) % 4;
+      const steps = methods[0].steps;
+      for (let i = 0; i <= stepIdx; i++) {
+        text(steps[i], 360, 420 + i * 35, i === stepIdx ? '#fbbf24' : C.dim, i === stepIdx ? 16 : 13);
+      }
+    }
+  },
+  {
+    title: '分部积分法',
+    example: '∫ x·eˣ dx',
+    steps: [
+      '令 u = x, dv = eˣ dx',
+      '则 du = dx, v = eˣ',
+      '∫ u dv = uv - ∫ v du',
+      '= x·eˣ - ∫ eˣ dx',
+      '= x·eˣ - eˣ + C',
+      '= (x-1)·eˣ + C'
+    ],
+    draw: (t) => {
+      clear();
+      // 分部积分的 LIATE 选择可视化
+      const parts = ['对数(Log)', '反三角(InvTrig)', '代数(Algebraic)', '三角(Trig)', '指数(Exponential)'];
+      const colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'];
+
+      text('LIATE 优先级（选 u 的规则）', 360, 50, '#c4b5fd', 16);
+
+      parts.forEach((p, i) => {
+        const y = 100 + i * 50;
+        const highlight = (i === 2 && methodIdx === 1) ? 1 : 0.4;
+        ctx.globalAlpha = highlight;
+        ctx.fillStyle = colors[i];
+        roundRectFill(120, y, 480, 38, 8);
+        text(`${i + 1}. ${p}`, 360, y + 25, '#fff', 14);
+        ctx.globalAlpha = 1;
+      });
+
+      // 公式
+      text('分部积分公式：', 360, 390, '#c4b5fd', 16);
+      mathT('∫ u dv = uv - ∫ v du', 360, 420, '#fbbf24', 20);
+
+      // 当前步骤
+      const stepIdx = Math.floor(t * 0.001) % methods[1].steps.length;
+      const steps = methods[1].steps;
+      for (let i = 0; i <= stepIdx; i++) {
+        text(steps[i], 360, 470 + i * 28, i === stepIdx ? '#fbbf24' : C.dim, i === stepIdx ? 15 : 12);
+      }
+    }
+  }
+];
+
+function roundRectFill(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function updateMethodsPanel() {
+  document.getElementById('panelTitle').textContent = '🔧 积分方法';
+  let html = `
+    <div class="equation">${methods[methodIdx].example}</div>
+    <div class="mode-switch">
+      ${methods.map((m, i) => `<div class="mode-btn ${i === methodIdx ? 'active' : ''}" data-mi="${i}">${m.title}</div>`).join('')}
+    </div>
+    <div class="prop-card">
+      <div class="prop-title">📖 ${methods[methodIdx].title}</div>
+      <p style="font-size:13px;color:#94a3b8;line-height:1.6">
+        ${methodIdx === 0
+          ? '通过变量替换，将复杂积分转化为简单积分。<br>关键：选择合适的替换 u = g(x)'
+          : '将 ∫u·v\'dx 转化为 uv - ∫u\'·v dx。<br>关键：用 LIATE 规则选择 u（优先级高的选为 u）'}
+      </p>
+    </div>
+    <div class="prop-card">
+      <div class="prop-title">📝 解题步骤</div>
+      <p style="font-size:13px;color:#94a3b8;line-height:1.6">
+        ${methods[methodIdx].steps.map((s, i) => `${i + 1}. ${s}`).join('<br>')}
+      </p>
+    </div>
+  `;
+  document.getElementById('panelContent').innerHTML = html;
+  document.querySelectorAll('[data-mi]').forEach(btn => {
+    btn.addEventListener('click', () => { methodIdx = parseInt(btn.dataset.mi); updateMethodsPanel(); });
+  });
+}
+
+/* =========================================
+   MODE 4: 面积应用
+   ========================================= */
+let areaMode = 0; // 0: 两曲线之间, 1: 旋转体
+function drawArea(t) {
+  clear();
+  const ox = 120, oy = 350, sx = 55, sy = 55;
+  drawGrid(ox, oy, sx, sy, 8, 5);
+
+  if (areaMode === 0) {
+    // 两曲线之间的面积
+    const f1 = x => x * x;       // x²
+    const f2 = x => x + 2;       // x + 2
+    // 交点：x² = x + 2 → x² - x - 2 = 0 → x = -1, x = 2
+
+    // 填充区域
+    ctx.globalAlpha = 0.2;
+    ctx.fillStyle = C.area;
+    ctx.beginPath();
+    ctx.moveTo(ox + (-1) * sx, oy - f1(-1) * sy);
+    for (let px = ox + (-1) * sx; px <= ox + 2 * sx; px += 1) {
+      const x = (px - ox) / sx;
+      ctx.lineTo(px, oy - f2(x) * sy);
+    }
+    for (let px = ox + 2 * sx; px >= ox + (-1) * sx; px -= 1) {
+      const x = (px - ox) / sx;
+      ctx.lineTo(px, oy - f1(x) * sy);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // 画 f1
+    ctx.strokeStyle = C.curve;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    let first = true;
+    for (let px = 0; px < W; px += 1) {
+      const x = (px - ox) / sx;
+      const y = f1(x);
+      const py = oy - y * sy;
+      if (py < -50 || py > H + 50) { first = true; continue; }
+      if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // 画 f2
+    ctx.strokeStyle = C.anti;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    first = true;
+    for (let px = 0; px < W; px += 1) {
+      const x = (px - ox) / sx;
+      const y = f2(x);
+      const py = oy - y * sy;
+      if (py < -50 || py > H + 50) { first = true; continue; }
+      if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // 交点
+    [[-1, f1(-1)], [2, f2(2)]].forEach(([x, y]) => {
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath(); ctx.arc(ox + x * sx, oy - y * sy, 6, 0, Math.PI * 2); ctx.fill();
+    });
+
+    text('y = x²', 520, 80, C.curve, 15);
+    text('y = x + 2', 520, 105, C.anti, 15);
+    text('交点: (-1, 1) 和 (2, 4)', 360, 530, '#fbbf24', 15);
+    text('面积 = ∫₋₁² (x+2 - x²) dx = 9/2', 360, 560, C.area, 16);
+  } else {
+    // 旋转体体积（圆盘法可视化）
+    const f = x => Math.sqrt(x);
+    const a = 0, b = 4;
+
+    // 旋转体阴影
+    const pulse = (Math.sin(t * 0.003) + 1) / 2;
+    const numDisks = 20;
+    const dx = (b - a) / numDisks;
+    for (let i = 0; i < numDisks; i++) {
+      const x = a + i * dx;
+      const r = f(x);
+      const px = ox + x * sx;
+      const diskH = r * sy * 2;
+
+      ctx.globalAlpha = 0.1 + 0.15 * Math.sin(t * 0.005 + i * 0.3);
+      ctx.fillStyle = C.area;
+      ctx.beginPath();
+      ctx.ellipse(px + dx * sx / 2, oy, dx * sx / 2, diskH / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // 曲线
+    ctx.strokeStyle = C.curve;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    first = true;
+    for (let px = ox + a * sx; px <= ox + b * sx; px += 1) {
+      const x = (px - ox) / sx;
+      const y = f(x);
+      const py = oy - y * sy;
+      if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // 镜像
+    ctx.strokeStyle = C.curve;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    first = true;
+    for (let px = ox + a * sx; px <= ox + b * sx; px += 1) {
+      const x = (px - ox) / sx;
+      const y = f(x);
+      const py = oy + y * sy;
+      if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // x 轴
+    ctx.strokeStyle = C.axis;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(ox + a * sx, oy); ctx.lineTo(ox + b * sx, oy); ctx.stroke();
+
+    text('y = √x', 520, 80, C.curve, 15);
+    text('绕 x 轴旋转', 520, 105, C.dim, 13);
+    text('V = π∫₀⁴ (√x)² dx = π∫₀⁴ x dx = 8π', 360, 530, '#fbbf24', 16);
+  }
+}
+
+function updateAreaPanel() {
+  document.getElementById('panelTitle').textContent = '📊 面积应用';
+  let html = `
+    <div class="mode-switch">
+      <div class="mode-btn ${areaMode === 0 ? 'active' : ''}" data-am="0">两曲线之间面积</div>
+      <div class="mode-btn ${areaMode === 1 ? 'active' : ''}" data-am="1">旋转体体积</div>
+    </div>
+  `;
+  if (areaMode === 0) {
+    html += `
+      <div class="equation">S = ∫<sub>a</sub><sup>b</sup> |f(x) - g(x)| dx</div>
+      <div class="prop-card">
+        <div class="prop-title">📖 求面积步骤</div>
+        <p style="font-size:13px;color:#94a3b8;line-height:1.6">
+          1. 求交点：令 f(x) = g(x)<br>
+          2. 确定上下函数<br>
+          3. 积分：∫(上 - 下)dx
+        </p>
+      </div>
+      <div class="info-grid">
+        <div>上交: <b>y = x + 2</b></div>
+        <div>下交: <b>y = x²</b></div>
+        <div>交点: <b>x = -1, x = 2</b></div>
+        <div>面积: <b>S = 9/2</b></div>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="equation">V = π∫<sub>a</sub><sup>b</sup> [f(x)]² dx</div>
+      <div class="prop-card">
+        <div class="prop-title">📖 圆盘法</div>
+        <p style="font-size:13px;color:#94a3b8;line-height:1.6">
+          将旋转体切成无数圆盘，<br>
+          每个圆盘体积 = πr²dx = π[f(x)]²dx<br>
+          求和即得总体积。
+        </p>
+      </div>
+      <div class="info-grid">
+        <div>曲线: <b>y = √x</b></div>
+        <div>区间: <b>[0, 4]</b></div>
+        <div>旋转轴: <b>x 轴</b></div>
+        <div>体积: <b>V = 8π</b></div>
+      </div>
+    `;
+  }
+  document.getElementById('panelContent').innerHTML = html;
+  document.querySelectorAll('[data-am]').forEach(btn => {
+    btn.addEventListener('click', () => { areaMode = parseInt(btn.dataset.am); updateAreaPanel(); });
+  });
+}
+
+/* =========================================
+   MODE 5: 互动练习
+   ========================================= */
+const quizzes = [
+  { q: '∫ x³ dx = ?', opts: ['x⁴/4 + C', '3x² + C', 'x⁴ + C', '4x⁴ + C'], ans: 0, explain: '幂函数积分：∫xⁿdx = xⁿ⁺¹/(n+1) + C' },
+  { q: '∫₀¹ 2x dx = ?', opts: ['0', '1', '2', '1/2'], ans: 1, explain: '∫₀¹ 2x dx = [x²]₀¹ = 1 - 0 = 1' },
+  { q: '∫ eˣ dx = ?', opts: ['eˣ + C', 'xeˣ + C', 'eˣ/x + C', 'ln(x) + C'], ans: 0, explain: 'eˣ 的原函数就是 eˣ 本身' },
+  { q: '∫ sin(x) dx = ?', opts: ['cos(x) + C', '-cos(x) + C', 'sin(x) + C', '-sin(x) + C'], ans: 1, explain: '(-cos(x))\' = sin(x)，所以 ∫sin(x)dx = -cos(x) + C' },
+  { q: '∫₁² 1/x dx = ?', opts: ['ln2', '1', '2', 'ln3'], ans: 0, explain: '∫₁² 1/x dx = [ln|x|]₁² = ln2 - ln1 = ln2' },
+  { q: '用换元法求 ∫ 2x·cos(x²)dx，应令 u = ?', opts: ['x', 'x²', '2x', 'cos(x)'], ans: 1, explain: '令 u = x²，du = 2x dx，原式 = ∫ cos(u) du = sin(u) + C = sin(x²) + C' },
+  { q: '曲线 y = x² 与 y = x 围成的面积 = ?', opts: ['1/6', '1/3', '1/2', '1'], ans: 0, explain: '交点 x=0,1。面积 = ∫₀¹(x - x²)dx = [x²/2 - x³/3]₀¹ = 1/2 - 1/3 = 1/6' },
+  { q: '∫₀^π sin(x) dx = ?', opts: ['0', '1', '2', 'π'], ans: 2, explain: '[-cos(x)]₀^π = -cos(π) + cos(0) = 1 + 1 = 2' }
+];
+
+function drawQuiz() {
+  clear();
+  const q = quizzes[quizIdx];
+
+  text(`第 ${quizIdx + 1}/${quizzes.length} 题`, 360, 50, C.dim, 14);
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.fillRect(160, 70, 400, 6);
+  ctx.fillStyle = C.primary;
+  ctx.fillRect(160, 70, 400 * (quizIdx / quizzes.length), 6);
+  text(`得分: ${quizScore}/${quizzes.length}`, 600, 50, '#fbbf24', 16);
+
+  // 题目
+  ctx.fillStyle = C.text;
+  ctx.font = '20px "Times New Roman", serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(q.q, 360, 160);
+
+  // 选项
+  const optY = 220;
+  q.opts.forEach((opt, i) => {
+    const bx = 120, by = optY + i * 70, bw = 480, bh = 55;
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(bx + 10, by);
+    ctx.lineTo(bx + bw - 10, by);
+    ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + 10);
+    ctx.lineTo(bx + bw, by + bh - 10);
+    ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - 10, by + bh);
+    ctx.lineTo(bx + 10, by + bh);
+    ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - 10);
+    ctx.lineTo(bx, by + 10);
+    ctx.quadraticCurveTo(bx, by, bx + 10, by);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = C.primary;
+    ctx.font = 'bold 18px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(String.fromCharCode(65 + i), bx + 30, by + 33);
+
+    ctx.fillStyle = C.text;
+    ctx.font = '18px "Times New Roman", serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(opt, bx + 60, by + 33);
+  });
+
+  cv._quizOpts = q.opts.map((_, i) => ({
+    x: 120, y: optY + i * 70, w: 480, h: 55
+  }));
+}
+
+function updateQuizPanel() {
+  document.getElementById('panelTitle').textContent = '🎯 互动练习';
+  const q = quizzes[quizIdx];
+  let html = `
+    <div class="equation" style="font-style:normal;font-family:inherit;font-size:14px;color:#cbd5e1">${q.q}</div>
+    <div class="quiz-opts">
+      ${q.opts.map((opt, i) => `<div class="quiz-opt" data-qi="${i}">${String.fromCharCode(65 + i)}. ${opt}</div>`).join('')}
+    </div>
+    <div class="quiz-feedback" id="quizFb"></div>
+    <div class="prop-card" style="margin-top:12px">
+      <div class="prop-title">💡 提示</div>
+      <p style="font-size:13px;color:#94a3b8">点击选项或画布上的选项区域作答。</p>
+    </div>
+  `;
+  document.getElementById('panelContent').innerHTML = html;
+  document.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => handleQuizAnswer(parseInt(opt.dataset.qi)));
+  });
+}
+
+function handleQuizAnswer(idx) {
+  const q = quizzes[quizIdx];
+  const opts = document.querySelectorAll('.quiz-opt');
+  const fb = document.getElementById('quizFb');
+  if (idx === q.ans) {
+    opts[idx].classList.add('correct');
+    fb.textContent = '✅ 正确！' + q.explain;
+    fb.style.color = '#10b981';
+    quizScore++;
+    if (typeof PageProgress !== 'undefined' && quizScore >= Math.ceil(quizzes.length * 0.6) && !PageProgress.isDone('integral')) {
+      PageProgress.markDone('integral');
+    }
+    setTimeout(() => {
+      quizIdx = (quizIdx + 1) % quizzes.length;
+      if (quizIdx === 0) quizScore = 0;
+      updateQuizPanel();
+    }, 2000);
+  } else {
+    opts[idx].classList.add('wrong');
+    opts[q.ans].classList.add('correct');
+    fb.textContent = '❌ 错误。' + q.explain;
+    fb.style.color = '#ef4444';
+    setTimeout(() => updateQuizPanel(), 3000);
+  }
+}
+
+cv.addEventListener('click', (e) => {
+  if (currentMode !== 'quiz' || !cv._quizOpts) return;
+  const rect = cv.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (W / rect.width);
+  const my = (e.clientY - rect.top) * (H / rect.height);
+  cv._quizOpts.forEach((box, i) => {
+    if (mx >= box.x && mx <= box.x + box.w && my >= box.y && my <= box.y + box.h) handleQuizAnswer(i);
+  });
+});
+
+/* ===== Legend & Main Loop ===== */
+function updateLegend() {
+  const m = {
+    concept: '<span class="l-curve">f(x)</span><span class="l-riem">黎曼矩形</span><span class="l-area">积分区域</span>',
+    ftc: '<span class="l-curve">f(x)</span><span class="l-anti">F(x) 累积面积</span><span class="l-area">积分面积</span>',
+    methods: '',
+    area: '<span class="l-curve">上交/曲线</span><span class="l-anti">下交/镜像</span><span class="l-area">面积/体积</span>',
+    quiz: ''
+  };
+  document.getElementById('legend').innerHTML = m[currentMode] || '';
+}
+
+function updatePanel() {
+  updateLegend();
+  switch (currentMode) {
+    case 'concept': updateConceptPanel(); break;
+    case 'ftc': updateFTCPanel(); break;
+    case 'methods': updateMethodsPanel(); break;
+    case 'area': updateAreaPanel(); break;
+    case 'quiz': updateQuizPanel(); break;
+  }
+}
+
+function draw() {
+  switch (currentMode) {
+    case 'concept': drawConcept(performance.now()); break;
+    case 'ftc': drawFTC(performance.now()); break;
+    case 'methods': methods[methodIdx].draw(performance.now()); break;
+    case 'area': drawArea(performance.now()); break;
+    case 'quiz': drawQuiz(); break;
+  }
+}
+
+function animate() {
+  if (['concept', 'ftc', 'methods', 'area'].includes(currentMode)) draw();
+  requestAnimationFrame(animate);
+}
+
+updatePanel();
+animate();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

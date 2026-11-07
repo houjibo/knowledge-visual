@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>相变与临界现象 · 大学物理互动可视化</title>
+<style>
+  :root {
+    --primary: #06b6d4;
+    --gas: #60a5fa;
+    --liquid: #34d399;
+    --solid: #f59e0b;
+    --critical: #ef4444;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #082f3f 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px;
+    font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #67e8f9; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #06b6d4, #67e8f9, #a5f3fc); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(6,182,212,.4); color: #082f3f; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #082f3f 0%, #0f172a 100%); touch-action: none; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); overflow-y: auto; max-height: 700px; }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.02rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #67e8f9; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 130px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 120px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #67e8f9; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.gas { border-color: var(--gas); }
+  .concept-card.liquid { border-color: var(--liquid); }
+  .concept-card.critical { border-color: var(--critical); }
+  .concept-card.magnet { border-color: #a78bfa; }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.gas .title { color: var(--gas); }
+  .concept-card.liquid .title { color: var(--liquid); }
+  .concept-card.critical .title { color: var(--critical); }
+  .concept-card.magnet .title { color: #a78bfa; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-gas::before { background: var(--gas); }
+  .legend .l-liquid::before { background: var(--liquid); }
+  .legend .l-solid::before { background: var(--solid); }
+  .legend .l-critical::before { background: var(--critical); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 36px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: #082f3f; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(6,182,212,0.08); border-radius: 12px; border: 1px solid rgba(6,182,212,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #67e8f9; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #082f3f; font-weight: 700; min-height: 36px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">🔭 物理</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">大学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">相变与临界现象</span>
+  </nav>
+
+  <header>
+    <h1>❄️ 相变与临界现象</h1>
+    <p>P-V 等温线 · P-T 相图 · 临界点 · 范德瓦尔斯方程 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 学习</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 学习模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="learnCanvas" width="700" height="420"></canvas>
+        <div class="legend">
+          <span class="l-gas">气相</span>
+          <span class="l-liquid">液相</span>
+          <span class="l-solid">固相</span>
+          <span class="l-critical">临界点</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📐 核心公式</h3>
+        <div class="equation">
+          范德瓦尔斯方程：<b>(P + a/V²)(V - b) = RT</b><br/>
+          即 <b>P = RT/(V - b) - a/V²</b><br/>
+          临界点（CO₂ 近似）：T<sub>c</sub> = 304 K · P<sub>c</sub> = 73 atm
+        </div>
+        <div class="slider-row">
+          <label>温度 T (K)</label>
+          <input type="range" id="T" min="270" max="330" step="1" value="290" />
+          <span class="val" id="Tv">290 K</span>
+        </div>
+        <div class="slider-row">
+          <label>体积 V (L/mol)</label>
+          <input type="range" id="V" min="5" max="100" step="1" value="50" />
+          <span class="val" id="Vv">0.50 L/mol</span>
+        </div>
+        <div class="slider-row">
+          <label>视图</label>
+          <button class="mode-btn active" id="viewPV" style="flex:1">P-V 等温线</button>
+          <button class="mode-btn" id="viewPT" style="flex:1">P-T 相图</button>
+        </div>
+        <div class="info-grid">
+          <div>压力 P：<b id="calc-P">—</b></div>
+          <div>当前相态：<b id="calc-phase">—</b></div>
+          <div>T - T<sub>c</sub>：<b id="calc-dT">—</b></div>
+          <div>状态：<b id="calc-state">—</b></div>
+        </div>
+        <div class="concept-card gas">
+          <div class="title">🔵 气相与等温线</div>
+          高温时等温线单调下降，接近理想气体双曲线。T > T<sub>c</sub> 时无论怎样加压都无法液化，这就是"永久气体"称呼的由来。
+        </div>
+        <div class="concept-card liquid">
+          <div class="title">🟢 气液共存</div>
+          T &lt; T<sub>c</sub> 时等温线出现 S 形（范德瓦尔斯环）。实际相变沿麦克斯韦等面积平台直线进行：水平线上气液两相共存，压力恒定。
+        </div>
+        <div class="concept-card critical">
+          <div class="title">🔴 临界点</div>
+          T = T<sub>c</sub> 时等温线在临界点处 dP/dV = 0 且 d²P/dV² = 0（拐点）。此时气液界面消失，成为超临界流体，密度涨落发散，出现临界乳光。
+        </div>
+        <div class="concept-card magnet">
+          <div class="title">🧲 连续相变与普适性</div>
+          铁磁体在居里温度 T<sub>c</sub> 处磁化强度连续降为 0（M ~ (T<sub>c</sub>-T)<sup>β</sup>，β≈1/3）。气液临界与铁磁临界属于同一普适类（3D Ising），临界指数相同——这是临界现象最深刻的发现在之一。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🧪 练习：调参达到目标</h3>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-target="subcritical">亚临界（S 形曲线）</button>
+          <button class="mode-btn" data-target="supercritical">超临界（单调曲线）</button>
+          <button class="mode-btn" data-target="nearcritical">逼近临界点</button>
+        </div>
+        <div class="slider-row">
+          <label>温度 T (K)</label>
+          <input type="range" id="pT" min="270" max="330" step="0.5" value="290" />
+          <span class="val" id="pTv">290 K</span>
+        </div>
+        <div class="slider-row">
+          <label>体积 V (L/mol)</label>
+          <input type="range" id="pV" min="5" max="100" step="1" value="50" />
+          <span class="val" id="pVv">0.50 L/mol</span>
+        </div>
+        <div class="info-grid">
+          <div>当前 P：<b id="p-P">—</b></div>
+          <div>当前相态：<b id="p-phase">—</b></div>
+          <div>曲线形态：<b id="p-shape">—</b></div>
+          <div>状态：<b id="p-status">未达成</b></div>
+        </div>
+        <div class="concept-card critical">
+          <div class="title">💡 提示</div>
+          <span id="p-hint">把温度调到 304 K 以下，观察等温线出现 S 形弯曲。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="quizCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🎯 随堂测验（4 题，3/4 合格）</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q">题目加载中…</div>
+          <div class="quiz-opts" id="quiz-opts"></div>
+          <div class="quiz-feedback" id="quiz-fb"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev">⬅ 上一题</button>
+            <button id="quiz-next">下一题 ➡</button>
+            <button id="quiz-submit" class="hidden">📊 提交评分</button>
+            <button id="quiz-retry" class="hidden">🔄 重新测验</button>
+          </div>
+          <div class="quiz-result hidden" id="quiz-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Knowledge Visual · 大学物理 · 相变与临界现象 · <span id="done-mark"></span></footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+let mode = 'learn';
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    mode = t.dataset.mode;
+    Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+    if (mode === 'quiz') renderQuiz();
+    draw();
+  });
+});
+
+/* ============================================================
+ * 范德瓦尔斯模型（CO₂ 近似）
+ * a = 3.59 L²·atm/mol², b = 0.0427 L/mol, R = 0.0821 L·atm/(mol·K)
+ * Tc = 8a/(27Rb) ≈ 304 K, Pc = a/(27b²) ≈ 73 atm
+ * ============================================================ */
+const A = 3.59, B = 0.0427, R = 0.0821;
+const TC = 8 * A / (27 * R * B);   // ≈ 303.6 K
+const PC = A / (27 * B * B);       // ≈ 72.8 atm
+const VC = 3 * B;                  // ≈ 0.128 L/mol
+
+function vdwP(T, V) {
+  if (V <= B) return NaN;
+  return R * T / (V - B) - A / (V * V);
+}
+function phaseOf(T, V) {
+  // 简化分类：按与临界体积比较
+  if (T > TC + 1) return '超临界流体';
+  if (V < VC) return '液相区';
+  return '气相区';
+}
+function curveShape(T) {
+  if (T < TC - 0.5) return 'S 形（亚临界）';
+  if (T > TC + 0.5) return '单调下降（超临界）';
+  return '临界点（拐点）';
+}
+
+/* ============================================================
+ * 学习模式
+ * ============================================================ */
+const TEl = document.getElementById('T');
+const VEl = document.getElementById('V');
+let learnView = 'pv';
+document.getElementById('viewPV').addEventListener('click', () => {
+  learnView = 'pv';
+  document.getElementById('viewPV').classList.add('active');
+  document.getElementById('viewPT').classList.remove('active');
+  draw();
+});
+document.getElementById('viewPT').addEventListener('click', () => {
+  learnView = 'pt';
+  document.getElementById('viewPT').classList.add('active');
+  document.getElementById('viewPV').classList.remove('active');
+  draw();
+});
+
+function updLearn() {
+  const T = +TEl.value, V = +VEl.value / 100; // V 单位 L/mol
+  document.getElementById('Tv').textContent = T.toFixed(0) + ' K';
+  document.getElementById('Vv').textContent = V.toFixed(2) + ' L/mol';
+  const P = vdwP(T, V);
+  document.getElementById('calc-P').textContent = isNaN(P) ? '—' : P.toFixed(1) + ' atm';
+  document.getElementById('calc-phase').textContent = phaseOf(T, V);
+  document.getElementById('calc-dT').textContent = (T - TC >= 0 ? '+' : '') + (T - TC).toFixed(1) + ' K';
+  document.getElementById('calc-state').textContent = curveShape(T);
+}
+[TEl, VEl].forEach(el => el.addEventListener('input', () => { updLearn(); draw(); }));
+updLearn();
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const pT = document.getElementById('pT');
+const pV = document.getElementById('pV');
+let practiceTarget = 'subcritical';
+const targetDesc = {
+  subcritical:   { text: '亚临界', check: T => T < TC - 2, hint: '把温度调到 ' + TC.toFixed(0) + ' K 以下，观察等温线出现 S 形弯曲（气液可共存）。' },
+  supercritical: { text: '超临界', check: T => T > TC + 2, hint: '把温度调到 ' + TC.toFixed(0) + ' K 以上，等温线单调下降，气液不可分。' },
+  nearcritical:  { text: '逼近临界', check: T => Math.abs(T - TC) <= 1.5, hint: '把温度调到 ' + TC.toFixed(0) + ' K 附近（±1.5 K 内），观察拐点——等温线在临界体积处切线水平。' }
+};
+document.querySelectorAll('#sec-practice .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#sec-practice .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    practiceTarget = btn.dataset.target;
+    document.getElementById('p-hint').textContent = targetDesc[practiceTarget].hint;
+    updPractice(); draw();
+  });
+});
+function updPractice() {
+  const T = +pT.value, V = +pV.value / 100;
+  document.getElementById('pTv').textContent = T.toFixed(1) + ' K';
+  document.getElementById('pVv').textContent = V.toFixed(2) + ' L/mol';
+  const P = vdwP(T, V);
+  document.getElementById('p-P').textContent = isNaN(P) ? '—' : P.toFixed(1) + ' atm';
+  document.getElementById('p-phase').textContent = phaseOf(T, V);
+  document.getElementById('p-shape').textContent = curveShape(T);
+  const ok = targetDesc[practiceTarget].check(T);
+  document.getElementById('p-status').textContent = ok ? '✅ 达成！' : '未达成';
+  document.getElementById('p-status').style.color = ok ? '#10b981' : '#f59e0b';
+}
+[pT, pV].forEach(el => el.addEventListener('input', () => { updPractice(); draw(); }));
+updPractice();
+
+/* ============================================================
+ * Canvas 绘制
+ * ============================================================ */
+function drawPV(ctx, W, H, T, Vcur, showMarker) {
+  ctx.clearRect(0, 0, W, H);
+  // 坐标范围：V ∈ [0.04, 1.0] L/mol，P ∈ [0, 200] atm
+  const Vmin = 0.04, Vmax = 1.0, Pmin = 0, Pmax = 200;
+  const mL = 60, mR = 20, mT = 30, mB = 50;
+  const x = V => mL + (V - Vmin) / (Vmax - Vmin) * (W - mL - mR);
+  const y = P => H - mB - (P - Pmin) / (Pmax - Pmin) * (H - mT - mB);
+
+  // 轴
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(mL, mT); ctx.lineTo(mL, H - mB); ctx.lineTo(W - mR, H - mB); ctx.stroke();
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('V (L/mol)', (W + mL - mR) / 2, H - 15);
+  ctx.save();
+  ctx.translate(18, (H + mT - mB) / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('P (atm)', 0, 0);
+  ctx.restore();
+
+  // 刻度
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#64748b';
+  for (let v = 0.2; v <= 1.0; v += 0.2) ctx.fillText(v.toFixed(1), x(v), H - mB + 16);
+  for (let p = 50; p <= 200; p += 50) { ctx.textAlign = 'right'; ctx.fillText(p, mL - 6, y(p) + 4); ctx.textAlign = 'center'; }
+
+  // 临界体积虚线
+  ctx.strokeStyle = 'rgba(239,68,68,0.4)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(x(VC), mT); ctx.lineTo(x(VC), H - mB); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#ef4444';
+  ctx.font = '11px sans-serif';
+  ctx.fillText('V_c', x(VC), mT - 6);
+
+  // 参考等温线：Tc（灰）
+  ctx.strokeStyle = 'rgba(148,163,184,0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  let started = false;
+  for (let V = Vmin + 0.001; V <= Vmax; V += 0.005) {
+    const P = vdwP(TC, V);
+    if (isNaN(P) || P < Pmin || P > Pmax) { started = false; continue; }
+    if (!started) { ctx.moveTo(x(V), y(P)); started = true; }
+    else ctx.lineTo(x(V), y(P));
+  }
+  ctx.stroke();
+
+  // 当前温度等温线（彩色）
+  const color = T < TC - 0.5 ? '#34d399' : (T > TC + 0.5 ? '#60a5fa' : '#ef4444');
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  started = false;
+  for (let V = Vmin + 0.001; V <= Vmax; V += 0.003) {
+    const P = vdwP(T, V);
+    if (isNaN(P) || P < Pmin || P > Pmax) { started = false; continue; }
+    if (!started) { ctx.moveTo(x(V), y(P)); started = true; }
+    else ctx.lineTo(x(V), y(P));
+  }
+  ctx.stroke();
+
+  // 麦克斯韦平台示意（亚临界）
+  if (T < TC - 0.5) {
+    // 近似平台压力：取 S 形两端极值的均值
+    let Pplat = 0, found = 0;
+    for (let V = VC; V <= 0.6; V += 0.005) {
+      const P = vdwP(T, V);
+      if (!isNaN(P)) { Pplat += P; found++; }
+    }
+    Pplat /= Math.max(1, found);
+    ctx.strokeStyle = 'rgba(245,158,11,0.7)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(x(VC * 0.7), y(Pplat));
+    ctx.lineTo(x(0.6), y(Pplat));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('麦克斯韦平台（气液共存）', x(VC) + 6, y(Pplat) - 6);
+    ctx.textAlign = 'center';
+  }
+
+  // 临界点标记
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.arc(x(VC), y(PC), 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ef4444';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('临界点 (T_c≈304K)', x(VC) + 8, y(PC) - 8);
+  ctx.textAlign = 'center';
+
+  // 当前点
+  if (showMarker && Vcur >= Vmin && Vcur <= Vmax) {
+    const Pcur = vdwP(T, Vcur);
+    if (!isNaN(Pcur) && Pcur >= Pmin && Pcur <= Pmax) {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(x(Vcur), y(Pcur), 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+
+  // 温度标注
+  ctx.fillStyle = color;
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('T = ' + T.toFixed(1) + ' K', mL + 10, mT + 20);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('灰线：T = T_c', mL + 10, mT + 40);
+}
+
+function drawPT(ctx, W, H, T, Vcur, showMarker) {
+  ctx.clearRect(0, 0, W, H);
+  // 简化 P-T 相图：T ∈ [200, 360] K，P ∈ [0, 120] atm
+  const Tmin = 200, Tmax = 360, Pmin = 0, Pmax = 120;
+  const mL = 60, mR = 20, mT = 30, mB = 50;
+  const x = T => mL + (T - Tmin) / (Tmax - Tmin) * (W - mL - mR);
+  const y = P => H - mB - (P - Pmin) / (Pmax - Pmin) * (H - mT - mB);
+
+  // 轴
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(mL, mT); ctx.lineTo(mL, H - mB); ctx.lineTo(W - mR, H - mB); ctx.stroke();
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('T (K)', (W + mL - mR) / 2, H - 15);
+  ctx.save();
+  ctx.translate(18, (H + mT - mB) / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('P (atm)', 0, 0);
+  ctx.restore();
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#64748b';
+  for (let t = 200; t <= 360; t += 40) ctx.fillText(t, x(t), H - mB + 16);
+  for (let p = 30; p <= 120; p += 30) { ctx.textAlign = 'right'; ctx.fillText(p, mL - 6, y(p) + 4); ctx.textAlign = 'center'; }
+
+  // 三相点（CO₂ 近似 216.6 K, 5.1 atm）
+  const TP = 216.6, PP = 5.1;
+  // 升华线：三相点向左下
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x(Tmin), y(Pmin + 1));
+  ctx.quadraticCurveTo(x(208), y(2.5), x(TP), y(PP));
+  ctx.stroke();
+  // 熔化线：三相点向右上（几乎竖直）
+  ctx.beginPath();
+  ctx.moveTo(x(TP), y(PP));
+  ctx.lineTo(x(TP + 4), y(Pmax));
+  ctx.stroke();
+  // 汽化线：三相点到临界点
+  ctx.strokeStyle = '#34d399';
+  ctx.beginPath();
+  ctx.moveTo(x(TP), y(PP));
+  ctx.quadraticCurveTo(x(260), y(35), x(TC), y(PC));
+  ctx.stroke();
+
+  // 区域标注
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = 'rgba(245,158,11,0.85)';
+  ctx.fillText('固相', x(225), y(85));
+  ctx.fillStyle = 'rgba(52,211,153,0.85)';
+  ctx.fillText('液相', x(280), y(80));
+  ctx.fillStyle = 'rgba(96,165,250,0.85)';
+  ctx.fillText('气相', x(295), y(20));
+  ctx.fillStyle = 'rgba(167,139,250,0.9)';
+  ctx.fillText('超临界流体', x(335), y(85));
+
+  // 三相点
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(x(TP), y(PP), 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('三相点', x(TP) + 8, y(PP) + 4);
+
+  // 临界点
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.arc(x(TC), y(PC), 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('临界点', x(TC) + 8, y(PC) + 4);
+  ctx.textAlign = 'center';
+
+  // 当前温度竖线
+  ctx.strokeStyle = 'rgba(103,232,249,0.6)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(x(T), mT);
+  ctx.lineTo(x(T), H - mB);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#67e8f9';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('T=' + T.toFixed(0) + 'K', x(T), mT - 6);
+}
+
+const learnCtx = document.getElementById('learnCanvas').getContext('2d');
+const practiceCtx = document.getElementById('practiceCanvas').getContext('2d');
+const quizCtx = document.getElementById('quizCanvas').getContext('2d');
+
+function draw() {
+  if (mode === 'learn') {
+    if (learnView === 'pv') drawPV(learnCtx, 700, 420, +TEl.value, +VEl.value / 100, true);
+    else drawPT(learnCtx, 700, 420, +TEl.value, +VEl.value / 100, true);
+  } else if (mode === 'practice') {
+    drawPV(practiceCtx, 700, 420, +pT.value, +pV.value / 100, true);
+  } else {
+    drawQuizScene(quizCtx, 700, 420);
+  }
+}
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const quizData = [
+  {
+    q: '1️⃣ 当温度 T > T_c（临界温度）时，无论怎样加压，气体会？',
+    opts: ['液化', '固化', '保持气态（超临界流体）', '爆炸'],
+    ans: 2,
+    fb: 'T > T_c 时等温线单调下降，不存在气液共存区，无法液化。此时物质处于超临界流体状态，气液界面消失。'
+  },
+  {
+    q: '2️⃣ 范德瓦尔斯等温线在 T < T_c 时出现 S 形弯曲，实际相变过程沿什么路径进行？',
+    opts: ['沿 S 形曲线', '沿麦克斯韦等面积水平线', '沿理想气体双曲线', '沿垂直线'],
+    ans: 1,
+    fb: '麦克斯韦等面积法则：实际相变沿水平平台进行，平台上下与 S 形曲线围成的两块面积相等。平台上气液两相共存，压力恒定。'
+  },
+  {
+    q: '3️⃣ 临界点的数学特征是？',
+    opts: ['P 取最大值', 'dP/dV = 0 且 d²P/dV² = 0（拐点）', 'V = 0', 'T = 0'],
+    ans: 1,
+    fb: '临界点是临界等温线上的拐点：一阶导数和二阶导数同时为零。由此可解出 T_c = 8a/(27Rb)，P_c = a/(27b²)，V_c = 3b。'
+  },
+  {
+    q: '4️⃣ 气液临界与铁磁相变属于同一普适类（3D Ising），说明它们？',
+    opts: ['微观机制完全相同', '临界指数相同，长程涨落主导', '临界温度相同', '都是一级相变'],
+    ans: 1,
+    fb: '普适性：临界指数只取决于空间维数、序参量分量数和对称性，与微观细节无关。气液临界与 3D Ising 铁磁临界共享 β≈0.326 等指数——微观不同，宏观临界行为相同。'
+  }
+];
+let quizIdx = 0;
+let quizAnswers = new Array(quizData.length).fill(-1);
+let quizSubmitted = false;
+
+const qEl = document.getElementById('quiz-q');
+const qOpts = document.getElementById('quiz-opts');
+const qFb = document.getElementById('quiz-fb');
+const qPrev = document.getElementById('quiz-prev');
+const qNext = document.getElementById('quiz-next');
+const qSubmit = document.getElementById('quiz-submit');
+const qRetry = document.getElementById('quiz-retry');
+const qResult = document.getElementById('quiz-result');
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  qEl.textContent = q.q;
+  qOpts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = String.fromCharCode(65 + i) + '. ' + opt;
+    if (quizAnswers[quizIdx] === i) div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+    if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) div.classList.add('correct');
+    div.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizAnswers[quizIdx] = i;
+      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
+      renderQuizOpts();
+    });
+    qOpts.appendChild(div);
+  });
+  function renderQuizOpts() {
+    [...qOpts.children].forEach((ch, i) => {
+      ch.classList.remove('correct', 'wrong');
+      if (quizAnswers[quizIdx] === i) ch.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+      if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) ch.classList.add('correct');
+    });
+  }
+  qFb.textContent = quizAnswers[quizIdx] === -1 ? '' : (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
+  qPrev.disabled = quizIdx === 0;
+  qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
+  qSubmit.classList.toggle('hidden', quizIdx !== quizData.length - 1 || quizSubmitted);
+  qRetry.classList.toggle('hidden', !quizSubmitted);
+}
+qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+qSubmit.addEventListener('click', () => {
+  quizSubmitted = true;
+  const score = quizData.reduce((s, q, i) => s + (quizAnswers[i] === q.ans ? 1 : 0), 0);
+  const pass = score >= 3;
+  qResult.classList.remove('hidden');
+  qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
+  qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  qResult.textContent = pass ? '🎉 得分 ' + score + '/4，合格！本知识点已标记完成' : '😅 得分 ' + score + '/4，未达到 3/4，请复习后重试';
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('phase-transitions');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+  renderQuiz();
+});
+qRetry.addEventListener('click', () => {
+  quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
+  qResult.classList.add('hidden');
+  renderQuiz();
+});
+
+function drawQuizScene(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('🎯 第 ' + (quizIdx + 1) + '/' + quizData.length + ' 题', 30, 40);
+  drawPV(ctx, W, H - 40, 295, 0.5, false);
+}
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('phase-transitions')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+renderQuiz();
+draw();
+</script>
+</body>
+</html>

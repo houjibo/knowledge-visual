@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>晶体结构 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #7c3aed;
+    --cation: #ef4444;
+    --anion: #3b82f6;
+    --bond: #94a3b8;
+    --accent: #fbbf24;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--cation), var(--primary), var(--anion)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(124,58,237,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .info-box { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid var(--primary); line-height: 1.7; font-size: 14px; }
+  .info-box.warn { border-color: var(--accent); }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .btn { padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; background: var(--primary); color: white; transition: all .2s; }
+  .btn:hover { filter: brightness(1.1); }
+  .btn.secondary { background: rgba(255,255,255,0.1); }
+  .btn-row { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-cation::before { background: var(--cation); }
+  .legend .l-anion::before { background: var(--anion); }
+  .legend .l-bond::before { background: var(--bond); }
+  .crystal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 12px 0; }
+  .crystal-btn { padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; text-align: center; }
+  .crystal-btn.active { background: var(--primary); border-color: var(--primary); }
+  .crystal-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .property-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  .property-table th, .property-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  .property-table th { color: #94a3b8; font-weight: 500; }
+  .property-table td { color: #e2e8f0; }
+  .property-table tr:hover { background: rgba(255,255,255,0.04); }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>💎 晶体结构 Interactive</h1>
+    <p>晶格类型 · 晶体模型 · 晶格能 · 性质预测<span id="done-mark" style="color:#10b981;font-weight:700;margin-left:8px;font-size:14px;"></span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="lattice">🔷 晶格类型</div>
+    <div class="tab" data-mode="model">🧊 晶体模型</div>
+    <div class="tab" data-mode="energy">⚡ 晶格能</div>
+    <div class="tab" data-mode="predict">📊 性质预测</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="600" height="450"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>知识可视化 · 大学化学 · 晶体结构</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
+const legend = document.getElementById('legend');
+
+let currentMode = 'lattice';
+let animFrame = null;
+let time = 0;
+let rotAngle = 0;
+
+// ===== Progress tracking: visit all 4 tabs → markDone =====
+const ALL_TABS = ['lattice', 'model', 'energy', 'predict'];
+const visitedTabs = new Set(['lattice']);
+function tryMarkDone() {
+  if (typeof PageProgress === 'undefined') return;
+  if (ALL_TABS.every(t => visitedTabs.has(t))) {
+    PageProgress.markDone('05-crystal');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+
+// ============ 模式切换 ============
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    visitedTabs.add(currentMode);
+    time = 0;
+    setupMode();
+    tryMarkDone();
+  });
+});
+
+// ============ 工具函数 ============
+function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+function drawSphere(x, y, r, color, highlight = true) {
+  const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r);
+  grad.addColorStop(0, highlight ? '#fff' : color);
+  grad.addColorStop(0.3, color);
+  grad.addColorStop(1, '#000');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawBond(x1, y1, x2, y2, color = '#94a3b8', width = 2) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+}
+
+// ============ 晶格类型模式 ============
+let latticeType = 0;
+const latticeTypes = [
+  { name: '简单立方 (SC)', coord: 6, packing: 0.52, atoms: 1, example: 'Po' },
+  { name: '体心立方 (BCC)', coord: 8, packing: 0.68, atoms: 2, example: 'Na, Fe, W' },
+  { name: '面心立方 (FCC)', coord: 12, packing: 0.74, atoms: 4, example: 'Cu, Ag, Au' },
+  { name: '六方密堆积 (HCP)', coord: 12, packing: 0.74, atoms: 6, example: 'Mg, Zn, Ti' }
+];
+
+function setupLattice() {
+  latticeType = 0;
+  panel.innerHTML = `
+    <h3>🔷 晶格类型选择</h3>
+    <div class="crystal-grid" id="latticeGrid"></div>
+    <div id="latticeInfo"></div>
+  `;
+  renderLatticeGrid();
+  updateLatticeInfo();
+  updateLatticeLegend();
+}
+
+function renderLatticeGrid() {
+  const grid = document.getElementById('latticeGrid');
+  if (!grid) return;
+  grid.innerHTML = latticeTypes.map((t, i) => `
+    <div class="crystal-btn ${i === latticeType ? 'active' : ''}" onclick="selectLattice(${i})">${t.name}</div>
+  `).join('');
+}
+
+function selectLattice(idx) {
+  latticeType = idx;
+  renderLatticeGrid();
+  updateLatticeInfo();
+  updateLatticeLegend();
+}
+
+function updateLatticeInfo() {
+  const t = latticeTypes[latticeType];
+  document.getElementById('latticeInfo').innerHTML = `
+    <div class="info-box">
+      <div class="title">📋 ${t.name}</div>
+      <table class="property-table">
+        <tr><th>配位数</th><td>${t.coord}</td></tr>
+        <tr><th>堆积效率</th><td>${(t.packing * 100).toFixed(0)}%</td></tr>
+        <tr><th>晶胞原子数</th><td>${t.atoms}</td></tr>
+        <tr><th>典型实例</th><td>${t.example}</td></tr>
+      </table>
+    </div>
+  `;
+}
+
+function updateLatticeLegend() {
+  legend.innerHTML = `
+    <span class="l-cation">● 原子/离子</span>
+    <span class="l-bond">● 晶格键</span>
+    <span style="color:#fbbf24">● 晶胞边界</span>
+  `;
+}
+
+function drawLattice() {
+  clearCanvas();
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  
+  rotAngle += 0.005;
+  const cosA = Math.cos(rotAngle);
+  const sinA = Math.sin(rotAngle);
+  
+  function project(x, y, z) {
+    const rx = x * cosA - z * sinA;
+    const rz = x * sinA + z * cosA;
+    const scale = 120;
+    return { x: cx + rx * scale, y: cy + y * scale, z: rz };
+  }
+  
+  const t = latticeTypes[latticeType];
+  const atoms = [];
+  const bonds = [];
+  
+  if (latticeType === 0) { // SC
+    const corners = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+    corners.forEach(c => atoms.push(c));
+    for (let i = 0; i < 8; i++) {
+      for (let j = i + 1; j < 8; j++) {
+        const dist = Math.sqrt((corners[i][0]-corners[j][0])**2 + (corners[i][1]-corners[j][1])**2 + (corners[i][2]-corners[j][2])**2);
+        if (Math.abs(dist - 2) < 0.01) bonds.push([i, j]);
+      }
+    }
+  } else if (latticeType === 1) { // BCC
+    const corners = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+    corners.forEach(c => atoms.push(c));
+    atoms.push([0, 0, 0]); // center
+    for (let i = 0; i < 8; i++) {
+      for (let j = i + 1; j < 8; j++) {
+        const dist = Math.sqrt((corners[i][0]-corners[j][0])**2 + (corners[i][1]-corners[j][1])**2 + (corners[i][2]-corners[j][2])**2);
+        if (Math.abs(dist - 2) < 0.01) bonds.push([i, j]);
+      }
+      bonds.push([i, 8]); // connect to center
+    }
+  } else if (latticeType === 2) { // FCC
+    const corners = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+    corners.forEach(c => atoms.push(c));
+    const faceCenters = [[0,-1,0],[0,1,0],[0,0,-1],[0,0,1],[-1,0,0],[1,0,0]];
+    faceCenters.forEach(c => atoms.push(c));
+    for (let i = 0; i < 8; i++) {
+      for (let j = i + 1; j < 8; j++) {
+        const dist = Math.sqrt((corners[i][0]-corners[j][0])**2 + (corners[i][1]-corners[j][1])**2 + (corners[i][2]-corners[j][2])**2);
+        if (Math.abs(dist - 2) < 0.01) bonds.push([i, j]);
+      }
+    }
+    faceCenters.forEach((fc, fi) => {
+      const idx = 8 + fi;
+      corners.forEach((c, ci) => {
+        const dist = Math.sqrt((fc[0]-c[0])**2 + (fc[1]-c[1])**2 + (fc[2]-c[2])**2);
+        if (Math.abs(dist - Math.sqrt(2)) < 0.01) bonds.push([idx, ci]);
+      });
+    });
+  } else { // HCP
+    const h = 1.633;
+    const layer1 = [[-1,0,-1],[1,0,-1],[0,0,1],[-1,0,1],[1,0,1],[0,0,-1]];
+    const layer2 = [[-0.5,h,-0.5],[0.5,h,-0.5],[0,h,0.5],[-0.5,h,0.5],[0.5,h,0.5],[0,h,-0.5]];
+    const layer3 = [[-1,-h,-1],[1,-h,-1],[0,-h,1],[-1,-h,1],[1,-h,1],[0,-h,-1]];
+    layer1.forEach(c => atoms.push(c));
+    layer2.forEach(c => atoms.push(c));
+    layer3.forEach(c => atoms.push(c));
+    for (let i = 0; i < 6; i++) {
+      bonds.push([i, (i + 1) % 6]);
+      bonds.push([i + 6, (i + 1) % 6 + 6]);
+      bonds.push([i + 12, (i + 1) % 6 + 12]);
+      bonds.push([i, i + 6]);
+      bonds.push([i + 6, i + 12]);
+    }
+  }
+  
+  // Draw bonds
+  bonds.forEach(([i, j]) => {
+    const p1 = project(...atoms[i]);
+    const p2 = project(...atoms[j]);
+    drawBond(p1.x, p1.y, p2.x, p2.y, 'rgba(148,163,184,0.4)', 1);
+  });
+  
+  // Sort atoms by z for proper rendering
+  const sortedAtoms = atoms.map((a, i) => ({ pos: project(...a), idx: i }))
+    .sort((a, b) => a.pos.z - b.pos.z);
+  
+  // Draw atoms
+  sortedAtoms.forEach(({ pos }) => {
+    const r = 12 + pos.z * 2;
+    drawSphere(pos.x, pos.y, Math.max(6, r), '#7c3aed');
+  });
+  
+  // Title
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(t.name, cx, 30);
+}
+
+// ============ 晶体模型模式 ============
+let crystalModel = 0;
+const crystalModels = [
+  { name: 'NaCl', type: '离子晶体', cation: 'Na⁺', anion: 'Cl⁻', rCation: 10, rAnion: 14 },
+  { name: 'CsCl', type: '离子晶体', cation: 'Cs⁺', anion: 'Cl⁻', rCation: 14, rAnion: 14 },
+  { name: '金刚石', type: '原子晶体', cation: 'C', anion: 'C', rCation: 12, rAnion: 12 },
+  { name: '干冰', type: '分子晶体', cation: 'CO₂', anion: 'CO₂', rCation: 16, rAnion: 16 }
+];
+
+function setupModel() {
+  crystalModel = 0;
+  panel.innerHTML = `
+    <h3>🧊 晶体模型选择</h3>
+    <div class="crystal-grid" id="modelGrid"></div>
+    <div id="modelInfo"></div>
+  `;
+  renderModelGrid();
+  updateModelInfo();
+  updateModelLegend();
+}
+
+function renderModelGrid() {
+  const grid = document.getElementById('modelGrid');
+  if (!grid) return;
+  grid.innerHTML = crystalModels.map((m, i) => `
+    <div class="crystal-btn ${i === crystalModel ? 'active' : ''}" onclick="selectModel(${i})">${m.name}</div>
+  `).join('');
+}
+
+function selectModel(idx) {
+  crystalModel = idx;
+  renderModelGrid();
+  updateModelInfo();
+  updateModelLegend();
+}
+
+function updateModelInfo() {
+  const m = crystalModels[crystalModel];
+  document.getElementById('modelInfo').innerHTML = `
+    <div class="info-box">
+      <div class="title">📋 ${m.name} (${m.type})</div>
+      <div style="font-size:13px;line-height:1.8;color:#94a3b8">
+        ${m.type === '离子晶体' ? `
+          阳离子: <b style="color:#ef4444">${m.cation}</b><br>
+          阴离子: <b style="color:#3b82f6">${m.anion}</b><br>
+          配位数: ${m.name === 'NaCl' ? '6:6' : '8:8'}<br>
+          结合力: 离子键
+        ` : m.type === '原子晶体' ? `
+          原子: <b style="color:#7c3aed">${m.cation}</b><br>
+          配位数: 4<br>
+          结合力: 共价键
+        ` : `
+          分子: <b style="color:#fbbf24">${m.cation}</b><br>
+          配位数: 12<br>
+          结合力: 范德华力
+        `}
+      </div>
+    </div>
+  `;
+}
+
+function updateModelLegend() {
+  const m = crystalModels[crystalModel];
+  if (m.type === '离子晶体') {
+    legend.innerHTML = `<span class="l-cation">● ${m.cation}</span><span class="l-anion">● ${m.anion}</span><span class="l-bond">● 离子键</span>`;
+  } else if (m.type === '原子晶体') {
+    legend.innerHTML = `<span style="color:#7c3aed">● ${m.cation}</span><span class="l-bond">● 共价键</span>`;
+  } else {
+    legend.innerHTML = `<span style="color:#fbbf24">● ${m.cation}</span><span style="color:#64748b">● 范德华力</span>`;
+  }
+}
+
+function drawModel() {
+  clearCanvas();
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  
+  rotAngle += 0.005;
+  const cosA = Math.cos(rotAngle);
+  const sinA = Math.sin(rotAngle);
+  
+  function project(x, y, z) {
+    const rx = x * cosA - z * sinA;
+    const rz = x * sinA + z * cosA;
+    const scale = 80;
+    return { x: cx + rx * scale, y: cy + y * scale, z: rz };
+  }
+  
+  const m = crystalModels[crystalModel];
+  
+  if (m.name === 'NaCl') {
+    // NaCl structure
+    const na = [[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5],[1,0.5,0.5],[0.5,1,0.5],[0.5,0.5,1]];
+    const cl = [[0.5,0.5,0.5],[0.5,0,0],[0,0.5,0],[0,0,0.5],[1,0.5,0],[0.5,1,0],[0,0.5,1],[1,0,0.5],[0.5,0,1],[0,1,0.5],[1,1,0.5],[0.5,1,1]];
+    
+    // Draw bonds
+    na.forEach((n, i) => {
+      cl.forEach((c, j) => {
+        const dist = Math.sqrt((n[0]-c[0])**2 + (n[1]-c[1])**2 + (n[2]-c[2])**2);
+        if (Math.abs(dist - 0.5) < 0.01) {
+          const p1 = project(...n);
+          const p2 = project(...c);
+          drawBond(p1.x, p1.y, p2.x, p2.y, 'rgba(148,163,184,0.3)', 1);
+        }
+      });
+    });
+    
+    // Draw Na+
+    na.forEach(n => {
+      const p = project(...n);
+      drawSphere(p.x, p.y, m.rCation + p.z, '#ef4444');
+    });
+    
+    // Draw Cl-
+    cl.forEach(c => {
+      const p = project(...c);
+      drawSphere(p.x, p.y, m.rAnion + p.z, '#3b82f6');
+    });
+  } else if (m.name === 'CsCl') {
+    const cs = [[0.5, 0.5, 0.5]];
+    const cl = [[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1]];
+    
+    cs.forEach(c => {
+      cl.forEach(l => {
+        const p1 = project(...c);
+        const p2 = project(...l);
+        drawBond(p1.x, p1.y, p2.x, p2.y, 'rgba(148,163,184,0.3)', 1);
+      });
+    });
+    
+    cs.forEach(c => {
+      const p = project(...c);
+      drawSphere(p.x, p.y, m.rCation + p.z, '#ef4444');
+    });
+    
+    cl.forEach(l => {
+      const p = project(...l);
+      drawSphere(p.x, p.y, m.rAnion + p.z, '#3b82f6');
+    });
+  } else if (m.name === '金刚石') {
+    const c1 = [[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1]];
+    const c2 = [[0.25,0.25,0.25],[0.75,0.75,0.25],[0.75,0.25,0.75],[0.25,0.75,0.75]];
+    const all = [...c1, ...c2];
+    
+    // Draw bonds (tetrahedral)
+    c2.forEach((c, i) => {
+      c1.forEach((n, j) => {
+        const dist = Math.sqrt((c[0]-n[0])**2 + (c[1]-n[1])**2 + (c[2]-n[2])**2);
+        if (Math.abs(dist - Math.sqrt(3)/4) < 0.1) {
+          const p1 = project(...c);
+          const p2 = project(...n);
+          drawBond(p1.x, p1.y, p2.x, p2.y, 'rgba(148,163,184,0.5)', 2);
+        }
+      });
+    });
+    
+    all.forEach(c => {
+      const p = project(...c);
+      drawSphere(p.x, p.y, m.rCation + p.z, '#7c3aed');
+    });
+  } else { // 干冰
+    const positions = [[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5],[1,0.5,0.5],[0.5,1,0.5],[0.5,0.5,1]];
+    
+    positions.forEach((p, i) => {
+      positions.forEach((q, j) => {
+        if (i < j) {
+          const dist = Math.sqrt((p[0]-q[0])**2 + (p[1]-q[1])**2 + (p[2]-q[2])**2);
+          if (Math.abs(dist - 0.5) < 0.01) {
+            const p1 = project(...p);
+            const p2 = project(...q);
+            drawBond(p1.x, p1.y, p2.x, p2.y, 'rgba(100,116,139,0.2)', 1);
+          }
+        }
+      });
+    });
+    
+    positions.forEach(p => {
+      const proj = project(...p);
+      drawSphere(proj.x, proj.y, m.rCation + proj.z, '#fbbf24');
+    });
+  }
+  
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${m.name} ${m.type}`, cx, 30);
+}
+
+// ============ 晶格能模式 ============
+let latticeEnergyParams = { charge1: 1, charge2: 1, radius1: 100, radius2: 100 };
+
+function setupEnergy() {
+  panel.innerHTML = `
+    <h3>⚡ 晶格能计算</h3>
+    <div class="info-box">
+      <div class="title">📋 玻恩-兰德方程</div>
+      <div style="font-family:serif;font-size:16px;text-align:center;color:#fbbf24;margin:10px 0">
+        U = (Nₐ × M × z⁺ × z⁻ × e²) / (4πε₀ × r₀) × (1 - 1/n)
+      </div>
+    </div>
+    <div class="slider-row">
+      <label>阳离子电荷</label>
+      <input type="range" min="1" max="3" value="1" oninput="updateEnergyParams('charge1', this.value)">
+      <span class="val" id="charge1Val">+1</span>
+    </div>
+    <div class="slider-row">
+      <label>阴离子电荷</label>
+      <input type="range" min="1" max="3" value="1" oninput="updateEnergyParams('charge2', this.value)">
+      <span class="val" id="charge2Val">-1</span>
+    </div>
+    <div class="slider-row">
+      <label>阳离子半径</label>
+      <input type="range" min="50" max="200" value="100" oninput="updateEnergyParams('radius1', this.value)">
+      <span class="val" id="radius1Val">100 pm</span>
+    </div>
+    <div class="slider-row">
+      <label>阴离子半径</label>
+      <input type="range" min="50" max="200" value="100" oninput="updateEnergyParams('radius2', this.value)">
+      <span class="val" id="radius2Val">100 pm</span>
+    </div>
+    <div id="energyResult" class="info-box warn"></div>
+  `;
+  updateEnergyResult();
+  updateEnergyLegend();
+}
+
+function updateEnergyParams(key, val) {
+  latticeEnergyParams[key] = parseInt(val);
+  document.getElementById(key + 'Val').textContent = 
+    key.includes('charge') ? (key === 'charge1' ? '+' : '-') + val : val + ' pm';
+  updateEnergyResult();
+}
+
+function updateEnergyResult() {
+  const p = latticeEnergyParams;
+  const r0 = p.radius1 + p.radius2;
+  const energy = (p.charge1 * p.charge2 * 1000) / r0;
+  document.getElementById('energyResult').innerHTML = `
+    <div class="title">📊 计算结果</div>
+    <div style="font-family:monospace;font-size:14px;line-height:1.8">
+      r₀ = ${r0} pm<br>
+      z⁺ × z⁻ = ${p.charge1} × ${p.charge2} = ${p.charge1 * p.charge2}<br>
+      <b style="color:#fbbf24">U ∝ ${energy.toFixed(2)} (相对值)</b>
+    </div>
+    <div style="font-size:12px;color:#94a3b8;margin-top:8px">
+      晶格能与电荷乘积成正比，与核间距成反比
+    </div>
+  `;
+}
+
+function updateEnergyLegend() {
+  legend.innerHTML = `
+    <span class="l-cation">● 阳离子</span>
+    <span class="l-anion">● 阴离子</span>
+    <span style="color:#fbbf24">● 晶格能</span>
+  `;
+}
+
+function drawEnergy() {
+  clearCanvas();
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  
+  const p = latticeEnergyParams;
+  const r0 = p.radius1 + p.radius2;
+  const scale = 150 / r0;
+  
+  // Draw ions
+  const cationR = p.radius1 * scale * 0.3;
+  const anionR = p.radius2 * scale * 0.3;
+  const dist = (cationR + anionR) * 1.5;
+  
+  // Cation
+  drawSphere(cx - dist, cy, cationR, '#ef4444');
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('+' + p.charge1, cx - dist, cy + 5);
+  
+  // Anion
+  drawSphere(cx + dist, cy, anionR, '#3b82f6');
+  ctx.fillStyle = '#fff';
+  ctx.fillText('-' + p.charge2, cx + dist, cy + 5);
+  
+  // Bond
+  drawBond(cx - dist + cationR, cy, cx + dist - anionR, cy, '#fbbf24', 3);
+  
+  // Distance label
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`r₀ = ${r0} pm`, cx, cy + 40);
+  
+  // Energy bar
+  const energy = (p.charge1 * p.charge2 * 1000) / r0;
+  const barHeight = Math.min(200, energy * 20);
+  const barX = W - 80;
+  
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.fillRect(barX, H - 50, 40, -200);
+  
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillRect(barX, H - 50, 40, -barHeight);
+  
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('U', barX + 20, H - 60);
+  ctx.fillText(energy.toFixed(1), barX + 20, H - 50 - barHeight - 10);
+  
+  // Title
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('晶格能可视化', cx, 30);
+}
+
+// ============ 性质预测模式 ============
+let predictCrystal = 0;
+const predictCrystals = [
+  { name: 'NaCl', type: '离子晶体', mp: 801, hardness: 2.5, conductivity: '固态不导电，熔融态导电' },
+  { name: '金刚石', type: '原子晶体', mp: 3550, hardness: 10, conductivity: '不导电' },
+  { name: '冰', type: '分子晶体', mp: 0, hardness: 1.5, conductivity: '不导电' },
+  { name: '铜', type: '金属晶体', mp: 1085, hardness: 3, conductivity: '良导体' }
+];
+
+function setupPredict() {
+  predictCrystal = 0;
+  panel.innerHTML = `
+    <h3>📊 性质预测</h3>
+    <div class="crystal-grid" id="predictGrid"></div>
+    <div id="predictInfo"></div>
+  `;
+  renderPredictGrid();
+  updatePredictInfo();
+  updatePredictLegend();
+}
+
+function renderPredictGrid() {
+  const grid = document.getElementById('predictGrid');
+  if (!grid) return;
+  grid.innerHTML = predictCrystals.map((c, i) => `
+    <div class="crystal-btn ${i === predictCrystal ? 'active' : ''}" onclick="selectPredict(${i})">${c.name}</div>
+  `).join('');
+}
+
+function selectPredict(idx) {
+  predictCrystal = idx;
+  renderPredictGrid();
+  updatePredictInfo();
+  updatePredictLegend();
+}
+
+function updatePredictInfo() {
+  const c = predictCrystals[predictCrystal];
+  document.getElementById('predictInfo').innerHTML = `
+    <div class="info-box">
+      <div class="title">📋 ${c.name} (${c.type})</div>
+      <table class="property-table">
+        <tr><th>熔点</th><td>${c.mp} °C</td></tr>
+        <tr><th>莫氏硬度</th><td>${c.hardness}</td></tr>
+        <tr><th>导电性</th><td>${c.conductivity}</td></tr>
+      </table>
+    </div>
+    <div class="info-box warn">
+      <div class="title">💡 性质规律</div>
+      <div style="font-size:13px;line-height:1.8;color:#94a3b8">
+        ${c.type === '离子晶体' ? '离子电荷越大、半径越小，晶格能越大，熔点越高、硬度越大' : 
+          c.type === '原子晶体' ? '共价键越强，熔点越高、硬度越大' :
+          c.type === '分子晶体' ? '分子间作用力越弱，熔点越低、硬度越小' :
+          '金属键越强，熔点越高、硬度越大'}
+      </div>
+    </div>
+  `;
+}
+
+function updatePredictLegend() {
+  const c = predictCrystals[predictCrystal];
+  legend.innerHTML = `<span style="color:#fbbf24">● ${c.type}</span><span style="color:#94a3b8">● 性质指标</span>`;
+}
+
+function drawPredict() {
+  clearCanvas();
+  const W = canvas.width, H = canvas.height;
+  const c = predictCrystals[predictCrystal];
+  
+  // Draw property bars
+  const props = [
+    { name: '熔点', value: c.mp / 3550, color: '#ef4444' },
+    { name: '硬度', value: c.hardness / 10, color: '#3b82f6' },
+    { name: '导电性', value: c.type === '金属晶体' ? 1 : c.type === '离子晶体' ? 0.3 : 0, color: '#fbbf24' }
+  ];
+  
+  const barWidth = 60;
+  const barSpacing = 100;
+  const startX = W / 2 - (props.length - 1) * barSpacing / 2;
+  
+  props.forEach((p, i) => {
+    const x = startX + i * barSpacing;
+    const barHeight = p.value * 250;
+    
+    // Background
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(x - barWidth / 2, H - 100, barWidth, -250);
+    
+    // Bar
+    ctx.fillStyle = p.color;
+    ctx.fillRect(x - barWidth / 2, H - 100, barWidth, -barHeight);
+    
+    // Label
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.name, x, H - 70);
+    
+    // Value
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText((p.value * 100).toFixed(0) + '%', x, H - 100 - barHeight - 10);
+  });
+  
+  // Title
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${c.name} 性质预测`, W / 2, 40);
+  
+  // Crystal type indicator
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.fillText(c.type, W / 2, 70);
+}
+
+// ============ 主循环 ============
+function setupMode() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  if (currentMode === 'lattice') setupLattice();
+  else if (currentMode === 'model') setupModel();
+  else if (currentMode === 'energy') setupEnergy();
+  else if (currentMode === 'predict') setupPredict();
+  animate();
+}
+
+function animate() {
+  time++;
+  if (currentMode === 'lattice') drawLattice();
+  else if (currentMode === 'model') drawModel();
+  else if (currentMode === 'energy') drawEnergy();
+  else if (currentMode === 'predict') drawPredict();
+  animFrame = requestAnimationFrame(animate);
+}
+
+setupMode();
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('05-crystal')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学化学"></script>
+</body>
+</html>

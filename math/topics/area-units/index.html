@@ -161,6 +161,7 @@
       <button class="mode-tab" data-mode="count">🔢 方格计数</button>
       <button class="mode-tab" data-mode="convert">🔄 单位换算</button>
       <button class="mode-tab" data-mode="estimate">🎯 估测挑战</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
     </div>
 
     <!-- 模式1: 认识单位 -->
@@ -297,6 +298,26 @@
           <div class="estimate-name" id="est-name"></div>
           <div class="estimate-prompt" id="est-prompt"></div>
           <div class="estimate-options" id="est-options"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模式5: 挑战 -->
+    <div class="mode-content" data-mode="challenge">
+      <div class="section-title">🏆 面积单位大挑战</div>
+      <div class="section-desc">连续答对越多越好，答错显示正确答案</div>
+      <div class="progress-bar">
+        <span id="ch-streak">🔥 连对 0</span>
+        <div class="progress-track"><div class="progress-fill" id="ch-progress" style="width:0%;"></div></div>
+        <span id="ch-best">🏅 最高 0</span>
+      </div>
+      <div class="convert-area">
+        <div class="convert-problem" id="ch-problem" style="min-height:60px;"></div>
+        <div class="convert-hint" id="ch-hint"></div>
+        <div class="convert-options" id="ch-options"></div>
+        <div id="ch-input-row" style="display:none;text-align:center;margin-top:12px;">
+          <input type="number" class="grid-input" id="ch-answer" placeholder="?" inputmode="numeric" style="width:120px;">
+          <button class="btn btn-primary" id="btn-ch-check" style="margin-left:8px;">✔️ 检查</button>
         </div>
       </div>
     </div>
@@ -520,6 +541,175 @@
     // 打乱顺序
     estimateItems.sort(() => Math.random() - 0.5);
     newEstimate();
+
+    // === 模式5: 挑战 ===
+    let chStreak = 0, chBest = 0, chRound = 0, chAnswer = null, chType = '';
+    chBest = parseInt(localStorage.getItem('areaUnitsChBest') || '0');
+    $('#ch-best').textContent = `🏅 最高 ${chBest}`;
+
+    const chTypes = ['convert', 'unit-pick', 'compare', 'count', 'real-life'];
+
+    function newChallenge() {
+      chRound++;
+      chType = chTypes[Math.floor(Math.random() * chTypes.length)];
+      $('#ch-hint').textContent = '';
+      $('#ch-options').innerHTML = '';
+      $('#ch-input-row').style.display = 'none';
+      $('#ch-answer').value = '';
+      $('#ch-answer').className = 'grid-input';
+
+      if (chType === 'convert') {
+        // 换算题：? 平方分米 = ? 平方厘米 等
+        const pairs = [
+          { from: '平方分米', to: '平方厘米', factor: 100, val: 1 + Math.floor(Math.random() * 9) },
+          { from: '平方米', to: '平方分米', factor: 100, val: 1 + Math.floor(Math.random() * 9) },
+          { from: '平方米', to: '平方厘米', factor: 10000, val: 1 + Math.floor(Math.random() * 5) },
+        ];
+        const p = pairs[Math.floor(Math.random() * pairs.length)];
+        chAnswer = p.val * p.factor;
+        $('#ch-problem').innerHTML = `${p.val} ${p.from} = <span class="blank">?</span> ${p.to}`;
+        showChOptions(chAnswer, v => v);
+      } else if (chType === 'unit-pick') {
+        // 选合适单位
+        const items = [
+          { obj: '📮 邮票', answer: '平方厘米' },
+          { obj: '📺 电视屏幕', answer: '平方分米' },
+          { obj: '🏀 篮球场', answer: '平方米' },
+          { obj: '💳 银行卡', answer: '平方厘米' },
+          { obj: '🗺️ 教室地面', answer: '平方米' },
+          { obj: '📔 作业本封面', answer: '平方分米' },
+        ];
+        const it = items[Math.floor(Math.random() * items.length)];
+        chAnswer = it.answer;
+        $('#ch-problem').innerHTML = `测量 <b>${it.obj}</b> 的面积，最合适的单位是？`;
+        showChOptions(chAnswer, v => v, ['平方厘米', '平方分米', '平方米']);
+      } else if (chType === 'compare') {
+        // 比较大小
+        const a = (1 + Math.floor(Math.random() * 9)) * 100; // 平方厘米
+        const b = 1 + Math.floor(Math.random() * 9);          // 平方分米
+        const aCm = a, bCm = b * 100;
+        chAnswer = aCm === bCm ? '=' : (aCm > bCm ? '>' : '<');
+        $('#ch-problem').innerHTML = `${a} 平方厘米 <span class="blank">○</span> ${b} 平方分米`;
+        showChOptions(chAnswer, v => v, ['>', '=', '<']);
+      } else if (chType === 'count') {
+        // 数方格
+        const r = 2 + Math.floor(Math.random() * 3);
+        const c = 3 + Math.floor(Math.random() * 3);
+        chAnswer = r * c;
+        $('#ch-problem').innerHTML = `长 ${c} 格、宽 ${r} 格的长方形（每格 1cm²），面积是多少平方厘米？`;
+        showChOptions(chAnswer, v => v);
+      } else {
+        // real-life 填空：数值输入
+        const qs = [
+          { q: '一块手帕约 4 平方分米 = ? 平方厘米', a: 400 },
+          { q: '一张课桌面约 24 平方分米 = ? 平方厘米', a: 2400 },
+          { q: '教室黑板约 4 平方米 = ? 平方分米', a: 400 },
+          { q: '篮球场约 400 平方米，半个篮球场约 ? 平方米', a: 200 },
+        ];
+        const it = qs[Math.floor(Math.random() * qs.length)];
+        chAnswer = it.a;
+        $('#ch-problem').innerHTML = it.q;
+        $('#ch-input-row').style.display = 'block';
+        setTimeout(() => $('#ch-answer').focus(), 100);
+      }
+      $('#ch-streak').textContent = `🔥 连对 ${chStreak}`;
+      $('#ch-progress').style.width = Math.min(100, chStreak * 10) + '%';
+    }
+
+    function showChOptions(answer, fmt, fixed) {
+      const container = $('#ch-options');
+      container.innerHTML = '';
+      let opts;
+      if (fixed) {
+        opts = fixed.slice();
+      } else {
+        opts = new Set([answer]);
+        let guard = 0;
+        while (opts.size < 4 && guard++ < 50) {
+          const deltas = [10, 100, 1000, 1, 2, 5];
+          const d = deltas[Math.floor(Math.random() * deltas.length)];
+          const wrong = Math.random() < 0.5 ? answer + d : Math.max(1, answer - d);
+          if (wrong !== answer && wrong > 0) opts.add(wrong);
+          if (opts.size < 4) opts.add(answer * (Math.random() < 0.5 ? 10 : 0.1));
+        }
+        opts = Array.from(opts).filter(v => Number.isFinite(v) && v > 0).slice(0, 4);
+        if (!opts.includes(answer)) opts[0] = answer;
+      }
+      opts.sort(() => Math.random() - 0.5);
+      opts.forEach(v => {
+        const btn = document.createElement('button');
+        btn.className = 'convert-opt';
+        btn.textContent = fmt(v);
+        btn.addEventListener('click', () => checkChallenge(btn, v));
+        container.appendChild(btn);
+      });
+    }
+
+    function checkChallenge(btn, val) {
+      if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+      if (val === chAnswer) {
+        btn.classList.add('correct');
+        chStreak++;
+        if (chStreak > chBest) {
+          chBest = chStreak;
+          localStorage.setItem('areaUnitsChBest', String(chBest));
+          $('#ch-best').textContent = `🏅 最高 ${chBest}`;
+        }
+        if (chStreak >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('area-units')) {
+          PageProgress.markDone('area-units');
+        }
+        playSound('correct'); celebrate();
+        showToast(`🎉 连对 ${chStreak} 题！`);
+        $$('#ch-options .convert-opt').forEach(b => b.style.pointerEvents = 'none');
+        setTimeout(newChallenge, 1200);
+      } else {
+        btn.classList.add('wrong');
+        playSound('wrong');
+        showToast(`答错了，正确答案是 ${chAnswer}`);
+        chStreak = 0;
+        setTimeout(() => { newChallenge(); }, 1800);
+      }
+      $('#ch-streak').textContent = `🔥 连对 ${chStreak}`;
+      $('#ch-progress').style.width = Math.min(100, chStreak * 10) + '%';
+    }
+
+    $('#btn-ch-check').addEventListener('click', () => {
+      const val = parseInt($('#ch-answer').value);
+      if (isNaN(val)) { showToast('请输入数字'); return; }
+      if (val === chAnswer) {
+        $('#ch-answer').className = 'grid-input correct';
+        chStreak++;
+        if (chStreak > chBest) {
+          chBest = chStreak;
+          localStorage.setItem('areaUnitsChBest', String(chBest));
+          $('#ch-best').textContent = `🏅 最高 ${chBest}`;
+        }
+        if (chStreak >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('area-units')) {
+          PageProgress.markDone('area-units');
+        }
+        playSound('correct'); celebrate();
+        showToast(`🎉 连对 ${chStreak} 题！`);
+        setTimeout(newChallenge, 1200);
+      } else {
+        $('#ch-answer').className = 'grid-input wrong';
+        playSound('wrong');
+        showToast(`答错了，正确答案是 ${chAnswer}`);
+        chStreak = 0;
+        setTimeout(() => { newChallenge(); }, 1800);
+      }
+      $('#ch-streak').textContent = `🔥 连对 ${chStreak}`;
+      $('#ch-progress').style.width = Math.min(100, chStreak * 10) + '%';
+    });
+    $('#ch-answer').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btn-ch-check').click(); });
+
+    // 切换到挑战 tab 时初始化
+    $$('.mode-tab').forEach(tab => {
+      if (tab.dataset.mode === 'challenge') {
+        tab.addEventListener('click', () => {
+          if (chRound === 0) newChallenge();
+        });
+      }
+    });
   </script>
 </body>
 </html>

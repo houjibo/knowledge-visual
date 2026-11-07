@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>氧化还原反应 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #e11d48;
+    --oxidize: #ef4444;
+    --reduce: #3b82f6;
+    --electron: #fbbf24;
+    --accent: #8b5cf6;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--oxidize), var(--electron), var(--reduce)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(225,29,72,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.8; }
+  .equation .ox { color: var(--oxidize); font-weight: 600; }
+  .equation .red { color: var(--reduce); font-weight: 600; }
+  .equation .el { color: var(--electron); font-weight: 600; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 90px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 60px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.ox { border-color: var(--oxidize); }
+  .concept-card.red { border-color: var(--reduce); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.ox .title { color: var(--oxidize); }
+  .concept-card.red .title { color: var(--reduce); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-ox::before { background: var(--oxidize); }
+  .legend .l-red::before { background: var(--reduce); }
+  .legend .l-el::before { background: var(--electron); }
+  .legend .l-accent::before { background: var(--accent); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(225,29,72,0.08); border-radius: 12px; border: 1px solid rgba(225,29,72,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; }
+  .quiz-nav button { padding: 6px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .balance-area { margin: 12px 0; }
+  .balance-row { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 14px; flex-wrap: wrap; }
+  .balance-row input { width: 50px; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: rgba(255,255,255,0.08); color: white; text-align: center; font-size: 15px; }
+  .balance-row input:focus { outline: none; border-color: var(--primary); }
+  .balance-row .eq-text { color: #94a3b8; }
+  .check-btn { padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; background: var(--primary); color: white; margin-top: 8px; transition: all .2s; }
+  .check-btn:hover { filter: brightness(1.1); }
+  .result-msg { margin-top: 8px; font-size: 14px; min-height: 20px; }
+  .result-msg.ok { color: #10b981; }
+  .result-msg.err { color: #ef4444; }
+  .step-anim { position: relative; }
+  .step-controls { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+  .step-controls button { padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: rgba(255,255,255,0.1); color: white; transition: all .2s; }
+  .step-controls button:hover { background: rgba(255,255,255,0.2); }
+  .step-controls button.primary { background: var(--primary); }
+  .hidden { display: none; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+</style>
+</head>
+<body>
+<script src="assets/common.js"></script>
+<div class="container">
+  <header>
+    <h1>⚗️ 氧化还原反应 Interactive</h1>
+    <p>概念解析 · 电子转移 · 方程式配平 · 互动练习</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="concept">📖 概念解析</div>
+    <div class="tab" data-mode="electron">⚡ 电子转移</div>
+    <div class="tab" data-mode="balance">🧮 方程式配平</div>
+    <div class="tab" data-mode="examples">🔬 经典反应</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="600" height="450"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>知识可视化 · 高中化学 · 氧化还原反应 <span id="done-mark" style="margin-left:8px;color:#34C759;font-weight:700;"></span></footer>
+</div>
+
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
+const legendEl = document.getElementById('legend');
+let currentMode = 'concept';
+let animFrame = 0;
+let animId = null;
+
+// ===== Color Palette =====
+const C = {
+  ox: '#ef4444', red: '#3b82f6', el: '#fbbf24', accent: '#8b5cf6',
+  green: '#10b981', white: '#f1f5f9', gray: '#94a3b8', dark: '#0f172a'
+};
+
+// ===== Tab Switching =====
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    cancelAnimationFrame(animId);
+    animFrame = 0;
+    render();
+  });
+});
+
+// ===== Utility =====
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+function drawText(text, x, y, { color = C.white, size = 14, align = 'center', bold = false, font = '' } = {}) {
+  ctx.fillStyle = color;
+  ctx.font = `${bold ? 'bold ' : ''}${size}px ${font || '-apple-system, "PingFang SC", sans-serif'}`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+function drawArrow(x1, y1, x2, y2, color, width = 2) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const len = 10;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - len * Math.cos(angle - 0.4), y2 - len * Math.sin(angle - 0.4));
+  ctx.lineTo(x2 - len * Math.cos(angle + 0.4), y2 - len * Math.sin(angle + 0.4));
+  ctx.fill();
+}
+function drawCircle(x, y, r, color, alpha = 1) {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+function lerp(a, b, t) { return a + (b - a) * t; }
+function easeInOut(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
+
+// ===== MODE 1: Concept =====
+function renderConcept() {
+  legendEl.innerHTML = '<span class="l-ox">氧化（失电子）</span><span class="l-red">还原（得电子）</span><span class="l-el">电子转移</span>';
+  panel.innerHTML = `
+    <h3>📖 氧化还原反应核心概念</h3>
+    <div class="concept-card ox">
+      <div class="title">🔴 氧化反应（Oxidation）</div>
+      物质<strong>失去电子</strong>的过程，化合价<strong>升高</strong>。<br>
+      例：Na → Na⁺ + e⁻（钠失去1个电子被氧化）
+    </div>
+    <div class="concept-card red">
+      <div class="title">🔵 还原反应（Reduction）</div>
+      物质<strong>得到电子</strong>的过程，化合价<strong>降低</strong>。<br>
+      例：Cl₂ + 2e⁻ → 2Cl⁻（氯得到电子被还原）
+    </div>
+    <div class="concept-card" style="border-color: var(--electron);">
+      <div class="title" style="color: var(--electron);">⚡ 核心规律</div>
+      <strong>氧化与还原同时发生</strong>，得失电子总数相等。<br>
+      氧化剂 → 被还原（得电子）<br>
+      还原剂 → 被氧化（失电子）
+    </div>
+    <div class="info-grid">
+      <div><b>口诀</b>：升失氧，降得还</div>
+      <div><b>本质</b>：电子的转移</div>
+      <div><b>氧化剂</b>：得电子的物质</div>
+      <div><b>还原剂</b>：失电子的物质</div>
+    </div>
+  `;
+  animateConcept();
+}
+
+function animateConcept() {
+  clearCanvas();
+  const t = (animFrame % 300) / 300;
+  const cx = 300, cy = 225;
+
+  // Title
+  drawText('氧化还原反应的本质', cx, 30, { size: 18, bold: true, color: C.white });
+
+  // Na atom (left)
+  const naX = 150, naY = 180;
+  const naPulse = 1 + 0.05 * Math.sin(animFrame * 0.05);
+  drawCircle(naX, naY, 40 * naPulse, 'rgba(239,68,68,0.15)');
+  drawCircle(naX, naY, 28, C.ox, 0.8);
+  drawText('Na', naX, naY, { size: 16, bold: true, color: 'white' });
+  drawText('还原剂', naX, naY + 55, { size: 12, color: C.ox });
+  drawText('化合价: 0 → +1', naX, naY + 72, { size: 11, color: C.gray });
+
+  // Cl atom (right)
+  const clX = 450, clY = 180;
+  const clPulse = 1 + 0.05 * Math.sin(animFrame * 0.05 + Math.PI);
+  drawCircle(clX, clY, 40 * clPulse, 'rgba(59,130,246,0.15)');
+  drawCircle(clX, clY, 28, C.red, 0.8);
+  drawText('Cl', clX, clY, { size: 16, bold: true, color: 'white' });
+  drawText('氧化剂', clX, clY + 55, { size: 12, color: C.red });
+  drawText('化合价: 0 → -1', clX, clY + 72, { size: 11, color: C.gray });
+
+  // Electron transfer animation
+  const phase = t;
+  if (phase < 0.5) {
+    // Electron near Na
+    const ep = easeInOut(phase * 2);
+    const ex = lerp(naX + 30, 300, ep);
+    const ey = lerp(naY, 130, ep);
+    drawCircle(ex, ey, 8, C.el);
+    drawText('e⁻', ex, ey, { size: 10, bold: true, color: C.dark });
+    if (ep > 0.3) {
+      drawArrow(ex + 12, ey, ex + 40, ey - 10, C.el, 1.5);
+    }
+  } else {
+    // Electron moving to Cl
+    const ep = easeInOut((phase - 0.5) * 2);
+    const ex = lerp(300, clX - 30, ep);
+    const ey = lerp(130, clY, ep);
+    drawCircle(ex, ey, 8, C.el);
+    drawText('e⁻', ex, ey, { size: 10, bold: true, color: C.dark });
+  }
+
+  // Trail
+  const trailCount = 8;
+  for (let i = 0; i < trailCount; i++) {
+    const tp = (phase - i * 0.02 + 1) % 1;
+    let tx, ty;
+    if (tp < 0.5) {
+      const e2 = easeInOut(tp * 2);
+      tx = lerp(naX + 30, 300, e2);
+      ty = lerp(naY, 130, e2);
+    } else {
+      const e2 = easeInOut((tp - 0.5) * 2);
+      tx = lerp(300, clX - 30, e2);
+      ty = lerp(130, clY, e2);
+    }
+    drawCircle(tx, ty, 3, C.el, 0.3 - i * 0.03);
+  }
+
+  // Result area
+  const resultY = 340;
+  drawText('2Na + Cl₂ → 2NaCl', cx, resultY, { size: 16, bold: true, color: C.white });
+
+  // Oxidation label
+  const labelAlpha = 0.5 + 0.5 * Math.sin(animFrame * 0.03);
+  drawText('Na 失去电子 → 被氧化', 180, resultY + 40, { size: 12, color: C.ox });
+  drawText('Cl 得到电子 → 被还原', 420, resultY + 40, { size: 12, color: C.red });
+
+  // Curved arrow labels
+  ctx.strokeStyle = C.ox;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.arc(naX, naY + 100, 60, -Math.PI, 0);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle = C.red;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.arc(clX, clY + 100, 60, -Math.PI, 0);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  animFrame++;
+  animId = requestAnimationFrame(animateConcept);
+}
+
+// ===== MODE 2: Electron Transfer =====
+function renderElectron() {
+  legendEl.innerHTML = '<span class="l-ox">失电子（氧化）</span><span class="l-red">得电子（还原）</span><span class="l-el">电子</span><span class="l-accent">化合价变化</span>';
+  panel.innerHTML = `
+    <h3>⚡ 电子转移可视化</h3>
+    <div class="mode-switch" id="rxnSwitch">
+      <div class="mode-btn active" data-rxn="0">Zn + Cu²⁺</div>
+      <div class="mode-btn" data-rxn="1">Fe + O₂</div>
+      <div class="mode-btn" data-rxn="2">Na + Cl₂</div>
+    </div>
+    <div class="equation" id="eqDisplay"></div>
+    <div class="info-grid" id="etInfo"></div>
+    <div style="margin-top:14px;">
+      <div class="slider-row">
+        <label>动画速度</label>
+        <input type="range" id="speedSlider" min="0.2" max="3" step="0.1" value="1">
+        <span class="val" id="speedVal">1.0x</span>
+      </div>
+    </div>
+    <div class="concept-card" style="border-color: var(--accent); margin-top: 10px;">
+      <div class="title" style="color: var(--accent);">💡 分析方法</div>
+      1. 标出各元素的化合价<br>
+      2. 找出化合价变化的元素<br>
+      3. 用双线桥表示电子转移方向<br>
+      4. 验证得失电子数相等
+    </div>
+  `;
+  document.querySelectorAll('#rxnSwitch .mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#rxnSwitch .mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentRxn = parseInt(btn.dataset.rxn);
+      animFrame = 0;
+      updateEqDisplay();
+    });
+  });
+  document.getElementById('speedSlider').addEventListener('input', e => {
+    speed = parseFloat(e.target.value);
+    document.getElementById('speedVal').textContent = speed.toFixed(1) + 'x';
+  });
+  currentRxn = 0;
+  speed = 1;
+  updateEqDisplay();
+  animateElectron();
+}
+
+let currentRxn = 0;
+let speed = 1;
+
+const reactions = [
+  {
+    title: 'Zn + CuSO₄ → ZnSO₄ + Cu',
+    eq: '<span class="ox">Zn</span> + Cu<span class="red">²⁺</span> → <span class="ox">Zn²⁺</span> + <span class="red">Cu</span>',
+    left: { sym: 'Zn', color: '#ef4444', label: '还原剂', valBefore: '0', valAfter: '+2' },
+    right: { sym: 'Cu²⁺', color: '#3b82f6', label: '氧化剂', valBefore: '+2', valAfter: '0' },
+    electrons: 2, desc: '锌失去2个电子，铜离子得到2个电子'
+  },
+  {
+    title: '4Fe + 3O₂ → 2Fe₂O₃',
+    eq: '<span class="ox">4Fe</span> + <span class="red">3O₂</span> → <span class="ox">2Fe₂O₃</span>',
+    left: { sym: 'Fe', color: '#ef4444', label: '还原剂', valBefore: '0', valAfter: '+3' },
+    right: { sym: 'O₂', color: '#3b82f6', label: '氧化剂', valBefore: '0', valAfter: '-2' },
+    electrons: 12, desc: '每个铁失去3个电子，每个氧得到2个电子'
+  },
+  {
+    title: '2Na + Cl₂ → 2NaCl',
+    eq: '<span class="ox">2Na</span> + <span class="red">Cl₂</span> → <span class="ox">2NaCl</span>',
+    left: { sym: 'Na', color: '#ef4444', label: '还原剂', valBefore: '0', valAfter: '+1' },
+    right: { sym: 'Cl₂', color: '#3b82f6', label: '氧化剂', valBefore: '0', valAfter: '-1' },
+    electrons: 2, desc: '每个钠失去1个电子，每个氯得到1个电子'
+  }
+];
+
+function updateEqDisplay() {
+  const r = reactions[currentRxn];
+  document.getElementById('eqDisplay').innerHTML = r.eq;
+  document.getElementById('etInfo').innerHTML = `
+    <div><b>转移电子</b>：${r.electrons}个</div>
+    <div><b>说明</b>：${r.desc}</div>
+    <div><b>左侧</b>：${r.left.sym} 化合价 ${r.left.valBefore}→${r.left.valAfter}</div>
+    <div><b>右侧</b>：${r.right.sym} 化合价 ${r.right.valBefore}→${r.right.valAfter}</div>
+  `;
+}
+
+function animateElectron() {
+  clearCanvas();
+  const r = reactions[currentRxn];
+  const t = ((animFrame * speed * 0.008) % 1 + 1) % 1;
+  const cx = 300;
+
+  // Title
+  drawText(r.title, cx, 28, { size: 16, bold: true });
+
+  // Left atom
+  const lX = 140, lY = 200;
+  drawCircle(lX, lY, 45, 'rgba(239,68,68,0.1)');
+  drawCircle(lX, lY, 32, r.left.color, 0.7);
+  drawText(r.left.sym, lX, lY, { size: 18, bold: true, color: 'white' });
+  drawText(r.left.label, lX, lY + 55, { size: 12, color: r.left.color });
+
+  // Right atom
+  const rX = 460, rY = 200;
+  drawCircle(rX, rY, 45, 'rgba(59,130,246,0.1)');
+  drawCircle(rX, rY, 32, r.right.color, 0.7);
+  drawText(r.right.sym, rX, rY, { size: 18, bold: true, color: 'white' });
+  drawText(r.right.label, rX, rY + 55, { size: 12, color: r.right.color });
+
+  // Valence labels
+  drawText(`价态: ${r.left.valBefore}`, lX, lY - 55, { size: 11, color: C.gray });
+  drawText(`价态: ${r.right.valBefore}`, rX, rY - 55, { size: 11, color: C.gray });
+
+  // Electron animation
+  const nEl = Math.min(r.electrons, 6);
+  for (let i = 0; i < nEl; i++) {
+    const phase = (t + i / nEl) % 1;
+    let ex, ey;
+    if (phase < 0.4) {
+      const ep = easeInOut(phase / 0.4);
+      ex = lerp(lX + 35, cx, ep);
+      ey = lerp(lY - 20 + i * 15, 120 + i * 20, ep);
+    } else if (phase < 0.8) {
+      const ep = easeInOut((phase - 0.4) / 0.4);
+      ex = lerp(cx, rX - 35, ep);
+      ey = lerp(120 + i * 20, rY - 20 + i * 15, ep);
+    } else {
+      ex = rX - 35;
+      ey = rY - 20 + i * 15;
+    }
+    // Trail
+    for (let j = 0; j < 5; j++) {
+      const tp = (phase - j * 0.015 + 1) % 1;
+      let tx, ty;
+      if (tp < 0.4) {
+        const e2 = easeInOut(tp / 0.4);
+        tx = lerp(lX + 35, cx, e2);
+        ty = lerp(lY - 20 + i * 15, 120 + i * 20, e2);
+      } else if (tp < 0.8) {
+        const e2 = easeInOut((tp - 0.4) / 0.4);
+        tx = lerp(cx, rX - 35, e2);
+        ty = lerp(120 + i * 20, rY - 20 + i * 15, e2);
+      } else {
+        tx = rX - 35; ty = rY - 20 + i * 15;
+      }
+      drawCircle(tx, ty, 3, C.el, 0.4 - j * 0.07);
+    }
+    drawCircle(ex, ey, 7, C.el);
+    drawText('e⁻', ex, ey, { size: 8, bold: true, color: C.dark });
+  }
+
+  // Double-line bridge (双线桥)
+  const bridgeY = 310;
+  // Oxidation bridge (top)
+  ctx.strokeStyle = C.ox;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(lX, bridgeY);
+  ctx.quadraticCurveTo(cx, bridgeY - 40, rX, bridgeY);
+  ctx.stroke();
+  drawArrow(cx - 20, bridgeY - 25, cx + 20, bridgeY - 25, C.ox, 2);
+  drawText(`失去 ${r.electrons}e⁻`, cx, bridgeY - 45, { size: 12, color: C.ox });
+
+  // Reduction bridge (bottom)
+  const bridgeY2 = 370;
+  ctx.strokeStyle = C.red;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(rX, bridgeY2);
+  ctx.quadraticCurveTo(cx, bridgeY2 + 40, lX, bridgeY2);
+  ctx.stroke();
+  drawArrow(cx + 20, bridgeY2 + 25, cx - 20, bridgeY2 + 25, C.red, 2);
+  drawText(`得到 ${r.electrons}e⁻`, cx, bridgeY2 + 45, { size: 12, color: C.red });
+
+  animFrame++;
+  animId = requestAnimationFrame(animateElectron);
+}
+
+// ===== MODE 3: Balancing =====
+function renderBalance() {
+  legendEl.innerHTML = '';
+  panel.innerHTML = `
+    <h3>🧮 氧化还原方程式配平</h3>
+    <div class="mode-switch" id="balSwitch">
+      <div class="mode-btn active" data-idx="0">题目 1</div>
+      <div class="mode-btn" data-idx="1">题目 2</div>
+      <div class="mode-btn" data-idx="2">题目 3</div>
+    </div>
+    <div id="balArea"></div>
+    <button class="check-btn" id="checkBtn">✅ 检查答案</button>
+    <div class="result-msg" id="balResult"></div>
+    <div class="concept-card" style="border-color: var(--electron); margin-top: 12px;">
+      <div class="title" style="color: var(--electron);">📝 配平步骤</div>
+      1. 标出变价元素的化合价<br>
+      2. 计算得失电子数<br>
+      3. 找最小公倍数，确定系数<br>
+      4. 用观察法配平其他原子<br>
+      5. 检查质量守恒
+    </div>
+  `;
+  document.querySelectorAll('#balSwitch .mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#balSwitch .mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentBal = parseInt(btn.dataset.idx);
+      renderBalProblem();
+    });
+  });
+  document.getElementById('checkBtn').addEventListener('click', checkBalance);
+  currentBal = 0;
+  renderBalProblem();
+  drawBalanceCanvas();
+}
+
+let currentBal = 0;
+const balanceProblems = [
+  {
+    title: 'Fe + O₂ → Fe₃O₄',
+    species: ['Fe', 'O₂', 'Fe₃O₄'],
+    answers: [3, 2, 1],
+    hint: '注意 Fe₃O₄ 中有3个铁原子和4个氧原子'
+  },
+  {
+    title: 'Cu + HNO₃(稀) → Cu(NO₃)₂ + NO↑ + H₂O',
+    species: ['Cu', 'HNO₃', 'Cu(NO₃)₂', 'NO', 'H₂O'],
+    answers: [3, 8, 3, 2, 4],
+    hint: '先配平氧化还原部分，再配平其他'
+  },
+  {
+    title: 'Fe₂O₃ + CO → Fe + CO₂',
+    species: ['Fe₂O₃', 'CO', 'Fe', 'CO₂'],
+    answers: [1, 3, 2, 3],
+    hint: 'Fe从+3变为0，C从+2变为+4'
+  }
+];
+
+function renderBalProblem() {
+  const p = balanceProblems[currentBal];
+  let html = `<div class="equation" style="font-size:1rem; margin: 8px 0;">${p.title}</div>`;
+  html += '<div class="balance-area">';
+  p.species.forEach((sp, i) => {
+    html += `<div class="balance-row">
+      <span>系数：</span>
+      <input type="number" id="bal${i}" min="1" max="20" value="">
+      <span class="eq-text">${sp}</span>
+    </div>`;
+  });
+  html += '</div>';
+  html += `<div style="font-size:12px; color:#94a3b8; margin-top:6px;">💡 ${p.hint}</div>`;
+  document.getElementById('balArea').innerHTML = html;
+  document.getElementById('balResult').textContent = '';
+  document.getElementById('balResult').className = 'result-msg';
+}
+
+function checkBalance() {
+  const p = balanceProblems[currentBal];
+  let correct = true;
+  p.answers.forEach((ans, i) => {
+    const input = document.getElementById(`bal${i}`);
+    const val = parseInt(input.value);
+    if (val !== ans) correct = false;
+    input.style.borderColor = val === ans ? '#10b981' : '#ef4444';
+  });
+  const res = document.getElementById('balResult');
+  if (correct) {
+    res.textContent = '✅ 完全正确！配平成功！';
+    res.className = 'result-msg ok';
+  } else {
+    res.textContent = '❌ 还有错误，请检查各系数';
+    res.className = 'result-msg err';
+  }
+}
+
+function drawBalanceCanvas() {
+  clearCanvas();
+  const cx = 300;
+  drawText('🧮 方程式配平练习', cx, 30, { size: 18, bold: true });
+
+  // Animated balance scale
+  const t = animFrame * 0.02;
+  const scaleY = 200;
+  const tilt = Math.sin(t) * 5;
+
+  // Scale base
+  ctx.strokeStyle = C.gray;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx, scaleY + 60);
+  ctx.lineTo(cx, scaleY - 20);
+  ctx.stroke();
+
+  // Scale beam
+  ctx.save();
+  ctx.translate(cx, scaleY - 20);
+  ctx.rotate(tilt * Math.PI / 180);
+  ctx.strokeStyle = C.accent;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-120, 0);
+  ctx.lineTo(120, 0);
+  ctx.stroke();
+
+  // Left pan
+  ctx.strokeStyle = C.ox;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-120, 0);
+  ctx.lineTo(-140, 40);
+  ctx.lineTo(-100, 40);
+  ctx.closePath();
+  ctx.stroke();
+  drawText('失电子', -120, 55, { size: 12, color: C.ox });
+
+  // Right pan
+  ctx.strokeStyle = C.red;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(120, 0);
+  ctx.lineTo(100, 40);
+  ctx.lineTo(140, 40);
+  ctx.closePath();
+  ctx.stroke();
+  drawText('得电子', 120, 55, { size: 12, color: C.red });
+
+  ctx.restore();
+
+  // Balance principle
+  drawText('得失电子数必须相等', cx, scaleY + 100, { size: 14, color: C.el, bold: true });
+  drawText('配平的关键：找到得失电子的最小公倍数', cx, scaleY + 125, { size: 12, color: C.gray });
+
+  // Example
+  const exY = 370;
+  drawText('示例：2Mg + O₂ → 2MgO', cx, exY, { size: 14, bold: true, color: C.white });
+  drawText('Mg: 0→+2 (失2e⁻) ×2    O: 0→-2 (得2e⁻) ×1', cx, exY + 25, { size: 11, color: C.gray });
+
+  animFrame++;
+  animId = requestAnimationFrame(drawBalanceCanvas);
+}
+
+// ===== MODE 4: Examples =====
+function renderExamples() {
+  legendEl.innerHTML = '<span class="l-ox">氧化反应</span><span class="l-red">还原反应</span><span class="l-el">电子转移</span>';
+  panel.innerHTML = `
+    <h3>🔬 经典氧化还原反应</h3>
+    <div class="mode-switch" id="exSwitch">
+      <div class="mode-btn active" data-idx="0">燃烧反应</div>
+      <div class="mode-btn" data-idx="1">置换反应</div>
+      <div class="mode-btn" data-idx="2">呼吸作用</div>
+    </div>
+    <div id="exDetail"></div>
+  `;
+  document.querySelectorAll('#exSwitch .mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#exSwitch .mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentEx = parseInt(btn.dataset.idx);
+      updateExDetail();
+    });
+  });
+  currentEx = 0;
+  updateExDetail();
+  animateExamples();
+}
+
+let currentEx = 0;
+const examples = [
+  {
+    title: '🔥 燃烧反应',
+    eq: 'CH₄ + 2O₂ → CO₂ + 2H₂O',
+    desc: '甲烷燃烧是最常见的氧化还原反应',
+    ox: 'C: -4 → +4（失去8个电子，被氧化）',
+    red: 'O: 0 → -2（得到2×2=4个电子，被还原）',
+    note: '燃烧是剧烈的氧化还原反应，伴随发光发热',
+    color: '#f97316'
+  },
+  {
+    title: '🧪 置换反应',
+    eq: 'Zn + CuSO₄ → ZnSO₄ + Cu',
+    desc: '活泼金属置换不活泼金属',
+    ox: 'Zn: 0 → +2（失去2个电子，被氧化）',
+    red: 'Cu: +2 → 0（得到2个电子，被还原）',
+    note: '活动性顺序：K Ca Na Mg Al Zn Fe Sn Pb (H) Cu Hg Ag Pt Au',
+    color: '#10b981'
+  },
+  {
+    title: '🫁 呼吸作用',
+    eq: 'C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O',
+    desc: '生物体内的缓慢氧化过程',
+    ox: 'C: 平均0 → +4（葡萄糖被氧化）',
+    red: 'O: 0 → -2（氧气被还原）',
+    note: '呼吸作用是生物体获取能量的主要方式，本质是氧化还原反应',
+    color: '#8b5cf6'
+  }
+];
+
+function updateExDetail() {
+  const e = examples[currentEx];
+  document.getElementById('exDetail').innerHTML = `
+    <div class="equation">${e.eq}</div>
+    <div style="font-size:14px; color:#94a3b8; margin:8px 0;">${e.desc}</div>
+    <div class="concept-card ox">
+      <div class="title">🔴 氧化过程</div>
+      ${e.ox}
+    </div>
+    <div class="concept-card red">
+      <div class="title">🔵 还原过程</div>
+      ${e.red}
+    </div>
+    <div class="concept-card" style="border-color: ${e.color};">
+      <div class="title" style="color: ${e.color};">💡 ${e.note}</div>
+    </div>
+  `;
+}
+
+function animateExamples() {
+  clearCanvas();
+  const e = examples[currentEx];
+  const t = animFrame * 0.02;
+  const cx = 300;
+
+  drawText(e.title, cx, 30, { size: 18, bold: true });
+
+  // Animated molecules
+  const particles = [];
+  const nParticles = 15;
+  for (let i = 0; i < nParticles; i++) {
+    const angle = (i / nParticles) * Math.PI * 2 + t;
+    const r = 80 + 30 * Math.sin(t * 2 + i);
+    const px = cx + r * Math.cos(angle);
+    const py = 220 + r * 0.6 * Math.sin(angle);
+    const isOx = i < nParticles / 2;
+    const color = isOx ? C.ox : C.red;
+    const size = 6 + 3 * Math.sin(t + i);
+    drawCircle(px, py, size, color, 0.6);
+    particles.push({ x: px, y: py, color });
+  }
+
+  // Center reaction
+  drawCircle(cx, 220, 35, 'rgba(251,191,36,0.15)');
+  drawCircle(cx, 220, 25, C.el, 0.3 + 0.2 * Math.sin(t * 3));
+  drawText('反应', cx, 220, { size: 14, bold: true, color: C.white });
+
+  // Energy waves
+  for (let i = 0; i < 3; i++) {
+    const waveR = 50 + i * 30 + (animFrame % 60);
+    ctx.strokeStyle = `rgba(251,191,36,${0.3 - i * 0.1})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, 220, waveR, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Labels
+  drawText('氧化剂', 150, 220, { size: 13, color: C.red });
+  drawText('还原剂', 450, 220, { size: 13, color: C.ox });
+
+  // Electron flow arrows
+  const arrowPhase = (t * 2) % (Math.PI * 2);
+  for (let i = 0; i < 4; i++) {
+    const a = arrowPhase + i * Math.PI / 2;
+    const ax = cx + 60 * Math.cos(a);
+    const ay = 220 + 40 * Math.sin(a);
+    drawCircle(ax, ay, 4, C.el, 0.7);
+    drawText('e⁻', ax, ay, { size: 7, color: C.dark });
+  }
+
+  // Bottom info
+  drawText(e.eq, cx, 380, { size: 14, bold: true, color: C.white });
+  drawText('得失电子总数相等 → 反应配平', cx, 410, { size: 12, color: C.gray });
+
+  animFrame++;
+  animId = requestAnimationFrame(animateExamples);
+}
+
+// ===== MODE 5: Quiz =====
+const quizData = [
+  {
+    q: '在反应 2Na + Cl₂ → 2NaCl 中，下列说法正确的是？',
+    opts: ['Na 是氧化剂', 'Cl₂ 被氧化', 'Na 失去电子，被氧化', 'NaCl 是还原剂'],
+    ans: 2,
+    explain: 'Na 从0价变为+1价，失去电子被氧化，是还原剂。Cl₂从0价变为-1价，得到电子被还原，是氧化剂。'
+  },
+  {
+    q: '下列反应中，属于氧化还原反应的是？',
+    opts: ['CaCO₃ → CaO + CO₂', 'NaOH + HCl → NaCl + H₂O', 'Zn + H₂SO₄ → ZnSO₄ + H₂↑', 'Na₂CO₃ + 2HCl → 2NaCl + H₂O + CO₂↑'],
+    ans: 2,
+    explain: 'Zn + H₂SO₄ 中，Zn从0→+2，H从+1→0，有化合价变化，是氧化还原反应。其他反应无化合价变化。'
+  },
+  {
+    q: '在 Fe₂O₃ + 3CO → 2Fe + 3CO₂ 中，氧化剂是？',
+    opts: ['Fe₂O₃', 'CO', 'Fe', 'CO₂'],
+    ans: 0,
+    explain: 'Fe₂O₃中的Fe从+3→0，化合价降低，得到电子，所以Fe₂O₃是氧化剂。CO中的C从+2→+4，被氧化，是还原剂。'
+  },
+  {
+    q: '氧化还原反应的本质是？',
+    opts: ['有氧元素参加', '有电子的转移（得失或偏移）', '反应前后物质质量不变', '有热量放出'],
+    ans: 1,
+    explain: '氧化还原反应的本质是电子的转移（包括得失和共用电子对偏移），不一定有氧元素参加。'
+  },
+  {
+    q: '下列变化中，一定需要加入氧化剂才能实现的是？',
+    opts: ['Fe³⁺ → Fe²⁺', 'CO₂ → CO', 'Fe²⁺ → Fe³⁺', 'CuO → Cu'],
+    ans: 2,
+    explain: 'Fe²⁺→Fe³⁺ 化合价升高，需要失去电子，即被氧化，需要加入氧化剂。其他选项都是化合价降低，需要还原剂。'
+  }
+];
+
+let quizIdx = 0;
+let quizAnswered = false;
+
+function renderQuiz() {
+  legendEl.innerHTML = '';
+  quizIdx = 0;
+  quizAnswered = false;
+  drawQuizCanvas();
+  showQuiz();
+}
+
+function showQuiz() {
+  const q = quizData[quizIdx];
+  panel.innerHTML = `
+    <h3>🎯 互动练习 (${quizIdx + 1}/${quizData.length})</h3>
+    <div class="quiz">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts" id="quizOpts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-idx="${i}">${String.fromCharCode(65 + i)}. ${o}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="quizFb"></div>
+      <div class="quiz-nav">
+        <button id="prevQ" ${quizIdx === 0 ? 'disabled' : ''}>← 上一题</button>
+        <button id="nextQ" ${quizIdx === quizData.length - 1 ? 'disabled' : ''}>下一题 →</button>
+      </div>
+    </div>
+  `;
+  quizAnswered = false;
+  document.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const idx = parseInt(opt.dataset.idx);
+      const correct = idx === q.ans;
+      if (correct) redoxBumpCorrect(quizIdx);
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) {
+        document.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+      }
+      document.getElementById('quizFb').textContent = correct ? '✅ 正确！' : `❌ 正确答案是 ${String.fromCharCode(65 + q.ans)}。${q.explain}`;
+    });
+  });
+  document.getElementById('prevQ')?.addEventListener('click', () => {
+    if (quizIdx > 0) { quizIdx--; showQuiz(); }
+  });
+  document.getElementById('nextQ')?.addEventListener('click', () => {
+    if (quizIdx < quizData.length - 1) { quizIdx++; showQuiz(); }
+  });
+}
+
+function drawQuizCanvas() {
+  clearCanvas();
+  const cx = 300;
+  drawText('🎯 氧化还原反应练习', cx, 30, { size: 18, bold: true });
+
+  const t = animFrame * 0.02;
+
+  // Decorative atoms
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 + t * 0.5;
+    const r = 120 + 20 * Math.sin(t + i);
+    const px = cx + r * Math.cos(angle);
+    const py = 230 + r * 0.5 * Math.sin(angle);
+    const colors = [C.ox, C.red, C.el, C.accent];
+    drawCircle(px, py, 10 + 3 * Math.sin(t * 2 + i), colors[i % 4], 0.4);
+  }
+
+  // Center question mark
+  const pulse = 1 + 0.1 * Math.sin(t * 3);
+  drawCircle(cx, 230, 50 * pulse, 'rgba(139,92,246,0.1)');
+  drawText('?', cx, 230, { size: 48, bold: true, color: C.accent });
+
+  drawText('选择题：选出正确答案', cx, 350, { size: 14, color: C.gray });
+  drawText(`共 ${quizData.length} 题`, cx, 375, { size: 12, color: C.gray });
+
+  animFrame++;
+  animId = requestAnimationFrame(drawQuizCanvas);
+}
+
+// ===== Main Render =====
+function render() {
+  cancelAnimationFrame(animId);
+  animFrame = 0;
+  switch (currentMode) {
+    case 'concept': renderConcept(); break;
+    case 'electron': renderElectron(); break;
+    case 'balance': renderBalance(); break;
+    case 'examples': renderExamples(); break;
+    case 'quiz': renderQuiz(); break;
+  }
+}
+
+render();
+
+// ============ 进度追踪（r100） ============
+let redoxCorrectSet = new Set();
+function redoxBumpCorrect(idx) {
+  redoxCorrectSet.add(idx);
+  if (redoxCorrectSet.size >= Math.ceil(quizData.length * 0.6) && typeof PageProgress !== 'undefined') {
+    if (!PageProgress.isDone('redox')) {
+      PageProgress.markDone('redox');
+      const dm = document.getElementById('done-mark');
+      if (dm) dm.textContent = '✓ 已完成';
+    }
+  }
+}
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('redox')) {
+  const dm = document.getElementById('done-mark');
+  if (dm) dm.textContent = '✓ 已完成';
+}
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中化学"></script>
+</body>
+</html>

@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金属及其化合物 - 高中化学互动可视化</title>
+    <link rel="stylesheet" href="assets/common.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #0c0c1d 0%, #1a1a3e 50%, #2d1b4e 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        header { text-align: center; padding: 30px 0; margin-bottom: 20px; }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #c0c0c0, #ffd700, #cd7f32);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle { font-size: 1.1rem; color: #a0a0a0; }
+
+        .mode-tabs {
+            display: flex; justify-content: center; gap: 12px;
+            margin-bottom: 30px; flex-wrap: wrap;
+        }
+
+        .mode-tab {
+            padding: 10px 20px; background: rgba(255,255,255,0.1);
+            border: 2px solid transparent; border-radius: 25px;
+            cursor: pointer; transition: all 0.3s; font-size: 0.95rem; color: #fff;
+        }
+
+        .mode-tab:hover { background: rgba(255,255,255,0.2); }
+        .mode-tab.active {
+            background: linear-gradient(135deg, #c0c0c0, #ffd700);
+            border-color: #fff; color: #1a1a3e; font-weight: bold;
+        }
+
+        .mode-content { display: none; animation: fadeIn 0.5s; }
+        .mode-content.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 模式1：金属活动性顺序 */
+        .activity-section {
+            background: rgba(255,255,255,0.05); border-radius: 20px; padding: 30px;
+        }
+        .activity-section h2 { color: #ffd700; margin-bottom: 20px; text-align: center; }
+
+        .activity-tower {
+            display: flex; flex-direction: column; gap: 8px;
+            max-width: 700px; margin: 20px auto;
+        }
+
+        .metal-bar {
+            display: flex; align-items: center; gap: 15px;
+            padding: 12px 20px; border-radius: 12px;
+            cursor: grab; transition: all 0.3s;
+            position: relative; user-select: none;
+        }
+
+        .metal-bar:active { cursor: grabbing; }
+        .metal-bar.dragging { opacity: 0.5; transform: scale(1.05); }
+        .metal-bar.drag-over { border-top: 3px solid #ffd700; }
+
+        .metal-symbol {
+            width: 50px; height: 50px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1.1rem; flex-shrink: 0;
+        }
+
+        .metal-info { flex: 1; }
+        .metal-name { font-size: 1rem; margin-bottom: 3px; }
+        .metal-reactivity {
+            font-size: 0.8rem; color: #a0a0a0;
+        }
+
+        .activity-label {
+            text-align: center; font-size: 0.9rem; color: #a0a0a0;
+            padding: 5px; display: flex; align-items: center; gap: 10px;
+        }
+
+        .activity-label::before, .activity-label::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,215,0,0.5), transparent);
+        }
+
+        .check-btn {
+            display: block; margin: 20px auto; padding: 12px 30px;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            border: none; border-radius: 25px; color: #1a1a3e;
+            font-size: 1rem; font-weight: bold; cursor: pointer;
+            transition: all 0.3s;
+        }
+        .check-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(255,215,0,0.4); }
+
+        .result-msg {
+            text-align: center; padding: 15px; margin-top: 15px;
+            border-radius: 12px; font-size: 1rem; min-height: 50px;
+        }
+
+        /* 模式2：反应现象可视化 */
+        .reaction-section {
+            background: rgba(255,255,255,0.05); border-radius: 20px; padding: 30px;
+        }
+        .reaction-section h2 { color: #ff6b6b; margin-bottom: 20px; text-align: center; }
+
+        .reaction-selector {
+            display: flex; justify-content: center; gap: 10px;
+            flex-wrap: wrap; margin-bottom: 25px;
+        }
+
+        .reaction-btn {
+            padding: 10px 18px; background: rgba(255,255,255,0.1);
+            border: 2px solid transparent; border-radius: 20px;
+            cursor: pointer; transition: all 0.3s; color: #fff; font-size: 0.9rem;
+        }
+        .reaction-btn:hover { background: rgba(255,255,255,0.2); }
+        .reaction-btn.active { border-color: #ff6b6b; background: rgba(255,107,107,0.2); }
+
+        .reaction-stage {
+            background: linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.1));
+            border-radius: 15px; padding: 30px; min-height: 300px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; position: relative; overflow: hidden;
+        }
+
+        .reaction-equation {
+            font-size: 1.3rem; color: #feca57; margin-bottom: 20px;
+            text-align: center; font-weight: bold;
+        }
+
+        .reaction-visual {
+            width: 200px; height: 200px; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            margin: 20px 0;
+        }
+
+        .beaker {
+            width: 120px; height: 150px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: none; border-radius: 0 0 15px 15px;
+            position: relative; overflow: hidden;
+        }
+
+        .liquid {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            transition: all 1s; height: 60%;
+        }
+
+        .bubble {
+            position: absolute; width: 8px; height: 8px;
+            background: rgba(255,255,255,0.6); border-radius: 50%;
+            animation: bubbleUp 1.5s infinite;
+        }
+
+        @keyframes bubbleUp {
+            0% { bottom: 10%; opacity: 1; transform: translateX(0); }
+            100% { bottom: 90%; opacity: 0; transform: translateX(10px); }
+        }
+
+        .reaction-desc {
+            text-align: center; color: #a0a0a0; font-size: 0.95rem;
+            margin-top: 15px; line-height: 1.8;
+        }
+
+        .reaction-phenomena {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px; margin-top: 20px; width: 100%;
+        }
+
+        .phenomenon-item {
+            padding: 12px; background: rgba(255,255,255,0.08);
+            border-radius: 10px; text-align: center; font-size: 0.9rem;
+        }
+        .phenomenon-item .phen-icon { font-size: 1.5rem; margin-bottom: 5px; }
+
+        /* 模式3：实验探究 */
+        .experiment-section {
+            background: rgba(255,255,255,0.05); border-radius: 20px; padding: 30px;
+        }
+        .experiment-section h2 { color: #48dbfb; margin-bottom: 20px; text-align: center; }
+
+        .experiment-workspace {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .experiment-workspace { grid-template-columns: 1fr; }
+        }
+
+        .reagent-shelf {
+            background: rgba(0,0,0,0.2); border-radius: 15px; padding: 20px;
+        }
+
+        .reagent-shelf h3 { color: #48dbfb; margin-bottom: 15px; font-size: 1rem; }
+
+        .reagents {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+        }
+
+        .reagent {
+            padding: 10px 5px; background: rgba(255,255,255,0.1);
+            border: 2px solid transparent; border-radius: 10px;
+            cursor: pointer; transition: all 0.3s; text-align: center;
+            font-size: 0.8rem;
+        }
+        .reagent:hover { background: rgba(255,255,255,0.2); }
+        .reagent.selected { border-color: #48dbfb; background: rgba(72,219,251,0.2); }
+        .reagent .reagent-icon { font-size: 1.5rem; margin-bottom: 5px; }
+
+        .reaction-vessel {
+            background: rgba(0,0,0,0.2); border-radius: 15px; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .reaction-vessel h3 { color: #48dbfb; margin-bottom: 15px; font-size: 1rem; }
+
+        .vessel-visual {
+            width: 150px; height: 180px; border: 4px solid rgba(255,255,255,0.3);
+            border-top: none; border-radius: 0 0 20px 20px;
+            position: relative; overflow: hidden; margin: 15px 0;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .vessel-liquid {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 0; transition: all 0.8s;
+        }
+
+        .vessel-precipitate {
+            position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 60%; height: 0; transition: all 0.8s;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .experiment-btn {
+            padding: 10px 25px; background: linear-gradient(135deg, #48dbfb, #0abde3);
+            border: none; border-radius: 20px; color: #1a1a3e;
+            font-weight: bold; cursor: pointer; transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .experiment-btn:hover { transform: scale(1.05); }
+
+        .experiment-log {
+            width: 100%; margin-top: 15px; padding: 15px;
+            background: rgba(0,0,0,0.3); border-radius: 10px;
+            font-size: 0.85rem; color: #a0a0a0; min-height: 80px;
+            line-height: 1.6;
+        }
+
+        .experiment-log .log-entry { margin-bottom: 5px; }
+        .experiment-log .log-entry.success { color: #00b894; }
+        .experiment-log .log-entry.fail { color: #d63031; }
+
+        .reset-btn {
+            padding: 8px 20px; background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 15px;
+            color: #fff; cursor: pointer; margin-top: 10px;
+            transition: all 0.3s; font-size: 0.85rem;
+        }
+        .reset-btn:hover { background: rgba(255,255,255,0.2); }
+
+        /* 知识卡片 */
+        .knowledge-card {
+            background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(205,127,50,0.1));
+            border-radius: 15px; padding: 20px; margin-top: 20px;
+        }
+        .knowledge-card h3 { color: #ffd700; margin-bottom: 10px; }
+        .knowledge-card ul { list-style: none; padding: 0; }
+        .knowledge-card li {
+            padding: 8px 0; padding-left: 25px; position: relative;
+        }
+        .knowledge-card li::before { content: '⚗️'; position: absolute; left: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧪 金属及其化合物</h1>
+            <p class="subtitle">高一化学 · 金属活动性 · 反应现象 · 实验探究</p>
+        </header>
+
+        <div class="mode-tabs">
+            <div class="mode-tab active" data-mode="activity">🏆 活动性顺序</div>
+            <div class="mode-tab" data-mode="reaction">💥 反应现象</div>
+            <div class="mode-tab" data-mode="experiment">🔬 实验探究</div>
+        </div>
+
+        <!-- 模式1：金属活动性顺序 -->
+        <div class="mode-content active" id="activity">
+            <div class="activity-section">
+                <h2>🏆 金属活动性顺序 — 拖拽排列</h2>
+                <p style="text-align:center; color:#a0a0a0; margin-bottom:15px;">
+                    将金属按活动性从强到弱排列（拖拽排序）
+                </p>
+
+                <div class="activity-label">⬆️ 活动性强</div>
+
+                <div class="activity-tower" id="activityTower"></div>
+
+                <div class="activity-label">⬇️ 活动性弱</div>
+
+                <button class="check-btn" id="checkOrder">检查排序</button>
+                <div class="result-msg" id="orderResult"></div>
+
+                <div class="knowledge-card">
+                    <h3>📚 金属活动性顺序表</h3>
+                    <ul>
+                        <li><strong>K Ca Na Mg Al Zn Fe Sn Pb (H) Cu Hg Ag Pt Au</strong></li>
+                        <li>钾钙钠镁铝 锌铁锡铅(氢) 铜汞银铂金</li>
+                        <li>排在前面的金属更活泼，能置换后面的金属</li>
+                        <li>排在氢前面的金属能与稀酸反应产生H₂</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模式2：反应现象可视化 -->
+        <div class="mode-content" id="reaction">
+            <div class="reaction-section">
+                <h2>💥 金属反应现象可视化</h2>
+                <p style="text-align:center; color:#a0a0a0; margin-bottom:15px;">
+                    选择不同反应，观察实验现象
+                </p>
+
+                <div class="reaction-selector" id="reactionSelector"></div>
+
+                <div class="reaction-stage" id="reactionStage">
+                    <div class="reaction-equation" id="reactionEq"></div>
+                    <div class="reaction-visual" id="reactionVisual"></div>
+                    <div class="reaction-desc" id="reactionDesc"></div>
+                    <div class="reaction-phenomena" id="reactionPhenomena"></div>
+                </div>
+
+                <div class="knowledge-card">
+                    <h3>📚 金属与化合物反应规律</h3>
+                    <ul>
+                        <li><strong>Na与水：</strong>浮、熔、游、响、红（加酚酞变红）</li>
+                        <li><strong>Fe与CuSO₄：</strong>铁表面覆盖红色固体，溶液由蓝变浅绿</li>
+                        <li><strong>Al与NaOH：</strong>两性金属，与强碱反应产生H₂</li>
+                        <li><strong>Cu与浓HNO₃：</strong>铜溶解，产生红棕色气体，溶液变蓝</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模式3：实验探究 -->
+        <div class="mode-content" id="experiment">
+            <div class="experiment-section">
+                <h2>🔬 金属化合物实验探究</h2>
+                <p style="text-align:center; color:#a0a0a0; margin-bottom:15px;">
+                    选择试剂进行虚拟实验，观察反应现象
+                </p>
+
+                <div class="experiment-workspace">
+                    <div class="reagent-shelf">
+                        <h3>📦 试剂架</h3>
+                        <div class="reagents" id="reagentShelf"></div>
+                        <p style="margin-top:15px; font-size:0.85rem; color:#a0a0a0;">
+                            点击选择两种试剂进行反应
+                        </p>
+                    </div>
+
+                    <div class="reaction-vessel">
+                        <h3>🧪 反应容器</h3>
+                        <div class="vessel-visual" id="vessel">
+                            <div class="vessel-liquid" id="vesselLiquid"></div>
+                            <div class="vessel-precipitate" id="vesselPrecipitate"></div>
+                        </div>
+                        <button class="experiment-btn" id="mixBtn">混合反应</button>
+                        <button class="reset-btn" id="resetBtn">重置</button>
+                        <div class="experiment-log" id="experimentLog">
+                            <div class="log-entry">等待选择试剂...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="knowledge-card">
+                    <h3>📚 常见金属离子检验</h3>
+                    <ul>
+                        <li><strong>Fe³⁺：</strong>加KSCN → 血红色溶液</li>
+                        <li><strong>Fe²⁺：</strong>加NaOH → 白色沉淀→灰绿色→红褐色</li>
+                        <li><strong>Cu²⁺：</strong>蓝色溶液，加NaOH → 蓝色沉淀</li>
+                        <li><strong>Al³⁺：</strong>加NaOH → 白色沉淀，过量NaOH → 沉淀溶解</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/common.js"></script>
+    <script>
+        // 模式切换
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.mode).classList.add('active');
+            });
+        });
+
+        // ===== 模式1：金属活动性排序 =====
+        const metals = [
+            { symbol: 'K', name: '钾 (Potassium)', color: '#ff0000', reactivity: '极活泼' },
+            { symbol: 'Ca', name: '钙 (Calcium)', color: '#ff4500', reactivity: '很活泼' },
+            { symbol: 'Na', name: '钠 (Sodium)', color: '#ff6347', reactivity: '很活泼' },
+            { symbol: 'Mg', name: '镁 (Magnesium)', color: '#ffa500', reactivity: '活泼' },
+            { symbol: 'Al', name: '铝 (Aluminum)', color: '#ffd700', reactivity: '较活泼' },
+            { symbol: 'Zn', name: '锌 (Zinc)', color: '#32cd32', reactivity: '较活泼' },
+            { symbol: 'Fe', name: '铁 (Iron)', color: '#4169e1', reactivity: '中等' },
+            { symbol: 'Cu', name: '铜 (Copper)', color: '#8b4513', reactivity: '不活泼' },
+            { symbol: 'Ag', name: '银 (Silver)', color: '#c0c0c0', reactivity: '很不活泼' },
+            { symbol: 'Au', name: '金 (Gold)', color: '#ffd700', reactivity: '最不活泼' }
+        ];
+
+        const correctOrder = ['K', 'Ca', 'Na', 'Mg', 'Al', 'Zn', 'Fe', 'Cu', 'Ag', 'Au'];
+        let shuffled = [...metals].sort(() => Math.random() - 0.5);
+        const tower = document.getElementById('activityTower');
+        const orderResult = document.getElementById('orderResult');
+
+        function renderTower() {
+            tower.innerHTML = '';
+            shuffled.forEach((metal, idx) => {
+                const bar = document.createElement('div');
+                bar.className = 'metal-bar';
+                bar.draggable = true;
+                bar.dataset.idx = idx;
+                bar.style.background = `linear-gradient(90deg, ${metal.color}33, transparent)`;
+                bar.innerHTML = `
+                    <div class="metal-symbol" style="background:${metal.color}; color:#fff;">${metal.symbol}</div>
+                    <div class="metal-info">
+                        <div class="metal-name">${metal.name}</div>
+                        <div class="metal-reactivity">活动性：${metal.reactivity}</div>
+                    </div>
+                `;
+
+                bar.addEventListener('dragstart', e => {
+                    bar.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', idx);
+                });
+                bar.addEventListener('dragend', () => bar.classList.remove('dragging'));
+                bar.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    bar.classList.add('drag-over');
+                });
+                bar.addEventListener('dragleave', () => bar.classList.remove('drag-over'));
+                bar.addEventListener('drop', e => {
+                    e.preventDefault();
+                    bar.classList.remove('drag-over');
+                    const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                    const toIdx = parseInt(bar.dataset.idx);
+                    const temp = shuffled[fromIdx];
+                    shuffled[fromIdx] = shuffled[toIdx];
+                    shuffled[toIdx] = temp;
+                    renderTower();
+                });
+
+                tower.appendChild(bar);
+            });
+        }
+
+        renderTower();
+
+        document.getElementById('checkOrder').addEventListener('click', () => {
+            const currentOrder = shuffled.map(m => m.symbol);
+            const isCorrect = JSON.stringify(currentOrder) === JSON.stringify(correctOrder);
+
+            if (isCorrect) {
+                orderResult.style.background = 'rgba(0,184,148,0.2)';
+                orderResult.style.color = '#00b894';
+                orderResult.textContent = '✅ 完全正确！你已掌握金属活动性顺序！';
+                // 排序全对一次 → 标记本页完成（r121 接入）
+                if (!PageProgress.isDone('07-metals')) {
+                    PageProgress.markDone('07-metals');
+                }
+            } else {
+                let wrong = [];
+                currentOrder.forEach((s, i) => {
+                    if (s !== correctOrder[i]) wrong.push(s);
+                });
+                orderResult.style.background = 'rgba(214,48,49,0.2)';
+                orderResult.style.color = '#d63031';
+                orderResult.textContent = `❌ 位置不对的金属：${wrong.join('、')}。记住口诀：钾钙钠镁铝 锌铁锡铅(氢) 铜汞银铂金`;
+            }
+        });
+
+        // ===== 模式2：反应现象 =====
+        const reactions = [
+            {
+                name: 'Na + H₂O',
+                equation: '2Na + 2H₂O → 2NaOH + H₂↑',
+                liquidColor: 'rgba(200,200,255,0.4)',
+                desc: '钠投入水中，剧烈反应',
+                phenomena: [
+                    { icon: '🔝', text: '浮：钠浮在水面' },
+                    { icon: '💧', text: '熔：熔成银白色小球' },
+                    { icon: '🏊', text: '游：在水面四处游动' },
+                    { icon: '🔊', text: '响：发出嘶嘶响声' },
+                    { icon: '🔴', text: '红：加酚酞溶液变红' }
+                ],
+                bubbles: true, flame: true
+            },
+            {
+                name: 'Fe + CuSO₄',
+                equation: 'Fe + CuSO₄ → FeSO₄ + Cu',
+                liquidColor: 'rgba(65,105,225,0.5)',
+                desc: '铁钉放入硫酸铜溶液中',
+                phenomena: [
+                    { icon: '🔴', text: '铁表面覆盖红色固体(Cu)' },
+                    { icon: '🟢', text: '溶液由蓝色变为浅绿色' },
+                    { icon: '⚖️', text: '铁钉质量增加' }
+                ],
+                colorChange: { from: 'rgba(65,105,225,0.5)', to: 'rgba(144,238,144,0.4)' }
+            },
+            {
+                name: 'Al + NaOH',
+                equation: '2Al + 2NaOH + 2H₂O → 2NaAlO₂ + 3H₂↑',
+                liquidColor: 'rgba(255,255,255,0.3)',
+                desc: '铝与氢氧化钠溶液反应（两性金属）',
+                phenomena: [
+                    { icon: '💨', text: '产生大量气泡(H₂)' },
+                    { icon: '🔥', text: '反应放热' },
+                    { icon: '📉', text: '铝逐渐溶解' }
+                ],
+                bubbles: true
+            },
+            {
+                name: 'Cu + 浓HNO₃',
+                equation: 'Cu + 4HNO₃(浓) → Cu(NO₃)₂ + 2NO₂↑ + 2H₂O',
+                liquidColor: 'rgba(0,100,0,0.4)',
+                desc: '铜与浓硝酸反应',
+                phenomena: [
+                    { icon: '🟤', text: '产生红棕色气体(NO₂)' },
+                    { icon: '🔵', text: '溶液变为蓝色(Cu²⁺)' },
+                    { icon: '📉', text: '铜片逐渐溶解' }
+                ],
+                redGas: true
+            },
+            {
+                name: 'Na + O₂',
+                equation: '2Na + O₂ →(点燃) Na₂O₂',
+                liquidColor: 'transparent',
+                desc: '钠在氧气中燃烧',
+                phenomena: [
+                    { icon: '🟡', text: '发出黄色火焰' },
+                    { icon: '⬜', text: '生成淡黄色固体(Na₂O₂)' },
+                    { icon: '🔥', text: '剧烈燃烧，放出大量热' }
+                ],
+                flameEffect: true
+            }
+        ];
+
+        const reactionSelector = document.getElementById('reactionSelector');
+        const reactionStage = document.getElementById('reactionStage');
+
+        reactions.forEach((r, i) => {
+            const btn = document.createElement('div');
+            btn.className = 'reaction-btn' + (i === 0 ? ' active' : '');
+            btn.textContent = r.name;
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.reaction-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                showReaction(i);
+            });
+            reactionSelector.appendChild(btn);
+        });
+
+        function showReaction(idx) {
+            const r = reactions[idx];
+            document.getElementById('reactionEq').textContent = r.equation;
+            document.getElementById('reactionDesc').textContent = r.desc;
+
+            const visual = document.getElementById('reactionVisual');
+            visual.innerHTML = '';
+
+            if (r.flameEffect) {
+                visual.innerHTML = `<div style="font-size:5rem; animation: burn 0.3s infinite alternate;">🔥</div>`;
+            } else if (r.redGas) {
+                visual.innerHTML = `
+                    <div class="beaker">
+                        <div class="liquid" style="background:${r.liquidColor}; height:50%;"></div>
+                        <div style="position:absolute;top:-20px;left:30%;font-size:2rem;animation:bubbleUp 1s infinite;">🟤</div>
+                        <div style="position:absolute;top:-30px;left:50%;font-size:1.5rem;animation:bubbleUp 1.2s infinite 0.3s;">🟤</div>
+                    </div>`;
+            } else {
+                let bubbleHtml = '';
+                if (r.bubbles) {
+                    for (let i = 0; i < 5; i++) {
+                        bubbleHtml += `<div class="bubble" style="left:${20+Math.random()*60}%;animation-delay:${Math.random()}s;"></div>`;
+                    }
+                }
+                visual.innerHTML = `
+                    <div class="beaker">
+                        <div class="liquid" style="background:${r.liquidColor}; height:60%;"></div>
+                        ${bubbleHtml}
+                    </div>`;
+            }
+
+            const phenomenaDiv = document.getElementById('reactionPhenomena');
+            phenomenaDiv.innerHTML = r.phenomena.map(p => `
+                <div class="phenomenon-item">
+                    <div class="phen-icon">${p.icon}</div>
+                    <div>${p.text}</div>
+                </div>
+            `).join('');
+        }
+
+        showReaction(0);
+
+        // ===== 模式3：实验探究 =====
+        const reagents = [
+            { id: 'naoh', name: 'NaOH', icon: '⬜', color: 'rgba(255,255,255,0.3)' },
+            { id: 'kscn', name: 'KSCN', icon: '⬜', color: 'rgba(255,255,255,0.2)' },
+            { id: 'fecl3', name: 'FeCl₃', icon: '🟤', color: 'rgba(139,69,19,0.5)' },
+            { id: 'fecl2', name: 'FeCl₂', icon: '🟢', color: 'rgba(144,238,144,0.4)' },
+            { id: 'cuso4', name: 'CuSO₄', icon: '🔵', color: 'rgba(65,105,225,0.5)' },
+            { id: 'alcl3', name: 'AlCl₃', icon: '⬜', color: 'rgba(255,255,255,0.2)' },
+            { id: 'hcl', name: 'HCl', icon: '⬜', color: 'rgba(255,255,255,0.15)' },
+            { id: 'fe', name: 'Fe粉', icon: '⚫', color: 'rgba(100,100,100,0.5)' },
+            { id: 'nh3', name: 'NH₃·H₂O', icon: '⬜', color: 'rgba(200,200,255,0.3)' }
+        ];
+
+        const reactionResults = {
+            'naoh+fecl3': {
+                liquidColor: 'rgba(139,0,0,0.5)',
+                precipitateColor: 'rgba(139,69,19,0.8)',
+                precipitateH: '30%',
+                log: '✅ FeCl₃ + 3NaOH → Fe(OH)₃↓(红褐色) + 3NaCl\n产生红褐色沉淀！这是Fe³⁺的特征反应。',
+                success: true
+            },
+            'naoh+fecl2': {
+                liquidColor: 'rgba(144,238,144,0.3)',
+                precipitateColor: 'rgba(144,238,144,0.8)',
+                precipitateH: '25%',
+                log: '✅ FeCl₂ + 2NaOH → Fe(OH)₂↓(白色) + 2NaCl\n白色沉淀迅速变为灰绿色，最终变为红褐色。\n4Fe(OH)₂ + O₂ + 2H₂O → 4Fe(OH)₃',
+                success: true
+            },
+            'naoh+cuso4': {
+                liquidColor: 'rgba(100,149,237,0.3)',
+                precipitateColor: 'rgba(30,144,255,0.8)',
+                precipitateH: '30%',
+                log: '✅ CuSO₄ + 2NaOH → Cu(OH)₂↓(蓝色) + Na₂SO₄\n产生蓝色絮状沉淀！加热会分解为黑色CuO。',
+                success: true
+            },
+            'naoh+alcl3': {
+                liquidColor: 'rgba(255,255,255,0.2)',
+                precipitateColor: 'rgba(255,255,255,0.8)',
+                precipitateH: '25%',
+                log: '✅ AlCl₃ + 3NaOH → Al(OH)₃↓(白色) + 3NaCl\n产生白色胶状沉淀。NaOH过量时沉淀溶解：\nAl(OH)₃ + NaOH → NaAlO₂ + 2H₂O',
+                success: true
+            },
+            'kscn+fecl3': {
+                liquidColor: 'rgba(178,34,34,0.6)',
+                precipitateColor: '',
+                precipitateH: '0',
+                log: '✅ FeCl₃ + 3KSCN → Fe(SCN)₃ + 3KCl\n溶液变为血红色！这是检验Fe³⁺的特效方法。',
+                success: true
+            },
+            'hcl+fe': {
+                liquidColor: 'rgba(144,238,144,0.3)',
+                precipitateColor: '',
+                precipitateH: '0',
+                log: '✅ Fe + 2HCl → FeCl₂ + H₂↑\n铁粉溶解，产生气泡，溶液变为浅绿色(Fe²⁺)。',
+                success: true
+            },
+            'fe+cuso4': {
+                liquidColor: 'rgba(144,238,144,0.4)',
+                precipitateColor: 'rgba(139,69,19,0.8)',
+                precipitateH: '20%',
+                log: '✅ Fe + CuSO₄ → FeSO₄ + Cu\n铁表面析出红色固体(铜)，溶液由蓝变浅绿。\n这是湿法炼铜的原理！',
+                success: true
+            },
+            'nh3+alcl3': {
+                liquidColor: 'rgba(255,255,255,0.2)',
+                precipitateColor: 'rgba(255,255,255,0.8)',
+                precipitateH: '25%',
+                log: '✅ AlCl₃ + 3NH₃·H₂O → Al(OH)₃↓ + 3NH₄Cl\n与NaOH不同，氨水过量时Al(OH)₃不溶解！\n可用于制备Al(OH)₃。',
+                success: true
+            }
+        };
+
+        let selectedReagents = [];
+        const reagentShelf = document.getElementById('reagentShelf');
+        const vesselLiquid = document.getElementById('vesselLiquid');
+        const vesselPrecipitate = document.getElementById('vesselPrecipitate');
+        const experimentLog = document.getElementById('experimentLog');
+
+        reagents.forEach(r => {
+            const div = document.createElement('div');
+            div.className = 'reagent';
+            div.dataset.id = r.id;
+            div.innerHTML = `<div class="reagent-icon">${r.icon}</div>${r.name}`;
+            div.addEventListener('click', () => {
+                if (div.classList.contains('selected')) {
+                    div.classList.remove('selected');
+                    selectedReagents = selectedReagents.filter(s => s !== r.id);
+                } else if (selectedReagents.length < 2) {
+                    div.classList.add('selected');
+                    selectedReagents.push(r.id);
+                }
+                updateLog(`选择了 ${selectedReagents.map(s => reagents.find(r2 => r2.id === s).name).join(' + ')}`);
+            });
+            reagentShelf.appendChild(div);
+        });
+
+        document.getElementById('mixBtn').addEventListener('click', () => {
+            if (selectedReagents.length !== 2) {
+                updateLog('⚠️ 请先选择两种试剂！', false);
+                return;
+            }
+
+            const key1 = selectedReagents.sort().join('+');
+            const result = reactionResults[key1];
+
+            if (result) {
+                vesselLiquid.style.background = result.liquidColor;
+                vesselLiquid.style.height = '60%';
+                if (result.precipitateColor && result.precipitateH !== '0') {
+                    vesselPrecipitate.style.background = result.precipitateColor;
+                    vesselPrecipitate.style.height = result.precipitateH;
+                }
+                updateLog(result.log, result.success);
+            } else {
+                updateLog('❌ 这两种试剂混合没有明显的化学反应，或不在本实验范围内。', false);
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            selectedReagents = [];
+            document.querySelectorAll('.reagent').forEach(r => r.classList.remove('selected'));
+            vesselLiquid.style.height = '0';
+            vesselPrecipitate.style.height = '0';
+            experimentLog.innerHTML = '<div class="log-entry">已重置，等待选择试剂...</div>';
+        });
+
+        function updateLog(msg, success) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry' + (success === true ? ' success' : success === false ? ' fail' : '');
+            entry.textContent = msg;
+            experimentLog.appendChild(entry);
+            experimentLog.scrollTop = experimentLog.scrollHeight;
+        }
+    </script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中化学"></script>
+</body>
+</html>

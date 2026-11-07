@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>电化学 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #00d2ff; --secondary: #3a7bd5; --positive: #ff6464; --negative: #6464ff;
+    --anode: #ff9f43; --cathode: #54a0ff; --electron: #ffeaa7; --ion: #55efc4;
+    --dark: #0f172a; --card: rgba(15,23,42,0.85); --border: rgba(255,255,255,0.08); --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%); color: var(--light); font-family: -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; min-height: 100vh; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; padding: 36px 20px; background: linear-gradient(135deg,rgba(255,100,100,0.12),rgba(100,100,255,0.12)); border-radius: 20px; margin-bottom: 28px; border: 1px solid var(--border); }
+  header h1 { font-size: 2.4em; background: linear-gradient(135deg,var(--positive),var(--negative)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+  header .sub { font-size: 1.05em; opacity: 0.75; }
+  .tabs { display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; justify-content: center; }
+  .tab { padding: 11px 22px; background: var(--card); border: 1px solid var(--border); border-radius: 28px; cursor: pointer; transition: all .3s; font-size: .93em; }
+  .tab:hover { transform: translateY(-2px); border-color: var(--primary); }
+  .tab.active { background: linear-gradient(135deg,var(--positive),var(--negative)); border-color: transparent; font-weight: 600; }
+  .section { display: none; background: var(--card); border-radius: 20px; padding: 28px; border: 1px solid var(--border); animation: fadeIn .4s; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .col { flex: 1; min-width: 280px; }
+  canvas { background: rgba(0,0,0,0.3); border-radius: 14px; display: block; width: 100%; }
+  .ctrl { background: rgba(255,255,255,0.04); border-radius: 14px; padding: 18px; margin-top: 14px; }
+  .ctrl label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: .9em; }
+  .ctrl input[type=range] { width: 60%; accent-color: var(--primary); }
+  .ctrl select { background: rgba(255,255,255,0.1); border: 1px solid var(--border); color: var(--light); padding: 6px 12px; border-radius: 8px; }
+  .btn { padding: 8px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: .88em; transition: all .2s; margin: 4px; }
+  .btn-primary { background: linear-gradient(135deg,var(--primary),var(--secondary)); color: #fff; }
+  .btn-sm { background: rgba(255,255,255,0.1); color: var(--light); }
+  .btn:hover { transform: scale(1.04); filter: brightness(1.15); }
+  .info { font-size: .88em; line-height: 1.7; padding: 14px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-top: 12px; }
+  .info b { color: var(--primary); }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: .78em; margin: 2px; }
+  .tag-red { background: rgba(255,100,100,0.2); color: #ff8888; }
+  .tag-blue { background: rgba(100,100,255,0.2); color: #8888ff; }
+  .tag-green { background: rgba(100,255,100,0.2); color: #88ff88; }
+  .quiz-q { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+  .quiz-q h4 { margin-bottom: 10px; font-size: .95em; }
+  .quiz-opt { padding: 10px 16px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; margin: 6px 0; transition: all .2s; font-size: .88em; }
+  .quiz-opt:hover { border-color: var(--primary); background: rgba(0,210,255,0.08); }
+  .quiz-opt.correct { border-color: #55efc4; background: rgba(85,239,196,0.15); color: #55efc4; }
+  .quiz-opt.wrong { border-color: #ff6464; background: rgba(255,100,100,0.1); color: #ff6464; }
+  .score-bar { text-align: center; padding: 14px; background: rgba(0,210,255,0.08); border-radius: 12px; margin-top: 14px; font-size: 1.05em; }
+  h3 { font-size: 1.2em; margin-bottom: 14px; color: var(--primary); }
+  .eq { font-family: "Times New Roman", serif; font-style: italic; color: var(--electron); }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>⚡ 电化学 · 互动可视化</h1>
+  <div class="sub">原电池 · 电解池 · 金属腐蚀与防护 — 高中化学</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="galvanic">🔋 原电池</div>
+  <div class="tab" data-tab="electrolysis">⚡ 电解池</div>
+  <div class="tab" data-tab="corrosion">🛡️ 腐蚀与防护</div>
+  <div class="tab" data-tab="quiz">📝 互动练习</div>
+</div>
+
+<!-- 1. 原电池 -->
+<div class="section active" id="sec-galvanic">
+  <h3>原电池工作原理</h3>
+  <div class="row">
+    <div class="col" style="flex:2">
+      <canvas id="cvGalvanic" width="700" height="420"></canvas>
+    </div>
+    <div class="col">
+      <div class="ctrl">
+        <label>电池类型
+          <select id="galvType">
+            <option value="zn-cu">Zn-Cu 稀H₂SO₄</option>
+            <option value="zn-ag">Zn-Ag AgNO₃</option>
+            <option value="fe-cu">Fe-Cu CuSO₄</option>
+          </select>
+        </label>
+        <label>温度 (°C) <input type="range" id="galvTemp" min="10" max="80" value="25"><span id="galvTempV">25</span></label>
+        <label>浓度 (mol/L) <input type="range" id="galvConc" min="1" max="20" value="10" step="1"><span id="galvConcV">1.0</span></label>
+        <div style="margin-top:10px">
+          <button class="btn btn-primary" id="galvPlay">▶ 开始反应</button>
+          <button class="btn btn-sm" id="galvReset">↺ 重置</button>
+        </div>
+      </div>
+      <div class="info" id="galvInfo">
+        <b>负极(Zn):</b> Zn → Zn²⁺ + 2e⁻ (氧化反应)<br>
+        <b>正极(Cu):</b> 2H⁺ + 2e⁻ → H₂↑ (还原反应)<br>
+        <b>总反应:</b> Zn + 2H⁺ → Zn²⁺ + H₂↑
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. 电解池 -->
+<div class="section" id="sec-electrolysis">
+  <h3>电解池工作原理</h3>
+  <div class="row">
+    <div class="col" style="flex:2">
+      <canvas id="cvElectro" width="700" height="420"></canvas>
+    </div>
+    <div class="col">
+      <div class="ctrl">
+        <label>电解液
+          <select id="elecType">
+            <option value="cucl2">CuCl₂ 溶液</option>
+            <option value="nacl">NaCl 溶液</option>
+            <option value="h2o">稀 H₂SO₄ (电解水)</option>
+          </select>
+        </label>
+        <label>电压 (V) <input type="range" id="elecVolt" min="1" max="12" value="6"><span id="elecVoltV">6</span></label>
+        <div style="margin-top:10px">
+          <button class="btn btn-primary" id="elecPlay">▶ 通电</button>
+          <button class="btn btn-sm" id="elecReset">↺ 重置</button>
+        </div>
+      </div>
+      <div class="info" id="elecInfo">
+        <b>阳极(+):</b> 2Cl⁻ → Cl₂↑ + 2e⁻ (氧化)<br>
+        <b>阴极(-):</b> Cu²⁺ + 2e⁻ → Cu (还原)<br>
+        <b>总反应:</b> CuCl₂ → Cu + Cl₂↑
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 腐蚀与防护 -->
+<div class="section" id="sec-corrosion">
+  <h3>金属腐蚀与防护</h3>
+  <div class="row">
+    <div class="col" style="flex:2">
+      <canvas id="cvCorrosion" width="700" height="420"></canvas>
+    </div>
+    <div class="col">
+      <div class="ctrl">
+        <label>防护方法
+          <select id="corrMethod">
+            <option value="none">无防护 (自然腐蚀)</option>
+            <option value="coating">涂层防护 (油漆/镀层)</option>
+            <option value="sacrifice">牺牲阳极 (Zn保护Fe)</option>
+            <option value="impressed">外加电流阴极保护</option>
+          </select>
+        </label>
+        <label>湿度 (%) <input type="range" id="corrHumid" min="10" max="100" value="60"><span id="corrHumidV">60</span></label>
+        <label>盐分浓度 (%) <input type="range" id="corrSalt" min="0" max="10" value="3"><span id="corrSaltV">3</span></label>
+        <div style="margin-top:10px">
+          <button class="btn btn-primary" id="corrPlay">▶ 开始</button>
+          <button class="btn btn-sm" id="corrReset">↺ 重置</button>
+        </div>
+      </div>
+      <div class="info" id="corrInfo">
+        <b>吸氧腐蚀:</b> Fe → Fe²⁺ + 2e⁻<br>
+        O₂ + 2H₂O + 4e⁻ → 4OH⁻<br>
+        <b>总反应:</b> 2Fe + O₂ + 2H₂O → 2Fe(OH)₂ → Fe₂O₃·xH₂O (铁锈)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. 练习 -->
+<div class="section" id="sec-quiz">
+  <h3>电化学互动练习</h3>
+  <div id="quizArea"></div>
+  <div class="score-bar" id="quizScore">得分：0 / 0</div>
+</div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// Tab switching
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('sec-' + t.dataset.tab).classList.add('active');
+}));
+
+// ========== 1. 原电池 ==========
+const galvanic = {
+  cv: null, ctx: null, running: false, frame: 0,
+  electrons: [], ions: [], bubbles: [],
+  type: 'zn-cu', temp: 25, conc: 1.0,
+  
+  configs: {
+    'zn-cu': { neg:'Zn', pos:'Cu', negIon:'Zn²⁺', posIon:'H⁺', sol:'稀H₂SO₄', negColor:'#a0a0a0', posColor:'#d4a574', solColor:'rgba(100,180,255,0.15)',
+      negEq:'Zn → Zn²⁺ + 2e⁻', posEq:'2H⁺ + 2e⁻ → H₂↑', totalEq:'Zn + 2H⁺ → Zn²⁺ + H₂↑' },
+    'zn-ag': { neg:'Zn', pos:'Ag', negIon:'Zn²⁺', posIon:'Ag⁺', sol:'AgNO₃', negColor:'#a0a0a0', posColor:'#c0c0c0', solColor:'rgba(150,150,200,0.15)',
+      negEq:'Zn → Zn²⁺ + 2e⁻', posEq:'2Ag⁺ + 2e⁻ → 2Ag', totalEq:'Zn + 2Ag⁺ → Zn²⁺ + 2Ag' },
+    'fe-cu': { neg:'Fe', pos:'Cu', negIon:'Fe²⁺', posIon:'Cu²⁺', sol:'CuSO₄', negColor:'#8090a0', posColor:'#d4a574', solColor:'rgba(80,140,255,0.2)',
+      negEq:'Fe → Fe²⁺ + 2e⁻', posEq:'Cu²⁺ + 2e⁻ → Cu', totalEq:'Fe + Cu²⁺ → Fe²⁺ + Cu' }
+  },
+  
+  init() {
+    this.cv = document.getElementById('cvGalvanic');
+    this.ctx = this.cv.getContext('2d');
+    this.resize();
+    this.reset();
+    this.animate();
+    
+    document.getElementById('galvType').onchange = e => { this.type = e.target.value; this.reset(); this.updateInfo(); };
+    document.getElementById('galvTemp').oninput = e => { this.temp = +e.target.value; document.getElementById('galvTempV').textContent = this.temp; };
+    document.getElementById('galvConc').oninput = e => { this.conc = +e.target.value / 10; document.getElementById('galvConcV').textContent = this.conc.toFixed(1); };
+    document.getElementById('galvPlay').onclick = () => this.running = !this.running;
+    document.getElementById('galvReset').onclick = () => this.reset();
+    this.updateInfo();
+  },
+  
+  resize() {
+    const r = window.devicePixelRatio || 1;
+    const rect = this.cv.getBoundingClientRect();
+    this.cv.width = rect.width * r; this.cv.height = rect.height * r;
+    this.ctx.scale(r, r);
+    this.W = rect.width; this.H = rect.height;
+  },
+  
+  reset() {
+    this.running = false; this.frame = 0;
+    this.electrons = []; this.ions = []; this.bubbles = [];
+    this.negWear = 0; this.posDeposit = 0;
+  },
+  
+  updateInfo() {
+    const c = this.configs[this.type];
+    document.getElementById('galvInfo').innerHTML =
+      `<b>负极(${c.neg}):</b> ${c.negEq} (氧化)<br><b>正极(${c.pos}):</b> ${c.posEq} (还原)<br><b>总反应:</b> ${c.totalEq}`;
+  },
+  
+  draw() {
+    const {ctx, W, H} = this, c = this.configs[this.type];
+    ctx.clearRect(0, 0, W, H);
+    
+    // Solution
+    ctx.fillStyle = c.solColor;
+    ctx.fillRect(40, 160, W - 80, H - 200);
+    
+    // Salt bridge
+    ctx.fillStyle = 'rgba(255,255,100,0.15)';
+    ctx.fillRect(W/2 - 15, 100, 30, 80);
+    ctx.strokeStyle = 'rgba(255,255,100,0.4)'; ctx.lineWidth = 2;
+    ctx.strokeRect(W/2 - 15, 100, 30, 80);
+    ctx.fillStyle = 'rgba(255,255,200,0.6)'; ctx.font = '11px sans-serif';
+    ctx.fillText('盐桥', W/2 - 12, 95);
+    
+    // Negative electrode (anode)
+    const negH = 200 - this.negWear * 0.3;
+    ctx.fillStyle = c.negColor;
+    ctx.fillRect(80, 160 + (200 - negH), 50, negH);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(`${c.neg} (负极)`, 65, 150 + (200 - negH));
+    
+    // Positive electrode (cathode)
+    const posH = 200 + this.posDeposit * 0.3;
+    ctx.fillStyle = c.posColor;
+    ctx.fillRect(W - 130, 160 + (200 - posH), 50, posH);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(`${c.pos} (正极)`, W - 145, 150 + (200 - posH));
+    
+    // Wire
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(105, 160 + (200 - negH)); ctx.lineTo(105, 40);
+    ctx.lineTo(W - 105, 40); ctx.lineTo(W - 105, 160 + (200 - posH)); ctx.stroke();
+    
+    // Ammeter
+    ctx.beginPath(); ctx.arc(W/2, 40, 18, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,210,255,0.2)'; ctx.fill();
+    ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.fillText('A', W/2 - 5, 45);
+    
+    // Electron flow arrow
+    if (this.running) {
+      const ax = W/2 - 60 + ((this.frame * 2) % 120);
+      ctx.fillStyle = '#ffeaa7';
+      ctx.beginPath(); ctx.moveTo(ax, 32); ctx.lineTo(ax - 8, 26); ctx.lineTo(ax - 8, 38); ctx.fill();
+      ctx.fillStyle = 'rgba(255,234,167,0.7)'; ctx.font = '11px sans-serif';
+      ctx.fillText('e⁻ →', W/2 - 30, 28);
+    }
+    
+    // Ions in solution
+    this.ions.forEach(ion => {
+      ctx.beginPath(); ctx.arc(ion.x, ion.y, ion.r, 0, Math.PI * 2);
+      ctx.fillStyle = ion.type === 'neg' ? 'rgba(255,100,100,0.7)' : 'rgba(100,100,255,0.7)';
+      ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '9px sans-serif';
+      ctx.fillText(ion.label, ion.x - 8, ion.y + 3);
+    });
+    
+    // Electrons on wire
+    this.electrons.forEach(e => {
+      ctx.beginPath(); ctx.arc(e.x, e.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffeaa7'; ctx.fill();
+      ctx.fillStyle = '#000'; ctx.font = '7px sans-serif'; ctx.fillText('e⁻', e.x - 5, e.y + 2);
+    });
+    
+    // Bubbles at positive electrode
+    this.bubbles.forEach(b => {
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,230,255,${b.alpha})`; ctx.fill();
+    });
+    
+    // Labels
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '12px sans-serif';
+    ctx.fillText(`溶液: ${c.sol}`, W/2 - 30, H - 30);
+  },
+  
+  update() {
+    if (!this.running) return;
+    this.frame++;
+    const speed = (this.temp / 25) * this.conc;
+    
+    // Spawn electrons
+    if (this.frame % Math.max(8, Math.floor(20 / speed)) === 0) {
+      this.electrons.push({ x: 105, y: 40, vx: 1.5 * speed, phase: 'wire' });
+    }
+    
+    // Update electrons
+    this.electrons = this.electrons.filter(e => {
+      e.x += e.vx;
+      return e.x < this.W - 100;
+    });
+    
+    // Spawn ions
+    if (this.frame % Math.max(15, Math.floor(40 / speed)) === 0) {
+      const c = this.configs[this.type];
+      this.ions.push({ x: 110 + Math.random() * 30, y: 250 + Math.random() * 80, vx: 0.3, vy: -0.2, r: 8, type: 'neg', label: c.negIon, life: 200 });
+    }
+    if (this.frame % Math.max(15, Math.floor(40 / speed)) === 0) {
+      const c = this.configs[this.type];
+      this.ions.push({ x: this.W - 130 + Math.random() * 30, y: 250 + Math.random() * 80, vx: -0.3, vy: 0, r: 8, type: 'pos', label: c.posIon, life: 200 });
+    }
+    
+    // Update ions
+    this.ions = this.ions.filter(ion => {
+      ion.x += ion.vx * speed; ion.y += ion.vy * speed;
+      ion.life--;
+      return ion.life > 0;
+    });
+    
+    // Bubbles
+    if (this.frame % 20 === 0 && this.type === 'zn-cu') {
+      this.bubbles.push({ x: this.W - 115 + Math.random() * 20, y: 300, r: 2 + Math.random() * 4, alpha: 0.6, vy: -0.8 });
+    }
+    this.bubbles = this.bubbles.filter(b => { b.y += b.vy; b.alpha -= 0.005; return b.alpha > 0 && b.y > 160; });
+    
+    // Wear/deposit
+    if (this.frame % 30 === 0) { this.negWear += 0.3; this.posDeposit += 0.3; }
+  },
+  
+  animate() {
+    this.update(); this.draw();
+    requestAnimationFrame(() => this.animate());
+  }
+};
+const var_primary = '#00d2ff';
+
+// ========== 2. 电解池 ==========
+const electrolysis = {
+  cv: null, ctx: null, running: false, frame: 0,
+  cations: [], anions: [], bubblesL: [], bubblesR: [],
+  type: 'cucl2', voltage: 6,
+  
+  configs: {
+    'cucl2': { anode:'石墨', cathode:'石墨', sol:'CuCl₂', solColor:'rgba(80,200,120,0.15)',
+      anodeEq:'2Cl⁻ → Cl₂↑ + 2e⁻ (氧化)', cathodeEq:'Cu²⁺ + 2e⁻ → Cu (还原)',
+      totalEq:'CuCl₂ → Cu + Cl₂↑', catIon:'Cu²⁺', anIon:'Cl⁻',
+      catColor:'rgba(100,200,100,0.8)', anColor:'rgba(200,200,100,0.8)',
+      anodeGas:'Cl₂', cathodeDeposit:'Cu' },
+    'nacl': { anode:'石墨', cathode:'石墨', sol:'NaCl', solColor:'rgba(200,200,255,0.1)',
+      anodeEq:'2Cl⁻ → Cl₂↑ + 2e⁻ (氧化)', cathodeEq:'2H₂O + 2e⁻ → H₂↑ + 2OH⁻ (还原)',
+      totalEq:'2NaCl + 2H₂O → 2NaOH + H₂↑ + Cl₂↑', catIon:'Na⁺', anIon:'Cl⁻',
+      catColor:'rgba(150,150,255,0.7)', anColor:'rgba(200,200,100,0.8)',
+      anodeGas:'Cl₂', cathodeDeposit:'H₂' },
+    'h2o': { anode:'Pt', cathode:'Pt', sol:'稀H₂SO₄', solColor:'rgba(200,220,255,0.08)',
+      anodeEq:'2H₂O → O₂↑ + 4H⁺ + 4e⁻ (氧化)', cathodeEq:'2H⁺ + 2e⁻ → H₂↑ (还原)',
+      totalEq:'2H₂O → 2H₂↑ + O₂↑', catIon:'H⁺', anIon:'OH⁻',
+      catColor:'rgba(255,150,150,0.7)', anColor:'rgba(150,200,255,0.7)',
+      anodeGas:'O₂', cathodeDeposit:'H₂' }
+  },
+  
+  init() {
+    this.cv = document.getElementById('cvElectro');
+    this.ctx = this.cv.getContext('2d');
+    this.resize();
+    this.reset();
+    this.animate();
+    document.getElementById('elecType').onchange = e => { this.type = e.target.value; this.reset(); this.updateInfo(); };
+    document.getElementById('elecVolt').oninput = e => { this.voltage = +e.target.value; document.getElementById('elecVoltV').textContent = this.voltage; };
+    document.getElementById('elecPlay').onclick = () => this.running = !this.running;
+    document.getElementById('elecReset').onclick = () => this.reset();
+    this.updateInfo();
+  },
+  
+  resize() {
+    const r = window.devicePixelRatio || 1;
+    const rect = this.cv.getBoundingClientRect();
+    this.cv.width = rect.width * r; this.cv.height = rect.height * r;
+    this.ctx.scale(r, r); this.W = rect.width; this.H = rect.height;
+  },
+  
+  reset() { this.running = false; this.frame = 0; this.cations = []; this.anions = []; this.bubblesL = []; this.bubblesR = []; },
+  
+  updateInfo() {
+    const c = this.configs[this.type];
+    document.getElementById('elecInfo').innerHTML =
+      `<b>阳极(+):</b> ${c.anodeEq}<br><b>阴极(-):</b> ${c.cathodeEq}<br><b>总反应:</b> ${c.totalEq}`;
+  },
+  
+  draw() {
+    const {ctx, W, H} = this, c = this.configs[this.type];
+    ctx.clearRect(0, 0, W, H);
+    
+    // Solution
+    ctx.fillStyle = c.solColor;
+    ctx.fillRect(40, 140, W - 80, H - 180);
+    
+    // Battery symbol
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(100, 30); ctx.lineTo(100, 140); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W - 100, 30); ctx.lineTo(W - 100, 140); ctx.stroke();
+    // Battery
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(W/2 - 40, 25); ctx.lineTo(W/2 + 40, 25); ctx.stroke();
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(W/2 - 25, 35); ctx.lineTo(W/2 + 25, 35); ctx.stroke();
+    ctx.fillStyle = '#ff6464'; ctx.font = '12px sans-serif'; ctx.fillText('+', W/2 + 45, 33);
+    ctx.fillStyle = '#6464ff'; ctx.fillText('−', W/2 - 55, 33);
+    
+    // Wire connections
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(100, 30); ctx.lineTo(W/2 - 40, 30); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W/2 + 40, 30); ctx.lineTo(W - 100, 30); ctx.stroke();
+    
+    // Anode (+)
+    ctx.fillStyle = '#666';
+    ctx.fillRect(80, 140, 40, 200);
+    ctx.fillStyle = '#ff8888'; ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(`阳极(${c.anode})`, 60, 130);
+    ctx.fillText('+', 95, 155);
+    
+    // Cathode (-)
+    ctx.fillStyle = '#666';
+    ctx.fillRect(W - 120, 140, 40, 200);
+    ctx.fillStyle = '#8888ff'; ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(`阴极(${c.cathode})`, W - 140, 130);
+    ctx.fillText('−', W - 105, 155);
+    
+    // Ions
+    this.cations.forEach(ion => {
+      ctx.beginPath(); ctx.arc(ion.x, ion.y, 9, 0, Math.PI * 2);
+      ctx.fillStyle = c.catColor; ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '9px sans-serif'; ctx.fillText(ion.label, ion.x - 10, ion.y + 3);
+    });
+    this.anions.forEach(ion => {
+      ctx.beginPath(); ctx.arc(ion.x, ion.y, 9, 0, Math.PI * 2);
+      ctx.fillStyle = c.anColor; ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '9px sans-serif'; ctx.fillText(ion.label, ion.x - 10, ion.y + 3);
+    });
+    
+    // Bubbles
+    const drawBubbles = (arr) => arr.forEach(b => {
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,230,255,${b.alpha})`; ctx.fill();
+    });
+    drawBubbles(this.bubblesL);
+    drawBubbles(this.bubblesR);
+    
+    // Electron flow
+    if (this.running) {
+      const ax = 100 + ((this.frame * 2) % (W - 200));
+      ctx.fillStyle = '#ffeaa7';
+      ctx.beginPath(); ctx.arc(ax > W/2 ? W - 100 : 100, 30 + (this.frame % 20), 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,234,167,0.6)'; ctx.font = '10px sans-serif';
+      ctx.fillText('e⁻', W/2 - 5, 18);
+    }
+    
+    // Solution label
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '12px sans-serif';
+    ctx.fillText(`电解液: ${c.sol}`, W/2 - 30, H - 20);
+  },
+  
+  update() {
+    if (!this.running) return;
+    this.frame++;
+    const speed = this.voltage / 6;
+    const c = this.configs[this.type];
+    const W = this.W;
+    
+    // Spawn cations (move to cathode = right)
+    if (this.frame % Math.max(10, Math.floor(25 / speed)) === 0) {
+      this.cations.push({ x: W/2 - 30 + Math.random() * 60, y: 200 + Math.random() * 100, vx: 0.8 * speed, label: c.catIon });
+    }
+    // Spawn anions (move to anode = left)
+    if (this.frame % Math.max(10, Math.floor(25 / speed)) === 0) {
+      this.anions.push({ x: W/2 - 30 + Math.random() * 60, y: 200 + Math.random() * 100, vx: -0.8 * speed, label: c.anIon });
+    }
+    
+    this.cations = this.cations.filter(ion => {
+      ion.x += ion.vx; ion.y += (Math.random() - 0.5) * 0.5;
+      if (ion.x > W - 125) {
+        // Arrived at cathode
+        if (this.frame % 30 === 0) this.bubblesR.push({ x: W - 110 + Math.random() * 10, y: 280, r: 2 + Math.random() * 3, alpha: 0.5 });
+        return false;
+      }
+      return true;
+    });
+    this.anions = this.anions.filter(ion => {
+      ion.x += ion.vx; ion.y += (Math.random() - 0.5) * 0.5;
+      if (ion.x < 125) {
+        if (this.frame % 30 === 0) this.bubblesL.push({ x: 110 + Math.random() * 10, y: 280, r: 2 + Math.random() * 3, alpha: 0.5 });
+        return false;
+      }
+      return true;
+    });
+    
+    // Bubbles rise
+    this.bubblesL = this.bubblesL.filter(b => { b.y -= 0.6; b.alpha -= 0.004; return b.alpha > 0 && b.y > 140; });
+    this.bubblesR = this.bubblesR.filter(b => { b.y -= 0.6; b.alpha -= 0.004; return b.alpha > 0 && b.y > 140; });
+  },
+  
+  animate() { this.update(); this.draw(); requestAnimationFrame(() => this.animate()); }
+};
+
+// ========== 3. 腐蚀与防护 ==========
+const corrosion = {
+  cv: null, ctx: null, running: false, frame: 0,
+  rustLevel: 0, particles: [], method: 'none', humidity: 60, salt: 3,
+  
+  init() {
+    this.cv = document.getElementById('cvCorrosion');
+    this.ctx = this.cv.getContext('2d');
+    this.resize();
+    this.reset();
+    this.animate();
+    document.getElementById('corrMethod').onchange = e => { this.method = e.target.value; this.reset(); this.updateInfo(); };
+    document.getElementById('corrHumid').oninput = e => { this.humidity = +e.target.value; document.getElementById('corrHumidV').textContent = this.humidity; };
+    document.getElementById('corrSalt').oninput = e => { this.salt = +e.target.value; document.getElementById('corrSaltV').textContent = this.salt; };
+    document.getElementById('corrPlay').onclick = () => this.running = !this.running;
+    document.getElementById('corrReset').onclick = () => this.reset();
+    this.updateInfo();
+  },
+  
+  resize() {
+    const r = window.devicePixelRatio || 1;
+    const rect = this.cv.getBoundingClientRect();
+    this.cv.width = rect.width * r; this.cv.height = rect.height * r;
+    this.ctx.scale(r, r); this.W = rect.width; this.H = rect.height;
+  },
+  
+  reset() { this.running = false; this.frame = 0; this.rustLevel = 0; this.particles = []; },
+  
+  updateInfo() {
+    const infos = {
+      'none': '<b>自然腐蚀:</b> 铁在潮湿空气中发生吸氧腐蚀<br>Fe → Fe²⁺ + 2e⁻<br>O₂ + 2H₂O + 4e⁻ → 4OH⁻',
+      'coating': '<b>涂层防护:</b> 隔绝空气和水，阻止电化学腐蚀<br>常见方法：油漆、镀锌、搪瓷、塑料涂层',
+      'sacrifice': '<b>牺牲阳极:</b> 用活泼金属(Zn/Mg)保护Fe<br>Zn → Zn²⁺ + 2e⁻ (Zn被腐蚀，Fe被保护)<br>原理：Zn比Fe活泼，Zn做负极',
+      'impressed': '<b>外加电流:</b> 将被保护金属接电源负极<br>使其成为阴极，不发生氧化反应<br>适用于大型设备：管道、船体、桥梁'
+    };
+    document.getElementById('corrInfo').innerHTML = infos[this.method];
+  },
+  
+  draw() {
+    const {ctx, W, H} = this;
+    ctx.clearRect(0, 0, W, H);
+    
+    // Water/moisture background
+    const waterH = 100 + this.humidity * 1.5;
+    ctx.fillStyle = `rgba(80,140,255,${0.05 + this.humidity * 0.001})`;
+    ctx.fillRect(0, H - waterH, W, waterH);
+    
+    // Iron block
+    const ironX = W/2 - 100, ironY = H/2 - 30, ironW = 200, ironH = 80;
+    
+    // Rust color based on level
+    const rustR = Math.floor(128 + this.rustLevel * 1.2);
+    const rustG = Math.floor(128 - this.rustLevel * 0.8);
+    const rustB = Math.floor(128 - this.rustLevel * 1.0);
+    
+    if (this.method === 'coating' && this.rustLevel < 5) {
+      // Coating layer
+      ctx.fillStyle = 'rgba(100,200,100,0.4)';
+      ctx.fillRect(ironX - 5, ironY - 5, ironW + 10, ironH + 10);
+      ctx.fillStyle = '#888';
+      ctx.fillRect(ironX, ironY, ironW, ironH);
+      ctx.fillStyle = '#55efc4'; ctx.font = '12px sans-serif';
+      ctx.fillText('涂层保护 ✓', ironX + 55, ironY - 10);
+    } else {
+      // Iron with rust
+      ctx.fillStyle = `rgb(${rustR},${rustG},${rustB})`;
+      ctx.fillRect(ironX, ironY, ironW, ironH);
+      
+      // Rust patches
+      if (this.rustLevel > 10) {
+        for (let i = 0; i < this.rustLevel / 5; i++) {
+          ctx.beginPath();
+          ctx.arc(ironX + 20 + (i * 37) % ironW, ironY + 15 + (i * 23) % (ironH - 20), 5 + this.rustLevel / 10, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(180,80,30,${Math.min(0.8, this.rustLevel / 50)})`;
+          ctx.fill();
+        }
+      }
+    }
+    
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('Fe 铁', ironX + 75, ironY + 45);
+    
+    // Sacrifice anode (Zn)
+    if (this.method === 'sacrifice') {
+      ctx.fillStyle = '#a0a0a0';
+      ctx.fillRect(ironX - 80, ironY + 10, 50, 60);
+      ctx.fillStyle = '#ddd'; ctx.font = '12px sans-serif';
+      ctx.fillText('Zn', ironX - 65, ironY + 45);
+      ctx.fillText('(牺牲阳极)', ironX - 90, ironY);
+      
+      // Electron flow arrow
+      if (this.running) {
+        const ax = ironX - 30 + ((this.frame * 2) % 30);
+        ctx.fillStyle = '#ffeaa7'; ctx.font = '10px sans-serif';
+        ctx.fillText('e⁻→', ax, ironY + 35);
+      }
+    }
+    
+    // Impressed current
+    if (this.method === 'impressed') {
+      ctx.strokeStyle = '#888'; ctx.lineWidth = 2;
+      ctx.strokeRect(ironX - 80, ironY - 20, 40, 30);
+      ctx.fillStyle = 'rgba(0,210,255,0.3)';
+      ctx.fillRect(ironX - 78, ironY - 18, 36, 26);
+      ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif';
+      ctx.fillText('电源', ironX - 72, ironY);
+      ctx.fillText('−', ironX - 45, ironY - 5);
+      // Wire to iron
+      ctx.strokeStyle = '#888'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(ironX - 40, ironY); ctx.lineTo(ironX, ironY + 20); ctx.stroke();
+    }
+    
+    // O2 / H2O particles
+    this.particles.forEach(p => {
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.type === 'O2' ? 'rgba(255,150,150,0.5)' : 'rgba(150,150,255,0.4)';
+      ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '8px sans-serif';
+      ctx.fillText(p.type, p.x - 6, p.y + 3);
+    });
+    
+    // Salt particles
+    if (this.salt > 2) {
+      for (let i = 0; i < this.salt; i++) {
+        ctx.fillStyle = 'rgba(255,255,200,0.3)';
+        ctx.fillRect(50 + (i * 67) % W, H - 40 + Math.sin(this.frame * 0.02 + i) * 10, 4, 4);
+      }
+    }
+    
+    // Rust level indicator
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '12px sans-serif';
+    ctx.fillText(`腐蚀程度: ${Math.min(100, Math.floor(this.rustLevel))}%`, 20, 25);
+    // Bar
+    ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(20, 32, 200, 10);
+    const barColor = this.rustLevel < 30 ? '#55efc4' : this.rustLevel < 60 ? '#ffeaa7' : '#ff6464';
+    ctx.fillStyle = barColor; ctx.fillRect(20, 32, Math.min(200, this.rustLevel * 2), 10);
+    
+    // Environment labels
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '11px sans-serif';
+    ctx.fillText(`湿度: ${this.humidity}%`, W - 120, 25);
+    ctx.fillText(`盐分: ${this.salt}%`, W - 120, 42);
+  },
+  
+  update() {
+    if (!this.running) return;
+    this.frame++;
+    
+    const rate = (this.humidity / 60) * (1 + this.salt * 0.15);
+    
+    // Rust growth
+    if (this.method === 'none') {
+      this.rustLevel += 0.05 * rate;
+    } else if (this.method === 'coating') {
+      this.rustLevel += 0.005 * rate; // Very slow
+    } else if (this.method === 'sacrifice' || this.method === 'impressed') {
+      this.rustLevel = Math.max(0, this.rustLevel - 0.02); // Protected
+    }
+    this.rustLevel = Math.min(100, Math.max(0, this.rustLevel));
+    
+    // Spawn particles
+    if (this.frame % 40 === 0) {
+      this.particles.push({ x: Math.random() * this.W, y: this.H, vx: (Math.random() - 0.5) * 0.5, vy: -0.5 - Math.random() * 0.5, r: 6 + Math.random() * 4, type: Math.random() > 0.5 ? 'O₂' : 'H₂O', life: 300 });
+    }
+    this.particles = this.particles.filter(p => { p.x += p.vx; p.y += p.vy; p.life--; return p.life > 0; });
+  },
+  
+  animate() { this.update(); this.draw(); requestAnimationFrame(() => this.animate()); }
+};
+
+// ========== 4. 练习 ==========
+const quiz = {
+  index: 0, score: 0,
+  questions: [
+    { q: '在原电池中，负极发生的是什么反应？', opts: ['还原反应', '氧化反应', '中和反应', '分解反应'], ans: 1,
+      explain: '负极失去电子，发生氧化反应。记住：负氧(负极氧化)' },
+    { q: '下列哪个不是原电池构成的必要条件？', opts: ['两种活泼性不同的电极', '电解质溶液', '形成闭合回路', '需要外加电源'], ans: 3,
+      explain: '原电池自发进行氧化还原反应，不需要外加电源。电解池才需要。' },
+    { q: '电解CuCl₂溶液时，阴极产物是？', opts: ['Cl₂', 'O₂', 'Cu', 'H₂'], ans: 2,
+      explain: 'Cu²⁺在阴极得电子被还原为Cu。阴极发生还原反应。' },
+    { q: '牺牲阳极保护法利用的原理是？', opts: ['电解原理', '原电池原理', '氧化还原原理', '化学平衡原理'], ans: 1,
+      explain: '牺牲阳极法本质是构成原电池，活泼金属做负极被腐蚀，被保护金属做正极。' },
+    { q: '在电解池中，阳极连接电源的？', opts: ['正极', '负极', '阴极', '无所谓'], ans: 0,
+      explain: '阳极连接电源正极，阴极连接电源负极。阳(正)阴(负)。' },
+    { q: '铁在潮湿空气中主要发生哪种腐蚀？', opts: ['析氢腐蚀', '吸氧腐蚀', '化学腐蚀', '均匀腐蚀'], ans: 1,
+      explain: '中性/弱酸性环境下，铁主要发生吸氧腐蚀。O₂ + 2H₂O + 4e⁻ → 4OH⁻' },
+    { q: '电解精炼铜时，粗铜应放在？', opts: ['阴极', '阳极', '任意一极', '不放入溶液'], ans: 1,
+      explain: '粗铜做阳极，溶解成Cu²⁺；纯铜做阴极，Cu²⁺在其上析出，实现精炼。' },
+    { q: '下列哪种方法可以减缓铁的腐蚀？', opts: ['与铜连接', '放在潮湿环境', '镀锌', '加酸'], ans: 2,
+      explain: '镀锌形成Zn-Fe原电池，Zn做负极被腐蚀，Fe被保护。且锌层隔绝空气。' }
+  ],
+  
+  init() {
+    this.index = 0; this.score = 0;
+    this.render();
+  },
+
+  // 进度追踪：练习完成且正确率 ≥60% 点亮知识地图
+  checkDone() {
+    if (this.index >= this.questions.length) {
+      const pass = this.score >= Math.ceil(this.questions.length * 0.6);
+      if (pass && typeof PageProgress !== 'undefined' && !PageProgress.isDone('electrochemistry')) {
+        PageProgress.markDone('electrochemistry');
+        const area = document.getElementById('quizArea');
+        const tip = document.createElement('p');
+        tip.style.cssText = 'margin-top:10px;color:#55efc4;font-weight:600';
+        tip.textContent = '🎉 「电化学」知识地图已点亮！';
+        area.appendChild(tip);
+      }
+    }
+  },
+  
+  render() {
+    const area = document.getElementById('quizArea');
+    if (this.index >= this.questions.length) {
+      area.innerHTML = `<div class="quiz-q"><h3>🎉 练习完成！</h3><p>最终得分：${this.score} / ${this.questions.length}</p>
+        <button class="btn btn-primary" onclick="quiz.init()">重新开始</button></div>`;
+      document.getElementById('quizScore').textContent = `得分：${this.score} / ${this.questions.length}`;
+      this.checkDone();
+      return;
+    }
+    const q = this.questions[this.index];
+    area.innerHTML = `<div class="quiz-q"><h4>第 ${this.index + 1} 题 / 共 ${this.questions.length} 题</h4>
+      <p style="margin-bottom:12px;font-size:1em">${q.q}</p>
+      ${q.opts.map((o, i) => `<div class="quiz-opt" onclick="quiz.answer(${i})">${'ABCD'[i]}. ${o}</div>`).join('')}
+      <div id="quizExplain" style="margin-top:10px;display:none"></div></div>`;
+    document.getElementById('quizScore').textContent = `得分：${this.score} / ${this.questions.length}`;
+  },
+  
+  answer(i) {
+    const q = this.questions[this.index];
+    const opts = document.querySelectorAll('.quiz-opt');
+    opts.forEach((o, idx) => {
+      o.onclick = null;
+      if (idx === q.ans) o.classList.add('correct');
+      if (idx === i && i !== q.ans) o.classList.add('wrong');
+    });
+    if (i === q.ans) this.score++;
+    const el = document.getElementById('quizExplain');
+    el.style.display = 'block';
+    el.innerHTML = `<div class="info">${i === q.ans ? '✅ 正确！' : '❌ 错误。'} ${q.explain}</div>
+      <button class="btn btn-primary" style="margin-top:10px" onclick="quiz.next()">下一题 →</button>`;
+    document.getElementById('quizScore').textContent = `得分：${this.score} / ${this.index + 1}`;
+  },
+  
+  next() { this.index++; this.render(); }
+};
+
+// Init all
+galvanic.init();
+electrolysis.init();
+corrosion.init();
+quiz.init();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中化学"></script>
+</body>
+</html>

@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>热学基础 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #f97316;
+    --hot: #ef4444;
+    --warm: #f97316;
+    --cool: #3b82f6;
+    --cold: #6366f1;
+    --energy: #eab308;
+    --entropy: #a855f7;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--hot), var(--warm), var(--energy)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(249,115,22,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.8; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.hot { border-color: var(--hot); }
+  .concept-card.warm { border-color: var(--warm); }
+  .concept-card.cool { border-color: var(--cool); }
+  .concept-card.entropy { border-color: var(--entropy); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.hot .title { color: var(--hot); }
+  .concept-card.warm .title { color: var(--warm); }
+  .concept-card.cool .title { color: var(--cool); }
+  .concept-card.entropy .title { color: var(--entropy); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-hot::before { background: var(--hot); }
+  .legend .l-warm::before { background: var(--warm); }
+  .legend .l-cool::before { background: var(--cool); }
+  .legend .l-entropy::before { background: var(--entropy); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(249,115,22,0.08); border-radius: 12px; border: 1px solid rgba(249,115,22,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; }
+  .quiz-nav button { padding: 6px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 3px; height: 120px; padding: 8px 0; margin: 10px 0; }
+  .bar-chart .bar { flex: 1; background: linear-gradient(to top, var(--hot), var(--warm)); border-radius: 3px 3px 0 0; min-width: 6px; transition: height 0.3s; position: relative; }
+  .bar-chart .bar-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #94a3b8; white-space: nowrap; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔥 热学基础 Interactive</h1>
+    <p>分子运动论 · 热力学定律 · PV过程 · 熵增原理</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="molecules">🌀 分子运动</div>
+    <div class="tab" data-mode="process">📊 热力学过程</div>
+    <div class="tab" data-mode="laws">⚖️ 热力学定律</div>
+    <div class="tab" data-mode="entropy">🎲 熵增原理</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="600" height="450"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>知识可视化 · 大学物理 · 热学基础</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
+const legendEl = document.getElementById('legend');
+
+let mode = 'molecules';
+let animId = null;
+let time = 0;
+
+// ── Color helpers ──
+function tempColor(T, alpha=1) {
+  // T: 0~1 → blue→red
+  const r = Math.round(60 + 195 * T);
+  const g = Math.round(80 + 60 * (1 - Math.abs(T - 0.5) * 2));
+  const b = Math.round(255 - 200 * T);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ── Tab switching ──
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    initMode();
+  });
+});
+
+// ═══════════════════════════════════════════════
+// MODE 1: 分子运动论 (Kinetic Theory of Gases)
+// ═══════════════════════════════════════════════
+let molecules = [];
+let gasTemp = 0.5; // 0~1
+let gasVolume = 0.6; // 0~1
+let numMolecules = 60;
+
+function initMolecules() {
+  molecules = [];
+  const vw = canvas.width * gasVolume;
+  const vh = canvas.height * gasVolume;
+  const ox = (canvas.width - vw) / 2;
+  const oy = (canvas.height - vh) / 2;
+  for (let i = 0; i < numMolecules; i++) {
+    const speed = (0.5 + Math.random() * 2) * (0.3 + gasTemp * 1.5);
+    const angle = Math.random() * Math.PI * 2;
+    molecules.push({
+      x: ox + Math.random() * vw,
+      y: oy + Math.random() * vh,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      r: 3 + Math.random() * 2,
+    });
+  }
+}
+
+function updateMolecules() {
+  const vw = canvas.width * gasVolume;
+  const vh = canvas.height * gasVolume;
+  const ox = (canvas.width - vw) / 2;
+  const oy = (canvas.height - vh) / 2;
+  const speedFactor = 0.3 + gasTemp * 1.5;
+
+  molecules.forEach(m => {
+    // Random kicks to maintain temperature
+    m.vx += (Math.random() - 0.5) * 0.1 * speedFactor;
+    m.vy += (Math.random() - 0.5) * 0.1 * speedFactor;
+    // Clamp speed
+    const sp = Math.sqrt(m.vx * m.vx + m.vy * m.vy);
+    const target = speedFactor * (0.5 + Math.random());
+    if (sp > 0.01) {
+      const ns = sp + (target - sp) * 0.02;
+      m.vx = m.vx / sp * ns;
+      m.vy = m.vy / sp * ns;
+    }
+    m.x += m.vx;
+    m.y += m.vy;
+    // Bounce off walls
+    if (m.x < ox + m.r) { m.x = ox + m.r; m.vx = Math.abs(m.vx); }
+    if (m.x > ox + vw - m.r) { m.x = ox + vw - m.r; m.vx = -Math.abs(m.vx); }
+    if (m.y < oy + m.r) { m.y = oy + m.r; m.vy = Math.abs(m.vy); }
+    if (m.y > oy + vh - m.r) { m.y = oy + vh - m.r; m.vy = -Math.abs(m.vy); }
+  });
+}
+
+function drawMolecules() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const vw = canvas.width * gasVolume;
+  const vh = canvas.height * gasVolume;
+  const ox = (canvas.width - vw) / 2;
+  const oy = (canvas.height - vh) / 2;
+
+  // Container
+  ctx.strokeStyle = 'rgba(249,115,22,0.5)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(ox, oy, vw, vh);
+
+  // Molecules
+  molecules.forEach(m => {
+    const sp = Math.sqrt(m.vx * m.vx + m.vy * m.vy);
+    const t = Math.min(sp / 3, 1);
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+    ctx.fillStyle = tempColor(t, 0.9);
+    ctx.fill();
+    // Glow
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, m.r * 2, 0, Math.PI * 2);
+    ctx.fillStyle = tempColor(t, 0.15);
+    ctx.fill();
+  });
+
+  // Temperature indicator
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '13px monospace';
+  ctx.fillText(`T = ${(gasTemp * 600 + 100).toFixed(0)} K`, ox + 8, oy + 20);
+  ctx.fillText(`N = ${molecules.length}`, ox + 8, oy + 38);
+
+  // Speed distribution histogram on right side
+  drawSpeedDist(ox + vw + 10, oy, canvas.width - ox - vw - 20, vh);
+}
+
+function drawSpeedDist(x, y, w, h) {
+  if (w < 40) return;
+  // Compute speed histogram
+  const bins = 12;
+  const maxSpeed = 4;
+  const counts = new Array(bins).fill(0);
+  molecules.forEach(m => {
+    const sp = Math.sqrt(m.vx * m.vx + m.vy * m.vy);
+    const bin = Math.min(Math.floor(sp / maxSpeed * bins), bins - 1);
+    counts[bin]++;
+  });
+  const maxCount = Math.max(...counts, 1);
+
+  // Draw bars
+  const barW = (w - 10) / bins;
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('速率分布', x + 2, y + 12);
+
+  for (let i = 0; i < bins; i++) {
+    const barH = (counts[i] / maxCount) * (h - 30);
+    const bx = x + 5 + i * barW;
+    const by = y + h - 10 - barH;
+    const t = i / bins;
+    ctx.fillStyle = tempColor(t, 0.7);
+    ctx.fillRect(bx + 1, by, barW - 2, barH);
+  }
+
+  // Maxwell-Boltzmann theoretical curve
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.lineWidth = 1.5;
+  const kT = gasTemp * 0.8 + 0.1;
+  for (let i = 0; i <= bins; i++) {
+    const v = (i / bins) * maxSpeed;
+    // f(v) ∝ v² exp(-v²/2kT)
+    const fv = v * v * Math.exp(-v * v / (2 * kT));
+    const px = x + 5 + (i / bins) * (w - 10);
+    const py = y + h - 10 - fv * (h - 30) * 0.4 / kT;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+}
+
+function initMoleculePanel() {
+  panel.innerHTML = `
+    <h3>🌀 气体分子运动论</h3>
+    <div class="equation">
+      E<sub>k</sub> = <sup>3</sup>/<sub>2</sub> k<sub>B</sub>T<br>
+      PV = nRT
+    </div>
+    <div class="slider-row">
+      <label>温度 T</label>
+      <input type="range" min="0.05" max="1" step="0.01" value="${gasTemp}" id="sTemp">
+      <span class="val" id="vTemp">${(gasTemp*600+100).toFixed(0)} K</span>
+    </div>
+    <div class="slider-row">
+      <label>体积 V</label>
+      <input type="range" min="0.3" max="1" step="0.01" value="${gasVolume}" id="sVol">
+      <span class="val" id="vVol">${(gasVolume*100).toFixed(0)}%</span>
+    </div>
+    <div class="slider-row">
+      <label>分子数 N</label>
+      <input type="range" min="10" max="120" step="1" value="${numMolecules}" id="sNum">
+      <span class="val" id="vNum">${numMolecules}</span>
+    </div>
+    <div class="concept-card hot">
+      <div class="title">📌 核心思想</div>
+      温度是分子平均动能的量度。温度越高，分子运动越剧烈，速率分布越宽。
+    </div>
+    <div class="info-grid">
+      <div>压强 <b id="iP">--</b></div>
+      <div>平均动能 <b id="iE">--</b></div>
+      <div>最概然速率 <b id="iVp">--</b></div>
+      <div>碰撞频率 <b id="iC">--</b></div>
+    </div>
+  `;
+  document.getElementById('sTemp').oninput = e => {
+    gasTemp = parseFloat(e.target.value);
+    document.getElementById('vTemp').textContent = (gasTemp*600+100).toFixed(0) + ' K';
+  };
+  document.getElementById('sVol').oninput = e => {
+    gasVolume = parseFloat(e.target.value);
+    document.getElementById('vVol').textContent = (gasVolume*100).toFixed(0) + '%';
+  };
+  document.getElementById('sNum').oninput = e => {
+    const n = parseInt(e.target.value);
+    document.getElementById('vNum').textContent = n;
+    if (n > numMolecules) {
+      const vw = canvas.width * gasVolume;
+      const vh = canvas.height * gasVolume;
+      const ox = (canvas.width - vw) / 2;
+      const oy = (canvas.height - vh) / 2;
+      while (molecules.length < n) {
+        const speed = (0.5 + Math.random() * 2) * (0.3 + gasTemp * 1.5);
+        const angle = Math.random() * Math.PI * 2;
+        molecules.push({ x: ox + Math.random()*vw, y: oy + Math.random()*vh, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, r: 3+Math.random()*2 });
+      }
+    } else {
+      molecules.length = n;
+    }
+    numMolecules = n;
+  };
+}
+
+function updateMoleculeInfo() {
+  const P = (numMolecules * gasTemp / gasVolume * 0.5).toFixed(1);
+  const E = (1.5 * gasTemp * 1.38e-23 * 1e23).toFixed(2);
+  const Vp = (Math.sqrt(2 * gasTemp * 1.5 + 0.1) * 200).toFixed(0);
+  const C = (numMolecules / gasVolume * gasTemp * 2).toFixed(0);
+  const iP = document.getElementById('iP');
+  if (iP) {
+    iP.textContent = P;
+    document.getElementById('iE').textContent = E + '×10⁻²³ J';
+    document.getElementById('iVp').textContent = Vp + ' m/s';
+    document.getElementById('iC').textContent = C + ' /s';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// MODE 2: 热力学过程 (PV Diagram)
+// ═══════════════════════════════════════════════
+let processType = 'isothermal';
+let processAnim = 0;
+let processDir = 1;
+let processTrail = [];
+
+function drawProcess() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+  const margin = 60;
+  const gW = W - margin * 2, gH = H - margin * 2;
+
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(margin, margin);
+  ctx.lineTo(margin, H - margin);
+  ctx.lineTo(W - margin, H - margin);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('P (压强)', margin - 10, margin - 15);
+  ctx.fillText('V (体积)', W - margin - 40, H - margin + 25);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  for (let i = 1; i <= 5; i++) {
+    const x = margin + (gW / 5) * i;
+    const y = margin + (gH / 5) * i;
+    ctx.beginPath(); ctx.moveTo(x, margin); ctx.lineTo(x, H-margin); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(margin, y); ctx.lineTo(W-margin, y); ctx.stroke();
+  }
+
+  // Animate process
+  processAnim += 0.008 * processDir;
+  if (processAnim > 1) { processAnim = 1; processDir = -1; }
+  if (processAnim < 0) { processAnim = 0; processDir = 1; }
+
+  const V1 = 0.2 + processAnim * 0.6;
+  const colors = { isothermal: '#f97316', adiabatic: '#ef4444', isobaric: '#3b82f6', isochoric: '#10b981' };
+  const color = colors[processType] || '#f97316';
+
+  // Draw curves
+  const gamma = 1.4;
+  function pForV(v, type) {
+    const V0 = 0.5;
+    const P0 = 0.5;
+    if (type === 'isothermal') return P0 * V0 / v;
+    if (type === 'adiabatic') return P0 * Math.pow(V0 / v, gamma);
+    if (type === 'isobaric') return P0;
+    if (type === 'isochoric') return null;
+    return P0 * V0 / v;
+  }
+
+  // Draw full curve (faded)
+  ctx.beginPath();
+  ctx.strokeStyle = color.replace(')', ',0.2)').replace('rgb', 'rgba');
+  ctx.lineWidth = 1.5;
+  if (processType === 'isochoric') {
+    const x = margin + 0.5 * gW;
+    ctx.moveTo(x, margin + gH * 0.1);
+    ctx.lineTo(x, margin + gH * 0.9);
+  } else {
+    for (let i = 0; i <= 100; i++) {
+      const v = 0.15 + (i / 100) * 0.75;
+      const p = pForV(v, processType);
+      if (p === null || p < 0 || p > 1) continue;
+      const x = margin + v * gW;
+      const y = margin + (1 - p) * gH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+  }
+  ctx.stroke();
+
+  // Draw animated portion (bright)
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 10;
+  if (processType === 'isochoric') {
+    const x = margin + 0.5 * gW;
+    const pTop = 0.1 + processAnim * 0.8;
+    const y = margin + (1 - pTop) * gH;
+    ctx.moveTo(x, margin + gH * 0.9);
+    ctx.lineTo(x, y);
+    // Dot
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fill();
+    // Store trail
+    processTrail.push({ x, y });
+  } else {
+    for (let i = 0; i <= Math.floor(processAnim * 100); i++) {
+      const v = 0.15 + (i / 100) * 0.75;
+      const p = pForV(v, processType);
+      if (p === null || p < 0 || p > 1) continue;
+      const x = margin + v * gW;
+      const y = margin + (1 - p) * gH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    // Current point
+    const p = pForV(V1, processType);
+    if (p !== null && p >= 0 && p <= 1) {
+      const cx = margin + V1 * gW;
+      const cy = margin + (1 - p) * gH;
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI*2); ctx.fill();
+      processTrail.push({ x: cx, y: cy });
+    }
+  }
+  ctx.shadowBlur = 0;
+
+  // Keep trail limited
+  if (processTrail.length > 30) processTrail.shift();
+
+  // Labels
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '12px sans-serif';
+  const labels = { isothermal: '等温过程 PV=const', adiabatic: '绝热过程 PV^γ=const', isobaric: '等压过程 V/T=const', isochoric: '等容过程 P/T=const' };
+  ctx.fillText(labels[processType], margin + 10, margin + 20);
+
+  // Work area shading
+  if (processType !== 'isochoric') {
+    ctx.fillStyle = color.replace(')', ',0.08)').replace('rgb', 'rgba');
+    ctx.beginPath();
+    const steps = Math.floor(processAnim * 50);
+    const startX = margin + 0.15 * gW;
+    ctx.moveTo(startX, H - margin);
+    for (let i = 0; i <= steps; i++) {
+      const v = 0.15 + (i / 50) * 0.75;
+      const p = pForV(v, processType);
+      if (p === null || p < 0 || p > 1) continue;
+      ctx.lineTo(margin + v * gW, margin + (1 - p) * gH);
+    }
+    const endV = 0.15 + processAnim * 0.75;
+    ctx.lineTo(margin + endV * gW, H - margin);
+    ctx.closePath();
+    ctx.fill();
+    // W label
+    ctx.fillStyle = color;
+    ctx.font = 'bold 14px serif';
+    ctx.fillText('W', margin + 0.15 * gW + processAnim * 0.3 * gW, H - margin - 10);
+  }
+}
+
+function initProcessPanel() {
+  panel.innerHTML = `
+    <h3>📊 热力学过程</h3>
+    <div class="equation">
+      等温: PV = const<br>
+      绝热: PV<sup>γ</sup> = const<br>
+      等压: V/T = const<br>
+      等容: P/T = const
+    </div>
+    <div class="mode-switch">
+      <div class="mode-btn ${processType==='isothermal'?'active':''}" data-pt="isothermal">等温</div>
+      <div class="mode-btn ${processType==='adiabatic'?'active':''}" data-pt="adiabatic">绝热</div>
+      <div class="mode-btn ${processType==='isobaric'?'active':''}" data-pt="isobaric">等压</div>
+      <div class="mode-btn ${processType==='isochoric'?'active':''}" data-pt="isochoric">等容</div>
+    </div>
+    <div class="concept-card warm">
+      <div class="title">📌 过程特征</div>
+      <div id="processDesc"></div>
+    </div>
+    <div class="info-grid">
+      <div>做功 W = <b id="iW">--</b></div>
+      <div>热量 Q = <b id="iQ">--</b></div>
+      <div>内能变化 <b id="iU">--</b></div>
+      <div>γ = <b>1.4</b> (双原子)</div>
+    </div>
+  `;
+  document.querySelectorAll('.mode-btn[data-pt]').forEach(btn => {
+    btn.onclick = () => {
+      processType = btn.dataset.pt;
+      processAnim = 0; processDir = 1; processTrail = [];
+      document.querySelectorAll('.mode-btn[data-pt]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateProcessDesc();
+    };
+  });
+  updateProcessDesc();
+}
+
+function updateProcessDesc() {
+  const desc = document.getElementById('processDesc');
+  const iW = document.getElementById('iW');
+  const iQ = document.getElementById('iQ');
+  const iU = document.getElementById('iU');
+  if (!desc) return;
+  const descs = {
+    isothermal: '温度不变，内能不变(ΔU=0)。吸收的热量全部转化为对外做功。Q = W = nRT ln(V₂/V₁)',
+    adiabatic: '无热量交换(Q=0)。气体膨胀时对外做功，内能减少，温度降低。TV^(γ-1) = const',
+    isobaric: '压强不变。气体膨胀时温度升高，吸收热量一部分用于做功，一部分增加内能。',
+    isochoric: '体积不变，不做功(W=0)。吸收的热量全部转化为内能增加。'
+  };
+  desc.textContent = descs[processType];
+  const p = processAnim;
+  if (processType === 'isothermal') {
+    iW.textContent = (p * 500).toFixed(0) + ' J';
+    iQ.textContent = (p * 500).toFixed(0) + ' J';
+    iU.textContent = '0';
+  } else if (processType === 'adiabatic') {
+    iW.textContent = (p * 400).toFixed(0) + ' J';
+    iQ.textContent = '0';
+    iU.textContent = (-p * 400).toFixed(0) + ' J';
+  } else if (processType === 'isobaric') {
+    iW.textContent = (p * 300).toFixed(0) + ' J';
+    iQ.textContent = (p * 750).toFixed(0) + ' J';
+    iU.textContent = (p * 450).toFixed(0) + ' J';
+  } else {
+    iW.textContent = '0';
+    iQ.textContent = (p * 600).toFixed(0) + ' J';
+    iU.textContent = (p * 600).toFixed(0) + ' J';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// MODE 3: 热力学定律
+// ═══════════════════════════════════════════════
+let heatFlow = 0.5;
+let workDone = 0.3;
+
+function drawLaws() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+
+  // Central system (gas in piston)
+  const cx = W / 2, cy = H / 2;
+  const pistonW = 120, pistonH = 160;
+
+  // Cylinder
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx - pistonW/2, cy - pistonH/2, pistonW, pistonH);
+
+  // Gas molecules inside
+  const numIn = 15;
+  for (let i = 0; i < numIn; i++) {
+    const angle = time * 0.02 + i * 0.7;
+    const r = 20 + Math.sin(i * 1.3) * 25;
+    const mx = cx + Math.cos(angle) * r * 0.8;
+    const my = cy + Math.sin(angle) * r * 0.6 + 20;
+    const sp = 0.3 + heatFlow * 0.7;
+    const t = Math.min(sp, 1);
+    ctx.beginPath();
+    ctx.arc(mx, my, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = tempColor(t, 0.8);
+    ctx.fill();
+  }
+
+  // Piston (moves with work)
+  const pistonY = cy - pistonH/2 + (1 - workDone) * 30;
+  ctx.fillStyle = 'rgba(148,163,184,0.4)';
+  ctx.fillRect(cx - pistonW/2 + 4, pistonY - 8, pistonW - 8, 8);
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx - pistonW/2 + 4, pistonY - 8, pistonW - 8, 8);
+
+  // Heat arrow (from bottom)
+  const heatArrowLen = heatFlow * 80;
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + pistonH/2 + 50);
+  ctx.lineTo(cx, cy + pistonH/2 + 50 - heatArrowLen);
+  ctx.stroke();
+  // Arrow head
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + pistonH/2 + 50 - heatArrowLen);
+  ctx.lineTo(cx - 6, cy + pistonH/2 + 50 - heatArrowLen + 10);
+  ctx.lineTo(cx + 6, cy + pistonH/2 + 50 - heatArrowLen + 10);
+  ctx.closePath();
+  ctx.fillStyle = '#ef4444';
+  ctx.fill();
+  // Fire particles
+  for (let i = 0; i < 5; i++) {
+    const fx = cx - 20 + Math.random() * 40;
+    const fy = cy + pistonH/2 + 50 + Math.random() * 20;
+    ctx.beginPath();
+    ctx.arc(fx, fy, 2 + Math.random() * 3, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(239,68,68,${0.3 + Math.random() * 0.4})`;
+    ctx.fill();
+  }
+  ctx.fillStyle = '#ef4444';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('Q (热量)', cx + 15, cy + pistonH/2 + 60);
+
+  // Work arrow (up from piston)
+  const workArrowLen = workDone * 60;
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx, pistonY - 15);
+  ctx.lineTo(cx, pistonY - 15 - workArrowLen);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx, pistonY - 15 - workArrowLen);
+  ctx.lineTo(cx - 6, pistonY - 15 - workArrowLen + 10);
+  ctx.lineTo(cx + 6, pistonY - 15 - workArrowLen + 10);
+  ctx.closePath();
+  ctx.fillStyle = '#3b82f6';
+  ctx.fill();
+  ctx.fillStyle = '#3b82f6';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('W (功)', cx + 15, pistonY - 20 - workArrowLen);
+
+  // Internal energy indicator
+  const internalE = heatFlow - workDone * 0.5;
+  const ueColor = tempColor(Math.max(0, Math.min(1, 0.3 + internalE * 0.5)));
+  ctx.fillStyle = ueColor;
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('ΔU', cx - 12, cy + 5);
+
+  // First law equation
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.font = '18px "Times New Roman", serif';
+  ctx.fillText('ΔU = Q - W', cx - 60, 40);
+
+  // Second law illustration (bottom)
+  ctx.fillStyle = 'rgba(168,85,247,0.7)';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('热力学第二定律：热量自发从高温→低温', cx - 150, H - 40);
+
+  // Temperature labels
+  ctx.fillStyle = '#ef4444';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('T_H (高温)', cx - 130, cy + pistonH/2 + 80);
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillText('T_C (低温)', cx + 60, cy + pistonH/2 + 80);
+
+  // Heat flow arrows animation
+  const flowPhase = time * 0.05;
+  for (let i = 0; i < 3; i++) {
+    const phase = (flowPhase + i * 0.33) % 1;
+    const ax = cx - 40 + phase * 80;
+    const ay = cy + pistonH/2 + 70;
+    ctx.beginPath();
+    ctx.arc(ax, ay, 2, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(239,68,68,${1 - phase})`;
+    ctx.fill();
+  }
+}
+
+function initLawsPanel() {
+  panel.innerHTML = `
+    <h3>⚖️ 热力学定律</h3>
+    <div class="equation">
+      <b>第一定律</b>: ΔU = Q - W<br>
+      <b>第二定律</b>: ΔS ≥ 0 (孤立系)
+    </div>
+    <div class="slider-row">
+      <label>热量 Q</label>
+      <input type="range" min="0" max="1" step="0.01" value="${heatFlow}" id="sHeat">
+      <span class="val" id="vHeat">${(heatFlow*500).toFixed(0)} J</span>
+    </div>
+    <div class="slider-row">
+      <label>做功 W</label>
+      <input type="range" min="0" max="1" step="0.01" value="${workDone}" id="sWork">
+      <span class="val" id="vWork">${(workDone*300).toFixed(0)} J</span>
+    </div>
+    <div class="concept-card hot">
+      <div class="title">🔥 第一定律 (能量守恒)</div>
+      系统内能的变化等于吸收的热量减去对外做的功。能量不会凭空产生或消失。
+    </div>
+    <div class="concept-card entropy">
+      <div class="title">🎲 第二定律 (熵增)</div>
+      孤立系统的熵永不减少。热量自发地从高温物体传向低温物体，反之则需外界做功（如制冷机）。
+    </div>
+    <div class="info-grid">
+      <div>ΔU = <b id="iDU">--</b></div>
+      <div>效率 η = <b id="iEta">--</b></div>
+    </div>
+  `;
+  document.getElementById('sHeat').oninput = e => {
+    heatFlow = parseFloat(e.target.value);
+    document.getElementById('vHeat').textContent = (heatFlow*500).toFixed(0) + ' J';
+  };
+  document.getElementById('sWork').oninput = e => {
+    workDone = parseFloat(e.target.value);
+    document.getElementById('vWork').textContent = (workDone*300).toFixed(0) + ' J';
+  };
+}
+
+function updateLawsInfo() {
+  const du = (heatFlow * 500 - workDone * 300).toFixed(0);
+  const eta = heatFlow > 0 ? ((workDone * 300) / (heatFlow * 500) * 100).toFixed(1) : '0';
+  const iDU = document.getElementById('iDU');
+  if (iDU) {
+    iDU.textContent = du + ' J';
+    document.getElementById('iEta').textContent = eta + '%';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// MODE 4: 熵增原理
+// ═══════════════════════════════════════════════
+let entropyGrid = [];
+let entropyStep = 0;
+const GRID_SIZE = 8;
+
+function initEntropyGrid() {
+  entropyGrid = [];
+  for (let i = 0; i < GRID_SIZE; i++) {
+    entropyGrid[i] = [];
+    for (let j = 0; j < GRID_SIZE; j++) {
+      entropyGrid[i][j] = 0; // 0 = empty, 1 = particle
+    }
+  }
+  // Start ordered: all particles in top-left corner
+  for (let i = 0; i < GRID_SIZE/2; i++)
+    for (let j = 0; j < GRID_SIZE/2; j++)
+      entropyGrid[i][j] = 1;
+  entropyStep = 0;
+}
+
+function stepEntropy() {
+  // Random swap to simulate mixing
+  const x1 = Math.floor(Math.random() * GRID_SIZE);
+  const y1 = Math.floor(Math.random() * GRID_SIZE);
+  const x2 = Math.floor(Math.random() * GRID_SIZE);
+  const y2 = Math.floor(Math.random() * GRID_SIZE);
+  const tmp = entropyGrid[x1][y1];
+  entropyGrid[x1][y1] = entropyGrid[x2][y2];
+  entropyGrid[x2][y2] = tmp;
+  entropyStep++;
+}
+
+function calcEntropy() {
+  // Count particles in each quadrant
+  let quads = [0, 0, 0, 0];
+  const half = GRID_SIZE / 2;
+  for (let i = 0; i < GRID_SIZE; i++) {
+    for (let j = 0; j < GRID_SIZE; j++) {
+      if (entropyGrid[i][j]) {
+        const q = (i < half ? 0 : 2) + (j < half ? 0 : 1);
+        quads[q]++;
+      }
+    }
+  }
+  const total = quads.reduce((a,b) => a+b, 0);
+  if (total === 0) return 0;
+  let S = 0;
+  quads.forEach(n => {
+    if (n > 0) {
+      const p = n / total;
+      S -= p * Math.log2(p);
+    }
+  });
+  return S;
+}
+
+function drawEntropy() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+
+  // Auto-step
+  if (time % 3 === 0) stepEntropy();
+
+  const cellSize = Math.min((W - 120) / GRID_SIZE, (H - 100) / GRID_SIZE);
+  const gridW = cellSize * GRID_SIZE;
+  const gridH = cellSize * GRID_SIZE;
+  const ox = (W - gridW) / 2;
+  const oy = 40;
+
+  // Title
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '15px sans-serif';
+  ctx.fillText('粒子从有序→无序的自发演化', ox, oy - 10);
+
+  // Grid
+  for (let i = 0; i < GRID_SIZE; i++) {
+    for (let j = 0; j < GRID_SIZE; j++) {
+      const x = ox + j * cellSize;
+      const y = oy + i * cellSize;
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(x, y, cellSize, cellSize);
+
+      if (entropyGrid[i][j]) {
+        const gradient = ctx.createRadialGradient(x + cellSize/2, y + cellSize/2, 0, x + cellSize/2, y + cellSize/2, cellSize/2);
+        gradient.addColorStop(0, 'rgba(168,85,247,0.9)');
+        gradient.addColorStop(1, 'rgba(168,85,247,0.3)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x + cellSize/2, y + cellSize/2, cellSize * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // Quadrant dividers
+  ctx.strokeStyle = 'rgba(168,85,247,0.3)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(ox + gridW/2, oy);
+  ctx.lineTo(ox + gridW/2, oy + gridH);
+  ctx.moveTo(ox, oy + gridH/2);
+  ctx.lineTo(ox + gridW, oy + gridH/2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Entropy bar chart below grid
+  const barY = oy + gridH + 30;
+  const S = calcEntropy();
+  const maxS = 2; // max entropy for 4 quadrants = log2(4) = 2
+
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '14px sans-serif';
+  ctx.fillText(`熵 S = ${S.toFixed(3)} bits`, ox, barY);
+  ctx.fillText(`步数: ${entropyStep}`, ox + gridW - 80, barY);
+
+  // Entropy bar
+  const barW = gridW;
+  const barH = 20;
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillRect(ox, barY + 10, barW, barH);
+  const fillW = (S / maxS) * barW;
+  const barGrad = ctx.createLinearGradient(ox, 0, ox + barW, 0);
+  barGrad.addColorStop(0, '#6366f1');
+  barGrad.addColorStop(0.5, '#a855f7');
+  barGrad.addColorStop(1, '#ec4899');
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(ox, barY + 10, fillW, barH);
+
+  // Labels
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '11px sans-serif';
+  ctx.fillText('有序 (低熵)', ox, barY + 45);
+  ctx.fillText('无序 (高熵)', ox + barW - 60, barY + 45);
+
+  // Arrow showing direction
+  ctx.strokeStyle = 'rgba(168,85,247,0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(ox + 60, barY + 50);
+  ctx.lineTo(ox + barW - 70, barY + 50);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(ox + barW - 70, barY + 50);
+  ctx.lineTo(ox + barW - 80, barY + 45);
+  ctx.lineTo(ox + barW - 80, barY + 55);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(168,85,247,0.5)';
+  ctx.fill();
+
+  // Reset button area
+  ctx.fillStyle = 'rgba(168,85,247,0.2)';
+  ctx.strokeStyle = 'rgba(168,85,247,0.5)';
+  ctx.lineWidth = 1;
+  const btnX = ox + gridW/2 - 50, btnY2 = barY + 60, btnW = 100, btnH = 30;
+  ctx.fillRect(btnX, btnY2, btnW, btnH);
+  ctx.strokeRect(btnX, btnY2, btnW, btnH);
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('🔄 重置有序', btnX + 10, btnY2 + 20);
+
+  // Store button bounds for click
+  canvas._resetBtn = { x: btnX, y: btnY2, w: btnW, h: btnH };
+}
+
+function initEntropyPanel() {
+  initEntropyGrid();
+  panel.innerHTML = `
+    <h3>🎲 熵增原理</h3>
+    <div class="equation">
+      ΔS<sub>孤立</sub> ≥ 0<br>
+      S = -k<sub>B</sub> Σ p<sub>i</sub> ln p<sub>i</sub>
+    </div>
+    <div class="concept-card entropy">
+      <div class="title">🎲 什么是熵？</div>
+      熵是系统无序度的度量。孤立系统中，粒子自发从有序排列演化为无序分布——这就是熵增。
+    </div>
+    <div class="concept-card cool">
+      <div class="title">⏰ 时间之箭</div>
+      熵增给出了时间的方向：过去低熵，未来高熵。打破鸡蛋容易，复原却几乎不可能——因为微观状态数太悬殊了。
+    </div>
+    <div class="concept-card warm">
+      <div class="title">🌡️ 热力学第二定律</div>
+      热量不会自发从低温传向高温；永动机不可能。所有自然过程都朝着熵增加的方向进行。
+    </div>
+    <div class="info-grid">
+      <div>当前熵 <b id="iS">--</b></div>
+      <div>最大熵 <b>2.000 bits</b></div>
+      <div>演化步数 <b id="iStep">0</b></div>
+      <div>有序度 <b id="iOrd">100%</b></div>
+    </div>
+  `;
+}
+
+function updateEntropyInfo() {
+  const S = calcEntropy();
+  const iS = document.getElementById('iS');
+  if (iS) {
+    iS.textContent = S.toFixed(3) + ' bits';
+    document.getElementById('iStep').textContent = entropyStep;
+    document.getElementById('iOrd').textContent = ((1 - S/2) * 100).toFixed(0) + '%';
+  }
+}
+
+// Click handler for reset
+canvas.addEventListener('click', e => {
+  if (mode === 'entropy' && canvas._resetBtn) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top) * scaleY;
+    const b = canvas._resetBtn;
+    if (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h) {
+      initEntropyGrid();
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════
+// MODE 5: Quiz
+// ═══════════════════════════════════════════════
+const quizData = [
+  { q: '理想气体等温膨胀时，内能如何变化？', opts: ['增加', '减少', '不变', '先增后减'], ans: 2, explain: '等温过程温度不变，理想气体内能只与温度有关，所以ΔU=0。' },
+  { q: '热力学第二定律指出，孤立系统的熵：', opts: ['不断减少', '保持不变', '永不减少', '先增后减'], ans: 2, explain: '熵增原理：孤立系统的熵永不减少，ΔS≥0。' },
+  { q: '气体分子平均动能与什么成正比？', opts: ['压强', '体积', '温度', '摩尔数'], ans: 2, explain: 'Ek = (3/2)kT，平均动能只与温度成正比。' },
+  { q: '绝热过程中，气体膨胀会导致：', opts: ['温度升高', '温度降低', '温度不变', '无法确定'], ans: 1, explain: '绝热膨胀时Q=0，气体对外做功W>0，由ΔU=Q-W<0，内能减少，温度降低。' },
+  { q: '玻尔兹曼熵公式 S = k ln Ω 中，Ω代表：', opts: ['温度', '压强', '微观状态数', '体积'], ans: 2, explain: 'Ω是系统可能的微观状态数。微观状态越多，系统越无序，熵越大。' },
+  { q: '等容过程中气体吸热，这些热量全部转化为：', opts: ['对外做功', '内能增加', '势能', '动能'], ans: 1, explain: '等容过程W=0，由ΔU=Q-W=Q，吸收的热量全部转化为内能。' },
+];
+let quizIdx = 0;
+let quizAnswered = false;
+
+// ========== Progress tracking (r100) ==========
+let totalCorrect = 0;
+function bumpTotalCorrect() {
+  totalCorrect++;
+  if (totalCorrect >= 4 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('thermodynamics')) {
+    PageProgress.markDone('thermodynamics');
+  }
+}
+
+function drawQuiz() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+
+  // Decorative background
+  for (let i = 0; i < 20; i++) {
+    const x = (time * 0.3 + i * 37) % W;
+    const y = (Math.sin(time * 0.01 + i) * 0.5 + 0.5) * H;
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(249,115,22,${0.1 + Math.sin(time*0.02+i)*0.1})`;
+    ctx.fill();
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.font = 'bold 20px sans-serif';
+  ctx.fillText(`🎯 第 ${quizIdx + 1}/${quizData.length} 题`, 30, 40);
+
+  const q = quizData[quizIdx];
+  ctx.font = '16px sans-serif';
+  ctx.fillStyle = '#e2e8f0';
+
+  // Word wrap
+  const words = q.q;
+  const maxWidth = W - 60;
+  let line = '';
+  let y = 80;
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i];
+    if (ctx.measureText(testLine).width > maxWidth) {
+      ctx.fillText(line, 30, y);
+      line = words[i];
+      y += 24;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, 30, y);
+
+  // Options
+  q.opts.forEach((opt, i) => {
+    const oy = 150 + i * 55;
+    const isCorrect = i === q.ans;
+    let bg = 'rgba(255,255,255,0.05)';
+    let border = 'rgba(255,255,255,0.1)';
+    if (quizAnswered) {
+      if (isCorrect) { bg = 'rgba(16,185,129,0.2)'; border = '#10b981'; }
+    }
+    ctx.fillStyle = bg;
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 1;
+    const rr = 10;
+    ctx.beginPath();
+    ctx.roundRect(30, oy, W - 60, 42, rr);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '15px sans-serif';
+    ctx.fillText(`${String.fromCharCode(65 + i)}. ${opt}`, 50, oy + 27);
+  });
+
+  // Store option bounds for click
+  canvas._quizOpts = q.opts.map((_, i) => ({ y: 150 + i * 55, idx: i }));
+
+  if (quizAnswered) {
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '14px sans-serif';
+    const explainY = 150 + q.opts.length * 55 + 10;
+    // Word wrap explanation
+    const exp = '💡 ' + q.explain;
+    line = '';
+    y = explainY;
+    for (let i = 0; i < exp.length; i++) {
+      const testLine = line + exp[i];
+      if (ctx.measureText(testLine).width > maxWidth) {
+        ctx.fillText(line, 30, y);
+        line = exp[i];
+        y += 20;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, 30, y);
+  }
+}
+
+canvas.addEventListener('click', e => {
+  if (mode !== 'quiz') return;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const my = (e.clientY - rect.top) * scaleY;
+
+  if (!quizAnswered && canvas._quizOpts) {
+    for (const opt of canvas._quizOpts) {
+      if (my >= opt.y && my <= opt.y + 42) {
+        quizAnswered = true;
+        if (opt.idx !== quizData[quizIdx].ans) {
+          // Wrong - highlight correct one via redraw
+        } else {
+          bumpTotalCorrect();
+        }
+        break;
+      }
+    }
+  }
+});
+
+function initQuizPanel() {
+  quizIdx = 0;
+  quizAnswered = false;
+  panel.innerHTML = `
+    <h3>🎯 热学基础练习</h3>
+    <div class="quiz">
+      <div class="quiz-q" id="quizQ"></div>
+      <div class="quiz-opts" id="quizOpts"></div>
+      <div class="quiz-feedback" id="quizFb"></div>
+      <div class="quiz-nav">
+        <button id="quizPrev" onclick="quizNav(-1)">← 上一题</button>
+        <button id="quizNext" onclick="quizNav(1)">下一题 →</button>
+      </div>
+    </div>
+    <div class="concept-card warm">
+      <div class="title">📚 学习建议</div>
+      重点理解：温度与分子运动的关系、四个热力学过程的特征、熵的物理意义。
+    </div>
+  `;
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  document.getElementById('quizQ').textContent = q.q;
+  const optsEl = document.getElementById('quizOpts');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = `${String.fromCharCode(65+i)}. ${opt}`;
+    div.onclick = () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      if (i === q.ans) {
+        div.classList.add('correct');
+        document.getElementById('quizFb').textContent = '✅ 正确！' + q.explain;
+        bumpTotalCorrect();
+      } else {
+        div.classList.add('wrong');
+        document.getElementById('quizFb').textContent = '❌ ' + q.explain;
+        optsEl.children[q.ans].classList.add('correct');
+      }
+    };
+    optsEl.appendChild(div);
+  });
+  document.getElementById('quizFb').textContent = '';
+  document.getElementById('quizPrev').disabled = quizIdx === 0;
+  document.getElementById('quizNext').disabled = quizIdx === quizData.length - 1;
+}
+
+window.quizNav = function(dir) {
+  quizIdx = Math.max(0, Math.min(quizData.length - 1, quizIdx + dir));
+  quizAnswered = false;
+  renderQuiz();
+};
+
+// ═══════════════════════════════════════════════
+// INIT & ANIMATION LOOP
+// ═══════════════════════════════════════════════
+function initMode() {
+  if (animId) cancelAnimationFrame(animId);
+  processTrail = [];
+  if (mode === 'molecules') { initMolecules(); initMoleculePanel(); legendEl.innerHTML = '<span class="l-hot">高速(高温)</span><span class="l-cool">低速(低温)</span>'; }
+  else if (mode === 'process') { initProcessPanel(); legendEl.innerHTML = ''; }
+  else if (mode === 'laws') { initLawsPanel(); legendEl.innerHTML = '<span class="l-hot">热量Q</span><span class="l-cool">功W</span>'; }
+  else if (mode === 'entropy') { initEntropyPanel(); legendEl.innerHTML = '<span class="l-entropy">粒子</span>'; }
+  else if (mode === 'quiz') { initQuizPanel(); legendEl.innerHTML = ''; }
+  animate();
+}
+
+function animate() {
+  time++;
+  if (mode === 'molecules') { updateMolecules(); drawMolecules(); updateMoleculeInfo(); }
+  else if (mode === 'process') { drawProcess(); updateProcessDesc(); }
+  else if (mode === 'laws') { drawLaws(); updateLawsInfo(); }
+  else if (mode === 'entropy') { drawEntropy(); updateEntropyInfo(); }
+  else if (mode === 'quiz') { drawQuiz(); }
+  animId = requestAnimationFrame(animate);
+}
+
+initMode();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学物理"></script>
+</body>
+</html>

@@ -2,6 +2,67 @@
    小学数学互动可视化 - 公共工具函数
    ============================================ */
 
+// === 页面完成进度追踪（localStorage） ===
+// 用法：
+//   PageProgress.markDone('addition')           → 子页面完成时调用
+//   PageProgress.isDone('addition')             → 判断某知识点是否完成
+//   PageProgress.renderBadges('.topic-card')    → 索引页：给已完成卡片加 ✓ 角标
+// 存储 key：kv-math-progress  →  { "addition": 1, "multiplication": 1, ... }
+const PageProgress = (() => {
+  const KEY = 'kv-math-progress';
+  let cache = null;
+  function read() {
+    if (cache) return cache;
+    try { cache = JSON.parse(localStorage.getItem(KEY) || '{}'); }
+    catch (e) { cache = {}; }
+    return cache;
+  }
+  function write(data) {
+    cache = data;
+    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { /* 隐私模式容错 */ }
+  }
+  return {
+    // 标记某知识点完成（在子页面调用，例如 quiz/practice 通过时）
+    markDone(slug) {
+      const d = read(); d[slug] = Date.now(); write(d);
+    },
+    // 取消完成标记
+    clear(slug) {
+      const d = read(); delete d[slug]; write(d);
+    },
+    // 是否已完成
+    isDone(slug) { return !!read()[slug]; },
+    // 已完成数量
+    count() { return Object.keys(read()).length; },
+    // 在索引页给卡片加 ✓ 角标：从卡片 href 提取 slug
+    // 兼容两种链接：topics/<slug>/... （小学目录式） 和 <slug>.html（初/高/大平铺式）
+    renderBadges(cardSelector = '.topic-card') {
+      document.querySelectorAll(cardSelector).forEach(card => {
+        const href = card.getAttribute('href') || '';
+        let m = href.match(/topics\/([^/]+)\//);
+        if (!m) m = href.match(/^([\w-]+)\.html(?:[?#].*)?$/);
+        if (!m) return;
+        if (!this.isDone(m[1])) return;
+        if (card.querySelector('.progress-badge')) return; // 幂等
+        card.style.position = card.style.position || 'relative';
+        const badge = document.createElement('span');
+        badge.className = 'progress-badge';
+        badge.textContent = '✓';
+        badge.setAttribute('aria-label', '已完成');
+        badge.style.cssText = [
+          'position:absolute', 'top:8px', 'right:8px',
+          'width:22px', 'height:22px', 'border-radius:50%',
+          'background:#34C759', 'color:#fff',
+          'display:flex', 'align-items:center', 'justify-content:center',
+          'font-size:14px', 'font-weight:700', 'line-height:1',
+          'box-shadow:0 1px 3px rgba(0,0,0,0.2)'
+        ].join(';');
+        card.appendChild(badge);
+      });
+    }
+  };
+})();
+
 // === 随机数 ===
 const Random = {
   int(min, max) {
@@ -214,3 +275,51 @@ function createObjectPool(createFn, resetFn, initialSize = 20) {
     }
   };
 }
+
+// === 页面卸载清理（防止内存泄漏） ===
+window.addEventListener('beforeunload', () => {
+  // 清理所有定时器
+  const highestId = window.setTimeout(() => {}, 0);
+  for (let i = 0; i < highestId; i++) {
+    window.clearInterval(i);
+    window.clearTimeout(i);
+  }
+  
+  // 清理所有事件监听器（通过重新克隆节点）
+  document.querySelectorAll('[data-listener]').forEach(el => {
+    const clone = el.cloneNode(true);
+    el.parentNode.replaceChild(clone, el);
+  });
+});
+
+// 页面可见性变化时暂停/恢复动画
+let animationFrameId = null;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // 页面隐藏时暂停所有动画
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+  }
+});
+
+// === 页面卸载清理（防止内存泄漏） ===
+window.addEventListener('pagehide', () => {
+  // 清理所有定时器（防止 setInterval 泄漏）
+  const highestId = window.setTimeout(() => {}, 0);
+  for (let i = 0; i < highestId; i++) {
+    window.clearInterval(i);
+    window.clearTimeout(i);
+  }
+});
+
+// 页面隐藏时暂停动画（节省 CPU）
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // 暂停所有 CSS 动画
+    document.querySelectorAll('.star-burst, .animate, [style*="animation"]').forEach(el => {
+      el.style.animationPlayState = 'paused';
+    });
+  }
+});

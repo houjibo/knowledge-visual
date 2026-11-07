@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>博弈论入门 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #f59e0b;
+    --zero: #ef4444;
+    --nash: #06b6d4;
+    --prisoner: #a78bfa;
+    --mixed: #10b981;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1f2937 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .back { display:inline-block; margin-bottom: 12px; color: #fcd34d; text-decoration: none; font-size: 14px; }
+  .back:hover { color: #fde68a; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--zero), var(--nash), var(--prisoner), var(--mixed)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); color: #1f2937; font-weight: 700; box-shadow: 0 4px 20px rgba(245,158,11,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); touch-action: manipulation; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); max-height: 560px; overflow-y: auto; }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:#94a3b8; }
+  .legend span::before { content:''; display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; background:currentColor; }
+  .l-zero { color: var(--zero); }
+  .l-nash { color: var(--nash); }
+  .l-prisoner { color: var(--prisoner); }
+  .l-mixed { color: var(--mixed); }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #fbbf24; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .btn-row { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: #e2e8f0; cursor: pointer; font-size: 13px; transition: all .2s; min-height: 36px; }
+  .btn:hover { background: rgba(255,255,255,0.12); }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: #1f2937; font-weight: 700; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .concept-card { border-left: 3px solid var(--zero); background: rgba(255,255,255,0.04); padding: 10px 12px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; line-height: 1.7; }
+  .concept-card.nash { border-left-color: var(--nash); }
+  .concept-card.prisoner { border-left-color: var(--prisoner); }
+  .concept-card.mixed { border-left-color: var(--mixed); }
+  .concept-card .title { font-weight: 700; color: #fbbf24; margin-bottom: 4px; }
+  .quiz .quiz-q { font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
+  .quiz-opt { padding: 10px 12px; margin: 6px 0; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; min-height: 40px; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: var(--mixed); }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; line-height: 1.7; }
+  .quiz-result { text-align: center; padding: 18px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 15px; line-height: 2; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back" href="index.html">← 返回大学数学</a>
+  <header>
+    <h1>⚔️ 博弈论入门</h1>
+    <p>零和博弈 · 纳什均衡 · 囚徒困境 · 混合策略</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="zero">⚡ 零和博弈</div>
+    <div class="tab" data-mode="nash">◎ 纳什均衡</div>
+    <div class="tab" data-mode="prisoner">🔒 囚徒困境</div>
+    <div class="tab" data-mode="mixed">🎲 混合策略</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="600" height="450"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>知识可视化 · 大学数学 · 博弈论</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
+const legendEl = document.getElementById('legend');
+
+let mode = 'zero';
+let animId = null;
+let time = 0;
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    initMode();
+  });
+});
+
+function initMode() {
+  if (animId) cancelAnimationFrame(animId);
+  if (mode === 'zero') initZero();
+  else if (mode === 'nash') initNash();
+  else if (mode === 'prisoner') initPrisoner();
+  else if (mode === 'mixed') initMixed();
+  else if (mode === 'quiz') initQuiz();
+}
+
+/* ================= 零和博弈 ================= */
+const zero = {
+  payoff: 0,   // A 从 B 处赢得的金额（-10..10）
+  aStrat: 0.5, // A 选策略 1 的概率
+  bStrat: 0.5, // B 选策略 1 的概率
+  // 收益矩阵（A 视角）：
+  //       B1    B2
+  //  A1 [ +3 ,  -2 ]
+  //  A2 [ -1 ,  +4 ]
+  M: [[3,-2],[-1,4]],
+  result: null, animT: 0
+};
+
+function initZero() {
+  legendEl.innerHTML = `
+    <span class="l-zero">A 行策略</span>
+    <span class="l-nash">B 列策略</span>
+    <span class="l-mixed">期望值曲线</span>`;
+  panel.innerHTML = `
+    <h3>⚡ 零和博弈：收益矩阵与期望值</h3>
+    <p style="font-size:13px;color:#94a3b8;line-height:1.7;">
+      零和博弈：一人收益 = 另一人损失。A 的收益矩阵如下，A 期望最大化，B 期望最小化。
+    </p>
+    <div class="equation">
+      收益矩阵（A 视角）：<br>
+      <b>M = [[3, −2], [−1, 4]]</b>
+    </div>
+    <div class="slider-row"><label>A 选策略 1 概率 p</label>
+      <input type="range" id="zp" min="0" max="100" value="50">
+      <span class="val" id="zpVal">0.50</span>
+    </div>
+    <div class="slider-row"><label>B 选策略 1 概率 q</label>
+      <input type="range" id="zq" min="0" max="100" value="50">
+      <span class="val" id="zqVal">0.50</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="zAuto">▶ 自动演化</button>
+      <button class="btn" id="zReset">↻ 重置</button>
+    </div>
+    <div class="info-grid">
+      <div>期望收益 E：<b id="zE" style="color:var(--zero);">+1.00</b></div>
+      <div>鞍点检查：<b id="zSaddle">无鞍点</b></div>
+      <div>Min-max：<b id="zMin">max_i min_j</b></div>
+      <div>Max-min：<b id="zMax">min_j max_i</b></div>
+    </div>
+    <div class="concept-card">
+      <div class="title">Min-max 定理（冯·诺依曼）</div>
+      对任何有限二人零和博弈，存在混合策略使 max_p min_q E(p,q) = min_q max_p E(p,q)，这个值称为<b>博弈值 V</b>。
+    </div>`;
+  bindZero();
+  drawZero();
+}
+
+function bindZero() {
+  const zp = document.getElementById('zp');
+  const zq = document.getElementById('zq');
+  const update = () => {
+    zero.aStrat = zp.value / 100;
+    zero.bStrat = zq.value / 100;
+    document.getElementById('zpVal').textContent = zero.aStrat.toFixed(2);
+    document.getElementById('zqVal').textContent = zero.bStrat.toFixed(2);
+    drawZero();
+  };
+  zp.addEventListener('input', update);
+  zq.addEventListener('input', update);
+  document.getElementById('zReset').addEventListener('click', () => {
+    zp.value = 50; zq.value = 50; update();
+  });
+  document.getElementById('zAuto').addEventListener('click', () => {
+    if (animId) { cancelAnimationFrame(animId); animId = null; return; }
+    let t = 0;
+    const loop = () => {
+      t += 0.01;
+      // 梯度上升模拟
+      const p = zero.aStrat, q = zero.bStrat;
+      const dEdp = (1-q)*zero.M[0][0]*0 + 0; // 简化：A 按对 q 最优反应
+      // A 最优：比较 E(A1) vs E(A2)
+      const e1 = q*zero.M[0][0] + (1-q)*zero.M[0][1];
+      const e2 = q*zero.M[1][0] + (1-q)*zero.M[1][1];
+      zero.aStrat += (e1 > e2 ? 0.01 : -0.01);
+      zero.aStrat = Math.max(0, Math.min(1, zero.aStrat));
+      // B 最优反向
+      const f1 = p*zero.M[0][0] + (1-p)*zero.M[1][0];
+      const f2 = p*zero.M[0][1] + (1-p)*zero.M[1][1];
+      zero.bStrat += (f1 < f2 ? 0.01 : -0.01);
+      zero.bStrat = Math.max(0, Math.min(1, zero.bStrat));
+      zp.value = zero.aStrat*100; zq.value = zero.bStrat*100;
+      drawZero();
+      animId = requestAnimationFrame(loop);
+    };
+    loop();
+  });
+}
+
+function drawZero() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+  // 左侧：矩阵
+  const mx = 40, my = 50, cw = 120, ch = 80;
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('B1', mx + cw*1.5, my - 8);
+  ctx.fillText('B2', mx + cw*2.5, my - 8);
+  ctx.fillText('A1', mx + cw*0.5 - 20, my + ch*0.5 + 5);
+  ctx.fillText('A2', mx + cw*0.5 - 20, my + ch*1.5 + 5);
+  for (let i = 0; i < 2; i++) {
+    for (let j = 0; j < 2; j++) {
+      const x = mx + cw*(j+1), y = my + ch*i;
+      const v = zero.M[i][j];
+      ctx.fillStyle = v > 0 ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)';
+      ctx.fillRect(x, y, cw, ch);
+      ctx.strokeStyle = '#475569';
+      ctx.strokeRect(x, y, cw, ch);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 22px monospace';
+      ctx.fillText(v > 0 ? '+'+v : ''+v, x + cw/2, y + ch/2 + 8);
+    }
+  }
+  // 当前策略高亮
+  const pA = zero.aStrat, pB = zero.bStrat;
+  ctx.strokeStyle = 'rgba(251,191,36,0.8)';
+  ctx.lineWidth = 3;
+  if (pA > 0.5) ctx.strokeRect(mx+cw, my, cw*2, ch);
+  else ctx.strokeRect(mx+cw, my+ch, cw*2, ch);
+  if (pB > 0.5) ctx.strokeRect(mx+cw, my, cw, ch*2);
+  else ctx.strokeRect(mx+cw*2, my, cw, ch*2);
+  ctx.lineWidth = 1;
+
+  // 右侧：E(p,q) 作为 p 的函数（固定 q）
+  const gx = 340, gy = 80, gw = 220, gh = 200;
+  ctx.strokeStyle = '#475569';
+  ctx.strokeRect(gx, gy, gw, gh);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px sans-serif';
+  ctx.fillText('E(p, q)', gx + gw/2, gy - 8);
+  ctx.fillText('p', gx + gw + 8, gy + gh);
+  // 画 E 关于 p 的曲线（固定 q）
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i <= 100; i++) {
+    const p = i / 100;
+    const E = p*zero.bStrat*zero.M[0][0] + p*(1-zero.bStrat)*zero.M[0][1]
+            + (1-p)*zero.bStrat*zero.M[1][0] + (1-p)*(1-zero.bStrat)*zero.M[1][1];
+    const ex = gx + p * gw;
+    const ey = gy + gh/2 - E * 20; // 缩放
+    if (i === 0) ctx.moveTo(ex, ey); else ctx.lineTo(ex, ey);
+  }
+  ctx.stroke();
+  ctx.lineWidth = 1;
+  // 当前 p 位置
+  const cx = gx + pA * gw;
+  const cE = pA*pB*zero.M[0][0] + pA*(1-pB)*zero.M[0][1]
+          + (1-pA)*pB*zero.M[1][0] + (1-pA)*(1-pB)*zero.M[1][1];
+  const cy = gy + gh/2 - cE * 20;
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI*2); ctx.fill();
+
+  // 底部文字
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 16px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(`E(p,q) = ${cE.toFixed(3)}`, gx, gy + gh + 30);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`A 期望最优：${(pA > 0.5 ? 'A1' : 'A2')}，B 期望最优：${(pB > 0.5 ? 'B1' : 'B2')}`, gx, gy + gh + 50);
+  ctx.fillText('混合策略均衡点通常在 (p*, q*) 内部', gx, gy + gh + 70);
+
+  // 更新信息
+  const minmax = Math.max(
+    Math.min(zero.M[0][0], zero.M[0][1]),
+    Math.min(zero.M[1][0], zero.M[1][1])
+  );
+  const maxmin = Math.min(
+    Math.max(zero.M[0][0], zero.M[1][0]),
+    Math.max(zero.M[0][1], zero.M[1][1])
+  );
+  document.getElementById('zE').textContent = (cE >= 0 ? '+' : '') + cE.toFixed(3);
+  document.getElementById('zMin').textContent = 'max min = ' + minmax;
+  document.getElementById('zMax').textContent = 'min max = ' + maxmin;
+  document.getElementById('zSaddle').textContent = minmax === maxmin ? '有鞍点 V='+minmax : '无鞍点（需混合）';
+}
+
+/* ================= 纳什均衡 ================= */
+const nash = {
+  // 性别之战 Battle of Sexes:
+  //       B:拳击  B:芭蕾
+  // A:拳击 (2,1)  (0,0)
+  // A:芭蕾 (0,0)  (1,2)
+  M: [[[2,1],[0,0]], [[0,0],[1,2]]],
+  p: 0.5, q: 0.5, animT: 0
+};
+
+function initNash() {
+  legendEl.innerHTML = `
+    <span class="l-nash">A 收益曲线</span>
+    <span class="l-prisoner">B 收益曲线</span>
+    <span class="l-mixed">最优反应交点 = NE</span>`;
+  panel.innerHTML = `
+    <h3>◎ 纳什均衡：性别之战</h3>
+    <p style="font-size:13px;color:#94a3b8;line-height:1.7;">
+      纳什均衡：在他人策略不变时，无人能通过单方面改变策略而获益。性别之战有 <b>2 个纯策略 NE + 1 个混合 NE</b>。
+    </p>
+    <div class="equation">
+      收益 (A, B)：<br>
+      <b>[[(2,1), (0,0)], [(0,0), (1,2)]]</b>
+    </div>
+    <div class="slider-row"><label>A 选拳击概率 p</label>
+      <input type="range" id="np" min="0" max="100" value="50">
+      <span class="val" id="npVal">0.50</span>
+    </div>
+    <div class="slider-row"><label>B 选拳击概率 q</label>
+      <input type="range" id="nq" min="0" max="100" value="50">
+      <span class="val" id="nqVal">0.50</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="nAuto">▶ 最优反应动态</button>
+      <button class="btn" id="nReset">↻ 重置</button>
+    </div>
+    <div class="info-grid">
+      <div>A 期望收益：<b id="nEA">1.00</b></div>
+      <div>B 期望收益：<b id="nEB">1.00</b></div>
+      <div>纯 NE 1：<b>(拳击, 拳击)</b></div>
+      <div>纯 NE 2：<b>(芭蕾, 芭蕾)</b></div>
+    </div>
+    <div class="concept-card nash">
+      <div class="title">纳什定理</div>
+      任何有限博弈都至少存在一个（可能是混合策略的）纳什均衡。证明用 Brouwer / Kakutani 不动点定理。
+    </div>`;
+  bindNash();
+  drawNash();
+}
+
+function bindNash() {
+  const np = document.getElementById('np');
+  const nq = document.getElementById('nq');
+  const update = () => {
+    nash.p = np.value / 100;
+    nash.q = nq.value / 100;
+    document.getElementById('npVal').textContent = nash.p.toFixed(2);
+    document.getElementById('nqVal').textContent = nash.q.toFixed(2);
+    drawNash();
+  };
+  np.addEventListener('input', update);
+  nq.addEventListener('input', update);
+  document.getElementById('nReset').addEventListener('click', () => {
+    np.value = 50; nq.value = 50; update();
+  });
+  document.getElementById('nAuto').addEventListener('click', () => {
+    if (animId) { cancelAnimationFrame(animId); animId = null; return; }
+    const loop = () => {
+      // A 最优反应：比较 U_A(拳击) vs U_A(芭蕾)
+      const uA1 = nash.q * 2 + (1 - nash.q) * 0; // 拳击
+      const uA2 = nash.q * 0 + (1 - nash.q) * 1; // 芭蕾
+      nash.p += (uA1 > uA2 ? 0.02 : -0.02);
+      nash.p = Math.max(0, Math.min(1, nash.p));
+      // B 最优反应
+      const uB1 = nash.p * 1 + (1 - nash.p) * 0; // 拳击
+      const uB2 = nash.p * 0 + (1 - nash.p) * 2; // 芭蕾
+      nash.q += (uB1 > uB2 ? 0.02 : -0.02);
+      nash.q = Math.max(0, Math.min(1, nash.q));
+      np.value = nash.p * 100; nq.value = nash.q * 100;
+      drawNash();
+      animId = requestAnimationFrame(loop);
+    };
+    loop();
+  });
+}
+
+function drawNash() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+  // 左上：2x2 收益表
+  const mx = 40, my = 50, cw = 130, ch = 70;
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('B:拳击', mx + cw*1.5, my - 8);
+  ctx.fillText('B:芭蕾', mx + cw*2.5, my - 8);
+  ctx.fillText('A:拳击', mx + cw*0.5 - 25, my + ch*0.5 + 5);
+  ctx.fillText('A:芭蕾', mx + cw*0.5 - 25, my + ch*1.5 + 5);
+  for (let i = 0; i < 2; i++) {
+    for (let j = 0; j < 2; j++) {
+      const x = mx + cw*(j+1), y = my + ch*i;
+      const [ua, ub] = nash.M[i][j];
+      const isNE = (i === 0 && j === 0) || (i === 1 && j === 1);
+      ctx.fillStyle = isNE ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.03)';
+      ctx.fillRect(x, y, cw, ch);
+      ctx.strokeStyle = isNE ? '#10b981' : '#475569';
+      ctx.lineWidth = isNE ? 2 : 1;
+      ctx.strokeRect(x, y, cw, ch);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText(`(${ua}, ${ub})`, x + cw/2, y + ch/2 + 6);
+      if (isNE) {
+        ctx.fillStyle = '#10b981';
+        ctx.font = '10px sans-serif';
+        ctx.fillText('NE', x + cw - 18, y + 14);
+      }
+    }
+  }
+  // 当前选择高亮
+  const pA = nash.p, pB = nash.q;
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 3;
+  const rA = pA > 0.5 ? 0 : 1;
+  const cB = pB > 0.5 ? 0 : 1;
+  ctx.strokeRect(mx + cw*(cB+1), my + ch*rA, cw, ch);
+  ctx.lineWidth = 1;
+
+  // 右侧：最优反应曲线
+  const gx = 340, gy = 80, gw = 220, gh = 220;
+  ctx.strokeStyle = '#475569';
+  ctx.strokeRect(gx, gy, gw, gh);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('最优反应对应', gx + gw/2, gy - 8);
+  ctx.fillText('p (A 选拳击)', gx + gw/2, gy + gh + 20);
+  ctx.save();
+  ctx.translate(gx - 12, gy + gh/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('q (B 选拳击)', 0, 0);
+  ctx.restore();
+
+  // A 最优反应：U_A(拳击) = 2q, U_A(芭蕾) = 1-q
+  // 当 2q > 1-q → q > 1/3，A 选拳击 (p=1)；q < 1/3 选芭蕾 (p=0)
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(gx, gy + gh); // p=0 (q<1/3)
+  ctx.lineTo(gx, gy + gh - gh/3);
+  ctx.lineTo(gx + gw, gy + gh - gh/3); // 无差异
+  ctx.moveTo(gx + gw, gy + gh - gh/3);
+  ctx.lineTo(gx + gw, gy); // p=1 (q>1/3)
+  ctx.stroke();
+  // B 最优反应：U_B(拳击) = p, U_B(芭蕾) = 2(1-p)
+  // 当 p > 2(1-p) → p > 2/3，B 选拳击 (q=1)；p < 2/3 选芭蕾 (q=0)
+  ctx.strokeStyle = '#a78bfa';
+  ctx.beginPath();
+  ctx.moveTo(gx, gy + gh); // q=0
+  ctx.lineTo(gx + gw*2/3, gy + gh);
+  ctx.lineTo(gx + gw*2/3, gy); // 无差异
+  ctx.moveTo(gx + gw*2/3, gy);
+  ctx.lineTo(gx + gw, gy); // q=1
+  ctx.stroke();
+  ctx.lineWidth = 1;
+  // 三个 NE 点
+  const nePoints = [
+    { p: 0, q: 0, label: '(芭蕾,芭蕾)' },
+    { p: 1, q: 1, label: '(拳击,拳击)' },
+    { p: 2/3, q: 1/3, label: '混合NE' }
+  ];
+  ctx.font = '11px sans-serif';
+  nePoints.forEach(ne => {
+    const x = gx + ne.p * gw;
+    const y = gy + gh - ne.q * gh;
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillText(ne.label, x, y - 10);
+  });
+  // 当前 (p,q)
+  const cx = gx + pA * gw;
+  const cy = gy + gh - pB * gh;
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.stroke();
+
+  // 更新信息
+  const EA = pA*pB*2 + pA*(1-pB)*0 + (1-pA)*pB*0 + (1-pA)*(1-pB)*1;
+  const EB = pA*pB*1 + pA*(1-pB)*0 + (1-pA)*pB*0 + (1-pA)*(1-pB)*2;
+  document.getElementById('nEA').textContent = EA.toFixed(3);
+  document.getElementById('nEB').textContent = EB.toFixed(3);
+}
+
+/* ================= 囚徒困境 ================= */
+const prisoner = {
+  //       B:合作  B:背叛
+  // A:合作 (3,3)  (0,5)
+  // A:背叛 (5,0)  (1,1)
+  M: [[[3,3],[0,5]], [[5,0],[1,1]]],
+  rounds: [],
+  stratA: 'titfortat', // 策略
+  stratB: 'alwaysD',
+  round: 0, maxRounds: 20,
+  running: false
+};
+
+function initPrisoner() {
+  legendEl.innerHTML = `
+    <span class="l-prisoner">累计收益对比</span>
+    <span class="l-mixed">合作 = 绿，背叛 = 红</span>`;
+  prisoner.rounds = [];
+  prisoner.round = 0;
+  panel.innerHTML = `
+    <h3>🔒 囚徒困境：重复博弈</h3>
+    <p style="font-size:13px;color:#94a3b8;line-height:1.7;">
+      单次博弈的 NE 是 (背叛, 背叛)，但重复博弈中<b>合作</b>可能演化出来（Axelrod 锦标赛）。
+    </p>
+    <div class="equation">
+      收益 (A, B)：<br>
+      <b>[[(3,3), (0,5)], [(5,0), (1,1)]]</b>
+    </div>
+    <div class="slider-row"><label>A 策略</label>
+      <select id="stratA" style="flex:1;padding:8px;background:rgba(255,255,255,0.06);color:#fff;border:1px solid var(--border);border-radius:8px;min-height:36px;">
+        <option value="titfortat">以牙还牙 (TFT)</option>
+        <option value="alwaysC">总是合作</option>
+        <option value="alwaysD">总是背叛</option>
+        <option value="random">随机</option>
+        <option value="grim">冷酷触发</option>
+      </select>
+    </div>
+    <div class="slider-row"><label>B 策略</label>
+      <select id="stratB" style="flex:1;padding:8px;background:rgba(255,255,255,0.06);color:#fff;border:1px solid var(--border);border-radius:8px;min-height:36px;">
+        <option value="alwaysD">总是背叛</option>
+        <option value="titfortat">以牙还牙 (TFT)</option>
+        <option value="alwaysC">总是合作</option>
+        <option value="random">随机</option>
+        <option value="grim">冷酷触发</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="pRun">▶ 运行 20 轮</button>
+      <button class="btn" id="pReset">↻ 重置</button>
+    </div>
+    <div class="info-grid">
+      <div>A 总分：<b id="pSA" style="color:var(--prisoner);">0</b></div>
+      <div>B 总分：<b id="pSB" style="color:var(--nash);">0</b></div>
+      <div>合作率 A：<b id="pCA">—</b></div>
+      <div>合作率 B：<b id="pCB">—</b></div>
+    </div>
+    <div class="concept-card prisoner">
+      <div class="title">重复博弈的教训</div>
+      Axelrod 计算机锦标赛（1980）冠军策略 <b>以牙还牙 TFT</b>：第一轮合作，之后模仿对手上一轮。特点：善良、报复、宽容、清晰。
+    </div>`;
+  bindPrisoner();
+  drawPrisoner();
+}
+
+function bindPrisoner() {
+  document.getElementById('stratA').addEventListener('change', e => {
+    prisoner.stratA = e.target.value; resetPrisoner();
+  });
+  document.getElementById('stratB').addEventListener('change', e => {
+    prisoner.stratB = e.target.value; resetPrisoner();
+  });
+  document.getElementById('pRun').addEventListener('click', () => {
+    if (prisoner.running) return;
+    resetPrisoner();
+    prisoner.running = true;
+    runRound();
+  });
+  document.getElementById('pReset').addEventListener('click', resetPrisoner);
+}
+
+function resetPrisoner() {
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  prisoner.rounds = [];
+  prisoner.round = 0;
+  prisoner.running = false;
+  drawPrisoner();
+}
+
+function chooseMove(strat, selfHist, oppHist) {
+  const r = selfHist.length;
+  if (strat === 'alwaysC') return 'C';
+  if (strat === 'alwaysD') return 'D';
+  if (strat === 'random') return Math.random() < 0.5 ? 'C' : 'D';
+  if (strat === 'titfortat') {
+    if (r === 0) return 'C';
+    return oppHist[r-1];
+  }
+  if (strat === 'grim') {
+    if (oppHist.includes('D')) return 'D';
+    return 'C';
+  }
+  return 'C';
+}
+
+function runRound() {
+  if (prisoner.round >= prisoner.maxRounds) {
+    prisoner.running = false;
+    return;
+  }
+  const histA = prisoner.rounds.map(r => r.a);
+  const histB = prisoner.rounds.map(r => r.b);
+  const a = chooseMove(prisoner.stratA, histA, histB);
+  const b = chooseMove(prisoner.stratB, histB, histA);
+  let pa, pb;
+  if (a === 'C' && b === 'C') { pa = 3; pb = 3; }
+  else if (a === 'C' && b === 'D') { pa = 0; pb = 5; }
+  else if (a === 'D' && b === 'C') { pa = 5; pb = 0; }
+  else { pa = 1; pb = 1; }
+  prisoner.rounds.push({ a, b, pa, pb });
+  prisoner.round++;
+  drawPrisoner();
+  animId = setTimeout(runRound, 300);
+}
+
+function drawPrisoner() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+  // 顶部：每轮点阵
+  const cellW = 26, cellH = 26;
+  const startX = 30, startY = 40;
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('每轮选择（绿=合作，红=背叛）：', startX, startY - 10);
+  for (let r = 0; r < prisoner.rounds.length; r++) {
+    const x = startX + r * cellW;
+    const rnd = prisoner.rounds[r];
+    // A
+    ctx.fillStyle = rnd.a === 'C' ? '#10b981' : '#ef4444';
+    ctx.fillRect(x, startY, cellW - 2, cellH - 2);
+    // B
+    ctx.fillStyle = rnd.b === 'C' ? '#10b981' : '#ef4444';
+    ctx.fillRect(x, startY + cellH + 4, cellW - 2, cellH - 2);
+  }
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('A', startX - 18, startY + cellH/2 + 4);
+  ctx.fillText('B', startX - 18, startY + cellH + 4 + cellH/2 + 4);
+
+  // 中部：累计收益曲线
+  const gy = 150, gw = 540, gh = 220, gx = 30;
+  ctx.strokeStyle = '#475569';
+  ctx.strokeRect(gx, gy, gw, gh);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('累计收益', gx + gw/2, gy - 8);
+  if (prisoner.rounds.length > 0) {
+    let cumA = 0, cumB = 0;
+    const maxCum = Math.max(...prisoner.rounds.map((_, i) => {
+      return Math.max(
+        prisoner.rounds.slice(0, i+1).reduce((s, r) => s + r.pa, 0),
+        prisoner.rounds.slice(0, i+1).reduce((s, r) => s + r.pb, 0)
+      );
+    }), 1);
+    // A 曲线
+    ctx.strokeStyle = '#a78bfa';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    cumA = 0;
+    for (let i = 0; i < prisoner.rounds.length; i++) {
+      cumA += prisoner.rounds[i].pa;
+      const x = gx + (i + 1) / prisoner.maxRounds * gw;
+      const y = gy + gh - (cumA / maxCum) * (gh - 10);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    // B 曲线
+    ctx.strokeStyle = '#06b6d4';
+    ctx.beginPath();
+    cumB = 0;
+    for (let i = 0; i < prisoner.rounds.length; i++) {
+      cumB += prisoner.rounds[i].pb;
+      const x = gx + (i + 1) / prisoner.maxRounds * gw;
+      const y = gy + gh - (cumB / maxCum) * (gh - 10);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    // 更新总分
+    document.getElementById('pSA').textContent = cumA;
+    document.getElementById('pSB').textContent = cumB;
+    const coopA = prisoner.rounds.filter(r => r.a === 'C').length / prisoner.rounds.length;
+    const coopB = prisoner.rounds.filter(r => r.b === 'C').length / prisoner.rounds.length;
+    document.getElementById('pCA').textContent = (coopA * 100).toFixed(0) + '%';
+    document.getElementById('pCB').textContent = (coopB * 100).toFixed(0) + '%';
+  }
+  // 底部说明
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('提示：尝试 TFT vs 总是背叛、TFT vs TFT、随机 vs 总是合作，观察累计收益差异', 30, 410);
+  ctx.fillText('单次 NE = (D,D)，但 Pareto 最优 = (C,C)，体现个体理性与集体理性的冲突', 30, 430);
+}
+
+/* ================= 混合策略 ================= */
+const mixed = {
+  // 石头剪刀布
+  history: [],
+  pRock: 0.33, pPaper: 0.33, pScissors: 0.34,
+  playerWins: 0, aiWins: 0, draws: 0
+};
+
+function initMixed() {
+  legendEl.innerHTML = `
+    <span class="l-mixed">出拳分布</span>
+    <span class="l-zero">你（点击右侧按钮出招）</span>`;
+  mixed.history = [];
+  mixed.playerWins = 0; mixed.aiWins = 0; mixed.draws = 0;
+  panel.innerHTML = `
+    <h3>🎲 混合策略：石头剪刀布</h3>
+    <p style="font-size:13px;color:#94a3b8;line-height:1.7;">
+      石头剪刀布的混合 NE 是 <b>(1/3, 1/3, 1/3)</b>。如果你偏离此分布，AI 会利用你的偏差。来试试看！
+    </p>
+    <div class="btn-row" style="justify-content:center;margin-top:14px;">
+      <button class="btn primary" id="mRock" style="font-size:20px;padding:14px 24px;">✊ 石头</button>
+      <button class="btn primary" id="mPaper" style="font-size:20px;padding:14px 24px;">✋ 布</button>
+      <button class="btn primary" id="mScissors" style="font-size:20px;padding:14px 24px;">✌️ 剪刀</button>
+    </div>
+    <div class="info-grid">
+      <div>你的胜场：<b id="mPW" style="color:var(--mixed);">0</b></div>
+      <div>AI 胜场：<b id="mAW" style="color:var(--zero);">0</b></div>
+      <div>平局：<b id="mD">0</b></div>
+      <div>总场次：<b id="mT">0</b></div>
+    </div>
+    <div class="info-grid" style="margin-top:8px;">
+      <div>你的石头率：<b id="mPR">—</b></div>
+      <div>你的布率：<b id="mPP">—</b></div>
+      <div>你的剪刀率：<b id="mPS">—</b></div>
+      <div>偏差得分：<b id="mBias">0</b></div>
+    </div>
+    <div class="concept-card mixed">
+      <div class="title">混合策略 NE 的含义</div>
+      在混合 NE 处，每个玩家对任一纯策略<b>无差异</b>。对手无法利用你的分布，你也无法利用对手。剪刀石头布 NE：(1/3, 1/3, 1/3)。
+    </div>
+    <div class="concept-card">
+      <div class="title">AI 的剥削策略</div>
+      AI 统计你过去 10 手分布，若某类显著偏多，AI 就偏向出克制它的招。如果你能稳住 1/3 分布，AI 优势会消失。
+    </div>`;
+  bindMixed();
+  drawMixed();
+}
+
+function bindMixed() {
+  ['Rock','Paper','Scissors'].forEach(m => {
+    document.getElementById('m' + m).addEventListener('click', () => playMixed(m));
+  });
+}
+
+function playMixed(player) {
+  // AI 剥削策略：基于玩家历史分布
+  const recent = mixed.history.slice(-10);
+  let pR = 1/3, pP = 1/3, pS = 1/3;
+  if (recent.length >= 3) {
+    const rCount = recent.filter(h => h.player === 'Rock').length;
+    const pCount = recent.filter(h => h.player === 'Paper').length;
+    const sCount = recent.filter(h => h.player === 'Scissors').length;
+    const total = recent.length;
+    // AI 出克制招
+    pR = 0.1 + 0.7 * (pCount / total); // AI 出石头（克剪刀）概率随玩家剪刀率
+    pP = 0.1 + 0.7 * (sCount / total); // AI 出布（克石头）
+    pS = 0.1 + 0.7 * (rCount / total); // AI 出剪刀（克布）
+    const sum = pR + pP + pS;
+    pR /= sum; pP /= sum; pS /= sum;
+  }
+  const rand = Math.random();
+  let ai;
+  if (rand < pR) ai = 'Rock';
+  else if (rand < pR + pP) ai = 'Paper';
+  else ai = 'Scissors';
+  let result;
+  if (player === ai) result = 'D';
+  else if ((player === 'Rock' && ai === 'Scissors') ||
+           (player === 'Paper' && ai === 'Rock') ||
+           (player === 'Scissors' && ai === 'Paper')) result = 'W';
+  else result = 'L';
+  mixed.history.push({ player, ai, result });
+  if (result === 'W') mixed.playerWins++;
+  else if (result === 'L') mixed.aiWins++;
+  else mixed.draws++;
+  updateMixedStats();
+  drawMixed();
+}
+
+function updateMixedStats() {
+  document.getElementById('mPW').textContent = mixed.playerWins;
+  document.getElementById('mAW').textContent = mixed.aiWins;
+  document.getElementById('mD').textContent = mixed.draws;
+  document.getElementById('mT').textContent = mixed.history.length;
+  const total = mixed.history.length;
+  if (total > 0) {
+    const r = mixed.history.filter(h => h.player === 'Rock').length / total;
+    const p = mixed.history.filter(h => h.player === 'Paper').length / total;
+    const s = mixed.history.filter(h => h.player === 'Scissors').length / total;
+    document.getElementById('mPR').textContent = (r*100).toFixed(0) + '%';
+    document.getElementById('mPP').textContent = (p*100).toFixed(0) + '%';
+    document.getElementById('mPS').textContent = (s*100).toFixed(0) + '%';
+    // 偏差 = sqrt(3*Σ(x_i - 1/3)^2)，0 表示完美 1/3
+    const bias = Math.sqrt(3 * ((r-1/3)**2 + (p-1/3)**2 + (s-1/3)**2));
+    document.getElementById('mBias').textContent = bias.toFixed(3);
+  }
+}
+
+function drawMixed() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+  // 顶部：三角形单纯形（简化：用堆叠柱状图）
+  const bx = 30, bw = 540, bh = 60, by = 60;
+  const total = mixed.history.length;
+  if (total > 0) {
+    const r = mixed.history.filter(h => h.player === 'Rock').length / total;
+    const p = mixed.history.filter(h => h.player === 'Paper').length / total;
+    const s = mixed.history.filter(h => h.player === 'Scissors').length / total;
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(bx, by, r * bw, bh);
+    ctx.fillStyle = '#06b6d4';
+    ctx.fillRect(bx + r * bw, by, p * bw, bh);
+    ctx.fillStyle = '#a78bfa';
+    ctx.fillRect(bx + (r + p) * bw, by, s * bw, bh);
+    // 1/3 标线
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(bx + bw/3, by - 5); ctx.lineTo(bx + bw/3, by + bh + 5);
+    ctx.moveTo(bx + 2*bw/3, by - 5); ctx.lineTo(bx + 2*bw/3, by + bh + 5);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    if (r > 0.05) ctx.fillText('✊ ' + (r*100).toFixed(0) + '%', bx + r*bw/2, by + bh/2 + 5);
+    if (p > 0.05) ctx.fillText('✋ ' + (p*100).toFixed(0) + '%', bx + (r + p/2)*bw, by + bh/2 + 5);
+    if (s > 0.05) ctx.fillText('✌️ ' + (s*100).toFixed(0) + '%', bx + (r + p + s/2)*bw, by + bh/2 + 5);
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('点击右侧按钮开始对决', bx + bw/2, by + bh/2 + 5);
+  }
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('你的出招分布（虚线 = 完美 1/3）', bx + bw/2, by - 8);
+
+  // 最近 15 手历史
+  const recent = mixed.history.slice(-15);
+  const cellW = 32, cellH = 32;
+  const sy = 180;
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('最近 15 手（你 / AI，绿=W 灰=D 红=L）：', 30, sy - 10);
+  for (let i = 0; i < recent.length; i++) {
+    const h = recent[i];
+    const x = 30 + i * (cellW + 4);
+    // 你
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(x, sy, cellW, cellH);
+    ctx.font = '18px sans-serif';
+    ctx.textAlign = 'center';
+    const emoji = { Rock: '✊', Paper: '✋', Scissors: '✌️' };
+    ctx.fillText(emoji[h.player], x + cellW/2, sy + cellH - 8);
+    // AI
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(x, sy + cellH + 6, cellW, cellH);
+    ctx.fillText(emoji[h.ai], x + cellW/2, sy + cellH*2 - 2);
+    // 结果点
+    ctx.fillStyle = h.result === 'W' ? '#10b981' : h.result === 'L' ? '#ef4444' : '#94a3b8';
+    ctx.beginPath();
+    ctx.arc(x + cellW/2, sy + cellH*2 + 18, 4, 0, Math.PI*2);
+    ctx.fill();
+  }
+  // 比分大字
+  const cy = 340;
+  ctx.font = 'bold 36px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(mixed.playerWins, W/2 - 100, cy);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '20px sans-serif';
+  ctx.fillText('—', W/2, cy);
+  ctx.fillStyle = '#ef4444';
+  ctx.font = 'bold 36px monospace';
+  ctx.fillText(mixed.aiWins, W/2 + 100, cy);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('你', W/2 - 100, cy + 24);
+  ctx.fillText('AI', W/2 + 100, cy + 24);
+  ctx.fillText(`平局 ${mixed.draws}`, W/2, cy + 24);
+}
+
+/* ================= 互动练习 ================= */
+const QUIZ = [
+  { q: '零和博弈的本质特征是？', opts: ['双方收益之和恒为常数', '双方总是合作', '双方收益相等', '至少有一方收益为 0'], ans: 0, exp: '零和：A 收益 + B 收益 = 常数（常为 0），一人所得即另一人所失。' },
+  { q: '纳什均衡的定义是？', opts: ['收益最大的策略组合', '无人能通过单方面偏离获益的策略组合', '双方收益相等的点', '纯策略均衡'], ans: 1, exp: 'NE 核心：单边偏离无利可图，但不要求整体最优。' },
+  { q: '囚徒困境单次博弈的 NE 是？', opts: ['(合作, 合作)', '(背叛, 背叛)', '(合作, 背叛)', '(背叛, 合作)'], ans: 1, exp: '背叛是占优策略，NE = (D,D)，但 Pareto 最优是 (C,C)。' },
+  { q: '石头剪刀布的混合 NE 是？', opts: ['(1/2, 1/4, 1/4)', '(1/3, 1/3, 1/3)', '(1, 0, 0)', '不存在'], ans: 1, exp: '对称零和博弈，唯一 NE 为均匀分布，对手无法剥削。' },
+  { q: '冯·诺依曼 min-max 定理告诉我们？', opts: ['所有博弈都有纯策略 NE', '二人零和博弈存在混合策略使 max min = min max', '纳什均衡唯一', '合作总是最优'], ans: 1, exp: 'min-max 定理是零和博弈的基石，保证博弈值 V 存在。' },
+  { q: 'Axelrod 重复囚徒困境锦标赛冠军策略是？', opts: ['总是背叛', '以牙还牙 (TFT)', '冷酷触发', '随机'], ans: 1, exp: 'TFT：善良（先合作）、报复（惩罚背叛）、宽容（回合作即原谅）、清晰（可预测）。' },
+  { q: '性别之战 (Battle of Sexes) 有几个 NE？', opts: ['1 个', '2 个', '3 个', '无穷多'], ans: 2, exp: '2 个纯策略 NE：(拳击,拳击)、(芭蕾,芭蕾)，加 1 个混合 NE，共 3 个。' },
+  { q: '占优策略是指？', opts: ['收益最高的策略', '无论对方选什么，自己都最优的策略', '对方无法预测的策略', '均衡策略'], ans: 1, exp: '占优策略与对手选择无关。囚徒困境中"背叛"就是占优策略。' }
+];
+let quizIdx = 0, quizScore = 0, quizAnswered = false;
+
+function initQuiz() {
+  legendEl.innerHTML = '';
+  quizIdx = 0; quizScore = 0;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('完成 8 道题，检验博弈论掌握情况', canvas.width / 2, canvas.height / 2 - 20);
+  ctx.fillText('答完自动出结果与解析', canvas.width / 2, canvas.height / 2 + 10);
+  renderQuiz();
+}
+
+function renderQuiz() {
+  if (quizIdx >= QUIZ.length) {
+    const pass = quizScore >= 6;
+    panel.innerHTML = `
+      <h3>🎯 测验完成</h3>
+      <div class="quiz-result">
+        得分 <b style="color:${pass ? '#10b981' : '#ef4444'};font-size:2em;">${quizScore}</b> / ${QUIZ.length}<br>
+        ${pass ? '🎉 已通过（≥6 分）' : '💪 继续加油（≥6 分通过）'}<br>
+        <button class="btn primary" id="retryQuiz" style="margin-top:12px;">↻ 再测一次</button>
+      </div>
+      <div class="concept-card" style="margin-top:14px;">
+        <div class="title">知识总结</div>
+        · 零和：一人所得 = 另一人所失，min-max 定理保证博弈值<br>
+        · NE：单边偏离无利可图，Nash 证明有限博弈必有 NE<br>
+        · 囚徒困境：单次 NE ≠ Pareto 最优，重复博弈催生合作<br>
+        · 混合策略：让对手无差异，剪刀石头布 NE = (1/3, 1/3, 1/3)
+      </div>`;
+    document.getElementById('retryQuiz').addEventListener('click', initQuiz);
+    if (pass && typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('game-theory');
+    }
+    return;
+  }
+  const q = QUIZ[quizIdx];
+  quizAnswered = false;
+  panel.innerHTML = `
+    <h3>第 ${quizIdx + 1} / ${QUIZ.length} 题 <span style="float:right;color:#fbbf24;">得分 ${quizScore}</span></h3>
+    <div class="quiz">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-i="${i}">${o}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="fb"></div>
+    </div>`;
+  panel.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const i = +opt.dataset.i;
+      const fb = document.getElementById('fb');
+      if (i === q.ans) {
+        opt.classList.add('correct');
+        quizScore++;
+        fb.textContent = '✓ ' + q.exp;
+        fb.style.color = '#10b981';
+      } else {
+        opt.classList.add('wrong');
+        panel.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        fb.textContent = '✗ ' + q.exp;
+        fb.style.color = '#ef4444';
+      }
+      setTimeout(() => { quizIdx++; renderQuiz(); }, 1800);
+    });
+  });
+}
+
+// Init
+initMode();
+</script>
+</body>
+</html>

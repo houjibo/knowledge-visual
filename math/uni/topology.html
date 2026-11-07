@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>拓扑学入门 · 互动可视化</title>
+<script src="assets/common.js"></script>
+<link rel="stylesheet" href="assets/common.css" />
+<style>
+  :root {
+    --primary: #06b6d4;
+    --secondary: #8b5cf6;
+    --accent: #f59e0b;
+    --node: #3b82f6;
+    --edge: #10b981;
+    --highlight: #f59e0b;
+    --path: #ec4899;
+    --muted: #64748b;
+    --dark: #0f172a;
+    --light: #f1f5f9;
+  }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; margin: 0; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 14px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(6,182,212,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .section { display: none; }
+  .section.active { display: block; }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); position: relative; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); cursor: crosshair; }
+  .panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); max-height: 640px; overflow-y: auto; }
+  .panel h3 { margin: 0 0 10px; font-size: 1.1rem; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.1rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; }
+  .prop-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.6; border-left: 3px solid var(--primary); }
+  .prop-card .prop-title { font-weight: 600; color: #67e8f9; margin-bottom: 4px; }
+  .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; display: inline-block; margin: 3px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .mode-btn:hover { background: rgba(255,255,255,0.12); }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 60px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(6,182,212,0.08); border-radius: 12px; border: 1px solid rgba(6,182,212,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.5; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-node::before { background: var(--node); }
+  .legend .l-edge::before { background: var(--edge); }
+  .legend .l-path::before { background: var(--path); }
+  .legend .l-highlight::before { background: var(--highlight); }
+  .info-bar { display: flex; gap: 12px; justify-content: center; font-size: 12px; color: #94a3b8; margin: 8px 0; flex-wrap: wrap; }
+  .info-bar b { color: #fbbf24; }
+  .controls { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  .controls label { font-size: 13px; color: #cbd5e1; }
+  .controls select, .controls button { padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #e2e8f0; font-size: 13px; cursor: pointer; }
+  .controls button:hover { background: rgba(255,255,255,0.12); }
+  .btn { padding: 6px 14px; border-radius: 8px; background: var(--primary); border: none; color: #0f172a; font-weight: 600; cursor: pointer; font-size: 13px; }
+  .btn:hover { opacity: 0.85; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+  .stat-box { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px; text-align: center; }
+  .stat-box .stat-val { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+  .stat-box .stat-label { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+  .formula { font-family: "Times New Roman", serif; font-size: 1.2rem; text-align: center; padding: 10px; background: rgba(6,182,212,0.1); border-radius: 10px; margin: 10px 0; color: #67e8f9; }
+  .hint { font-size: 12px; color: #94a3b8; font-style: italic; margin-top: 8px; }
+  .surface-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; margin-left: 6px; }
+  .surface-badge.orientable { background: rgba(16,185,129,0.2); color: #34d399; }
+  .surface-badge.non-orientable { background: rgba(239,68,68,0.2); color: #f87171; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🧬 拓扑学入门 · Topology</h1>
+    <p>橡皮膜上的几何学 —— 从欧拉示性数到莫比乌斯带</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="euler">欧拉示性数</div>
+    <div class="tab" data-tab="mobius">莫比乌斯带</div>
+    <div class="tab" data-tab="classify">曲面分类</div>
+    <div class="tab" data-tab="quiz">互动练习</div>
+  </div>
+
+  <!-- ============ 1. 欧拉示性数 ============ -->
+  <div class="section active" id="sec-euler">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvEuler" width="600" height="420"></canvas>
+        <div class="legend">
+          <span class="l-node">顶点 V</span>
+          <span class="l-edge">边 E</span>
+          <span class="l-path">面 F</span>
+          <span class="l-highlight">高亮</span>
+        </div>
+        <div class="controls">
+          <label>多面体：</label>
+          <select id="selPoly">
+            <option value="tetra">正四面体</option>
+            <option value="cube">正方体</option>
+            <option value="octa">正八面体</option>
+            <option value="dodeca">正十二面体</option>
+            <option value="icosa">正二十面体</option>
+            <option value="torus">圆环面（亏格1）</option>
+          </select>
+          <button class="btn" id="btnRotate">⟳ 旋转</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📐 欧拉示性数公式</h3>
+        <div class="formula">χ = V − E + F</div>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="stat-val" id="statV">-</div><div class="stat-label">顶点数 V</div></div>
+          <div class="stat-box"><div class="stat-val" id="statE">-</div><div class="stat-label">边数 E</div></div>
+          <div class="stat-box"><div class="stat-val" id="statF">-</div><div class="stat-label">面数 F</div></div>
+          <div class="stat-box"><div class="stat-val" id="statChi">-</div><div class="stat-label">欧拉示性数 χ</div></div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">核心洞察</div>
+          <div>对于任意凸多面体，χ = 2。这是拓扑不变量——连续形变不改变它。</div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">亏格与χ的关系</div>
+          <div>χ = 2 − 2g，其中 g 是亏格（"洞"的数量）。球面 g=0，χ=2；环面 g=1，χ=0。</div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">历史</div>
+          <div>1750 年欧拉发现 V−E+F=2，这是拓扑学的第一个定理，比"拓扑"一词早 170 年。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 2. 莫比乌斯带 ============ -->
+  <div class="section" id="sec-mobius">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvMobius" width="600" height="420"></canvas>
+        <div class="legend">
+          <span class="l-node">中心线</span>
+          <span class="l-edge">法向量</span>
+          <span class="l-path">扭转方向</span>
+        </div>
+        <div class="controls">
+          <label>参数 u：</label>
+          <input type="range" id="sliderU" min="0" max="360" value="0" style="flex:1;accent-color:var(--primary)">
+          <span class="val" id="valU">0°</span>
+        </div>
+        <div class="controls">
+          <button class="btn" id="btnAnimate">▶ 动画</button>
+          <button class="btn" id="btnResetMobius" style="background:var(--muted)">↺ 重置</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🎗️ 莫比乌斯带</h3>
+        <div class="prop-card">
+          <div class="prop-title">单侧曲面</div>
+          <div>莫比乌斯带只有一个面和一个边界。一只蚂蚁可以不跨过边缘爬遍整个表面。</div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">不可定向性</div>
+          <div>沿中心线走一圈后，法向量方向反转。这说明莫比乌斯带是不可定向的。</div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">欧拉示性数</div>
+          <div>莫比乌斯带的 χ = 0。它可以通过"粘合"一个圆盘的边界到自身而得到。</div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">参数方程</div>
+          <div style="font-family:monospace;font-size:12px;margin-top:4px">
+            x(u,v) = (R + v·cos(u/2))·cos(u)<br>
+            y(u,v) = (R + v·cos(u/2))·sin(u)<br>
+            z(u,v) = v·sin(u/2)
+          </div>
+        </div>
+        <div class="hint">拖动滑块观察法向量如何随 u 变化而扭转</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 3. 曲面分类 ============ -->
+  <div class="section" id="sec-classify">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvClassify" width="600" height="420"></canvas>
+        <div class="legend">
+          <span class="l-node">可定向</span>
+          <span class="l-edge">不可定向</span>
+          <span class="l-path">亏格 g</span>
+        </div>
+        <div class="controls">
+          <label>选择曲面：</label>
+          <select id="selSurface">
+            <option value="sphere">球面 S²（g=0, χ=2）</option>
+            <option value="torus">环面 T²（g=1, χ=0）</option>
+            <option value="genus2">双环面（g=2, χ=−2）</option>
+            <option value="mobius">莫比乌斯带（不可定向）</option>
+            <option value="klein">克莱因瓶（不可定向）</option>
+            <option value="projective">射影平面（不可定向）</option>
+          </select>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🗂️ 闭曲面分类定理</h3>
+        <div class="prop-card">
+          <div class="prop-title">可定向闭曲面</div>
+          <div>每个可定向闭曲面同胚于 g 个环面的连通和，g ≥ 0。χ = 2 − 2g。</div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">不可定向闭曲面</div>
+          <div>每个不可定向闭曲面同胚于 k 个射影平面的连通和，k ≥ 1。χ = 2 − k。</div>
+        </div>
+        <div class="prop-card">
+          <div class="prop-title">判定方法</div>
+          <div>1. 检查是否可定向（是否存在莫比乌斯带）<br>2. 计算欧拉示性数 χ<br>3. 由 χ 和定向性唯一确定曲面类型</div>
+        </div>
+        <div id="surfaceInfo" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 4. 互动练习 ============ -->
+  <div class="section" id="sec-quiz">
+    <div class="panel" style="max-width:700px;margin:0 auto">
+      <h3>🧠 拓扑学知识测试</h3>
+      <div class="quiz" id="quizBox">
+        <div class="quiz-q" id="quizQ">加载中...</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFeedback"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+        <div style="font-size:13px;color:#94a3b8">得分：<b id="quizScore" style="color:var(--primary)">0</b> / <span id="quizTotal">0</span></div>
+        <button class="btn" id="btnNextQ" style="display:none">下一题 →</button>
+      </div>
+      <div id="quizDone" style="display:none;text-align:center;margin-top:20px;padding:20px;background:rgba(6,182,212,0.1);border-radius:12px">
+        <div style="font-size:1.5rem;margin-bottom:8px">🎉 测试完成！</div>
+        <div style="color:#94a3b8">最终得分：<b id="finalScore" style="color:var(--primary)">0</b> / <span id="finalTotal">0</span></div>
+        <div id="quizGrade" style="margin-top:8px;font-size:14px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =============== Tab 切换 =============== */
+const tabs = document.querySelectorAll('.tab');
+const sections = document.querySelectorAll('.section');
+tabs.forEach((tab, i) => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    sections.forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    sections[i].classList.add('active');
+    if (i === 0) drawEuler();
+    if (i === 1) drawMobius();
+    if (i === 2) drawClassify();
+  });
+});
+
+/* =============== 1. 欧拉示性数 =============== */
+const cvEuler = document.getElementById('cvEuler');
+const ctxEuler = cvEuler.getContext('2d');
+const selPoly = document.getElementById('selPoly');
+
+const polyData = {
+  tetra:  { V: 4,  E: 6,  F: 4,  name: '正四面体',   chi: 2, g: 0 },
+  cube:   { V: 8,  E: 12, F: 6,  name: '正方体',     chi: 2, g: 0 },
+  octa:   { V: 6,  E: 12, F: 8,  name: '正八面体',   chi: 2, g: 0 },
+  dodeca: { V: 20, E: 30, F: 12, name: '正十二面体', chi: 2, g: 0 },
+  icosa:  { V: 12, E: 30, F: 20, name: '正二十面体', chi: 2, g: 0 },
+  torus:  { V: 16, E: 32, F: 16, name: '圆环面',     chi: 0, g: 1 }
+};
+
+let rotAngle = 0;
+let rotating = false;
+let rotId = null;
+
+function drawEuler() {
+  const d = polyData[selPoly.value];
+  const W = cvEuler.width, H = cvEuler.height;
+  ctxEuler.clearRect(0, 0, W, H);
+
+  const cx = W / 2, cy = H / 2;
+  const R = Math.min(W, H) / 2 - 50;
+
+  // 投影 3D → 2D（简单透视）
+  function project(x, y, z) {
+    const scale = 300 / (300 - z);
+    return { x: cx + x * scale, y: cy + y * scale };
+  }
+
+  // 旋转矩阵
+  function rotate(x, y, z) {
+    const c = Math.cos(rotAngle), s = Math.sin(rotAngle);
+    const y2 = y * c - z * s;
+    const z2 = y * s + z * c;
+    return { x, y: y2, z: z2 };
+  }
+
+  let vertices = [];
+  let edges = [];
+
+  if (selPoly.value === 'torus') {
+    // 环面网格
+    const n1 = 8, n2 = 4;
+    for (let i = 0; i < n1; i++) {
+      for (let j = 0; j < n2; j++) {
+        const u = (i / n1) * 2 * Math.PI;
+        const v = (j / n2) * 2 * Math.PI;
+        const r1 = R * 0.6, r2 = R * 0.3;
+        const x = (r1 + r2 * Math.cos(v)) * Math.cos(u);
+        const y = (r1 + r2 * Math.cos(v)) * Math.sin(u);
+        const z = r2 * Math.sin(v);
+        vertices.push(rotate(x, y, z));
+      }
+    }
+    for (let i = 0; i < n1; i++) {
+      for (let j = 0; j < n2; j++) {
+        const a = i * n2 + j;
+        const b = ((i + 1) % n1) * n2 + j;
+        const c = i * n2 + ((j + 1) % n2);
+        edges.push([a, b], [a, c]);
+      }
+    }
+  } else if (selPoly.value === 'tetra') {
+    const s = R * 0.9;
+    const raw = [
+      [s, s, s], [s, -s, -s], [-s, s, -s], [-s, -s, s]
+    ];
+    vertices = raw.map(v => rotate(...v));
+    edges = [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
+  } else if (selPoly.value === 'cube') {
+    const s = R * 0.7;
+    const raw = [];
+    for (let i = 0; i < 8; i++) {
+      raw.push([(i&1?1:-1)*s, (i&2?1:-1)*s, (i&4?1:-1)*s]);
+    }
+    vertices = raw.map(v => rotate(...v));
+    edges = [[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
+  } else if (selPoly.value === 'octa') {
+    const s = R * 0.9;
+    const raw = [[s,0,0],[-s,0,0],[0,s,0],[0,-s,0],[0,0,s],[0,0,-s]];
+    vertices = raw.map(v => rotate(...v));
+    edges = [[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,4],[2,5],[3,4],[3,5]];
+  } else if (selPoly.value === 'dodeca') {
+    const phi = (1 + Math.sqrt(5)) / 2;
+    const s = R * 0.6;
+    const raw = [];
+    for (let i = 0; i < 8; i++) raw.push([(i&1?1:-1)*s, (i&2?1:-1)*s, (i&4?1:-1)*s]);
+    for (let i = 0; i < 4; i++) {
+      const t = i % 2 ? 1 : -1;
+      raw.push([0, t * s / phi, (i < 2 ? 1 : -1) * s * phi]);
+    }
+    for (let i = 0; i < 4; i++) {
+      const t = i % 2 ? 1 : -1;
+      raw.push([t * s / phi, (i < 2 ? 1 : -1) * s * phi, 0]);
+    }
+    for (let i = 0; i < 4; i++) {
+      const t = i % 2 ? 1 : -1;
+      raw.push([(i < 2 ? 1 : -1) * s * phi, 0, t * s / phi]);
+    }
+    vertices = raw.map(v => rotate(...v));
+    // 简化：只画部分边
+    edges = [];
+    for (let i = 0; i < 20; i++) {
+      for (let j = i + 1; j < 20; j++) {
+        const dx = raw[i][0] - raw[j][0];
+        const dy = raw[i][1] - raw[j][1];
+        const dz = raw[i][2] - raw[j][2];
+        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        if (dist < s * 1.2) edges.push([i, j]);
+      }
+    }
+  } else if (selPoly.value === 'icosa') {
+    const phi = (1 + Math.sqrt(5)) / 2;
+    const s = R * 0.6;
+    const raw = [];
+    for (let i = 0; i < 4; i++) {
+      raw.push([0, (i&1?1:-1)*s, (i<2?1:-1)*s*phi]);
+      raw.push([(i&1?1:-1)*s, (i<2?1:-1)*s*phi, 0]);
+      raw.push([(i<2?1:-1)*s*phi, 0, (i&1?1:-1)*s]);
+    }
+    vertices = raw.map(v => rotate(...v));
+    edges = [];
+    for (let i = 0; i < 12; i++) {
+      for (let j = i + 1; j < 12; j++) {
+        const dx = raw[i][0] - raw[j][0];
+        const dy = raw[i][1] - raw[j][1];
+        const dz = raw[i][2] - raw[j][2];
+        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        if (dist < s * 2.1) edges.push([i, j]);
+      }
+    }
+  }
+
+  // 绘制边
+  ctxEuler.strokeStyle = 'rgba(16,185,129,0.6)';
+  ctxEuler.lineWidth = 1.5;
+  edges.forEach(([a, b]) => {
+    const p1 = project(vertices[a].x, vertices[a].y, vertices[a].z);
+    const p2 = project(vertices[b].x, vertices[b].y, vertices[b].z);
+    ctxEuler.beginPath();
+    ctxEuler.moveTo(p1.x, p1.y);
+    ctxEuler.lineTo(p2.x, p2.y);
+    ctxEuler.stroke();
+  });
+
+  // 绘制顶点
+  vertices.forEach(v => {
+    const p = project(v.x, v.y, v.z);
+    ctxEuler.fillStyle = '#3b82f6';
+    ctxEuler.beginPath();
+    ctxEuler.arc(p.x, p.y, 4, 0, 2 * Math.PI);
+    ctxEuler.fill();
+  });
+
+  // 中心文字
+  ctxEuler.fillStyle = 'rgba(255,255,255,0.7)';
+  ctxEuler.font = 'bold 16px sans-serif';
+  ctxEuler.textAlign = 'center';
+  ctxEuler.fillText(d.name, cx, H - 20);
+
+  // 更新统计
+  document.getElementById('statV').textContent = d.V;
+  document.getElementById('statE').textContent = d.E;
+  document.getElementById('statF').textContent = d.F;
+  document.getElementById('statChi').textContent = d.chi;
+}
+
+selPoly.addEventListener('change', () => { rotAngle = 0; drawEuler(); });
+document.getElementById('btnRotate').addEventListener('click', () => {
+  if (rotating) {
+    clearInterval(rotId);
+    rotating = false;
+    document.getElementById('btnRotate').textContent = '⟳ 旋转';
+  } else {
+    rotId = setInterval(() => { rotAngle += 0.02; drawEuler(); }, 30);
+    rotating = true;
+    document.getElementById('btnRotate').textContent = '⏸ 停止';
+  }
+});
+
+/* =============== 2. 莫比乌斯带 =============== */
+const cvMobius = document.getElementById('cvMobius');
+const ctxMobius = cvMobius.getContext('2d');
+const sliderU = document.getElementById('sliderU');
+const valU = document.getElementById('valU');
+
+let mobiusAnimating = false;
+let mobiusAnimId = null;
+
+function drawMobius() {
+  const W = cvMobius.width, H = cvMobius.height;
+  ctxMobius.clearRect(0, 0, W, H);
+
+  const cx = W / 2, cy = H / 2;
+  const R = 120;
+  const u = (sliderU.value / 180) * Math.PI;
+
+  // 绘制莫比乌斯带中心线（参数曲线）
+  ctxMobius.strokeStyle = 'rgba(59,130,246,0.5)';
+  ctxMobius.lineWidth = 2;
+  ctxMobius.beginPath();
+  for (let t = 0; t <= 2 * Math.PI; t += 0.05) {
+    const x = R * Math.cos(t);
+    const y = R * Math.sin(t);
+    const px = cx + x;
+    const py = cy + y * 0.6; // 压扁模拟透视
+    if (t === 0) ctxMobius.moveTo(px, py);
+    else ctxMobius.lineTo(px, py);
+  }
+  ctxMobius.stroke();
+
+  // 当前点
+  const px = cx + R * Math.cos(u);
+  const py = cy + R * Math.sin(u) * 0.6;
+
+  // 法向量（随 u 扭转）
+  const twist = u / 2;
+  const nx = Math.cos(twist) * 40;
+  const ny = Math.sin(twist) * 40 * 0.6;
+
+  ctxMobius.strokeStyle = '#10b981';
+  ctxMobius.lineWidth = 3;
+  ctxMobius.beginPath();
+  ctxMobius.moveTo(px, py);
+  ctxMobius.lineTo(px + nx, py + ny);
+  ctxMobius.stroke();
+
+  // 法向量箭头
+  const angle = Math.atan2(ny, nx);
+  ctxMobius.fillStyle = '#10b981';
+  ctxMobius.beginPath();
+  ctxMobius.moveTo(px + nx, py + ny);
+  ctxMobius.lineTo(px + nx - 8 * Math.cos(angle - 0.4), py + ny - 8 * Math.sin(angle - 0.4));
+  ctxMobius.lineTo(px + nx - 8 * Math.cos(angle + 0.4), py + ny - 8 * Math.sin(angle + 0.4));
+  ctxMobius.fill();
+
+  // 当前点标记
+  ctxMobius.fillStyle = '#f59e0b';
+  ctxMobius.beginPath();
+  ctxMobius.arc(px, py, 6, 0, 2 * Math.PI);
+  ctxMobius.fill();
+
+  // 显示扭转角度
+  ctxMobius.fillStyle = 'rgba(255,255,255,0.8)';
+  ctxMobius.font = '14px monospace';
+  ctxMobius.textAlign = 'center';
+  ctxMobius.fillText(`u = ${sliderU.value}°, 法向量扭转 = ${(u/2).toFixed(2)} rad`, cx, 30);
+  ctxMobius.fillText(`法向量方向: (${Math.cos(twist).toFixed(2)}, ${Math.sin(twist).toFixed(2)})`, cx, 50);
+
+  // 当 u = 360° 时法向量反向
+  if (sliderU.value == 360) {
+    ctxMobius.fillStyle = '#ec4899';
+    ctxMobius.font = 'bold 16px sans-serif';
+    ctxMobius.fillText('⚠️ 走一圈后法向量反转！这就是不可定向性', cx, H - 20);
+  }
+
+  valU.textContent = sliderU.value + '°';
+}
+
+sliderU.addEventListener('input', drawMobius);
+document.getElementById('btnAnimate').addEventListener('click', () => {
+  if (mobiusAnimating) {
+    clearInterval(mobiusAnimId);
+    mobiusAnimating = false;
+    document.getElementById('btnAnimate').textContent = '▶ 动画';
+  } else {
+    let v = 0;
+    mobiusAnimId = setInterval(() => {
+      v = (v + 2) % 361;
+      sliderU.value = v;
+      drawMobius();
+    }, 50);
+    mobiusAnimating = true;
+    document.getElementById('btnAnimate').textContent = '⏸ 停止';
+  }
+});
+document.getElementById('btnResetMobius').addEventListener('click', () => {
+  sliderU.value = 0;
+  drawMobius();
+});
+
+/* =============== 3. 曲面分类 =============== */
+const cvClassify = document.getElementById('cvClassify');
+const ctxClassify = cvClassify.getContext('2d');
+const selSurface = document.getElementById('selSurface');
+
+const surfaceData = {
+  sphere:     { name: '球面 S²',       chi: 2,  g: 0, orientable: true,  color: '#10b981' },
+  torus:      { name: '环面 T²',       chi: 0,  g: 1, orientable: true,  color: '#06b6d4' },
+  genus2:     { name: '双环面',        chi: -2, g: 2, orientable: true,  color: '#8b5cf6' },
+  mobius:     { name: '莫比乌斯带',    chi: 0,  g: null, orientable: false, color: '#ec4899' },
+  klein:      { name: '克莱因瓶',      chi: 0,  g: null, orientable: false, color: '#f59e0b' },
+  projective: { name: '射影平面',      chi: 1,  g: null, orientable: false, color: '#ef4444' }
+};
+
+function drawClassify() {
+  const d = surfaceData[selSurface.value];
+  const W = cvClassify.width, H = cvClassify.height;
+  ctxClassify.clearRect(0, 0, W, H);
+
+  const cx = W / 2, cy = H / 2;
+
+  // 绘制曲面示意图
+  ctxClassify.fillStyle = d.color + '40';
+  ctxClassify.strokeStyle = d.color;
+  ctxClassify.lineWidth = 2;
+
+  if (selSurface.value === 'sphere') {
+    ctxClassify.beginPath();
+    ctxClassify.arc(cx, cy, 100, 0, 2 * Math.PI);
+    ctxClassify.fill();
+    ctxClassify.stroke();
+    // 经线
+    for (let i = 0; i < 6; i++) {
+      ctxClassify.beginPath();
+      ctxClassify.ellipse(cx, cy, 100 * Math.sin(i * Math.PI / 6), 100, 0, 0, 2 * Math.PI);
+      ctxClassify.stroke();
+    }
+  } else if (selSurface.value === 'torus') {
+    // 外圆
+    ctxClassify.beginPath();
+    ctxClassify.arc(cx, cy, 100, 0, 2 * Math.PI);
+    ctxClassify.fill();
+    ctxClassify.stroke();
+    // 内圆（洞）
+    ctxClassify.fillStyle = '#0f172a';
+    ctxClassify.beginPath();
+    ctxClassify.arc(cx, cy, 40, 0, 2 * Math.PI);
+    ctxClassify.fill();
+    ctxClassify.stroke();
+  } else if (selSurface.value === 'genus2') {
+    // 双环面（两个洞）
+    ctxClassify.beginPath();
+    ctxClassify.arc(cx - 50, cy, 70, 0, 2 * Math.PI);
+    ctxClassify.fill();
+    ctxClassify.stroke();
+    ctxClassify.beginPath();
+    ctxClassify.arc(cx + 50, cy, 70, 0, 2 * Math.PI);
+    ctxClassify.fill();
+    ctxClassify.stroke();
+    ctxClassify.fillStyle = '#0f172a';
+    ctxClassify.beginPath();
+    ctxClassify.arc(cx - 50, cy, 30, 0, 2 * Math.PI);
+    ctxClassify.fill();
+    ctxClassify.stroke();
+    ctxClassify.beginPath();
+    ctxClassify.arc(cx + 50, cy, 30, 0, 2 * Math.PI);
+    ctxClassify.fill();
+    ctxClassify.stroke();
+  } else if (selSurface.value === 'mobius') {
+    // 莫比乌斯带（画成扭转的带子）
+    ctxClassify.save();
+    ctxClassify.translate(cx, cy);
+    ctxClassify.rotate(-0.3);
+    ctxClassify.beginPath();
+    ctxClassify.ellipse(0, 0, 120, 50, 0, 0, 2 * Math.PI);
+    ctxClassify.fill();
+    ctxClassify.stroke();
+    // 扭转标记
+    ctxClassify.strokeStyle = '#ec4899';
+    ctxClassify.lineWidth = 3;
+    for (let i = 0; i < 8; i++) {
+      const t = (i / 8) * 2 * Math.PI;
+      const x1 = 120 * Math.cos(t);
+      const y1 = 50 * Math.sin(t);
+      const x2 = 120 * Math.cos(t + 0.3);
+      const y2 = 50 * Math.sin(t + 0.3);
+      ctxClassify.beginPath();
+      ctxClassify.moveTo(x1, y1);
+      ctxClassify.lineTo(x2, y2);
+      ctxClassify.stroke();
+    }
+    ctxClassify.restore();
+  } else if (selSurface.value === 'klein') {
+    // 克莱因瓶（自交瓶状）
+    ctxClassify.beginPath();
+    ctxClassify.ellipse(cx, cy - 20, 60, 80, 0, 0, 2 * Math.PI);
+    ctxClassify.fill();
+    ctxClassify.stroke();
+    ctxClassify.beginPath();
+    ctxClassify.ellipse(cx, cy + 30, 40, 30, 0, 0, 2 * Math.PI);
+    ctxClassify.fill();
+    ctxClassify.stroke();
+    // 瓶颈
+    ctxClassify.beginPath();
+    ctxClassify.moveTo(cx - 20, cy - 80);
+    ctxClassify.quadraticCurveTo(cx, cy - 120, cx + 20, cy - 80);
+    ctxClassify.stroke();
+  } else if (selSurface.value === 'projective') {
+    // 射影平面（画成圆盘 + 对径点认同）
+    ctxClassify.beginPath();
+    ctxClassify.arc(cx, cy, 100, 0, 2 * Math.PI);
+    ctxClassify.fill();
+    ctxClassify.stroke();
+    // 对径点标记
+    ctxClassify.fillStyle = '#ef4444';
+    for (let i = 0; i < 8; i++) {
+      const t = (i / 8) * 2 * Math.PI;
+      ctxClassify.beginPath();
+      ctxClassify.arc(cx + 100 * Math.cos(t), cy + 100 * Math.sin(t), 4, 0, 2 * Math.PI);
+      ctxClassify.fill();
+    }
+    ctxClassify.fillStyle = 'rgba(255,255,255,0.7)';
+    ctxClassify.font = '12px sans-serif';
+    ctxClassify.textAlign = 'center';
+    ctxClassify.fillText('边界对径点认同', cx, cy + 130);
+  }
+
+  // 信息面板
+  const info = document.getElementById('surfaceInfo');
+  let html = `<div class="prop-card">
+    <div class="prop-title">${d.name}
+      <span class="surface-badge ${d.orientable ? 'orientable' : 'non-orientable'}">${d.orientable ? '可定向' : '不可定向'}</span>
+    </div>
+    <div>χ = ${d.chi}`;
+  if (d.g !== null) html += `，亏格 g = ${d.g}`;
+  html += `</div></div>`;
+  info.innerHTML = html;
+}
+
+selSurface.addEventListener('change', drawClassify);
+
+/* =============== 4. 互动练习 =============== */
+const quizData = [
+  { q: '对于任意凸多面体，欧拉示性数 χ = V − E + F 的值是多少？', opts: ['0', '1', '2', '取决于多面体'], correct: 2, explain: '所有凸多面体的 χ 都等于 2，这是拓扑不变量。' },
+  { q: '莫比乌斯带最独特的性质是什么？', opts: ['它有两个面', '它只有一个面和一个边界', '它可以被定向', '它的 χ = 2'], correct: 1, explain: '莫比乌斯带是单侧曲面，只有一个面和一个边界。' },
+  { q: '环面（T²）的欧拉示性数是多少？', opts: ['2', '0', '−2', '1'], correct: 1, explain: '环面的 χ = 2 − 2g = 2 − 2(1) = 0。' },
+  { q: '下列哪个曲面是不可定向的？', opts: ['球面', '环面', '克莱因瓶', '双环面'], correct: 2, explain: '克莱因瓶是不可定向闭曲面，包含莫比乌斯带作为子集。' },
+  { q: '亏格 g = 2 的可定向闭曲面，其欧拉示性数 χ 为？', opts: ['2', '0', '−2', '−4'], correct: 2, explain: 'χ = 2 − 2g = 2 − 4 = −2。' },
+  { q: '拓扑学中"同胚"的含义是？', opts: ['形状完全相同', '可以通过连续形变互相转换', '面积相等', '周长相等'], correct: 1, explain: '同胚是拓扑等价，允许拉伸、弯曲但不允许撕裂或粘合。' },
+  { q: '欧拉发现 V−E+F=2 是在哪一年？', opts: ['1650', '1700', '1750', '1800'], correct: 2, explain: '1750 年欧拉在给哥德巴赫的信中首次描述了这一公式。' },
+  { q: '射影平面的欧拉示性数 χ 是多少？', opts: ['0', '1', '2', '−1'], correct: 1, explain: '射影平面 = 球面 / 对径点认同，χ = 2/2 = 1。' }
+];
+
+let quizIdx = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+function showQuiz() {
+  const q = quizData[quizIdx];
+  document.getElementById('quizQ').textContent = `第 ${quizIdx + 1} 题 / 共 ${quizData.length} 题：${q.q}`;
+  const optsEl = document.getElementById('quizOpts');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = String.fromCharCode(65 + i) + '. ' + opt;
+    div.addEventListener('click', () => answerQuiz(i));
+    optsEl.appendChild(div);
+  });
+  document.getElementById('quizFeedback').textContent = '';
+  document.getElementById('btnNextQ').style.display = 'none';
+  quizAnswered = false;
+}
+
+function answerQuiz(i) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = quizData[quizIdx];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach((o, j) => {
+    o.style.pointerEvents = 'none';
+    if (j === q.correct) o.classList.add('correct');
+    else if (j === i) o.classList.add('wrong');
+  });
+  const fb = document.getElementById('quizFeedback');
+  if (i === q.correct) {
+    quizScore++;
+    fb.textContent = '✅ 正确！' + q.explain;
+    fb.style.color = '#34d399';
+  } else {
+    fb.textContent = '❌ 错误。' + q.explain;
+    fb.style.color = '#f87171';
+  }
+  document.getElementById('quizScore').textContent = quizScore;
+  document.getElementById('quizTotal').textContent = quizIdx + 1;
+  document.getElementById('btnNextQ').style.display = 'inline-block';
+}
+
+document.getElementById('btnNextQ').addEventListener('click', () => {
+  quizIdx++;
+  if (quizIdx >= quizData.length) {
+    document.getElementById('quizBox').style.display = 'none';
+    document.getElementById('btnNextQ').style.display = 'none';
+    document.getElementById('quizDone').style.display = 'block';
+    document.getElementById('finalScore').textContent = quizScore;
+    document.getElementById('finalTotal').textContent = quizData.length;
+    const pct = (quizScore / quizData.length) * 100;
+    let grade = '';
+    if (pct >= 90) grade = '🏆 优秀！拓扑直觉很棒！';
+    else if (pct >= 70) grade = '👍 良好！继续加油！';
+    else if (pct >= 50) grade = '📖 及格，建议复习一下';
+    else grade = '💪 再学一遍，你会更好！';
+    document.getElementById('quizGrade').textContent = grade;
+    // 标记完成
+    if (typeof PageProgress !== 'undefined' && quizScore >= 5 && !PageProgress.isDone('topology')) {
+      PageProgress.markDone('topology');
+    }
+  } else {
+    showQuiz();
+  }
+});
+
+/* =============== 初始化 =============== */
+drawEuler();
+drawMobius();
+drawClassify();
+showQuiz();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

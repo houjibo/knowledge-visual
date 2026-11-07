@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>奇妙的力 · 小学科学互动可视化</title>
+<style>
+  :root {
+    --primary: #f59e0b;
+    --force: #ef4444;
+    --push: #3b82f6;
+    --pull: #10b981;
+    --effect: #a855f7;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.7);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e3a5f 0%, #2d1b4e 50%, #1e3a5f 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.4rem; background: linear-gradient(90deg, var(--push), var(--primary), var(--pull)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 1rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab { padding: 12px 24px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(245,158,11,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  .legend { display: flex; gap: 16px; justify-content: center; font-size: 13px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .legend .l-push::before { background: var(--push); }
+  .legend .l-pull::before { background: var(--pull); }
+  .legend .l-force::before { background: var(--force); }
+  .legend .l-effect::before { background: var(--effect); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 680px; }
+  .panel h3 { font-size: 1.15rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .concept-box { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 1.05rem; text-align: left; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 12px 0; line-height: 1.9; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--push); font-weight: 600; }
+  .concept-box .hl2 { color: var(--pull); font-weight: 600; }
+  .concept-box .hlr { color: var(--force); font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; font-size: 13px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 16px; border-radius: 10px; background: rgba(59,130,246,0.1); border: 2px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 14px; color: #93c5fd; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .steps { margin: 14px 0; }
+  .step { padding: 12px 14px; margin: 8px 0; background: rgba(255,255,255,0.04); border-radius: 10px; font-size: 14px; line-height: 1.8; border-left: 4px solid var(--primary); transition: all .3s; }
+  .step.active { background: rgba(245,158,11,0.15); border-left-color: var(--effect); }
+  .step .sn { display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: var(--primary); color: white; text-align: center; line-height: 24px; font-size: 12px; margin-right: 8px; font-weight: 700; }
+  .step.active .sn { background: var(--effect); }
+
+  .quiz { margin-top: 16px; padding: 18px; background: rgba(245,158,11,0.1); border-radius: 14px; border: 2px solid rgba(245,158,11,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 10px; }
+  .quiz-opt { padding: 12px 16px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 12px; font-size: 14px; color: #fbbf24; min-height: 22px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 14px; }
+  .quiz-nav button { padding: 8px 18px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
+  .quiz-nav button:hover { background: #d97706; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .drag-hint { text-align: center; color: #94a3b8; font-size: 13px; margin-top: 8px; font-style: italic; }
+
+  .experiment-btn { padding: 10px 20px; border-radius: 12px; border: none; cursor: pointer; font-size: 14px; background: var(--effect); color: white; transition: all .2s; font-weight: 500; margin: 6px; }
+  .experiment-btn:hover { background: #9333ea; transform: translateY(-2px); }
+  .experiment-btn.active { background: #7c3aed; box-shadow: 0 4px 16px rgba(168,85,247,.4); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🎯 奇妙的力</h1>
+    <p>小学科学 · 力学启蒙互动可视化 <span id="done-mark" style="display:none;margin-left:6px;color:#34d399;font-weight:700;">✓ 已完成</span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-section="concept">💡 力的概念</div>
+    <div class="tab" data-section="pushpull">👐 推力与拉力</div>
+    <div class="tab" data-section="effect">✨ 力的效果</div>
+    <div class="tab" data-section="quiz">📝 小测验</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="canvas" width="700" height="560"></canvas>
+      <div class="legend">
+        <span class="l-push">推力 →</span>
+        <span class="l-pull">拉力 ←</span>
+        <span class="l-force">力的方向</span>
+        <span class="l-effect">力的效果</span>
+      </div>
+      <div class="drag-hint" id="dragHint">👆 点击并拖拽来体验力！</div>
+    </div>
+
+    <div class="panel">
+      <!-- Section 1: Force Concept -->
+      <div class="section active" id="section-concept">
+        <h3>🌟 什么是力？</h3>
+        <div class="concept-box">
+          力是<span class="hl">物体对物体的作用</span>。<br/>
+          力可以<span class="hl2">改变物体的运动状态</span>，<br/>
+          也可以<span class="hlr">改变物体的形状</span>。
+        </div>
+
+        <div class="steps">
+          <div class="step active" id="step1">
+            <span class="sn">1</span>
+            <b>力是相互的</b><br/>
+            当你推墙时，墙也在推你。力的作用总是相互的！
+          </div>
+          <div class="step" id="step2">
+            <span class="sn">2</span>
+            <b>力有大小和方向</b><br/>
+            用力推箱子，推得越重，力越大；推的方向不同，箱子移动的方向也不同。
+          </div>
+          <div class="step" id="step3">
+            <span class="sn">3</span>
+            <b>力能让物体动起来</b><br/>
+            静止的足球，踢一脚就会飞出去。力能让静止的物体运动，也能让运动的物体停下来。
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div>
+            <b>🎯 观察点</b><br/>
+            点击画布中的小球，拖拽它，感受力的作用！
+          </div>
+          <div>
+            <b>💡 思考题</b><br/>
+            不接触物体，能对它施加力吗？（提示：想想磁铁）
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Push and Pull -->
+      <div class="section" id="section-pushpull">
+        <h3>👐 推力和拉力</h3>
+        <div class="concept-box">
+          <span class="hl">推力</span>：用力把物体<span class="hl">推开</span>或<span class="hl">向前移动</span>。<br/>
+          <span class="hl2">拉力</span>：用力把物体<span class="hl2">拉近</span>或<span class="hl2">向后移动</span>。
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="push">推箱子 →</div>
+          <div class="mode-btn" data-mode="pull">拉弹簧 ←</div>
+          <div class="mode-btn" data-mode="both">推拉对比</div>
+        </div>
+
+        <div class="slider-row">
+          <label>力的大小：</label>
+          <input type="range" id="forceSlider" min="1" max="10" value="5" />
+          <span class="val" id="forceVal">5 N</span>
+        </div>
+
+        <div class="info-grid">
+          <div>
+            <b>📦 推箱子</b><br/>
+            向右拖拽鼠标，推动箱子向右移动。力越大，箱子移动越快！
+          </div>
+          <div>
+            <b>🧲 拉弹簧</b><br/>
+            向左拖拽鼠标，拉伸弹簧。力越大，弹簧伸得越长！
+          </div>
+        </div>
+
+        <div class="steps">
+          <div class="step active">
+            <span class="sn">💡</span>
+            <b>生活中的推力</b>：推门、推车、推箱子...
+          </div>
+          <div class="step">
+            <span class="sn">💡</span>
+            <b>生活中的拉力</b>：拉抽屉、拉弓射箭、拔河...
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Force Effects -->
+      <div class="section" id="section-effect">
+        <h3>✨ 力的效果</h3>
+        <div class="concept-box">
+          力可以让物体<span class="hlr">改变形状</span>，<br/>
+          也可以让物体<span class="hl">改变运动状态</span>：<br/>
+          从静止到运动，从运动到静止，或改变运动方向。
+        </div>
+
+        <div style="text-align: center; margin: 16px 0;">
+          <button class="experiment-btn active" data-exp="deform">🎨 形变实验</button>
+          <button class="experiment-btn" data-exp="motion">⚽ 运动改变</button>
+          <button class="experiment-btn" data-exp="gravity">🍎 重力实验</button>
+        </div>
+
+        <div class="slider-row">
+          <label>力的大小：</label>
+          <input type="range" id="effectSlider" min="1" max="10" value="5" />
+          <span class="val" id="effectVal">5 N</span>
+        </div>
+
+        <div class="info-grid">
+          <div>
+            <b>🎨 形变</b><br/>
+            点击并拖拽物体，观察它如何变形。力越大，形变越明显！
+          </div>
+          <div>
+            <b>⚽ 运动</b><br/>
+            点击发射小球，调整力的大小和方向，看它如何运动！
+          </div>
+        </div>
+
+        <div class="steps">
+          <div class="step active">
+            <span class="sn">1</span>
+            <b>弹性形变</b>：撤去力后能恢复原状（如弹簧、橡皮筋）
+          </div>
+          <div class="step">
+            <span class="sn">2</span>
+            <b>塑性形变</b>：撤去力后不能恢复（如捏泥巴、折纸）
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Quiz -->
+      <div class="section" id="section-quiz">
+        <h3>📝 小测验</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quizQ">加载中...</div>
+          <div class="quiz-opts" id="quizOpts"></div>
+          <div class="quiz-feedback" id="quizFeedback"></div>
+          <div class="quiz-nav">
+            <button id="prevBtn">← 上一题</button>
+            <button id="nextBtn">下一题 →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let currentSection = 'concept';
+let currentMode = 'push';
+let currentExp = 'deform';
+let forceMagnitude = 5;
+let effectForce = 5;
+
+// ─── PageProgress 接线（r137）───
+const SLUG = 'forces';
+const ALL_TABS = ['concept', 'pushpull', 'effect', 'quiz'];
+const visitedTabs = new Set(['concept']);
+const quizAttempted = new Set();
+const quizFirstTryCorrect = new Set();
+
+function maybeMarkDone() {
+  if (typeof PageProgress === 'undefined') return;
+  if (PageProgress.isDone(SLUG)) return;
+  const allVisited = ALL_TABS.every(t => visitedTabs.has(t));
+  const allCorrect = quizFirstTryCorrect.size === quizzes.length;
+  if (allVisited && allCorrect) {
+    PageProgress.markDone(SLUG);
+    showForcesToast('🎉 「奇妙的力」知识地图已点亮！');
+    updateDoneMark();
+  }
+}
+
+function showForcesToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(52,199,89,.95);color:#fff;padding:12px 22px;border-radius:12px;font-size:14px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .4s'; setTimeout(() => t.remove(), 400); }, 2200);
+}
+
+function updateDoneMark() {
+  if (typeof PageProgress === 'undefined') return;
+  if (PageProgress.isDone(SLUG)) {
+    const m = document.getElementById('done-mark');
+    if (m) m.style.display = 'inline';
+  }
+}
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentSection = tab.dataset.section;
+    visitedTabs.add(currentSection);
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(`section-${currentSection}`).classList.add('active');
+    maybeMarkDone();
+    draw();
+  });
+});
+
+// Mode switching for push/pull
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    draw();
+  });
+});
+
+// Experiment switching
+document.querySelectorAll('.experiment-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.experiment-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentExp = btn.dataset.exp;
+    draw();
+  });
+});
+
+// Sliders
+document.getElementById('forceSlider').addEventListener('input', (e) => {
+  forceMagnitude = parseInt(e.target.value);
+  document.getElementById('forceVal').textContent = forceMagnitude + ' N';
+  draw();
+});
+
+document.getElementById('effectSlider').addEventListener('input', (e) => {
+  effectForce = parseInt(e.target.value);
+  document.getElementById('effectVal').textContent = effectForce + ' N';
+  draw();
+});
+
+// Interactive objects
+let ball = { x: 350, y: 280, r: 40, vx: 0, vy: 0, dragging: false };
+let box = { x: 200, y: 300, w: 100, h: 80, vx: 0 };
+let spring = { x: 350, y: 280, stretch: 0 };
+let deformObj = { x: 350, y: 280, deformX: 0, deformY: 0 };
+let projectile = { x: 100, y: 400, vx: 0, vy: 0, launched: false };
+let apple = { x: 350, y: 100, vy: 0, falling: false };
+
+let mouseX = 0, mouseY = 0, isDragging = false;
+
+canvas.addEventListener('mousedown', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+  mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+  isDragging = true;
+
+  if (currentSection === 'concept') {
+    const dx = mouseX - ball.x;
+    const dy = mouseY - ball.y;
+    if (Math.sqrt(dx*dx + dy*dy) < ball.r) {
+      ball.dragging = true;
+    }
+  } else if (currentSection === 'pushpull') {
+    if (currentMode === 'push' || currentMode === 'both') {
+      const dx = mouseX - box.x;
+      const dy = mouseY - (box.y + box.h/2);
+      if (Math.abs(dx) < box.w && Math.abs(dy) < box.h) {
+        box.dragging = true;
+      }
+    }
+  } else if (currentSection === 'effect') {
+    if (currentExp === 'deform') {
+      const dx = mouseX - deformObj.x;
+      const dy = mouseY - deformObj.y;
+      if (Math.abs(dx) < 60 && Math.abs(dy) < 60) {
+        deformObj.dragging = true;
+      }
+    } else if (currentExp === 'motion' && !projectile.launched) {
+      projectile.launched = true;
+      projectile.vx = effectForce * 3;
+      projectile.vy = -effectForce * 2;
+    } else if (currentExp === 'gravity' && !apple.falling) {
+      apple.falling = true;
+    }
+  }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+  mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+  if (isDragging) {
+    if (ball.dragging) {
+      ball.vx = (mouseX - ball.x) * 0.3;
+      ball.vy = (mouseY - ball.y) * 0.3;
+    }
+    if (box.dragging) {
+      box.vx = (mouseX - box.x) * 0.1;
+    }
+    if (deformObj.dragging) {
+      deformObj.deformX = (mouseX - deformObj.x) * 0.5;
+      deformObj.deformY = (mouseY - deformObj.y) * 0.5;
+    }
+  }
+});
+
+canvas.addEventListener('mouseup', () => {
+  isDragging = false;
+  ball.dragging = false;
+  box.dragging = false;
+  deformObj.dragging = false;
+});
+
+// Drawing functions
+function drawArrow(fromX, fromY, toX, toY, color, label) {
+  const headlen = 15;
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+  const angle = Math.atan2(dy, dx);
+  
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  
+  ctx.beginPath();
+  ctx.moveTo(fromX, fromY);
+  ctx.lineTo(toX, toY);
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(toX, toY);
+  ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+  ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+  ctx.closePath();
+  ctx.fill();
+  
+  if (label) {
+    ctx.font = 'bold 16px "PingFang SC", sans-serif';
+    ctx.fillText(label, fromX + 10, fromY - 10);
+  }
+}
+
+function drawConcept() {
+  // Background grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < canvas.width; i += 40) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, canvas.height);
+    ctx.stroke();
+  }
+  for (let i = 0; i < canvas.height; i += 40) {
+    ctx.beginPath();
+    ctx.moveTo(0, i);
+    ctx.lineTo(canvas.width, i);
+    ctx.stroke();
+  }
+
+  // Ball
+  const gradient = ctx.createRadialGradient(ball.x - 10, ball.y - 10, 5, ball.x, ball.y, ball.r);
+  gradient.addColorStop(0, '#fbbf24');
+  gradient.addColorStop(1, '#f59e0b');
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.strokeStyle = '#d97706';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  
+  // Force arrow when dragging
+  if (ball.dragging && (Math.abs(ball.vx) > 0.5 || Math.abs(ball.vy) > 0.5)) {
+    drawArrow(ball.x, ball.y, ball.x + ball.vx * 5, ball.y + ball.vy * 5, '#ef4444', 'F');
+  }
+  
+  // Update position
+  if (!ball.dragging) {
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    ball.vx *= 0.95;
+    ball.vy *= 0.95;
+    
+    // Bounce off walls
+    if (ball.x - ball.r < 0 || ball.x + ball.r > canvas.width) ball.vx *= -0.8;
+    if (ball.y - ball.r < 0 || ball.y + ball.r > canvas.height) ball.vy *= -0.8;
+    ball.x = Math.max(ball.r, Math.min(canvas.width - ball.r, ball.x));
+    ball.y = Math.max(ball.r, Math.min(canvas.height - ball.r, ball.y));
+  }
+  
+  // Instructions
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '14px "PingFang SC", sans-serif';
+  ctx.fillText('👆 拖拽小球，观察力的作用', 20, 30);
+}
+
+function drawPushPull() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  if (currentMode === 'push' || currentMode === 'both') {
+    // Draw box
+    const gradient = ctx.createLinearGradient(box.x, box.y, box.x + box.w, box.y + box.h);
+    gradient.addColorStop(0, '#3b82f6');
+    gradient.addColorStop(1, '#2563eb');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(box.x, box.y, box.w, box.h);
+    ctx.strokeStyle = '#1d4ed8';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(box.x, box.y, box.w, box.h);
+    
+    // Box label
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 20px "PingFang SC", sans-serif';
+    ctx.fillText('📦', box.x + 35, box.y + 50);
+    
+    // Force arrow
+    if (box.dragging && Math.abs(box.vx) > 0.1) {
+      const arrowLen = forceMagnitude * 10;
+      drawArrow(box.x - 30, box.y + box.h/2, box.x - 30 + arrowLen, box.y + box.h/2, '#3b82f6', `推力 ${forceMagnitude}N`);
+    }
+    
+    // Update box position
+    if (!box.dragging) {
+      box.x += box.vx;
+      box.vx *= 0.92;
+      if (box.x < 50) box.x = 50;
+      if (box.x > canvas.width - box.w - 50) box.x = canvas.width - box.w - 50;
+    }
+    
+    // Ground
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, box.y + box.h + 10);
+    ctx.lineTo(canvas.width, box.y + box.h + 10);
+    ctx.stroke();
+  }
+  
+  if (currentMode === 'pull' || currentMode === 'both') {
+    // Draw spring
+    const springX = currentMode === 'both' ? 500 : 350;
+    const springY = currentMode === 'both' ? 280 : 280;
+    const coils = 10;
+    const coilWidth = 30;
+    const stretch = isDragging ? (mouseX - springX) * 0.3 : 0;
+    
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(springX - 100, springY);
+    
+    for (let i = 0; i <= coils; i++) {
+      const x = springX - 100 + (i / coils) * (200 + stretch);
+      const y = springY + (i % 2 === 0 ? -coilWidth : coilWidth);
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(springX + 100 + stretch, springY);
+    ctx.stroke();
+    
+    // Spring ends
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(springX - 110, springY - 20, 10, 40);
+    ctx.fillRect(springX + 100 + stretch, springY - 20, 10, 40);
+    
+    // Force arrow
+    if (isDragging && Math.abs(stretch) > 5) {
+      const arrowLen = forceMagnitude * 8;
+      drawArrow(springX + 110 + stretch, springY, springX + 110 + stretch - arrowLen, springY, '#10b981', `拉力 ${forceMagnitude}N`);
+    }
+    
+    // Label
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.font = '16px "PingFang SC", sans-serif';
+    ctx.fillText('🧲 弹簧', springX - 30, springY - 50);
+  }
+  
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '14px "PingFang SC", sans-serif';
+  ctx.fillText('👆 拖拽物体，体验推力和拉力', 20, 30);
+}
+
+function drawEffect() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  if (currentExp === 'deform') {
+    // Draw deformable object (squishy ball)
+    const rx = 60 + Math.abs(deformObj.deformX);
+    const ry = 60 - Math.abs(deformObj.deformY) * 0.5;
+    
+    const gradient = ctx.createRadialGradient(deformObj.x, deformObj.y, 10, deformObj.x, deformObj.y, Math.max(rx, ry));
+    gradient.addColorStop(0, '#a855f7');
+    gradient.addColorStop(1, '#7c3aed');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.ellipse(deformObj.x, deformObj.y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.strokeStyle = '#6d28d9';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Face
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(deformObj.x - 15, deformObj.y - 10, 6, 0, Math.PI * 2);
+    ctx.arc(deformObj.x + 15, deformObj.y - 10, 6, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(deformObj.x, deformObj.y + 10, 12, 0, Math.PI);
+    ctx.stroke();
+    
+    // Force arrows
+    if (deformObj.dragging && (Math.abs(deformObj.deformX) > 5 || Math.abs(deformObj.deformY) > 5)) {
+      drawArrow(deformObj.x, deformObj.y - 80, deformObj.x, deformObj.y - 40, '#ef4444', `${effectForce}N`);
+    }
+    
+    // Reset on double click
+    if (!deformObj.dragging) {
+      deformObj.deformX *= 0.9;
+      deformObj.deformY *= 0.9;
+    }
+    
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = '14px "PingFang SC", sans-serif';
+    ctx.fillText('👆 拖拽物体观察形变 | 双击恢复', 20, 30);
+  }
+  
+  else if (currentExp === 'motion') {
+    // Draw projectile motion
+    // Ground
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 450);
+    ctx.lineTo(canvas.width, 450);
+    ctx.stroke();
+    
+    // Launcher
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(50, 400, 50, 50);
+    ctx.fillStyle = '#475569';
+    ctx.beginPath();
+    ctx.moveTo(100, 420);
+    ctx.lineTo(130, 410);
+    ctx.lineTo(130, 440);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Projectile
+    if (projectile.launched) {
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(projectile.x, projectile.y, 15, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Trail
+      ctx.strokeStyle = 'rgba(239,68,68,0.3)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(projectile.x, projectile.y);
+      ctx.lineTo(projectile.x - projectile.vx * 5, projectile.y - projectile.vy * 5);
+      ctx.stroke();
+      
+      // Update position
+      projectile.x += projectile.vx;
+      projectile.y += projectile.vy;
+      projectile.vy += 0.5; // gravity
+      
+      if (projectile.y > 435) {
+        projectile.y = 435;
+        projectile.vy *= -0.6;
+        projectile.vx *= 0.8;
+        if (Math.abs(projectile.vy) < 1) {
+          projectile.launched = false;
+          projectile.x = 100;
+          projectile.y = 400;
+        }
+      }
+    } else {
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(projectile.x, projectile.y, 15, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // Force indicator
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.font = '16px "PingFang SC", sans-serif';
+    ctx.fillText(`发射力：${effectForce}N`, 200, 100);
+    
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = '14px "PingFang SC", sans-serif';
+    ctx.fillText('👆 点击发射小球 | 调整滑块改变力的大小', 20, 30);
+  }
+  
+  else if (currentExp === 'gravity') {
+    // Draw gravity experiment
+    // Ground
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 500);
+    ctx.lineTo(canvas.width, 500);
+    ctx.stroke();
+    
+    // Tree
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(330, 200, 40, 300);
+    ctx.fillStyle = '#16a34a';
+    ctx.beginPath();
+    ctx.arc(350, 180, 80, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Apple
+    if (apple.falling) {
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(apple.x, apple.y, 20, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Stem
+      ctx.strokeStyle = '#92400e';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(apple.x, apple.y - 20);
+      ctx.lineTo(apple.x + 5, apple.y - 30);
+      ctx.stroke();
+      
+      // Update position
+      apple.y += apple.vy;
+      apple.vy += 0.3; // gravity acceleration
+      
+      if (apple.y > 480) {
+        apple.y = 480;
+        apple.vy = 0;
+        apple.falling = false;
+      }
+      
+      // Gravity arrow
+      drawArrow(apple.x + 30, apple.y, apple.x + 30, apple.y + 40, '#ef4444', 'G');
+    } else {
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(apple.x, apple.y, 20, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.strokeStyle = '#92400e';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(apple.x, apple.y - 20);
+      ctx.lineTo(apple.x + 5, apple.y - 30);
+      ctx.stroke();
+    }
+    
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.font = '16px "PingFang SC", sans-serif';
+    ctx.fillText('🍎 重力：让物体下落的力', 200, 100);
+    
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = '14px "PingFang SC", sans-serif';
+    ctx.fillText('👆 点击苹果让它掉下来！', 20, 30);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  if (currentSection === 'concept') {
+    drawConcept();
+  } else if (currentSection === 'pushpull') {
+    drawPushPull();
+  } else if (currentSection === 'effect') {
+    drawEffect();
+  }
+}
+
+// Animation loop
+function animate() {
+  draw();
+  requestAnimationFrame(animate);
+}
+
+// Quiz
+const quizzes = [
+  {
+    q: "1. 关于力，下列说法正确的是？",
+    opts: ["力只能改变物体的形状", "力只能改变物体的运动状态", "力可以改变物体的形状和运动状态", "力不能改变任何东西"],
+    answer: 2
+  },
+  {
+    q: "2. 下列哪个是推力的例子？",
+    opts: ["拉抽屉", "拔河", "推门", "拉弓射箭"],
+    answer: 2
+  },
+  {
+    q: "3. 用力踢静止的足球，足球会飞出去，这说明力可以？",
+    opts: ["改变物体的形状", "改变物体的运动状态", "让物体消失", "让物体变重"],
+    answer: 1
+  },
+  {
+    q: "4. 下列哪个现象说明力可以改变物体的形状？",
+    opts: ["推箱子，箱子移动", "拉弹簧，弹簧伸长", "踢足球，足球飞出去", "抛石头，石头落地"],
+    answer: 1
+  },
+  {
+    q: "5. 关于重力的说法，正确的是？",
+    opts: ["重力是推力的一种", "重力让物体向上飞", "重力是让物体下落的力", "重力不存在"],
+    answer: 2
+  }
+];
+
+let currentQuiz = 0;
+
+function loadQuiz() {
+  const quiz = quizzes[currentQuiz];
+  document.getElementById('quizQ').textContent = quiz.q;
+  const optsDiv = document.getElementById('quizOpts');
+  optsDiv.innerHTML = '';
+  quiz.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+      if (!quizAttempted.has(currentQuiz)) {
+        quizAttempted.add(currentQuiz);
+        if (i === quiz.answer) quizFirstTryCorrect.add(currentQuiz);
+      }
+      if (i === quiz.answer) {
+        div.classList.add('correct');
+        document.getElementById('quizFeedback').textContent = '✅ 正确！太棒了！';
+      } else {
+        div.classList.add('wrong');
+        document.getElementById('quizFeedback').textContent = '❌ 不对哦，再想想看！';
+      }
+      maybeMarkDone();
+    });
+    optsDiv.appendChild(div);
+  });
+  document.getElementById('quizFeedback').textContent = '';
+  document.getElementById('prevBtn').disabled = currentQuiz === 0;
+  document.getElementById('nextBtn').disabled = currentQuiz === quizzes.length - 1;
+}
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  if (currentQuiz > 0) {
+    currentQuiz--;
+    loadQuiz();
+  }
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  if (currentQuiz < quizzes.length - 1) {
+    currentQuiz++;
+    loadQuiz();
+  }
+});
+
+// Double click to reset deform
+canvas.addEventListener('dblclick', () => {
+  if (currentSection === 'effect' && currentExp === 'deform') {
+    deformObj.deformX = 0;
+    deformObj.deformY = 0;
+  }
+});
+
+// Initialize
+updateDoneMark();
+loadQuiz();
+animate();
+</script>
+  <script src="assets/nav.js" data-home="../index.html" data-back="index.html" data-label="小学科学"></script>
+</body>
+</html>

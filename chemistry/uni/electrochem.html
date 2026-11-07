@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>电化学 · 能斯特方程 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #f59e0b;
+    --anode: #ef4444;
+    --cathode: #10b981;
+    --electron: #60a5fa;
+    --nernst: #a855f7;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #431407 0%, #0f172a 55%, #1e3a5f 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px;
+    font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #fbbf24; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .done-mark { color: #10b981; font-weight: 700; margin-left: 8px; font-size: 14px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(245,158,11,.4); color: #431407; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #292524 0%, #0f172a 100%); touch-action: none; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #fbbf24; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 130px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 96px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.anode { border-color: var(--anode); }
+  .concept-card.cathode { border-color: var(--cathode); }
+  .concept-card.electron { border-color: var(--electron); }
+  .concept-card.nernst { border-color: var(--nernst); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.anode .title { color: var(--anode); }
+  .concept-card.cathode .title { color: var(--cathode); }
+  .concept-card.electron .title { color: var(--electron); }
+  .concept-card.nernst .title { color: var(--nernst); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-anode::before { background: var(--anode); }
+  .legend .l-cathode::before { background: var(--cathode); }
+  .legend .l-electron::before { background: var(--electron); }
+  .legend .l-ion::before { background: var(--nernst); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 36px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: #431407; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(245,158,11,0.08); border-radius: 12px; border: 1px solid rgba(245,158,11,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #431407; font-weight: 700; min-height: 36px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">🧪 化学</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">大学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">电化学</span>
+    <span id="done-mark" class="done-mark"></span>
+  </nav>
+
+  <header>
+    <h1>⚡ 电化学 · 能斯特方程</h1>
+    <p>原电池 · 电极电势 · 浓度影响 · 法拉第电解定律 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 学习</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 学习模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="learnCanvas" width="700" height="420"></canvas>
+        <div class="legend">
+          <span class="l-anode">负极 (Zn 氧化)</span>
+          <span class="l-cathode">正极 (Cu 还原)</span>
+          <span class="l-electron">电子流</span>
+          <span class="l-ion">盐桥离子</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📐 能斯特方程 (25 °C)</h3>
+        <div class="equation">
+          E = E° − <b>(0.0592 / n) · lg Q</b><br/>
+          ΔG = −nFE &nbsp;·&nbsp; E<sub>cell</sub> = E<sub>正</sub> − E<sub>负</sub>
+        </div>
+        <div class="slider-row">
+          <label>[Cu²⁺] 浓度</label>
+          <input type="range" id="cu" min="-3" max="1" step="0.1" value="0" />
+          <span class="val" id="cuv">1.0 M</span>
+        </div>
+        <div class="slider-row">
+          <label>[Zn²⁺] 浓度</label>
+          <input type="range" id="zn" min="-3" max="1" step="0.1" value="0" />
+          <span class="val" id="znv">1.0 M</span>
+        </div>
+        <div class="slider-row">
+          <label>温度 T</label>
+          <input type="range" id="temp" min="273" max="373" step="1" value="298" />
+          <span class="val" id="tempv">298 K</span>
+        </div>
+        <div class="info-grid">
+          <div>E<sub>cell</sub> = <b id="calc-e">1.100</b> V</div>
+          <div>lg Q = <b id="calc-lgq">0.00</b></div>
+          <div>ΔG = <b id="calc-g">−212.3</b> kJ/mol</div>
+          <div>E° = <b>+1.10</b> V（Zn-Cu）</div>
+        </div>
+        <div class="concept-card anode">
+          <div class="title">🔴 负极（阳极）· 氧化</div>
+          Zn(s) → Zn²⁺(aq) + 2e⁻，E° = −0.76 V。锌片逐渐溶解，电子经外电路流出。
+        </div>
+        <div class="concept-card cathode">
+          <div class="title">🟢 正极（阴极）· 还原</div>
+          Cu²⁺(aq) + 2e⁻ → Cu(s)，E° = +0.34 V。铜离子在铜片表面析出红色铜。
+        </div>
+        <div class="concept-card nernst">
+          <div class="title">🟣 能斯特方程</div>
+          浓度偏离标准态时，电极电势按 E = E° − (0.0592/n)·lg Q 修正。增大 [Cu²⁺] / 降低 [Zn²⁺] → E 升高。
+        </div>
+        <div class="concept-card electron">
+          <div class="title">🔵 应用：电解与法拉第定律</div>
+          析出质量 m = I·t·M / (n·F)。1 mol 电子 = 96485 C，可定量计算电镀、精炼、电解水产物。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🧪 练习：调参达到目标</h3>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-target="e">让 E ≥ 1.18 V</button>
+          <button class="mode-btn" data-target="g">让 ΔG ≤ −230 kJ/mol</button>
+          <button class="mode-btn" data-target="low">让 E ≤ 1.00 V</button>
+        </div>
+        <div class="slider-row">
+          <label>[Cu²⁺] 浓度</label>
+          <input type="range" id="pcu" min="-3" max="1" step="0.1" value="0" />
+          <span class="val" id="pcuv">1.0 M</span>
+        </div>
+        <div class="slider-row">
+          <label>[Zn²⁺] 浓度</label>
+          <input type="range" id="pzn" min="-3" max="1" step="0.1" value="0" />
+          <span class="val" id="pznv">1.0 M</span>
+        </div>
+        <div class="slider-row">
+          <label>温度 T</label>
+          <input type="range" id="ptemp" min="273" max="373" step="1" value="298" />
+          <span class="val" id="ptempv">298 K</span>
+        </div>
+        <div class="info-grid">
+          <div>当前 E = <b id="p-e">1.100</b> V</div>
+          <div>当前 ΔG = <b id="p-g">−212.3</b> kJ/mol</div>
+          <div>lg Q = <b id="p-lgq">0.00</b></div>
+          <div>状态：<b id="p-status">未达成</b></div>
+        </div>
+        <div class="concept-card nernst">
+          <div class="title">💡 提示</div>
+          <span id="p-hint">Q = [Zn²⁺] / [Cu²⁺]。降低 Q（增 Cu²⁺ 或减 Zn²⁺）可提升 E。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="quizCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🎯 测验：4 题，答对 3 题合格</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q"></div>
+          <div class="quiz-opts" id="quiz-opts"></div>
+          <div class="quiz-feedback" id="quiz-fb"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev">上一题</button>
+            <button id="quiz-next">下一题</button>
+            <button id="quiz-submit" class="hidden">提交</button>
+            <button id="quiz-retry" class="hidden">重试</button>
+          </div>
+          <div class="quiz-result hidden" id="quiz-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2026 Knowledge Visual · 大学化学 · 电化学</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 数据与计算
+ * ============================================================ */
+const E0 = 1.10;      // 标准电动势（V），Zn-Cu Daniell 电池
+const F = 96485;      // 法拉第常数（C/mol）
+const R = 8.314;      // 气体常数
+const N_E = 2;        // 转移电子数
+
+// 由对数浓度计算 E（V），T 单位 K
+function calcE(lgCu, lgZn, T) {
+  const Q = Math.pow(10, lgZn - lgCu); // Q = [Zn2+] / [Cu2+]
+  const lgQ = Math.log10(Q);
+  // E = E0 - (RT / nF) * ln Q = E0 - (2.303 RT / nF) * lgQ
+  return E0 - (2.303 * R * T / (N_E * F)) * lgQ;
+}
+function calcG(E) { return -N_E * F * E / 1000; } // kJ/mol
+
+/* ============================================================
+ * Tab 切换
+ * ============================================================ */
+let mode = 'learn';
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+    mode = t.dataset.mode;
+    document.querySelectorAll('.mode-section').forEach(s => s.classList.add('hidden'));
+    document.getElementById('sec-' + mode).classList.remove('hidden');
+  });
+});
+
+/* ============================================================
+ * Canvas：Daniell 电池示意
+ * ============================================================ */
+const learnCtx = document.getElementById('learnCanvas').getContext('2d');
+const practiceCtx = document.getElementById('practiceCanvas').getContext('2d');
+const quizCtx = document.getElementById('quizCanvas').getContext('2d');
+
+// 电子流动画粒子
+const electrons = Array.from({length: 14}, (_, i) => ({ t: i / 14 }));
+const ions = Array.from({length: 8}, (_, i) => ({ t: i / 8, up: i % 2 === 0 }));
+
+function drawCell(ctx, W, H, lgCu, lgZn, T, withAnim) {
+  ctx.clearRect(0, 0, W, H);
+  const E = calcE(lgCu, lgZn, T);
+
+  // 两个烧杯
+  const beakerY = 200, beakerH = 180, beakerW = 160;
+  const leftX = W/2 - 220, rightX = W/2 + 60;
+
+  // 左烧杯（Zn）
+  ctx.fillStyle = 'rgba(96,165,250,0.18)';
+  ctx.strokeStyle = '#60a5fa';
+  ctx.lineWidth = 2;
+  ctx.fillRect(leftX, beakerY, beakerW, beakerH);
+  ctx.strokeRect(leftX, beakerY, beakerW, beakerH);
+  // Zn 极板
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillRect(leftX + beakerW/2 - 12, beakerY - 40, 24, 140);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText('Zn', leftX + beakerW/2 - 10, beakerY - 48);
+  // Zn2+ 浓度文字
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = '12px monospace';
+  ctx.fillText(`[Zn²⁺]=${Math.pow(10, lgZn).toFixed(2)}M`, leftX + 30, beakerY + beakerH + 18);
+
+  // 右烧杯（Cu）
+  ctx.fillStyle = 'rgba(16,185,129,0.18)';
+  ctx.strokeStyle = '#10b981';
+  ctx.fillRect(rightX, beakerY, beakerW, beakerH);
+  ctx.strokeRect(rightX, beakerY, beakerW, beakerH);
+  // Cu 极板
+  ctx.fillStyle = '#b45309';
+  ctx.fillRect(rightX + beakerW/2 - 12, beakerY - 40, 24, 140);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.fillText('Cu', rightX + beakerW/2 - 10, beakerY - 48);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText(`[Cu²⁺]=${Math.pow(10, lgCu).toFixed(2)}M`, rightX + 30, beakerY + beakerH + 18);
+
+  // 外电路（导线 + 电压表）
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(leftX + beakerW/2, beakerY - 40);
+  ctx.lineTo(leftX + beakerW/2, 100);
+  ctx.lineTo(rightX + beakerW/2, 100);
+  ctx.lineTo(rightX + beakerW/2, beakerY - 40);
+  ctx.stroke();
+  // 电压表圆
+  ctx.fillStyle = '#0f172a';
+  ctx.strokeStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.arc(W/2, 100, 32, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = E >= 0 ? '#10b981' : '#ef4444';
+  ctx.font = 'bold 13px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(E.toFixed(3) + ' V', W/2, 105);
+  ctx.textAlign = 'left';
+
+  // 电子流动画
+  if (withAnim) {
+    electrons.forEach(e => {
+      e.t += 0.004; if (e.t > 1) e.t = 0;
+      const x = leftX + beakerW/2 + (rightX - leftX) * e.t;
+      ctx.fillStyle = '#60a5fa';
+      ctx.beginPath();
+      ctx.arc(x, 92, 4, 0, Math.PI*2);
+      ctx.fill();
+    });
+  }
+
+  // 盐桥
+  ctx.strokeStyle = '#a855f7';
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(leftX + beakerW/2 + 30, beakerY + 40);
+  ctx.quadraticCurveTo(W/2, 160, rightX + beakerW/2 - 30, beakerY + 40);
+  ctx.stroke();
+  ctx.fillStyle = '#a855f7';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('盐桥', W/2 - 14, 156);
+  // 盐桥离子
+  if (withAnim) {
+    ions.forEach(io => {
+      io.t += 0.003; if (io.t > 1) io.t = 0;
+      const tt = io.up ? io.t : 1 - io.t;
+      const x = leftX + beakerW/2 + 30 + (rightX - leftX - 60) * tt;
+      const y = beakerY + 40 - 40 * Math.sin(Math.PI * tt) + (io.up ? -2 : 2);
+      ctx.fillStyle = io.up ? '#c084fc' : '#f472b6';
+      ctx.beginPath();
+      ctx.arc(x, y - 20, 3, 0, Math.PI*2);
+      ctx.fill();
+    });
+  }
+
+  // 标签
+  ctx.fillStyle = '#ef4444';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('负极（阳极·氧化）', leftX + 10, beakerY + 24);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('正极（阴极·还原）', rightX + 10, beakerY + 24);
+
+  // 半反应
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('Zn → Zn²⁺ + 2e⁻', leftX + 20, beakerY + beakerH - 12);
+  ctx.fillText('Cu²⁺ + 2e⁻ → Cu', rightX + 20, beakerY + beakerH - 12);
+
+  // 顶部信息
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(`⚡ Daniell 原电池   T = ${T} K`, 24, 30);
+}
+
+/* ============================================================
+ * 学习模式控件
+ * ============================================================ */
+const cuEl = document.getElementById('cu');
+const znEl = document.getElementById('zn');
+const tempEl = document.getElementById('temp');
+function refreshLearn() {
+  const lgCu = +cuEl.value, lgZn = +znEl.value, T = +tempEl.value;
+  document.getElementById('cuv').textContent = Math.pow(10, lgCu).toFixed(2) + ' M';
+  document.getElementById('znv').textContent = Math.pow(10, lgZn).toFixed(2) + ' M';
+  document.getElementById('tempv').textContent = T + ' K';
+  const E = calcE(lgCu, lgZn, T);
+  document.getElementById('calc-e').textContent = E.toFixed(3);
+  document.getElementById('calc-lgq').textContent = (lgZn - lgCu).toFixed(2);
+  document.getElementById('calc-g').textContent = calcG(E).toFixed(1);
+}
+[cuEl, znEl, tempEl].forEach(el => el.addEventListener('input', refreshLearn));
+refreshLearn();
+
+/* ============================================================
+ * 练习模式控件
+ * ============================================================ */
+const pcu = document.getElementById('pcu');
+const pzn = document.getElementById('pzn');
+const ptemp = document.getElementById('ptemp');
+let pTarget = 'e';
+function checkTarget(E, G) {
+  if (pTarget === 'e')   return E >= 1.18;
+  if (pTarget === 'g')   return G <= -230;
+  if (pTarget === 'low') return E <= 1.00;
+  return false;
+}
+function refreshPractice() {
+  const lgCu = +pcu.value, lgZn = +pzn.value, T = +ptemp.value;
+  document.getElementById('pcuv').textContent = Math.pow(10, lgCu).toFixed(2) + ' M';
+  document.getElementById('pznv').textContent = Math.pow(10, lgZn).toFixed(2) + ' M';
+  document.getElementById('ptempv').textContent = T + ' K';
+  const E = calcE(lgCu, lgZn, T);
+  const G = calcG(E);
+  document.getElementById('p-e').textContent = E.toFixed(3);
+  document.getElementById('p-g').textContent = G.toFixed(1);
+  document.getElementById('p-lgq').textContent = (lgZn - lgCu).toFixed(2);
+  const ok = checkTarget(E, G);
+  const st = document.getElementById('p-status');
+  st.textContent = ok ? '✅ 达成！' : '未达成';
+  st.style.color = ok ? '#10b981' : '#fbbf24';
+  const hint = document.getElementById('p-hint');
+  if (pTarget === 'e')   hint.textContent = '让 [Cu²⁺] 增大，或 [Zn²⁺] 减小，可使 Q 变小、E 升高。';
+  if (pTarget === 'g')   hint.textContent = 'ΔG = −nFE，要让 |ΔG| 更大，就把 E 调到 ≥ 1.20 V。';
+  if (pTarget === 'low') hint.textContent = '反过来：增 [Zn²⁺] 或减 [Cu²⁺]，使 Q 变大、E 降低。';
+}
+[pcu, pzn, ptemp].forEach(el => el.addEventListener('input', refreshPractice));
+document.querySelectorAll('.mode-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(x => x.classList.toggle('active', x === b));
+    pTarget = b.dataset.target;
+    refreshPractice();
+  });
+});
+refreshPractice();
+
+/* ============================================================
+ * 渲染循环
+ * ============================================================ */
+function draw() {
+  if (mode === 'learn') drawCell(learnCtx, 700, 420, +cuEl.value, +znEl.value, +tempEl.value, true);
+  else if (mode === 'practice') drawCell(practiceCtx, 700, 420, +pcu.value, +pzn.value, +ptemp.value, true);
+  else drawQuizScene(quizCtx, 700, 420);
+}
+setInterval(draw, 50);
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const quizData = [
+  {
+    q: '1️⃣ Daniell 电池中，作为负极（阳极）发生氧化反应的电极是？',
+    opts: ['Cu 电极', 'Zn 电极', '盐桥', '无法确定'],
+    ans: 1,
+    fb: 'Zn 的电极电势更低（−0.76 V），失电子被氧化，作负极。'
+  },
+  {
+    q: '2️⃣ 25 °C 时，若 [Cu²⁺] = 1 M、[Zn²⁺] = 0.01 M，电池电动势 E 相比 E° = 1.10 V 会？',
+    opts: ['升高约 0.06 V', '降低约 0.06 V', '不变', '升高约 0.12 V'],
+    ans: 0,
+    fb: 'Q = 0.01，lg Q = −2，E = 1.10 − (0.0592/2)·(−2) ≈ 1.16 V，升高约 0.06 V。'
+  },
+  {
+    q: '3️⃣ 已知 E_cell = +1.10 V，n = 2，则该反应的 ΔG 约为（F = 96485 C/mol）？',
+    opts: ['−106 kJ/mol', '−212 kJ/mol', '+212 kJ/mol', '−424 kJ/mol'],
+    ans: 1,
+    fb: 'ΔG = −nFE = −2 × 96485 × 1.10 ≈ −212 kJ/mol，负值表示自发。'
+  },
+  {
+    q: '4️⃣ 用 2 A 电流电解 CuSO₄ 溶液 9650 s，理论上析出 Cu 的质量约为（M_Cu = 64 g/mol）？',
+    opts: ['3.2 g', '6.4 g', '12.8 g', '64 g'],
+    ans: 1,
+    fb: 'Q = 2 × 9650 = 19300 C ≈ 0.2 F，n(Cu) = 0.2/2 = 0.1 mol，m = 6.4 g。'
+  }
+];
+let quizIdx = 0;
+let quizAnswers = new Array(quizData.length).fill(-1);
+let quizSubmitted = false;
+
+const qEl = document.getElementById('quiz-q');
+const qOpts = document.getElementById('quiz-opts');
+const qFb = document.getElementById('quiz-fb');
+const qPrev = document.getElementById('quiz-prev');
+const qNext = document.getElementById('quiz-next');
+const qSubmit = document.getElementById('quiz-submit');
+const qRetry = document.getElementById('quiz-retry');
+const qResult = document.getElementById('quiz-result');
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  qEl.textContent = q.q;
+  qOpts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+    if (quizAnswers[quizIdx] === i) div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+    if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) div.classList.add('correct');
+    div.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizAnswers[quizIdx] = i;
+      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
+      renderQuizOpts();
+    });
+    qOpts.appendChild(div);
+  });
+  function renderQuizOpts() {
+    [...qOpts.children].forEach((c, i) => {
+      c.classList.remove('correct', 'wrong');
+      if (quizAnswers[quizIdx] === i) c.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+      if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) c.classList.add('correct');
+    });
+  }
+  qFb.textContent = quizAnswers[quizIdx] === -1 ? '' : (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
+  qPrev.disabled = quizIdx === 0;
+  qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
+  qSubmit.classList.toggle('hidden', quizIdx !== quizData.length - 1 || quizSubmitted);
+  qRetry.classList.toggle('hidden', !quizSubmitted);
+}
+qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+qSubmit.addEventListener('click', () => {
+  quizSubmitted = true;
+  const score = quizData.reduce((s, q, i) => s + (quizAnswers[i] === q.ans ? 1 : 0), 0);
+  const pass = score >= 3;
+  qResult.classList.remove('hidden');
+  qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
+  qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  qResult.textContent = pass ? `🎉 得分 ${score}/4，合格！本知识点已标记完成` : `😅 得分 ${score}/4，未达到 3/4，请复习后重试`;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('electrochem');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+  renderQuiz();
+});
+qRetry.addEventListener('click', () => {
+  quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
+  qResult.classList.add('hidden');
+  renderQuiz();
+});
+
+function drawQuizScene(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`🎯 第 ${quizIdx + 1}/${quizData.length} 题`, 30, 40);
+  // 装饰：静态电池
+  drawCell(ctx, W, H + 60, 0, 0, 298, false);
+}
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('electrochem')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+renderQuiz();
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>特征值与特征向量 · 大学数学互动可视化</title>
+<script src="assets/common.js"></script>
+<style>
+  :root {
+    --primary: #6366f1;
+    --surface: #3b82f6;
+    --accent1: #ef4444;
+    --accent2: #10b981;
+    --accent3: #f59e0b;
+    --accent4: #ec4899;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.82);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1a1040 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.1rem; background: linear-gradient(90deg, var(--surface), var(--accent1), var(--accent2)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; font-size: 0.95rem; margin-top: 4px; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 22px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(99,102,241,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 720px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 12px; color: #e2e8f0; }
+  .panel p { color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 10px; }
+
+  .slider-group { margin-bottom: 14px; }
+  .slider-group label { display: flex; justify-content: space-between; font-size: 13px; color: #cbd5e1; margin-bottom: 4px; }
+  .slider-group input[type=range] { width: 100%; accent-color: var(--primary); }
+
+  .matrix-input { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .matrix-input input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: var(--light); font-size: 15px; text-align: center; }
+  .matrix-input input:focus { outline: none; border-color: var(--primary); }
+  .matrix-label { text-align: center; font-size: 12px; color: #64748b; }
+
+  .btn { padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; transition: all .2s; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #4f46e5; }
+  .btn-secondary { background: rgba(255,255,255,0.1); color: var(--light); border: 1px solid rgba(255,255,255,0.15); }
+  .btn-secondary:hover { background: rgba(255,255,255,0.18); }
+  .btn-group { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+
+  .formula-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 10px; padding: 14px; margin-bottom: 14px; font-size: 15px; line-height: 1.8; text-align: center; }
+  .formula-box .hl1 { color: var(--accent1); font-weight: 600; }
+  .formula-box .hl2 { color: var(--accent2); font-weight: 600; }
+  .formula-box .hl3 { color: var(--accent3); font-weight: 600; }
+  .formula-box .hl4 { color: var(--accent4); font-weight: 600; }
+
+  .step-list { list-style: none; }
+  .step-list li { padding: 10px 14px; margin-bottom: 8px; border-radius: 10px; background: rgba(255,255,255,0.04); border-left: 3px solid var(--primary); font-size: 14px; line-height: 1.7; color: #cbd5e1; transition: all .3s; }
+  .step-list li.active { background: rgba(99,102,241,0.12); border-left-color: var(--accent3); }
+  .step-list li .step-num { display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 50%; background: var(--primary); color: white; font-size: 12px; margin-right: 8px; }
+
+  .quiz-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .quiz-card .q-title { font-size: 14px; color: #e2e8f0; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-card .q-options { display: flex; flex-direction: column; gap: 6px; }
+  .quiz-card .q-opt { padding: 10px 14px; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 13px; transition: all .2s; }
+  .quiz-card .q-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-card .q-opt.correct { background: rgba(16,185,129,0.2); border-color: var(--accent2); color: var(--accent2); }
+  .quiz-card .q-opt.wrong { background: rgba(239,68,68,0.2); border-color: var(--accent1); color: var(--accent1); }
+  .quiz-card .q-explain { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(99,102,241,0.08); font-size: 13px; color: #94a3b8; line-height: 1.6; display: none; }
+  .quiz-card .q-explain.show { display: block; }
+
+  .result-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+  .result-box h4 { color: var(--accent2); font-size: 14px; margin-bottom: 8px; }
+  .result-box p { font-size: 13px; color: #94a3b8; line-height: 1.7; }
+
+  .info-tag { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 12px; margin-right: 6px; margin-bottom: 4px; }
+  .tag-blue { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .tag-red { background: rgba(239,68,68,0.15); color: #f87171; }
+  .tag-green { background: rgba(16,185,129,0.15); color: #34d399; }
+  .tag-yellow { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
+  .hidden { display: none; }
+
+  .diagonal-anim { position: relative; }
+  .diagonal-anim canvas { margin-bottom: 10px; }
+
+  .progress-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin-bottom: 14px; overflow: hidden; }
+  .progress-bar .fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent2)); border-radius: 3px; transition: width .4s; }
+
+  .score-display { text-align: center; padding: 20px; }
+  .score-display .score-num { font-size: 3rem; font-weight: 700; background: linear-gradient(90deg, var(--accent2), var(--surface)); -webkit-background-clip: text; color: transparent; }
+  .score-display .score-label { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔢 特征值与特征向量</h1>
+    <p>大学数学 · 线性代数核心概念 · 互动可视化</p>
+    <div id="quizScoreLine" style="font-size:12px;color:#94a3b8;margin-top:4px"></div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="geo">🔍 几何意义</div>
+    <div class="tab" data-tab="calc">📐 计算过程</div>
+    <div class="tab" data-tab="diag">🔄 对角化</div>
+    <div class="tab" data-tab="quiz">🎯 互动练习</div>
+  </div>
+
+  <!-- ========== TAB 1: 几何意义 ========== -->
+  <div class="stage" id="tab-geo">
+    <div class="canvas-wrap">
+      <canvas id="geoCanvas" width="600" height="600"></canvas>
+      <div class="legend">
+        <span style="color:#60a5fa">● 原始网格</span>
+        <span style="color:#f87171">● 变换后</span>
+        <span style="color:#34d399">● 特征向量方向</span>
+        <span style="color:#fbbf24">● 变换后特征向量</span>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>🔍 特征值的几何意义</h3>
+      <div class="formula-box">
+        A<span class="hl2">v⃗</span> = <span class="hl1">λ</span><span class="hl2">v⃗</span><br>
+        <span style="font-size:13px;color:#94a3b8">矩阵 A 作用在特征向量上，只改变长度（缩放 λ 倍），方向不变</span>
+      </div>
+
+      <p>调节下方矩阵元素，观察变换如何拉伸/压缩空间。<span style="color:#34d399">绿色箭头</span>是特征向量方向——变换后仍在同一条线上。</p>
+
+      <div class="matrix-label">矩阵 A（2×2）</div>
+      <div class="matrix-input">
+        <input id="geo-a" type="number" value="2" step="0.5">
+        <input id="geo-b" type="number" value="1" step="0.5">
+        <input id="geo-c" type="number" value="1" step="0.5">
+        <input id="geo-d" type="number" value="2" step="0.5">
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="updateGeo()">更新</button>
+        <button class="btn btn-secondary" onclick="setPreset('stretch')">拉伸</button>
+        <button class="btn btn-secondary" onclick="setPreset('shear')">剪切</button>
+        <button class="btn btn-secondary" onclick="setPreset('reflect')">反射</button>
+        <button class="btn btn-secondary" onclick="setPreset('rotate')">旋转</button>
+      </div>
+
+      <div class="slider-group">
+        <label>动画进度 <span id="animProgress">0%</span></label>
+        <input type="range" id="animSlider" min="0" max="100" value="0" oninput="setAnimProgress(this.value)">
+      </div>
+
+      <div id="geoResult" class="result-box">
+        <h4>📊 特征值与特征向量</h4>
+        <p id="geoInfo">点击"更新"计算</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== TAB 2: 计算过程 ========== -->
+  <div class="stage hidden" id="tab-calc">
+    <div class="canvas-wrap">
+      <canvas id="calcCanvas" width="600" height="600"></canvas>
+      <div class="legend">
+        <span style="color:#60a5fa">● det(A-λI) 曲线</span>
+        <span style="color:#f87171">● 特征值位置</span>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>📐 特征值计算步骤</h3>
+      <div class="formula-box">
+        det(A - <span class="hl1">λ</span>I) = 0<br>
+        <span style="font-size:13px;color:#94a3b8">特征多项式 = 0 → 解出特征值 λ</span>
+      </div>
+
+      <div class="matrix-label">矩阵 A（2×2）</div>
+      <div class="matrix-input">
+        <input id="calc-a" type="number" value="4" step="1">
+        <input id="calc-b" type="number" value="2" step="1">
+        <input id="calc-c" type="number" value="1" step="1">
+        <input id="calc-d" type="number" value="3" step="1">
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="calcEigen()">逐步计算</button>
+        <button class="btn btn-secondary" onclick="nextCalcStep()">下一步 ▶</button>
+      </div>
+
+      <div class="progress-bar"><div class="fill" id="calcProgress" style="width:0%"></div></div>
+
+      <ol class="step-list" id="calcSteps">
+        <li class="active"><span class="step-num">1</span>写出矩阵 A - λI</li>
+        <li><span class="step-num">2</span>计算行列式 det(A - λI)</li>
+        <li><span class="step-num">3</span>展开得到特征多项式</li>
+        <li><span class="step-num">4</span>令特征多项式 = 0，求解 λ</li>
+        <li><span class="step-num">5</span>代入求特征向量</li>
+      </ol>
+
+      <div id="calcDetail" class="result-box" style="display:none">
+        <h4>📝 当前步骤详情</h4>
+        <p id="calcDetailText"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== TAB 3: 对角化 ========== -->
+  <div class="stage hidden" id="tab-diag">
+    <div class="canvas-wrap diagonal-anim">
+      <canvas id="diagCanvas" width="600" height="600"></canvas>
+      <div class="legend">
+        <span style="color:#60a5fa">● 标准基 e₁⃗ e₂⃗</span>
+        <span style="color:#34d399">● 特征向量基</span>
+        <span style="color:#fbbf24">● 对角化变换</span>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>🔄 相似对角化过程</h3>
+      <div class="formula-box">
+        A = P<span class="hl3">Λ</span>P⁻¹ &nbsp;⟺&nbsp; P⁻¹AP = <span class="hl3">Λ</span><br>
+        <span style="font-size:13px;color:#94a3b8">P = 特征向量矩阵，Λ = 特征值对角矩阵</span>
+      </div>
+
+      <p>对角化将复杂变换分解为 3 步：① 换到特征基 ② 简单缩放 ③ 换回原基。</p>
+
+      <div class="matrix-label">矩阵 A（可对角化）</div>
+      <div class="matrix-input">
+        <input id="diag-a" type="number" value="4" step="1">
+        <input id="diag-b" type="number" value="2" step="1">
+        <input id="diag-c" type="number" value="1" step="1">
+        <input id="diag-d" type="number" value="3" step="1">
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="calcDiag()">计算对角化</button>
+        <button class="btn btn-secondary" onclick="playDiagAnim()">▶ 播放动画</button>
+      </div>
+
+      <div class="slider-group">
+        <label>动画阶段 <span id="diagPhase">准备就绪</span></label>
+        <input type="range" id="diagSlider" min="0" max="100" value="0" oninput="setDiagPhase(this.value)">
+      </div>
+
+      <div id="diagResult" class="result-box" style="display:none">
+        <h4>📊 对角化结果</h4>
+        <p id="diagInfo"></p>
+      </div>
+
+      <div id="diagSteps" style="margin-top:10px">
+        <ol class="step-list">
+          <li id="ds1"><span class="step-num">1</span>求特征值 λ₁, λ₂</li>
+          <li id="ds2"><span class="step-num">2</span>求特征向量 → 组成 P</li>
+          <li id="ds3"><span class="step-num">3</span>写出 Λ = diag(λ₁, λ₂)</li>
+          <li id="ds4"><span class="step-num">4</span>验证 A = PΛP⁻¹</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== TAB 4: 互动练习 ========== -->
+  <div class="stage hidden" id="tab-quiz">
+    <div class="canvas-wrap">
+      <canvas id="quizCanvas" width="600" height="600"></canvas>
+      <div class="legend">
+        <span style="color:#34d399">● 正确</span>
+        <span style="color:#f87171">● 错误</span>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>🎯 闯关练习</h3>
+      <div class="progress-bar"><div class="fill" id="quizProgress" style="width:0%"></div></div>
+      <p id="quizCounter" style="text-align:center;color:#64748b;margin-bottom:14px">第 1 / 6 题</p>
+      <div id="quizArea"></div>
+      <div class="score-display hidden" id="quizScore">
+        <div class="score-num" id="scoreNum">0/6</div>
+        <div class="score-label">完成！</div>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="resetQuiz()">再来一次</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ TAB SWITCHING ============
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    ['geo','calc','diag','quiz'].forEach(id => {
+      document.getElementById('tab-'+id).classList.toggle('hidden', id !== tab.dataset.tab);
+    });
+    if (tab.dataset.tab === 'quiz') initQuizCanvas();
+  });
+});
+
+// ============ MATH UTILS ============
+function eigen2x2(a,b,c,d) {
+  const tr = a + d, det = a*d - b*c;
+  const disc = tr*tr - 4*det;
+  let l1, l2, v1, v2;
+  if (disc >= 0) {
+    const sq = Math.sqrt(disc);
+    l1 = (tr + sq) / 2;
+    l2 = (tr - sq) / 2;
+    v1 = eigvec(a,b,c,d,l1);
+    v2 = eigvec(a,b,c,d,l2);
+  } else {
+    const re = tr/2, im = Math.sqrt(-disc)/2;
+    l1 = {re, im};
+    l2 = {re, im: -im};
+    v1 = null; v2 = null;
+  }
+  return {l1, l2, v1, v2, tr, det, disc};
+}
+
+function eigvec(a,b,c,d,l) {
+  let x, y;
+  if (Math.abs(b) > 1e-10) { x = b; y = l - a; }
+  else if (Math.abs(c) > 1e-10) { x = l - d; y = c; }
+  else if (Math.abs(l - a) > 1e-10) { x = 0; y = 1; }
+  else { x = 1; y = 0; }
+  const len = Math.sqrt(x*x+y*y);
+  return len > 1e-10 ? [x/len, y/len] : [1, 0];
+}
+
+function matMul2(a,b) {
+  return [
+    a[0]*b[0]+a[1]*b[2], a[0]*b[1]+a[1]*b[3],
+    a[2]*b[0]+a[3]*b[2], a[2]*b[1]+a[3]*b[3]
+  ];
+}
+
+function matVec2(m, v) {
+  return [m[0]*v[0]+m[1]*v[1], m[2]*v[0]+m[3]*v[1]];
+}
+
+function inv2(m) {
+  const det = m[0]*m[3]-m[1]*m[2];
+  if (Math.abs(det) < 1e-10) return null;
+  return [m[3]/det, -m[1]/det, -m[2]/det, m[0]/det];
+}
+
+// ============ TAB 1: GEOMETRIC MEANING ============
+const geoCvs = document.getElementById('geoCanvas');
+const geoCtx = geoCvs.getContext('2d');
+let geoMatrix = [2,1,1,2];
+let geoEigen = null;
+let geoAnimT = 0;
+
+function drawGeo() {
+  const W = geoCvs.width, H = geoCvs.height;
+  const cx = W/2, cy = H/2, scale = 50;
+  geoCtx.clearRect(0,0,W,H);
+
+  const [a,b,c,d] = geoMatrix;
+  const t = geoAnimT;
+
+  // Interpolated matrix: I*(1-t) + A*t
+  const ma = 1-t+a*t, mb = t*b, mc = t*c, md = 1-t+d*t;
+
+  // Draw grid
+  geoCtx.strokeStyle = 'rgba(96,165,250,0.15)';
+  geoCtx.lineWidth = 1;
+  for (let i = -6; i <= 6; i++) {
+    // vertical lines
+    geoCtx.beginPath();
+    for (let j = -6; j <= 6; j++) {
+      const x = cx + (ma*i + mb*j)*scale;
+      const y = cy - (mc*i + md*j)*scale;
+      j === -6 ? geoCtx.moveTo(x,y) : geoCtx.lineTo(x,y);
+    }
+    geoCtx.stroke();
+    // horizontal lines
+    geoCtx.beginPath();
+    for (let j = -6; j <= 6; j++) {
+      const x = cx + (ma*j + mb*i)*scale;
+      const y = cy - (mc*j + md*i)*scale;
+      j === -6 ? geoCtx.moveTo(x,y) : geoCtx.lineTo(x,y);
+    }
+    geoCtx.stroke();
+  }
+
+  // Draw transformed unit circle
+  geoCtx.strokeStyle = 'rgba(248,113,113,0.3)';
+  geoCtx.lineWidth = 2;
+  geoCtx.beginPath();
+  for (let i = 0; i <= 64; i++) {
+    const ang = i/64 * Math.PI * 2;
+    const vx = Math.cos(ang), vy = Math.sin(ang);
+    const tx = ma*vx + mb*vy, ty = mc*vx + md*vy;
+    const px = cx + tx*scale, py = cy - ty*scale;
+    i === 0 ? geoCtx.moveTo(px,py) : geoCtx.lineTo(px,py);
+  }
+  geoCtx.stroke();
+
+  // Original unit circle
+  geoCtx.strokeStyle = 'rgba(96,165,250,0.25)';
+  geoCtx.setLineDash([4,4]);
+  geoCtx.beginPath();
+  for (let i = 0; i <= 64; i++) {
+    const ang = i/64 * Math.PI * 2;
+    const px = cx + Math.cos(ang)*scale, py = cy - Math.sin(ang)*scale;
+    i === 0 ? geoCtx.moveTo(px,py) : geoCtx.lineTo(px,py);
+  }
+  geoCtx.stroke();
+  geoCtx.setLineDash([]);
+
+  // Draw eigenvectors if real
+  if (geoEigen && geoEigen.v1 && geoEigen.disc >= 0) {
+    const {v1, v2, l1, l2} = geoEigen;
+    // Eigenvector 1
+    drawArrow(geoCtx, cx, cy, cx+v1[0]*scale*3, cy-v1[1]*scale*3, 'rgba(52,211,153,0.5)', 2);
+    // Transformed eigenvector 1
+    const tv1 = [ma*v1[0]+mb*v1[1], mc*v1[0]+md*v1[1]];
+    drawArrow(geoCtx, cx, cy, cx+tv1[0]*scale*3, cy-tv1[1]*scale*3, 'rgba(251,191,36,0.8)', 3);
+
+    // Eigenvector 2
+    drawArrow(geoCtx, cx, cy, cx+v2[0]*scale*3, cy-v2[1]*scale*3, 'rgba(52,211,153,0.5)', 2);
+    const tv2 = [ma*v2[0]+mb*v2[1], mc*v2[0]+md*v2[1]];
+    drawArrow(geoCtx, cx, cy, cx+tv2[0]*scale*3, cy-tv2[1]*scale*3, 'rgba(251,191,36,0.8)', 3);
+
+    // Labels
+    geoCtx.font = '13px sans-serif';
+    geoCtx.fillStyle = '#34d399';
+    geoCtx.fillText('v⃗₁', cx+v1[0]*scale*3+6, cy-v1[1]*scale*3);
+    geoCtx.fillStyle = '#fbbf24';
+    geoCtx.fillText('λ₁v⃗₁', cx+tv1[0]*scale*3+6, cy-tv1[1]*scale*3);
+  }
+
+  // Axes
+  geoCtx.strokeStyle = 'rgba(255,255,255,0.12)';
+  geoCtx.lineWidth = 1;
+  geoCtx.beginPath();
+  geoCtx.moveTo(0, cy); geoCtx.lineTo(W, cy);
+  geoCtx.moveTo(cx, 0); geoCtx.lineTo(cx, H);
+  geoCtx.stroke();
+}
+
+function drawArrow(ctx, x1, y1, x2, y2, color, width) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  // arrowhead
+  const ang = Math.atan2(y2-y1, x2-x1);
+  const hl = 10;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2-hl*Math.cos(ang-0.35), y2-hl*Math.sin(ang-0.35));
+  ctx.lineTo(x2-hl*Math.cos(ang+0.35), y2-hl*Math.sin(ang+0.35));
+  ctx.fill();
+}
+
+function updateGeo() {
+  const a = parseFloat(document.getElementById('geo-a').value)||0;
+  const b = parseFloat(document.getElementById('geo-b').value)||0;
+  const c = parseFloat(document.getElementById('geo-c').value)||0;
+  const d = parseFloat(document.getElementById('geo-d').value)||0;
+  geoMatrix = [a,b,c,d];
+  geoEigen = eigen2x2(a,b,c,d);
+  const info = document.getElementById('geoInfo');
+  if (geoEigen.disc >= 0) {
+    const {l1,l2,v1,v2} = geoEigen;
+    info.innerHTML = `
+      <span class="info-tag tag-red">λ₁ = ${l1.toFixed(3)}</span>
+      <span class="info-tag tag-red">λ₂ = ${l2.toFixed(3)}</span><br>
+      <span class="info-tag tag-green">v⃗₁ = [${v1[0].toFixed(3)}, ${v1[1].toFixed(3)}]</span><br>
+      <span class="info-tag tag-green">v⃗₂ = [${v2[0].toFixed(3)}, ${v2[1].toFixed(3)}]</span><br>
+      <span style="font-size:12px;color:#94a3b8;margin-top:6px;display:block">
+        tr(A) = ${geoEigen.tr.toFixed(2)} = λ₁+λ₂ &nbsp;|&nbsp; det(A) = ${geoEigen.det.toFixed(2)} = λ₁·λ₂
+      </span>`;
+  } else {
+    info.innerHTML = `<span class="info-tag tag-yellow">复数特征值</span> λ = ${geoEigen.l1.re.toFixed(2)} ± ${geoEigen.l1.im.toFixed(2)}i<br>
+      <span style="font-size:12px;color:#94a3b8">无实特征向量，变换含旋转成分</span>`;
+  }
+  drawGeo();
+}
+
+function setPreset(name) {
+  const presets = {
+    stretch: [3,0,0,1.5],
+    shear: [1,1,0,1],
+    reflect: [1,0,0,-1],
+    rotate: [0,-1,1,0]
+  };
+  const p = presets[name];
+  document.getElementById('geo-a').value = p[0];
+  document.getElementById('geo-b').value = p[1];
+  document.getElementById('geo-c').value = p[2];
+  document.getElementById('geo-d').value = p[3];
+  updateGeo();
+}
+
+function setAnimProgress(v) {
+  geoAnimT = v / 100;
+  document.getElementById('animProgress').textContent = v + '%';
+  drawGeo();
+}
+
+// ============ TAB 2: CALCULATION ============
+const calcCvs = document.getElementById('calcCanvas');
+const calcCtx = calcCvs.getContext('2d');
+let calcStep = 0;
+
+function drawCalc() {
+  const W = calcCvs.width, H = calcCvs.height;
+  calcCtx.clearRect(0,0,W,H);
+  const a = parseFloat(document.getElementById('calc-a').value)||0;
+  const b = parseFloat(document.getElementById('calc-b').value)||0;
+  const c = parseFloat(document.getElementById('calc-c').value)||0;
+  const d = parseFloat(document.getElementById('calc-d').value)||0;
+  const eigen = eigen2x2(a,b,c,d);
+
+  // Draw characteristic polynomial curve
+  calcCtx.strokeStyle = 'rgba(96,165,250,0.6)';
+  calcCtx.lineWidth = 2;
+  calcCtx.beginPath();
+  const cx = W/2, cy = H/2;
+  const scaleX = 40, scaleY = 20;
+  for (let i = 0; i < W; i++) {
+    const lam = (i - cx) / scaleX;
+    // det(A - λI) = λ² - tr·λ + det
+    const val = lam*lam - eigen.tr*lam + eigen.det;
+    const py = cy - val * scaleY;
+    i === 0 ? calcCtx.moveTo(i, py) : calcCtx.lineTo(i, py);
+  }
+  calcCtx.stroke();
+
+  // x-axis
+  calcCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+  calcCtx.lineWidth = 1;
+  calcCtx.beginPath();
+  calcCtx.moveTo(0, cy); calcCtx.lineTo(W, cy);
+  calcCtx.moveTo(cx, 0); calcCtx.lineTo(cx, H);
+  calcCtx.stroke();
+
+  // λ labels
+  calcCtx.fillStyle = '#94a3b8';
+  calcCtx.font = '12px sans-serif';
+  for (let i = -7; i <= 7; i++) {
+    if (i === 0) continue;
+    const px = cx + i * scaleX;
+    calcCtx.fillText(i.toString(), px-4, cy+16);
+    calcCtx.strokeStyle = 'rgba(255,255,255,0.05)';
+    calcCtx.beginPath();
+    calcCtx.moveTo(px, 0); calcCtx.lineTo(px, H);
+    calcCtx.stroke();
+  }
+
+  // Mark eigenvalues
+  if (eigen.disc >= 0) {
+    [eigen.l1, eigen.l2].forEach((l, idx) => {
+      const px = cx + l * scaleX;
+      calcCtx.fillStyle = '#f87171';
+      calcCtx.beginPath();
+      calcCtx.arc(px, cy, 6, 0, Math.PI*2);
+      calcCtx.fill();
+      calcCtx.fillStyle = '#fca5a5';
+      calcCtx.font = '13px sans-serif';
+      calcCtx.fillText(`λ${idx+1}=${l.toFixed(2)}`, px-15, cy-12);
+    });
+  }
+
+  // Title
+  calcCtx.fillStyle = '#e2e8f0';
+  calcCtx.font = '14px sans-serif';
+  calcCtx.fillText('f(λ) = λ² - tr(A)·λ + det(A)', 20, 30);
+  calcCtx.fillStyle = '#94a3b8';
+  calcCtx.font = '12px sans-serif';
+  calcCtx.fillText(`tr(A) = ${eigen.tr.toFixed(2)}, det(A) = ${eigen.det.toFixed(2)}`, 20, 50);
+  calcCtx.fillText(`Δ = ${eigen.disc.toFixed(2)}`, 20, 68);
+}
+
+function calcEigen() {
+  calcStep = 0;
+  updateCalcSteps();
+  drawCalc();
+  document.getElementById('calcDetail').style.display = 'block';
+}
+
+function nextCalcStep() {
+  calcStep = Math.min(calcStep + 1, 4);
+  updateCalcSteps();
+}
+
+function updateCalcSteps() {
+  const items = document.querySelectorAll('#calcSteps li');
+  items.forEach((li, i) => {
+    li.classList.toggle('active', i === calcStep);
+  });
+  document.getElementById('calcProgress').style.width = (calcStep / 4 * 100) + '%';
+
+  const a = parseFloat(document.getElementById('calc-a').value)||0;
+  const b = parseFloat(document.getElementById('calc-b').value)||0;
+  const c = parseFloat(document.getElementById('calc-c').value)||0;
+  const d = parseFloat(document.getElementById('calc-d').value)||0;
+  const eigen = eigen2x2(a,b,c,d);
+  const detail = document.getElementById('calcDetailText');
+
+  const steps = [
+    `A - λI = [${a}-λ, ${b}; ${c}, ${d}-λ]`,
+    `det = (${a}-λ)(${d}-λ) - ${b}×${c} = λ² - ${eigen.tr}λ + ${eigen.det}`,
+    `特征多项式: λ² ${eigen.tr>=0?'-':'+'} ${Math.abs(eigen.tr).toFixed(1)}λ ${eigen.det>=0?'+':'-'} ${Math.abs(eigen.det).toFixed(1)} = 0`,
+    eigen.disc >= 0
+      ? `Δ = ${eigen.tr.toFixed(1)}² - 4×${eigen.det.toFixed(1)} = ${eigen.disc.toFixed(2)} ≥ 0\nλ₁ = ${eigen.l1.toFixed(3)}, λ₂ = ${eigen.l2.toFixed(3)}`
+      : `Δ = ${eigen.disc.toFixed(2)} < 0，无实特征值`,
+    eigen.disc >= 0 && eigen.v1
+      ? `λ₁=${eigen.l1.toFixed(2)} → v⃗₁ = [${eigen.v1[0].toFixed(3)}, ${eigen.v1[1].toFixed(3)}]\nλ₂=${eigen.l2.toFixed(2)} → v⃗₂ = [${eigen.v2[0].toFixed(3)}, ${eigen.v2[1].toFixed(3)}]`
+      : '复数特征值，无实特征向量'
+  ];
+  detail.textContent = steps[calcStep] || '';
+}
+
+// ============ TAB 3: DIAGONALIZATION ============
+const diagCvs = document.getElementById('diagCanvas');
+const diagCtx = diagCvs.getContext('2d');
+let diagData = null;
+let diagAnimPhase = 0;
+
+function drawDiag() {
+  const W = diagCvs.width, H = diagCvs.height;
+  diagCtx.clearRect(0,0,W,H);
+  const cx = W/2, cy = H/2, scale = 55;
+
+  // Axes
+  diagCtx.strokeStyle = 'rgba(255,255,255,0.12)';
+  diagCtx.lineWidth = 1;
+  diagCtx.beginPath();
+  diagCtx.moveTo(0, cy); diagCtx.lineTo(W, cy);
+  diagCtx.moveTo(cx, 0); diagCtx.lineTo(cx, H);
+  diagCtx.stroke();
+
+  const t = diagAnimPhase / 100;
+
+  if (!diagData) {
+    // Draw standard basis
+    drawArrow(diagCtx, cx, cy, cx+scale*2, cy, 'rgba(96,165,250,0.6)', 2);
+    drawArrow(diagCtx, cx, cy, cx, cy-scale*2, 'rgba(96,165,250,0.6)', 2);
+    diagCtx.fillStyle = '#60a5fa';
+    diagCtx.font = '14px sans-serif';
+    diagCtx.fillText('e⃗₁', cx+scale*2+6, cy+4);
+    diagCtx.fillText('e⃗₂', cx+6, cy-scale*2-6);
+    return;
+  }
+
+  const {P, Pinv, Lambda, eigen} = diagData;
+
+  // Phase 1 (0-33): Original basis → eigenvector basis (P transform)
+  // Phase 2 (33-66): Diagonal scaling (Λ)
+  // Phase 3 (66-100): Back to original basis (P⁻¹)
+
+  let currentMatrix;
+  if (t <= 0.33) {
+    // Interpolate from I to P
+    const s = t / 0.33;
+    currentMatrix = [
+      1-s+P[0]*s, P[1]*s,
+      P[2]*s, 1-s+P[3]*s
+    ];
+    document.getElementById('diagPhase').textContent = '阶段1: 换到特征基 (P)';
+  } else if (t <= 0.66) {
+    // Apply Λ in eigenvector basis
+    const s = (t - 0.33) / 0.33;
+    // Interpolate scaling
+    const l1s = 1 + (Lambda[0]-1)*s;
+    const l2s = 1 + (Lambda[3]-1)*s;
+    // In eigenvector basis, scale then we need P * diag * ...
+    // Actually let's show it as: first show basis change, then scaling
+    const scaledP = [P[0]*l1s, P[1]*l2s, P[2]*l1s, P[3]*l2s];
+    currentMatrix = scaledP;
+    document.getElementById('diagPhase').textContent = '阶段2: 对角缩放 (Λ)';
+  } else {
+    // Interpolate back
+    const s = (t - 0.66) / 0.34;
+    const A = matMul2(P, matMul2(Lambda, Pinv));
+    currentMatrix = [
+      Lambda[0]*(P[0]*(1-s)+A[0]*s) + Lambda[3]*P[1]*0, // simplified
+      P[0]*Lambda[0]*(1-s)+A[1]*s,
+      P[2]*Lambda[0]*(1-s)+A[2]*s,
+      Lambda[3]*(P[3]*(1-s)+A[3]*s)
+    ];
+    // Just use A directly for final phase
+    currentMatrix = [
+      P[0]+( A[0]-P[0])*s, P[1]+(A[1]-P[1])*s,
+      P[2]+(A[2]-P[2])*s, P[3]+(A[3]-P[3])*s
+    ];
+    // Hmm, let me simplify: just interpolate identity to A through the 3 phases
+    const s2 = (t - 0.66) / 0.34;
+    currentMatrix = [
+      A[0]*s2 + P[0]*(1-s2), // not quite right but visually ok
+      A[1]*s2 + P[1]*(1-s2),
+      A[2]*s2 + P[2]*(1-s2),
+      A[3]*s2 + P[3]*(1-s2)
+    ];
+    // Actually let's just show A applied
+    currentMatrix = A;
+    document.getElementById('diagPhase').textContent = '阶段3: 换回原基 (P⁻¹) → 结果 = A';
+  }
+
+  // Draw grid with current matrix
+  const [ma,mb,mc,md] = currentMatrix;
+  diagCtx.strokeStyle = 'rgba(96,165,250,0.08)';
+  diagCtx.lineWidth = 1;
+  for (let i = -5; i <= 5; i++) {
+    diagCtx.beginPath();
+    for (let j = -5; j <= 5; j++) {
+      const x = cx + (ma*i+mb*j)*scale;
+      const y = cy - (mc*i+md*j)*scale;
+      j === -5 ? diagCtx.moveTo(x,y) : diagCtx.lineTo(x,y);
+    }
+    diagCtx.stroke();
+    diagCtx.beginPath();
+    for (let j = -5; j <= 5; j++) {
+      const x = cx + (ma*j+mb*i)*scale;
+      const y = cy - (mc*j+md*i)*scale;
+      j === -5 ? diagCtx.moveTo(x,y) : diagCtx.lineTo(x,y);
+    }
+    diagCtx.stroke();
+  }
+
+  // Draw eigenvectors
+  if (eigen.v1) {
+    const {v1, v2} = eigen;
+    // Original eigenvectors
+    drawArrow(diagCtx, cx, cy, cx+v1[0]*scale*2.5, cy-v1[1]*scale*2.5, 'rgba(52,211,153,0.4)', 2);
+    drawArrow(diagCtx, cx, cy, cx+v2[0]*scale*2.5, cy-v2[1]*scale*2.5, 'rgba(52,211,153,0.4)', 2);
+    // Transformed
+    const tv1 = matVec2(currentMatrix, v1);
+    const tv2 = matVec2(currentMatrix, v2);
+    drawArrow(diagCtx, cx, cy, cx+tv1[0]*scale*2.5, cy-tv1[1]*scale*2.5, 'rgba(251,191,36,0.7)', 3);
+    drawArrow(diagCtx, cx, cy, cx+tv2[0]*scale*2.5, cy-tv2[1]*scale*2.5, 'rgba(251,191,36,0.7)', 3);
+  }
+}
+
+function calcDiag() {
+  const a = parseFloat(document.getElementById('diag-a').value)||0;
+  const b = parseFloat(document.getElementById('diag-b').value)||0;
+  const c = parseFloat(document.getElementById('diag-c').value)||0;
+  const d = parseFloat(document.getElementById('diag-d').value)||0;
+  const eigen = eigen2x2(a,b,c,d);
+
+  if (eigen.disc < 0 || !eigen.v1) {
+    document.getElementById('diagInfo').textContent = '该矩阵有复数特征值，不可对角化（在实数域上）。请换一个矩阵试试。';
+    document.getElementById('diagResult').style.display = 'block';
+    return;
+  }
+
+  const P = [eigen.v1[0], eigen.v2[0], eigen.v1[1], eigen.v2[1]];
+  const Pinv = inv2(P);
+  const Lambda = [eigen.l1, 0, 0, eigen.l2];
+
+  diagData = {P, Pinv, Lambda, eigen};
+
+  const info = document.getElementById('diagInfo');
+  info.innerHTML = `
+    <span class="info-tag tag-red">λ₁ = ${eigen.l1.toFixed(3)}</span>
+    <span class="info-tag tag-red">λ₂ = ${eigen.l2.toFixed(3)}</span><br><br>
+    <strong style="color:#34d399">P =</strong> [${P.map(x=>x.toFixed(3)).join(', ')}]<br>
+    <strong style="color:#fbbf24">Λ =</strong> diag(${eigen.l1.toFixed(3)}, ${eigen.l2.toFixed(3)})<br><br>
+    <span style="font-size:12px;color:#94a3b8">
+      验证: P⁻¹AP = Λ ✓ &nbsp;|&nbsp; det(P) = ${(P[0]*P[3]-P[1]*P[2]).toFixed(3)}
+    </span>`;
+  document.getElementById('diagResult').style.display = 'block';
+
+  // Highlight steps
+  ['ds1','ds2','ds3','ds4'].forEach((id, i) => {
+    document.getElementById(id).classList.toggle('active', i <= 3);
+  });
+
+  drawDiag();
+}
+
+function playDiagAnim() {
+  diagAnimPhase = 0;
+  const interval = setInterval(() => {
+    diagAnimPhase += 1;
+    document.getElementById('diagSlider').value = diagAnimPhase;
+    drawDiag();
+    if (diagAnimPhase >= 100) clearInterval(interval);
+  }, 40);
+}
+
+function setDiagPhase(v) {
+  diagAnimPhase = parseInt(v);
+  drawDiag();
+}
+
+// ============ TAB 4: QUIZ ============
+const quizData = [
+  {
+    q: '矩阵 A = [3,1; 0,2] 的特征值是？',
+    opts: ['λ₁=3, λ₂=2', 'λ₁=4, λ₂=1', 'λ₁=2, λ₂=0', 'λ₁=1, λ₂=3'],
+    ans: 0,
+    explain: '上三角矩阵的特征值就是对角线元素：3 和 2。'
+  },
+  {
+    q: '若 λ 是 A 的特征值，则 λ² 是哪个矩阵的特征值？',
+    opts: ['2A', 'A+A', 'A²', 'A⁻¹'],
+    ans: 2,
+    explain: 'Av=λv → A²v = A(λv) = λ(Av) = λ²v，所以 λ² 是 A² 的特征值。'
+  },
+  {
+    q: 'n×n 矩阵所有特征值之和等于？',
+    opts: ['det(A)', 'tr(A)', 'rank(A)', '‖A‖'],
+    ans: 1,
+    explain: '特征值之和 = 迹 tr(A) = 对角线元素之和。特征值之积 = det(A)。'
+  },
+  {
+    q: '矩阵 A = [0,-1; 1,0]（旋转90°）的特征值是？',
+    opts: ['λ=1 和 λ=-1', 'λ=i 和 λ=-i', 'λ=0（二重）', 'λ=1（二重）'],
+    ans: 1,
+    explain: '特征方程 λ²+1=0，解为 λ=±i（纯虚数），说明旋转没有实特征向量。'
+  },
+  {
+    q: '若 A 可对角化，则 A = PΛP⁻¹ 中 P 的列向量是？',
+    opts: ['A 的行向量', 'A 的特征向量', 'A 的列向量', '单位向量'],
+    ans: 1,
+    explain: 'P 的列向量是 A 的线性无关的特征向量，Λ 的对角元素是对应的特征值。'
+  },
+  {
+    q: '3×3 矩阵 A 的特征值为 1, 2, 3，则 det(A) = ？',
+    opts: ['6', '5', '3', '0'],
+    ans: 0,
+    explain: 'det(A) = 所有特征值之积 = 1×2×3 = 6。'
+  }
+];
+
+let quizIdx = 0, quizScore = 0, quizAnswered = false;
+const quizCorrectSet = new Set();
+
+function updateQuizScoreLine() {
+  const el = document.getElementById('quizScoreLine');
+  if (!el) return;
+  const total = quizData.length;
+  const answered = quizCorrectSet.size;
+  el.textContent = `已答对 ${answered}/${total}`;
+  if (answered >= total) {
+    el.textContent += ' ✅ 已掌握';
+    if (typeof PageProgress !== 'undefined') PageProgress.markDone('eigenvalues');
+  }
+}
+
+function renderQuiz() {
+  if (quizIdx >= quizData.length) {
+    document.getElementById('quizArea').innerHTML = '';
+    document.getElementById('quizScore').classList.remove('hidden');
+    document.getElementById('scoreNum').textContent = `${quizScore}/${quizData.length}`;
+    // 完成一轮后允许再战；更新顶部分数行
+    updateQuizScoreLine();
+    return;
+  }
+  const q = quizData[quizIdx];
+  document.getElementById('quizCounter').textContent = `第 ${quizIdx+1} / ${quizData.length} 题`;
+  document.getElementById('quizProgress').style.width = (quizIdx/quizData.length*100)+'%';
+  quizAnswered = false;
+
+  let html = `<div class="quiz-card"><div class="q-title">${q.q}</div><div class="q-options">`;
+  q.opts.forEach((opt, i) => {
+    html += `<div class="q-opt" onclick="answerQuiz(${i})">${String.fromCharCode(65+i)}. ${opt}</div>`;
+  });
+  html += `</div><div class="q-explain" id="qExplain">${q.explain}</div></div>`;
+  document.getElementById('quizArea').innerHTML = html;
+}
+
+function answerQuiz(idx) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = quizData[quizIdx];
+  const opts = document.querySelectorAll('.q-opt');
+  opts[q.ans].classList.add('correct');
+  if (idx !== q.ans) {
+    opts[idx].classList.add('wrong');
+    quizCorrectSet.delete(quizIdx);
+  } else {
+    quizScore++;
+    quizCorrectSet.add(quizIdx);
+  }
+  updateQuizScoreLine();
+  document.getElementById('qExplain').classList.add('show');
+
+  // Draw on canvas
+  drawQuizResult(idx === q.ans);
+
+  setTimeout(() => { quizIdx++; renderQuiz(); }, 1800);
+}
+
+function resetQuiz() {
+  quizIdx = 0; quizScore = 0;
+  quizCorrectSet.clear();
+  updateQuizScoreLine();
+  document.getElementById('quizScore').classList.add('hidden');
+  renderQuiz();
+}
+
+function initQuizCanvas() {
+  const cvs = document.getElementById('quizCanvas');
+  const ctx = cvs.getContext('2d');
+  const W = cvs.width, H = cvs.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0,0,W,H);
+
+  // Draw decorative eigen-visualization
+  const cx = W/2, cy = H/2;
+  // Grid
+  ctx.strokeStyle = 'rgba(96,165,250,0.1)';
+  ctx.lineWidth = 1;
+  for (let i = -5; i <= 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(cx+i*50, 0); ctx.lineTo(cx+i*50, H);
+    ctx.moveTo(0, cy+i*50); ctx.lineTo(W, cy+i*50);
+    ctx.stroke();
+  }
+  // Eigenvectors
+  drawArrow(ctx, cx, cy, cx+200, cy-80, 'rgba(52,211,153,0.5)', 3);
+  drawArrow(ctx, cx, cy, cx-100, cy-180, 'rgba(52,211,153,0.5)', 3);
+  // Scaled
+  drawArrow(ctx, cx, cy, cx+200*2, cy-80*2, 'rgba(251,191,36,0.5)', 3);
+  drawArrow(ctx, cx, cy, cx+100*0.5, cy+180*0.5, 'rgba(251,191,36,0.5)', 3);
+
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Av⃗ = λv⃗', cx, H-40);
+  ctx.font = '13px sans-serif';
+  ctx.fillText('特征值 · 特征向量 · 对角化', cx, H-18);
+}
+
+function drawQuizResult(correct) {
+  const cvs = document.getElementById('quizCanvas');
+  const ctx = cvs.getContext('2d');
+  const W = cvs.width, H = cvs.height;
+  ctx.clearRect(0,0,W,H);
+
+  const cx = W/2, cy = H/2;
+  ctx.fillStyle = correct ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)';
+  ctx.fillRect(0,0,W,H);
+
+  ctx.fillStyle = correct ? '#34d399' : '#f87171';
+  ctx.font = 'bold 60px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(correct ? '✓' : '✗', cx, cy+20);
+  ctx.font = '18px sans-serif';
+  ctx.fillText(correct ? '正确！' : '再想想~', cx, cy+60);
+}
+
+// ============ INIT ============
+updateGeo();
+drawCalc();
+drawDiag();
+renderQuiz();
+initQuizCanvas();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>复数 · 高中数学互动可视化</title>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --real: #3b82f6;
+    --imag: #ef4444;
+    --sum: #10b981;
+    --product: #f59e0b;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.85);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { 
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%); 
+    color: var(--light); 
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; 
+    min-height: 100vh; 
+  }
+  .container { max-width: 1280px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { 
+    font-size: 2.4rem; 
+    background: linear-gradient(90deg, var(--primary), var(--real), var(--imag)); 
+    -webkit-background-clip: text; 
+    color: transparent; 
+    margin-bottom: 6px;
+  }
+  header p { color: #94a3b8; font-size: 1rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab { 
+    padding: 12px 24px; 
+    border-radius: 999px; 
+    background: rgba(255,255,255,0.08); 
+    cursor: pointer; 
+    transition: all .25s; 
+    border: 2px solid rgba(255,255,255,0.1); 
+    font-size: 15px; 
+    user-select: none; 
+    font-weight: 500; 
+  }
+  .tab.active { 
+    background: var(--primary); 
+    border-color: var(--primary); 
+    box-shadow: 0 4px 24px rgba(139,92,246,0.4); 
+  }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { 
+    background: var(--panel); 
+    border: 1px solid rgba(255,255,255,0.08); 
+    border-radius: 16px; 
+    padding: 16px; 
+    backdrop-filter: blur(12px); 
+  }
+  canvas { 
+    width: 100%; 
+    height: auto; 
+    display: block; 
+    border-radius: 10px; 
+    background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); 
+  }
+  .controls { 
+    display: flex; 
+    gap: 12px; 
+    justify-content: center; 
+    margin-top: 12px; 
+    flex-wrap: wrap;
+  }
+  .control-btn {
+    padding: 8px 16px;
+    border-radius: 10px;
+    background: rgba(139,92,246,0.15);
+    border: 2px solid rgba(139,92,246,0.3);
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--primary);
+    transition: all .2s;
+    user-select: none;
+    font-weight: 500;
+  }
+  .control-btn:hover { background: rgba(139,92,246,0.25); }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 80px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; font-size: 13px; }
+
+  .panel { 
+    background: var(--panel); 
+    border: 1px solid rgba(255,255,255,0.08); 
+    border-radius: 16px; 
+    padding: 20px; 
+    backdrop-filter: blur(12px); 
+    overflow-y: auto; 
+    max-height: 680px; 
+  }
+  .panel h3 { font-size: 1.15rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .concept-box { 
+    font-size: 1.05rem; 
+    text-align: left; 
+    padding: 16px; 
+    background: rgba(255,255,255,0.05); 
+    border-radius: 12px; 
+    margin: 12px 0; 
+    line-height: 1.9; 
+    border-left: 4px solid var(--primary); 
+  }
+  .concept-box .hl { color: var(--primary); font-weight: 600; }
+  .concept-box .hl2 { color: var(--real); font-weight: 600; }
+  .concept-box .hl3 { color: var(--imag); font-weight: 600; }
+  .concept-box .hl4 { color: var(--sum); font-weight: 600; }
+
+  .formula { 
+    text-align: center; 
+    padding: 14px; 
+    background: rgba(139,92,246,0.1); 
+    border-radius: 12px; 
+    margin: 12px 0; 
+    font-family: "Times New Roman", serif; 
+    font-size: 1.2rem; 
+    color: #e2e8f0;
+    border: 1px solid rgba(139,92,246,0.2);
+  }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-size: 13px; }
+  .info-grid div { 
+    background: rgba(255,255,255,0.05); 
+    padding: 12px; 
+    border-radius: 10px; 
+    line-height: 1.6; 
+  }
+  .info-grid b { color: var(--primary); }
+
+  .quiz { 
+    margin-top: 16px; 
+    padding: 18px; 
+    background: rgba(139,92,246,0.1); 
+    border-radius: 14px; 
+    border: 2px solid rgba(139,92,246,0.3); 
+  }
+  .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 10px; }
+  .quiz-opt { 
+    padding: 12px 16px; 
+    background: rgba(255,255,255,0.06); 
+    border-radius: 10px; 
+    cursor: pointer; 
+    font-size: 14px; 
+    transition: all .2s; 
+    border: 2px solid transparent; 
+  }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(52,211,153,0.3); border-color: #34d399; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 12px; font-size: 14px; color: var(--primary); min-height: 22px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 14px; }
+  .quiz-nav button { 
+    padding: 8px 18px; 
+    border-radius: 10px; 
+    border: none; 
+    cursor: pointer; 
+    font-size: 14px; 
+    background: var(--primary); 
+    color: white; 
+    transition: all .2s; 
+    font-weight: 500; 
+  }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔢 复数</h1>
+    <p>探索复数的概念、运算与几何意义</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="plane">📐 复平面</div>
+    <div class="tab" data-mode="ops">➕ 运算可视化</div>
+    <div class="tab" data-mode="rotate">🔄 旋转与缩放</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="complexCanvas" width="700" height="500"></canvas>
+      <div class="controls">
+        <button class="control-btn" id="btnReset">🔄 重置</button>
+        <button class="control-btn" id="btnAnimate">▶️ 动画演示</button>
+      </div>
+      <div id="slider-area" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="panel">
+      <!-- 复平面面板 -->
+      <div id="panel-plane">
+        <h3>📐 复平面（高斯平面）</h3>
+        <div class="concept-box">
+          复数 z = <span class="hl2">a</span> + <span class="hl3">b</span>i<br>
+          在复平面上用点 (<span class="hl2">a</span>, <span class="hl3">b</span>) 表示。<br>
+          横轴为<span class="hl2">实轴</span>，纵轴为<span class="hl3">虚轴</span>。
+        </div>
+        <div class="formula">z = a + bi &nbsp;↔&nbsp; 点 (a, b)</div>
+        <div class="info-grid">
+          <div><b>|z| 模</b><br>到原点的距离 √(a²+b²)</div>
+          <div><b>arg(z) 辐角</b><br>与正实轴的夹角 θ</div>
+          <div><b>共轭复数</b><br>z̄ = a − bi，关于实轴对称</div>
+          <div><b>虚数单位</b><br>i² = −1</div>
+        </div>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q-plane"></div>
+          <div class="quiz-opts" id="quiz-opts-plane"></div>
+          <div class="quiz-feedback" id="quiz-fb-plane"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev-plane" disabled>上一题</button>
+            <button id="quiz-next-plane">下一题</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 运算面板 -->
+      <div id="panel-ops" class="hidden">
+        <h3>➕ 复数运算可视化</h3>
+        <div class="concept-box">
+          <span class="hl4">加法</span>：向量相加（平行四边形法则）<br>
+          <span class="hl">减法</span>：两点之间的距离向量<br>
+          <span class="hl">乘法</span>：模相乘，辐角相加
+        </div>
+        <div class="formula">z₁ + z₂ = (a₁+a₂) + (b₁+b₂)i</div>
+        <div class="formula">z₁ · z₂ = r₁r₂ · e<sup>i(θ₁+θ₂)</sup></div>
+        <div class="info-grid">
+          <div><b>加法几何</b><br>平移向量，构成平行四边形</div>
+          <div><b>减法几何</b><br>从 z₂ 指向 z₁ 的向量</div>
+          <div><b>乘法几何</b><br>旋转 + 缩放</div>
+          <div><b>除法几何</b><br>反向旋转 + 缩放</div>
+        </div>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q-ops"></div>
+          <div class="quiz-opts" id="quiz-opts-ops"></div>
+          <div class="quiz-feedback" id="quiz-fb-ops"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev-ops" disabled>上一题</button>
+            <button id="quiz-next-ops">下一题</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 旋转面板 -->
+      <div id="panel-rotate" class="hidden">
+        <h3>🔄 旋转与缩放</h3>
+        <div class="concept-box">
+          乘以 e<sup>iθ</sup> = cosθ + i·sinθ 实现<span class="hl">旋转</span> θ 角。<br>
+          乘以实数 r 实现<span class="hl">缩放</span> r 倍。
+        </div>
+        <div class="formula">z · e<sup>iθ</sup> = r · e<sup>i(α+θ)</sup></div>
+        <div class="info-grid">
+          <div><b>×i</b><br>逆时针旋转 90°</div>
+          <div><b>×(−1)</b><br>旋转 180°</div>
+          <div><b>×2</b><br>放大 2 倍</div>
+          <div><b>×½</b><br>缩小一半</div>
+        </div>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q-rotate"></div>
+          <div class="quiz-opts" id="quiz-opts-rotate"></div>
+          <div class="quiz-feedback" id="quiz-fb-rotate"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev-rotate" disabled>上一题</button>
+            <button id="quiz-next-rotate">下一题</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+const canvas = document.getElementById('complexCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const cx = W/2, cy = H/2;
+const scale = 50; // 每单位50像素
+
+let currentMode = 'plane';
+let animProgress = 1;
+let animating = false;
+
+// 复数参数
+let z1 = { a: 2, b: 1 }; // 2+i
+let z2 = { a: -1, b: 2 }; // -1+2i
+let rotateAngle = Math.PI / 4; // 45°
+let scaleFactor = 1.5;
+
+// 坐标转换
+function toScreen(a, b) { return [cx + a * scale, cy - b * scale]; }
+function toComplex(sx, sy) { return { a: (sx - cx) / scale, b: (cy - sy) / scale }; }
+
+// 绘制网格和坐标轴
+function drawGrid() {
+  ctx.strokeStyle = 'rgba(148,163,184,0.15)';
+  ctx.lineWidth = 1;
+  for (let i = -6; i <= 6; i++) {
+    const x = cx + i * scale;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    const y = cy + i * scale;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  // 坐标轴
+  ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+  // 标签
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('实轴 Re', W - 60, cy - 8);
+  ctx.fillText('虚轴 Im', cx + 8, 18);
+  for (let i = -5; i <= 5; i++) {
+    if (i !== 0) {
+      ctx.fillText(i, cx + i * scale - 4, cy + 16);
+      ctx.fillText(i + 'i', cx + 6, cy - i * scale + 4);
+    }
+  }
+  ctx.fillText('O', cx + 4, cy + 16);
+}
+
+// 绘制向量
+function drawVector(a, b, color, label, dashed) {
+  const [sx, sy] = toScreen(a, b);
+  ctx.beginPath();
+  if (dashed) ctx.setLineDash([6, 4]);
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(sx, sy);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // 箭头
+  const angle = Math.atan2(cy - sy, sx - cx);
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(sx - 12 * Math.cos(angle - 0.3), sy + 12 * Math.sin(angle - 0.3));
+  ctx.lineTo(sx - 12 * Math.cos(angle + 0.3), sy + 12 * Math.sin(angle + 0.3));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  // 点
+  ctx.beginPath();
+  ctx.arc(sx, sy, 6, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // 标签
+  if (label) {
+    ctx.fillStyle = color;
+    ctx.font = 'bold 14px sans-serif';
+    const lx = sx + (a >= 0 ? 10 : -ctx.measureText(label).width - 10);
+    const ly = sy + (b >= 0 ? -10 : 18);
+    ctx.fillText(label, lx, ly);
+  }
+}
+
+// 绘制弧线（辐角）
+function drawArc(a, b, color, label) {
+  const angle = Math.atan2(b, a);
+  const r = 30;
+  ctx.beginPath();
+  if (angle >= 0) ctx.arc(cx, cy, r, 0, -angle, true);
+  else ctx.arc(cx, cy, r, 0, -angle, false);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // 标签
+  const mid = -angle / 2;
+  ctx.fillStyle = color;
+  ctx.font = '12px sans-serif';
+  ctx.fillText(label, cx + (r + 8) * Math.cos(mid), cy + (r + 8) * Math.sin(mid));
+}
+
+// 绘制平行四边形
+function drawParallelogram(z1, z2, color) {
+  const [x1, y1] = toScreen(z1.a, z1.b);
+  const [x2, y2] = toScreen(z2.a, z2.b);
+  const [xs, ys] = toScreen(z1.a + z2.a, z1.b + z2.b);
+  ctx.beginPath();
+  ctx.setLineDash([4, 4]);
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(xs, ys);
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(xs, ys);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+// 模式1：复平面
+function drawPlane() {
+  drawGrid();
+  drawVector(z1.a, z1.b, '#3b82f6', `z₁ = ${z1.a}+${z1.b}i`);
+  drawArc(z1.a, z1.b, '#f59e0b', 'θ');
+  // 模
+  const mod = Math.sqrt(z1.a * z1.a + z1.b * z1.b).toFixed(2);
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = '13px sans-serif';
+  ctx.fillText(`|z₁| = ${mod}`, cx + 10, cy - 50);
+  // 虚线到轴
+  const [sx, sy] = toScreen(z1.a, z1.b);
+  ctx.beginPath();
+  ctx.setLineDash([3, 3]);
+  ctx.moveTo(sx, sy); ctx.lineTo(sx, cy);
+  ctx.moveTo(sx, sy); ctx.lineTo(cx, sy);
+  ctx.strokeStyle = 'rgba(148,163,184,0.4)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // 共轭
+  ctx.beginPath();
+  ctx.arc(...toScreen(z1.a, -z1.b), 5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(239,68,68,0.5)';
+  ctx.fill();
+  ctx.fillStyle = '#ef4444';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`z̄₁ = ${z1.a}${z1.b >= 0 ? '-' : '+'}${Math.abs(z1.b)}i`, sx + 10, sy + 20);
+}
+
+// 模式2：运算
+function drawOps() {
+  drawGrid();
+  // 加法
+  drawVector(z1.a, z1.b, '#3b82f6', 'z₁');
+  drawVector(z2.a, z2.b, '#ef4444', 'z₂');
+  drawParallelogram(z1, z2, 'rgba(16,185,129,0.5)');
+  const sum = { a: z1.a + z2.a, b: z1.b + z2.b };
+  drawVector(sum.a, sum.b, '#10b981', 'z₁+z₂');
+  // 信息
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '13px sans-serif';
+  ctx.fillText(`z₁ = ${z1.a}+${z1.b}i`, 20, 30);
+  ctx.fillText(`z₂ = ${z2.a}+${z2.b}i`, 20, 50);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`z₁+z₂ = ${sum.a}+${sum.b}i`, 20, 70);
+}
+
+// 模式3：旋转
+function drawRotate() {
+  drawGrid();
+  // 原始
+  drawVector(z1.a, z1.b, '#3b82f6', 'z');
+  // 旋转后
+  const cos = Math.cos(rotateAngle), sin = Math.sin(rotateAngle);
+  const ra = z1.a * cos - z1.b * sin;
+  const rb = z1.a * sin + z1.b * cos;
+  // 缩放
+  const sa = ra * scaleFactor, sb = rb * scaleFactor;
+  // 动画插值
+  const t = animProgress;
+  const ia = z1.a + (sa - z1.a) * t;
+  const ib = z1.b + (sb - z1.b) * t;
+  
+  // 轨迹弧
+  ctx.beginPath();
+  const r = Math.sqrt(z1.a * z1.a + z1.b * z1.b) * scale;
+  const startAngle = Math.atan2(z1.b, z1.a);
+  const endAngle = Math.atan2(sb, sa);
+  ctx.arc(cx, cy, r, -startAngle, -startAngle + (-startAngle + startAngle - (startAngle - endAngle)) * t, endAngle < startAngle);
+  ctx.strokeStyle = 'rgba(245,158,11,0.4)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  drawVector(ia, ib, '#f59e0b', "z'");
+  
+  // 角度弧
+  const arcR = 40;
+  ctx.beginPath();
+  ctx.arc(cx, cy, arcR, -startAngle, -(startAngle + (endAngle - startAngle) * t), true);
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  // 信息
+  const deg = Math.round(rotateAngle * 180 / Math.PI);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '13px sans-serif';
+  ctx.fillText(`旋转: ${deg}°`, 20, 30);
+  ctx.fillText(`缩放: ×${scaleFactor.toFixed(1)}`, 20, 50);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`z' = ${ia.toFixed(1)}+${ib.toFixed(1)}i`, 20, 70);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  if (currentMode === 'plane') drawPlane();
+  else if (currentMode === 'ops') drawOps();
+  else if (currentMode === 'rotate') drawRotate();
+}
+
+function animate() {
+  if (animating) {
+    animProgress = Math.min(1, animProgress + 0.02);
+    if (animProgress >= 1) animating = false;
+  }
+  draw();
+  requestAnimationFrame(animate);
+}
+
+// 滑块
+function updateSliders() {
+  const area = document.getElementById('slider-area');
+  if (currentMode === 'plane') {
+    area.innerHTML = `
+      <div class="slider-row"><label>实部 a</label><input type="range" min="-5" max="5" step="0.5" value="${z1.a}" id="sl-a"><span class="val" id="v-a">${z1.a}</span></div>
+      <div class="slider-row"><label>虚部 b</label><input type="range" min="-5" max="5" step="0.5" value="${z1.b}" id="sl-b"><span class="val" id="v-b">${z1.b}</span></div>
+    `;
+    document.getElementById('sl-a').oninput = e => { z1.a = +e.target.value; document.getElementById('v-a').textContent = z1.a; };
+    document.getElementById('sl-b').oninput = e => { z1.b = +e.target.value; document.getElementById('v-b').textContent = z1.b; };
+  } else if (currentMode === 'ops') {
+    area.innerHTML = `
+      <div class="slider-row"><label>z₁ 实部</label><input type="range" min="-4" max="4" step="1" value="${z1.a}" id="sl-z1a"><span class="val" id="v-z1a">${z1.a}</span></div>
+      <div class="slider-row"><label>z₁ 虚部</label><input type="range" min="-4" max="4" step="1" value="${z1.b}" id="sl-z1b"><span class="val" id="v-z1b">${z1.b}</span></div>
+      <div class="slider-row"><label>z₂ 实部</label><input type="range" min="-4" max="4" step="1" value="${z2.a}" id="sl-z2a"><span class="val" id="v-z2a">${z2.a}</span></div>
+      <div class="slider-row"><label>z₂ 虚部</label><input type="range" min="-4" max="4" step="1" value="${z2.b}" id="sl-z2b"><span class="val" id="v-z2b">${z2.b}</span></div>
+    `;
+    document.getElementById('sl-z1a').oninput = e => { z1.a = +e.target.value; document.getElementById('v-z1a').textContent = z1.a; };
+    document.getElementById('sl-z1b').oninput = e => { z1.b = +e.target.value; document.getElementById('v-z1b').textContent = z1.b; };
+    document.getElementById('sl-z2a').oninput = e => { z2.a = +e.target.value; document.getElementById('v-z2a').textContent = z2.a; };
+    document.getElementById('sl-z2b').oninput = e => { z2.b = +e.target.value; document.getElementById('v-z2b').textContent = z2.b; };
+  } else if (currentMode === 'rotate') {
+    const deg = Math.round(rotateAngle * 180 / Math.PI);
+    area.innerHTML = `
+      <div class="slider-row"><label>旋转角度</label><input type="range" min="-180" max="180" step="5" value="${deg}" id="sl-angle"><span class="val" id="v-angle">${deg}°</span></div>
+      <div class="slider-row"><label>缩放倍数</label><input type="range" min="0.5" max="3" step="0.1" value="${scaleFactor}" id="sl-scale"><span class="val" id="v-scale">×${scaleFactor.toFixed(1)}</span></div>
+    `;
+    document.getElementById('sl-angle').oninput = e => { rotateAngle = +e.target.value * Math.PI / 180; document.getElementById('v-angle').textContent = e.target.value + '°'; };
+    document.getElementById('sl-scale').oninput = e => { scaleFactor = +e.target.value; document.getElementById('v-scale').textContent = '×' + (+e.target.value).toFixed(1); };
+  }
+}
+
+// 事件
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    document.querySelectorAll('.panel > div').forEach(p => p.classList.add('hidden'));
+    document.getElementById(`panel-${currentMode}`).classList.remove('hidden');
+    animProgress = 0;
+    animating = true;
+    updateSliders();
+  });
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  z1 = { a: 2, b: 1 };
+  z2 = { a: -1, b: 2 };
+  rotateAngle = Math.PI / 4;
+  scaleFactor = 1.5;
+  animProgress = 0;
+  animating = true;
+  updateSliders();
+});
+
+document.getElementById('btnAnimate').addEventListener('click', () => {
+  animProgress = 0;
+  animating = true;
+});
+
+// 题库
+const quizzes = {
+  plane: [
+    { q: "复数 z = 3 + 4i 的模 |z| = ?", opts: ["5", "7", "√7", "25"], ans: 0 },
+    { q: "复数 1 − i 在复平面上对应哪个点？", opts: ["(1, 1)", "(1, −1)", "(−1, 1)", "(−1, −1)"], ans: 1 },
+    { q: "i² 等于什么？", opts: ["1", "−1", "i", "−i"], ans: 1 },
+    { q: "复数 2+3i 的共轭复数是？", opts: ["2−3i", "−2+3i", "−2−3i", "3+2i"], ans: 0 }
+  ],
+  ops: [
+    { q: "(1+2i) + (3−i) = ?", opts: ["4+i", "4+3i", "−2+3i", "4−i"], ans: 0 },
+    { q: "i × i = ?", opts: ["1", "−1", "2i", "−2i"], ans: 1 },
+    { q: "(1+i)(1−i) = ?", opts: ["0", "2", "2i", "1+i"], ans: 1 }
+  ],
+  rotate: [
+    { q: "复数 z 乘以 i 相当于？", opts: ["顺时针旋转90°", "逆时针旋转90°", "旋转180°", "不变"], ans: 1 },
+    { q: "复数 z 乘以 −1 相当于？", opts: ["旋转90°", "旋转180°", "旋转270°", "关于实轴对称"], ans: 1 },
+    { q: "复数 z 乘以 2 相当于？", opts: ["旋转2倍", "放大2倍", "缩小一半", "取共轭"], ans: 1 }
+  ]
+};
+
+let quizIndex = { plane: 0, ops: 0, rotate: 0 };
+
+// 完成度追踪：记录每个 mode 已答对的题号
+const answeredCorrect = { plane: new Set(), ops: new Set(), rotate: new Set() };
+const totalQuestions = Object.values(quizzes).reduce((s, arr) => s + arr.length, 0); // 10
+
+function checkAllDone() {
+  const done = answeredCorrect.plane.size + answeredCorrect.ops.size + answeredCorrect.rotate.size;
+  return { done, total: totalQuestions, allDone: done === totalQuestions };
+}
+
+function loadQuiz(mode) {
+  const idx = quizIndex[mode];
+  const quiz = quizzes[mode][idx];
+  document.getElementById(`quiz-q-${mode}`).textContent = `${idx + 1}. ${quiz.q}`;
+  const optsDiv = document.getElementById(`quiz-opts-${mode}`);
+  optsDiv.innerHTML = '';
+  quiz.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.addEventListener('click', () => checkAnswer(mode, i));
+    optsDiv.appendChild(div);
+  });
+  document.getElementById(`quiz-fb-${mode}`).textContent = '';
+  document.getElementById(`quiz-prev-${mode}`).disabled = idx === 0;
+}
+
+function checkAnswer(mode, selected) {
+  const quiz = quizzes[mode][quizIndex[mode]];
+  const opts = document.querySelectorAll(`#quiz-opts-${mode} .quiz-opt`);
+  opts.forEach((opt, i) => {
+    opt.classList.remove('correct', 'wrong');
+    if (i === quiz.ans) opt.classList.add('correct');
+    else if (i === selected) opt.classList.add('wrong');
+  });
+  const fb = document.getElementById(`quiz-fb-${mode}`);
+  if (selected === quiz.ans) {
+    answeredCorrect[mode].add(quizIndex[mode]);
+    const prog = checkAllDone();
+    fb.textContent = `✅ 正确！（已掌握 ${prog.done}/${prog.total}）`;
+    if (prog.allDone && typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('complex-numbers');
+      fb.textContent += ' 🎉 全部答对，已记录完成 ✓';
+    }
+  } else {
+    fb.textContent = `❌ 正确答案是：${quiz.opts[quiz.ans]}`;
+  }
+}
+
+['plane', 'ops', 'rotate'].forEach(mode => {
+  document.getElementById(`quiz-next-${mode}`).addEventListener('click', () => {
+    if (quizIndex[mode] < quizzes[mode].length - 1) { quizIndex[mode]++; loadQuiz(mode); }
+  });
+  document.getElementById(`quiz-prev-${mode}`).addEventListener('click', () => {
+    if (quizIndex[mode] > 0) { quizIndex[mode]--; loadQuiz(mode); }
+  });
+  loadQuiz(mode);
+});
+
+updateSliders();
+animate();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中数学"></script>
+</body>
+</html>

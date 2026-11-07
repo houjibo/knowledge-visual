@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>物态变化 · 初中物理互动可视化</title>
+<style>
+  :root {
+    --primary: #3b82f6;
+    --hot: #ef4444;
+    --warm: #f59e0b;
+    --cool: #06b6d4;
+    --cold: #6366f1;
+    --ice: #a5f3fc;
+    --steam: #e2e8f0;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.78);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0c1e3a 0%, #1a1040 50%, #0c1e3a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1320px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 18px; }
+  header h1 { font-size: 2.4rem; background: linear-gradient(90deg, var(--cold), var(--cool), var(--warm), var(--hot)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 1rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 12px 22px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(59,130,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 720px; }
+  .panel h3 { font-size: 1.15rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .concept-box { font-size: 1.02rem; text-align: left; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 12px 0; line-height: 1.9; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--hot); font-weight: 600; }
+  .concept-box .hl2 { color: var(--cool); font-weight: 600; }
+  .concept-box .hl3 { color: var(--warm); font-weight: 600; }
+  .concept-box .hl4 { color: var(--cold); font-weight: 600; }
+
+  .formula { display: inline-block; background: rgba(245,158,11,0.15); padding: 6px 14px; border-radius: 8px; font-family: "Times New Roman", serif; font-size: 1.15rem; color: #fbbf24; margin: 8px 0; font-style: italic; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 120px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--warm); font-weight: 600; font-size: 13px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 16px; border-radius: 10px; background: rgba(59,130,246,0.1); border: 2px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 14px; color: #93c5fd; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .data-display { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+  .data-item { text-align: center; padding: 12px 8px; background: rgba(255,255,255,0.05); border-radius: 10px; }
+  .data-item .label { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+  .data-item .value { font-size: 1.3rem; font-weight: 700; font-family: monospace; }
+  .data-item .unit { font-size: 11px; color: #64748b; margin-left: 2px; }
+  .data-item.hot .value { color: var(--hot); }
+  .data-item.warm .value { color: var(--warm); }
+  .data-item.cool .value { color: var(--cool); }
+  .data-item.cold .value { color: var(--cold); }
+
+  .state-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+  .state-card { text-align: center; padding: 14px 8px; background: rgba(255,255,255,0.05); border-radius: 12px; border: 2px solid transparent; transition: all .3s; cursor: pointer; }
+  .state-card.active-state { border-color: var(--primary); background: rgba(59,130,246,0.15); }
+  .state-card .emoji { font-size: 2rem; margin-bottom: 6px; }
+  .state-card .name { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+  .state-card .temp { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+  .change-arrow { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; background: rgba(255,255,255,0.04); border-radius: 10px; margin: 8px 0; font-size: 14px; }
+  .change-arrow .arrow { font-size: 1.4rem; }
+  .change-arrow .absorb { color: var(--hot); }
+  .change-arrow .release { color: var(--cool); }
+
+  .quiz { margin-top: 16px; padding: 18px; background: rgba(59,130,246,0.1); border-radius: 14px; border: 2px solid rgba(59,130,246,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 10px; }
+  .quiz-opt { padding: 12px 16px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.2); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 14px; display: none; }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.ok { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+  .quiz-feedback.no { background: rgba(239,68,68,0.15); color: #fca5a5; }
+  .quiz-next { margin-top: 12px; padding: 10px 24px; border-radius: 10px; background: var(--primary); color: white; border: none; cursor: pointer; font-size: 14px; font-weight: 600; display: none; }
+  .quiz-next.show { display: inline-block; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .legend { display: flex; gap: 16px; justify-content: center; font-size: 13px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+  .btn-action { padding: 10px 24px; border-radius: 10px; background: var(--primary); color: white; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: all .2s; }
+  .btn-action:hover { filter: brightness(1.15); }
+  .btn-action.secondary { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); }
+
+  .progress-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+</style>
+<script src="assets/touch.js"></script>
+<script src="assets/common.js"></script>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🌡️ 物态变化</h1>
+    <p>初中物理 · 八年级 · 温度与物态变化互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(0)">🌡️ 温度计</div>
+    <div class="tab" onclick="switchTab(1)">📈 熔化与凝固</div>
+    <div class="tab" onclick="switchTab(2)">🔬 物态变化</div>
+    <div class="tab" onclick="switchTab(3)">🎯 知识闯关</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="760" height="540"></canvas>
+    </div>
+    <div class="panel" id="controlPanel">
+      <!-- 动态内容 -->
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('controlPanel');
+let currentTab = 0;
+let animId = null;
+
+/* ===== 工具函数 ===== */
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawRoundRect(x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  if (fill) { ctx.fill(); }
+  if (stroke) { ctx.stroke(); }
+}
+
+function tempToColor(t) {
+  // -30 ~ 120 映射到颜色
+  const ratio = Math.max(0, Math.min(1, (t + 30) / 150));
+  if (ratio < 0.25) return `hsl(220, 80%, ${50 + ratio * 80}%)`;
+  if (ratio < 0.5) return `hsl(${180 + (ratio - 0.25) * 160}, 75%, 55%)`;
+  if (ratio < 0.75) return `hsl(${40 - (ratio - 0.5) * 80}, 85%, 55%)`;
+  return `hsl(${0 + (1 - ratio) * 20}, 85%, ${55 - (ratio - 0.75) * 40}%)`;
+}
+
+/* ===== Tab 切换 ===== */
+function switchTab(idx) {
+  currentTab = idx;
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  if (idx === 0) initThermometer();
+  else if (idx === 1) initMeltFreeze();
+  else if (idx === 2) initStateChange();
+  else if (idx === 3) initQuiz();
+}
+
+/* ==========================================
+   TAB 0: 温度计原理
+   ========================================== */
+let thermTemp = 25;
+let thermTarget = 25;
+let thermParticles = [];
+
+function initThermometer() {
+  thermTemp = 25;
+  thermTarget = 25;
+  thermParticles = [];
+  for (let i = 0; i < 40; i++) {
+    thermParticles.push({
+      x: Math.random() * 760,
+      y: Math.random() * 540,
+      vx: (Math.random() - 0.5) * 1.5,
+      vy: (Math.random() - 0.5) * 1.5,
+      r: 3 + Math.random() * 4,
+      hue: Math.random() * 360
+    });
+  }
+  renderThermPanel();
+  drawThermFrame();
+}
+
+function renderThermPanel() {
+  panel.innerHTML = `
+    <h3>🌡️ 温度计原理</h3>
+    <div class="concept-box">
+      温度计利用液体的<span class="hl">热胀冷缩</span>原理工作。<br>
+      温度升高 → 液体分子运动<span class="hl">加快</span>，间距<span class="hl">增大</span>，体积膨胀<br>
+      温度降低 → 液体分子运动<span class="hl2">减慢</span>，间距<span class="hl2">减小</span>，体积收缩
+    </div>
+    <div class="slider-row">
+      <label>目标温度</label>
+      <input type="range" min="-20" max="110" value="${thermTarget}" oninput="thermTarget=+this.value; document.getElementById('thermVal').textContent=this.value+'°C'">
+      <span class="val" id="thermVal">${thermTarget}°C</span>
+    </div>
+    <div class="data-display">
+      <div class="data-item hot"><div class="label">当前温度</div><div class="value" id="thermCur">${thermTemp.toFixed(1)}<span class="unit">°C</span></div></div>
+      <div class="data-item cool"><div class="label">液柱高度</div><div class="value" id="thermH">--<span class="unit">%</span></div></div>
+      <div class="data-item warm"><div class="label">分子速度</div><div class="value" id="thermV">--<span class="unit">m/s</span></div></div>
+    </div>
+    <div class="concept-box" style="border-left-color: var(--warm);">
+      <b>📏 常见温度计</b><br>
+      • 实验室温度计：-20°C ~ 110°C<br>
+      • 体温计：35°C ~ 42°C（有缩口）<br>
+      • 寒暑表：-30°C ~ 50°C
+    </div>
+    <div class="concept-box" style="border-left-color: var(--cool);">
+      <b>💡 使用要点</b><br>
+      • 玻璃泡完全接触被测物体<br>
+      • 等待示数稳定后再读数<br>
+      • 读数时视线与液柱上表面相平
+    </div>
+  `;
+}
+
+function drawThermFrame() {
+  if (currentTab !== 0) return;
+  clearCanvas();
+
+  // 温度平滑过渡
+  thermTemp += (thermTarget - thermTemp) * 0.03;
+
+  const W = canvas.width, H = canvas.height;
+
+  // 背景粒子（分子运动模拟）
+  const speed = Math.max(0.3, (thermTemp + 30) / 100);
+  thermParticles.forEach(p => {
+    p.x += p.vx * speed;
+    p.y += p.vy * speed;
+    if (p.x < 0 || p.x > W) p.vx *= -1;
+    if (p.y < 0 || p.y > H) p.vy *= -1;
+    const alpha = 0.3 + speed * 0.2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * (0.8 + speed * 0.3), 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${p.hue}, 70%, 60%, ${alpha})`;
+    ctx.fill();
+  });
+
+  // 温度计绘制
+  const tx = W / 2, ty = 40;
+  const tubeW = 36, tubeH = 380;
+  const bulbR = 32;
+  const tubeTop = ty;
+  const tubeBot = ty + tubeH;
+
+  // 外管
+  ctx.save();
+  ctx.strokeStyle = 'rgba(200,220,255,0.5)';
+  ctx.lineWidth = 3;
+  ctx.fillStyle = 'rgba(30,40,70,0.6)';
+  // 管身
+  drawRoundRect(tx - tubeW / 2, tubeTop, tubeW, tubeH, 18, 'rgba(30,40,70,0.6)', 'rgba(200,220,255,0.5)');
+  // 玻璃泡
+  ctx.beginPath();
+  ctx.arc(tx, tubeBot + bulbR - 5, bulbR, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(30,40,70,0.6)';
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // 液柱
+  const fillRatio = Math.max(0, Math.min(1, (thermTemp + 20) / 130));
+  const liquidH = fillRatio * tubeH;
+  const liquidTop = tubeBot - liquidH;
+  const color = tempToColor(thermTemp);
+
+  // 管中液柱
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(tx - tubeW / 2 + 4, liquidTop, tubeW - 8, liquidH);
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // 玻璃泡中液体
+  ctx.beginPath();
+  ctx.arc(tx, tubeBot + bulbR - 5, bulbR - 4, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+
+  // 刻度
+  ctx.save();
+  ctx.font = '12px monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'right';
+  for (let t = -20; t <= 110; t += 10) {
+    const ratio = (t + 20) / 130;
+    const yy = tubeBot - ratio * tubeH;
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(tx + tubeW / 2 + 4, yy, 10, 1);
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(t + '°', tx + tubeW / 2 + 40, yy + 4);
+  }
+  // 当前温度指示线
+  const curY = tubeBot - fillRatio * tubeH;
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(tx - tubeW / 2 - 20, curY);
+  ctx.lineTo(tx + tubeW / 2 + 4, curY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 14px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(thermTemp.toFixed(1) + '°C', tx - tubeW / 2 - 80, curY + 5);
+  ctx.restore();
+
+  // 温度标注
+  ctx.save();
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = color;
+  ctx.fillText(thermTemp > 50 ? '🔥 高温' : thermTemp > 20 ? '☀️ 常温' : thermTemp > 0 ? '🌤️ 低温' : '❄️ 严寒', tx, tubeBot + bulbR * 2 + 30);
+  ctx.restore();
+
+  // 更新面板数据
+  const hEl = document.getElementById('thermH');
+  const vEl = document.getElementById('thermCur');
+  const spEl = document.getElementById('thermV');
+  if (hEl) hEl.innerHTML = (fillRatio * 100).toFixed(0) + '<span class="unit">%</span>';
+  if (vEl) vEl.innerHTML = thermTemp.toFixed(1) + '<span class="unit">°C</span>';
+  if (spEl) spEl.innerHTML = (speed * 500).toFixed(0) + '<span class="unit">m/s</span>';
+
+  animId = requestAnimationFrame(drawThermFrame);
+}
+
+/* ==========================================
+   TAB 1: 熔化与凝固曲线
+   ========================================== */
+let meltMode = 'heat'; // heat / cool
+let meltTime = 0;
+let meltTemp = -10;
+let meltCurveData = [];
+let meltPaused = false;
+let meltSpeed = 1;
+
+function initMeltFreeze() {
+  meltMode = 'heat';
+  meltTime = 0;
+  meltTemp = -10;
+  meltCurveData = [];
+  meltPaused = false;
+  meltSpeed = 1;
+  renderMeltPanel();
+  drawMeltFrame();
+}
+
+function renderMeltPanel() {
+  panel.innerHTML = `
+    <h3>📈 熔化与凝固曲线</h3>
+    <div class="mode-switch">
+      <div class="mode-btn ${meltMode === 'heat' ? 'active' : ''}" onclick="setMeltMode('heat')">🔥 加热（熔化）</div>
+      <div class="mode-btn ${meltMode === 'cool' ? 'active' : ''}" onclick="setMeltMode('cool')">❄️ 冷却（凝固）</div>
+    </div>
+    <div class="concept-box">
+      <b>冰（晶体）的熔化</b><br>
+      冰在 <span class="hl">0°C</span> 时开始熔化，熔化过程中温度<span class="hl">保持不变</span>，<br>
+      直到全部变为水后温度才继续升高。<br>
+      <span class="formula">熔化条件：达到熔点 + 继续吸热</span>
+    </div>
+    <div style="display:flex; gap:10px; margin:12px 0;">
+      <button class="btn-action" onclick="meltPaused=!meltPaused">${meltPaused ? '▶ 继续' : '⏸ 暂停'}</button>
+      <button class="btn-action secondary" onclick="meltTime=0;meltCurveData=[];meltTemp=${meltMode==='heat'?-10:110}">🔄 重置</button>
+    </div>
+    <div class="slider-row">
+      <label>加热速度</label>
+      <input type="range" min="0.3" max="3" step="0.1" value="${meltSpeed}" oninput="meltSpeed=+this.value; document.getElementById('speedVal').textContent=this.value+'x'">
+      <span class="val" id="speedVal">${meltSpeed}x</span>
+    </div>
+    <div class="data-display">
+      <div class="data-item hot"><div class="label">当前温度</div><div class="value">${meltTemp.toFixed(1)}<span class="unit">°C</span></div></div>
+      <div class="data-item cool"><div class="label">时间</div><div class="value">${meltTime.toFixed(0)}<span class="unit">s</span></div></div>
+      <div class="data-item warm"><div class="label">状态</div><div class="value" style="font-size:1rem;">${getStateName(meltTemp, meltMode)}</div></div>
+    </div>
+    <div class="concept-box" style="border-left-color: var(--cool);">
+      <b>📊 曲线解读</b><br>
+      • <span class="hl2">AB段</span>：固态升温（冰升温到0°C）<br>
+      • <span class="hl">BC段</span>：熔化过程（温度不变 = 熔点）<br>
+      • <span class="hl3">CD段</span>：液态升温（水升温到100°C）<br>
+      • <span class="hl">DE段</span>：沸腾过程（温度不变 = 沸点）
+    </div>
+  `;
+}
+
+function getStateName(t, mode) {
+  if (mode === 'heat') {
+    if (t < 0) return '🧊 固态';
+    if (t >= 0 && t < 100) return t === 0 ? '🧊→💧 熔化中' : '💧 液态';
+    return t === 100 ? '💧→☁️ 沸腾中' : '☁️ 气态';
+  } else {
+    if (t > 100) return '☁️ 气态';
+    if (t > 0 && t <= 100) return t === 100 ? '💧→☁️ 沸腾中' : '💧 液态';
+    return t === 0 ? '💧→🧊 凝固中' : '🧊 固态';
+  }
+}
+
+function setMeltMode(m) {
+  meltMode = m;
+  meltTime = 0;
+  meltCurveData = [];
+  meltTemp = m === 'heat' ? -10 : 110;
+  renderMeltPanel();
+}
+
+function drawMeltFrame() {
+  if (currentTab !== 1) return;
+  clearCanvas();
+  const W = canvas.width, H = canvas.height;
+
+  if (!meltPaused) {
+    meltTime += 0.5 * meltSpeed;
+
+    if (meltMode === 'heat') {
+      // 加热曲线逻辑
+      if (meltTemp < 0) { meltTemp += 0.15 * meltSpeed; }
+      else if (meltTemp < 0.5 && meltTime < 80) { meltTemp = 0; } // 熔化平台
+      else if (meltTemp < 100) { meltTemp += 0.12 * meltSpeed; }
+      else if (meltTemp < 100.5 && meltTime < 200) { meltTemp = 100; } // 沸腾平台
+      else { meltTemp = Math.min(120, meltTemp + 0.05 * meltSpeed); }
+    } else {
+      // 冷却曲线逻辑
+      if (meltTemp > 100) { meltTemp -= 0.15 * meltSpeed; }
+      else if (meltTemp > 99.5 && meltTime < 80) { meltTemp = 100; }
+      else if (meltTemp > 0) { meltTemp -= 0.12 * meltSpeed; }
+      else if (meltTemp > -0.5 && meltTime < 200) { meltTemp = 0; }
+      else { meltTemp = Math.max(-20, meltTemp - 0.05 * meltSpeed); }
+    }
+    meltCurveData.push({ t: meltTime, temp: meltTemp });
+    if (meltCurveData.length > 600) meltCurveData.shift();
+  }
+
+  // 绘制坐标系
+  const ox = 80, oy = H - 60;
+  const gw = W - 120, gh = H - 100;
+
+  // 网格
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    const y = oy - (i / 10) * gh;
+    ctx.beginPath(); ctx.moveTo(ox, y); ctx.lineTo(ox + gw, y); ctx.stroke();
+  }
+  for (let i = 0; i <= 12; i++) {
+    const x = ox + (i / 12) * gw;
+    ctx.beginPath(); ctx.moveTo(x, oy); ctx.lineTo(x, oy - gh); ctx.stroke();
+  }
+  ctx.restore();
+
+  // 轴
+  ctx.save();
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(ox, oy - gh); ctx.lineTo(ox, oy); ctx.lineTo(ox + gw, oy); ctx.stroke();
+
+  // Y轴标签（温度）
+  ctx.font = '12px monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'right';
+  for (let t = -20; t <= 120; t += 20) {
+    const ratio = (t + 20) / 140;
+    const y = oy - ratio * gh;
+    ctx.fillText(t + '°C', ox - 8, y + 4);
+    // 特殊标注
+    if (t === 0) { ctx.fillStyle = '#06b6d4'; ctx.fillText('熔点', ox - 40, y + 4); ctx.fillStyle = '#94a3b8'; }
+    if (t === 100) { ctx.fillStyle = '#ef4444'; ctx.fillText('沸点', ox - 40, y + 4); ctx.fillStyle = '#94a3b8'; }
+  }
+
+  // X轴标签
+  ctx.textAlign = 'center';
+  const maxT = Math.max(60, meltTime + 10);
+  for (let i = 0; i <= 5; i++) {
+    const tv = (i / 5) * maxT;
+    const x = ox + (tv / maxT) * gw;
+    ctx.fillText(tv.toFixed(0) + 's', x, oy + 20);
+  }
+
+  // 标题
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = '#e2e8f0';
+  ctx.textAlign = 'center';
+  ctx.fillText(meltMode === 'heat' ? '🔥 加热曲线（冰→水→水蒸气）' : '❄️ 冷却曲线（水蒸气→水→冰）', ox + gw / 2, 25);
+  ctx.restore();
+
+  // 绘制曲线
+  if (meltCurveData.length > 1) {
+    ctx.save();
+    ctx.beginPath();
+    meltCurveData.forEach((d, i) => {
+      const x = ox + (d.t / maxT) * gw;
+      const ratio = (d.temp + 20) / 140;
+      const y = oy - ratio * gh;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = meltMode === 'heat' ? '#ef4444' : '#06b6d4';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // 当前点
+    const last = meltCurveData[meltCurveData.length - 1];
+    const lx = ox + (last.t / maxT) * gw;
+    const ly = oy - ((last.temp + 20) / 140) * gh;
+    ctx.beginPath();
+    ctx.arc(lx, ly, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 状态指示（底部小图）
+  drawMiniState(meltTemp, ox + gw / 2, oy + 42);
+
+  // 更新面板
+  if (!meltPaused) renderMeltPanel();
+
+  animId = requestAnimationFrame(drawMeltFrame);
+}
+
+function drawMiniState(temp, x, y) {
+  ctx.save();
+  ctx.font = '20px sans-serif';
+  ctx.textAlign = 'center';
+  let emoji = '🧊';
+  if (temp > 0 && temp < 100) emoji = '💧';
+  if (temp >= 100) emoji = '☁️';
+  if (temp === 0) emoji = '🧊💧';
+  if (temp === 100) emoji = '💧☁️';
+  ctx.fillText(emoji, x, y);
+  ctx.restore();
+}
+
+/* ==========================================
+   TAB 2: 六种物态变化
+   ========================================== */
+let stateMode = 0; // 0=熔化 1=凝固 2=汽化 3=液化 4=升华 5=凝华
+let stateAnimT = 0;
+
+const stateChanges = [
+  { name: '熔化', from: '固态', to: '液态', emoji: '🧊→💧', heat: '吸热', color: '#ef4444', desc: '固态变为液态，如冰融化成水' },
+  { name: '凝固', from: '液态', to: '固态', emoji: '💧→🧊', heat: '放热', color: '#06b6d4', desc: '液态变为固态，如水结成冰' },
+  { name: '汽化', from: '液态', to: '气态', emoji: '💧→☁️', heat: '吸热', color: '#f59e0b', desc: '液态变为气态，如水蒸发成水蒸气' },
+  { name: '液化', from: '气态', to: '液态', emoji: '☁️→💧', heat: '放热', color: '#6366f1', desc: '气态变为液态，如水蒸气凝结成水珠' },
+  { name: '升华', from: '固态', to: '气态', emoji: '🧊→☁️', heat: '吸热', color: '#ec4899', desc: '固态直接变为气态，如干冰升华' },
+  { name: '凝华', from: '气态', to: '固态', emoji: '☁️→🧊', heat: '放热', color: '#14b8a6', desc: '气态直接变为固态，如霜的形成' }
+];
+
+function initStateChange() {
+  stateMode = 0;
+  stateAnimT = 0;
+  renderStatePanel();
+  drawStateFrame();
+}
+
+function renderStatePanel() {
+  const sc = stateChanges[stateMode];
+  panel.innerHTML = `
+    <h3>🔬 六种物态变化</h3>
+    <div class="mode-switch">
+      ${stateChanges.map((s, i) => `<div class="mode-btn ${i === stateMode ? 'active' : ''}" onclick="setStateMode(${i})">${s.emoji}</div>`).join('')}
+    </div>
+    <div class="concept-box" style="border-left-color: ${sc.color};">
+      <b>${sc.emoji} ${sc.name}</b><br>
+      ${sc.from} → ${sc.to}<br>
+      条件：<span class="${sc.heat === '吸热' ? 'hl' : 'hl2'}">${sc.heat}</span><br>
+      ${sc.desc}
+    </div>
+    <div class="state-grid">
+      <div class="state-card ${sc.from === '固态' ? 'active-state' : ''}"><div class="emoji">🧊</div><div class="name">固态</div><div class="temp">分子紧密排列</div></div>
+      <div class="state-card ${sc.from === '液态' || sc.to === '液态' ? 'active-state' : ''}"><div class="emoji">💧</div><div class="name">液态</div><div class="temp">分子可流动</div></div>
+      <div class="state-card ${sc.to === '气态' ? 'active-state' : ''}"><div class="emoji">☁️</div><div class="name">气态</div><div class="temp">分子自由运动</div></div>
+    </div>
+    <div class="change-arrow">
+      <span>${sc.from}</span>
+      <span class="arrow">${sc.heat === '吸热' ? '→' : '←'}</span>
+      <span class="${sc.heat === '吸热' ? 'absorb' : 'release'}">${sc.heat}</span>
+      <span class="arrow">→</span>
+      <span>${sc.to}</span>
+    </div>
+    <div class="concept-box" style="border-left-color: var(--warm);">
+      <b>🌍 生活实例</b><br>
+      ${getLifeExamples(stateMode)}
+    </div>
+  `;
+}
+
+function getLifeExamples(mode) {
+  const examples = [
+    '• 春天冰雪融化 🌸<br>• 蜡烛燃烧时蜡油滴落 🕯️<br>• 铁块在高温下熔化成铁水 🔥',
+    '• 冬天湖面结冰 ⛸️<br>• 熔岩冷却成岩石 🌋<br>• 制作冰棍 🍦',
+    '• 湿衣服晾干 👕<br>• 烧水时水逐渐减少 🫖<br>• 酒精擦拭后很快消失 💊',
+    '• 冬天窗户上的水珠 🪟<br>• 从冰箱拿出饮料瓶外壁的水珠 🥤<br>• 雾和露的形成 🌫️',
+    '• 干冰（固态CO₂）变成气体 🧊💨<br>• 衣柜里的樟脑丸逐渐变小 👔<br>• 冰冻的衣服在低温下也能变干 ❄️',
+    '• 冬天窗户上的冰花 ❄️🪟<br>• 霜的形成（空气中的水蒸气直接变成冰晶）🌿<br>• 雪花的形成 ☃️'
+  ];
+  return examples[mode];
+}
+
+function setStateMode(m) {
+  stateMode = m;
+  stateAnimT = 0;
+  renderStatePanel();
+}
+
+function drawStateFrame() {
+  if (currentTab !== 2) return;
+  clearCanvas();
+  const W = canvas.width, H = canvas.height;
+  stateAnimT += 0.02;
+
+  const sc = stateChanges[stateMode];
+
+  // 标题
+  ctx.save();
+  ctx.font = 'bold 20px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = sc.color;
+  ctx.fillText(`${sc.emoji} ${sc.name}`, W / 2, 35);
+  ctx.font = '14px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`${sc.from} → ${sc.to}（${sc.heat}）`, W / 2, 58);
+  ctx.restore();
+
+  // 根据模式绘制不同动画
+  if (stateMode === 0) drawMeltAnim(W, H);
+  else if (stateMode === 1) drawFreezeAnim(W, H);
+  else if (stateMode === 2) drawVaporAnim(W, H);
+  else if (stateMode === 3) drawCondenseAnim(W, H);
+  else if (stateMode === 4) drawSublimeAnim(W, H);
+  else drawDepositAnim(W, H);
+
+  animId = requestAnimationFrame(drawStateFrame);
+}
+
+/* 熔化动画：冰块逐渐变小，水出现 */
+function drawMeltAnim(W, H) {
+  const progress = (Math.sin(stateAnimT * 0.8) + 1) / 2; // 0~1
+  const cx = W / 2, cy = H / 2 + 20;
+
+  // 热源（火焰）
+  drawFlame(cx, cy + 120, 60 + Math.sin(stateAnimT * 5) * 10);
+
+  // 容器
+  ctx.save();
+  ctx.strokeStyle = 'rgba(200,220,255,0.4)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(cx - 120, cy - 60, 240, 180);
+  ctx.restore();
+
+  // 冰块（逐渐缩小）
+  const iceSize = 80 * (1 - progress * 0.7);
+  const iceY = cy + 60 - iceSize;
+  ctx.save();
+  ctx.fillStyle = `rgba(165,243,252,${0.7 - progress * 0.3})`;
+  ctx.strokeStyle = 'rgba(165,243,252,0.8)';
+  ctx.lineWidth = 2;
+  drawRoundRect(cx - iceSize, iceY, iceSize * 2, iceSize * 1.5, 8, `rgba(165,243,252,${0.7 - progress * 0.3})`, 'rgba(165,243,252,0.8)');
+  // 冰晶纹理
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 3; i++) {
+    const sx = cx - iceSize * 0.5 + i * iceSize * 0.5;
+    ctx.beginPath();
+    ctx.moveTo(sx, iceY + 10);
+    ctx.lineTo(sx + 10, iceY + iceSize * 0.8);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // 水（逐渐增多）
+  const waterH = progress * 100;
+  ctx.save();
+  ctx.fillStyle = `rgba(59,130,246,${0.3 + progress * 0.2})`;
+  ctx.fillRect(cx - 118, cy + 120 - waterH, 236, waterH);
+  // 水面波纹
+  ctx.strokeStyle = 'rgba(147,197,253,0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let x = cx - 118; x < cx + 118; x += 2) {
+    const waveY = cy + 120 - waterH + Math.sin((x + stateAnimT * 100) * 0.05) * 3;
+    if (x === cx - 118) ctx.moveTo(x, waveY);
+    else ctx.lineTo(x, waveY);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // 温度显示
+  ctx.save();
+  ctx.font = 'bold 16px monospace';
+  ctx.fillStyle = '#fbbf24';
+  ctx.textAlign = 'left';
+  ctx.fillText(`温度: 0°C（熔点）`, 30, H - 30);
+  ctx.fillStyle = '#ef4444';
+  ctx.fillText('吸热 →', 30, H - 55);
+  ctx.restore();
+}
+
+function drawFlame(x, y, size) {
+  ctx.save();
+  const grad = ctx.createRadialGradient(x, y, 0, x, y, size);
+  grad.addColorStop(0, 'rgba(255,200,50,0.9)');
+  grad.addColorStop(0.5, 'rgba(255,100,20,0.6)');
+  grad.addColorStop(1, 'rgba(255,50,0,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(x, y, size, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+/* 凝固动画 */
+function drawFreezeAnim(W, H) {
+  const progress = (Math.sin(stateAnimT * 0.8) + 1) / 2;
+  const cx = W / 2, cy = H / 2 + 20;
+
+  // 冷源
+  ctx.save();
+  const grad = ctx.createRadialGradient(cx, cy + 130, 0, cx, cy + 130, 80);
+  grad.addColorStop(0, 'rgba(99,102,241,0.6)');
+  grad.addColorStop(1, 'rgba(99,102,241,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy + 130, 80, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '30px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('❄️', cx, cy + 140);
+  ctx.restore();
+
+  // 容器
+  ctx.save();
+  ctx.strokeStyle = 'rgba(200,220,255,0.4)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(cx - 120, cy - 60, 240, 180);
+  ctx.restore();
+
+  // 水（逐渐减少）
+  const waterH = (1 - progress) * 100;
+  ctx.save();
+  ctx.fillStyle = `rgba(59,130,246,${0.3 + (1 - progress) * 0.2})`;
+  ctx.fillRect(cx - 118, cy + 120 - waterH, 236, waterH);
+  ctx.restore();
+
+  // 冰（逐渐增大）
+  const iceSize = 80 * progress;
+  if (iceSize > 5) {
+    const iceY = cy + 60 - iceSize;
+    ctx.save();
+    drawRoundRect(cx - iceSize, iceY, iceSize * 2, iceSize * 1.5, 8, `rgba(165,243,252,${0.4 + progress * 0.4})`, 'rgba(165,243,252,0.8)');
+    ctx.restore();
+  }
+
+  // 雪花粒子
+  for (let i = 0; i < 8; i++) {
+    const angle = stateAnimT * 0.5 + i * Math.PI / 4;
+    const dist = 60 + Math.sin(stateAnimT + i) * 20;
+    const sx = cx + Math.cos(angle) * dist;
+    const sy = cy + 30 + Math.sin(angle) * dist * 0.5;
+    ctx.save();
+    ctx.font = `${12 + progress * 8}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = 0.3 + progress * 0.5;
+    ctx.fillText('❄️', sx, sy);
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.font = 'bold 16px monospace';
+  ctx.fillStyle = '#fbbf24';
+  ctx.textAlign = 'left';
+  ctx.fillText(`温度: 0°C（凝固点）`, 30, H - 30);
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText('← 放热', 30, H - 55);
+  ctx.restore();
+}
+
+/* 汽化动画 */
+function drawVaporAnim(W, H) {
+  const progress = (Math.sin(stateAnimT * 0.6) + 1) / 2;
+  const cx = W / 2, cy = H / 2 + 40;
+
+  // 加热器
+  drawFlame(cx, cy + 110, 50 + Math.sin(stateAnimT * 6) * 8);
+
+  // 容器
+  ctx.save();
+  ctx.strokeStyle = 'rgba(200,220,255,0.4)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(cx - 120, cy - 80, 240, 180);
+  ctx.restore();
+
+  // 水（减少）
+  const waterH = (1 - progress * 0.6) * 90;
+  ctx.save();
+  ctx.fillStyle = 'rgba(59,130,246,0.4)';
+  ctx.fillRect(cx - 118, cy + 100 - waterH, 236, waterH);
+  // 气泡
+  for (let i = 0; i < 6; i++) {
+    const bx = cx - 80 + Math.random() * 160;
+    const by = cy + 100 - Math.random() * waterH;
+    const br = 3 + Math.random() * 5;
+    ctx.beginPath();
+    ctx.arc(bx, by, br, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(147,197,253,0.3)';
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // 水蒸气粒子（上升）
+  for (let i = 0; i < 15; i++) {
+    const t = (stateAnimT * 0.8 + i * 0.3) % 3;
+    const px = cx - 60 + (i % 5) * 30 + Math.sin(stateAnimT + i) * 15;
+    const py = cy - 80 - t * 60;
+    const alpha = Math.max(0, 1 - t / 3) * 0.5;
+    const size = 8 + t * 10;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(226,232,240,${alpha})`;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.font = 'bold 16px monospace';
+  ctx.fillStyle = '#fbbf24';
+  ctx.textAlign = 'left';
+  ctx.fillText(`温度: 100°C（沸点）`, 30, H - 30);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('吸热 →', 30, H - 55);
+  ctx.restore();
+}
+
+/* 液化动画 */
+function drawCondenseAnim(W, H) {
+  const progress = (Math.sin(stateAnimT * 0.6) + 1) / 2;
+  const cx = W / 2, cy = H / 2 + 20;
+
+  // 冷表面（玻璃板）
+  ctx.save();
+  ctx.fillStyle = 'rgba(148,163,184,0.2)';
+  ctx.fillRect(cx - 140, cy - 20, 280, 12);
+  ctx.strokeStyle = 'rgba(200,220,255,0.5)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx - 140, cy - 20, 280, 12);
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'center';
+  ctx.fillText('冷玻璃板', cx, cy - 28);
+  ctx.restore();
+
+  // 水蒸气上升
+  for (let i = 0; i < 12; i++) {
+    const t = (stateAnimT * 0.5 + i * 0.25) % 2.5;
+    const px = cx - 80 + (i % 6) * 30 + Math.sin(stateAnimT * 0.7 + i) * 10;
+    const py = cy + 120 - t * 60;
+    const alpha = Math.max(0, 1 - t / 2.5) * 0.5;
+    const size = 10 + t * 5;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(226,232,240,${alpha})`;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 水珠凝结（在玻璃板下方）
+  const dropCount = Math.floor(progress * 8) + 2;
+  for (let i = 0; i < dropCount; i++) {
+    const dx = cx - 100 + i * 28;
+    const dy = cy - 6;
+    const dropSize = 4 + Math.sin(stateAnimT + i) * 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(dx, dy + dropSize, dropSize, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(59,130,246,0.6)';
+    ctx.fill();
+    // 水滴形状
+    ctx.beginPath();
+    ctx.moveTo(dx, dy - dropSize);
+    ctx.quadraticCurveTo(dx + dropSize, dy + dropSize * 0.5, dx, dy + dropSize * 2);
+    ctx.quadraticCurveTo(dx - dropSize, dy + dropSize * 0.5, dx, dy - dropSize);
+    ctx.fillStyle = 'rgba(96,165,250,0.7)';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 掉下的水滴
+  for (let i = 0; i < 3; i++) {
+    const fallT = (stateAnimT * 1.2 + i * 1.5) % 3;
+    if (fallT > 1.5) {
+      const fx = cx - 60 + i * 60;
+      const fy = cy + (fallT - 1.5) * 100;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(fx, fy, 4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(96,165,250,0.6)';
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  ctx.save();
+  ctx.font = 'bold 16px monospace';
+  ctx.fillStyle = '#fbbf24';
+  ctx.textAlign = 'left';
+  ctx.fillText(`冷表面 → 水蒸气液化`, 30, H - 30);
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText('← 放热', 30, H - 55);
+  ctx.restore();
+}
+
+/* 升华动画：干冰 */
+function drawSublimeAnim(W, H) {
+  const cx = W / 2, cy = H / 2 + 20;
+
+  // 干冰块
+  ctx.save();
+  const wobble = Math.sin(stateAnimT * 2) * 3;
+  drawRoundRect(cx - 60 + wobble, cy + 20, 120, 60, 10, 'rgba(200,220,255,0.5)', 'rgba(226,232,240,0.7)');
+  ctx.font = '14px sans-serif';
+  ctx.fillStyle = '#e2e8f0';
+  ctx.textAlign = 'center';
+  ctx.fillText('干冰（固态CO₂）', cx + wobble, cy + 55);
+  ctx.restore();
+
+  // 升华气体（大量白雾向上）
+  for (let i = 0; i < 25; i++) {
+    const t = (stateAnimT * 0.6 + i * 0.2) % 3;
+    const px = cx - 80 + (i % 8) * 22 + Math.sin(stateAnimT * 1.5 + i * 0.7) * 20;
+    const py = cy + 10 - t * 70;
+    const alpha = Math.max(0, 1 - t / 3) * 0.45;
+    const size = 12 + t * 15;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(226,232,240,${alpha})`;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 标签
+  ctx.save();
+  ctx.font = 'bold 16px monospace';
+  ctx.fillStyle = '#fbbf24';
+  ctx.textAlign = 'left';
+  ctx.fillText(`固态 → 气态（直接升华）`, 30, H - 30);
+  ctx.fillStyle = '#ec4899';
+  ctx.fillText('吸热 →', 30, H - 55);
+  ctx.restore();
+}
+
+/* 凝华动画：霜的形成 */
+function drawDepositAnim(W, H) {
+  const progress = (Math.sin(stateAnimT * 0.4) + 1) / 2;
+  const cx = W / 2, cy = H / 2;
+
+  // 冷表面（窗户/草地）
+  ctx.save();
+  ctx.fillStyle = 'rgba(30,40,70,0.8)';
+  drawRoundRect(cx - 160, cy - 10, 320, 140, 12, 'rgba(30,40,70,0.8)', 'rgba(100,116,139,0.5)');
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'center';
+  ctx.fillText('冷表面（窗户/草地）', cx, cy + 150);
+  ctx.restore();
+
+  // 水蒸气粒子（向下运动）
+  for (let i = 0; i < 10; i++) {
+    const t = (stateAnimT * 0.4 + i * 0.3) % 2;
+    const px = cx - 100 + (i % 5) * 50 + Math.sin(stateAnimT + i) * 15;
+    const py = 40 + t * (cy - 40);
+    const alpha = Math.max(0, 1 - t / 2) * 0.4;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, 8 + t * 4, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(226,232,240,${alpha})`;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 霜晶（在表面生长）
+  const crystalCount = Math.floor(progress * 20) + 5;
+  for (let i = 0; i < crystalCount; i++) {
+    const sx = cx - 140 + (i * 37) % 280;
+    const sy = cy + 5 + (i * 13) % 50;
+    const size = 5 + Math.sin(stateAnimT * 0.5 + i) * 3;
+    drawSnowflake(sx, sy, size, 0.3 + progress * 0.5);
+  }
+
+  ctx.save();
+  ctx.font = 'bold 16px monospace';
+  ctx.fillStyle = '#fbbf24';
+  ctx.textAlign = 'left';
+  ctx.fillText(`气态 → 固态（直接凝华）`, 30, H - 30);
+  ctx.fillStyle = '#14b8a6';
+  ctx.fillText('← 放热', 30, H - 55);
+  ctx.restore();
+}
+
+function drawSnowflake(x, y, size, alpha) {
+  ctx.save();
+  ctx.strokeStyle = `rgba(165,243,252,${alpha})`;
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(angle) * size, y + Math.sin(angle) * size);
+    ctx.stroke();
+    // 分支
+    const bx = x + Math.cos(angle) * size * 0.6;
+    const by = y + Math.sin(angle) * size * 0.6;
+    ctx.beginPath();
+    ctx.moveTo(bx, by);
+    ctx.lineTo(bx + Math.cos(angle + 0.5) * size * 0.3, by + Math.sin(angle + 0.5) * size * 0.3);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ==========================================
+   TAB 3: 知识闯关
+   ========================================== */
+const quizBank = [
+  { q: '冰在熔化过程中，温度会？', opts: ['持续升高', '保持不变', '持续降低', '先升后降'], ans: 1, explain: '冰是晶体，熔化时温度保持在0°C不变，直到全部熔化。' },
+  { q: '下列哪个过程需要吸热？', opts: ['水结冰', '水蒸气液化', '冰融化成水', '霜的形成'], ans: 2, explain: '熔化（固→液）需要吸热。结冰、液化、凝华都是放热过程。' },
+  { q: '体温计的缩口设计是为了？', opts: ['更美观', '可以离开人体读数', '测量更精确', '防止摔碎'], ans: 1, explain: '缩口使水银柱在离开人体后不会回落，方便读数。使用前需要甩一甩。' },
+  { q: '冬天窗户上的冰花属于哪种物态变化？', opts: ['凝固', '液化', '凝华', '熔化'], ans: 2, explain: '冰花是室内水蒸气遇到冰冷的玻璃直接变成固态冰晶，属于凝华现象。' },
+  { q: '湿衣服晾干属于什么物态变化？', opts: ['升华', '汽化（蒸发）', '液化', '熔化'], ans: 1, explain: '湿衣服上的水在常温下慢慢变成水蒸气散失到空气中，这是蒸发（汽化的一种形式）。' },
+  { q: '下列哪种方法可以加快蒸发？', opts: ['降低温度', '减小表面积', '加快空气流动', '增加湿度'], ans: 2, explain: '加快空气流动（如吹风）可以带走液面上方的水蒸气，加快蒸发。升高温度和增大表面积也能加快蒸发。' },
+  { q: '标准大气压下，水的沸点是？', opts: ['90°C', '100°C', '110°C', '0°C'], ans: 1, explain: '标准大气压下，水的沸点是100°C。气压降低，沸点降低；气压升高，沸点升高。' },
+  { q: '干冰升华常用于？', opts: ['制冷保鲜', '烧水', '结冰', '测量温度'], ans: 0, explain: '干冰（固态CO₂）升华时大量吸热，可用于制冷保鲜、舞台烟雾效果等。' },
+  { q: '晶体和非晶体的区别是？', opts: ['颜色不同', '晶体有固定熔点，非晶体没有', '重量不同', '硬度不同'], ans: 1, explain: '晶体（如冰、食盐、金属）有固定的熔点，熔化时温度不变；非晶体（如蜡、玻璃、沥青）没有固定熔点。' },
+  { q: '用酒精擦拭皮肤感觉凉爽，是因为？', opts: ['酒精温度低', '酒精蒸发吸热', '酒精是液体', '酒精有特殊气味'], ans: 1, explain: '酒精蒸发（汽化）时从皮肤吸收热量，使皮肤温度降低，所以感觉凉爽。' }
+];
+
+let quizIdx = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+// ─── PageProgress 接线（r112）───
+let totalCorrect = 0;
+const quizSolved = new Set();
+let stateChangeDone = false;
+function bumpTotalCorrect(qid) {
+  if (quizSolved.has(qid)) return;
+  quizSolved.add(qid);
+  totalCorrect++;
+  if (!stateChangeDone && totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('state-change')) {
+    stateChangeDone = true;
+    PageProgress.markDone('state-change');
+    if (typeof showToast === 'function') showToast('🎉 已完成「物态变化」，知识地图已点亮');
+  }
+}
+
+function initQuiz() {
+  quizIdx = 0;
+  quizScore = 0;
+  quizAnswered = false;
+  renderQuizPanel();
+  drawQuizFrame();
+}
+
+function renderQuizPanel() {
+  if (quizIdx >= quizBank.length) {
+    panel.innerHTML = `
+      <h3>🎯 闯关完成！</h3>
+      <div class="concept-box" style="border-left-color: #10b981;">
+        <b>🏆 最终成绩</b><br>
+        正确：${quizScore} / ${quizBank.length}<br>
+        正确率：${(quizScore / quizBank.length * 100).toFixed(0)}%<br>
+        ${quizScore >= 8 ? '🎉 太棒了！物态变化掌握得很好！' : quizScore >= 6 ? '👍 不错！再复习一下薄弱的地方。' : '📖 建议回顾前面的知识点再来挑战！'}
+      </div>
+      <button class="btn-action" onclick="initQuiz()">🔄 再来一次</button>
+    `;
+    return;
+  }
+
+  const q = quizBank[quizIdx];
+  quizAnswered = false;
+  panel.innerHTML = `
+    <h3>🎯 知识闯关 (${quizIdx + 1}/${quizBank.length})</h3>
+    <div class="progress-bar"><div class="progress-fill" style="width:${(quizIdx / quizBank.length) * 100}%; background: var(--primary);"></div></div>
+    <div class="quiz" style="margin-top:16px;">
+      <div class="quiz-q">${quizIdx + 1}. ${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" id="qopt${i}" onclick="answerQuiz(${i})">${String.fromCharCode(65 + i)}. ${o}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="quizFb"></div>
+      <button class="quiz-next" id="quizNext" onclick="nextQuiz()">下一题 →</button>
+    </div>
+    <div style="margin-top:16px; text-align:center; font-size:14px; color:#94a3b8;">
+      当前得分：<span style="color:#fbbf24; font-weight:700;">${quizScore}</span> / ${quizBank.length}
+    </div>
+  `;
+}
+
+function answerQuiz(idx) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = quizBank[quizIdx];
+  const correct = idx === q.ans;
+  if (correct) { quizScore++; bumpTotalCorrect(quizIdx); }
+
+  document.getElementById('qopt' + idx).classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) document.getElementById('qopt' + q.ans).classList.add('correct');
+
+  const fb = document.getElementById('quizFb');
+  fb.className = 'quiz-feedback show ' + (correct ? 'ok' : 'no');
+  fb.textContent = correct ? '✅ 正确！' + q.explain : '❌ 错误。' + q.explain;
+
+  document.getElementById('quizNext').classList.add('show');
+}
+
+function nextQuiz() {
+  quizIdx++;
+  renderQuizPanel();
+}
+
+function drawQuizFrame() {
+  if (currentTab !== 3) return;
+  clearCanvas();
+  const W = canvas.width, H = canvas.height;
+
+  // 背景装饰
+  ctx.save();
+  // 大标题
+  ctx.font = 'bold 28px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#e2e8f0';
+  ctx.fillText('🎯 物态变化知识闯关', W / 2, 50);
+
+  // 六种物态变化总结图
+  const states = ['🧊 固态', '💧 液态', '☁️ 气态'];
+  const colors = ['#6366f1', '#3b82f6', '#94a3b8'];
+  const changes = [
+    { from: 0, to: 1, name: '熔化', c: '#ef4444' },
+    { from: 1, to: 0, name: '凝固', c: '#06b6d4' },
+    { from: 1, to: 2, name: '汽化', c: '#f59e0b' },
+    { from: 2, to: 1, name: '液化', c: '#6366f1' },
+    { from: 0, to: 2, name: '升华', c: '#ec4899' },
+    { from: 2, to: 0, name: '凝华', c: '#14b8a6' }
+  ];
+
+  const positions = [
+    { x: W / 2, y: 180 },
+    { x: W / 2, y: 320 },
+    { x: W / 2, y: 460 }
+  ];
+
+  // 画状态圆圈
+  positions.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 50, 0, Math.PI * 2);
+    ctx.fillStyle = `${colors[i]}33`;
+    ctx.fill();
+    ctx.strokeStyle = colors[i];
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillStyle = colors[i];
+    ctx.fillText(states[i], p.x, p.y + 6);
+  });
+
+  // 画变化箭头
+  changes.forEach(ch => {
+    const from = positions[ch.from];
+    const to = positions[ch.to];
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const midX = (from.x + to.x) / 2 + (ch.from < ch.to ? 80 : -80);
+    const midY = (from.y + to.y) / 2;
+
+    ctx.save();
+    ctx.strokeStyle = ch.c;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(from.x + (ch.from < ch.to ? 40 : -40), from.y + dy * 0.2);
+    ctx.quadraticCurveTo(midX, midY, to.x + (ch.from < ch.to ? 40 : -40), to.y - dy * 0.2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 标签
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillStyle = ch.c;
+    ctx.textAlign = 'center';
+    ctx.fillText(ch.name, midX, midY);
+    ctx.restore();
+  });
+
+  // 进度
+  ctx.font = '16px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'center';
+  ctx.fillText(`进度：${quizIdx} / ${quizBank.length}  |  得分：${quizScore}`, W / 2, H - 20);
+
+  ctx.restore();
+
+  animId = requestAnimationFrame(drawQuizFrame);
+}
+
+/* 初始化 */
+switchTab(0);
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中物理"></script>
+</body>
+</html>

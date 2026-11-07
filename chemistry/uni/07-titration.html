@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>滴定分析 · 大学化学互动可视化</title>
+<style>
+  :root {
+    --primary: #06b6d4;
+    --accent: #f59e0b;
+    --acid: #ef4444;
+    --base: #3b82f6;
+    --endpoint: #10b981;
+    --indicator: #a78bfa;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0c4a6e 0%, #164e63 50%, #0c4a6e 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.3rem; background: linear-gradient(90deg, var(--acid), var(--primary), var(--base)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 0.95rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 11px 22px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 14px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(6,182,212,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 660px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 10px; color: #e2e8f0; }
+
+  .concept-box { font-size: 0.98rem; text-align: left; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 10px 0; line-height: 1.85; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--acid); font-weight: 600; }
+  .concept-box .hl2 { color: var(--base); font-weight: 600; }
+  .concept-box .hl3 { color: var(--endpoint); font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 120px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--accent); font-weight: 600; font-size: 12px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 7px 14px; border-radius: 10px; background: rgba(6,182,212,0.1); border: 2px solid rgba(6,182,212,0.3); cursor: pointer; font-size: 13px; color: #67e8f9; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 12px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; line-height: 1.5; }
+  .info-grid b { color: #fbbf24; }
+
+  .formula-box { padding: 12px; background: rgba(6,182,212,0.08); border-radius: 12px; margin: 10px 0; font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; color: #67e8f9; border: 1px solid rgba(6,182,212,0.2); }
+
+  .titration-controls { display: flex; gap: 10px; margin: 14px 0; align-items: center; flex-wrap: wrap; }
+  .titrate-btn { padding: 10px 24px; border-radius: 12px; border: none; cursor: pointer; font-size: 14px; background: linear-gradient(135deg, var(--primary), #0891b2); color: white; font-weight: 600; transition: all .2s; box-shadow: 0 4px 15px rgba(6,182,212,.3); }
+  .titrate-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(6,182,212,.4); }
+  .titrate-btn:active { transform: translateY(0); }
+  .reset-btn { padding: 10px 24px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; font-size: 14px; background: transparent; color: #94a3b8; font-weight: 500; transition: all .2s; }
+  .reset-btn:hover { background: rgba(255,255,255,0.1); }
+
+  .speed-control { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #94a3b8; }
+  .speed-control input { width: 80px; accent-color: var(--primary); }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(6,182,212,0.1); border-radius: 14px; border: 2px solid rgba(6,182,212,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 13px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; color: #67e8f9; min-height: 20px; line-height: 1.5; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 12px; }
+  .quiz-nav button { padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .calc-input { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 13px; }
+  .calc-input label { flex: 0 0 130px; color: #cbd5e1; }
+  .calc-input input[type=number] { width: 100px; padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white; font-size: 13px; }
+  .calc-input select { padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white; font-size: 13px; }
+  .calc-result { padding: 12px; background: rgba(16,185,129,0.1); border-radius: 10px; margin-top: 10px; font-size: 14px; color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .calc-btn { padding: 8px 20px; border-radius: 10px; border: none; cursor: pointer; font-size: 13px; background: var(--endpoint); color: white; font-weight: 500; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔬 滴定分析</h1>
+    <p>大学化学 · 分析化学 · 互动可视化<span id="done-mark" style="color:#10b981;font-weight:700;margin-left:8px;font-size:14px;"></span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-section="curve">滴定曲线</div>
+    <div class="tab" data-section="indicator">指示剂选择</div>
+    <div class="tab" data-section="calc">计算练习</div>
+    <div class="tab" data-section="quiz">测试</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <!-- 滴定曲线 -->
+      <div class="section active" id="curve">
+        <canvas id="curveCanvas" width="600" height="500"></canvas>
+        <div class="legend">
+          <span style="color:#ef4444">● 强酸滴定强碱</span>
+          <span style="color:#3b82f6">● 强碱滴定强酸</span>
+          <span style="color:#10b981">● 等当点</span>
+        </div>
+        <div class="titration-controls">
+          <button class="titrate-btn" id="startTitrate">▶ 开始滴定</button>
+          <button class="reset-btn" id="resetTitrate">↻ 重置</button>
+          <div class="speed-control">
+            <span>速度：</span>
+            <input type="range" id="speedSlider" min="1" max="5" value="2">
+          </div>
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-ttype="strong-strong">强酸-强碱</div>
+          <div class="mode-btn" data-ttype="weak-strong">弱酸-强碱</div>
+          <div class="mode-btn" data-ttype="strong-weak">强酸-弱碱</div>
+        </div>
+      </div>
+
+      <!-- 指示剂 -->
+      <div class="section" id="indicator">
+        <canvas id="indicatorCanvas" width="600" height="500"></canvas>
+        <div class="legend">
+          <span style="color:#ef4444">● 甲基橙</span>
+          <span style="color:#a78bfa">● 酚酞</span>
+          <span style="color:#f59e0b">● 甲基红</span>
+        </div>
+      </div>
+
+      <!-- 计算练习 -->
+      <div class="section" id="calc">
+        <div style="padding: 20px;">
+          <h3 style="color: #e2e8f0; margin-bottom: 16px;">📐 滴定计算工具</h3>
+          <div class="calc-input">
+            <label>滴定类型：</label>
+            <select id="calcType">
+              <option value="acid-base">酸滴定碱</option>
+              <option value="base-acid">碱滴定酸</option>
+            </select>
+          </div>
+          <div class="calc-input">
+            <label>标准液浓度 (M)：</label>
+            <input type="number" id="stdConc" value="0.1" step="0.01" min="0.001">
+          </div>
+          <div class="calc-input">
+            <label>标准液体积 (mL)：</label>
+            <input type="number" id="stdVol" value="25" step="0.1" min="0">
+          </div>
+          <div class="calc-input">
+            <label>待测液浓度 (M)：</label>
+            <input type="number" id="unkConc" value="0.1" step="0.01" min="0.001">
+          </div>
+          <button class="calc-btn" id="calcBtn">计算等当点体积</button>
+          <div class="calc-result" id="calcResult">
+            等当点体积：<b>25.00 mL</b>
+          </div>
+
+          <div style="margin-top: 20px;">
+            <h3 style="color: #e2e8f0; margin-bottom: 12px;">📊 常见滴定反应</h3>
+            <div class="concept-box">
+              <b>酸碱滴定</b><br>
+              HCl + NaOH → NaCl + H₂O<br>
+              CH₃COOH + NaOH → CH₃COONa + H₂O
+            </div>
+            <div class="concept-box">
+              <b>氧化还原滴定</b><br>
+              2KMnO₄ + 5H₂C₂O₄ + 3H₂SO₄ → K₂SO₄ + 2MnSO₄ + 10CO₂ + 8H₂O<br>
+              <small>高锰酸钾自身作指示剂，终点：无色→浅紫红色</small>
+            </div>
+            <div class="concept-box">
+              <b>配位滴定 (EDTA)</b><br>
+              M²⁺ + EDTA⁴⁻ → [M-EDTA]²⁻<br>
+              <small>常用指示剂：铬黑T，终点：酒红→纯蓝</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 测试 -->
+      <div class="section" id="quiz">
+        <div class="quiz">
+          <div class="quiz-q" id="quizQuestion"></div>
+          <div class="quiz-opts" id="quizOptions"></div>
+          <div class="quiz-feedback" id="quizFeedback"></div>
+          <div class="quiz-nav">
+            <button id="quizPrev">上一题</button>
+            <button id="quizNext">下一题</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <!-- 滴定曲线面板 -->
+      <div class="section active" id="curvePanel">
+        <h3>📈 滴定曲线解读</h3>
+        <div class="concept-box">
+          <b>🔬 滴定原理</b><br>
+          用已知浓度的<span class="hl">标准溶液</span>滴定未知浓度的<span class="hl2">待测溶液</span><br>
+          通过指示剂颜色变化或 pH 计确定<span class="hl3">等当点</span>
+        </div>
+        <div class="formula-box">
+          等当点：C₁V₁ = C₂V₂<br>
+          （一元酸碱滴定）
+        </div>
+        <div class="slider-row">
+          <label>标准液浓度：</label>
+          <input type="range" id="stdConcSlider" min="0.01" max="0.5" step="0.01" value="0.1">
+          <span class="val" id="stdConcSliderVal">0.10 M</span>
+        </div>
+        <div class="slider-row">
+          <label>待测液浓度：</label>
+          <input type="range" id="unkConcSlider" min="0.01" max="0.5" step="0.01" value="0.1">
+          <span class="val" id="unkConcSliderVal">0.10 M</span>
+        </div>
+        <div class="info-grid">
+          <div><b>当前滴加体积：</b><br><span id="currentVol">0.00</span> mL</div>
+          <div><b>当前 pH：</b><br><span id="currentPH">13.00</span></div>
+          <div><b>等当点体积：</b><br><span id="eqVol">25.00</span> mL</div>
+          <div><b>滴定进度：</b><br><span id="titrationProgress">0%</span></div>
+        </div>
+      </div>
+
+      <!-- 指示剂面板 -->
+      <div class="section" id="indicatorPanel">
+        <h3>🎨 指示剂选择</h3>
+        <div class="concept-box">
+          <b>📌 选择原则</b><br>
+          指示剂的<span class="hl3">变色范围</span>应包含或靠近等当点的 pH 值<br>
+          变色敏锐，用量适当
+        </div>
+        <div class="concept-box">
+          <b>🔴 甲基橙</b><br>
+          变色范围：pH 3.1 ~ 4.4<br>
+          酸色：<span class="hl">红色</span> → 碱色：<span style="color:#f59e0b;font-weight:600">黄色</span><br>
+          适用：强酸滴定强碱/弱碱
+        </div>
+        <div class="concept-box">
+          <b>🟣 酚酞</b><br>
+          变色范围：pH 8.2 ~ 10.0<br>
+          酸色：无色 → 碱色：<span style="color:#a78bfa;font-weight:600">粉红</span><br>
+          适用：强碱滴定强酸/弱酸
+        </div>
+        <div class="concept-box">
+          <b>🟡 甲基红</b><br>
+          变色范围：pH 4.4 ~ 6.2<br>
+          酸色：<span class="hl">红色</span> → 碱色：<span style="color:#fbbf24;font-weight:600">黄色</span><br>
+          适用：弱碱滴定强酸
+        </div>
+        <div class="slider-row">
+          <label>当前 pH：</label>
+          <input type="range" id="indicatorPH" min="0" max="14" step="0.1" value="7">
+          <span class="val" id="indicatorPHVal">7.0</span>
+        </div>
+      </div>
+
+      <!-- 计算面板 -->
+      <div class="section" id="calcPanel">
+        <h3>🧮 计算方法</h3>
+        <div class="concept-box">
+          <b>📌 等当点计算</b><br>
+          根据化学计量关系：<br>
+          n(酸) = n(碱)<br>
+          C₁V₁ = C₂V₂（一元酸碱）
+        </div>
+        <div class="concept-box">
+          <b>🔄 氧化还原滴定</b><br>
+          根据电子转移数：<br>
+          n₁ × z₁ = n₂ × z₂<br>
+          <small>z 为电子转移数</small>
+        </div>
+        <div class="concept-box">
+          <b>⚗️ 配位滴定</b><br>
+          EDTA 与金属离子 1:1 配位<br>
+          C(EDTA) × V(EDTA) = C(M) × V(M)
+        </div>
+      </div>
+
+      <!-- 测试面板 -->
+      <div class="section" id="quizPanel">
+        <h3>📝 知识检测</h3>
+        <div class="concept-box">
+          <b>💡 学习提示</b><br>
+          完成练习后查看答案解析<br>
+          共 5 道题目，涵盖滴定原理与计算
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const section = tab.dataset.section;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(section).classList.add('active');
+    document.getElementById(section + 'Panel').classList.add('active');
+  });
+});
+
+// ===== Titration Curve =====
+let titrationType = 'strong-strong';
+let titrating = false;
+let currentDropVol = 0;
+let animFrame = null;
+
+const curveCanvas = document.getElementById('curveCanvas');
+const curveCtx = curveCanvas.getContext('2d');
+
+const stdConcSlider = document.getElementById('stdConcSlider');
+const unkConcSlider = document.getElementById('unkConcSlider');
+const stdConcSliderVal = document.getElementById('stdConcSliderVal');
+const unkConcSliderVal = document.getElementById('unkConcSliderVal');
+const currentVol = document.getElementById('currentVol');
+const currentPH = document.getElementById('currentPH');
+const eqVol = document.getElementById('eqVol');
+const titrationProgress = document.getElementById('titrationProgress');
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    titrationType = btn.dataset.ttype;
+    resetTitration();
+    drawCurve();
+  });
+});
+
+stdConcSlider.addEventListener('input', () => {
+  stdConcSliderVal.textContent = parseFloat(stdConcSlider.value).toFixed(2) + ' M';
+  drawCurve();
+});
+
+unkConcSlider.addEventListener('input', () => {
+  unkConcSliderVal.textContent = parseFloat(unkConcSlider.value).toFixed(2) + ' M';
+  drawCurve();
+});
+
+function calcPH(vol, type, cStd, cUnk) {
+  const v0 = 25; // initial volume of analyte
+  const nUnk = cUnk * v0;
+  const nStd = cStd * vol;
+  
+  if (type === 'strong-strong') {
+    // Strong acid titrating strong base (or vice versa)
+    const excess = nUnk - nStd;
+    const totalVol = v0 + vol;
+    if (excess > 0.0001) {
+      return 14 + Math.log10(excess / totalVol); // excess OH-
+    } else if (excess < -0.0001) {
+      return -Math.log10(Math.abs(excess) / totalVol); // excess H+
+    } else {
+      return 7;
+    }
+  } else if (type === 'weak-strong') {
+    // Weak acid titrated with strong base
+    const ha = Math.max(0.0001, nUnk - nStd);
+    const a = Math.max(0.0001, nStd);
+    const totalVol = v0 + vol;
+    const pka = 4.76;
+    if (vol === 0) return (pka + Math.log10(0.001)) ;
+    if (Math.abs(nStd - nUnk) < 0.0001 * nUnk) {
+      // At equivalence point: salt hydrolysis
+      // pH = 7 + 0.5*pKa + 0.5*log10(C_salt)
+      const cSalt = nUnk / totalVol;
+      return 7 + 0.5 * pka + 0.5 * Math.log10(cSalt);
+    }
+    if (nStd > nUnk) {
+      // past equivalence
+      const excessOH = (nStd - nUnk) / totalVol;
+      return 14 + Math.log10(excessOH);
+    }
+    return pka + Math.log10(a / ha);
+  } else {
+    // Strong acid titrated with weak base
+    const h = Math.max(0.0001, nUnk - nStd);
+    const bh = Math.max(0.0001, nStd);
+    const totalVol = v0 + vol;
+    const pkA = 9.25; // NH4+ pKa
+    if (Math.abs(nStd - nUnk) < 0.0001 * nUnk) {
+      // At equivalence point: salt hydrolysis
+      // pH = 7 - 0.5*pKb - 0.5*log10(C_salt) = 7 - 0.5*(14-pkA) - 0.5*log10(C_salt)
+      const cSalt = nUnk / totalVol;
+      return 7 - 0.5 * (14 - pkA) - 0.5 * Math.log10(cSalt);
+    }
+    if (nStd > nUnk) {
+      const excessH = (nStd - nUnk) / totalVol;
+      return -Math.log10(excessH);
+    }
+    return pkA + Math.log10(bh / h);
+  }
+}
+
+function drawCurve() {
+  const ctx = curveCtx;
+  const w = curveCanvas.width;
+  const h = curveCanvas.height;
+  ctx.clearRect(0, 0, w, h);
+  
+  const cStd = parseFloat(stdConcSlider.value);
+  const cUnk = parseFloat(unkConcSlider.value);
+  const vEq = (cUnk * 25) / cStd;
+  
+  eqVol.textContent = vEq.toFixed(2);
+  
+  // Draw axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(60, 30);
+  ctx.lineTo(60, 460);
+  ctx.lineTo(570, 460);
+  ctx.stroke();
+  
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  for (let i = 0; i <= 14; i++) {
+    const y = 460 - (i / 14) * 430;
+    ctx.beginPath();
+    ctx.moveTo(60, y);
+    ctx.lineTo(570, y);
+    ctx.stroke();
+    
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(i, 55, y + 4);
+  }
+  
+  // Labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('滴定剂体积 (mL)', 315, 490);
+  
+  ctx.save();
+  ctx.translate(20, 245);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('pH', 0, 0);
+  ctx.restore();
+  
+  // Draw curve
+  const maxVol = vEq * 2.5;
+  ctx.strokeStyle = titrationType === 'strong-strong' ? '#ef4444' : 
+                     titrationType === 'weak-strong' ? '#3b82f6' : '#a78bfa';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  
+  let firstPoint = true;
+  for (let i = 0; i <= 200; i++) {
+    const vol = (i / 200) * maxVol;
+    let ph;
+    if (vol < 0.01) {
+      ph = titrationType === 'weak-strong' ? 2.87 : 
+           titrationType === 'strong-weak' ? 1.0 : 1.0;
+    } else {
+      ph = calcPH(vol, titrationType, cStd, cUnk);
+    }
+    ph = Math.max(0, Math.min(14, ph));
+    
+    const x = 60 + (vol / maxVol) * 510;
+    const y = 460 - (ph / 14) * 430;
+    
+    if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  
+  // Equivalence point
+  const eqX = 60 + (vEq / maxVol) * 510;
+  const eqPH = titrationType === 'strong-strong' ? 7 : 
+               titrationType === 'weak-strong' ? 8.72 : 5.28;
+  const eqY = 460 - (eqPH / 14) * 430;
+  
+  ctx.setLineDash([5, 5]);
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(eqX, 460);
+  ctx.lineTo(eqX, eqY);
+  ctx.lineTo(60, eqY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath();
+  ctx.arc(eqX, eqY, 6, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.fillStyle = '#6ee7b7';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`等当点 (${vEq.toFixed(1)}mL, pH=${eqPH.toFixed(1)})`, eqX + 10, eqY - 8);
+  
+  // Current drop marker
+  if (currentDropVol > 0) {
+    const dropPH = calcPH(currentDropVol, titrationType, cStd, cUnk);
+    const dropX = 60 + (currentDropVol / maxVol) * 510;
+    const dropY = 460 - (Math.max(0, Math.min(14, dropPH)) / 14) * 430;
+    
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath();
+    ctx.arc(dropX, dropY, 8, 0, Math.PI * 2);
+    ctx.fill();
+    
+    currentVol.textContent = currentDropVol.toFixed(2);
+    currentPH.textContent = Math.max(0, Math.min(14, dropPH)).toFixed(2);
+    titrationProgress.textContent = Math.min(100, (currentDropVol / vEq * 100)).toFixed(0) + '%';
+  }
+  
+  // Title
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  const titles = {
+    'strong-strong': '强酸-强碱滴定曲线',
+    'weak-strong': '弱酸-强碱滴定曲线',
+    'strong-weak': '强酸-弱碱滴定曲线'
+  };
+  ctx.fillText(titles[titrationType], w / 2, 20);
+}
+
+// Titration animation
+document.getElementById('startTitrate').addEventListener('click', () => {
+  if (titrating) return;
+  titrating = true;
+  currentDropVol = 0;
+  animateTitration();
+});
+
+document.getElementById('resetTitrate').addEventListener('click', resetTitration);
+
+function resetTitration() {
+  titrating = false;
+  currentDropVol = 0;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  drawCurve();
+}
+
+function animateTitration() {
+  if (!titrating) return;
+  
+  const cStd = parseFloat(stdConcSlider.value);
+  const cUnk = parseFloat(unkConcSlider.value);
+  const vEq = (cUnk * 25) / cStd;
+  const maxVol = vEq * 2.2;
+  const speed = parseInt(document.getElementById('speedSlider').value);
+  
+  currentDropVol += speed * 0.05;
+  
+  if (currentDropVol > maxVol) {
+    titrating = false;
+    drawCurve();
+    return;
+  }
+  
+  drawCurve();
+  animFrame = requestAnimationFrame(animateTitration);
+}
+
+// ===== Indicator Canvas =====
+const indicatorCanvas = document.getElementById('indicatorCanvas');
+const indicatorCtx = indicatorCanvas.getContext('2d');
+const indicatorPH = document.getElementById('indicatorPH');
+const indicatorPHVal = document.getElementById('indicatorPHVal');
+
+indicatorPH.addEventListener('input', () => {
+  indicatorPHVal.textContent = parseFloat(indicatorPH.value).toFixed(1);
+  drawIndicator();
+});
+
+function drawIndicator() {
+  const ctx = indicatorCtx;
+  const w = indicatorCanvas.width;
+  const h = indicatorCanvas.height;
+  ctx.clearRect(0, 0, w, h);
+  
+  const ph = parseFloat(indicatorPH.value);
+  
+  // Draw 3 beakers with indicators
+  const beakers = [
+    { name: '甲基橙', range: [3.1, 4.4], acidColor: '#ef4444', baseColor: '#f59e0b', x: 100 },
+    { name: '酚酞', range: [8.2, 10.0], acidColor: 'rgba(200,200,200,0.2)', baseColor: '#a78bfa', x: 300 },
+    { name: '甲基红', range: [4.4, 6.2], acidColor: '#ef4444', baseColor: '#fbbf24', x: 500 }
+  ];
+  
+  beakers.forEach(b => {
+    // Beaker outline
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(b.x - 50, 120, 100, 180);
+    
+    // Liquid
+    const t = Math.max(0, Math.min(1, (ph - b.range[0]) / (b.range[1] - b.range[0])));
+    let color;
+    if (ph < b.range[0]) {
+      color = b.acidColor;
+    } else if (ph > b.range[1]) {
+      color = b.baseColor;
+    } else {
+      // Interpolate
+      color = t < 0.5 ? b.acidColor : b.baseColor;
+    }
+    
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.6;
+    ctx.fillRect(b.x - 48, 180, 96, 118);
+    ctx.globalAlpha = 1;
+    
+    // Label
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(b.name, b.x, 100);
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px sans-serif';
+    ctx.fillText(`pH ${b.range[0]}~${b.range[1]}`, b.x, 320);
+    
+    // Current state
+    let state;
+    if (ph < b.range[0]) state = '酸色';
+    else if (ph > b.range[1]) state = '碱色';
+    else state = '变色中';
+    
+    ctx.fillStyle = ph >= b.range[0] && ph <= b.range[1] ? '#f59e0b' : '#94a3b8';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(state, b.x, 345);
+  });
+  
+  // pH scale at bottom
+  const gradient = ctx.createLinearGradient(50, 0, 550, 0);
+  gradient.addColorStop(0, '#ef4444');
+  gradient.addColorStop(0.25, '#f59e0b');
+  gradient.addColorStop(0.5, '#10b981');
+  gradient.addColorStop(0.75, '#3b82f6');
+  gradient.addColorStop(1, '#8b5cf6');
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(50, 400, 500, 30);
+  
+  // Marker
+  const markerX = 50 + (ph / 14) * 500;
+  ctx.fillStyle = 'white';
+  ctx.beginPath();
+  ctx.moveTo(markerX, 395);
+  ctx.lineTo(markerX - 5, 385);
+  ctx.lineTo(markerX + 5, 385);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillRect(markerX - 1, 395, 2, 40);
+  
+  // Labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('pH 0', 50, 450);
+  ctx.fillText('pH 7', 300, 450);
+  ctx.fillText('pH 14', 550, 450);
+  
+  // Title
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`指示剂变色演示 · pH = ${ph.toFixed(1)}`, w / 2, 40);
+  
+  // Recommendation
+  ctx.fillStyle = '#67e8f9';
+  ctx.font = '13px sans-serif';
+  let rec = '';
+  if (ph >= 3.1 && ph <= 4.4) rec = '💡 当前 pH 处于甲基橙变色范围';
+  else if (ph >= 8.2 && ph <= 10.0) rec = '💡 当前 pH 处于酚酞变色范围';
+  else if (ph >= 4.4 && ph <= 6.2) rec = '💡 当前 pH 处于甲基红变色范围';
+  else rec = '💡 拖动滑块观察指示剂颜色变化';
+  ctx.fillText(rec, w / 2, 480);
+}
+
+// ===== Calculation =====
+document.getElementById('calcBtn').addEventListener('click', () => {
+  const stdC = parseFloat(document.getElementById('stdConc').value);
+  const stdV = parseFloat(document.getElementById('stdVol').value);
+  const unkC = parseFloat(document.getElementById('unkConc').value);
+  
+  if (unkC > 0) {
+    const eqV = (stdC * stdV) / unkC;
+    document.getElementById('calcResult').innerHTML = 
+      `等当点体积：<b>${eqV.toFixed(2)} mL</b><br>` +
+      `计算过程：V = (${stdC} × ${stdV}) / ${unkC} = ${eqV.toFixed(2)} mL`;
+  }
+});
+
+// ===== Quiz =====
+const quizData = [
+  {
+    q: '1. 强酸滴定强碱时，等当点的 pH 为？',
+    opts: ['大于7', '等于7', '小于7', '无法确定'],
+    ans: 1,
+    explain: '强酸强碱滴定生成强酸强碱盐，不水解，等当点 pH = 7'
+  },
+  {
+    q: '2. 弱酸滴定强碱时，应选用哪种指示剂？',
+    opts: ['甲基橙 (pH 3.1~4.4)', '酚酞 (pH 8.2~10.0)', '甲基红 (pH 4.4~6.2)', '石蕊 (pH 5.0~8.0)'],
+    ans: 1,
+    explain: '弱酸-强碱滴定等当点 pH > 7（约8.7），应选酚酞'
+  },
+  {
+    q: '3. EDTA 配位滴定中，EDTA 与金属离子的配位比为？',
+    opts: ['1:1', '1:2', '2:1', '取决于金属离子'],
+    ans: 0,
+    explain: 'EDTA 有6个配位原子，与大多数金属离子形成1:1螯合物'
+  },
+  {
+    q: '4. 高锰酸钾滴定中，终点判断依据是？',
+    opts: ['加入指示剂变色', '溶液从无色变为浅紫红色', '产生沉淀', 'pH 突变'],
+    ans: 1,
+    explain: 'KMnO₄ 自身作指示剂，Mn²⁺近无色，过量一滴即显紫红色'
+  },
+  {
+    q: '5. 滴定分析中，下列哪个操作会导致结果偏高？',
+    opts: ['滴定管未润洗', '锥形瓶用待测液润洗', '读数时俯视', '滴定速度过快'],
+    ans: 1,
+    explain: '锥形瓶用待测液润洗会使待测物增多，消耗更多标准液，结果偏高'
+  }
+];
+
+let currentQuiz = 0;
+const quizQuestion = document.getElementById('quizQuestion');
+const quizOptions = document.getElementById('quizOptions');
+const quizFeedback = document.getElementById('quizFeedback');
+const quizPrev = document.getElementById('quizPrev');
+const quizNext = document.getElementById('quizNext');
+
+function showQuiz() {
+  const data = quizData[currentQuiz];
+  quizQuestion.textContent = data.q;
+  quizOptions.innerHTML = '';
+  quizFeedback.textContent = '';
+  
+  data.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+      if (i === data.ans) {
+        div.classList.add('correct');
+        quizFeedback.textContent = '✓ ' + data.explain;
+        quizFeedback.style.color = '#10b981';
+      } else {
+        div.classList.add('wrong');
+        quizFeedback.textContent = '✗ 正确答案是 ' + data.opts[data.ans] + '。' + data.explain;
+        quizFeedback.style.color = '#ef4444';
+      }
+    });
+    quizOptions.appendChild(div);
+  });
+  
+  quizPrev.disabled = currentQuiz === 0;
+  quizNext.disabled = currentQuiz === quizData.length - 1;
+}
+
+quizPrev.addEventListener('click', () => {
+  if (currentQuiz > 0) { currentQuiz--; showQuiz(); }
+});
+quizNext.addEventListener('click', () => {
+  if (currentQuiz < quizData.length - 1) { currentQuiz++; showQuiz(); }
+});
+
+showQuiz();
+
+/* ===== Progress tracking: visit all 4 tabs + all quiz first-try correct → markDone ===== */
+const ALL_TABS = ['curve', 'indicator', 'calc', 'quiz'];
+const visitedTabs = new Set(['curve']);
+const quizFirstTryCorrect = new Array(quizData.length).fill(false);
+const quizTried = new Array(quizData.length).fill(false);
+
+function maybeMarkDone() {
+  const tabsOk = ALL_TABS.every(t => visitedTabs.has(t));
+  const quizOk = quizFirstTryCorrect.every(v => v);
+  if (tabsOk && quizOk && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('07-titration');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('07-titration')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+
+// Wrap quiz option click to track first-try correctness
+const _origShowQuiz = showQuiz;
+showQuiz = function() {
+  const data = quizData[currentQuiz];
+  quizQuestion.textContent = data.q;
+  quizOptions.innerHTML = '';
+  quizFeedback.textContent = '';
+  
+  data.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.addEventListener('click', () => {
+      if (!quizTried[currentQuiz]) {
+        quizTried[currentQuiz] = true;
+        if (i === data.ans) quizFirstTryCorrect[currentQuiz] = true;
+      }
+      document.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+      if (i === data.ans) {
+        div.classList.add('correct');
+        quizFeedback.textContent = '✓ ' + data.explain;
+        quizFeedback.style.color = '#10b981';
+      } else {
+        div.classList.add('wrong');
+        quizFeedback.textContent = '✗ 正确答案是 ' + data.opts[data.ans] + '。' + data.explain;
+        quizFeedback.style.color = '#ef4444';
+      }
+      if (!quizFirstTryCorrect[currentQuiz]) quizTried[currentQuiz] = false;
+      maybeMarkDone();
+    });
+    quizOptions.appendChild(div);
+  });
+  
+  quizPrev.disabled = currentQuiz === 0;
+  quizNext.disabled = currentQuiz === quizData.length - 1;
+};
+
+// Track tab visits for progress
+document.querySelectorAll('.tab').forEach(tab => {
+  const origHandler = tab.onclick;
+  tab.addEventListener('click', () => {
+    visitedTabs.add(tab.dataset.section);
+    maybeMarkDone();
+  });
+});
+
+// Animation loop
+function animate() {
+  const activeSection = document.querySelector('#curve.active, #indicator.active');
+  if (document.getElementById('curve').classList.contains('active')) {
+    if (!titrating) drawCurve();
+  }
+  if (document.getElementById('indicator').classList.contains('active')) {
+    drawIndicator();
+  }
+  requestAnimationFrame(animate);
+}
+
+// Initialize
+drawCurve();
+drawIndicator();
+animate();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学化学"></script>
+</body>
+</html>

@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>机械运动 · 初中物理互动可视化</title>
+<style>
+  :root {
+    --primary: #3b82f6;
+    --speed: #f59e0b;
+    --distance: #10b981;
+    --time: #8b5cf6;
+    --accel: #ef4444;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f2744 0%, #1a1a3e 50%, #0f2744 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1320px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.4rem; background: linear-gradient(90deg, var(--distance), var(--primary), var(--speed)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 1rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab { padding: 12px 24px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(59,130,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 16px; justify-content: center; font-size: 13px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .legend .l-speed::before { background: var(--speed); }
+  .legend .l-dist::before { background: var(--distance); }
+  .legend .l-time::before { background: var(--time); }
+  .legend .l-accel::before { background: var(--accel); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 700px; }
+  .panel h3 { font-size: 1.15rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .concept-box { font-size: 1.05rem; text-align: left; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 12px 0; line-height: 1.9; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--speed); font-weight: 600; }
+  .concept-box .hl2 { color: var(--distance); font-weight: 600; }
+  .concept-box .hl3 { color: var(--time); font-weight: 600; }
+  .concept-box .hlr { color: var(--accel); font-weight: 600; }
+
+  .formula { display: inline-block; background: rgba(245,158,11,0.15); padding: 6px 14px; border-radius: 8px; font-family: "Times New Roman", serif; font-size: 1.15rem; color: #fbbf24; margin: 8px 0; font-style: italic; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--speed); font-weight: 600; font-size: 13px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 16px; border-radius: 10px; background: rgba(59,130,246,0.1); border: 2px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 14px; color: #93c5fd; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .data-display { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+  .data-item { text-align: center; padding: 12px 8px; background: rgba(255,255,255,0.05); border-radius: 10px; }
+  .data-item .label { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+  .data-item .value { font-size: 1.3rem; font-weight: 700; font-family: monospace; }
+  .data-item .unit { font-size: 11px; color: #64748b; margin-left: 2px; }
+  .data-item.speed .value { color: var(--speed); }
+  .data-item.dist .value { color: var(--distance); }
+  .data-item.time .value { color: var(--time); }
+
+  .quiz { margin-top: 16px; padding: 18px; background: rgba(59,130,246,0.1); border-radius: 14px; border: 2px solid rgba(59,130,246,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 10px; }
+  .quiz-opt { padding: 12px 16px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 12px; font-size: 14px; color: #fbbf24; min-height: 22px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 14px; }
+  .quiz-nav button { padding: 8px 18px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
+  .quiz-nav button:disabled { opacity: .4; cursor: not-allowed; }
+  .quiz-progress { font-size: 13px; color: #94a3b8; margin-top: 10px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .btn-row { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+  .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; transition: all .2s; font-weight: 500; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.2); color: #cbd5e1; }
+  .btn-outline:hover { background: rgba(255,255,255,0.08); }
+
+  .compare-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+  .compare-table th, .compare-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .compare-table th { color: #94a3b8; font-weight: 500; background: rgba(255,255,255,0.03); }
+  .compare-table td { color: #e2e8f0; }
+  .compare-table tr:hover td { background: rgba(255,255,255,0.03); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🚗 机械运动</h1>
+    <p>初中物理 · 八年级 · 速度、匀速运动与运动图像</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="concept">速度概念</div>
+    <div class="tab" data-tab="uniform">匀速运动</div>
+    <div class="tab" data-tab="graphs">运动图像</div>
+    <div class="tab" data-tab="quiz">互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="800" height="500"></canvas>
+      <div class="legend">
+        <span class="l-speed">速度 v</span>
+        <span class="l-dist">路程 s</span>
+        <span class="l-time">时间 t</span>
+        <span class="l-accel">加速度 a</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <!-- 速度概念 -->
+      <div class="section active" id="sec-concept">
+        <h3>📐 什么是速度？</h3>
+        <div class="concept-box">
+          <b>速度</b>是描述物体<span class="hl">运动快慢</span>的物理量。<br>
+          定义：物体在<span class="hl3">单位时间</span>内通过的<span class="hl2">路程</span>。<br><br>
+          <div class="formula">v = s ÷ t</div>
+          <br>
+          其中：<span class="hl">v</span> = 速度(m/s)，<span class="hl2">s</span> = 路程(m)，<span class="hl3">t</span> = 时间(s)
+        </div>
+
+        <div class="data-display">
+          <div class="data-item speed">
+            <div class="label">速度</div>
+            <div class="value" id="dispSpeed">5.0<span class="unit">m/s</span></div>
+          </div>
+          <div class="data-item dist">
+            <div class="label">路程</div>
+            <div class="value" id="dispDist">0.0<span class="unit">m</span></div>
+          </div>
+          <div class="data-item time">
+            <div class="label">时间</div>
+            <div class="value" id="dispTime">0.0<span class="unit">s</span></div>
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <label>🏃 速度调节</label>
+          <input type="range" id="speedSlider" min="1" max="15" step="0.5" value="5" />
+          <span class="val" id="speedVal">5.0 m/s</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnStart">▶ 开始运动</button>
+          <button class="btn btn-outline" id="btnReset">↺ 重置</button>
+        </div>
+
+        <h3 style="margin-top:18px">🔍 生活中的速度</h3>
+        <table class="compare-table">
+          <tr><th>物体</th><th>速度(m/s)</th><th>换算(km/h)</th></tr>
+          <tr><td>🚶 步行</td><td>1.2</td><td>4.3</td></tr>
+          <tr><td>🚴 骑自行车</td><td>5</td><td>18</td></tr>
+          <tr><td>🚗 城市汽车</td><td>16.7</td><td>60</td></tr>
+          <tr><td>🚄 高铁</td><td>83.3</td><td>300</td></tr>
+          <tr><td>✈️ 飞机</td><td>250</td><td>900</td></tr>
+        </table>
+      </div>
+
+      <!-- 匀速运动 -->
+      <div class="section" id="sec-uniform">
+        <h3>📏 匀速直线运动</h3>
+        <div class="concept-box">
+          <b>匀速直线运动</b>：物体沿直线运动，<span class="hl">速度保持不变</span>。<br><br>
+          特点：<br>
+          • 速度<span class="hl">恒定不变</span><br>
+          • 路程与时间成<span class="hl2">正比</span><br>
+          • 任意相等时间内路程<span class="hl2">相等</span><br><br>
+          <div class="formula">s = v × t</div>
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="slow">🚶 慢速 2m/s</div>
+          <div class="mode-btn" data-mode="medium">🚴 中速 5m/s</div>
+          <div class="mode-btn" data-mode="fast">🚗 快速 10m/s</div>
+        </div>
+
+        <div class="data-display">
+          <div class="data-item speed">
+            <div class="label">当前速度</div>
+            <div class="value" id="uniSpeed">2.0<span class="unit">m/s</span></div>
+          </div>
+          <div class="data-item dist">
+            <div class="label">已走路程</div>
+            <div class="value" id="uniDist">0.0<span class="unit">m</span></div>
+          </div>
+          <div class="data-item time">
+            <div class="label">运动时间</div>
+            <div class="value" id="uniTime">0.0<span class="unit">s</span></div>
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <label>⏱ 时间倍率</label>
+          <input type="range" id="timeScale" min="1" max="5" step="1" value="1" />
+          <span class="val" id="timeVal">×1</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnUniStart">▶ 开始</button>
+          <button class="btn btn-outline" id="btnUniReset">↺ 重置</button>
+        </div>
+
+        <h3 style="margin-top:18px">💡 关键理解</h3>
+        <div class="info-grid">
+          <div><b>相同时间</b><br>速度越大 → 路程越长</div>
+          <div><b>相同路程</b><br>速度越大 → 时间越短</div>
+          <div><b>速度×时间</b><br>= 路程（恒定关系）</div>
+          <div><b>单位换算</b><br>1 m/s = 3.6 km/h</div>
+        </div>
+      </div>
+
+      <!-- 运动图像 -->
+      <div class="section" id="sec-graphs">
+        <h3>📊 运动图像</h3>
+        <div class="concept-box">
+          运动图像是描述运动的<b>重要工具</b>：<br>
+          • <span class="hl2">s-t 图像</span>：纵轴路程，横轴时间<br>
+          • <span class="hl">v-t 图像</span>：纵轴速度，横轴时间<br><br>
+          <b>斜率</b>的含义：<br>
+          • s-t 图斜率 = <span class="hl">速度</span><br>
+          • v-t 图斜率 = <span class="hlr">加速度</span>
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-graph="st">s-t 图像</div>
+          <div class="mode-btn" data-graph="vt">v-t 图像</div>
+          <div class="mode-btn" data-graph="both">对比视图</div>
+        </div>
+
+        <div class="slider-row">
+          <label>🏃 速度</label>
+          <input type="range" id="graphSpeed" min="2" max="12" step="1" value="5" />
+          <span class="val" id="graphSpeedVal">5 m/s</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnGraphStart">▶ 绘制图像</button>
+          <button class="btn btn-outline" id="btnGraphReset">↺ 清除</button>
+        </div>
+
+        <h3 style="margin-top:18px">📖 图像解读</h3>
+        <div class="info-grid">
+          <div><b>s-t 直线</b><br>斜率 = 速度<br>越陡 → 越快</div>
+          <div><b>s-t 水平线</b><br>斜率 = 0<br>物体静止</div>
+          <div><b>v-t 水平线</b><br>匀速运动<br>速度不变</div>
+          <div><b>v-t 斜线</b><br>匀变速运动<br>斜率 = 加速度</div>
+        </div>
+      </div>
+
+      <!-- 互动练习 -->
+      <div class="section" id="sec-quiz">
+        <h3>🎯 互动练习</h3>
+        <div class="quiz" id="quizBox">
+          <div class="quiz-q" id="quizQ">加载中...</div>
+          <div class="quiz-opts" id="quizOpts"></div>
+          <div class="quiz-feedback" id="quizFb"></div>
+          <div class="quiz-nav">
+            <button id="btnPrevQ">← 上一题</button>
+            <button id="btnNextQ">下一题 →</button>
+          </div>
+          <div class="quiz-progress" id="quizProgress"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// ========== 全局状态 ==========
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+let currentTab = 'concept';
+let animFrame = null;
+
+// ========== Tab 切换 ==========
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('sec-' + currentTab).classList.add('active');
+    cancelAnimationFrame(animFrame);
+    drawScene();
+  });
+});
+
+// ========== 1. 速度概念场景 ==========
+let conceptState = { running: false, speed: 5, dist: 0, time: 0, carX: 80 };
+
+const speedSlider = document.getElementById('speedSlider');
+speedSlider.addEventListener('input', () => {
+  conceptState.speed = parseFloat(speedSlider.value);
+  document.getElementById('speedVal').textContent = conceptState.speed.toFixed(1) + ' m/s';
+  document.getElementById('dispSpeed').innerHTML = conceptState.speed.toFixed(1) + '<span class="unit">m/s</span>';
+});
+
+document.getElementById('btnStart').addEventListener('click', () => {
+  if (conceptState.running) {
+    conceptState.running = false;
+    document.getElementById('btnStart').textContent = '▶ 继续';
+  } else {
+    conceptState.running = true;
+    document.getElementById('btnStart').textContent = '⏸ 暂停';
+    animateConcept();
+  }
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  conceptState.running = false;
+  conceptState.dist = 0;
+  conceptState.time = 0;
+  conceptState.carX = 80;
+  document.getElementById('btnStart').textContent = '▶ 开始运动';
+  updateConceptDisplay();
+  drawScene();
+});
+
+function animateConcept() {
+  if (!conceptState.running) return;
+  const dt = 0.05;
+  conceptState.time += dt;
+  conceptState.dist += conceptState.speed * dt;
+  conceptState.carX += conceptState.speed * 8 * dt;
+  if (conceptState.carX > 750) {
+    conceptState.carX = 80;
+    conceptState.dist = 0;
+    conceptState.time = 0;
+  }
+  updateConceptDisplay();
+  drawScene();
+  animFrame = requestAnimationFrame(animateConcept);
+}
+
+function updateConceptDisplay() {
+  document.getElementById('dispDist').innerHTML = conceptState.dist.toFixed(1) + '<span class="unit">m</span>';
+  document.getElementById('dispTime').innerHTML = conceptState.time.toFixed(1) + '<span class="unit">s</span>';
+}
+
+// ========== 2. 匀速运动场景 ==========
+let uniState = { running: false, speed: 2, dist: 0, time: 0, carX: 80, scale: 1 };
+
+document.querySelectorAll('#sec-uniform .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#sec-uniform .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.mode;
+    uniState.speed = mode === 'slow' ? 2 : mode === 'medium' ? 5 : 10;
+    document.getElementById('uniSpeed').innerHTML = uniState.speed.toFixed(1) + '<span class="unit">m/s</span>';
+  });
+});
+
+document.getElementById('timeScale').addEventListener('input', (e) => {
+  uniState.scale = parseInt(e.target.value);
+  document.getElementById('timeVal').textContent = '×' + uniState.scale;
+});
+
+document.getElementById('btnUniStart').addEventListener('click', () => {
+  if (uniState.running) {
+    uniState.running = false;
+    document.getElementById('btnUniStart').textContent = '▶ 继续';
+  } else {
+    uniState.running = true;
+    document.getElementById('btnUniStart').textContent = '⏸ 暂停';
+    animateUni();
+  }
+});
+
+document.getElementById('btnUniReset').addEventListener('click', () => {
+  uniState.running = false;
+  uniState.dist = 0;
+  uniState.time = 0;
+  uniState.carX = 80;
+  document.getElementById('btnUniStart').textContent = '▶ 开始';
+  updateUniDisplay();
+  drawScene();
+});
+
+function animateUni() {
+  if (!uniState.running) return;
+  const dt = 0.05 * uniState.scale;
+  uniState.time += dt;
+  uniState.dist += uniState.speed * dt;
+  uniState.carX += uniState.speed * 6 * dt;
+  if (uniState.carX > 750) {
+    uniState.carX = 80;
+    uniState.dist = 0;
+    uniState.time = 0;
+  }
+  updateUniDisplay();
+  drawScene();
+  animFrame = requestAnimationFrame(animateUni);
+}
+
+function updateUniDisplay() {
+  document.getElementById('uniDist').innerHTML = uniState.dist.toFixed(1) + '<span class="unit">m</span>';
+  document.getElementById('uniTime').innerHTML = uniState.time.toFixed(1) + '<span class="unit">s</span>';
+}
+
+// ========== 3. 运动图像场景 ==========
+let graphState = { mode: 'st', speed: 5, points: [], running: false, t: 0 };
+
+document.querySelectorAll('#sec-graphs .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#sec-graphs .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    graphState.mode = btn.dataset.graph;
+    drawScene();
+  });
+});
+
+document.getElementById('graphSpeed').addEventListener('input', (e) => {
+  graphState.speed = parseInt(e.target.value);
+  document.getElementById('graphSpeedVal').textContent = graphState.speed + ' m/s';
+});
+
+document.getElementById('btnGraphStart').addEventListener('click', () => {
+  if (graphState.running) {
+    graphState.running = false;
+    document.getElementById('btnGraphStart').textContent = '▶ 继续';
+  } else {
+    graphState.running = true;
+    document.getElementById('btnGraphStart').textContent = '⏸ 暂停';
+    animateGraph();
+  }
+});
+
+document.getElementById('btnGraphReset').addEventListener('click', () => {
+  graphState.running = false;
+  graphState.points = [];
+  graphState.t = 0;
+  document.getElementById('btnGraphStart').textContent = '▶ 绘制图像';
+  drawScene();
+});
+
+function animateGraph() {
+  if (!graphState.running) return;
+  graphState.t += 0.1;
+  const s = graphState.speed * graphState.t;
+  graphState.points.push({ t: graphState.t, s: s, v: graphState.speed });
+  if (graphState.t > 10) {
+    graphState.running = false;
+    document.getElementById('btnGraphStart').textContent = '▶ 绘制图像';
+  }
+  drawScene();
+  if (graphState.running) animFrame = requestAnimationFrame(animateGraph);
+}
+
+// ========== 绘制场景 ==========
+function drawScene() {
+  ctx.clearRect(0, 0, 800, 500);
+  
+  if (currentTab === 'concept') drawConceptScene();
+  else if (currentTab === 'uniform') drawUniScene();
+  else if (currentTab === 'graphs') drawGraphScene();
+  else if (currentTab === 'quiz') drawQuizScene();
+}
+
+function drawRoad(y) {
+  // 路面
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(40, y, 720, 60);
+  // 中线
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([20, 15]);
+  ctx.beginPath();
+  ctx.moveTo(40, y + 30);
+  ctx.lineTo(760, y + 30);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // 路边
+  ctx.fillStyle = '#10b981';
+  ctx.fillRect(40, y + 60, 720, 8);
+  ctx.fillRect(40, y - 8, 720, 8);
+  // 刻度
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= 8; i++) {
+    const x = 80 + i * 85;
+    ctx.fillText(i * 10 + 'm', x, y + 78);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + 60);
+    ctx.stroke();
+  }
+}
+
+function drawCar(x, y, color, label) {
+  // 车身
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(x - 30, y - 15, 60, 30, 6);
+  ctx.fill();
+  // 车窗
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.fillRect(x - 10, y - 12, 25, 12);
+  // 车轮
+  ctx.fillStyle = '#1e293b';
+  ctx.beginPath();
+  ctx.arc(x - 15, y + 15, 8, 0, Math.PI * 2);
+  ctx.arc(x + 15, y + 15, 8, 0, Math.PI * 2);
+  ctx.fill();
+  // 标签
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, x, y + 2);
+}
+
+function drawConceptScene() {
+  drawRoad(200);
+  drawCar(conceptState.carX, 215, '#3b82f6', '🚗');
+  
+  // 速度箭头
+  const arrowLen = conceptState.speed * 8;
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(conceptState.carX + 35, 200);
+  ctx.lineTo(conceptState.carX + 35 + arrowLen, 200);
+  ctx.stroke();
+  // 箭头头部
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.moveTo(conceptState.carX + 35 + arrowLen, 200);
+  ctx.lineTo(conceptState.carX + 28 + arrowLen, 195);
+  ctx.lineTo(conceptState.carX + 28 + arrowLen, 205);
+  ctx.closePath();
+  ctx.fill();
+  
+  // 速度标签
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('v = ' + conceptState.speed.toFixed(1) + ' m/s', conceptState.carX + 40 + arrowLen, 198);
+  
+  // 标题
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('速度 = 路程 ÷ 时间', 400, 50);
+  
+  // 公式推导
+  ctx.font = '14px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('当速度不变时，路程与时间成正比', 400, 80);
+  
+  // 轨迹点
+  ctx.fillStyle = 'rgba(16,185,129,0.5)';
+  for (let i = 80; i < conceptState.carX - 20; i += 30) {
+    ctx.beginPath();
+    ctx.arc(i, 230, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawUniScene() {
+  // 三条跑道对比
+  const speeds = [2, 5, 10];
+  const labels = ['慢速', '中速', '快速'];
+  const colors = ['#10b981', '#3b82f6', '#ef4444'];
+  
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('匀速直线运动对比', 400, 35);
+  
+  for (let i = 0; i < 3; i++) {
+    const y = 100 + i * 130;
+    // 跑道
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(60, y, 680, 40);
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.strokeRect(60, y, 680, 40);
+    
+    // 标签
+    ctx.fillStyle = colors[i];
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(labels[i] + ' ' + speeds[i] + 'm/s', 70, y - 8);
+    
+    // 计算位置
+    let carX;
+    if (i === 1) {
+      carX = 80 + (uniState.dist % 80) * 8;
+    } else {
+      carX = 80 + ((uniState.speed === speeds[i] ? uniState.dist : speeds[i] * uniState.time) % 80) * 8;
+    }
+    if (carX > 720) carX = 80;
+    
+    // 小车
+    ctx.fillStyle = colors[i];
+    ctx.beginPath();
+    ctx.roundRect(carX - 20, y + 8, 40, 24, 4);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🚗', carX, y + 25);
+    
+    // 刻度
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px sans-serif';
+    for (let j = 0; j <= 8; j++) {
+      const x = 80 + j * 80;
+      ctx.fillText(j * 10 + 'm', x, y + 52);
+    }
+  }
+}
+
+function drawGraphScene() {
+  const mode = graphState.mode;
+  
+  if (mode === 'st' || mode === 'both') {
+    const ox = mode === 'both' ? 60 : 100;
+    const oy = mode === 'both' ? 250 : 420;
+    const w = mode === 'both' ? 320 : 600;
+    const h = mode === 'both' ? 200 : 350;
+    drawSTGraph(ox, oy, w, h);
+  }
+  
+  if (mode === 'vt' || mode === 'both') {
+    const ox = mode === 'both' ? 420 : 100;
+    const oy = mode === 'both' ? 250 : 420;
+    const w = mode === 'both' ? 320 : 600;
+    const h = mode === 'both' ? 200 : 350;
+    drawVTGraph(ox, oy, w, h);
+  }
+}
+
+function drawSTGraph(ox, oy, w, h) {
+  // 坐标轴
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(ox, oy);
+  ctx.lineTo(ox, oy - h);
+  ctx.moveTo(ox, oy);
+  ctx.lineTo(ox + w, oy);
+  ctx.stroke();
+  
+  // 标签
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('t/s', ox + w + 20, oy + 5);
+  ctx.fillText('s/m', ox - 5, oy - h - 10);
+  
+  // 标题
+  ctx.fillStyle = '#10b981';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('s-t 图像（路程-时间）', ox + w/2, oy - h - 30);
+  
+  // 网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i <= 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(ox, oy - i * h/5);
+    ctx.lineTo(ox + w, oy - i * h/5);
+    ctx.stroke();
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'right';
+    ctx.fillText(i * 20, ox - 8, oy - i * h/5 + 4);
+  }
+  for (let i = 1; i <= 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(ox + i * w/5, oy);
+    ctx.lineTo(ox + i * w/5, oy - h);
+    ctx.stroke();
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'center';
+    ctx.fillText(i * 2, ox + i * w/5, oy + 18);
+  }
+  
+  // 绘制曲线
+  if (graphState.points.length > 1) {
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    graphState.points.forEach((p, i) => {
+      const x = ox + (p.t / 10) * w;
+      const y = oy - (p.s / 100) * h;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    
+    // 当前点
+    const last = graphState.points[graphState.points.length - 1];
+    const lx = ox + (last.t / 10) * w;
+    const ly = oy - (last.s / 100) * h;
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath();
+    ctx.arc(lx, ly, 6, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 数值标签
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`(${last.t.toFixed(1)}s, ${last.s.toFixed(1)}m)`, lx + 10, ly - 5);
+  }
+  
+  // 斜率说明
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('斜率 = v = ' + graphState.speed + ' m/s', ox + 10, oy - h + 20);
+}
+
+function drawVTGraph(ox, oy, w, h) {
+  // 坐标轴
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(ox, oy);
+  ctx.lineTo(ox, oy - h);
+  ctx.moveTo(ox, oy);
+  ctx.lineTo(ox + w, oy);
+  ctx.stroke();
+  
+  // 标签
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('t/s', ox + w + 20, oy + 5);
+  ctx.fillText('v/(m/s)', ox - 5, oy - h - 10);
+  
+  // 标题
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('v-t 图像（速度-时间）', ox + w/2, oy - h - 30);
+  
+  // 网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i <= 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(ox, oy - i * h/5);
+    ctx.lineTo(ox + w, oy - i * h/5);
+    ctx.stroke();
+    ctx.fillStyle = '#64748b';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(i * 4, ox - 8, oy - i * h/5 + 4);
+  }
+  for (let i = 1; i <= 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(ox + i * w/5, oy);
+    ctx.lineTo(ox + i * w/5, oy - h);
+    ctx.stroke();
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'center';
+    ctx.fillText(i * 2, ox + i * w/5, oy + 18);
+  }
+  
+  // 匀速运动水平线
+  if (graphState.points.length > 0) {
+    const v = graphState.speed;
+    const y = oy - (v / 20) * h;
+    const lastT = graphState.points[graphState.points.length - 1].t;
+    const endX = ox + (lastT / 10) * w;
+    
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(ox, y);
+    ctx.lineTo(endX, y);
+    ctx.stroke();
+    
+    // 面积填充
+    ctx.fillStyle = 'rgba(245,158,11,0.15)';
+    ctx.fillRect(ox, y, endX - ox, oy - y);
+    
+    // 当前点
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath();
+    ctx.arc(endX, y, 6, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 标签
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('v = ' + v + ' m/s', endX + 10, y + 4);
+    
+    // 面积说明
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('面积 = 路程 s', ox + (endX - ox)/2, oy - 10);
+  }
+}
+
+function drawQuizScene() {
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0, 0, 800, 500);
+  
+  // 装饰
+  ctx.fillStyle = 'rgba(59,130,246,0.1)';
+  ctx.beginPath();
+  ctx.arc(400, 250, 180, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 28px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🎯 机械运动练习', 400, 200);
+  
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('在右侧面板完成互动题目', 400, 250);
+  ctx.fillText('掌握速度、路程、时间的关系', 400, 280);
+  
+  // 公式
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'italic 24px "Times New Roman"';
+  ctx.fillText('v = s ÷ t', 400, 350);
+}
+
+// ========== 练习系统 ==========
+const quizData = [
+  {
+    q: '一辆汽车以 20 m/s 的速度匀速行驶，10 秒后通过的路程是多少？',
+    opts: ['100 m', '200 m', '300 m', '400 m'],
+    ans: 1,
+    explain: 's = v × t = 20 × 10 = 200 m'
+  },
+  {
+    q: '小明跑步用了 50 秒跑了 200 米，他的平均速度是？',
+    opts: ['2 m/s', '4 m/s', '6 m/s', '8 m/s'],
+    ans: 1,
+    explain: 'v = s ÷ t = 200 ÷ 50 = 4 m/s'
+  },
+  {
+    q: '1 m/s 等于多少 km/h？',
+    opts: ['1 km/h', '3.6 km/h', '10 km/h', '36 km/h'],
+    ans: 1,
+    explain: '1 m/s = 1 × 3.6 = 3.6 km/h'
+  },
+  {
+    q: '在 s-t 图像中，一条水平直线表示物体处于什么状态？',
+    opts: ['匀速运动', '加速运动', '静止', '减速运动'],
+    ans: 2,
+    explain: 's-t 图水平线表示路程不变化，即物体静止'
+  },
+  {
+    q: '两辆车同时出发，甲车速度 15 m/s，乙车速度 10 m/s，5 秒后两车相距多远？',
+    opts: ['15 m', '20 m', '25 m', '50 m'],
+    ans: 2,
+    explain: '距离差 = (15-10) × 5 = 25 m'
+  },
+  {
+    q: '关于匀速直线运动，下列说法正确的是？',
+    opts: ['速度随时间增大', '路程与时间成正比', '速度随路程变化', '时间与路程无关'],
+    ans: 1,
+    explain: '匀速运动速度恒定，s = vt，路程与时间成正比'
+  },
+  {
+    q: '某同学以 2 m/s 的速度走了 3 分钟，他走过的路程是？',
+    opts: ['6 m', '360 m', '600 m', '36 m'],
+    ans: 1,
+    explain: '3分钟 = 180秒，s = 2 × 180 = 360 m'
+  },
+  {
+    q: '在 v-t 图像中，匀速直线运动表现为？',
+    opts: ['斜向上的直线', '斜向下的直线', '平行于时间轴的直线', '曲线'],
+    ans: 2,
+    explain: '匀速运动速度不变，v-t 图是一条水平线'
+  }
+];
+
+let quizIdx = 0;
+let quizAnswered = false;
+let quizScore = 0;
+let quizFinished = false;
+
+function loadQuiz() {
+  const q = quizData[quizIdx];
+  document.getElementById('quizQ').textContent = (quizIdx + 1) + '. ' + q.q;
+  const optsEl = document.getElementById('quizOpts');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = String.fromCharCode(65 + i) + '. ' + opt;
+    div.addEventListener('click', () => selectAnswer(i));
+    optsEl.appendChild(div);
+  });
+  document.getElementById('quizFb').textContent = '';
+  quizAnswered = false;
+  document.getElementById('quizProgress').textContent = `${quizIdx + 1} / ${quizData.length}`;
+  document.getElementById('btnPrevQ').disabled = quizIdx === 0;
+  document.getElementById('btnNextQ').disabled = quizIdx === quizData.length - 1;
+}
+
+function selectAnswer(idx) {
+  if (quizAnswered || quizFinished) return;
+  quizAnswered = true;
+  const q = quizData[quizIdx];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach((o, i) => {
+    if (i === q.ans) o.classList.add('correct');
+    else if (i === idx && idx !== q.ans) o.classList.add('wrong');
+  });
+  const correct = idx === q.ans;
+  if (correct) quizScore++;
+  let fb = correct ? '✅ 正确！' + q.explain : '❌ 错误。' + q.explain;
+  // 最后一题答完 → 结算
+  if (quizIdx === quizData.length - 1) {
+    quizFinished = true;
+    const pass = quizScore >= Math.ceil(quizData.length * 0.6);
+    fb += `\n\n🎯 完成！得分：${quizScore} / ${quizData.length}`;
+    if (pass && typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('motion');
+      fb += ' · 已记录完成 ✓';
+    }
+  }
+  document.getElementById('quizFb').textContent = fb;
+}
+
+document.getElementById('btnPrevQ').addEventListener('click', () => {
+  if (quizIdx > 0) { quizIdx--; loadQuiz(); }
+});
+document.getElementById('btnNextQ').addEventListener('click', () => {
+  if (quizIdx < quizData.length - 1) { quizIdx++; loadQuiz(); }
+});
+
+// ========== 初始化 ==========
+loadQuiz();
+drawScene();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中物理"></script>
+</body>
+</html>

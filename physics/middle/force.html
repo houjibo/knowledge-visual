@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>力 · 初中物理互动可视化</title>
+<style>
+  :root {
+    --primary: #3b82f6;
+    --force: #ef4444;
+    --gravity: #8b5cf6;
+    --elastic: #10b981;
+    --friction: #f59e0b;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f2744 0%, #1a1a3e 50%, #0f2744 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1320px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.4rem; background: linear-gradient(90deg, var(--force), var(--gravity), var(--elastic)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 1rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab { padding: 12px 24px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(59,130,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 16px; justify-content: center; font-size: 13px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .legend .l-force::before { background: var(--force); }
+  .legend .l-gravity::before { background: var(--gravity); }
+  .legend .l-elastic::before { background: var(--elastic); }
+  .legend .l-friction::before { background: var(--friction); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 700px; }
+  .panel h3 { font-size: 1.15rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .concept-box { font-size: 1.05rem; text-align: left; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 12px 0; line-height: 1.9; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--force); font-weight: 600; }
+  .concept-box .hl2 { color: var(--gravity); font-weight: 600; }
+  .concept-box .hl3 { color: var(--elastic); font-weight: 600; }
+  .concept-box .hl4 { color: var(--friction); font-weight: 600; }
+
+  .formula { display: inline-block; background: rgba(245,158,11,0.15); padding: 6px 14px; border-radius: 8px; font-family: "Times New Roman", serif; font-size: 1.15rem; color: #fbbf24; margin: 8px 0; font-style: italic; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--force); font-weight: 600; font-size: 13px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 16px; border-radius: 10px; background: rgba(59,130,246,0.1); border: 2px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 14px; color: #93c5fd; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .data-display { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+  .data-item { text-align: center; padding: 12px 8px; background: rgba(255,255,255,0.05); border-radius: 10px; }
+  .data-item .label { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+  .data-item .value { font-size: 1.3rem; font-weight: 700; font-family: monospace; }
+  .data-item .unit { font-size: 11px; color: #64748b; margin-left: 2px; }
+  .data-item.force .value { color: var(--force); }
+  .data-item.gravity .value { color: var(--gravity); }
+  .data-item.elastic .value { color: var(--elastic); }
+  .data-item.friction .value { color: var(--friction); }
+
+  .quiz { margin-top: 16px; padding: 18px; background: rgba(59,130,246,0.1); border-radius: 14px; border: 2px solid rgba(59,130,246,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 10px; }
+  .quiz-opt { padding: 12px 16px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 12px; font-size: 14px; color: #fbbf24; min-height: 22px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 14px; }
+  .quiz-nav button { padding: 8px 18px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
+  .quiz-nav button:disabled { opacity: .4; cursor: not-allowed; }
+  .quiz-progress { font-size: 13px; color: #94a3b8; margin-top: 10px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .btn-row { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+  .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; transition: all .2s; font-weight: 500; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.2); color: #cbd5e1; }
+  .btn-outline:hover { background: rgba(255,255,255,0.08); }
+
+  .compare-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+  .compare-table th, .compare-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .compare-table th { color: #94a3b8; font-weight: 500; background: rgba(255,255,255,0.03); }
+  .compare-table td { color: #e2e8f0; }
+  .compare-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+  .drag-hint { text-align: center; color: #64748b; font-size: 12px; margin-top: 8px; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>💪 力</h1>
+    <p>初中物理 · 八年级 · 力的概念、重力、弹力、摩擦力</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="concept">力的效果</div>
+    <div class="tab" data-tab="gravity">重力</div>
+    <div class="tab" data-tab="elastic">弹力</div>
+    <div class="tab" data-tab="friction">摩擦力</div>
+    <div class="tab" data-tab="quiz">互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="800" height="500"></canvas>
+      <div class="legend">
+        <span class="l-force">力 F</span>
+        <span class="l-gravity">重力 G</span>
+        <span class="l-elastic">弹力 F</span>
+        <span class="l-friction">摩擦力 f</span>
+      </div>
+      <div class="drag-hint" id="dragHint">💡 点击画布施加力，观察物体运动变化</div>
+    </div>
+
+    <div class="panel">
+      <!-- 力的效果 -->
+      <div class="section active" id="sec-concept">
+        <h3>📐 什么是力？</h3>
+        <div class="concept-box">
+          <b>力</b>是物体对物体的<span class="hl">作用</span>。<br><br>
+          力的作用效果：<br>
+          1. 改变物体的<span class="hl">运动状态</span>（速度大小或方向）<br>
+          2. 改变物体的<span class="hl">形状</span>（形变）<br><br>
+          <div class="formula">F = m × a</div>
+          <br>
+          其中：<span class="hl">F</span> = 力(N)，<span class="hl">m</span> = 质量(kg)，<span class="hl">a</span> = 加速度(m/s²)
+        </div>
+
+        <div class="data-display">
+          <div class="data-item force">
+            <div class="label">施加力</div>
+            <div class="value" id="dispForce">0.0<span class="unit">N</span></div>
+          </div>
+          <div class="data-item">
+            <div class="label">质量</div>
+            <div class="value" id="dispMass">2.0<span class="unit">kg</span></div>
+          </div>
+          <div class="data-item">
+            <div class="label">加速度</div>
+            <div class="value" id="dispAccel">0.0<span class="unit">m/s²</span></div>
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <label>📦 物体质量</label>
+          <input type="range" id="massSlider" min="0.5" max="10" step="0.5" value="2" />
+          <span class="val" id="massVal">2.0 kg</span>
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="push">👆 点击推动</div>
+          <div class="mode-btn" data-mode="drag">🖐️ 拖拽移动</div>
+          <div class="mode-btn" data-mode="squeeze">🤏 挤压形变</div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnReset">↺ 重置</button>
+        </div>
+
+        <h3 style="margin-top:18px">🔍 力的三要素</h3>
+        <div class="info-grid">
+          <div><b>大小</b><br>力有强弱之分<br>单位：牛顿(N)</div>
+          <div><b>方向</b><br>力是矢量<br>有明确方向性</div>
+          <div><b>作用点</b><br>力作用在物体上<br>的具体位置</div>
+          <div><b>效果</b><br>改变运动状态<br>或使物体形变</div>
+        </div>
+      </div>
+
+      <!-- 重力 -->
+      <div class="section" id="sec-gravity">
+        <h3>🌍 重力</h3>
+        <div class="concept-box">
+          <b>重力</b>是由于地球吸引而使物体受到的<span class="hl2">力</span>。<br><br>
+          特点：<br>
+          • 方向：<span class="hl2">竖直向下</span>（指向地心）<br>
+          • 大小：与物体<span class="hl2">质量</span>成正比<br>
+          • 作用点：物体的<span class="hl2">重心</span><br><br>
+          <div class="formula">G = m × g</div>
+          <br>
+          其中：<span class="hl2">G</span> = 重力(N)，<span class="hl2">m</span> = 质量(kg)，<span class="hl2">g</span> ≈ 9.8 N/kg
+        </div>
+
+        <div class="data-display">
+          <div class="data-item gravity">
+            <div class="label">物体质量</div>
+            <div class="value" id="gMass">1.0<span class="unit">kg</span></div>
+          </div>
+          <div class="data-item gravity">
+            <div class="label">重力</div>
+            <div class="value" id="gForce">9.8<span class="unit">N</span></div>
+          </div>
+          <div class="data-item">
+            <div class="label">下落高度</div>
+            <div class="value" id="gHeight">0.0<span class="unit">m</span></div>
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <label>📦 物体质量</label>
+          <input type="range" id="gMassSlider" min="0.5" max="5" step="0.5" value="1" />
+          <span class="val" id="gMassVal">1.0 kg</span>
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="freefall">🍎 自由落体</div>
+          <div class="mode-btn" data-mode="projectile">🎯 平抛运动</div>
+          <div class="mode-btn" data-mode="pendulum">🎪 单摆</div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnDrop">▶ 释放</button>
+          <button class="btn btn-outline" id="btnGravReset">↺ 重置</button>
+        </div>
+
+        <h3 style="margin-top:18px">💡 重力的应用</h3>
+        <table class="compare-table">
+          <tr><th>场景</th><th>重力方向</th><th>应用</th></tr>
+          <tr><td>🏗️ 建筑</td><td>竖直向下</td><td>铅垂线校准</td></tr>
+          <tr><td>⚖️ 天平</td><td>竖直向下</td><td>测量质量</td></tr>
+          <tr><td>🎢 过山车</td><td>指向地心</td><td>重力势能转化</td></tr>
+          <tr><td>🌊 潮汐</td><td>月球引力</td><td>海水涨落</td></tr>
+        </table>
+      </div>
+
+      <!-- 弹力 -->
+      <div class="section" id="sec-elastic">
+        <h3>🎯 弹力</h3>
+        <div class="concept-box">
+          <b>弹力</b>是物体发生<span class="hl3">弹性形变</span>后，要恢复原状而对与它接触的物体产生的力。<br><br>
+          产生条件：<br>
+          1. 物体直接接触<br>
+          2. 发生<span class="hl3">弹性形变</span><br><br>
+          <div class="formula">F = k × x</div>
+          <br>
+          其中：<span class="hl3">F</span> = 弹力(N)，<span class="hl3">k</span> = 劲度系数(N/m)，<span class="hl3">x</span> = 形变量(m)
+        </div>
+
+        <div class="data-display">
+          <div class="data-item elastic">
+            <div class="label">形变量</div>
+            <div class="value" id="eDisp">0.0<span class="unit">cm</span></div>
+          </div>
+          <div class="data-item elastic">
+            <div class="label">劲度系数</div>
+            <div class="value" id="eK">50<span class="unit">N/m</span></div>
+          </div>
+          <div class="data-item elastic">
+            <div class="label">弹力</div>
+            <div class="value" id="eForce">0.0<span class="unit">N</span></div>
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <label>🔧 劲度系数</label>
+          <input type="range" id="kSlider" min="10" max="200" step="10" value="50" />
+          <span class="val" id="kVal">50 N/m</span>
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="spring">🔩 弹簧拉伸</div>
+          <div class="mode-btn" data-mode="compress">🗜️ 弹簧压缩</div>
+          <div class="mode-btn" data-mode="bounce">🏀 弹球</div>
+        </div>
+
+        <div class="drag-hint">💡 拖拽弹簧端点或小球观察弹力变化</div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnElasticReset">↺ 重置</button>
+        </div>
+
+        <h3 style="margin-top:18px">💡 弹力的应用</h3>
+        <div class="info-grid">
+          <div><b>弹簧测力计</b><br>利用弹力测量力的大小</div>
+          <div><b>弓箭</b><br>弓的弹性势能转化为动能</div>
+          <div><b>减震器</b><br>吸收震动能量</div>
+          <div><b>蹦床</b><br>弹性形变储存能量</div>
+        </div>
+      </div>
+
+      <!-- 摩擦力 -->
+      <div class="section" id="sec-friction">
+        <h3>🛑 摩擦力</h3>
+        <div class="concept-box">
+          <b>摩擦力</b>是两个相互接触的物体，当它们发生<span class="hl4">相对运动</span>或具有相对运动趋势时，在接触面上产生的阻碍相对运动的力。<br><br>
+          影响因素：<br>
+          1. <span class="hl4">压力大小</span>（正压力）<br>
+          2. <span class="hl4">接触面粗糙程度</span><br><br>
+          <div class="formula">f = μ × N</div>
+          <br>
+          其中：<span class="hl4">f</span> = 摩擦力(N)，<span class="hl4">μ</span> = 摩擦系数，<span class="hl4">N</span> = 正压力(N)
+        </div>
+
+        <div class="data-display">
+          <div class="data-item friction">
+            <div class="label">推力</div>
+            <div class="value" id="fPush">0.0<span class="unit">N</span></div>
+          </div>
+          <div class="data-item friction">
+            <div class="label">摩擦力</div>
+            <div class="value" id="fFriction">0.0<span class="unit">N</span></div>
+          </div>
+          <div class="data-item">
+            <div class="label">运动状态</div>
+            <div class="value" id="fState" style="font-size:1rem">静止</div>
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <label>🏋️ 物体重量</label>
+          <input type="range" id="weightSlider" min="1" max="10" step="1" value="3" />
+          <span class="val" id="weightVal">3 kg</span>
+        </div>
+
+        <div class="slider-row">
+          <label>📐 粗糙程度</label>
+          <input type="range" id="roughSlider" min="0.1" max="0.8" step="0.1" value="0.3" />
+          <span class="val" id="roughVal">μ=0.3</span>
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-mode="static">📦 静摩擦</div>
+          <div class="mode-btn" data-mode="kinetic">🛹 滑动摩擦</div>
+          <div class="mode-btn" data-mode="rolling">🎱 滚动摩擦</div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnFrictionReset">↺ 重置</button>
+        </div>
+
+        <h3 style="margin-top:18px">💡 摩擦力的应用</h3>
+        <table class="compare-table">
+          <tr><th>类型</th><th>特点</th><th>实例</th></tr>
+          <tr><td>静摩擦</td><td>阻碍相对运动趋势</td><td>手握瓶子</td></tr>
+          <tr><td>滑动摩擦</td><td>阻碍相对滑动</td><td>推箱子</td></tr>
+          <tr><td>滚动摩擦</td><td>阻碍滚动</td><td>车轮滚动</td></tr>
+        </table>
+      </div>
+
+      <!-- 互动练习 -->
+      <div class="section" id="sec-quiz">
+        <div class="quiz">
+          <div class="quiz-q" id="quizQ">加载中...</div>
+          <div class="quiz-opts" id="quizOpts"></div>
+          <div class="quiz-feedback" id="quizFeedback"></div>
+          <div class="quiz-nav">
+            <button id="btnPrev">← 上一题</button>
+            <button id="btnNext">下一题 →</button>
+          </div>
+          <div class="quiz-progress" id="quizProgress">第 1 题 / 共 5 题</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// ============ 全局状态 ============
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+let currentTab = 'concept';
+let currentMode = 'push';
+let totalCorrect = 0;
+function bumpTotalCorrect() {
+  totalCorrect++;
+  if (totalCorrect >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('force')) {
+    PageProgress.markDone('force');
+  }
+}
+
+// ============ Tab 切换 ============
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(`sec-${currentTab}`).classList.add('active');
+    // 更新提示
+    const hints = {
+      concept: '💡 点击画布施加力，观察物体运动变化',
+      gravity: '💡 点击释放观察重力效果',
+      elastic: '💡 拖拽弹簧端点或小球观察弹力变化',
+      friction: '💡 调节滑块观察摩擦力变化',
+      quiz: '💡 测试你对力的理解'
+    };
+    document.getElementById('dragHint').textContent = hints[currentTab];
+    resetScene();
+  });
+});
+
+// ============ 力的效果模块 ============
+let forceState = {
+  x: 400, y: 250, vx: 0, vy: 0,
+  mass: 2, force: 0, angle: 0,
+  deform: 0, isDragging: false, isSqueezing: false
+};
+
+document.getElementById('massSlider').addEventListener('input', e => {
+  forceState.mass = parseFloat(e.target.value);
+  document.getElementById('massVal').textContent = forceState.mass.toFixed(1) + ' kg';
+  document.getElementById('dispMass').innerHTML = forceState.mass.toFixed(1) + '<span class="unit">kg</span>';
+});
+
+document.querySelectorAll('#sec-concept .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#sec-concept .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    resetScene();
+  });
+});
+
+canvas.addEventListener('mousedown', e => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
+  
+  if (currentTab === 'concept') {
+    if (currentMode === 'push') {
+      const dx = mx - forceState.x;
+      const dy = my - forceState.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 50) {
+        forceState.force = 20;
+        forceState.angle = Math.atan2(dy, dx);
+        forceState.vx = Math.cos(forceState.angle) * forceState.force / forceState.mass;
+        forceState.vy = Math.sin(forceState.angle) * forceState.force / forceState.mass;
+      }
+    } else if (currentMode === 'drag') {
+      const dx = mx - forceState.x;
+      const dy = my - forceState.y;
+      if (Math.sqrt(dx*dx + dy*dy) < 50) {
+        forceState.isDragging = true;
+      }
+    } else if (currentMode === 'squeeze') {
+      const dx = mx - forceState.x;
+      const dy = my - forceState.y;
+      if (Math.sqrt(dx*dx + dy*dy) < 60) {
+        forceState.isSqueezing = true;
+      }
+    }
+  } else if (currentTab === 'elastic') {
+    handleElasticMouseDown(mx, my);
+  }
+});
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
+  
+  if (currentTab === 'concept' && currentMode === 'drag' && forceState.isDragging) {
+    forceState.x = mx;
+    forceState.y = my;
+  } else if (currentTab === 'concept' && currentMode === 'squeeze' && forceState.isSqueezing) {
+    const dx = mx - forceState.x;
+    const dy = my - forceState.y;
+    forceState.deform = Math.max(0, 30 - Math.sqrt(dx*dx + dy*dy) / 2);
+  } else if (currentTab === 'elastic') {
+    handleElasticMouseMove(mx, my);
+  }
+});
+
+canvas.addEventListener('mouseup', () => {
+  forceState.isDragging = false;
+  forceState.isSqueezing = false;
+  elasticState.isDragging = false;
+});
+
+document.getElementById('btnReset').addEventListener('click', resetScene);
+
+function resetScene() {
+  if (currentTab === 'concept') {
+    forceState.x = 400; forceState.y = 250;
+    forceState.vx = 0; forceState.vy = 0;
+    forceState.force = 0; forceState.deform = 0;
+  } else if (currentTab === 'gravity') {
+    gravityState.y = 100; gravityState.vy = 0;
+    gravityState.x = 400; gravityState.vx = 0;
+    gravityState.time = 0; gravityState.swinging = false;
+  } else if (currentTab === 'elastic') {
+    elasticState.stretch = 0; elasticState.force = 0;
+    elasticState.ballY = 250; elasticState.ballVY = 0;
+  } else if (currentTab === 'friction') {
+    frictionState.pushForce = 0; frictionState.velocity = 0;
+    frictionState.x = 200; frictionState.moving = false;
+  }
+}
+
+function drawForceConcept() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // 更新位置
+  if (currentMode === 'push' && !forceState.isDragging) {
+    forceState.x += forceState.vx;
+    forceState.y += forceState.vy;
+    forceState.vx *= 0.98;
+    forceState.vy *= 0.98;
+    
+    // 边界反弹
+    if (forceState.x < 50 || forceState.x > 750) forceState.vx *= -0.8;
+    if (forceState.y < 50 || forceState.y > 450) forceState.vy *= -0.8;
+    forceState.x = Math.max(50, Math.min(750, forceState.x));
+    forceState.y = Math.max(50, Math.min(450, forceState.y));
+  }
+  
+  // 形变恢复
+  if (!forceState.isSqueezing) {
+    forceState.deform *= 0.9;
+  }
+  
+  // 绘制网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < canvas.width; i += 50) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+  }
+  for (let i = 0; i < canvas.height; i += 50) {
+    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
+  }
+  
+  // 绘制物体（带形变）
+  const size = 40 + forceState.mass * 5;
+  const deformX = size + forceState.deform;
+  const deformY = size - forceState.deform * 0.5;
+  
+  ctx.save();
+  ctx.translate(forceState.x, forceState.y);
+  
+  // 阴影
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(5, deformY + 5, deformX * 0.8, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 物体
+  const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, deformX);
+  gradient.addColorStop(0, '#60a5fa');
+  gradient.addColorStop(1, '#2563eb');
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, deformX, deformY, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 力的箭头
+  if (Math.abs(forceState.vx) > 0.1 || Math.abs(forceState.vy) > 0.1) {
+    const arrowLen = Math.sqrt(forceState.vx**2 + forceState.vy**2) * 3;
+    const arrowAngle = Math.atan2(forceState.vy, forceState.vx);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(arrowAngle) * arrowLen, Math.sin(arrowAngle) * arrowLen);
+    ctx.stroke();
+    // 箭头头部
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(arrowAngle) * arrowLen, Math.sin(arrowAngle) * arrowLen);
+    ctx.lineTo(Math.cos(arrowAngle - 0.4) * (arrowLen - 15), Math.sin(arrowAngle - 0.4) * (arrowLen - 15));
+    ctx.moveTo(Math.cos(arrowAngle) * arrowLen, Math.sin(arrowAngle) * arrowLen);
+    ctx.lineTo(Math.cos(arrowAngle + 0.4) * (arrowLen - 15), Math.sin(arrowAngle + 0.4) * (arrowLen - 15));
+    ctx.stroke();
+  }
+  
+  ctx.restore();
+  
+  // 更新显示
+  const accel = forceState.force / forceState.mass;
+  document.getElementById('dispForce').innerHTML = forceState.force.toFixed(1) + '<span class="unit">N</span>';
+  document.getElementById('dispAccel').innerHTML = accel.toFixed(1) + '<span class="unit">m/s²</span>';
+  forceState.force *= 0.95;
+}
+
+// ============ 重力模块 ============
+let gravityState = { x: 400, y: 100, vy: 0, vx: 0, time: 0, swinging: false, angle: 0, angVel: 0 };
+
+document.getElementById('gMassSlider').addEventListener('input', e => {
+  const mass = parseFloat(e.target.value);
+  document.getElementById('gMassVal').textContent = mass.toFixed(1) + ' kg';
+  document.getElementById('gMass').innerHTML = mass.toFixed(1) + '<span class="unit">kg</span>';
+  const g = mass * 9.8;
+  document.getElementById('gForce').innerHTML = g.toFixed(1) + '<span class="unit">N</span>';
+});
+
+document.querySelectorAll('#sec-gravity .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#sec-gravity .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    resetScene();
+  });
+});
+
+document.getElementById('btnDrop').addEventListener('click', () => {
+  if (currentMode === 'pendulum') {
+    gravityState.swinging = true;
+    gravityState.angle = Math.PI / 4;
+    gravityState.angVel = 0;
+  } else {
+    gravityState.y = 100;
+    gravityState.vy = 0;
+    if (currentMode === 'projectile') gravityState.vx = 3;
+  }
+});
+
+document.getElementById('btnGravReset').addEventListener('click', resetScene);
+
+function drawGravity() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  const mass = parseFloat(document.getElementById('gMassSlider').value);
+  const g = 9.8;
+  
+  // 绘制地面
+  ctx.fillStyle = '#374151';
+  ctx.fillRect(0, 450, canvas.width, 50);
+  ctx.strokeStyle = '#4b5563';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < canvas.width; i += 30) {
+    ctx.beginPath();
+    ctx.moveTo(i, 450);
+    ctx.lineTo(i + 15, 470);
+    ctx.stroke();
+  }
+  
+  if (currentMode === 'freefall' || currentMode === 'projectile') {
+    // 更新位置
+    if (gravityState.y < 420) {
+      gravityState.vy += g * 0.05;
+      gravityState.y += gravityState.vy;
+      gravityState.x += gravityState.vx;
+      gravityState.time += 0.05;
+    } else {
+      gravityState.y = 420;
+      gravityState.vy = 0;
+    }
+    
+    // 绘制轨迹
+    ctx.strokeStyle = 'rgba(139, 92, 246, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(400, 100);
+    if (currentMode === 'projectile') {
+      for (let t = 0; t < gravityState.time; t += 0.1) {
+        const px = 400 + 3 * t * 60;
+        const py = 100 + 0.5 * g * t * t * 60;
+        ctx.lineTo(px, Math.min(py, 420));
+      }
+    } else {
+      ctx.lineTo(400, gravityState.y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // 绘制物体
+    const size = 20 + mass * 5;
+    const gradient = ctx.createRadialGradient(gravityState.x, gravityState.y, 0, gravityState.x, gravityState.y, size);
+    gradient.addColorStop(0, '#a78bfa');
+    gradient.addColorStop(1, '#7c3aed');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(gravityState.x, gravityState.y, size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 重力箭头
+    if (gravityState.y < 420) {
+      ctx.strokeStyle = '#8b5cf6';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(gravityState.x, gravityState.y + size);
+      ctx.lineTo(gravityState.x, gravityState.y + size + 40);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(gravityState.x, gravityState.y + size + 40);
+      ctx.lineTo(gravityState.x - 8, gravityState.y + size + 30);
+      ctx.moveTo(gravityState.x, gravityState.y + size + 40);
+      ctx.lineTo(gravityState.x + 8, gravityState.y + size + 30);
+      ctx.stroke();
+      
+      ctx.fillStyle = '#8b5cf6';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('G=' + (mass * g).toFixed(1) + 'N', gravityState.x + 15, gravityState.y + size + 30);
+    }
+    
+    // 更新显示
+    const height = Math.max(0, (420 - gravityState.y) / 60);
+    document.getElementById('gHeight').innerHTML = height.toFixed(1) + '<span class="unit">m</span>';
+  } else if (currentMode === 'pendulum') {
+    const pivotX = 400, pivotY = 80;
+    const length = 200;
+    
+    if (gravityState.swinging) {
+      const angAccel = -(g / length) * Math.sin(gravityState.angle);
+      gravityState.angVel += angAccel * 0.05;
+      gravityState.angVel *= 0.995;
+      gravityState.angle += gravityState.angVel * 0.05;
+    }
+    
+    const bobX = pivotX + length * Math.sin(gravityState.angle);
+    const bobY = pivotY + length * Math.cos(gravityState.angle);
+    
+    // 绘制支架
+    ctx.strokeStyle = '#6b7280';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(pivotX - 50, pivotY);
+    ctx.lineTo(pivotX + 50, pivotY);
+    ctx.stroke();
+    
+    // 绘制绳子
+    ctx.strokeStyle = '#9ca3af';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(pivotX, pivotY);
+    ctx.lineTo(bobX, bobY);
+    ctx.stroke();
+    
+    // 绘制小球
+    const size = 20 + mass * 5;
+    const gradient = ctx.createRadialGradient(bobX, bobY, 0, bobX, bobY, size);
+    gradient.addColorStop(0, '#a78bfa');
+    gradient.addColorStop(1, '#7c3aed');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(bobX, bobY, size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 重力分解
+    if (Math.abs(gravityState.angle) > 0.1) {
+      const gForce = mass * g;
+      const tangential = gForce * Math.sin(gravityState.angle);
+      const radial = gForce * Math.cos(gravityState.angle);
+      
+      // 重力
+      ctx.strokeStyle = '#8b5cf6';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(bobX, bobY);
+      ctx.lineTo(bobX, bobY + 50);
+      ctx.stroke();
+      
+      // 切向分力
+      ctx.strokeStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.moveTo(bobX, bobY);
+      const tanX = bobX + tangential * Math.cos(gravityState.angle) * 2;
+      const tanY = bobY - tangential * Math.sin(gravityState.angle) * 2;
+      ctx.lineTo(tanX, tanY);
+      ctx.stroke();
+    }
+  }
+}
+
+// ============ 弹力模块 ============
+let elasticState = { stretch: 0, force: 0, k: 50, ballY: 250, ballVY: 0, isDragging: false };
+
+document.getElementById('kSlider').addEventListener('input', e => {
+  elasticState.k = parseInt(e.target.value);
+  document.getElementById('kVal').textContent = elasticState.k + ' N/m';
+  document.getElementById('eK').innerHTML = elasticState.k + '<span class="unit">N/m</span>';
+});
+
+document.querySelectorAll('#sec-elastic .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#sec-elastic .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    resetScene();
+  });
+});
+
+function handleElasticMouseDown(mx, my) {
+  if (currentMode === 'spring' || currentMode === 'compress') {
+    if (Math.abs(mx - 600) < 30 && Math.abs(my - 250) < 50) {
+      elasticState.isDragging = true;
+    }
+  } else if (currentMode === 'bounce') {
+    if (Math.sqrt((mx - 400)**2 + (my - elasticState.ballY)**2) < 30) {
+      elasticState.isDragging = true;
+    }
+  }
+}
+
+function handleElasticMouseMove(mx, my) {
+  if (elasticState.isDragging) {
+    if (currentMode === 'spring') {
+      elasticState.stretch = Math.max(0, Math.min(150, mx - 600));
+    } else if (currentMode === 'compress') {
+      elasticState.stretch = Math.max(-100, Math.min(0, mx - 600));
+    } else if (currentMode === 'bounce') {
+      elasticState.ballY = Math.max(100, Math.min(400, my));
+    }
+    elasticState.force = elasticState.k * Math.abs(elasticState.stretch) / 100;
+  }
+}
+
+document.getElementById('btnElasticReset').addEventListener('click', resetScene);
+
+function drawElastic() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  if (currentMode === 'spring' || currentMode === 'compress') {
+    const anchorX = 200, anchorY = 250;
+    const endX = 600 + elasticState.stretch;
+    const endY = 250;
+    
+    // 绘制固定端
+    ctx.fillStyle = '#6b7280';
+    ctx.fillRect(anchorX - 20, anchorY - 40, 20, 80);
+    
+    // 绘制弹簧
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    const coils = 15;
+    const coilWidth = (endX - anchorX) / coils;
+    ctx.moveTo(anchorX, anchorY);
+    for (let i = 0; i < coils; i++) {
+      const x1 = anchorX + i * coilWidth + coilWidth * 0.25;
+      const x2 = anchorX + i * coilWidth + coilWidth * 0.75;
+      const y1 = anchorY - 20;
+      const y2 = anchorY + 20;
+      ctx.lineTo(x1, y1);
+      ctx.lineTo(x2, y2);
+    }
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    
+    // 绘制端点
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath();
+    ctx.arc(endX, endY, 15, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 弹力箭头
+    if (Math.abs(elasticState.stretch) > 5) {
+      const forceDir = elasticState.stretch > 0 ? -1 : 1;
+      const arrowLen = Math.abs(elasticState.force) * 2;
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(endX, endY);
+      ctx.lineTo(endX + forceDir * arrowLen, endY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(endX + forceDir * arrowLen, endY);
+      ctx.lineTo(endX + forceDir * (arrowLen - 10), endY - 8);
+      ctx.moveTo(endX + forceDir * arrowLen, endY);
+      ctx.lineTo(endX + forceDir * (arrowLen - 10), endY + 8);
+      ctx.stroke();
+    }
+    
+    // 更新显示
+    const disp = Math.abs(elasticState.stretch) / 10;
+    document.getElementById('eDisp').innerHTML = disp.toFixed(1) + '<span class="unit">cm</span>';
+    document.getElementById('eForce').innerHTML = elasticState.force.toFixed(1) + '<span class="unit">N</span>';
+    
+    // 释放动画
+    if (!elasticState.isDragging && Math.abs(elasticState.stretch) > 1) {
+      elasticState.stretch *= 0.9;
+      elasticState.force = elasticState.k * Math.abs(elasticState.stretch) / 100;
+    }
+  } else if (currentMode === 'bounce') {
+    const floorY = 450;
+    const ballX = 400;
+    
+    // 绘制地面
+    ctx.fillStyle = '#374151';
+    ctx.fillRect(0, floorY, canvas.width, 50);
+    
+    // 绘制弹簧床
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 4;
+    const springTop = Math.max(350, elasticState.ballY + 25);
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const x1 = 300 + i * 20;
+      const x2 = 300 + i * 20 + 10;
+      ctx.lineTo(x1, springTop);
+      ctx.lineTo(x2, springTop + 10);
+    }
+    ctx.stroke();
+    
+    // 更新球位置
+    if (!elasticState.isDragging) {
+      elasticState.ballVY += 0.5;
+      elasticState.ballY += elasticState.ballVY;
+      
+      // 碰撞检测
+      if (elasticState.ballY > 350 - 25) {
+        elasticState.ballY = 350 - 25;
+        elasticState.ballVY *= -0.8;
+      }
+    }
+    
+    // 绘制球
+    const gradient = ctx.createRadialGradient(ballX, elasticState.ballY, 0, ballX, elasticState.ballY, 25);
+    gradient.addColorStop(0, '#fbbf24');
+    gradient.addColorStop(1, '#d97706');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(ballX, elasticState.ballY, 25, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 形变效果
+    if (elasticState.ballY > 340) {
+      const deform = (elasticState.ballY - 340) / 10;
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.arc(ballX + (Math.random() - 0.5) * 30, elasticState.ballY + 20, 5 + deform * 3, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+// ============ 摩擦力模块 ============
+let frictionState = { pushForce: 0, velocity: 0, x: 200, moving: false, mass: 3, mu: 0.3 };
+
+document.getElementById('weightSlider').addEventListener('input', e => {
+  frictionState.mass = parseInt(e.target.value);
+  document.getElementById('weightVal').textContent = frictionState.mass + ' kg';
+});
+
+document.getElementById('roughSlider').addEventListener('input', e => {
+  frictionState.mu = parseFloat(e.target.value);
+  document.getElementById('roughVal').textContent = 'μ=' + frictionState.mu.toFixed(1);
+});
+
+document.querySelectorAll('#sec-friction .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#sec-friction .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    resetScene();
+  });
+});
+
+document.getElementById('btnFrictionReset').addEventListener('click', resetScene);
+
+function drawFriction() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // 绘制地面
+  ctx.fillStyle = '#374151';
+  ctx.fillRect(0, 350, canvas.width, 150);
+  
+  // 粗糙程度可视化
+  if (frictionState.mu > 0.3) {
+    ctx.fillStyle = '#4b5563';
+    for (let i = 0; i < 50; i++) {
+      const x = Math.random() * canvas.width;
+      const y = 350 + Math.random() * 20;
+      ctx.fillRect(x, y, 3, 3);
+    }
+  }
+  
+  // 计算摩擦力
+  const normalForce = frictionState.mass * 9.8;
+  const maxStaticFriction = frictionState.mu * normalForce * 1.2;
+  const kineticFriction = frictionState.mu * normalForce;
+  
+  // 自动增加推力（演示用）
+  frictionState.pushForce = Math.min(frictionState.pushForce + 0.1, 50);
+  
+  // 判断运动状态
+  let frictionForce = 0;
+  if (currentMode === 'static') {
+    if (frictionState.pushForce < maxStaticFriction) {
+      frictionForce = frictionState.pushForce;
+      frictionState.moving = false;
+    } else {
+      frictionState.moving = true;
+    }
+  } else if (currentMode === 'kinetic') {
+    frictionForce = kineticFriction;
+    if (frictionState.pushForce > kineticFriction) {
+      frictionState.velocity += (frictionState.pushForce - kineticFriction) * 0.01;
+      frictionState.moving = true;
+    } else {
+      frictionState.velocity *= 0.95;
+      if (frictionState.velocity < 0.1) frictionState.moving = false;
+    }
+  } else if (currentMode === 'rolling') {
+    frictionForce = kineticFriction * 0.2; // 滚动摩擦小很多
+    if (frictionState.pushForce > frictionForce) {
+      frictionState.velocity += (frictionState.pushForce - frictionForce) * 0.02;
+      frictionState.moving = true;
+    }
+  }
+  
+  // 更新位置
+  if (frictionState.moving) {
+    frictionState.x += frictionState.velocity;
+    if (frictionState.x > 700) frictionState.x = 200;
+  }
+  
+  // 绘制物体
+  const boxSize = 40 + frictionState.mass * 3;
+  const gradient = ctx.createLinearGradient(frictionState.x, 310 - boxSize, frictionState.x + boxSize, 310);
+  gradient.addColorStop(0, '#60a5fa');
+  gradient.addColorStop(1, '#2563eb');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(frictionState.x, 310 - boxSize, boxSize, boxSize);
+  
+  // 推力箭头
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(frictionState.x - 30, 310 - boxSize / 2);
+  ctx.lineTo(frictionState.x - 5, 310 - boxSize / 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(frictionState.x - 5, 310 - boxSize / 2);
+  ctx.lineTo(frictionState.x - 12, 310 - boxSize / 2 - 6);
+  ctx.moveTo(frictionState.x - 5, 310 - boxSize / 2);
+  ctx.lineTo(frictionState.x - 12, 310 - boxSize / 2 + 6);
+  ctx.stroke();
+  
+  // 摩擦力箭头
+  if (frictionState.pushForce > 0) {
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(frictionState.x + boxSize + 5, 310 - boxSize / 2);
+    ctx.lineTo(frictionState.x + boxSize + 30, 310 - boxSize / 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(frictionState.x + boxSize + 30, 310 - boxSize / 2);
+    ctx.lineTo(frictionState.x + boxSize + 23, 310 - boxSize / 2 - 6);
+    ctx.moveTo(frictionState.x + boxSize + 30, 310 - boxSize / 2);
+    ctx.lineTo(frictionState.x + boxSize + 23, 310 - boxSize / 2 + 6);
+    ctx.stroke();
+  }
+  
+  // 更新显示
+  document.getElementById('fPush').innerHTML = frictionState.pushForce.toFixed(1) + '<span class="unit">N</span>';
+  document.getElementById('fFriction').innerHTML = frictionForce.toFixed(1) + '<span class="unit">N</span>';
+  document.getElementById('fState').textContent = frictionState.moving ? '运动中' : '静止';
+}
+
+// ============ 练习模块 ============
+const quizzes = [
+  {
+    q: '关于力的说法，下列正确的是？',
+    opts: ['力可以脱离物体而存在', '力是物体对物体的作用', '只有接触的物体才有力的作用', '力的单位是千克'],
+    answer: 1
+  },
+  {
+    q: '一个物体受到的重力为9.8N，它的质量约为？',
+    opts: ['0.5kg', '1kg', '2kg', '9.8kg'],
+    answer: 1
+  },
+  {
+    q: '弹簧的劲度系数越大，说明？',
+    opts: ['弹簧越软', '弹簧越硬', '弹力越小', '形变越大'],
+    answer: 1
+  },
+  {
+    q: '下列哪种摩擦属于滚动摩擦？',
+    opts: ['手推桌子', '滑雪', '车轮滚动', '擦黑板'],
+    answer: 2
+  },
+  {
+    q: '在光滑水平面上推一个物体，松手后物体将？',
+    opts: ['立即停止', '慢慢停下', '匀速直线运动', '加速运动'],
+    answer: 2
+  }
+];
+
+let quizIndex = 0;
+let quizAnswered = false;
+
+function renderQuiz() {
+  const quiz = quizzes[quizIndex];
+  document.getElementById('quizQ').textContent = quiz.q;
+  const optsDiv = document.getElementById('quizOpts');
+  optsDiv.innerHTML = '';
+  quiz.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      if (i === quiz.answer) {
+        div.classList.add('correct');
+        document.getElementById('quizFeedback').textContent = '✓ 正确！';
+        bumpTotalCorrect();
+      } else {
+        div.classList.add('wrong');
+        document.getElementById('quizFeedback').textContent = '✗ 错误，正确答案是：' + quiz.opts[quiz.answer];
+      }
+    });
+    optsDiv.appendChild(div);
+  });
+  document.getElementById('quizProgress').textContent = `第 ${quizIndex + 1} 题 / 共 ${quizzes.length} 题`;
+  document.getElementById('btnPrev').disabled = quizIndex === 0;
+  document.getElementById('btnNext').disabled = quizIndex === quizzes.length - 1;
+  quizAnswered = false;
+  document.getElementById('quizFeedback').textContent = '';
+}
+
+document.getElementById('btnPrev').addEventListener('click', () => {
+  if (quizIndex > 0) {
+    quizIndex--;
+    renderQuiz();
+  }
+});
+
+document.getElementById('btnNext').addEventListener('click', () => {
+  if (quizIndex < quizzes.length - 1) {
+    quizIndex++;
+    renderQuiz();
+  }
+});
+
+// ============ 主循环 ============
+function animate() {
+  if (currentTab === 'concept') {
+    drawForceConcept();
+  } else if (currentTab === 'gravity') {
+    drawGravity();
+  } else if (currentTab === 'elastic') {
+    drawElastic();
+  } else if (currentTab === 'friction') {
+    drawFriction();
+  }
+  requestAnimationFrame(animate);
+}
+
+// 初始化
+renderQuiz();
+animate();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中物理"></script>
+</body>
+</html>

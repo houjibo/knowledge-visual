@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>动量 - 高中物理互动可视化</title>
+<style>
+:root {
+  --primary: #1565c0;
+  --accent: #ff6f00;
+  --momentum-a: #e53935;
+  --momentum-b: #1e88e5;
+  --momentum-total: #fdd835;
+  --bg-dark: #0a1428;
+  --bg-card: #152238;
+  --text: #e3f2fd;
+  --text-dim: #90caf9;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-dark);
+  color: var(--text);
+  overflow-x: hidden;
+}
+.header {
+  background: linear-gradient(135deg, #0a1428 0%, #1565c0 100%);
+  padding: 20px 24px;
+  text-align: center;
+  border-bottom: 2px solid var(--primary);
+}
+.header h1 { font-size: 1.6em; margin-bottom: 4px; }
+.header p { color: var(--text-dim); font-size: 0.9em; }
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  flex-wrap: wrap;
+}
+.tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.3s;
+}
+.tab.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.section { display: none; padding: 20px 16px; max-width: 800px; margin: 0 auto; }
+.section.active { display: block; }
+.section-title {
+  font-size: 1.2em;
+  margin-bottom: 16px;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+canvas {
+  width: 100%;
+  border-radius: 8px;
+  background: #050a14;
+  touch-action: none;
+}
+.controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+  align-items: center;
+}
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 140px;
+}
+.control-group label {
+  font-size: 0.75em;
+  color: var(--text-dim);
+}
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--primary);
+}
+.btn {
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.3s;
+}
+.btn:active { transform: scale(0.95); }
+.btn.accent { background: var(--accent); }
+.data-display {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.data-item {
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+.data-item .value {
+  font-size: 1.3em;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+}
+.data-item .label {
+  font-size: 0.7em;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.pa { color: var(--momentum-a); }
+.pb { color: var(--momentum-b); }
+.pt { color: var(--momentum-total); }
+.formula {
+  background: rgba(0,0,0,0.4);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95em;
+  text-align: center;
+  border-left: 3px solid var(--primary);
+}
+.quiz-option {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  margin: 6px 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.2);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.9em;
+  transition: all 0.2s;
+}
+.quiz-option:hover { border-color: var(--primary); }
+.quiz-option.correct { background: rgba(46,125,50,0.4); border-color: #2e7d32; }
+.quiz-option.wrong { background: rgba(229,57,53,0.3); border-color: #e53935; }
+.explanation {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.3);
+  font-size: 0.85em;
+  line-height: 1.6;
+  display: none;
+}
+.explanation.show { display: block; }
+.legend {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin: 8px 0;
+  font-size: 0.8em;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>💥 动量</h1>
+  <p>冲量与动量定理 · 动量守恒定律 · 碰撞问题</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(0)">🎯 冲量与动量</div>
+  <div class="tab" onclick="switchTab(1)">💥 碰撞模拟</div>
+  <div class="tab" onclick="switchTab(2)">🔄 反冲运动</div>
+  <div class="tab" onclick="switchTab(3)">📝 练习</div>
+</div>
+
+<!-- Section 0: 冲量与动量 -->
+<div class="section active">
+  <div class="section-title">🎯 冲量与动量定理</div>
+  
+  <div class="card">
+    <div class="formula">p = mv &nbsp;&nbsp;|&nbsp;&nbsp; I = FΔt = Δp = mv' - mv</div>
+    <p style="font-size:0.85em;color:var(--text-dim);margin:8px 0">
+      调整质量和速度，观察动量大小。施加力后观察动量如何变化，理解冲量-动量关系。
+    </p>
+    <canvas id="impulseCanvas" height="280"></canvas>
+    <div class="controls">
+      <div class="control-group">
+        <label>质量 m = <span id="massVal">2</span> kg</label>
+        <input type="range" id="massSlider" min="0.5" max="10" value="2" step="0.5">
+      </div>
+      <div class="control-group">
+        <label>初速度 v₀ = <span id="v0Val">3</span> m/s</label>
+        <input type="range" id="v0Slider" min="-10" max="10" value="3" step="1">
+      </div>
+      <div class="control-group">
+        <label>作用力 F = <span id="forceVal">5</span> N</label>
+        <input type="range" id="forceSlider" min="-20" max="20" value="5" step="1">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin:8px 0">
+      <button class="btn" onclick="applyForce()">⚡ 施加力</button>
+      <button class="btn accent" onclick="resetImpulse()">🔄 重置</button>
+    </div>
+    <div class="data-display">
+      <div class="data-item">
+        <div class="value pa" id="pInitVal">6.0</div>
+        <div class="label">初动量 (kg·m/s)</div>
+      </div>
+      <div class="data-item">
+        <div class="value pb" id="impulseVal">0.0</div>
+        <div class="label">冲量 I (N·s)</div>
+      </div>
+      <div class="data-item">
+        <div class="value pt" id="pCurVal">6.0</div>
+        <div class="label">当前动量 (kg·m/s)</div>
+      </div>
+      <div class="data-item">
+        <div class="value" id="velCurVal">3.0</div>
+        <div class="label">当前速度 (m/s)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="color:var(--text-dim);font-size:0.95em;margin-bottom:8px">📖 核心概念</h3>
+    <div style="font-size:0.85em;line-height:1.8;color:var(--text-dim)">
+      <p>• <b style="color:var(--momentum-a)">动量 p = mv</b>：描述物体运动状态的物理量，是矢量</p>
+      <p>• <b style="color:var(--momentum-b)">冲量 I = FΔt</b>：力对时间的累积效应</p>
+      <p>• <b style="color:var(--momentum-total)">动量定理</b>：合外力的冲量等于物体动量的变化</p>
+      <p>• 动量定理揭示了<b>力-时间-动量变化</b>三者的内在联系</p>
+    </div>
+  </div>
+</div>
+
+<!-- Section 1: 碰撞模拟 -->
+<div class="section">
+  <div class="section-title">💥 碰撞模拟</div>
+  
+  <div class="card">
+    <div class="formula">m₁v₁ + m₂v₂ = m₁v₁' + m₂v₂'（动量守恒）</div>
+    <p style="font-size:0.85em;color:var(--text-dim);margin:8px 0">
+      拖动滑块设置两球的质量和初速度，选择碰撞类型，观察碰撞过程中的动量守恒。
+    </p>
+    <canvas id="collisionCanvas" height="300"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--momentum-a)"></div>球A</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--momentum-b)"></div>球B</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--momentum-total)"></div>总动量</div>
+    </div>
+    <div class="controls">
+      <div class="control-group">
+        <label>A质量 m₁ = <span id="m1Val">2</span> kg</label>
+        <input type="range" id="m1Slider" min="0.5" max="8" value="2" step="0.5">
+      </div>
+      <div class="control-group">
+        <label>A速度 v₁ = <span id="v1Val">4</span> m/s</label>
+        <input type="range" id="v1Slider" min="-8" max="8" value="4" step="1">
+      </div>
+      <div class="control-group">
+        <label>B质量 m₂ = <span id="m2Val">3</span> kg</label>
+        <input type="range" id="m2Slider" min="0.5" max="8" value="3" step="0.5">
+      </div>
+      <div class="control-group">
+        <label>B速度 v₂ = <span id="v2Val">-2</span> m/s</label>
+        <input type="range" id="v2Slider" min="-8" max="8" value="-2" step="1">
+      </div>
+    </div>
+    <div class="controls">
+      <div class="control-group">
+        <label>碰撞类型</label>
+        <select id="collisionType" style="padding:6px;border-radius:8px;background:var(--bg-dark);color:var(--text);border:1px solid rgba(255,255,255,0.2)">
+          <option value="elastic">完全弹性碰撞</option>
+          <option value="inelastic">完全非弹性碰撞</option>
+          <option value="partial">一般碰撞 (e=0.5)</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin:8px 0">
+      <button class="btn" onclick="startCollision()">▶ 开始碰撞</button>
+      <button class="btn accent" onclick="resetCollision()">🔄 重置</button>
+    </div>
+    <div class="data-display">
+      <div class="data-item">
+        <div class="value pa" id="pAVal">8.0</div>
+        <div class="label">A动量 (kg·m/s)</div>
+      </div>
+      <div class="data-item">
+        <div class="value pb" id="pBVal">-6.0</div>
+        <div class="label">B动量 (kg·m/s)</div>
+      </div>
+      <div class="data-item">
+        <div class="value pt" id="pTotalVal">2.0</div>
+        <div class="label">总动量 (kg·m/s)</div>
+      </div>
+      <div class="data-item">
+        <div class="value" id="keTotalVal">20.0</div>
+        <div class="label">总动能 (J)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="color:var(--text-dim);font-size:0.95em;margin-bottom:8px">📖 碰撞分类</h3>
+    <div style="font-size:0.85em;line-height:1.8;color:var(--text-dim)">
+      <p>• <b style="color:#4caf50">完全弹性碰撞</b>：动量守恒 + 动能守恒（e=1）</p>
+      <p>• <b style="color:#ff9800">一般碰撞</b>：动量守恒，动能部分损失（0&lt;e&lt;1）</p>
+      <p>• <b style="color:#e53935">完全非弹性碰撞</b>：动量守恒，动能损失最大，碰后粘在一起（e=0）</p>
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: 反冲运动 -->
+<div class="section">
+  <div class="section-title">🔄 反冲运动</div>
+  
+  <div class="card">
+    <div class="formula">m₁v₁ + m₂v₂ = 0 &nbsp;（初始静止，分裂后动量守恒）</div>
+    <p style="font-size:0.85em;color:var(--text-dim);margin:8px 0">
+      模拟火箭发射/炮弹发射的反冲过程。点击发射，观察两部分如何反向运动，动量等大反向。
+    </p>
+    <canvas id="recoilCanvas" height="280"></canvas>
+    <div class="controls">
+      <div class="control-group">
+        <label>主体质量 M = <span id="mainMassVal">5</span> kg</label>
+        <input type="range" id="mainMassSlider" min="1" max="10" value="5" step="0.5">
+      </div>
+      <div class="control-group">
+        <label>抛射物质量 m = <span id="projMassVal">1</span> kg</label>
+        <input type="range" id="projMassSlider" min="0.1" max="5" value="1" step="0.1">
+      </div>
+      <div class="control-group">
+        <label>抛射速度 v = <span id="projVelVal">8</span> m/s</label>
+        <input type="range" id="projVelSlider" min="2" max="15" value="8" step="1">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin:8px 0">
+      <button class="btn" onclick="fireRecoil()">🚀 发射</button>
+      <button class="btn accent" onclick="resetRecoil()">🔄 重置</button>
+    </div>
+    <div class="data-display">
+      <div class="data-item">
+        <div class="value pa" id="recoilMainP">0.0</div>
+        <div class="label">主体动量 (kg·m/s)</div>
+      </div>
+      <div class="data-item">
+        <div class="value pb" id="recoilProjP">0.0</div>
+        <div class="label">抛射物动量 (kg·m/s)</div>
+      </div>
+      <div class="data-item">
+        <div class="value pt" id="recoilTotalP">0.0</div>
+        <div class="label">总动量 (kg·m/s)</div>
+      </div>
+      <div class="data-item">
+        <div class="value" id="recoilMainV">0.0</div>
+        <div class="label">主体速度 (m/s)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="color:var(--text-dim);font-size:0.95em;margin-bottom:8px">📖 反冲原理</h3>
+    <div style="font-size:0.85em;line-height:1.8;color:var(--text-dim)">
+      <p>• 系统初始静止，总动量为零</p>
+      <p>• 抛射物向前飞出 → 主体向后反冲</p>
+      <p>• <b>Mv₁ = mv₂</b>（动量等大反向）</p>
+      <p>• 应用：火箭发射、枪械后坐力、章鱼喷水推进</p>
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: 练习 -->
+<div class="section">
+  <div class="section-title">📝 动量练习</div>
+  
+  <div class="card" id="quiz1Card">
+    <h3 style="color:var(--text);font-size:0.95em;margin-bottom:12px">题目 1：冲量计算</h3>
+    <p style="font-size:0.9em;line-height:1.6;margin-bottom:12px">
+      一个质量为 2kg 的物体以 3m/s 的速度运动，受到一个与运动方向相同的 10N 的力作用 2s，求末动量。
+    </p>
+    <div class="quiz-option" onclick="checkQuiz('q1',0)">A. 6 kg·m/s</div>
+    <div class="quiz-option" onclick="checkQuiz('q1',1)">B. 20 kg·m/s</div>
+    <div class="quiz-option" onclick="checkQuiz('q1',2)">C. 26 kg·m/s</div>
+    <div class="quiz-option" onclick="checkQuiz('q1',3)">D. 32 kg·m/s</div>
+    <div class="explanation" id="q1Exp">
+      <b>答案：C</b><br>
+      初动量 p₀ = mv₀ = 2×3 = 6 kg·m/s<br>
+      冲量 I = FΔt = 10×2 = 20 N·s<br>
+      由动量定理：p = p₀ + I = 6 + 20 = <b>26 kg·m/s</b>
+    </div>
+  </div>
+
+  <div class="card" id="quiz2Card">
+    <h3 style="color:var(--text);font-size:0.95em;margin-bottom:12px">题目 2：碰撞问题</h3>
+    <p style="font-size:0.9em;line-height:1.6;margin-bottom:12px">
+      质量分别为 1kg 和 3kg 的A、B两球，A以 4m/s 向右运动，B静止。发生完全弹性碰撞后，A的速度为？
+    </p>
+    <div class="quiz-option" onclick="checkQuiz('q2',0)">A. -2 m/s（向左）</div>
+    <div class="quiz-option" onclick="checkQuiz('q2',1)">B. 1 m/s（向右）</div>
+    <div class="quiz-option" onclick="checkQuiz('q2',2)">C. 4 m/s（向右）</div>
+    <div class="quiz-option" onclick="checkQuiz('q2',3)">D. 0 m/s（静止）</div>
+    <div class="explanation" id="q2Exp">
+      <b>答案：A</b><br>
+      完全弹性碰撞公式：<br>
+      v₁' = (m₁-m₂)v₁/(m₁+m₂) = (1-3)×4/(1+3) = -8/4 = <b>-2 m/s</b><br>
+      v₂' = 2m₁v₁/(m₁+m₂) = 2×1×4/4 = 2 m/s<br>
+      验证：动量 1×(-2)+3×2 = 4 ✓，动能 ½×1×4+½×3×4 = 8 ✓
+    </div>
+  </div>
+
+  <div class="card" id="quiz3Card">
+    <h3 style="color:var(--text);font-size:0.95em;margin-bottom:12px">题目 3：反冲运动</h3>
+    <p style="font-size:0.9em;line-height:1.6;margin-bottom:12px">
+      质量为 200kg 的小船上站着一个 50kg 的人，船静止在水面。人以 4m/s（相对地面）向前跳上岸，忽略水的阻力，船的速度为？
+    </p>
+    <div class="quiz-option" onclick="checkQuiz('q3',0)">A. 1 m/s 向前</div>
+    <div class="quiz-option" onclick="checkQuiz('q3',1)">B. 1 m/s 向后</div>
+    <div class="quiz-option" onclick="checkQuiz('q3',2)">C. 4 m/s 向后</div>
+    <div class="quiz-option" onclick="checkQuiz('q3',3)">D. 0.8 m/s 向后</div>
+    <div class="explanation" id="q3Exp">
+      <b>答案：B</b><br>
+      系统初始静止，总动量为零。<br>
+      由动量守恒：m人v人 + m船v船 = 0<br>
+      50×4 + 200×v船 = 0<br>
+      v船 = -200/200 = <b>-1 m/s</b>（向后）
+    </div>
+  </div>
+</div>
+
+<script src="assets/touch.js"></script>
+<script src="assets/common.js"></script>
+<script>
+// 进度追踪：累计答对 3 题点亮「动量与冲量」
+let totalCorrect = 0;
+function bumpTotalCorrect() {
+  totalCorrect++;
+  if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('momentum')) {
+    PageProgress.markDone('momentum');
+    if (typeof showToast === 'function') showToast('🎉 「动量与冲量」知识地图已点亮！');
+  }
+}
+
+// Tab switching
+function switchTab(idx) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.section').forEach((s,i) => s.classList.toggle('active', i===idx));
+}
+
+// ============ Section 0: Impulse & Momentum ============
+const ic = document.getElementById('impulseCanvas');
+const ictx = ic.getContext('2d');
+let impulseState = { applying: false, t: 0, v: 3, x: 60 };
+
+function resizeIC() { ic.width = ic.parentElement.clientWidth - 40; }
+resizeIC();
+window.addEventListener('resize', resizeIC);
+
+function drawImpulse() {
+  const W = ic.width, H = ic.height;
+  ictx.clearRect(0,0,W,H);
+  
+  // Grid
+  ictx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ictx.lineWidth = 1;
+  for(let x=0;x<W;x+=40) { ictx.beginPath(); ictx.moveTo(x,0); ictx.lineTo(x,H); ictx.stroke(); }
+  
+  // Ground
+  const gy = H * 0.7;
+  ictx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ictx.lineWidth = 2;
+  ictx.beginPath(); ictx.moveTo(0,gy); ictx.lineTo(W,gy); ictx.stroke();
+  
+  // Object
+  const m = parseFloat(document.getElementById('massSlider').value);
+  const size = 20 + m * 3;
+  const objX = impulseState.x;
+  const objY = gy - size;
+  
+  // Draw object
+  const grad = ictx.createLinearGradient(objX, objY, objX, gy);
+  grad.addColorStop(0, '#e53935');
+  grad.addColorStop(1, '#b71c1c');
+  ictx.fillStyle = grad;
+  ictx.fillRect(objX - size/2, objY, size, size);
+  ictx.fillStyle = 'white';
+  ictx.font = '12px sans-serif';
+  ictx.textAlign = 'center';
+  ictx.fillText(m+'kg', objX, objY + size/2 + 4);
+  
+  // Velocity arrow
+  const vScale = 15;
+  const vLen = impulseState.v * vScale;
+  if(Math.abs(vLen) > 2) {
+    ictx.strokeStyle = '#4caf50';
+    ictx.lineWidth = 3;
+    ictx.beginPath();
+    ictx.moveTo(objX, objY - 15);
+    ictx.lineTo(objX + vLen, objY - 15);
+    ictx.stroke();
+    // Arrowhead
+    const dir = vLen > 0 ? 1 : -1;
+    ictx.fillStyle = '#4caf50';
+    ictx.beginPath();
+    ictx.moveTo(objX + vLen, objY - 15);
+    ictx.lineTo(objX + vLen - dir*8, objY - 20);
+    ictx.lineTo(objX + vLen - dir*8, objY - 10);
+    ictx.fill();
+    ictx.fillStyle = '#4caf50';
+    ictx.fillText('v=' + impulseState.v.toFixed(1) + ' m/s', objX + vLen/2, objY - 22);
+  }
+  
+  // Force arrow (when applying)
+  if(impulseState.applying) {
+    const F = parseFloat(document.getElementById('forceSlider').value);
+    const fScale = 5;
+    const fLen = F * fScale;
+    if(Math.abs(fLen) > 2) {
+      ictx.strokeStyle = '#ff6f00';
+      ictx.lineWidth = 4;
+      ictx.beginPath();
+      ictx.moveTo(objX, objY + size/2);
+      ictx.lineTo(objX + fLen, objY + size/2);
+      ictx.stroke();
+      const dir = fLen > 0 ? 1 : -1;
+      ictx.fillStyle = '#ff6f00';
+      ictx.beginPath();
+      ictx.moveTo(objX + fLen, objY + size/2);
+      ictx.lineTo(objX + fLen - dir*10, objY + size/2 - 6);
+      ictx.lineTo(objX + fLen - dir*10, objY + size/2 + 6);
+      ictx.fill();
+      ictx.fillText('F=' + F + 'N', objX + fLen/2, objY + size/2 + 20);
+    }
+    
+    // Time indicator
+    ictx.fillStyle = 'rgba(255,111,0,0.3)';
+    ictx.fillRect(10, 10, Math.min(impulseState.t / 3 * (W-20), W-20), 6);
+    ictx.fillStyle = '#ff6f00';
+    ictx.font = '11px sans-serif';
+    ictx.textAlign = 'left';
+    ictx.fillText('t = ' + impulseState.t.toFixed(1) + 's', 10, 30);
+  }
+  
+  // Momentum bar
+  const p = m * impulseState.v;
+  const barW = Math.min(Math.abs(p) * 8, W - 40);
+  const barY = H - 30;
+  ictx.fillStyle = 'rgba(0,0,0,0.4)';
+  ictx.fillRect(20, barY, W-40, 20);
+  ictx.fillStyle = p >= 0 ? '#e53935' : '#1e88e5';
+  const barStart = (W-40)/2 + 20;
+  if(p >= 0) {
+    ictx.fillRect(barStart, barY, barW, 20);
+  } else {
+    ictx.fillRect(barStart - barW, barY, barW, 20);
+  }
+  ictx.fillStyle = 'white';
+  ictx.font = '11px sans-serif';
+  ictx.textAlign = 'center';
+  ictx.fillText('p = ' + p.toFixed(1) + ' kg·m/s', W/2, barY + 14);
+}
+
+function applyForce() {
+  if(impulseState.applying) return;
+  impulseState.applying = true;
+  impulseState.t = 0;
+  const F = parseFloat(document.getElementById('forceSlider').value);
+  const m = parseFloat(document.getElementById('massSlider').value);
+  const a = F / m;
+  const dt = 0.05;
+  const totalTime = 3;
+  
+  const interval = setInterval(() => {
+    impulseState.t += dt;
+    impulseState.v += a * dt;
+    impulseState.x += impulseState.v * 8 * dt;
+    
+    // Wrap around
+    if(impulseState.x > ic.width + 30) impulseState.x = -30;
+    if(impulseState.x < -30) impulseState.x = ic.width + 30;
+    
+    updateImpulseData();
+    drawImpulse();
+    
+    if(impulseState.t >= totalTime) {
+      clearInterval(interval);
+      impulseState.applying = false;
+    }
+  }, 50);
+}
+
+function resetImpulse() {
+  impulseState.applying = false;
+  impulseState.t = 0;
+  impulseState.v = parseFloat(document.getElementById('v0Slider').value);
+  impulseState.x = 60;
+  updateImpulseData();
+  drawImpulse();
+}
+
+function updateImpulseData() {
+  const m = parseFloat(document.getElementById('massSlider').value);
+  const v0 = parseFloat(document.getElementById('v0Slider').value);
+  const F = parseFloat(document.getElementById('forceSlider').value);
+  const p0 = m * v0;
+  const I = F * impulseState.t;
+  const pCur = m * impulseState.v;
+  
+  document.getElementById('pInitVal').textContent = p0.toFixed(1);
+  document.getElementById('impulseVal').textContent = I.toFixed(1);
+  document.getElementById('pCurVal').textContent = pCur.toFixed(1);
+  document.getElementById('velCurVal').textContent = impulseState.v.toFixed(1);
+}
+
+// Slider events for impulse section
+['massSlider','v0Slider','forceSlider'].forEach(id => {
+  document.getElementById(id).addEventListener('input', function() {
+    const label = id.replace('Slider','Val');
+    document.getElementById(label).textContent = this.value;
+    if(!impulseState.applying && id !== 'forceSlider') {
+      impulseState.v = parseFloat(document.getElementById('v0Slider').value);
+    }
+    updateImpulseData();
+    drawImpulse();
+  });
+});
+
+// ============ Section 1: Collision ============
+const cc = document.getElementById('collisionCanvas');
+const cctx = cc.getContext('2d');
+let colState = { running: false, collided: false, t: 0 };
+let ballA = { x: 0, v: 4, m: 2, r: 22 };
+let ballB = { x: 0, v: -2, m: 3, r: 27 };
+
+function resizeCC() { cc.width = cc.parentElement.clientWidth - 40; }
+resizeCC();
+window.addEventListener('resize', resizeCC);
+
+function startCollision() {
+  if(colState.running) return;
+  resetCollision();
+  colState.running = true;
+  
+  ballA.m = parseFloat(document.getElementById('m1Slider').value);
+  ballA.v = parseFloat(document.getElementById('v1Slider').value);
+  ballA.r = 18 + ballA.m * 2;
+  ballA.x = 60;
+  
+  ballB.m = parseFloat(document.getElementById('m2Slider').value);
+  ballB.v = parseFloat(document.getElementById('v2Slider').value);
+  ballB.r = 18 + ballB.m * 2;
+  ballB.x = cc.width - 60;
+  
+  const type = document.getElementById('collisionType').value;
+  const dt = 0.03;
+  
+  const interval = setInterval(() => {
+    colState.t += dt;
+    
+    ballA.x += ballA.v * 30 * dt;
+    ballB.x += ballB.v * 30 * dt;
+    
+    // Check collision
+    if(!colState.collided && ballA.x + ballA.r >= ballB.x - ballB.r) {
+      colState.collided = true;
+      const v1 = ballA.v, v2 = ballB.v;
+      const m1 = ballA.m, m2 = ballB.m;
+      
+      if(type === 'elastic') {
+        ballA.v = ((m1-m2)*v1 + 2*m2*v2) / (m1+m2);
+        ballB.v = ((m2-m1)*v2 + 2*m1*v1) / (m1+m2);
+      } else if(type === 'inelastic') {
+        const vf = (m1*v1 + m2*v2) / (m1+m2);
+        ballA.v = vf;
+        ballB.v = vf;
+      } else {
+        const e = 0.5;
+        ballA.v = ((m1-e*m2)*v1 + (1+e)*m2*v2) / (m1+m2);
+        ballB.v = ((m2-e*m1)*v2 + (1+e)*m1*v1) / (m1+m2);
+      }
+    }
+    
+    updateCollisionData();
+    drawCollision();
+    
+    if(ballA.x < -50 || ballA.x > cc.width + 50 || ballB.x < -50 || ballB.x > cc.width + 50 || colState.t > 8) {
+      clearInterval(interval);
+      colState.running = false;
+    }
+  }, 30);
+}
+
+function resetCollision() {
+  colState = { running: false, collided: false, t: 0 };
+  ballA.x = 60;
+  ballB.x = cc.width - 60;
+  ballA.v = parseFloat(document.getElementById('v1Slider').value);
+  ballB.v = parseFloat(document.getElementById('v2Slider').value);
+  ballA.m = parseFloat(document.getElementById('m1Slider').value);
+  ballB.m = parseFloat(document.getElementById('m2Slider').value);
+  ballA.r = 18 + ballA.m * 2;
+  ballB.r = 18 + ballB.m * 2;
+  updateCollisionData();
+  drawCollision();
+}
+
+function drawCollision() {
+  const W = cc.width, H = cc.height;
+  cctx.clearRect(0,0,W,H);
+  
+  // Grid
+  cctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  for(let x=0;x<W;x+=40) { cctx.beginPath(); cctx.moveTo(x,0); cctx.lineTo(x,H); cctx.stroke(); }
+  
+  const gy = H * 0.65;
+  
+  // Ground line
+  cctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  cctx.lineWidth = 1;
+  cctx.beginPath(); cctx.moveTo(0,gy); cctx.lineTo(W,gy); cctx.stroke();
+  
+  // Ball A
+  const gA = cctx.createRadialGradient(ballA.x-5, gy-ballA.r-5, 2, ballA.x, gy-ballA.r, ballA.r);
+  gA.addColorStop(0, '#ff5252');
+  gA.addColorStop(1, '#b71c1c');
+  cctx.fillStyle = gA;
+  cctx.beginPath();
+  cctx.arc(ballA.x, gy - ballA.r, ballA.r, 0, Math.PI*2);
+  cctx.fill();
+  cctx.fillStyle = 'white';
+  cctx.font = '11px sans-serif';
+  cctx.textAlign = 'center';
+  cctx.fillText('A', ballA.x, gy - ballA.r + 4);
+  
+  // Ball B
+  const gB = cctx.createRadialGradient(ballB.x-5, gy-ballB.r-5, 2, ballB.x, gy-ballB.r, ballB.r);
+  gB.addColorStop(0, '#42a5f5');
+  gB.addColorStop(1, '#0d47a1');
+  cctx.fillStyle = gB;
+  cctx.beginPath();
+  cctx.arc(ballB.x, gy - ballB.r, ballB.r, 0, Math.PI*2);
+  cctx.fill();
+  cctx.fillStyle = 'white';
+  cctx.fillText('B', ballB.x, gy - ballB.r + 4);
+  
+  // Velocity arrows
+  const vScale = 12;
+  drawArrow(cctx, ballA.x, gy - ballA.r*2 - 10, ballA.x + ballA.v * vScale, gy - ballA.r*2 - 10, '#e53935');
+  drawArrow(cctx, ballB.x, gy - ballB.r*2 - 10, ballB.x + ballB.v * vScale, gy - ballB.r*2 - 10, '#1e88e5');
+  
+  // Velocity labels
+  cctx.font = '10px sans-serif';
+  cctx.fillStyle = '#e53935';
+  cctx.fillText('v=' + ballA.v.toFixed(1), ballA.x, gy - ballA.r*2 - 18);
+  cctx.fillStyle = '#1e88e5';
+  cctx.fillText('v=' + ballB.v.toFixed(1), ballB.x, gy - ballB.r*2 - 18);
+  
+  // Momentum bar chart
+  const barBaseY = H - 15;
+  const barH = 40;
+  const pA = ballA.m * ballA.v;
+  const pB = ballB.m * ballB.v;
+  const pT = pA + pB;
+  const maxP = Math.max(Math.abs(pA), Math.abs(pB), Math.abs(pT), 1) * 1.2;
+  const scale = (W * 0.25) / maxP;
+  
+  // Bar labels
+  cctx.font = '10px sans-serif';
+  cctx.textAlign = 'center';
+  
+  // pA bar
+  const bAw = pA * scale;
+  cctx.fillStyle = 'rgba(229,57,53,0.6)';
+  cctx.fillRect(W/2 - 5, barBaseY - barH, -bAw, barH);
+  cctx.fillStyle = '#e53935';
+  cctx.fillText('pA=' + pA.toFixed(1), W/2 - 5 - bAw/2, barBaseY - barH - 4);
+  
+  // pB bar
+  const bBw = pB * scale;
+  cctx.fillStyle = 'rgba(30,136,229,0.6)';
+  cctx.fillRect(W/2 + 5, barBaseY - barH, bBw, barH);
+  cctx.fillStyle = '#1e88e5';
+  cctx.fillText('pB=' + pB.toFixed(1), W/2 + 5 + bBw/2, barBaseY - barH - 4);
+  
+  // Total bar
+  cctx.fillStyle = 'rgba(253,216,53,0.4)';
+  const bTw = pT * scale;
+  cctx.fillRect(W/2 - 3, barBaseY - barH*2 - 5, bTw, 8);
+  cctx.fillStyle = '#fdd835';
+  cctx.fillText('Σp=' + pT.toFixed(1), W/2 + bTw/2, barBaseY - barH*2 - 10);
+  
+  // Collision flash
+  if(colState.collided && colState.t < 0.3) {
+    const cx = (ballA.x + ballB.x) / 2;
+    const alpha = (0.3 - colState.t) / 0.3 * 0.5;
+    cctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    cctx.beginPath();
+    cctx.arc(cx, gy - (ballA.r + ballB.r)/2, 30, 0, Math.PI*2);
+    cctx.fill();
+  }
+}
+
+function drawArrow(ctx, x1, y1, x2, y2, color) {
+  const len = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+  if(len < 3) return;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  const angle = Math.atan2(y2-y1, x2-x1);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 8*Math.cos(angle-0.4), y2 - 8*Math.sin(angle-0.4));
+  ctx.lineTo(x2 - 8*Math.cos(angle+0.4), y2 - 8*Math.sin(angle+0.4));
+  ctx.fill();
+}
+
+function updateCollisionData() {
+  const pA = ballA.m * ballA.v;
+  const pB = ballB.m * ballB.v;
+  const ke = 0.5*ballA.m*ballA.v**2 + 0.5*ballB.m*ballB.v**2;
+  document.getElementById('pAVal').textContent = pA.toFixed(1);
+  document.getElementById('pBVal').textContent = pB.toFixed(1);
+  document.getElementById('pTotalVal').textContent = (pA+pB).toFixed(1);
+  document.getElementById('keTotalVal').textContent = ke.toFixed(1);
+}
+
+// Slider events for collision
+['m1Slider','v1Slider','m2Slider','v2Slider'].forEach(id => {
+  document.getElementById(id).addEventListener('input', function() {
+    const label = id.replace('Slider','Val');
+    document.getElementById(label).textContent = this.value;
+    if(!colState.running) {
+      ballA.m = parseFloat(document.getElementById('m1Slider').value);
+      ballA.v = parseFloat(document.getElementById('v1Slider').value);
+      ballA.r = 18 + ballA.m * 2;
+      ballB.m = parseFloat(document.getElementById('m2Slider').value);
+      ballB.v = parseFloat(document.getElementById('v2Slider').value);
+      ballB.r = 18 + ballB.m * 2;
+      updateCollisionData();
+      drawCollision();
+    }
+  });
+});
+
+// ============ Section 2: Recoil ============
+const rc = document.getElementById('recoilCanvas');
+const rctx = rc.getContext('2d');
+let recoilState = { fired: false, t: 0, mainV: 0, projV: 0, mainX: 0, projX: 0 };
+
+function resizeRC() { rc.width = rc.parentElement.clientWidth - 40; }
+resizeRC();
+window.addEventListener('resize', resizeRC);
+
+function fireRecoil() {
+  if(recoilState.fired) return;
+  resetRecoil();
+  recoilState.fired = true;
+  
+  const M = parseFloat(document.getElementById('mainMassSlider').value);
+  const m = parseFloat(document.getElementById('projMassSlider').value);
+  const v = parseFloat(document.getElementById('projVelSlider').value);
+  
+  recoilState.projV = v;
+  recoilState.mainV = -(m * v) / M;
+  recoilState.mainX = rc.width / 2 - 40;
+  recoilState.projX = rc.width / 2 + 40;
+  
+  const dt = 0.05;
+  const interval = setInterval(() => {
+    recoilState.t += dt;
+    recoilState.mainX += recoilState.mainV * 20 * dt;
+    recoilState.projX += recoilState.projV * 20 * dt;
+    
+    updateRecoilData();
+    drawRecoil();
+    
+    if(recoilState.mainX < -60 || recoilState.projX > rc.width + 60 || recoilState.t > 6) {
+      clearInterval(interval);
+      recoilState.fired = false;
+    }
+  }, 30);
+}
+
+function resetRecoil() {
+  recoilState = { fired: false, t: 0, mainV: 0, projV: 0, mainX: rc.width/2 - 40, projX: rc.width/2 + 40 };
+  updateRecoilData();
+  drawRecoil();
+}
+
+function drawRecoil() {
+  const W = rc.width, H = rc.height;
+  rctx.clearRect(0,0,W,H);
+  
+  // Grid
+  rctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  for(let x=0;x<W;x+=40) { rctx.beginPath(); rctx.moveTo(x,0); rctx.lineTo(x,H); rctx.stroke(); }
+  
+  const gy = H * 0.65;
+  const M = parseFloat(document.getElementById('mainMassSlider').value);
+  const m = parseFloat(document.getElementById('projMassSlider').value);
+  
+  // Ground
+  rctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  rctx.lineWidth = 1;
+  rctx.beginPath(); rctx.moveTo(0,gy); rctx.lineTo(W,gy); rctx.stroke();
+  
+  // Main body (cannon/cart)
+  const mainSize = 25 + M * 2;
+  const mainY = gy - mainSize;
+  const gMain = rctx.createLinearGradient(recoilState.mainX, mainY, recoilState.mainX, gy);
+  gMain.addColorStop(0, '#e53935');
+  gMain.addColorStop(1, '#8e0000');
+  rctx.fillStyle = gMain;
+  rctx.fillRect(recoilState.mainX - mainSize/2, mainY, mainSize, mainSize);
+  rctx.fillStyle = 'white';
+  rctx.font = '11px sans-serif';
+  rctx.textAlign = 'center';
+  rctx.fillText(M+'kg', recoilState.mainX, mainY + mainSize/2 + 4);
+  
+  // Projectile
+  const projSize = 12 + m * 2;
+  const projY = gy - projSize;
+  const gProj = rctx.createLinearGradient(recoilState.projX, projY, recoilState.projX, gy);
+  gProj.addColorStop(0, '#42a5f5');
+  gProj.addColorStop(1, '#0d47a1');
+  rctx.fillStyle = gProj;
+  rctx.beginPath();
+  rctx.arc(recoilState.projX, gy - projSize/2, projSize/2, 0, Math.PI*2);
+  rctx.fill();
+  rctx.fillStyle = 'white';
+  rctx.font = '10px sans-serif';
+  rctx.fillText(m.toFixed(1)+'kg', recoilState.projX, gy - projSize/2 + 4);
+  
+  // Velocity arrows
+  if(recoilState.fired) {
+    const vScale = 10;
+    drawArrow(rctx, recoilState.mainX, mainY - 12, recoilState.mainX + recoilState.mainV * vScale, mainY - 12, '#e53935');
+    drawArrow(rctx, recoilState.projX, projY - 12, recoilState.projX + recoilState.projV * vScale, projY - 12, '#1e88e5');
+    
+    rctx.font = '10px sans-serif';
+    rctx.fillStyle = '#e53935';
+    rctx.fillText('V=' + recoilState.mainV.toFixed(1), recoilState.mainX, mainY - 20);
+    rctx.fillStyle = '#1e88e5';
+    rctx.fillText('v=' + recoilState.projV.toFixed(1), recoilState.projX, projY - 20);
+  }
+  
+  // Momentum balance indicator
+  const pMain = M * recoilState.mainV;
+  const pProj = m * recoilState.projV;
+  const barY = H - 35;
+  
+  rctx.fillStyle = 'rgba(0,0,0,0.3)';
+  rctx.fillRect(W/2 - 100, barY, 200, 24);
+  
+  // Two bars growing from center
+  const maxBar = 90;
+  const maxP = Math.max(Math.abs(pMain), Math.abs(pProj), 1);
+  const bMain = (Math.abs(pMain) / maxP) * maxBar;
+  const bProj = (Math.abs(pProj) / maxP) * maxBar;
+  
+  rctx.fillStyle = 'rgba(229,57,53,0.6)';
+  rctx.fillRect(W/2 - bMain, barY + 2, bMain, 20);
+  rctx.fillStyle = 'rgba(30,136,229,0.6)';
+  rctx.fillRect(W/2, barY + 2, bProj, 20);
+  
+  rctx.fillStyle = '#fdd835';
+  rctx.font = '10px sans-serif';
+  rctx.textAlign = 'center';
+  rctx.fillText('Σp = ' + (pMain + pProj).toFixed(2) + ' ≈ 0', W/2, barY - 4);
+  
+  // Explosion effect at start
+  if(recoilState.fired && recoilState.t < 0.3) {
+    const alpha = (0.3 - recoilState.t) / 0.3 * 0.6;
+    rctx.fillStyle = `rgba(255,200,0,${alpha})`;
+    rctx.beginPath();
+    rctx.arc(W/2, gy - 20, 25 + recoilState.t * 40, 0, Math.PI*2);
+    rctx.fill();
+  }
+}
+
+function updateRecoilData() {
+  const M = parseFloat(document.getElementById('mainMassSlider').value);
+  const m = parseFloat(document.getElementById('projMassSlider').value);
+  const pMain = M * recoilState.mainV;
+  const pProj = m * recoilState.projV;
+  document.getElementById('recoilMainP').textContent = pMain.toFixed(1);
+  document.getElementById('recoilProjP').textContent = pProj.toFixed(1);
+  document.getElementById('recoilTotalP').textContent = (pMain + pProj).toFixed(2);
+  document.getElementById('recoilMainV').textContent = recoilState.mainV.toFixed(1);
+}
+
+['mainMassSlider','projMassSlider','projVelSlider'].forEach(id => {
+  document.getElementById(id).addEventListener('input', function() {
+    const label = id.replace('Slider','Val');
+    document.getElementById(label).textContent = this.value;
+    if(!recoilState.fired) {
+      drawRecoil();
+    }
+  });
+});
+
+// ============ Section 3: Quiz ============
+const quizAnswers = { q1: 2, q2: 0, q3: 1 };
+
+function checkQuiz(qid, choice) {
+  const card = document.getElementById('quiz' + qid.slice(1) + 'Card');
+  const options = card.querySelectorAll('.quiz-option');
+  const correct = quizAnswers[qid];
+  
+  options.forEach((opt, i) => {
+    opt.classList.remove('correct','wrong');
+    if(i === correct) { opt.classList.add('correct'); bumpTotalCorrect(); }
+    else if(i === choice && choice !== correct) opt.classList.add('wrong');
+  });
+  
+  document.getElementById(qid + 'Exp').classList.add('show');
+}
+
+// Initial draw
+updateImpulseData();
+drawImpulse();
+updateCollisionData();
+drawCollision();
+drawRecoil();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中物理"></script>
+</body>
+</html>

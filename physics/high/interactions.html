@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>相互作用 · 高中物理互动可视化</title>
+<link rel="stylesheet" href="assets/common.css" />
+<style>
+  :root {
+    --primary: #6366f1;
+    --gravity: #ef4444;
+    --normal: #10b981;
+    --friction: #f59e0b;
+    --tension: #3b82f6;
+    --resultant: #ec4899;
+    --dark: #0f172a;
+    --light: #f1f5f9;
+  }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; margin: 0; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--gravity), var(--tension), var(--normal)); -webkit-background-clip: text; color: transparent; margin: 0; }
+  header p { color: #94a3b8; margin: 6px 0 0; font-size: 14px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 8px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; color: #cbd5e1; }
+  .tab.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 20px rgba(99,102,241,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); overflow-y: auto; max-height: 640px; }
+  .panel h3 { margin: 0 0 10px; font-size: 1.05rem; color: #e2e8f0; }
+  .eq { font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 8px 0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 65px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--primary); }
+  .card .ct { font-weight: 600; color: #a5b4fc; margin-bottom: 4px; }
+  .mode-switch { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 5px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 12px; color: #e2e8f0; transition: all .2s; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; font-size: 12px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 6px 8px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .quiz { margin-top: 10px; padding: 12px; background: rgba(99,102,241,0.08); border-radius: 12px; border: 1px solid rgba(99,102,241,0.3); }
+  .quiz-q { font-size: 13px; margin-bottom: 8px; }
+  .quiz-opts { display: grid; gap: 5px; }
+  .quiz-opt { padding: 7px 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 12px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-fb { margin-top: 6px; font-size: 12px; min-height: 16px; }
+  .legend { display: flex; gap: 12px; justify-content: center; font-size: 11px; color: #cbd5e1; margin-top: 6px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
+  .legend .l-g::before { background: var(--gravity); }
+  .legend .l-n::before { background: var(--normal); }
+  .legend .l-f::before { background: var(--friction); }
+  .legend .l-t::before { background: var(--tension); }
+  .legend .l-r::before { background: var(--resultant); }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚡ 相互作用 Interactive</h1>
+    <p>重力 · 弹力 · 摩擦力 · 力的合成与分解 · 共点力平衡</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="types">🔍 力的分类</div>
+    <div class="tab" data-mode="compose">📐 力的合成</div>
+    <div class="tab" data-mode="decompose">📏 力的分解</div>
+    <div class="tab" data-mode="equilibrium">⚖️ 共点力平衡</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="720" height="560"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel">
+      <h3 id="panelTitle">🔍 力的分类</h3>
+      <div id="panelContent"></div>
+    </div>
+  </div>
+</div>
+<footer>高中物理 · 相互作用互动可视化 · 知识可视化项目</footer>
+
+<script src="assets/common.js"></script>
+<script>
+// 进度追踪：累计答对 3 题点亮「相互作用」
+let totalCorrect = 0;
+function bumpTotalCorrect() {
+  totalCorrect++;
+  if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('interactions')) {
+    PageProgress.markDone('interactions');
+    if (typeof showToast === 'function') showToast('🎉 「相互作用」知识地图已点亮！');
+  }
+}
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+let mode = 'types';
+let animId = null;
+let t = 0;
+
+// Force params
+let subMode = 'gravity'; // gravity, normal, friction, tension
+let angle1 = 30, angle2 = 60; // angles for decompose
+let f1Mag = 60, f2Mag = 80; // magnitudes for compose
+let composeAngle = 60; // angle between F1 and F2
+let eqAngle1 = 135, eqAngle2 = 45;
+let eqMass = 5;
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    t = 0;
+    updatePanel();
+    draw();
+  });
+});
+
+function drawArrow(x0, y0, x1, y1, color, lw = 3) {
+  const dx = x1 - x0, dy = y1 - y0;
+  const len = Math.sqrt(dx*dx + dy*dy);
+  if (len < 2) return;
+  const headLen = Math.min(14, len * 0.3);
+  const ang = Math.atan2(dy, dx);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = lw;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.lineTo(x1, y1);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x1 - headLen * Math.cos(ang - 0.4), y1 - headLen * Math.sin(ang - 0.4));
+  ctx.lineTo(x1 - headLen * Math.cos(ang + 0.4), y1 - headLen * Math.sin(ang + 0.4));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawDashedLine(x0, y0, x1, y1, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.lineTo(x1, y1);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawBlock(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  const r = 6;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+}
+
+function drawSurface(x, y, w) {
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + w, y);
+  ctx.stroke();
+  // hatching
+  for (let i = 0; i < w; i += 12) {
+    ctx.beginPath();
+    ctx.moveTo(x + i, y);
+    ctx.lineTo(x + i - 6, y + 8);
+    ctx.stroke();
+  }
+}
+
+function updatePanel() {
+  const title = document.getElementById('panelTitle');
+  const content = document.getElementById('panelContent');
+  const legend = document.getElementById('legend');
+
+  if (mode === 'types') {
+    title.textContent = '🔍 力的分类';
+    legend.innerHTML = '<span class="l-g">重力</span><span class="l-n">支持力</span><span class="l-f">摩擦力</span><span class="l-t">弹力/拉力</span>';
+    content.innerHTML = `
+      <div class="card"><div class="ct">🔹 选择力类型</div></div>
+      <div class="mode-switch">
+        <div class="mode-btn active" data-ft="gravity">重力</div>
+        <div class="mode-btn" data-ft="normal">弹力</div>
+        <div class="mode-btn" data-ft="friction">摩擦力</div>
+        <div class="mode-btn" data-ft="tension">拉力</div>
+      </div>
+      <div id="forceInfo"></div>
+    `;
+    document.querySelectorAll('.mode-btn[data-ft]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn[data-ft]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        subMode = btn.dataset.ft;
+        t = 0;
+        updateForceInfo();
+        draw();
+      });
+    });
+    updateForceInfo();
+  } else if (mode === 'compose') {
+    title.textContent = '📐 力的合成';
+    legend.innerHTML = '<span class="l-t">F₁</span><span class="l-g">F₂</span><span class="l-r">合力 F</span>';
+    content.innerHTML = `
+      <div class="card"><div class="ct">📐 平行四边形法则</div>
+      两个共点力的合力，以这两个力为邻边作平行四边形，<b>对角线</b>即为合力。</div>
+      <div class="slider-row">
+        <label>F₁ 大小:</label>
+        <input type="range" id="f1Slider" min="20" max="120" step="5" value="${f1Mag}">
+        <span class="val" id="f1Val">${f1Mag}N</span>
+      </div>
+      <div class="slider-row">
+        <label>F₂ 大小:</label>
+        <input type="range" id="f2Slider" min="20" max="120" step="5" value="${f2Mag}">
+        <span class="val" id="f2Val">${f2Mag}N</span>
+      </div>
+      <div class="slider-row">
+        <label>夹角 θ:</label>
+        <input type="range" id="caSlider" min="10" max="170" step="5" value="${composeAngle}">
+        <span class="val" id="caVal">${composeAngle}°</span>
+      </div>
+      <div class="info-grid">
+        <div>合力大小: <b id="resMag">--</b></div>
+        <div>合力方向: <b id="resAng">--</b></div>
+      </div>
+      <div class="card" style="margin-top:10px"><div class="ct">💡 规律</div>
+      • 夹角增大 → 合力减小<br>
+      • 夹角减小 → 合力增大<br>
+      • 同向(0°)：F = F₁ + F₂<br>
+      • 反向(180°)：F = |F₁ - F₂|</div>
+    `;
+    ['f1Slider','f2Slider','caSlider'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        f1Mag = +document.getElementById('f1Slider').value;
+        f2Mag = +document.getElementById('f2Slider').value;
+        composeAngle = +document.getElementById('caSlider').value;
+        document.getElementById('f1Val').textContent = f1Mag + 'N';
+        document.getElementById('f2Val').textContent = f2Mag + 'N';
+        document.getElementById('caVal').textContent = composeAngle + '°';
+        draw();
+      });
+    });
+  } else if (mode === 'decompose') {
+    title.textContent = '📏 力的分解';
+    legend.innerHTML = '<span class="l-r">合力 F</span><span class="l-t">分力 F₁</span><span class="l-g">分力 F₂</span>';
+    content.innerHTML = `
+      <div class="card"><div class="ct">📏 力的分解</div>
+      力的分解是合成的<b>逆运算</b>，同样遵循<b>平行四边形法则</b>。<br>
+      通常按力的<b>实际效果</b>来分解。</div>
+      <div class="mode-switch">
+        <div class="mode-btn active" data-dt="slope">斜面分解</div>
+        <div class="mode-btn" data-dt="rope">绳悬挂</div>
+      </div>
+      <div class="slider-row">
+        <label>角度 θ:</label>
+        <input type="range" id="dAngle" min="10" max="80" step="1" value="${angle1}">
+        <span class="val" id="dAngleVal">${angle1}°</span>
+      </div>
+      <div class="slider-row">
+        <label>力 F:</label>
+        <input type="range" id="dForce" min="30" max="120" step="5" value="80">
+        <span class="val" id="dForceVal">80N</span>
+      </div>
+      <div class="info-grid">
+        <div>F₁ = <b id="df1">--</b></div>
+        <div>F₂ = <b id="df2">--</b></div>
+      </div>
+    `;
+    document.querySelectorAll('.mode-btn[data-dt]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn[data-dt]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        subMode = btn.dataset.dt;
+        draw();
+      });
+    });
+    document.getElementById('dAngle').addEventListener('input', e => {
+      angle1 = +e.target.value;
+      document.getElementById('dAngleVal').textContent = angle1 + '°';
+      draw();
+    });
+    document.getElementById('dForce').addEventListener('input', e => {
+      f1Mag = +e.target.value;
+      document.getElementById('dForceVal').textContent = f1Mag + 'N';
+      draw();
+    });
+  } else if (mode === 'equilibrium') {
+    title.textContent = '⚖️ 共点力平衡';
+    legend.innerHTML = '<span class="l-g">重力</span><span class="l-t">拉力 T₁</span><span class="l-n">拉力 T₂</span>';
+    content.innerHTML = `
+      <div class="card"><div class="ct">⚖️ 平衡条件</div>
+      物体处于平衡状态时，合外力为零：<br>
+      <div class="eq">ΣF = 0 → ΣFx = 0, ΣFy = 0</div></div>
+      <div class="slider-row">
+        <label>质量 m:</label>
+        <input type="range" id="eqMass" min="1" max="10" step="0.5" value="${eqMass}">
+        <span class="val" id="eqMassVal">${eqMass}kg</span>
+      </div>
+      <div class="slider-row">
+        <label>左绳角 α:</label>
+        <input type="range" id="eqA1" min="15" max="85" step="1" value="${eqAngle1}">
+        <span class="val" id="eqA1Val">${eqAngle1}°</span>
+      </div>
+      <div class="slider-row">
+        <label>右绳角 β:</label>
+        <input type="range" id="eqA2" min="15" max="85" step="1" value="${eqAngle2}">
+        <span class="val" id="eqA2Val">${eqAngle2}°</span>
+      </div>
+      <div class="info-grid">
+        <div>G = <b id="eqG">--</b></div>
+        <div>状态: <b id="eqState">--</b></div>
+        <div>T₁ = <b id="eqT1">--</b></div>
+        <div>T₂ = <b id="eqT2">--</b></div>
+      </div>
+      <div class="card" style="margin-top:10px"><div class="ct">💡 方法</div>
+      <b>合成法</b>：任意两力的合力与第三个力等大反向<br>
+      <b>正交分解法</b>：将所有力分解到 x、y 方向</div>
+    `;
+    document.getElementById('eqMass').addEventListener('input', e => {
+      eqMass = +e.target.value;
+      document.getElementById('eqMassVal').textContent = eqMass + 'kg';
+      draw();
+    });
+    document.getElementById('eqA1').addEventListener('input', e => {
+      eqAngle1 = +e.target.value;
+      document.getElementById('eqA1Val').textContent = eqAngle1 + '°';
+      draw();
+    });
+    document.getElementById('eqA2').addEventListener('input', e => {
+      eqAngle2 = +e.target.value;
+      document.getElementById('eqA2Val').textContent = eqAngle2 + '°';
+      draw();
+    });
+  } else if (mode === 'quiz') {
+    title.textContent = '🎯 互动练习';
+    legend.innerHTML = '';
+    showQuiz();
+  }
+}
+
+function updateForceInfo() {
+  const el = document.getElementById('forceInfo');
+  if (!el) return;
+  const infos = {
+    gravity: `<div class="card"><div class="ct">🔴 重力 G</div>
+      由于地球吸引而使物体受到的力。<br>
+      <div class="eq">G = mg (g ≈ 9.8 N/kg)</div>
+      方向：<b>竖直向下</b><br>
+      重心：重力等效作用点</div>`,
+    normal: `<div class="card"><div class="ct">🟢 弹力 N</div>
+      发生弹性形变的物体，对与之接触的物体产生的力。<br>
+      方向：<b>垂直于接触面</b>，指向被支持物体<br>
+      <div class="eq">弹簧: F = kx (胡克定律)</div></div>`,
+    friction: `<div class="card"><div class="ct">🟡 摩擦力 f</div>
+      两个相互接触的物体，发生相对运动（或有趋势）时产生的力。<br>
+      方向：<b>沿接触面</b>，与相对运动（趋势）方向相反<br>
+      <div class="eq">滑动摩擦: f = μN</div>
+      静摩擦力：0 ≤ f ≤ f_max</div>`,
+    tension: `<div class="card"><div class="ct">🔵 拉力 T</div>
+      绳、杆等对物体的拉力。<br>
+      绳的拉力方向：<b>沿绳指向绳收缩方向</b><br>
+      同一根绳上各处张力相等（轻绳）</div>`
+  };
+  el.innerHTML = infos[subMode] || '';
+}
+
+// Drawing functions
+function drawTypes() {
+  ctx.clearRect(0, 0, W, H);
+  const cx = W / 2, cy = H / 2;
+  const progress = Math.min(t / 60, 1);
+
+  if (subMode === 'gravity') {
+    // Ball falling
+    const by = 80 + progress * 300;
+    drawArrow(cx, 80, cx, by, '#94a3b8', 1); // path
+    drawBlock(cx - 25, by - 25, 50, 50, 'rgba(239,68,68,0.3)');
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('m', cx - 5, by + 5);
+    drawArrow(cx, by + 25, cx, by + 25 + 100 * progress, '#ef4444', 4);
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('G = mg', cx + 15, by + 60);
+    // Ground
+    drawSurface(cx - 150, 480, 300);
+    // Bounce effect
+    if (progress > 0.9) {
+      ctx.fillStyle = 'rgba(239,68,68,0.15)';
+      ctx.beginPath();
+      ctx.arc(cx, 480, 30 * (1 - (progress - 0.9) * 10), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (subMode === 'normal') {
+    // Block on surface with normal force
+    drawSurface(cx - 150, 380, 300);
+    drawBlock(cx - 35, 330, 70, 50, 'rgba(16,185,129,0.3)');
+    // Gravity
+    drawArrow(cx, 380, cx, 460, '#ef4444', 3);
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('G', cx + 10, 440);
+    // Normal force
+    const nLen = 80 * progress;
+    drawArrow(cx, 330, cx, 330 - nLen, '#10b981', 4);
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('N', cx + 10, 330 - nLen - 5);
+    // Deformation illustration
+    if (progress > 0.5) {
+      ctx.strokeStyle = 'rgba(16,185,129,0.4)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(cx - 35, 380);
+      ctx.quadraticCurveTo(cx, 380 + 8 * Math.sin(t * 0.1), cx + 35, 380);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#10b981';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('形变（放大）', cx + 45, 385);
+    }
+  } else if (subMode === 'friction') {
+    // Block being pushed on surface
+    const bx = 150 + progress * 300;
+    drawSurface(100, 380, 520);
+    drawBlock(bx - 35, 330, 70, 50, 'rgba(245,158,11,0.3)');
+    // Applied force
+    drawArrow(bx + 35, 355, bx + 100, 355, '#3b82f6', 3);
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('F', bx + 75, 348);
+    // Friction force
+    drawArrow(bx - 35, 355, bx - 90 * progress, 355, '#f59e0b', 4);
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('f', bx - 60, 348);
+    // Normal & gravity
+    drawArrow(bx, 380, bx, 440, '#ef4444', 2);
+    drawArrow(bx, 330, bx, 280, '#10b981', 2);
+    // Roughness
+    for (let i = 0; i < 8; i++) {
+      const rx = bx - 30 + i * 8;
+      ctx.strokeStyle = 'rgba(245,158,11,0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(rx, 380);
+      ctx.lineTo(rx + 3, 376);
+      ctx.lineTo(rx + 6, 380);
+      ctx.stroke();
+    }
+  } else if (subMode === 'tension') {
+    // Hanging ball on rope
+    const swingAngle = Math.sin(t * 0.05) * 0.15;
+    const ropeLen = 200;
+    const px = cx, py = 100;
+    const bx = px + ropeLen * Math.sin(swingAngle);
+    const by = py + ropeLen * Math.cos(swingAngle);
+    // Support
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(px - 60, py);
+    ctx.lineTo(px + 60, py);
+    ctx.stroke();
+    for (let i = -60; i < 60; i += 12) {
+      ctx.beginPath();
+      ctx.moveTo(px + i, py);
+      ctx.lineTo(px + i - 6, py - 8);
+      ctx.stroke();
+    }
+    // Rope
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(bx, by);
+    ctx.stroke();
+    // Ball
+    ctx.fillStyle = 'rgba(59,130,246,0.3)';
+    ctx.beginPath();
+    ctx.arc(bx, by + 20, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#3b82f6';
+    ctx.stroke();
+    // Tension arrow
+    const tAng = Math.atan2(py - by, px - bx);
+    drawArrow(bx, by, bx + 80 * Math.cos(tAng), by + 80 * Math.sin(tAng), '#3b82f6', 4);
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('T', bx + 45 * Math.cos(tAng) + 10, by + 45 * Math.sin(tAng));
+    // Gravity
+    drawArrow(bx, by + 20, bx, by + 100, '#ef4444', 3);
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('G', bx + 10, by + 80);
+  }
+}
+
+function drawCompose() {
+  ctx.clearRect(0, 0, W, H);
+  const ox = 180, oy = 380;
+  const a1Rad = 0; // F1 along x-axis
+  const a2Rad = -composeAngle * Math.PI / 180; // F2 at angle
+
+  const f1x = ox + f1Mag * 2 * Math.cos(a1Rad);
+  const f1y = oy + f1Mag * 2 * Math.sin(a1Rad);
+  const f2x = ox + f2Mag * 2 * Math.cos(a2Rad);
+  const f2y = oy + f2Mag * 2 * Math.sin(a2Rad);
+
+  // Resultant endpoint (parallelogram)
+  const rx = f1x + f2x - ox;
+  const ry = f1y + f2y - oy;
+
+  const progress = Math.min(t / 40, 1);
+
+  // Draw F1
+  drawArrow(ox, oy, ox + (f1x - ox) * progress, oy + (f1y - oy) * progress, '#3b82f6', 4);
+  // Draw F2
+  drawArrow(ox, oy, ox + (f2x - ox) * progress, oy + (f2y - oy) * progress, '#ef4444', 4);
+
+  if (progress > 0.5) {
+    // Parallelogram dashed lines
+    drawDashedLine(f1x, f1y, rx, ry, 'rgba(236,72,153,0.4)');
+    drawDashedLine(f2x, f2y, rx, ry, 'rgba(236,72,153,0.4)');
+
+    // Resultant
+    const rp = (progress - 0.5) * 2;
+    drawArrow(ox, oy, ox + (rx - ox) * rp, oy + (ry - oy) * rp, '#ec4899', 5);
+
+    // Angle arc
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(ox, oy, 40, a2Rad, a1Rad);
+    ctx.stroke();
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('θ=' + composeAngle + '°', ox + 48, oy - 15);
+  }
+
+  // Labels
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillText('F₁=' + f1Mag + 'N', (ox + f1x) / 2, oy + 25);
+  ctx.fillStyle = '#ef4444';
+  ctx.fillText('F₂=' + f2Mag + 'N', (ox + f2x) / 2 - 50, (oy + f2y) / 2);
+
+  // Calculate resultant
+  const rMag = Math.sqrt(f1Mag * f1Mag + f2Mag * f2Mag + 2 * f1Mag * f2Mag * Math.cos(composeAngle * Math.PI / 180));
+  const rAng = Math.atan2(f2Mag * Math.sin(composeAngle * Math.PI / 180), f1Mag + f2Mag * Math.cos(composeAngle * Math.PI / 180)) * 180 / Math.PI;
+
+  const rMagEl = document.getElementById('resMag');
+  const rAngEl = document.getElementById('resAng');
+  if (rMagEl) rMagEl.textContent = rMag.toFixed(1) + 'N';
+  if (rAngEl) rAngEl.textContent = rAng.toFixed(1) + '°';
+
+  // Formula
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('F = √(F₁² + F₂² + 2F₁F₂cosθ)', 200, 60);
+  ctx.fillText(`F = √(${f1Mag}² + ${f2Mag}² + 2×${f1Mag}×${f2Mag}×cos${composeAngle}°)`, 200, 85);
+  ctx.fillStyle = '#ec4899';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`F ≈ ${rMag.toFixed(1)} N`, 200, 115);
+}
+
+function drawDecompose() {
+  ctx.clearRect(0, 0, W, H);
+
+  if (subMode === 'slope') {
+    // Block on slope
+    const slopeAng = angle1 * Math.PI / 180;
+    const sx = 100, sy = 450, ex = 620, ey = 450;
+    const peakX = 150, peakY = 150;
+
+    // Draw slope
+    ctx.fillStyle = 'rgba(100,116,139,0.2)';
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(peakX, peakY);
+    ctx.lineTo(ex, ey);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(peakX, peakY);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+
+    // Block position on slope
+    const bp = 0.45;
+    const bx = peakX + (ex - peakX) * bp;
+    const by = peakY + (ey - peakY) * bp;
+    const blockSize = 50;
+
+    // Draw block tilted on slope
+    ctx.save();
+    ctx.translate(bx, by - blockSize / 2);
+    ctx.rotate(-slopeAng);
+    drawBlock(-blockSize / 2, -blockSize / 2, blockSize, blockSize, 'rgba(236,72,153,0.3)');
+    ctx.restore();
+
+    // Force decomposition
+    const fLen = f1Mag * 1.5;
+    // Gravity (straight down)
+    drawArrow(bx, by, bx, by + fLen, '#ef4444', 4);
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText('G', bx + 10, by + fLen);
+
+    // Component along slope (parallel)
+    const gxComp = fLen * Math.sin(slopeAng);
+    const parX = bx - gxComp * Math.cos(slopeAng);
+    const parY = by + gxComp * Math.sin(slopeAng);
+    // Actually: along slope downward direction
+    const alongX = bx + gxComp * Math.cos(slopeAng);
+    const alongY = by - gxComp * Math.sin(slopeAng);
+    // Let me redo: slope goes right-down, angle from horizontal
+    // Component parallel to slope (down the slope): Gsinθ
+    const fpar = fLen * Math.sin(slopeAng);
+    drawArrow(bx, by, bx + fpar * Math.cos(slopeAng), by + fpar * Math.sin(slopeAng), '#3b82f6', 3);
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillText('G₁=Gsinθ', bx + fpar * Math.cos(slopeAng) + 5, by + fpar * Math.sin(slopeAng) + 15);
+
+    // Component perpendicular to slope: Gcosθ
+    const fperp = fLen * Math.cos(slopeAng);
+    drawArrow(bx, by, bx - fperp * Math.sin(slopeAng), by + fperp * Math.cos(slopeAng), '#10b981', 3);
+    ctx.fillStyle = '#10b981';
+    ctx.fillText('G₂=Gcosθ', bx - fperp * Math.sin(slopeAng) - 80, by + fperp * Math.cos(slopeAng));
+
+    // Dashed parallelogram
+    drawDashedLine(bx, by + fLen, bx + fpar * Math.cos(slopeAng), by + fpar * Math.sin(slopeAng), 'rgba(255,255,255,0.2)');
+    drawDashedLine(bx, by + fLen, bx - fperp * Math.sin(slopeAng), by + fperp * Math.cos(slopeAng), 'rgba(255,255,255,0.2)');
+
+    // Angle arc
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(bx, by, 35, -Math.PI / 2, -Math.PI / 2 + slopeAng);
+    ctx.stroke();
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('θ', bx - 15, by - 40);
+
+    // Info
+    const gVal = f1Mag;
+    const df1El = document.getElementById('df1');
+    const df2El = document.getElementById('df2');
+    if (df1El) df1El.textContent = (gVal * Math.sin(slopeAng)).toFixed(1) + 'N (沿斜面)';
+    if (df2El) df2El.textContent = (gVal * Math.cos(slopeAng)).toFixed(1) + 'N (垂直斜面)';
+  } else {
+    // Rope hanging
+    const cx = W / 2, topY = 80;
+    const ang = angle1 * Math.PI / 180;
+    const ropeLen = 200;
+
+    // Support bar
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - 200, topY);
+    ctx.lineTo(cx + 200, topY);
+    ctx.stroke();
+
+    // Two ropes meeting at center bottom
+    const jx = cx, jy = topY + ropeLen;
+    // Left rope
+    const l1x = jx - ropeLen * Math.sin(ang);
+    const l1y = topY;
+    // Right rope (symmetric for simplicity)
+    const l2x = jx + ropeLen * Math.sin(ang);
+    const l2y = topY;
+
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(l1x, l1y);
+    ctx.lineTo(jx, jy);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(l2x, l2y);
+    ctx.lineTo(jx, jy);
+    ctx.stroke();
+
+    // Hanging weight
+    drawArrow(jx, jy, jx, jy + 80, '#ef4444', 4);
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText('G=' + f1Mag + 'N', jx + 10, jy + 60);
+
+    // T1 along left rope
+    const t1Mag = f1Mag / (2 * Math.cos(ang));
+    const t1Len = t1Mag * 1.5;
+    const t1dx = (l1x - jx) / ropeLen;
+    const t1dy = (l1y - jy) / ropeLen;
+    drawArrow(jx, jy, jx + t1Len * t1dx, jy + t1Len * t1dy, '#3b82f6', 3);
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillText('T₁', jx + t1Len * t1dx - 30, jy + t1Len * t1dy);
+
+    // T2 along right rope
+    const t2dx = (l2x - jx) / ropeLen;
+    const t2dy = (l2y - jy) / ropeLen;
+    drawArrow(jx, jy, jx + t1Len * t2dx, jy + t1Len * t2dy, '#10b981', 3);
+    ctx.fillStyle = '#10b981';
+    ctx.fillText('T₂', jx + t1Len * t2dx + 10, jy + t1Len * t2dy);
+
+    const df1El = document.getElementById('df1');
+    const df2El = document.getElementById('df2');
+    if (df1El) df1El.textContent = t1Mag.toFixed(1) + 'N';
+    if (df2El) df2El.textContent = t1Mag.toFixed(1) + 'N';
+  }
+}
+
+function drawEquilibrium() {
+  ctx.clearRect(0, 0, W, H);
+  const cx = W / 2, topY = 80;
+  const a1 = eqAngle1 * Math.PI / 180;
+  const a2 = eqAngle2 * Math.PI / 180;
+  const ropeLen = 200;
+  const jx = cx, jy = topY + ropeLen;
+
+  // Support
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx - 200, topY);
+  ctx.lineTo(cx + 200, topY);
+  ctx.stroke();
+  for (let i = -200; i < 200; i += 12) {
+    ctx.beginPath();
+    ctx.moveTo(cx + i, topY);
+    ctx.lineTo(cx + i - 6, topY - 8);
+    ctx.stroke();
+  }
+
+  // Left rope
+  const l1x = jx - ropeLen * Math.sin(a1);
+  const l1y = topY;
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(l1x, l1y);
+  ctx.lineTo(jx, jy);
+  ctx.stroke();
+
+  // Right rope
+  const l2x = jx + ropeLen * Math.sin(a2);
+  const l2y = topY;
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(l2x, l2y);
+  ctx.lineTo(jx, jy);
+  ctx.stroke();
+
+  // Weight
+  const G = eqMass * 10;
+  drawArrow(jx, jy, jx, jy + 60, '#ef4444', 4);
+  ctx.fillStyle = 'rgba(239,68,68,0.3)';
+  ctx.beginPath();
+  ctx.arc(jx, jy + 80, 20, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ef4444';
+  ctx.font = '13px sans-serif';
+  ctx.fillText(eqMass + 'kg', jx - 12, jy + 85);
+
+  // Calculate tensions using equilibrium
+  // T1*sin(a1) = T2*sin(a2) (horizontal)
+  // T1*cos(a1) + T2*cos(a2) = G (vertical)
+  const sinA1 = Math.sin(a1), cosA1 = Math.cos(a1);
+  const sinA2 = Math.sin(a2), cosA2 = Math.cos(a2);
+  // From horizontal: T1*sin(a1) = T2*sin(a2) => T2 = T1*sin(a1)/sin(a2)
+  // Substituting: T1*cos(a1) + T1*sin(a1)*cos(a2)/sin(a2) = G
+  // T1*(cos(a1)*sin(a2) + sin(a1)*cos(a2)) / sin(a2) = G
+  // T1*sin(a1+a2)/sin(a2) = G
+  const denom = sinA1 + sinA2;
+  const T1 = G * sinA2 / (sinA1 * sinA2 + cosA1 * sinA2 + sinA1 * cosA2 - sinA1 * cosA2 + cosA1 * sinA2);
+  // Simpler: use standard formula
+  // T1 = G * cos(a2) / sin(a1 + a2) ... no, let me derive properly
+  // Actually for a weight hung from two ropes at angles from vertical:
+  // Horizontal: T1*sin(a1) = T2*sin(a2)
+  // Vertical: T1*cos(a1) + T2*cos(a2) = G
+  // From 1st: T2 = T1 * sin(a1)/sin(a2)
+  // Into 2nd: T1*cos(a1) + T1*sin(a1)*cos(a2)/sin(a2) = G
+  // T1 * [cos(a1)*sin(a2) + sin(a1)*cos(a2)] / sin(a2) = G
+  // T1 * sin(a1+a2) / sin(a2) = G
+  const T1calc = G * sinA2 / Math.sin(a1 + a2);
+  const T2calc = G * sinA1 / Math.sin(a1 + a2);
+
+  // Draw force vectors at junction
+  const scale = 1.2;
+  // T1 along left rope direction (from junction toward left anchor)
+  const t1DirX = (l1x - jx) / ropeLen;
+  const t1DirY = (l1y - jy) / ropeLen;
+  drawArrow(jx, jy, jx + T1calc * scale * t1DirX, jy + T1calc * scale * t1DirY, '#3b82f6', 4);
+
+  // T2 along right rope
+  const t2DirX = (l2x - jx) / ropeLen;
+  const t2DirY = (l2y - jy) / ropeLen;
+  drawArrow(jx, jy, jx + T2calc * scale * t2DirX, jy + T2calc * scale * t2DirY, '#10b981', 4);
+
+  // Labels
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillText('T₁=' + T1calc.toFixed(1) + 'N', jx + T1calc * scale * t1DirX - 20, jy + T1calc * scale * t1DirY - 10);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('T₂=' + T2calc.toFixed(1) + 'N', jx + T2calc * scale * t2DirX + 5, jy + T2calc * scale * t2DirY - 10);
+
+  // Angle arcs
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(jx, jy, 30, -Math.PI / 2 - a1, -Math.PI / 2);
+  ctx.stroke();
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('α=' + eqAngle1 + '°', jx - 55, jy - 35);
+
+  ctx.beginPath();
+  ctx.arc(jx, jy, 30, -Math.PI / 2, -Math.PI / 2 + a2);
+  ctx.stroke();
+  ctx.fillText('β=' + eqAngle2 + '°', jx + 35, jy - 35);
+
+  // Update info
+  const eqGEl = document.getElementById('eqG');
+  const eqT1El = document.getElementById('eqT1');
+  const eqT2El = document.getElementById('eqT2');
+  const eqStateEl = document.getElementById('eqState');
+  if (eqGEl) eqGEl.textContent = G + 'N';
+  if (eqT1El) eqT1El.textContent = T1calc.toFixed(1) + 'N';
+  if (eqT2El) eqT2El.textContent = T2calc.toFixed(1) + 'N';
+  if (eqStateEl) eqStateEl.textContent = '✅ 平衡';
+
+  // Show equilibrium equations
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('ΣFx = 0: T₁sinα = T₂sinβ', 50, 500);
+  ctx.fillText('ΣFy = 0: T₁cosα + T₂cosβ = G', 50, 525);
+}
+
+const quizzes = [
+  { q: '两个大小均为 10N 的力，夹角为 120° 时，合力大小为？', opts: ['10N', '10√3 N', '20N', '0N'], ans: 0, explain: 'F = √(10² + 10² + 2×10×10×cos120°) = √(100+100-100) = 10N' },
+  { q: '物体静止在斜面上，斜面倾角 θ，则摩擦力等于？', opts: ['mg', 'mg·sinθ', 'mg·cosθ', 'μmg'], ans: 1, explain: '静止时摩擦力 = 重力沿斜面分量 = mg·sinθ' },
+  { q: '关于弹力，下列说法正确的是？', opts: ['弹力只能沿弹簧方向', '弹力方向总与形变方向相反', '只有弹簧才能产生弹力', '弹力大小总等于重力'], ans: 1, explain: '弹力方向总是与使物体发生形变的外力方向相反，即恢复原状的方向。' },
+  { q: '一根绳子悬挂重物，绳子与竖直方向成 30°，绳中张力 T 与重力 G 的关系？', opts: ['T = G', 'T = G·cos30°', 'T = G/cos30°', 'T = G·sin30°'], ans: 2, explain: '竖直方向平衡：T·cos30° = G，所以 T = G/cos30°' },
+  { q: '三个共点力使物体平衡，其中 F₁=3N，F₂=4N，则 F₃ 的范围是？', opts: ['F₃ = 7N', 'F₃ = 1N', '1N ≤ F₃ ≤ 7N', 'F₃ = 5N'], ans: 2, explain: '三力平衡时，任意一个力在另外两个力的合力范围内。|F₁-F₂| ≤ F₃ ≤ F₁+F₂' },
+  { q: '用平行四边形法则求合力时，如果两个分力大小不变，增大它们之间的夹角，合力将？', opts: ['增大', '减小', '不变', '先增后减'], ans: 1, explain: 'F = √(F₁² + F₂² + 2F₁F₂cosθ)，θ 增大则 cosθ 减小，合力减小。' }
+];
+let quizIdx = 0;
+
+function showQuiz() {
+  const content = document.getElementById('panelContent');
+  const q = quizzes[quizIdx % quizzes.length];
+  content.innerHTML = `
+    <div class="quiz">
+      <div class="quiz-q"><b>第 ${quizIdx + 1} 题</b>：${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-idx="${i}">${String.fromCharCode(65 + i)}. ${o}</div>`).join('')}
+      </div>
+      <div class="quiz-fb" id="quizFb"></div>
+    </div>
+    <div class="mode-switch" style="margin-top:10px">
+      <div class="mode-btn" id="prevQ">← 上一题</div>
+      <div class="mode-btn" id="nextQ">下一题 →</div>
+    </div>
+  `;
+  content.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const idx = +opt.dataset.idx;
+      content.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+      if (idx === q.ans) {
+        opt.classList.add('correct');
+        bumpTotalCorrect();
+        document.getElementById('quizFb').innerHTML = '✅ 正确！' + q.explain;
+        document.getElementById('quizFb').style.color = '#10b981';
+      } else {
+        opt.classList.add('wrong');
+        content.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        document.getElementById('quizFb').innerHTML = '❌ 错误。' + q.explain;
+        document.getElementById('quizFb').style.color = '#ef4444';
+      }
+    });
+  });
+  document.getElementById('prevQ').addEventListener('click', () => { quizIdx = Math.max(0, quizIdx - 1); showQuiz(); });
+  document.getElementById('nextQ').addEventListener('click', () => { quizIdx++; showQuiz(); });
+}
+
+function draw() {
+  if (animId) cancelAnimationFrame(animId);
+
+  if (mode === 'types') drawTypes();
+  else if (mode === 'compose') drawCompose();
+  else if (mode === 'decompose') drawDecompose();
+  else if (mode === 'equilibrium') drawEquilibrium();
+  else if (mode === 'quiz') {
+    ctx.clearRect(0, 0, W, H);
+    // Draw decorative force diagram
+    const cx = W / 2, cy = H / 2;
+    const time = t * 0.02;
+    for (let i = 0; i < 5; i++) {
+      const ang = time + i * Math.PI * 2 / 5;
+      const r = 120;
+      const fx = cx + r * Math.cos(ang);
+      const fy = cy + r * Math.sin(ang);
+      const colors = ['#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#ec4899'];
+      drawArrow(cx, cy, fx, fy, colors[i], 3);
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText('ΣF = 0', cx - 30, cy + 6);
+  }
+
+  t++;
+  animId = requestAnimationFrame(draw);
+}
+
+updatePanel();
+draw();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中物理"></script>
+</body>
+</html>

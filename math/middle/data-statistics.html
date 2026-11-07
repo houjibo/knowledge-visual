@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>数据的收集整理与分析 · 初中数学互动可视化</title>
+<style>
+  :root {
+    --primary: #fbbf24;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #451a03 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #fcd34d; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #f59e0b, #fbbf24, #fcd34d); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(251,191,36,.4); color: #451a03; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .hidden { display: none !important; }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .stage > * { min-width: 0; }
+  @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #3d2a0c 0%, #0f172a 100%); touch-action: none; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #cbd5e1; flex-wrap: wrap; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #fcd34d; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fcd34d; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid var(--primary); line-height: 1.7; font-size: 14px; }
+  .concept-card.warn { border-color: #f59e0b; }
+  .concept-card .title { font-weight: 700; margin-bottom: 4px; color: var(--primary); }
+  .concept-card.warn .title { color: #f59e0b; }
+  .chart-btns { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .chart-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 44px; min-width: 44px; }
+  .chart-btn.active { background: var(--primary); border-color: var(--primary); color: #451a03; font-weight: 700; }
+  .act-btn { padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; font-weight: 700; background: var(--primary); color: #451a03; min-height: 44px; transition: all .2s; margin-right: 8px; margin-top: 6px; }
+  .act-btn.ghost { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+  .data-strip { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; font-size: 12.5px; line-height: 1.8; color: #cbd5e1; margin-top: 8px; max-height: 96px; overflow-y: auto; font-family: monospace; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(251,191,36,0.08); border-radius: 12px; border: 1px solid rgba(251,191,36,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fcd34d; min-height: 18px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #451a03; font-weight: 700; min-height: 44px; min-width: 44px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  .practice-item { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+  .practice-item h4 { color: #e2e8f0; margin-bottom: 10px; font-size: 15px; line-height: 1.6; }
+  .practice-opts { display: grid; gap: 6px; }
+  .practice-fb { margin-top: 8px; font-size: 13px; min-height: 18px; line-height: 1.6; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 28px; }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .container { padding: 10px 14px; }
+    .breadcrumb { padding: 6px 10px; font-size: 12px; margin-bottom: 8px; }
+    header { margin-bottom: 10px; }
+    header h1 { font-size: 1.5rem; }
+    header p { font-size: 12px; margin-top: 2px; }
+    .tabs { gap: 6px; margin-bottom: 10px; }
+    .tab { padding: 6px 14px; font-size: 12px; min-height: 36px; }
+    .canvas-wrap, .panel { padding: 10px; border-radius: 12px; }
+    .panel h3 { font-size: 1rem; margin-bottom: 8px; }
+    .equation { padding: 8px; font-size: 0.95rem; margin: 6px 0; }
+    .concept-card { padding: 10px; margin: 6px 0; font-size: 13px; }
+  }
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    header h1 { font-size: 1.6rem; }
+    .tabs { gap: 6px; }
+    .tab { padding: 8px 12px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">📐 数学</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">初中</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">数据的收集整理与分析</span>
+    <span id="done-mark" style="margin-left:auto;color:#10b981;font-weight:600;"></span>
+  </nav>
+
+  <header>
+    <h1>📊 数据的收集整理与分析</h1>
+    <p>统计调查 · 统计图选择 · 平均数/中位数/众数 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 探究</div>
+    <div class="tab" data-mode="practice">🧪 计算</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 探究模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div>
+        <div class="canvas-wrap">
+          <canvas id="statCanvas" width="720" height="460"></canvas>
+          <div class="legend">
+            <span>某班 20 名学生一次数学测验成绩</span>
+            <span>点击「＋随机加人」观察统计量变化</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>统计图选择</h3>
+        <div class="chart-btns" id="chartBtns">
+          <button class="chart-btn active" data-chart="bar">条形图</button>
+          <button class="chart-btn" data-chart="pie">扇形图</button>
+          <button class="chart-btn" data-chart="line">折线图</button>
+        </div>
+        <div>
+          <button class="act-btn" id="btnAdd">＋ 随机加一名学生</button>
+          <button class="act-btn ghost" id="btnReset">重置</button>
+        </div>
+        <div class="info-grid">
+          <div>平均数<br><b id="statMean">—</b></div>
+          <div>中位数<br><b id="statMedian">—</b></div>
+          <div>众数<br><b id="statMode">—</b></div>
+          <div>极差<br><b id="statRange">—</b></div>
+        </div>
+        <div class="data-strip" id="dataStrip"></div>
+        <div class="concept-card">
+          <div class="title">三个统计量，三种视角</div>
+          <b>平均数</b>：总体水平（受极端值影响大）；<b>中位数</b>：中间位置（不受极端值影响）；<b>众数</b>：出现次数最多。报告"班级水平"用哪个？要看数据分布！
+        </div>
+        <div class="concept-card">
+          <div class="title">统计图怎么选</div>
+          <b>条形图</b>：比较数量多少；<b>扇形图</b>：显示部分占整体的<b>百分比</b>；<b>折线图</b>：反映变化趋势。
+        </div>
+        <div class="concept-card warn">
+          <div class="title">⚠️ 全面调查 vs 抽样调查</div>
+          对象少、要求精确 → 全面调查（ census ）；对象多/有破坏性 → 抽样调查，样本要有<b>代表性</b>（如：测灯泡寿命只能抽样）。抽样结论只能<b>估计</b>总体。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 计算模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="practice-item" id="p1">
+      <h4>1️⃣ 数据 85, 90, 78, 92, 88 的平均数是？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">85</button>
+        <button class="quiz-opt" data-ok="0">88</button>
+        <button class="quiz-opt" data-ok="1">86.6</button>
+        <button class="quiz-opt" data-ok="0">90</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+    <div class="practice-item" id="p2">
+      <h4>2️⃣ 数据 3, 5, 7, 7, 9, 11, 13 的中位数和众数分别是？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">中位数 8，众数 7</button>
+        <button class="quiz-opt" data-ok="1">中位数 7，众数 7</button>
+        <button class="quiz-opt" data-ok="0">中位数 7，众数 9</button>
+        <button class="quiz-opt" data-ok="0">中位数 9，众数 7</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+    <div class="practice-item" id="p3">
+      <h4>3️⃣ 一组数据 2, 4, 6, 8, x 的平均数是 6，则 x 等于？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="1">10</button>
+        <button class="quiz-opt" data-ok="0">6</button>
+        <button class="quiz-opt" data-ok="0">8</button>
+        <button class="quiz-opt" data-ok="0">12</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="panel">
+      <h3>🎯 数据统计 · 小测验（5 题，≥80% 通关）</h3>
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">点击「开始答题」</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFb"></div>
+        <div class="quiz-nav">
+          <button id="quizStart">开始答题</button>
+          <button id="quizPrev" disabled>上一题</button>
+          <button id="quizNext" disabled>下一题</button>
+        </div>
+        <div class="quiz-result hidden" id="quizResult"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>初中数学 · 数据的收集整理与分析 · 互动可视化 | 知识可视化全学科项目</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+let mode = 'learn';
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+  draw();
+}));
+
+/* ============================================================
+ * 探究模式
+ * ============================================================ */
+const canvas = document.getElementById('statCanvas');
+const ctx = canvas.getContext('2d');
+const INIT_DATA = [78, 85, 92, 65, 88, 90, 72, 85, 95, 60, 85, 79, 88, 91, 68, 84, 90, 76, 85, 89];
+let data = [...INIT_DATA];
+let chart = 'bar';
+const BANDS = [['60 以下', 0, 59], ['60–69', 60, 69], ['70–79', 70, 79], ['80–89', 80, 89], ['90–100', 90, 100]];
+const BAND_COLORS = ['#ef4444', '#f59e0b', '#4ade80', '#38bdf8', '#a78bfa'];
+
+function bandCounts() {
+  return BANDS.map(([, lo, hi]) => data.filter(v => v >= lo && v <= hi).length);
+}
+function stats() {
+  const sorted = [...data].sort((a, b) => a - b);
+  const n = sorted.length;
+  const mean = sorted.reduce((s, v) => s + v, 0) / n;
+  const median = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+  const freq = {};
+  sorted.forEach(v => freq[v] = (freq[v] || 0) + 1);
+  const maxF = Math.max(...Object.values(freq));
+  const modes = Object.keys(freq).filter(k => freq[k] === maxF).map(Number);
+  return { n, mean, median, modes, maxF, range: sorted[n - 1] - sorted[0], sorted };
+}
+function updPanel() {
+  const s = stats();
+  document.getElementById('statMean').textContent = s.mean.toFixed(1) + ' 分';
+  document.getElementById('statMedian').textContent = s.median + ' 分';
+  document.getElementById('statMode').textContent = s.modes.join('、') + ' 分（各 ' + s.maxF + ' 次）';
+  document.getElementById('statRange').textContent = s.range + ' 分';
+  document.getElementById('dataStrip').textContent =
+    `数据（n=${s.n}）：` + [...data].sort((a, b) => a - b).join(', ');
+}
+document.querySelectorAll('.chart-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.chart-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  chart = b.dataset.chart;
+  draw();
+}));
+document.getElementById('btnAdd').addEventListener('click', () => {
+  if (data.length >= 40) return;
+  data.push(55 + Math.floor(Math.random() * 46));
+  updPanel(); draw();
+});
+document.getElementById('btnReset').addEventListener('click', () => {
+  data = [...INIT_DATA];
+  updPanel(); draw();
+});
+
+const PLOT = { x0: 80, y0: 400, w: 560, h: 300 };
+function drawAxes(ymax) {
+  ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(PLOT.x0, PLOT.y0); ctx.lineTo(PLOT.x0 + PLOT.w, PLOT.y0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PLOT.x0, PLOT.y0); ctx.lineTo(PLOT.x0, PLOT.y0 - PLOT.h); ctx.stroke();
+  ctx.fillStyle = '#64748b'; ctx.font = '11px sans-serif';
+  for (let i = 0; i <= ymax; i += Math.ceil(ymax / 5)) {
+    const y = PLOT.y0 - (i / ymax) * PLOT.h;
+    ctx.fillText(String(i), PLOT.x0 - 22, y + 4);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PLOT.x0, y); ctx.lineTo(PLOT.x0 + PLOT.w, y); ctx.stroke();
+  }
+}
+
+function drawBar() {
+  const counts = bandCounts();
+  const ymax = Math.max(...counts, 5);
+  drawAxes(ymax);
+  const bw = PLOT.w / BANDS.length * 0.56;
+  BANDS.forEach(([label], i) => {
+    const x = PLOT.x0 + (i + 0.22) * (PLOT.w / BANDS.length);
+    const h = (counts[i] / ymax) * PLOT.h;
+    const g = ctx.createLinearGradient(0, PLOT.y0 - h, 0, PLOT.y0);
+    g.addColorStop(0, BAND_COLORS[i]);
+    g.addColorStop(1, BAND_COLORS[i] + '55');
+    ctx.fillStyle = g;
+    ctx.fillRect(x, PLOT.y0 - h, bw, h);
+    ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(String(counts[i]), x + bw / 2 - 5, PLOT.y0 - h - 8);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
+    ctx.fillText(label, x - 2, PLOT.y0 + 18);
+  });
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText('各分数段人数（条形图：便于比较数量）', 200, 50);
+}
+
+function drawPie() {
+  const counts = bandCounts();
+  const total = data.length;
+  const cx = 300, cy = 230, r = 150;
+  let a0 = -Math.PI / 2;
+  counts.forEach((c, i) => {
+    if (!c) return;
+    const a1 = a0 + (c / total) * Math.PI * 2;
+    ctx.fillStyle = BAND_COLORS[i];
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, a0, a1);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
+    const mid = (a0 + a1) / 2;
+    const pct = Math.round(c / total * 100);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(`${pct}%`, cx + Math.cos(mid) * r * 0.62 - 14, cy + Math.sin(mid) * r * 0.62 + 4);
+    a0 = a1;
+  });
+  // 图例
+  BANDS.forEach(([label], i) => {
+    ctx.fillStyle = BAND_COLORS[i];
+    ctx.fillRect(510, 120 + i * 34, 16, 16);
+    ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+    ctx.fillText(`${label}：${counts[i]} 人`, 534, 133 + i * 34);
+  });
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText('各分数段占比（扇形图：便于看百分比）', 190, 50);
+}
+
+function drawLine() {
+  // 按学号顺序的成绩折线
+  drawAxes(100);
+  const n = data.length;
+  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = PLOT.x0 + 20 + (i / Math.max(1, n - 1)) * (PLOT.w - 40);
+    const y = PLOT.y0 - (v / 100) * PLOT.h;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  });
+  ctx.stroke();
+  data.forEach((v, i) => {
+    const x = PLOT.x0 + 20 + (i / Math.max(1, n - 1)) * (PLOT.w - 40);
+    const y = PLOT.y0 - (v / 100) * PLOT.h;
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+  });
+  // 平均线
+  const s = stats();
+  const my = PLOT.y0 - (s.mean / 100) * PLOT.h;
+  ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(PLOT.x0, my); ctx.lineTo(PLOT.x0 + PLOT.w, my); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#38bdf8'; ctx.font = '13px sans-serif';
+  ctx.fillText(`平均数 ${s.mean.toFixed(1)}`, PLOT.x0 + PLOT.w - 90, my - 8);
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText('每人成绩（折线图：便于看波动与趋势）', 200, 50);
+  ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
+  ctx.fillText('学号 →', PLOT.x0 + PLOT.w - 46, PLOT.y0 + 20);
+}
+
+function draw() {
+  if (mode !== 'learn') return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (chart === 'bar') drawBar();
+  else if (chart === 'pie') drawPie();
+  else drawLine();
+}
+
+updPanel();
+draw();
+
+/* ============================================================
+ * 计算模式
+ * ============================================================ */
+const PRACTICE_TIPS = {
+  p1: '✅ 正确！(85+90+78+92+88) ÷ 5 = 433 ÷ 5 = 86.6。',
+  p2: '✅ 正确！已排好序，中间（第 4 个）是 7；7 出现 2 次最多，众数也是 7。',
+  p3: '✅ 正确！总和应为 6×5 = 30，x = 30 − (2+4+6+8) = 10。'
+};
+document.querySelectorAll('.practice-item').forEach(item => {
+  const fb = item.querySelector('.practice-fb');
+  item.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const ok = opt.dataset.ok === '1';
+      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      opt.classList.add(ok ? 'correct' : 'wrong');
+      fb.style.color = ok ? '#10b981' : '#ef4444';
+      fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
+    });
+  });
+});
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const QUIZ = [
+  { q: '要反映某班各分数段人数占总人数的百分比，最适合的统计图是（　　）',
+    opts: ['条形图', '扇形图', '折线图', '都可以'],
+    ans: 1, ex: '扇形图显示部分占整体的百分比；条形比多少，折线看趋势。' },
+  { q: '数据 2, 3, 3, 5, 7, 10 的中位数是（　　）',
+    opts: ['3', '5', '4', '3.5'],
+    ans: 2, ex: '偶数个数据取中间两个的平均：(3+5)/2 = 4。' },
+  { q: '调查一批灯泡的使用寿命，合适的调查方式是（　　）',
+    opts: ['全面调查', '抽样调查', '逐个测试', '问卷调查'],
+    ans: 1, ex: '测试有破坏性（用完即废），只能抽样调查估计总体。' },
+  { q: '一组数据加入一个特别大值后，受影响最大的统计量是（　　）',
+    opts: ['中位数', '众数', '平均数', '都不变'],
+    ans: 2, ex: '平均数受极端值影响大；中位数只与位置有关，抗干扰强。' },
+  { q: '数据 5, 8, 6, 9, 2 的极差是（　　）',
+    opts: ['7', '6', '9', '5'],
+    ans: 0, ex: '极差 = 最大值 − 最小值 = 9 − 2 = 7。' }
+];
+let qi = 0, qScore = 0, qAnswered = false;
+const quizQ = document.getElementById('quizQ');
+const quizOpts = document.getElementById('quizOpts');
+const quizFb = document.getElementById('quizFb');
+const quizResult = document.getElementById('quizResult');
+const btnStart = document.getElementById('quizStart');
+const btnPrev = document.getElementById('quizPrev');
+const btnNext = document.getElementById('quizNext');
+
+function renderQ() {
+  const q = QUIZ[qi];
+  qAnswered = false;
+  quizQ.textContent = `第${qi + 1}题 / 共${QUIZ.length}题：${q.q}`;
+  quizFb.textContent = '';
+  quizOpts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const d = document.createElement('div');
+    d.className = 'quiz-opt';
+    d.textContent = o;
+    d.addEventListener('click', () => {
+      if (qAnswered) return;
+      qAnswered = true;
+      const ok = i === q.ans;
+      if (ok) qScore++;
+      quizOpts.children[q.ans].classList.add('correct');
+      if (!ok) d.classList.add('wrong');
+      quizFb.textContent = (ok ? '✅ ' : '❌ ') + q.ex;
+    });
+    quizOpts.appendChild(d);
+  });
+  btnPrev.disabled = qi === 0;
+  btnNext.disabled = false;
+  btnNext.textContent = qi === QUIZ.length - 1 ? '查看成绩' : '下一题';
+}
+function finishQuiz() {
+  const pass = qScore >= Math.ceil(QUIZ.length * 0.8);
+  quizQ.textContent = '测验完成！';
+  quizOpts.innerHTML = '';
+  quizFb.textContent = '';
+  quizResult.classList.remove('hidden');
+  quizResult.innerHTML = `得分：<b>${qScore} / ${QUIZ.length}</b>　${pass ? '🎉 通关！' : '继续加油，再试一次！'}`;
+  btnNext.disabled = true;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('data-statistics');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+btnStart.addEventListener('click', () => {
+  qi = 0; qScore = 0;
+  quizResult.classList.add('hidden');
+  btnStart.textContent = '重新答题';
+  renderQ();
+});
+btnPrev.addEventListener('click', () => { if (qi > 0) { qi--; renderQ(); } });
+btnNext.addEventListener('click', () => {
+  if (qi < QUIZ.length - 1) { qi++; renderQ(); }
+  else finishQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('data-statistics')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+</body>
+</html>

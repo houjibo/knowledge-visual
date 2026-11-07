@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概率初步 · 初中数学互动可视化</title>
+<style>
+  :root {
+    --primary: #fb923c;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #331708 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #fdba74; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #f97316, #fb923c, #fdba74); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(251,146,60,.4); color: #331708; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .hidden { display: none !important; }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .stage > * { min-width: 0; }
+  @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #2e1a0e 0%, #0f172a 100%); touch-action: none; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #cbd5e1; flex-wrap: wrap; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #fdba74; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--primary); min-height: 44px; }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fdba74; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid var(--primary); line-height: 1.7; font-size: 14px; }
+  .concept-card.warn { border-color: #f59e0b; }
+  .concept-card .title { font-weight: 700; margin-bottom: 4px; color: var(--primary); }
+  .concept-card.warn .title { color: #f59e0b; }
+  .act-btns { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .act-btn { padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; font-weight: 700; background: var(--primary); color: #331708; min-height: 44px; transition: all .2s; }
+  .act-btn.ghost { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+  .act-btn:disabled { opacity: 0.4; cursor: default; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(251,146,60,0.08); border-radius: 12px; border: 1px solid rgba(251,146,60,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fdba74; min-height: 18px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #331708; font-weight: 700; min-height: 44px; min-width: 44px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  .practice-item { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+  .practice-item h4 { color: #e2e8f0; margin-bottom: 10px; font-size: 15px; line-height: 1.6; }
+  .practice-opts { display: grid; gap: 6px; }
+  .practice-fb { margin-top: 8px; font-size: 13px; min-height: 18px; line-height: 1.6; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 28px; }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .container { padding: 10px 14px; }
+    .breadcrumb { padding: 6px 10px; font-size: 12px; margin-bottom: 8px; }
+    header { margin-bottom: 10px; }
+    header h1 { font-size: 1.5rem; }
+    header p { font-size: 12px; margin-top: 2px; }
+    .tabs { gap: 6px; margin-bottom: 10px; }
+    .tab { padding: 6px 14px; font-size: 12px; min-height: 36px; }
+    .canvas-wrap, .panel { padding: 10px; border-radius: 12px; }
+    .panel h3 { font-size: 1rem; margin-bottom: 8px; }
+    .equation { padding: 8px; font-size: 0.95rem; margin: 6px 0; }
+    .concept-card { padding: 10px; margin: 6px 0; font-size: 13px; }
+    .slider-row { margin: 6px 0; font-size: 13px; }
+  }
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    header h1 { font-size: 1.6rem; }
+    .tabs { gap: 6px; }
+    .tab { padding: 8px 12px; font-size: 13px; }
+    .slider-row { flex-wrap: wrap; }
+    .slider-row label { flex: 0 0 auto; }
+    .slider-row .val { flex: 0 0 auto; }
+    .slider-row input[type=range] { flex: 1 1 100%; order: 3; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">📐 数学</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">初中</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">概率初步</span>
+    <span id="done-mark" style="margin-left:auto;color:#10b981;font-weight:600;"></span>
+  </nav>
+
+  <header>
+    <h1>🎲 概率初步</h1>
+    <p>随机事件 · 概率的意义 · 用频率估计概率 · 摸球模拟实验</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 实验</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 实验模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div>
+        <div class="canvas-wrap">
+          <canvas id="simCanvas" width="720" height="480"></canvas>
+          <div class="legend">
+            <span style="color:#ef4444">● 红球</span>
+            <span style="color:#60a5fa">● 蓝球</span>
+            <span>虚线 = 理论概率</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🎰 摸球实验（摸后放回）</h3>
+        <div class="slider-row">
+          <label>红球个数</label>
+          <input type="range" id="sliderRed" min="1" max="8" step="1" value="3">
+          <span class="val" id="valRed">3 个</span>
+        </div>
+        <div class="slider-row">
+          <label>蓝球个数</label>
+          <input type="range" id="sliderBlue" min="1" max="8" step="1" value="2">
+          <span class="val" id="valBlue">2 个</span>
+        </div>
+        <div class="act-btns">
+          <button class="act-btn" id="btnDraw1">摸 1 次</button>
+          <button class="act-btn" id="btnDraw50">连摸 50 次</button>
+          <button class="act-btn ghost" id="btnReset">重置</button>
+        </div>
+        <div class="info-grid">
+          <div>理论 P(红球)<br><b id="infoTheory">3/5 = 0.600</b></div>
+          <div>已摸次数<br><b id="infoN">0 次</b></div>
+          <div>摸到红球<br><b id="infoRedN">0 次</b></div>
+          <div>实际频率<br><b id="infoFreq">—</b></div>
+        </div>
+        <div class="equation">概率：<b>P(A) = 事件 A 的结果数 ÷ 所有等可能结果数</b><br><span style="font-size:0.85em;color:#94a3b8">P(红球) = 红球数 ÷ 总球数</span></div>
+        <div class="concept-card">
+          <div class="title">事件的分类</div>
+          <b>必然事件</b>：一定发生（P = 1）；<b>不可能事件</b>：一定不发生（P = 0）；<b>随机事件</b>：可能发生也可能不发生（0 &lt; P &lt; 1）。
+        </div>
+        <div class="concept-card warn">
+          <div class="title">⚠️ 频率与概率</div>
+          大量重复试验中，频率会<b>稳定在概率附近</b>（大数定律）——可以用频率估计概率。但频率 ≠ 概率：摸 10 次红球出现 4 次，不说明 P = 0.4！试验次数太少时波动很大。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="practice-item" id="p1">
+      <h4>1️⃣ 一个不透明袋中有 4 个红球和 6 个白球（除颜色外完全相同），搅匀后随机摸出 1 个球，摸到红球的概率是？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">1/4</button>
+        <button class="quiz-opt" data-ok="1">2/5</button>
+        <button class="quiz-opt" data-ok="0">2/3</button>
+        <button class="quiz-opt" data-ok="0">1/2</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+    <div class="practice-item" id="p2">
+      <h4>2️⃣ 掷一枚质地均匀的骰子，向上一面点数为偶数的概率是？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">1/6</button>
+        <button class="quiz-opt" data-ok="0">1/3</button>
+        <button class="quiz-opt" data-ok="1">1/2</button>
+        <button class="quiz-opt" data-ok="0">2/3</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+    <div class="practice-item" id="p3">
+      <h4>3️⃣ 从一副去掉大小王的扑克牌（52 张）中随机抽 1 张，抽到红桃的概率是？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="1">1/4</button>
+        <button class="quiz-opt" data-ok="0">1/13</button>
+        <button class="quiz-opt" data-ok="0">1/2</button>
+        <button class="quiz-opt" data-ok="0">1/52</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="panel">
+      <h3>🎯 概率初步 · 小测验（5 题，≥80% 通关）</h3>
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">点击「开始答题」</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFb"></div>
+        <div class="quiz-nav">
+          <button id="quizStart">开始答题</button>
+          <button id="quizPrev" disabled>上一题</button>
+          <button id="quizNext" disabled>下一题</button>
+        </div>
+        <div class="quiz-result hidden" id="quizResult"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>初中数学 · 概率初步 · 互动可视化 | 知识可视化全学科项目</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+let mode = 'learn';
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+  draw();
+}));
+
+/* ============================================================
+ * 实验模式：摸球模拟
+ * ============================================================ */
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const sliderRed = document.getElementById('sliderRed');
+const sliderBlue = document.getElementById('sliderBlue');
+let trials = [];        // true = 红球
+let lastDraw = null;    // 最近摸出的球
+let animT = 0;
+
+function theory() {
+  const r = +sliderRed.value, b = +sliderBlue.value;
+  return { r, b, p: r / (r + b) };
+}
+function updPanel() {
+  const t = theory();
+  document.getElementById('valRed').textContent = t.r + ' 个';
+  document.getElementById('valBlue').textContent = t.b + ' 个';
+  document.getElementById('infoTheory').textContent = `${t.r}/${t.r + t.b} = ${t.p.toFixed(3)}`;
+  document.getElementById('infoN').textContent = trials.length + ' 次';
+  const reds = trials.filter(Boolean).length;
+  document.getElementById('infoRedN').textContent = reds + ' 次';
+  document.getElementById('infoFreq').textContent = trials.length ? (reds / trials.length).toFixed(3) : '—';
+}
+sliderRed.addEventListener('input', () => { updPanel(); draw(); });
+sliderBlue.addEventListener('input', () => { updPanel(); draw(); });
+
+function drawOnce() {
+  const t = theory();
+  const isRed = Math.random() < t.p;
+  trials.push(isRed);
+  lastDraw = isRed;
+  animT = performance.now();
+  updPanel(); draw();
+}
+document.getElementById('btnDraw1').addEventListener('click', drawOnce);
+document.getElementById('btnDraw50').addEventListener('click', () => {
+  const t = theory();
+  for (let i = 0; i < 50; i++) trials.push(Math.random() < t.p);
+  lastDraw = trials[trials.length - 1];
+  updPanel(); draw();
+});
+document.getElementById('btnReset').addEventListener('click', () => {
+  trials = []; lastDraw = null;
+  updPanel(); draw();
+});
+
+function drawBag(t) {
+  // 袋子
+  const bx = 90, by = 60, bw = 200, bh = 160;
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(bx + 20, by); ctx.lineTo(bx + bw - 20, by);
+  ctx.quadraticCurveTo(bx + bw + 16, by + bh / 2, bx + bw - 14, by + bh);
+  ctx.lineTo(bx + 14, by + bh);
+  ctx.quadraticCurveTo(bx - 16, by + bh / 2, bx + 20, by);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  // 袋中球（示意排列）
+  let k = 0;
+  const cols = 5;
+  for (let i = 0; i < t.r; i++, k++) {
+    const cx = bx + 34 + (k % cols) * 30, cy = by + 40 + Math.floor(k / cols) * 30;
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath(); ctx.arc(cx, cy, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath(); ctx.arc(cx - 3, cy - 3, 3.5, 0, Math.PI * 2); ctx.fill();
+  }
+  for (let i = 0; i < t.b; i++, k++) {
+    const cx = bx + 34 + (k % cols) * 30, cy = by + 40 + Math.floor(k / cols) * 30;
+    ctx.fillStyle = '#60a5fa';
+    ctx.beginPath(); ctx.arc(cx, cy, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath(); ctx.arc(cx - 3, cy - 3, 3.5, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText(`袋中：红 ${t.r} + 蓝 ${t.b} = ${t.r + t.b} 球`, bx + 26, by + bh + 24);
+}
+
+function drawLastBall() {
+  if (lastDraw === null) return;
+  const elapsed = (performance.now() - animT) / 1000;
+  const bounce = elapsed < 0.5 ? Math.abs(Math.sin(elapsed * Math.PI * 2)) * 18 * (1 - elapsed * 2) : 0;
+  const cx = 190, cy = 290 - bounce;
+  ctx.fillStyle = lastDraw ? '#ef4444' : '#60a5fa';
+  ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.beginPath(); ctx.arc(cx - 6, cy - 6, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#e2e8f0'; ctx.font = '13px sans-serif';
+  ctx.fillText(`第 ${trials.length} 次摸出：${lastDraw ? '红球' : '蓝球'}`, cx - 60, cy + 46);
+  if (elapsed < 0.5) requestAnimationFrame(draw);
+}
+
+function drawFreqChart(t) {
+  // 频率折线图
+  const ox = 380, oy = 400, w = 300, h = 300;
+  ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + w, oy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox, oy - h); ctx.stroke();
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '12px sans-serif';
+  ctx.fillText('摸球次数 n', ox + w - 70, oy + 18);
+  ctx.fillText('红球频率', ox - 58, oy - h + 16);
+  ctx.font = '10px sans-serif'; ctx.fillStyle = '#64748b';
+  for (const f of [0, 0.25, 0.5, 0.75, 1]) {
+    const y = oy - f * h;
+    ctx.fillText(f.toFixed(2), ox - 34, y + 3);
+  }
+  // 理论概率虚线
+  const ty = oy - t.p * h;
+  ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2;
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(ox, ty); ctx.lineTo(ox + w, ty); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#f59e0b'; ctx.font = '12px sans-serif';
+  ctx.fillText(`理论 ${t.p.toFixed(3)}`, ox + w - 78, ty - 6);
+  // 频率曲线（分段最多取 500 个点）
+  if (trials.length > 1) {
+    const step = Math.max(1, Math.floor(trials.length / 500));
+    ctx.strokeStyle = '#10b981'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    let reds = 0, started = false;
+    for (let i = 0; i < trials.length; i++) {
+      if (trials[i]) reds++;
+      const n = i + 1;
+      if (n % step !== 0 && n !== trials.length) continue;
+      const x = ox + (n / Math.max(trials.length, 50)) * w;
+      const y = oy - (reds / n) * h;
+      started ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      started = true;
+    }
+    ctx.stroke();
+  }
+}
+
+function draw() {
+  if (mode !== 'learn') return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const t = theory();
+  drawBag(t);
+  drawLastBall();
+  drawFreqChart(t);
+  if (!trials.length) {
+    ctx.fillStyle = '#64748b'; ctx.font = '14px sans-serif';
+    ctx.fillText('点击「摸 1 次」或「连摸 50 次」开始实验', 390, 60);
+  }
+}
+
+updPanel();
+draw();
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const PRACTICE_TIPS = {
+  p1: '✅ 正确！共 10 球，红球 4 个：P = 4/10 = 2/5。',
+  p2: '✅ 正确！偶数点有 2、4、6 共 3 种：P = 3/6 = 1/2。',
+  p3: '✅ 正确！红桃 13 张，共 52 张：P = 13/52 = 1/4。'
+};
+document.querySelectorAll('.practice-item').forEach(item => {
+  const fb = item.querySelector('.practice-fb');
+  item.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const ok = opt.dataset.ok === '1';
+      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      opt.classList.add(ok ? 'correct' : 'wrong');
+      fb.style.color = ok ? '#10b981' : '#ef4444';
+      fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
+    });
+  });
+});
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const QUIZ = [
+  { q: '下列事件中，属于必然事件的是（　　）',
+    opts: ['明天会下雨', '掷骰子点数不超过 6', '买彩票中一等奖', '抛硬币正面朝上'],
+    ans: 1, ex: '骰子点数只有 1-6，"不超过 6"一定发生，是必然事件（P = 1）。' },
+  { q: '一个袋中有 3 个红球、2 个黄球，随机摸出 1 个球，摸到黄球的概率是（　　）',
+    opts: ['2/5', '3/5', '1/2', '2/3'],
+    ans: 0, ex: 'P(黄) = 2/(3+2) = 2/5。' },
+  { q: '关于频率与概率，下列说法正确的是（　　）',
+    opts: ['频率就是概率', '大量重复试验中频率稳定在概率附近', '概率会随试验次数改变', '试验次数越少频率越接近概率'],
+    ans: 1, ex: '大数定律：大量重复试验时频率趋近概率；少量试验时频率可能偏离很大。' },
+  { q: '抛掷两枚均匀硬币，两枚都正面朝上的概率是（　　）',
+    opts: ['1/2', '1/3', '1/4', '2/3'],
+    ans: 2, ex: '等可能结果有 4 种：正正、正反、反正、反反，两正占 1/4。' },
+  { q: '某事件的概率为 0，说明该事件（　　）',
+    opts: ['一定不发生', '一定发生', '很可能发生', '发生可能性为 50%'],
+    ans: 0, ex: 'P = 0 是不可能事件，一定不发生；P = 1 是必然事件。' }
+];
+let qi = 0, qScore = 0, qAnswered = false;
+const quizQ = document.getElementById('quizQ');
+const quizOpts = document.getElementById('quizOpts');
+const quizFb = document.getElementById('quizFb');
+const quizResult = document.getElementById('quizResult');
+const btnStart = document.getElementById('quizStart');
+const btnPrev = document.getElementById('quizPrev');
+const btnNext = document.getElementById('quizNext');
+
+function renderQ() {
+  const q = QUIZ[qi];
+  qAnswered = false;
+  quizQ.textContent = `第${qi + 1}题 / 共${QUIZ.length}题：${q.q}`;
+  quizFb.textContent = '';
+  quizOpts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const d = document.createElement('div');
+    d.className = 'quiz-opt';
+    d.textContent = o;
+    d.addEventListener('click', () => {
+      if (qAnswered) return;
+      qAnswered = true;
+      const ok = i === q.ans;
+      if (ok) qScore++;
+      quizOpts.children[q.ans].classList.add('correct');
+      if (!ok) d.classList.add('wrong');
+      quizFb.textContent = (ok ? '✅ ' : '❌ ') + q.ex;
+    });
+    quizOpts.appendChild(d);
+  });
+  btnPrev.disabled = qi === 0;
+  btnNext.disabled = false;
+  btnNext.textContent = qi === QUIZ.length - 1 ? '查看成绩' : '下一题';
+}
+function finishQuiz() {
+  const pass = qScore >= Math.ceil(QUIZ.length * 0.8);
+  quizQ.textContent = '测验完成！';
+  quizOpts.innerHTML = '';
+  quizFb.textContent = '';
+  quizResult.classList.remove('hidden');
+  quizResult.innerHTML = `得分：<b>${qScore} / ${QUIZ.length}</b>　${pass ? '🎉 通关！' : '继续加油，再试一次！'}`;
+  btnNext.disabled = true;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('probability-intro');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+btnStart.addEventListener('click', () => {
+  qi = 0; qScore = 0;
+  quizResult.classList.add('hidden');
+  btnStart.textContent = '重新答题';
+  renderQ();
+});
+btnPrev.addEventListener('click', () => { if (qi > 0) { qi--; renderQ(); } });
+btnNext.addEventListener('click', () => {
+  if (qi < QUIZ.length - 1) { qi++; renderQ(); }
+  else finishQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('probability-intro')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+</body>
+</html>

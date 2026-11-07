@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>光电效应 · 爱因斯坦方程 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #f59e0b;
+    --photon: #fbbf24;
+    --electron: #38bdf8;
+    --metal: #94a3b8;
+    --energy: #a855f7;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #451a03 0%, #0f172a 60%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px;
+    font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #fcd34d; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #f59e0b, #fbbf24, #fde68a); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(245,158,11,.4); color: #451a03; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); touch-action: none; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.1rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #fcd34d; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 100px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.photon { border-color: var(--photon); }
+  .concept-card.electron { border-color: var(--electron); }
+  .concept-card.metal { border-color: var(--metal); }
+  .concept-card.energy { border-color: var(--energy); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.photon .title { color: var(--photon); }
+  .concept-card.electron .title { color: var(--electron); }
+  .concept-card.metal .title { color: var(--metal); }
+  .concept-card.energy .title { color: var(--energy); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-photon::before { background: var(--photon); }
+  .legend .l-electron::before { background: var(--electron); }
+  .legend .l-metal::before { background: var(--metal); }
+  .legend .l-energy::before { background: var(--energy); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 36px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: #451a03; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(245,158,11,0.08); border-radius: 12px; border: 1px solid rgba(245,158,11,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #451a03; font-weight: 700; min-height: 36px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">🔭 物理</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">大学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">光电效应</span>
+  </nav>
+
+  <header>
+    <h1>⚡ 光电效应 · 爱因斯坦方程</h1>
+    <p>光子能量 · 逸出功 · 遏止电压 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 学习</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 学习模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="learnCanvas" width="700" height="420"></canvas>
+        <div class="legend">
+          <span class="l-photon">光子 hν</span>
+          <span class="l-electron">光电子</span>
+          <span class="l-metal">金属板</span>
+          <span class="l-energy">能量</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📐 核心方程</h3>
+        <div class="equation">
+          光子能量：<b>E = hν</b><br/>
+          爱因斯坦方程：<b>Eₖ = hν − W₀</b><br/>
+          遏止电压：<b>eU₀ = Eₖ</b>
+        </div>
+        <div class="slider-row">
+          <label>光频率 ν (×10¹⁴ Hz)</label>
+          <input type="range" id="nu" min="4" max="12" step="0.1" value="7" />
+          <span class="val" id="nuv">7.0</span>
+        </div>
+        <div class="slider-row">
+          <label>逸出功 W₀ (eV)</label>
+          <input type="range" id="w0" min="1.5" max="4.5" step="0.1" value="2.3" />
+          <span class="val" id="w0v">2.3 eV</span>
+        </div>
+        <div class="slider-row">
+          <label>光强（光子数）</label>
+          <input type="range" id="intensity" min="1" max="10" value="5" />
+          <span class="val" id="intensityv">5</span>
+        </div>
+        <div class="info-grid">
+          <div>光子能量 hν = <b id="calc-hnu">2.90</b> eV</div>
+          <div>最大初动能 Eₖ = <b id="calc-ek">0.60</b> eV</div>
+          <div>遏止电压 U₀ = <b id="calc-u0">0.60</b> V</div>
+          <div>截止频率 ν₀ = <b id="calc-nu0">5.56</b> ×10¹⁴ Hz</div>
+        </div>
+        <div class="concept-card photon">
+          <div class="title">💡 光子能量</div>
+          光由光子组成，每个光子能量 E = hν，h = 4.136×10⁻¹⁵ eV·s 为普朗克常量。频率越高，单个光子能量越大。
+        </div>
+        <div class="concept-card electron">
+          <div class="title">⚡ 光电子发射</div>
+          光子能量 ≥ 逸出功 W₀ 时，电子吸收光子后逸出金属表面，剩余能量转化为动能：Eₖ = hν − W₀。
+        </div>
+        <div class="concept-card metal">
+          <div class="title">🔩 逸出功</div>
+          金属表面电子挣脱束缚所需的最小能量。不同金属 W₀ 不同：钠 2.3 eV、锌 4.3 eV、钨 4.5 eV。
+        </div>
+        <div class="concept-card energy">
+          <div class="title">📉 遏止电压</div>
+          反向电压恰好阻止光电子到达阳极时的电压 U₀，满足 eU₀ = Eₖ = hν − W₀。U₀ 与光强无关，只与频率有关。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🧪 练习：调参达到目标</h3>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-target="emit">让光电子逸出</button>
+          <button class="mode-btn" data-target="ek">让 Eₖ ≥ 2.0 eV</button>
+          <button class="mode-btn" data-target="u0">让 U₀ ≥ 1.5 V</button>
+        </div>
+        <div class="slider-row">
+          <label>光频率 ν (×10¹⁴ Hz)</label>
+          <input type="range" id="pnu" min="4" max="12" step="0.1" value="6" />
+          <span class="val" id="pnuv">6.0</span>
+        </div>
+        <div class="slider-row">
+          <label>逸出功 W₀ (eV)</label>
+          <input type="range" id="pw0" min="1.5" max="4.5" step="0.1" value="3.0" />
+          <span class="val" id="pw0v">3.0 eV</span>
+        </div>
+        <div class="slider-row">
+          <label>光强（光子数）</label>
+          <input type="range" id="pintensity" min="1" max="10" value="5" />
+          <span class="val" id="pintensityv">5</span>
+        </div>
+        <div class="info-grid">
+          <div>当前 hν = <b id="p-hnu">2.48</b> eV</div>
+          <div>当前 Eₖ = <b id="p-ek">−0.52</b> eV</div>
+          <div>当前 U₀ = <b id="p-u0">0</b> V</div>
+          <div>状态：<b id="p-status">未达成</b></div>
+        </div>
+        <div class="concept-card electron">
+          <div class="title">💡 提示</div>
+          <span id="p-hint">提高频率 ν，使 hν > W₀，才能打出光电子。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="quizCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🎯 随堂测验（4 题，3/4 合格）</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q">题目加载中…</div>
+          <div class="quiz-opts" id="quiz-opts"></div>
+          <div class="quiz-feedback" id="quiz-fb"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev">⬅ 上一题</button>
+            <button id="quiz-next">下一题 ➡</button>
+            <button id="quiz-submit" class="hidden">📊 提交评分</button>
+            <button id="quiz-retry" class="hidden">🔄 重新测验</button>
+          </div>
+          <div class="quiz-result hidden" id="quiz-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Knowledge Visual · 大学物理 · 光电效应 · <span id="done-mark"></span></footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 通用：模式切换
+ * ============================================================ */
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+let mode = 'learn';
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    mode = t.dataset.mode;
+    Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+    if (mode === 'quiz') renderQuiz();
+    draw();
+  });
+});
+
+/* ============================================================
+ * 物理计算
+ * ============================================================ */
+const H = 4.136e-15; // eV·s
+function physics(nu14, w0) {
+  // nu14: 频率 ×10¹⁴ Hz
+  const nu = nu14 * 1e14;
+  const hnu = H * nu;          // eV
+  const ek = Math.max(0, hnu - w0); // eV
+  const u0 = ek;               // V（数值相等，单位不同）
+  const nu0 = w0 / H / 1e14;   // ×10¹⁴ Hz
+  return { hnu, ek, u0, nu0, canEmit: hnu > w0 };
+}
+
+/* ============================================================
+ * 学习模式
+ * ============================================================ */
+const nuEl = document.getElementById('nu');
+const w0El = document.getElementById('w0');
+const intEl = document.getElementById('intensity');
+function updLearn() {
+  document.getElementById('nuv').textContent = Number(nuEl.value).toFixed(1);
+  document.getElementById('w0v').textContent = Number(w0El.value).toFixed(1) + ' eV';
+  document.getElementById('intensityv').textContent = intEl.value;
+  const p = physics(+nuEl.value, +w0El.value);
+  document.getElementById('calc-hnu').textContent = p.hnu.toFixed(2);
+  document.getElementById('calc-ek').textContent = p.ek.toFixed(2);
+  document.getElementById('calc-u0').textContent = p.u0.toFixed(2);
+  document.getElementById('calc-nu0').textContent = p.nu0.toFixed(2);
+}
+[nuEl, w0El, intEl].forEach(el => el.addEventListener('input', () => { updLearn(); draw(); }));
+updLearn();
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const pnu = document.getElementById('pnu');
+const pw0 = document.getElementById('pw0');
+const pint = document.getElementById('pintensity');
+let practiceTarget = 'emit';
+const targetDesc = {
+  emit: { text: '让光电子逸出', check: p => p.canEmit, hint: '提高频率 ν，使 hν > W₀，才能打出光电子。' },
+  ek:   { text: '让 Eₖ ≥ 2.0 eV', check: p => p.ek >= 2.0, hint: 'Eₖ = hν − W₀，提高频率或换 W₀ 更小的金属。' },
+  u0:   { text: '让 U₀ ≥ 1.5 V', check: p => p.u0 >= 1.5, hint: 'U₀ = (hν − W₀)/e，需要 hν − W₀ ≥ 1.5 eV。' }
+};
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    practiceTarget = btn.dataset.target;
+    document.getElementById('p-hint').textContent = targetDesc[practiceTarget].hint;
+    updPractice(); draw();
+  });
+});
+function updPractice() {
+  document.getElementById('pnuv').textContent = Number(pnu.value).toFixed(1);
+  document.getElementById('pw0v').textContent = Number(pw0.value).toFixed(1) + ' eV';
+  document.getElementById('pintensityv').textContent = pint.value;
+  const p = physics(+pnu.value, +pw0.value);
+  document.getElementById('p-hnu').textContent = p.hnu.toFixed(2);
+  document.getElementById('p-ek').textContent = p.ek.toFixed(2);
+  document.getElementById('p-u0').textContent = p.u0.toFixed(2);
+  const ok = targetDesc[practiceTarget].check(p);
+  document.getElementById('p-status').textContent = ok ? '✅ 达成！' : '未达成';
+  document.getElementById('p-status').style.color = ok ? '#10b981' : '#f59e0b';
+}
+[pnu, pw0, pint].forEach(el => el.addEventListener('input', () => { updPractice(); draw(); }));
+updPractice();
+
+/* ============================================================
+ * Canvas 绘制：光电效应示意
+ * ============================================================ */
+function drawScene(ctx, W, H, nu, w0, intensity, showLabels) {
+  const p = physics(nu, w0);
+  ctx.clearRect(0, 0, W, H);
+
+  const metalX = W * 0.55;
+  const metalW = 30;
+  const metalTop = H * 0.15;
+  const metalBot = H * 0.85;
+
+  // 金属板
+  ctx.fillStyle = 'rgba(148,163,184,0.25)';
+  ctx.fillRect(metalX, metalTop, metalW, metalBot - metalTop);
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(metalX, metalTop, metalW, metalBot - metalTop);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText('金属', metalX + 4, metalTop - 8);
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`W₀ = ${w0.toFixed(1)} eV`, metalX - 10, metalBot + 18);
+
+  // 内部电子（束缚）
+  ctx.fillStyle = 'rgba(56,189,248,0.35)';
+  for (let i = 0; i < 8; i++) {
+    const y = metalTop + 20 + i * (metalBot - metalTop - 40) / 7;
+    ctx.beginPath(); ctx.arc(metalX + metalW/2, y, 4, 0, Math.PI*2); ctx.fill();
+  }
+
+  // 光子（黄色波浪线）
+  const nPhotons = Math.round(intensity);
+  for (let i = 0; i < nPhotons; i++) {
+    const y = metalTop + 30 + i * (metalBot - metalTop - 60) / Math.max(1, nPhotons - 1);
+    ctx.beginPath();
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    for (let x = 30; x < metalX; x += 3) {
+      const yy = y + Math.sin((x + Date.now()/80 + i*40) * 0.08) * 4;
+      if (x === 30) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
+    }
+    ctx.stroke();
+    // 光子符号
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('hν', 35, y - 8);
+  }
+
+  // 逸出电子（蓝色）
+  if (p.canEmit) {
+    const speed = 1 + p.ek * 2;
+    for (let i = 0; i < Math.min(6, nPhotons); i++) {
+      const y = metalTop + 40 + i * (metalBot - metalTop - 80) / 5;
+      const ex = metalX + metalW + ((Date.now() / 20 * speed + i * 60) % (W - metalX - metalW - 40));
+      ctx.beginPath();
+      ctx.arc(ex, y, 4, 0, Math.PI*2);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fill();
+      // 速度箭头
+      ctx.strokeStyle = 'rgba(56,189,248,0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(ex + 6, y);
+      ctx.lineTo(ex + 6 + Math.min(30, speed * 8), y);
+      ctx.stroke();
+    }
+    // 能量标注
+    if (showLabels) {
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillText(`hν = ${p.hnu.toFixed(2)} eV`, 30, 30);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText(`Eₖ = ${p.ek.toFixed(2)} eV`, W - 120, 30);
+    }
+  } else {
+    // 无法逸出：红色叉
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('hν < W₀，电子无法逸出', metalX - 40, H * 0.5);
+  }
+
+  // 截止频率参考线
+  if (showLabels) {
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(`ν₀ = ${p.nu0.toFixed(2)} ×10¹⁴ Hz`, W - 160, H - 20);
+  }
+}
+
+const learnCtx = document.getElementById('learnCanvas').getContext('2d');
+const practiceCtx = document.getElementById('practiceCanvas').getContext('2d');
+const quizCtx = document.getElementById('quizCanvas').getContext('2d');
+
+function draw() {
+  if (mode === 'learn') drawScene(learnCtx, 700, 420, +nuEl.value, +w0El.value, +intEl.value, true);
+  else if (mode === 'practice') drawScene(practiceCtx, 700, 420, +pnu.value, +pw0.value, +pint.value, true);
+  else drawQuizScene(quizCtx, 700, 420);
+}
+setInterval(draw, 50);
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const quizData = [
+  {
+    q: '1️⃣ 光电效应中，光电子的最大初动能 Eₖ 取决于？',
+    opts: ['光强', '光的频率', '照射时间', '金属温度'],
+    ans: 1,
+    fb: 'Eₖ = hν − W₀，只与频率 ν 和逸出功 W₀ 有关，与光强无关。'
+  },
+  {
+    q: '2️⃣ 用频率 ν 的光照射某金属，恰好能打出光电子。若换用频率 2ν 的光，Eₖ 变为原来的？',
+    opts: ['相同', '2 倍', '大于 2 倍', '小于 2 倍但大于 1 倍'],
+    ans: 3,
+    fb: 'Eₖ₁ = hν − W₀ = 0；Eₖ₂ = 2hν − W₀ = hν > 0，比值 = hν/(hν−W₀) > 1 但 < 2。'
+  },
+  {
+    q: '3️⃣ 遏止电压 U₀ 的物理意义是？',
+    opts: ['使光电流达到饱和的电压', '恰好阻止光电子到达阳极的反向电压', '金属的逸出功', '光子的能量'],
+    ans: 1,
+    fb: 'eU₀ = Eₖ = hν − W₀，U₀ 是阻止最大初动能光电子的反向电压。'
+  },
+  {
+    q: '4️⃣ 钠的逸出功 W₀ = 2.3 eV，用 ν = 7×10¹⁴ Hz 的光照射，遏止电压 U₀ 约为？（h = 4.136×10⁻¹⁵ eV·s）',
+    opts: ['0.6 V', '1.2 V', '2.3 V', '4.1 V'],
+    ans: 0,
+    fb: 'hν = 4.136×7×10⁻¹⁵×10¹⁴ = 2.90 eV；Eₖ = 2.90 − 2.3 = 0.60 eV；U₀ = 0.60 V。'
+  }
+];
+let quizIdx = 0;
+let quizAnswers = new Array(quizData.length).fill(-1);
+let quizSubmitted = false;
+
+const qEl = document.getElementById('quiz-q');
+const qOpts = document.getElementById('quiz-opts');
+const qFb = document.getElementById('quiz-fb');
+const qPrev = document.getElementById('quiz-prev');
+const qNext = document.getElementById('quiz-next');
+const qSubmit = document.getElementById('quiz-submit');
+const qRetry = document.getElementById('quiz-retry');
+const qResult = document.getElementById('quiz-result');
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  qEl.textContent = q.q;
+  qOpts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+    if (quizAnswers[quizIdx] === i) div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+    if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) div.classList.add('correct');
+    div.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizAnswers[quizIdx] = i;
+      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
+      renderQuizOpts();
+    });
+    qOpts.appendChild(div);
+  });
+  function renderQuizOpts() {
+    [...qOpts.children].forEach((c, i) => {
+      c.classList.remove('correct', 'wrong');
+      if (quizAnswers[quizIdx] === i) c.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+      if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) c.classList.add('correct');
+    });
+  }
+  qFb.textContent = quizAnswers[quizIdx] === -1 ? '' : (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
+  qPrev.disabled = quizIdx === 0;
+  qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
+  qSubmit.classList.toggle('hidden', quizIdx !== quizData.length - 1 || quizSubmitted);
+  qRetry.classList.toggle('hidden', !quizSubmitted);
+}
+qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+qSubmit.addEventListener('click', () => {
+  quizSubmitted = true;
+  const score = quizData.reduce((s, q, i) => s + (quizAnswers[i] === q.ans ? 1 : 0), 0);
+  const pass = score >= 3;
+  qResult.classList.remove('hidden');
+  qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
+  qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  qResult.textContent = pass ? `🎉 得分 ${score}/4，合格！本知识点已标记完成` : `😅 得分 ${score}/4，未达到 3/4，请复习后重试`;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('photoelectric');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+  renderQuiz();
+});
+qRetry.addEventListener('click', () => {
+  quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
+  qResult.classList.add('hidden');
+  renderQuiz();
+});
+
+function drawQuizScene(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`🎯 第 ${quizIdx + 1}/${quizData.length} 题`, 30, 40);
+  drawScene(ctx, W, H - 100, 7, 2.3, 5, false);
+}
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('photoelectric')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+renderQuiz();
+draw();
+</script>
+</body>
+</html>

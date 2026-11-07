@@ -117,6 +117,31 @@
     .sides-btn.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
     .sides-btn.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; animation: shake 0.4s ease; }
 
+    /* === 模式5: 挑战 === */
+    .challenge-area { text-align: center; padding: 16px; }
+    .challenge-streak { font-size: 18px; font-weight: 700; color: #FF9500; margin: 8px 0; }
+    .challenge-question {
+      background: white; border-radius: 20px; padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin: 12px auto; max-width: 400px;
+      font-size: 17px; color: #1D1D1F; line-height: 1.7; text-align: center;
+    }
+    .challenge-qtype {
+      display: inline-block; padding: 4px 12px; background: rgba(123,31,162,0.12);
+      color: #7B1FA2; border-radius: 999px; font-size: 13px; font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .challenge-svg { display: block; margin: 12px auto; }
+    .challenge-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 400px; margin: 16px auto; padding: 0 8px; }
+    .challenge-opt {
+      padding: 16px 12px; border: 3px solid #E5E5EA; background: white;
+      border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s ease; min-height: 52px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .challenge-opt:active { transform: scale(0.95); }
+    .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
+    .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; animation: shake 0.4s ease; }
+
     /* === 通用 === */
     .highlight-num { color: #7B1FA2; font-weight: 800; }
     .feedback { font-size: 18px; font-weight: 700; text-align: center; margin: 12px 0; min-height: 28px; }
@@ -138,6 +163,7 @@
       <button class="mode-tab" data-mode="classify">🏷️ 分类大师</button>
       <button class="mode-tab" data-mode="calc">🔢 角度计算</button>
       <button class="mode-tab" data-mode="sides">📏 三边关系</button>
+      <button class="mode-tab" data-mode="challenge">🏆 挑战</button>
     </div>
 
     <!-- ===== 模式1: 认识三角形 ===== -->
@@ -196,6 +222,19 @@
         <div class="feedback" id="sides-feedback"></div>
       </div>
     </div>
+
+    <!-- ===== 模式5: 挑战 ===== -->
+    <div id="mode-challenge" class="mode-content">
+      <div class="challenge-area">
+        <div class="score-bar">
+          <span>✅ <span id="ch-correct">0</span></span>
+          <span>🔥 连对 <span id="ch-streak">0</span></span>
+        </div>
+        <div class="challenge-question" id="ch-question"></div>
+        <div class="challenge-options" id="ch-options"></div>
+        <div class="feedback" id="ch-feedback"></div>
+      </div>
+    </div>
   </div>
 
   <script src="../../assets/js/common.js"></script>
@@ -206,7 +245,7 @@
 
     // ========== Tab 切换 ==========
     const tabs = document.querySelectorAll('.mode-tab');
-    const modeMap = { learn: 'mode-learn', classify: 'mode-classify', calc: 'mode-calc', sides: 'mode-sides' };
+    const modeMap = { learn: 'mode-learn', classify: 'mode-classify', calc: 'mode-calc', sides: 'mode-sides', challenge: 'mode-challenge' };
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
@@ -412,6 +451,16 @@
     });
     renderLearnSlide();
 
+    // ========== 进度追踪（PageProgress.markDone）==========
+    let totalCorrect = 0;
+    function bumpTotalCorrect() {
+      totalCorrect++;
+      if (totalCorrect >= 8 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('triangles')) {
+        PageProgress.markDone('triangles');
+        if (typeof showToast === 'function') showToast('🎉 「三角形」知识地图已点亮！');
+      }
+    }
+
     // ========== 模式2: 分类大师 ==========
     const clsState = { correct: 0, wrong: 0, locked: false };
 
@@ -475,6 +524,7 @@
         fb.className = 'feedback correct-fb';
         clsState.correct++;
         document.getElementById('cls-correct').textContent = clsState.correct;
+        bumpTotalCorrect();
         setTimeout(newClassifyQuestion, 1500);
       } else {
         btn.classList.add('wrong');
@@ -549,6 +599,7 @@
         fb.className = 'feedback correct-fb';
         calcState.correct++;
         document.getElementById('calc-correct').textContent = calcState.correct;
+        bumpTotalCorrect();
         setTimeout(newCalcQuestion, 1500);
       } else {
         input.classList.add('wrong');
@@ -708,6 +759,7 @@
         fb.className = 'feedback correct-fb';
         sidesState.correct++;
         document.getElementById('sides-correct').textContent = sidesState.correct;
+        bumpTotalCorrect();
         setTimeout(newSidesQuestion, 1500);
       } else {
         btn.classList.add('wrong');
@@ -722,10 +774,145 @@
       }
     }
 
+    // ========== 模式5: 挑战（综合） ==========
+    const chState = { correct: 0, streak: 0, locked: false };
+
+    function drawChTriangle(svgEl, angles, labels) {
+      // angles: {A,B,C}，labels: 显示文本（角 A/B/C 标签）
+      const w = 240, h = 170;
+      svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      svgEl.setAttribute('width', w);
+      svgEl.setAttribute('height', h);
+      svgEl.classList.add('challenge-svg');
+      const A = { x: 30, y: 140 }, B = { x: 210, y: 140 }, C = { x: 120, y: 20 };
+      const path = `M ${A.x} ${A.y} L ${B.x} ${B.y} L ${C.x} ${C.y} Z`;
+      svgEl.innerHTML = `
+        <path d="${path}" fill="rgba(123,31,162,0.15)" stroke="#7B1FA2" stroke-width="3"/>
+        <text x="${A.x - 5}" y="${A.y + 20}" font-size="16" font-weight="700" fill="#7B1FA2">${labels[0]}</text>
+        <text x="${B.x - 10}" y="${B.y + 20}" font-size="16" font-weight="700" fill="#7B1FA2">${labels[1]}</text>
+        <text x="${C.x - 5}" y="${C.y - 8}" font-size="16" font-weight="700" fill="#7B1FA2">${labels[2]}</text>
+      `;
+    }
+
+    function newChQuestion() {
+      chState.locked = false;
+      const qType = randInt(1, 4);
+      const qEl = document.getElementById('ch-question');
+      const optEl = document.getElementById('ch-options');
+      const fb = document.getElementById('ch-feedback');
+      fb.textContent = '';
+      fb.className = 'feedback';
+
+      let typeTag = '', questionHtml = '', answer = '', options = [];
+
+      if (qType === 1) {
+        // 内角和
+        const a = randInt(30, 80), b = randInt(30, 80);
+        const c = 180 - a - b;
+        typeTag = '🔢 角度计算';
+        questionHtml = `<span class="challenge-qtype">${typeTag}</span><br>三角形中，∠A = ${a}°，∠B = ${b}°<br>∠C = ?`;
+        answer = `${c}°`;
+        const wrongs = [c + 10, c - 10, 180 - a, 90 + randInt(-10, 10)].filter(v => v > 0 && v !== c);
+        options = [answer, ...wrongs.slice(0, 3).map(v => `${v}°`)];
+      } else if (qType === 2) {
+        // 分类识别
+        const types = [
+          { name: '锐角三角形', angles: [60, 70, 50] },
+          { name: '直角三角形', angles: [90, 45, 45] },
+          { name: '钝角三角形', angles: [110, 40, 30] }
+        ];
+        const pick = types[randInt(0, 2)];
+        typeTag = '🏷️ 分类识别';
+        questionHtml = `<span class="challenge-qtype">${typeTag}</span><br>三角形的三个角分别是 ${pick.angles[0]}°、${pick.angles[1]}°、${pick.angles[2]}°<br>它是什么三角形？`;
+        answer = pick.name;
+        options = ['锐角三角形', '直角三角形', '钝角三角形', '等边三角形'];
+      } else if (qType === 3) {
+        // 三边关系判断
+        let a, b, c, valid;
+        if (Math.random() < 0.5) {
+          a = randInt(3, 8); b = randInt(3, 8); c = randInt(Math.abs(a - b) + 1, a + b - 1);
+          valid = true;
+        } else {
+          a = randInt(2, 5); b = randInt(2, 5); c = a + b + randInt(0, 3);
+          valid = false;
+        }
+        typeTag = '📏 三边关系';
+        questionHtml = `<span class="challenge-qtype">${typeTag}</span><br>三条边长分别为 <strong>${a}cm、${b}cm、${c}cm</strong><br>能组成三角形吗？`;
+        answer = valid ? '能' : '不能';
+        options = ['能', '不能', '不确定', '看情况'];
+      } else {
+        // 等腰/等边特性
+        const sub = randInt(1, 2);
+        typeTag = '⭐ 特殊三角形';
+        if (sub === 1) {
+          const base = randInt(30, 70);
+          const top = 180 - 2 * base;
+          questionHtml = `<span class="challenge-qtype">${typeTag}</span><br>等腰三角形的底角是 ${base}°<br>顶角是多少度？`;
+          answer = `${top}°`;
+          const wrongs = [base, 180 - base, 90].filter(v => v !== top);
+          options = [answer, ...wrongs.slice(0, 3).map(v => `${v}°`)];
+        } else {
+          questionHtml = `<span class="challenge-qtype">${typeTag}</span><br>等边三角形的每个内角是多少度？`;
+          answer = '60°';
+          options = ['60°', '90°', '45°', '120°'];
+        }
+      }
+
+      // 去重 + 打乱
+      options = [...new Set(options)];
+      while (options.length < 4) {
+        const filler = qType === 1 || qType === 4 && sub === 1 || qType === 4 && sub === 2 ? `${randInt(20, 150)}°` : (qType === 2 ? '梯形' : '可能');
+        if (!options.includes(filler)) options.push(filler);
+      }
+      options = shuffle(options.slice(0, 4));
+      if (!options.includes(answer)) {
+        options[0] = answer;
+        options = shuffle(options);
+      }
+
+      qEl.innerHTML = questionHtml;
+      optEl.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'challenge-opt';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => handleChAnswer(btn, opt, answer, optEl));
+        optEl.appendChild(btn);
+      });
+    }
+
+    function handleChAnswer(btn, selected, answer, container) {
+      if (chState.locked) return;
+      chState.locked = true;
+      const fb = document.getElementById('ch-feedback');
+      if (selected === answer) {
+        btn.classList.add('correct');
+        chState.correct++;
+        chState.streak++;
+        fb.textContent = chState.streak >= 3 ? `🔥 太棒了！连对 ${chState.streak} 题！` : '✅ 正确！';
+        fb.className = 'feedback correct-fb';
+        document.getElementById('ch-correct').textContent = chState.correct;
+        document.getElementById('ch-streak').textContent = chState.streak;
+        bumpTotalCorrect();
+        setTimeout(newChQuestion, 1200);
+      } else {
+        btn.classList.add('wrong');
+        fb.textContent = `❌ 正确答案：${answer}`;
+        fb.className = 'feedback wrong-fb';
+        chState.streak = 0;
+        document.getElementById('ch-streak').textContent = 0;
+        container.querySelectorAll('.challenge-opt').forEach(b => {
+          if (b.textContent === answer) b.classList.add('correct');
+        });
+        setTimeout(newChQuestion, 2200);
+      }
+    }
+
     // ========== 初始化 ==========
     newClassifyQuestion();
     newCalcQuestion();
     newSidesQuestion();
+    newChQuestion();
   </script>
 </body>
 </html>

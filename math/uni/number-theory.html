@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>初等数论 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #f59e0b;
+    --prime: #a78bfa;
+    --gcd: #06b6d4;
+    --mod: #10b981;
+    --rsa: #ec4899;
+    --num: #fbbf24;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1f2937 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .back { display:inline-block; margin-bottom: 12px; color: #fcd34d; text-decoration: none; font-size: 14px; }
+  .back:hover { color: #fde68a; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--prime), var(--gcd), var(--mod), var(--rsa)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); color: #1f2937; font-weight: 700; box-shadow: 0 4px 20px rgba(245,158,11,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); touch-action: manipulation; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); max-height: 560px; overflow-y: auto; }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:#94a3b8; }
+  .legend span::before { content:''; display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; background:currentColor; }
+  .l-prime { color: var(--prime); }
+  .l-gcd { color: var(--gcd); }
+  .l-mod { color: var(--mod); }
+  .l-rsa { color: var(--rsa); }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #fbbf24; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .btn-row { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: #e2e8f0; cursor: pointer; font-size: 13px; transition: all .2s; min-height: 36px; }
+  .btn:hover { background: rgba(255,255,255,0.12); }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: #1f2937; font-weight: 700; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .concept-card { border-left: 3px solid var(--prime); background: rgba(255,255,255,0.04); padding: 10px 12px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; line-height: 1.7; }
+  .concept-card.gcd { border-left-color: var(--gcd); }
+  .concept-card.mod { border-left-color: var(--mod); }
+  .concept-card.rsa { border-left-color: var(--rsa); }
+  .concept-card .title { font-weight: 700; color: #fbbf24; margin-bottom: 4px; }
+  .quiz .quiz-q { font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
+  .quiz-opt { padding: 10px 12px; margin: 6px 0; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; min-height: 40px; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: var(--mod); }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; line-height: 1.7; }
+  .quiz-result { text-align: center; padding: 18px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 15px; line-height: 2; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back" href="index.html">← 返回大学数学</a>
+  <header>
+    <h1>🔢 初等数论</h1>
+    <p>素数筛 · 欧几里得算法 · 模运算 · RSA 公钥加密</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="sieve">🔍 素数筛</div>
+    <div class="tab" data-mode="gcd">🔄 欧几里得算法</div>
+    <div class="tab" data-mode="mod">🕐 模运算</div>
+    <div class="tab" data-mode="rsa">🔐 RSA 加密</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="600" height="450"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>知识可视化 · 大学数学 · 初等数论</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
+const legendEl = document.getElementById('legend');
+
+let mode = 'sieve';
+let animId = null;
+let time = 0;
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    initMode();
+  });
+});
+
+function initMode() {
+  if (animId) cancelAnimationFrame(animId);
+  if (mode === 'sieve') initSieve();
+  else if (mode === 'gcd') initGcd();
+  else if (mode === 'mod') initMod();
+  else if (mode === 'rsa') initRsa();
+  else if (mode === 'quiz') initQuiz();
+}
+
+function startLoop(draw) {
+  function frame() { time += 1; draw(); animId = requestAnimationFrame(frame); }
+  frame();
+}
+
+// ═══════════════════════════════════════════════
+// MODE 1: 埃拉托斯特尼筛法 Sieve of Eratosthenes
+// ═══════════════════════════════════════════════
+let sieveN = 100;
+let sieveNums = [];      // {n, state: 'unknown'|'prime'|'composite', cur}
+let sieveP = 2;          // 当前素数
+let sieveMultiple = 0;   // 当前要划掉的倍数
+let sieveRunning = false;
+let sieveSpeed = 3;
+
+function sieveReset(n) {
+  sieveN = n;
+  sieveNums = [];
+  for (let i = 2; i <= n; i++) sieveNums.push({ n: i, state: 'unknown' });
+  sieveNums[0].state = 'prime'; // 2 是素数
+  sieveP = 2;
+  sieveMultiple = 4;
+  sieveRunning = false;
+}
+
+function initSieve() {
+  legendEl.innerHTML = `<span class="l-prime">素数</span><span style="color:#64748b">合数(划掉)</span><span class="l-gcd">当前倍数</span>`;
+  sieveReset(100);
+  panel.innerHTML = `
+    <h3>🔍 埃拉托斯特尼筛法</h3>
+    <div class="concept-card">
+      <div class="title">算法思想</div>
+      从 2 开始，把每个素数的所有倍数划掉。剩下的就是素数。只需筛到 √N：若 n 为合数，必有 ≤ √n 的素因子。
+    </div>
+    <div class="concept-card">
+      <div class="title">素数定理</div>
+      π(x) ≈ x / ln(x)：不超过 x 的素数个数渐近等于 x/ln(x)。
+    </div>
+    <div class="equation">
+      π(100) = 25 &nbsp;&nbsp; π(1000) = 168
+    </div>
+    <div class="slider-row">
+      <label>范围 N</label>
+      <input type="range" id="sieveN" min="30" max="200" value="100" step="10">
+      <span class="val" id="sieveNVal">100</span>
+    </div>
+    <div class="slider-row">
+      <label>速度</label>
+      <input type="range" id="sieveSpeed" min="1" max="5" value="3">
+      <span class="val" id="sieveSpeedVal">3x</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="sieveToggle">▶ 开始筛</button>
+      <button class="btn" id="sieveStep">⏭ 单步</button>
+      <button class="btn" id="sieveReset">↻ 重置</button>
+    </div>
+    <div class="info-grid">
+      <div>已找到素数<br><b id="sievePrimeCount">0</b></div>
+      <div>当前筛子 p<br><b id="sieveCurP">2</b></div>
+      <div>时间复杂度<br><b>O(N log log N)</b></div>
+      <div>只需筛到<br><b>√N</b></div>
+    </div>`;
+  document.getElementById('sieveN').addEventListener('input', e => {
+    document.getElementById('sieveNVal').textContent = e.target.value;
+    sieveReset(+e.target.value);
+  });
+  document.getElementById('sieveSpeed').addEventListener('input', e => {
+    sieveSpeed = +e.target.value;
+    document.getElementById('sieveSpeedVal').textContent = sieveSpeed + 'x';
+  });
+  document.getElementById('sieveToggle').addEventListener('click', e => {
+    sieveRunning = !sieveRunning;
+    e.target.textContent = sieveRunning ? '⏸ 暂停' : '▶ 开始筛';
+  });
+  document.getElementById('sieveStep').addEventListener('click', () => sieveStep());
+  document.getElementById('sieveReset').addEventListener('click', () => sieveReset(sieveN));
+  startLoop(drawSieve);
+}
+
+function sieveStep() {
+  // 划掉 sieveP 的下一个倍数
+  if (sieveP * sieveP > sieveN) {
+    // 收尾：所有 unknown → prime
+    sieveNums.forEach(x => { if (x.state === 'unknown') x.state = 'prime'; });
+    return;
+  }
+  while (sieveMultiple <= sieveN) {
+    const item = sieveNums.find(x => x.n === sieveMultiple);
+    sieveMultiple += sieveP;
+    if (item && item.state === 'unknown') { item.state = 'composite'; return; }
+  }
+  // 找下一个素数
+  let np = sieveP + 1;
+  while (np <= sieveN) {
+    const it = sieveNums.find(x => x.n === np);
+    if (it && it.state !== 'composite') { it.state = 'prime'; sieveP = np; sieveMultiple = np * np; return; }
+    np++;
+  }
+}
+
+function drawSieve() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  if (sieveRunning && time % Math.max(1, 8 - sieveSpeed) === 0) sieveStep();
+
+  const cols = 10;
+  const cell = Math.min(50, (W - 40) / cols);
+  const rows = Math.ceil((sieveN - 1) / cols);
+  const x0 = (W - cols * cell) / 2, y0 = 30;
+
+  ctx.font = `${Math.floor(cell * 0.36)}px sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let i = 0; i < sieveNums.length; i++) {
+    const it = sieveNums[i];
+    const r = Math.floor(i / cols), c = i % cols;
+    const x = x0 + c * cell, y = y0 + r * cell;
+    let bg = 'rgba(255,255,255,0.05)', fg = '#cbd5e1';
+    if (it.state === 'prime') { bg = 'rgba(167,139,250,0.85)'; fg = '#fff'; }
+    else if (it.state === 'composite') { bg = 'rgba(100,116,139,0.2)'; fg = '#475569'; }
+    if (it.n === sieveMultiple && it.state === 'unknown') { bg = 'rgba(6,182,212,0.5)'; }
+    ctx.fillStyle = bg;
+    ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2);
+    ctx.fillStyle = fg;
+    ctx.fillText(String(it.n), x + cell / 2, y + cell / 2);
+    if (it.state === 'composite') {
+      ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x + 4, y + 4); ctx.lineTo(x + cell - 4, y + cell - 4); ctx.stroke();
+    }
+  }
+  const pc = sieveNums.filter(x => x.state === 'prime').length;
+  const el1 = document.getElementById('sievePrimeCount');
+  if (el1) el1.textContent = pc;
+  const el2 = document.getElementById('sieveCurP');
+  if (el2) el2.textContent = sieveP * sieveP > sieveN ? '完成 ✓' : sieveP;
+}
+
+// ═══════════════════════════════════════════════
+// MODE 2: 欧几里得算法（辗转相除）
+// ═══════════════════════════════════════════════
+let gcdA = 252, gcdB = 105;
+let gcdSteps = [];
+let gcdStepIdx = 0;
+let gcdAuto = false;
+
+function gcdCompute(a, b) {
+  const steps = [];
+  let x = Math.max(a, b), y = Math.min(a, b);
+  while (y !== 0) {
+    const q = Math.floor(x / y), r = x % y;
+    steps.push({ x, y, q, r });
+    x = y; y = r;
+  }
+  steps.push({ x, y: 0, q: null, r: null, gcd: x });
+  return steps;
+}
+
+function initGcd() {
+  legendEl.innerHTML = `<span class="l-gcd">被除数 a</span><span class="l-prime">除数 b</span><span class="l-mod">余数 r</span>`;
+  gcdSteps = gcdCompute(gcdA, gcdB);
+  gcdStepIdx = 0;
+  gcdAuto = false;
+  panel.innerHTML = `
+    <h3>🔄 欧几里得算法（辗转相除）</h3>
+    <div class="concept-card gcd">
+      <div class="title">核心原理</div>
+      gcd(a, b) = gcd(b, a mod b)。反复用余数替换被除数，直到余数为 0，此时的除数就是最大公约数。
+    </div>
+    <div class="concept-card gcd">
+      <div class="title">几何意义</div>
+      用 b×b 的正方形去铺 a×b 的矩形，剩下的余数矩形继续用更小的正方形铺 — 正方形边长即 gcd。
+    </div>
+    <div class="equation">
+      gcd(a, b) = gcd(b, a <b>mod</b> b)，直到 b = 0
+    </div>
+    <div class="slider-row">
+      <label>a</label>
+      <input type="range" id="gcdA" min="20" max="400" value="252">
+      <span class="val" id="gcdAVal">252</span>
+    </div>
+    <div class="slider-row">
+      <label>b</label>
+      <input type="range" id="gcdB" min="10" max="200" value="105">
+      <span class="val" id="gcdBVal">105</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="gcdAuto">▶ 自动演示</button>
+      <button class="btn" id="gcdNext">⏭ 下一步</button>
+      <button class="btn" id="gcdReset">↻ 重置</button>
+    </div>
+    <div class="info-grid">
+      <div>当前步<br><b id="gcdStepInfo">0 / ${gcdSteps.length - 1}</b></div>
+      <div>结果 gcd<br><b id="gcdResult">?</b></div>
+      <div>步数上界<br><b>≤ 5·(b 的位数)</b></div>
+      <div>应用<br><b>约分 / 模逆元</b></div>
+    </div>`;
+  function recompute() {
+    gcdSteps = gcdCompute(gcdA, gcdB);
+    gcdStepIdx = 0; gcdAuto = false;
+    document.getElementById('gcdAuto').textContent = '▶ 自动演示';
+    document.getElementById('gcdResult').textContent = '?';
+  }
+  document.getElementById('gcdA').addEventListener('input', e => {
+    gcdA = +e.target.value; document.getElementById('gcdAVal').textContent = gcdA; recompute();
+  });
+  document.getElementById('gcdB').addEventListener('input', e => {
+    gcdB = +e.target.value; document.getElementById('gcdBVal').textContent = gcdB; recompute();
+  });
+  document.getElementById('gcdAuto').addEventListener('click', e => {
+    gcdAuto = !gcdAuto; e.target.textContent = gcdAuto ? '⏸ 暂停' : '▶ 自动演示';
+  });
+  document.getElementById('gcdNext').addEventListener('click', () => {
+    if (gcdStepIdx < gcdSteps.length - 1) gcdStepIdx++;
+  });
+  document.getElementById('gcdReset').addEventListener('click', recompute);
+  startLoop(drawGcd);
+}
+
+function drawGcd() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  if (gcdAuto && time % 45 === 0 && gcdStepIdx < gcdSteps.length - 1) gcdStepIdx++;
+
+  // 几何可视化：矩形铺正方形
+  const a = Math.max(gcdA, gcdB), b = Math.min(gcdA, gcdB);
+  const scale = Math.min((W - 80) / a, (H - 200) / b);
+  const rw = a * scale, rh = b * scale;
+  const rx = (W - rw) / 2, ry = 20;
+
+  // 已执行的步：用当前步的 gcd（若完成）铺正方形，否则铺当前步除数
+  const st = gcdSteps[Math.min(gcdStepIdx, gcdSteps.length - 1)];
+  const done = gcdStepIdx >= gcdSteps.length - 1;
+  const tileSize = done ? st.gcd : Math.min(st.x, st.y);
+
+  // 画矩形
+  ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 2;
+  ctx.strokeRect(rx, ry, rw, rh);
+  // 铺正方形（示意：只铺前 30 个，太多会糊）
+  ctx.strokeStyle = done ? '#10b981' : '#a78bfa';
+  ctx.lineWidth = 1;
+  const ts = tileSize * scale;
+  let cnt = 0;
+  if (ts > 1) {
+    for (let yy = 0; yy + ts <= rh + 0.01 && cnt < 60; yy += ts) {
+      for (let xx = 0; xx + ts <= rw + 0.01 && cnt < 60; xx += ts) {
+        ctx.strokeRect(rx + xx, ry + yy, ts, ts);
+        cnt++;
+      }
+    }
+  }
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`矩形 ${a} × ${b}，铺 ${tileSize} × ${tileSize} 正方形`, 20, H - 10);
+
+  // 下方步骤列表
+  const listY = ry + rh + 24;
+  ctx.font = '13px monospace';
+  ctx.textAlign = 'left';
+  const maxShow = Math.min(gcdStepIdx + 1, 8);
+  for (let i = 0; i < maxShow; i++) {
+    const s = gcdSteps[i];
+    const yy = listY + i * 20;
+    if (yy > H - 30) break;
+    let txt, color = '#cbd5e1';
+    if (s.gcd !== undefined) { txt = `✓ gcd = ${s.gcd}`; color = '#10b981'; }
+    else txt = `${s.x} = ${s.q} × ${s.y} + ${s.r}`;
+    if (i === gcdStepIdx && !done) color = '#fbbf24';
+    ctx.fillStyle = color;
+    ctx.fillText(txt, 20, yy);
+  }
+  document.getElementById('gcdStepInfo').textContent = `${Math.min(gcdStepIdx, gcdSteps.length - 1)} / ${gcdSteps.length - 1}`;
+  if (done) document.getElementById('gcdResult').textContent = st.gcd;
+}
+
+// ═══════════════════════════════════════════════
+// MODE 3: 模运算（时钟算术）
+// ═══════════════════════════════════════════════
+let modN = 12;
+let modA = 7;
+let modAnim = 0;
+
+function initMod() {
+  legendEl.innerHTML = `<span class="l-mod">当前位置</span><span class="l-prime">目标位置</span>`;
+  modAnim = 0;
+  panel.innerHTML = `
+    <h3>🕐 模运算 · 时钟算术</h3>
+    <div class="concept-card mod">
+      <div class="title">定义</div>
+      a ≡ b (mod n) ⟺ n | (a − b)。同余是一种等价关系，把整数分成 n 个剩余类。
+    </div>
+    <div class="concept-card mod">
+      <div class="title">运算性质</div>
+      (a + b) mod n = ((a mod n) + (b mod n)) mod n；乘法同理 — 可"先取模再运算"，避免大数溢出。
+    </div>
+    <div class="equation">
+      a ≡ b (mod n) ⟺ a = b + kn, k ∈ ℤ
+    </div>
+    <div class="slider-row">
+      <label>模 n</label>
+      <input type="range" id="modN" min="3" max="24" value="12">
+      <span class="val" id="modNVal">12</span>
+    </div>
+    <div class="slider-row">
+      <label>步数 a</label>
+      <input type="range" id="modA" min="1" max="60" value="7">
+      <span class="val" id="modAVal">7</span>
+    </div>
+    <div class="info-grid">
+      <div>a mod n<br><b id="modRes">7 mod 12 = 7</b></div>
+      <div>时钟类比<br><b>12 小时制</b></div>
+      <div>剩余类个数<br><b id="modClass">12 个</b></div>
+      <div>应用<br><b>哈希 / 校验码 / RSA</b></div>
+    </div>`;
+  document.getElementById('modN').addEventListener('input', e => {
+    modN = +e.target.value; document.getElementById('modNVal').textContent = modN;
+    document.getElementById('modClass').textContent = modN + ' 个';
+  });
+  document.getElementById('modA').addEventListener('input', e => {
+    modA = +e.target.value; document.getElementById('modAVal').textContent = modA;
+  });
+  startLoop(drawMod);
+}
+
+function drawMod() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const cx = W / 2, cy = H / 2 - 10;
+  const R = Math.min(W, H) / 2 - 60;
+
+  // 画时钟刻度
+  for (let i = 0; i < modN; i++) {
+    const ang = -Math.PI / 2 + (i / modN) * Math.PI * 2;
+    const x = cx + R * Math.cos(ang), y = cy + R * Math.sin(ang);
+    const res = modA % modN;
+    ctx.fillStyle = i === res ? '#a78bfa' : 'rgba(255,255,255,0.1)';
+    ctx.beginPath(); ctx.arc(x, y, i === res ? 18 : 13, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = i === res ? '#fff' : '#cbd5e1';
+    ctx.font = `bold ${i === res ? 15 : 12}px sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(i), x, y);
+  }
+
+  // 指针：从 0 走 a 步（动画：分段弧）
+  const res = modA % modN;
+  const stepsToShow = Math.min(modA, Math.floor(modAnim / 6));
+  ctx.strokeStyle = '#10b981'; ctx.lineWidth = 3;
+  for (let s = 0; s < stepsToShow; s++) {
+    const a0 = -Math.PI / 2 + (s % modN) / modN * Math.PI * 2;
+    const a1 = -Math.PI / 2 + ((s + 1) % modN) / modN * Math.PI * 2;
+    ctx.beginPath(); ctx.arc(cx, cy, R * 0.7, a0, a1); ctx.stroke();
+  }
+  // 当前指针
+  const cur = stepsToShow >= modA ? res : (stepsToShow % modN);
+  const pang = -Math.PI / 2 + cur / modN * Math.PI * 2;
+  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + R * 0.85 * Math.cos(pang), cy + R * 0.85 * Math.sin(pang)); ctx.stroke();
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+
+  modAnim++;
+  if (stepsToShow >= modA) modAnim = Math.max(modAnim, modA * 6); // 停
+
+  const el = document.getElementById('modRes');
+  if (el) el.textContent = `${modA} mod ${modN} = ${res}`;
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 15px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${modA} ≡ ${res} (mod ${modN})`, cx, H - 18);
+}
+
+// ═══════════════════════════════════════════════
+// MODE 4: RSA 加密演示（小数字）
+// ═══════════════════════════════════════════════
+let rsaP = 3, rsaQ = 11, rsaM = 7;
+
+function modPow(base, exp, mod) {
+  let r = 1, b = base % mod;
+  while (exp > 0) {
+    if (exp & 1) r = (r * b) % mod;
+    b = (b * b) % mod;
+    exp = Math.floor(exp / 2);
+  }
+  return r;
+}
+function egcd(a, b) {
+  if (b === 0) return [a, 1, 0];
+  const [g, x1, y1] = egcd(b, a % b);
+  return [g, y1, x1 - Math.floor(a / b) * y1];
+}
+function rsaParams(p, q) {
+  const n = p * q, phi = (p - 1) * (q - 1);
+  let e = 3;
+  while (e < phi) { if (egcd(e, phi)[0] === 1) break; e += 2; }
+  if (e >= phi) return null;
+  let d = egcd(e, phi)[1] % phi; if (d < 0) d += phi;
+  return { n, phi, e, d };
+}
+
+function initRsa() {
+  legendEl.innerHTML = `<span class="l-rsa">密文</span><span class="l-mod">明文</span>`;
+  panel.innerHTML = `
+    <h3>🔐 RSA 公钥加密（小数字演示）</h3>
+    <div class="concept-card rsa">
+      <div class="title">密钥生成</div>
+      选两素数 p, q → n = pq, φ(n) = (p−1)(q−1)。选 e 使 gcd(e, φ)=1，求 d 使 ed ≡ 1 (mod φ)。
+    </div>
+    <div class="concept-card rsa">
+      <div class="title">加解密</div>
+      加密 c = m<sup>e</sup> mod n（公钥 e,n 公开）；解密 m = c<sup>d</sup> mod n（私钥 d 保密）。安全性依赖大数分解困难。
+    </div>
+    <div class="equation">
+      c ≡ m<sup>e</sup> (mod n) &nbsp;&nbsp; m ≡ c<sup>d</sup> (mod n)
+    </div>
+    <div class="slider-row">
+      <label>素数 p</label>
+      <input type="range" id="rsaP" min="3" max="13" value="3" step="2">
+      <span class="val" id="rsaPVal">3</span>
+    </div>
+    <div class="slider-row">
+      <label>素数 q</label>
+      <input type="range" id="rsaQ" min="3" max="17" value="11" step="2">
+      <span class="val" id="rsaQVal">11</span>
+    </div>
+    <div class="slider-row">
+      <label>明文 m</label>
+      <input type="range" id="rsaM" min="0" max="32" value="7">
+      <span class="val" id="rsaMVal">7</span>
+    </div>
+    <div class="info-grid" id="rsaInfo"></div>`;
+  ['rsaP', 'rsaQ', 'rsaM'].forEach(id => {
+    document.getElementById(id).addEventListener('input', e => {
+      if (id === 'rsaP') { rsaP = +e.target.value; document.getElementById('rsaPVal').textContent = rsaP; }
+      if (id === 'rsaQ') { rsaQ = +e.target.value; document.getElementById('rsaQVal').textContent = rsaQ; }
+      if (id === 'rsaM') { rsaM = +e.target.value; document.getElementById('rsaMVal').textContent = rsaM; }
+    });
+  });
+  startLoop(drawRsa);
+}
+
+function drawRsa() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const pr = rsaParams(rsaP, rsaQ);
+  const infoEl = document.getElementById('rsaInfo');
+
+  if (!pr || rsaM >= pr.n) {
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(!pr ? '无法找到合法 e（换一组 p, q）' : `要求 m < n = ${pr.n}，请减小 m`, W / 2, H / 2);
+    if (infoEl) infoEl.innerHTML = '';
+    return;
+  }
+  const { n, phi, e, d } = pr;
+  const c = modPow(rsaM, e, n);
+  const m2 = modPow(c, d, n);
+
+  // 流程图：m → (e,n) → c → (d,n) → m
+  const boxW = 90, boxH = 54, gap = 60;
+  const y0 = H / 2 - 40;
+  const boxes = [
+    { x: 30, label: '明文', val: `m = ${rsaM}`, color: '#10b981' },
+    { x: 30 + (boxW + gap), label: '加密', val: `m^${e} mod ${n}`, color: '#fbbf24' },
+    { x: 30 + 2 * (boxW + gap), label: '密文', val: `c = ${c}`, color: '#ec4899' },
+    { x: 30 + 3 * (boxW + gap), label: '解密', val: `c^${d} mod ${n}`, color: '#fbbf24' },
+  ];
+  boxes.forEach((b, i) => {
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.strokeStyle = b.color; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(b.x, y0, boxW, boxH, 10); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = b.color;
+    ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(b.label, b.x + boxW / 2, y0 + 20);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 13px monospace';
+    ctx.fillText(b.val, b.x + boxW / 2, y0 + 40);
+    if (i < boxes.length - 1) {
+      ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(b.x + boxW + 4, y0 + boxH / 2);
+      ctx.lineTo(b.x + boxW + gap - 4, y0 + boxH / 2);
+      ctx.stroke();
+      // 箭头
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath();
+      ctx.moveTo(b.x + boxW + gap - 4, y0 + boxH / 2);
+      ctx.lineTo(b.x + boxW + gap - 12, y0 + boxH / 2 - 5);
+      ctx.lineTo(b.x + boxW + gap - 12, y0 + boxH / 2 + 5);
+      ctx.fill();
+    }
+  });
+
+  // 验证结果
+  ctx.fillStyle = m2 === rsaM ? '#10b981' : '#ef4444';
+  ctx.font = 'bold 15px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(m2 === rsaM ? `✓ 解密还原 m = ${m2}` : `✗ 出错 m' = ${m2}`, W / 2, y0 + boxH + 40);
+
+  // 关键公式
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px monospace';
+  ctx.fillText(`n = ${rsaP}×${rsaQ} = ${n}    φ(n) = ${rsaP - 1}×${rsaQ - 1} = ${phi}    e = ${e}    d = ${d}    e·d mod φ = ${(e * d) % phi}`, W / 2, y0 + boxH + 70);
+
+  if (infoEl) infoEl.innerHTML = `
+    <div>公钥 (e, n)<br><b>(${e}, ${n})</b></div>
+    <div>私钥 (d, n)<br><b>(${d}, ${n})</b></div>
+    <div>密文 c<br><b>${c}</b></div>
+    <div>安全基础<br><b>大数分解困难</b></div>`;
+}
+
+// ═══════════════════════════════════════════════
+// MODE 5: Quiz
+// ═══════════════════════════════════════════════
+const QUIZ = [
+  {
+    q: '用埃拉托斯特尼筛法筛 1~30 的素数，第一个被 3 划掉的数（除 3 本身）是？',
+    opts: ['A. 3', 'B. 6', 'C. 9', 'D. 12'],
+    ans: 1,
+    exp: '筛法中从素数 p 开始划掉其倍数：2p, 3p, …。对 p=3，第一个被划掉的是 2×3=6。'
+  },
+  {
+    q: '筛 1~N 的素数时，外层只需枚举素数到 √N 即可，原因是？',
+    opts: ['A. 节省时间', 'B. 合数 n 必有 ≤ √n 的素因子', 'C. √N 之后没有素数', 'D. 计算机算得快'],
+    ans: 1,
+    exp: '若 n 是合数且 n = ab（a ≤ b），则 a ≤ √n，因此 n 必被某个 ≤ √n 的素数划掉。'
+  },
+  {
+    q: '用欧几里得算法求 gcd(252, 105)，第一次相除的余数是？',
+    opts: ['A. 42', 'B. 21', 'C. 52', 'D. 147'],
+    ans: 0,
+    exp: '252 = 2×105 + 42，余数为 42。继续：105 = 2×42 + 21，42 = 2×21 + 0 → gcd = 21。'
+  },
+  {
+    q: '关于欧几里得算法，下列说法错误的是？',
+    opts: ['A. 终止时除数即 gcd', 'B. gcd(a,b) = gcd(b, a mod b)', 'C. 步数随 b 的位数线性增长', 'D. 只能用于素数'],
+    ans: 3,
+    exp: '欧几里得算法对任意正整数都适用，不要求素数。Lamé 定理：步数 ≤ 5 × b 的十进制位数。'
+  },
+  {
+    q: '17 mod 5 的值是？',
+    opts: ['A. 3', 'B. 2', 'C. 4', 'D. 1'],
+    ans: 1,
+    exp: '17 = 3×5 + 2，故 17 mod 5 = 2，也可写 17 ≡ 2 (mod 5)。'
+  },
+  {
+    q: '若 a ≡ b (mod n)，则下列不一定成立的是？',
+    opts: ['A. a + c ≡ b + c (mod n)', 'B. ac ≡ bc (mod n)', 'C. a/c ≡ b/c (mod n)，c≠0', 'D. a² ≡ b² (mod n)'],
+    ans: 2,
+    exp: '同余对加、减、乘封闭，但除法需要 c 与 n 互素时才能消去（此时存在 c 的模逆元）。'
+  },
+  {
+    q: 'RSA 中 p=3, q=11，则 n 和 φ(n) 分别是？',
+    opts: ['A. n=33, φ=20', 'B. n=33, φ=22', 'C. n=14, φ=20', 'D. n=33, φ=32'],
+    ans: 0,
+    exp: 'n = pq = 33；φ(n) = (p−1)(q−1) = 2×10 = 20。'
+  },
+  {
+    q: 'RSA 的安全性主要依赖于下列哪个数学难题？',
+    opts: ['A. 求最大公约数', 'B. 大整数素因子分解', 'C. 求模逆元', 'D. 解一元二次方程'],
+    ans: 1,
+    exp: '已知 n = pq 而 p, q 未知时，对大整数做素因子分解在经典计算模型下被认为非常困难（Shor 算法在量子计算机上可多项式时间分解）。'
+  }
+];
+let quizIdx = 0, quizScore = 0, quizAnswered = false;
+
+function initQuiz() {
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  legendEl.innerHTML = '';
+  quizIdx = 0; quizScore = 0;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🎯 初等数论测验', canvas.width / 2, 80);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('共 8 题，答对 5 题以上即完成本知识点', canvas.width / 2, 110);
+  ctx.fillText('点击右侧选项作答 →', canvas.width / 2, 140);
+  renderQuiz();
+}
+
+function renderQuiz() {
+  if (quizIdx >= QUIZ.length) {
+    const pass = quizScore >= 5;
+    panel.innerHTML = `
+      <h3>🎯 测验完成！</h3>
+      <div class="quiz-result">
+        得分：<b style="font-size:1.5rem;color:${pass ? '#10b981' : '#ef4444'}">${quizScore} / ${QUIZ.length}</b><br>
+        ${pass ? '🎉 太棒了！已掌握初等数论核心知识' : '💪 再复习一下前面几个模式，然后重试'}
+      </div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn primary" id="retryQuiz">↻ 重新测验</button>
+      </div>
+      <div class="concept-card ${pass ? 'mod' : 'rsa'}" style="margin-top:14px;">
+        <div class="title">知识总结</div>
+        · 素数筛：划掉素数倍数，只需筛到 √N<br>
+        · 欧几里得：gcd(a,b) = gcd(b, a mod b)<br>
+        · 模运算：a ≡ b (mod n)，加减乘封闭<br>
+        · RSA：n=pq, ed≡1 (mod φ)，大数分解困难
+      </div>`;
+    document.getElementById('retryQuiz').addEventListener('click', initQuiz);
+    if (pass && typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('number-theory');
+    }
+    return;
+  }
+  const q = QUIZ[quizIdx];
+  quizAnswered = false;
+  panel.innerHTML = `
+    <h3>第 ${quizIdx + 1} / ${QUIZ.length} 题 <span style="float:right;color:#fbbf24;">得分 ${quizScore}</span></h3>
+    <div class="quiz">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-i="${i}">${o}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="fb"></div>
+    </div>`;
+  panel.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const i = +opt.dataset.i;
+      const fb = document.getElementById('fb');
+      if (i === q.ans) {
+        opt.classList.add('correct');
+        quizScore++;
+        fb.textContent = '✓ ' + q.exp;
+        fb.style.color = '#10b981';
+      } else {
+        opt.classList.add('wrong');
+        panel.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        fb.textContent = '✗ ' + q.exp;
+        fb.style.color = '#ef4444';
+      }
+      setTimeout(() => { quizIdx++; renderQuiz(); }, 1800);
+    });
+  });
+}
+
+// Init
+initMode();
+</script>
+</body>
+</html>

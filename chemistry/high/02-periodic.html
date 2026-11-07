@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>元素周期律 · 互动可视化</title>
+<style>
+:root{--p:#10b981;--a:#06b6d4;--w:#f59e0b;--d:#ef4444;--pu:#8b5cf6;--pk:#ec4899;--dk:#0f172a;--card:rgba(15,23,42,.72);--bd:rgba(255,255,255,.08);--tx:#e2e8f0;--mt:#94a3b8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(135deg,#0f172a,#1e293b);color:var(--tx);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+header{text-align:center;margin-bottom:24px}
+header h1{font-size:2rem;background:linear-gradient(90deg,var(--p),var(--a),var(--pu));-webkit-background-clip:text;color:transparent;margin-bottom:6px}
+header p{color:var(--mt);font-size:14px}
+.tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap}
+.tab{padding:10px 18px;border-radius:999px;background:rgba(255,255,255,.06);cursor:pointer;transition:all .25s;border:1px solid var(--bd);font-size:14px;user-select:none}
+.tab.active{background:var(--p);border-color:var(--p);box-shadow:0 4px 20px rgba(16,185,129,.4)}
+.tab:hover:not(.active){background:rgba(255,255,255,.12)}
+.section{display:none}.section.active{display:block}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;backdrop-filter:blur(10px);margin-bottom:16px}
+.panel h3{font-size:1rem;margin-bottom:10px;color:var(--a)}
+.panel p,.panel li{color:var(--mt);font-size:13px;line-height:1.7}
+.panel ul{padding-left:18px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.btn{padding:8px 16px;border-radius:8px;background:var(--p);color:#fff;border:none;cursor:pointer;font-size:13px;transition:all .2s}
+.btn:hover{background:#059669;transform:translateY(-1px)}
+.btn.secondary{background:rgba(255,255,255,.1)}.btn.secondary:hover{background:rgba(255,255,255,.2)}
+.btn.accent{background:var(--a)}.btn.accent:hover{background:#0891b2}
+.btn.warn{background:var(--w)}.btn.warn:hover{background:#d97706}
+.info-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:12px 16px;margin:10px 0;font-size:13px;color:var(--mt);line-height:1.7}
+.info-box strong{color:var(--w)}
+
+/* Periodic Table */
+.pt-wrap{overflow-x:auto;padding:10px 0}
+.pt-grid{display:grid;grid-template-columns:repeat(18,1fr);gap:2px;min-width:720px}
+.pt-cell{aspect-ratio:1;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;font-size:10px;position:relative;min-height:38px}
+.pt-cell:hover{transform:scale(1.3);z-index:10;box-shadow:0 0 12px rgba(255,255,255,.3)}
+.pt-cell .sym{font-size:12px;font-weight:700;color:#fff}
+.pt-cell .num{font-size:8px;color:rgba(255,255,255,.7);position:absolute;top:2px;left:3px}
+.pt-cell.empty{background:transparent;cursor:default;pointer-events:none}
+.pt-cell.la{background:rgba(139,92,246,.3);border:1px solid rgba(139,92,246,.5)}
+.pt-cell.ac{background:rgba(236,72,153,.3);border:1px solid rgba(236,72,153,.5)}
+/* Block colors */
+.pt-cell.s-block{background:rgba(239,68,68,.25);border:1px solid rgba(239,68,68,.4)}
+.pt-cell.p-block{background:rgba(16,185,129,.25);border:1px solid rgba(16,185,129,.4)}
+.pt-cell.d-block{background:rgba(6,182,212,.25);border:1px solid rgba(6,182,212,.4)}
+.pt-cell.f-block{background:rgba(139,92,246,.25);border:1px solid rgba(139,92,246,.4)}
+.pt-cell.highlighted{box-shadow:0 0 8px 2px var(--w);border-color:var(--w)!important}
+.pt-cell.selected{box-shadow:0 0 12px 3px var(--a);border-color:var(--a)!important;transform:scale(1.2);z-index:10}
+.pt-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;justify-content:center}
+.pt-legend span{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mt)}
+.pt-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+/* Element Detail */
+.detail-card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px;margin:16px 0;display:none}
+.detail-card.show{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
+@media(max-width:700px){.detail-card.show{grid-template-columns:1fr}}
+.detail-symbol{width:120px;height:140px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(6,182,212,.15);border:2px solid rgba(6,182,212,.4)}
+.detail-symbol .num{font-size:14px;color:var(--mt)}
+.detail-symbol .sym{font-size:42px;font-weight:700;color:var(--tx)}
+.detail-symbol .name{font-size:14px;color:var(--a)}
+.detail-symbol .mass{font-size:12px;color:var(--mt);margin-top:4px}
+.detail-info h4{color:var(--a);font-size:15px;margin-bottom:8px}
+.detail-info .props{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.detail-info .prop{background:rgba(255,255,255,.04);border-radius:8px;padding:8px 12px}
+.detail-info .prop label{font-size:11px;color:var(--mt);display:block}
+.detail-info .prop span{font-size:14px;color:var(--tx);font-weight:500}
+
+/* Trend Chart */
+.trend-chart{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px;margin:12px 0}
+.trend-chart h4{color:var(--pu);margin-bottom:12px;font-size:15px}
+.trend-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.trend-controls select{background:rgba(255,255,255,.08);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:8px 12px;font-size:13px;outline:none}
+canvas{width:100%;height:auto;display:block;border-radius:10px}
+
+/* Quiz */
+.quiz-card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px;margin:12px 0}
+.quiz-card h4{color:var(--pk);margin-bottom:12px;font-size:15px}
+.quiz-q{font-size:15px;color:var(--tx);margin:12px 0;line-height:1.6}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+@media(max-width:600px){.quiz-opts{grid-template-columns:1fr}}
+.quiz-opt{padding:12px 16px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--bd);cursor:pointer;transition:all .2s;font-size:14px;color:var(--tx)}
+.quiz-opt:hover{background:rgba(255,255,255,.12)}
+.quiz-opt.correct{background:rgba(16,185,129,.2);border-color:var(--p);color:var(--p)}
+.quiz-opt.wrong{background:rgba(239,68,68,.2);border-color:var(--d);color:var(--d)}
+.quiz-result{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13px;display:none}
+.quiz-result.show{display:block}
+.quiz-result.ok{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--p)}
+.quiz-result.no{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--d)}
+.score-bar{display:flex;gap:10px;align-items:center;margin:12px 0}
+.score-bar .bar{flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+.score-bar .bar-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--a));border-radius:4px;transition:width .4s}
+.score-bar span{font-size:12px;color:var(--mt)}
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>🧪 元素周期律</h1>
+<p>周期表结构 · 元素性质递变 · 规律预测</p>
+</header>
+
+<div class="tabs">
+<div class="tab active" onclick="switchTab(0)">📊 周期表结构</div>
+<div class="tab" onclick="switchTab(1)">📈 性质递变</div>
+<div class="tab" onclick="switchTab(2)">🎯 规律预测</div>
+</div>
+
+<!-- Tab 0: 周期表结构 -->
+<div class="section active" id="sec0">
+<div class="panel">
+<h3>🔍 点击元素查看详情 · 观察周期表结构</h3>
+<div class="controls">
+<button class="btn" onclick="highlightPeriod()">高亮周期</button>
+<button class="btn secondary" onclick="highlightGroup()">高亮族</button>
+<button class="btn accent" onclick="clearHighlight()">清除</button>
+<select id="periodSelect" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);color:#e2e8f0;border-radius:8px;padding:6px 10px;font-size:13px">
+<option value="1">第1周期</option><option value="2">第2周期</option><option value="3">第3周期</option>
+<option value="4">第4周期</option><option value="5">第5周期</option><option value="6">第6周期</option><option value="7">第7周期</option>
+</select>
+<select id="groupSelect" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);color:#e2e8f0;border-radius:8px;padding:6px 10px;font-size:13px">
+<option value="1">第IA族</option><option value="2">第IIA族</option><option value="13">第IIIA族</option>
+<option value="14">第IVA族</option><option value="15">第VA族</option><option value="16">第VIA族</option>
+<option value="17">第VIIA族</option><option value="18">0族</option>
+</select>
+</div>
+</div>
+<div class="pt-wrap">
+<div class="pt-grid" id="ptGrid"></div>
+</div>
+<div class="pt-legend">
+<span><i style="background:rgba(239,68,68,.4)"></i>s区</span>
+<span><i style="background:rgba(16,185,129,.4)"></i>p区</span>
+<span><i style="background:rgba(6,182,212,.4)"></i>d区</span>
+<span><i style="background:rgba(139,92,246,.4)"></i>f区</span>
+</div>
+<div class="detail-card" id="detailCard">
+<div class="detail-symbol" id="detailSymbol">
+<div class="num" id="dNum"></div>
+<div class="sym" id="dSym"></div>
+<div class="name" id="dName"></div>
+<div class="mass" id="dMass"></div>
+</div>
+<div class="detail-info">
+<h4 id="dTitle"></h4>
+<div class="props" id="dProps"></div>
+</div>
+</div>
+</div>
+
+<!-- Tab 1: 性质递变 -->
+<div class="section" id="sec1">
+<div class="trend-chart">
+<h4>📈 元素性质随原子序数的变化规律</h4>
+<div class="trend-controls">
+<select id="trendProperty" onchange="drawTrend()">
+<option value="radius">原子半径</option>
+<option value="ie">第一电离能</option>
+<option value="en">电负性</option>
+<option value="mp">金属性</option>
+</select>
+<select id="trendRange" onchange="drawTrend()">
+<option value="2">第2周期</option>
+<option value="3">第3周期</option>
+</select>
+</div>
+<canvas id="cvTrend" width="800" height="360"></canvas>
+<div class="info-box" id="trendExplain"></div>
+</div>
+<div class="panel">
+<h3>📖 周期律要点</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="info-box"><strong>同周期（左→右）：</strong><br>原子半径减小，金属性减弱，非金属性增强，电离能增大</div>
+<div class="info-box"><strong>同族（上→下）：</strong><br>原子半径增大，金属性增强，非金属性减弱，电离能减小</div>
+</div>
+</div>
+</div>
+
+<!-- Tab 2: 规律预测 -->
+<div class="section" id="sec2">
+<div class="quiz-card">
+<h4>🎯 元素性质预测挑战</h4>
+<p style="color:#94a3b8;font-size:13px;margin-bottom:12px">根据元素在周期表中的位置，预测其性质</p>
+<div class="quiz-q" id="quizQ"></div>
+<div class="quiz-opts" id="quizOpts"></div>
+<div style="display:flex;gap:10px;margin-top:12px">
+<button class="btn accent" onclick="nextQuiz()">→ 下一题</button>
+</div>
+<div class="quiz-result" id="quizResult"></div>
+<div class="score-bar">
+<span>得分：</span>
+<div class="bar"><div class="bar-fill" id="quizBar" style="width:0%"></div></div>
+<span id="quizScore">0/0</span>
+</div>
+</div>
+<div class="panel">
+<h3>💡 预测技巧</h3>
+<ul>
+<li>根据元素位置判断金属性/非金属性强弱</li>
+<li>同周期元素化合价从左到右递增（主族）</li>
+<li>对角线规则：Li与Mg、Be与Al、B与Si性质相似</li>
+<li>稀有气体化学性质稳定，化合价通常为0</li>
+</ul>
+</div>
+</div>
+</div>
+
+<script>
+/* ===== Tab Switching ===== */
+function switchTab(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+  document.querySelectorAll('.section').forEach((s,j)=>s.classList.toggle('active',j===i));
+  if(i===1)drawTrend();
+}
+
+/* ===== Periodic Table Data ===== */
+const elements=[
+  // Period 1
+  {z:1,sym:'H',name:'氢',mass:1.008,period:1,group:1,block:'s',config:'1s¹',radius:37,ie:1312,en:2.20,metal:'非金属'},
+  {z:2,sym:'He',name:'氦',mass:4.003,period:1,group:18,block:'s',config:'1s²',radius:31,ie:2372,en:0,metal:'稀有气体'},
+  // Period 2
+  {z:3,sym:'Li',name:'锂',mass:6.941,period:2,group:1,block:'s',config:'[He]2s¹',radius:152,ie:520,en:0.98,metal:'活泼金属'},
+  {z:4,sym:'Be',name:'铍',mass:9.012,period:2,group:2,block:'s',config:'[He]2s²',radius:112,ie:900,en:1.57,metal:'金属'},
+  {z:5,sym:'B',name:'硼',mass:10.81,period:2,group:13,block:'p',config:'[He]2s²2p¹',radius:85,ie:801,en:2.04,metal:'类金属'},
+  {z:6,sym:'C',name:'碳',mass:12.01,period:2,group:14,block:'p',config:'[He]2s²2p²',radius:77,ie:1087,en:2.55,metal:'非金属'},
+  {z:7,sym:'N',name:'氮',mass:14.01,period:2,group:15,block:'p',config:'[He]2s²2p³',radius:75,ie:1402,en:3.04,metal:'非金属'},
+  {z:8,sym:'O',name:'氧',mass:16.00,period:2,group:16,block:'p',config:'[He]2s²2p⁴',radius:73,ie:1314,en:3.44,metal:'非金属'},
+  {z:9,sym:'F',name:'氟',mass:19.00,period:2,group:17,block:'p',config:'[He]2s²2p⁵',radius:71,ie:1681,en:3.98,metal:'非金属'},
+  {z:10,sym:'Ne',name:'氖',mass:20.18,period:2,group:18,block:'p',config:'[He]2s²2p⁶',radius:69,ie:2081,en:0,metal:'稀有气体'},
+  // Period 3
+  {z:11,sym:'Na',name:'钠',mass:22.99,period:3,group:1,block:'s',config:'[Ne]3s¹',radius:186,ie:496,en:0.93,metal:'活泼金属'},
+  {z:12,sym:'Mg',name:'镁',mass:24.31,period:3,group:2,block:'s',config:'[Ne]3s²',radius:160,ie:738,en:1.31,metal:'金属'},
+  {z:13,sym:'Al',name:'铝',mass:26.98,period:3,group:13,block:'p',config:'[Ne]3s²3p¹',radius:143,ie:578,en:1.61,metal:'金属'},
+  {z:14,sym:'Si',name:'硅',mass:28.09,period:3,group:14,block:'p',config:'[Ne]3s²3p²',radius:117,ie:786,en:1.90,metal:'类金属'},
+  {z:15,sym:'P',name:'磷',mass:30.97,period:3,group:15,block:'p',config:'[Ne]3s²3p³',radius:110,ie:1012,en:2.19,metal:'非金属'},
+  {z:16,sym:'S',name:'硫',mass:32.07,period:3,group:16,block:'p',config:'[Ne]3s²3p⁴',radius:103,ie:1000,en:2.58,metal:'非金属'},
+  {z:17,sym:'Cl',name:'氯',mass:35.45,period:3,group:17,block:'p',config:'[Ne]3s²3p⁵',radius:99,ie:1251,en:3.16,metal:'非金属'},
+  {z:18,sym:'Ar',name:'氩',mass:39.95,period:3,group:18,block:'p',config:'[Ne]3s²3p⁶',radius:97,ie:1521,en:0,metal:'稀有气体'},
+  // Period 4
+  {z:19,sym:'K',name:'钾',mass:39.10,period:4,group:1,block:'s',config:'[Ar]4s¹',radius:227,ie:419,en:0.82,metal:'活泼金属'},
+  {z:20,sym:'Ca',name:'钙',mass:40.08,period:4,group:2,block:'s',config:'[Ar]4s²',radius:197,ie:590,en:1.00,metal:'金属'},
+  {z:21,sym:'Sc',name:'钪',mass:44.96,period:4,group:3,block:'d',config:'[Ar]3d¹4s²',radius:162,ie:633,en:1.36,metal:'金属'},
+  {z:22,sym:'Ti',name:'钛',mass:47.87,period:4,group:4,block:'d',config:'[Ar]3d²4s²',radius:147,ie:659,en:1.54,metal:'金属'},
+  {z:23,sym:'V',name:'钒',mass:50.94,period:4,group:5,block:'d',config:'[Ar]3d³4s²',radius:134,ie:651,en:1.63,metal:'金属'},
+  {z:24,sym:'Cr',name:'铬',mass:52.00,period:4,group:6,block:'d',config:'[Ar]3d⁵4s¹',radius:128,ie:653,en:1.66,metal:'金属'},
+  {z:25,sym:'Mn',name:'锰',mass:54.94,period:4,group:7,block:'d',config:'[Ar]3d⁵4s²',radius:127,ie:717,en:1.55,metal:'金属'},
+  {z:26,sym:'Fe',name:'铁',mass:55.85,period:4,group:8,block:'d',config:'[Ar]3d⁶4s²',radius:126,ie:762,en:1.83,metal:'金属'},
+  {z:27,sym:'Co',name:'钴',mass:58.93,period:4,group:9,block:'d',config:'[Ar]3d⁷4s²',radius:125,ie:760,en:1.88,metal:'金属'},
+  {z:28,sym:'Ni',name:'镍',mass:58.69,period:4,group:10,block:'d',config:'[Ar]3d⁸4s²',radius:124,ie:737,en:1.91,metal:'金属'},
+  {z:29,sym:'Cu',name:'铜',mass:63.55,period:4,group:11,block:'d',config:'[Ar]3d¹⁰4s¹',radius:128,ie:745,en:1.90,metal:'金属'},
+  {z:30,sym:'Zn',name:'锌',mass:65.38,period:4,group:12,block:'d',config:'[Ar]3d¹⁰4s²',radius:134,ie:906,en:1.65,metal:'金属'},
+  {z:31,sym:'Ga',name:'镓',mass:69.72,period:4,group:13,block:'p',config:'[Ar]3d¹⁰4s²4p¹',radius:135,ie:579,en:1.81,metal:'金属'},
+  {z:32,sym:'Ge',name:'锗',mass:72.63,period:4,group:14,block:'p',config:'[Ar]3d¹⁰4s²4p²',radius:122,ie:762,en:2.01,metal:'类金属'},
+  {z:33,sym:'As',name:'砷',mass:74.92,period:4,group:15,block:'p',config:'[Ar]3d¹⁰4s²4p³',radius:119,ie:947,en:2.18,metal:'类金属'},
+  {z:34,sym:'Se',name:'硒',mass:78.97,period:4,group:16,block:'p',config:'[Ar]3d¹⁰4s²4p⁴',radius:116,ie:941,en:2.55,metal:'非金属'},
+  {z:35,sym:'Br',name:'溴',mass:79.90,period:4,group:17,block:'p',config:'[Ar]3d¹⁰4s²4p⁵',radius:114,ie:1140,en:2.96,metal:'非金属'},
+  {z:36,sym:'Kr',name:'氪',mass:83.80,period:4,group:18,block:'p',config:'[Ar]3d¹⁰4s²4p⁶',radius:110,ie:1351,en:3.00,metal:'稀有气体'}
+];
+
+/* Build periodic table grid */
+const grid=document.getElementById('ptGrid');
+// Layout: row = period, col = group (1-18)
+// Period 1: H(1,1), He(1,18)
+// Period 2-3: groups 1-2, then 13-18
+// Period 4+: groups 1-18
+const layout=[];
+for(let p=1;p<=4;p++){
+  const row=[];
+  for(let g=1;g<=18;g++){
+    const el=elements.find(e=>e.period===p&&e.group===g);
+    row.push(el||null);
+  }
+  layout.push(row);
+}
+// Add lanthanide/actinide row placeholders
+layout.push(Array(18).fill(null)); // placeholder row
+
+let selectedEl=null;
+layout.forEach((row,ri)=>{
+  row.forEach((el,ci)=>{
+    const cell=document.createElement('div');
+    cell.className='pt-cell';
+    cell.dataset.period=ri+1;
+    cell.dataset.group=ci+1;
+    if(el){
+      cell.classList.add(el.block+'-block');
+      cell.innerHTML=`<span class="num">${el.z}</span><span class="sym">${el.sym}</span>`;
+      cell.title=`${el.name} (${el.sym})`;
+      cell.onclick=()=>selectElement(el,cell);
+    }else{
+      cell.classList.add('empty');
+    }
+    grid.appendChild(cell);
+  });
+});
+
+function selectElement(el,cell){
+  document.querySelectorAll('.pt-cell.selected').forEach(c=>c.classList.remove('selected'));
+  cell.classList.add('selected');
+  selectedEl=el;
+  const dc=document.getElementById('detailCard');
+  dc.classList.add('show');
+  document.getElementById('dNum').textContent=el.z;
+  document.getElementById('dSym').textContent=el.sym;
+  document.getElementById('dName').textContent=el.name;
+  document.getElementById('dMass').textContent=el.mass.toFixed(3);
+  document.getElementById('dTitle').textContent=`${el.name} — 第${el.period}周期 第${groupLabel(el.group)}族`;
+  document.getElementById('dProps').innerHTML=`
+    <div class="prop"><label>电子构型</label><span>${el.config}</span></div>
+    <div class="prop"><label>原子半径</label><span>${el.radius} pm</span></div>
+    <div class="prop"><label>第一电离能</label><span>${el.ie} kJ/mol</span></div>
+    <div class="prop"><label>电负性</label><span>${el.en||'—'}</span></div>
+    <div class="prop"><label>元素类型</label><span>${el.metal}</span></div>
+    <div class="prop"><label>所在区</label><span>${el.block}区</span></div>
+  `;
+}
+
+function groupLabel(g){
+  if(g===1)return'IA';if(g===2)return'IIA';if(g>=13&&g<=18){
+    const m={13:'IIIA',14:'IVA',15:'VA',16:'VIA',17:'VIIA',18:'0'};return m[g];
+  }
+  return g;
+}
+
+function highlightPeriod(){
+  clearHighlight();
+  const p=+document.getElementById('periodSelect').value;
+  document.querySelectorAll('.pt-cell').forEach(c=>{
+    if(+c.dataset.period===p&&!c.classList.contains('empty'))c.classList.add('highlighted');
+  });
+}
+function highlightGroup(){
+  clearHighlight();
+  const g=+document.getElementById('groupSelect').value;
+  document.querySelectorAll('.pt-cell').forEach(c=>{
+    if(+c.dataset.group===g&&!c.classList.contains('empty'))c.classList.add('highlighted');
+  });
+}
+function clearHighlight(){
+  document.querySelectorAll('.pt-cell.highlighted').forEach(c=>c.classList.remove('highlighted'));
+}
+
+/* ===== Tab 1: Trend Chart ===== */
+const cvT=document.getElementById('cvTrend'),ctxT=cvT.getContext('2d');
+const trendData={
+  '2':{
+    labels:['Li','Be','B','C','N','O','F','Ne'],
+    radius:[152,112,85,77,75,73,71,69],
+    ie:[520,900,801,1087,1402,1314,1681,2081],
+    en:[0.98,1.57,2.04,2.55,3.04,3.44,3.98,0],
+    mp:[5,4,3,3,2,2,1,0]
+  },
+  '3':{
+    labels:['Na','Mg','Al','Si','P','S','Cl','Ar'],
+    radius:[186,160,143,117,110,103,99,97],
+    ie:[496,738,578,786,1012,1000,1251,1521],
+    en:[0.93,1.31,1.61,1.90,2.19,2.58,3.16,0],
+    mp:[5,4,3,3,2,2,1,0]
+  }
+};
+const propNames={radius:'原子半径 (pm)',ie:'第一电离能 (kJ/mol)',en:'电负性 (Pauling)',mp:'金属性 (相对)'};
+const propColors={radius:'#10b981',ie:'#06b6d4',en:'#8b5cf6',mp:'#f59e0b'};
+
+function drawTrend(){
+  const prop=document.getElementById('trendProperty').value;
+  const range=document.getElementById('trendRange').value;
+  const d=trendData[range];
+  const W=cvT.width,H=cvT.height;
+  ctxT.clearRect(0,0,W,H);
+  const pad={l:70,r:30,t:30,b:50};
+  const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  const vals=d[prop];
+  const maxV=Math.max(...vals)*1.15;
+  const minV=0;
+  // Grid
+  ctxT.strokeStyle='rgba(255,255,255,0.06)';ctxT.lineWidth=1;
+  for(let i=0;i<=5;i++){
+    const y=pad.t+ch*(1-i/5);
+    ctxT.beginPath();ctxT.moveTo(pad.l,y);ctxT.lineTo(pad.l+cw,y);ctxT.stroke();
+    ctxT.fillStyle='#94a3b8';ctxT.font='11px sans-serif';ctxT.textAlign='right';
+    ctxT.fillText((minV+(maxV-minV)*i/5).toFixed(prop==='en'?1:0),pad.l-8,y+4);
+  }
+  // Bars + line
+  const n=vals.length;
+  const bw=cw/n*0.5;
+  const color=propColors[prop];
+  vals.forEach((v,i)=>{
+    const x=pad.l+cw*(i+0.5)/n;
+    const h=ch*(v-minV)/(maxV-minV);
+    const y=pad.t+ch-h;
+    // Bar
+    const grd=ctxT.createLinearGradient(x,y,x,pad.t+ch);
+    grd.addColorStop(0,color);grd.addColorStop(1,color+'30');
+    ctxT.fillStyle=grd;
+    ctxT.fillRect(x-bw/2,y,bw,h);
+    // Label
+    ctxT.fillStyle='#94a3b8';ctxT.font='12px sans-serif';ctxT.textAlign='center';
+    ctxT.fillText(d.labels[i],x,H-pad.b+18);
+    // Value
+    ctxT.fillStyle=color;ctxT.font='bold 11px sans-serif';
+    ctxT.fillText(v,x,y-6);
+  });
+  // Y axis label
+  ctxT.save();ctxT.translate(16,pad.t+ch/2);ctxT.rotate(-Math.PI/2);
+  ctxT.fillStyle='#94a3b8';ctxT.font='12px sans-serif';ctxT.textAlign='center';
+  ctxT.fillText(propNames[prop],0,0);ctxT.restore();
+  // Explanation
+  const explains={
+    radius:`<strong>第${range}周期原子半径变化：</strong>从左到右，核电荷数增加，核对电子的吸引力增强，原子半径逐渐<strong>减小</strong>。`,
+    ie:`<strong>第${range}周期电离能变化：</strong>总体趋势从左到右<strong>增大</strong>。注意 Be/B、N/O 处出现反常（全满/半满稳定结构）。`,
+    en:`<strong>第${range}周期电负性变化：</strong>从左到右电负性<strong>增大</strong>，非金属性增强。稀有气体电负性为0（不参与成键）。`,
+    mp:`<strong>第${range}周期金属性变化：</strong>从左到右金属性逐渐<strong>减弱</strong>，由金属过渡到类金属再到非金属。`
+  };
+  document.getElementById('trendExplain').innerHTML=explains[prop];
+}
+
+/* ===== Tab 2: Quiz ===== */
+const quizzes=[
+  {q:'钠(Na)和钾(K)同属第IA族，谁的金属性更强？',opts:['Na','K','一样强','无法判断'],ans:1,
+   explain:'同族从上到下，原子半径增大，失电子能力增强，金属性增强。'},
+  {q:'第3周期中，原子半径最大的元素是？',opts:['Cl','Na','Al','Ar'],ans:1,
+   explain:'同周期从左到右原子半径减小，Na在最左边，半径最大。'},
+  {q:'F和Cl相比，谁的电负性更大？',opts:['F','Cl','一样','无法判断'],ans:0,
+   explain:'同族从上到下电负性减小，F在上方，电负性最大（3.98）。'},
+  {q:'下列元素中，第一电离能最高的是？',opts:['Li','Be','B','C'],ans:1,
+   explain:'Be的2s轨道全满，结构稳定，电离能高于相邻的B（出现反常）。'},
+  {q:'某元素位于第3周期第VIA族，它是？',opts:['O','S','Se','Cl'],ans:1,
+   explain:'第3周期第VIA族是硫(S)，原子序数16。'},
+  {q:'关于Na和Mg的比较，正确的是？',opts:['Na原子半径更小','Mg金属性更强','Na第一电离能更小','Mg电负性更小'],ans:2,
+   explain:'同周期从左到右电离能总体增大，Na在Mg左边，电离能更小。'},
+  {q:'元素X的最高正价为+5，它可能在哪个族？',opts:['IIIA','VA','VIIA','IVA'],ans:1,
+   explain:'主族元素最高正价 = 族序数（O、F除外），+5对应VA族。'},
+  {q:'下列哪对元素性质最相似（对角线规则）？',opts:['Na和K','Li和Mg','C和Si','O和S'],ans:1,
+   explain:'对角线规则：Li与Mg、Be与Al、B与Si性质相似。'}
+];
+let curQuiz=0,quizCorrect=0,quizTotal=0;
+
+function renderQuiz(){
+  const q=quizzes[curQuiz];
+  document.getElementById('quizQ').textContent=`Q${curQuiz+1}. ${q.q}`;
+  let html='';
+  q.opts.forEach((o,i)=>{
+    html+=`<div class="quiz-opt" onclick="answerQuiz(${i})">${o}</div>`;
+  });
+  document.getElementById('quizOpts').innerHTML=html;
+  document.getElementById('quizResult').className='quiz-result';
+  document.getElementById('quizResult').style.display='none';
+}
+
+function answerQuiz(idx){
+  const q=quizzes[curQuiz];
+  quizTotal++;
+  const opts=document.querySelectorAll('.quiz-opt');
+  opts.forEach((o,i)=>{
+    o.style.pointerEvents='none';
+    if(i===q.ans)o.classList.add('correct');
+    if(i===idx&&idx!==q.ans)o.classList.add('wrong');
+  });
+  const res=document.getElementById('quizResult');
+  if(idx===q.ans){
+    quizCorrect++;
+    res.className='quiz-result show ok';
+    res.innerHTML=`✅ 正确！${q.explain}`;
+  }else{
+    res.className='quiz-result show no';
+    res.innerHTML=`❌ 错误。${q.explain}`;
+  }
+  document.getElementById('quizBar').style.width=(quizCorrect/Math.max(quizTotal,1)*100)+'%';
+  document.getElementById('quizScore').textContent=`${quizCorrect}/${quizTotal}`;
+}
+
+function nextQuiz(){
+  curQuiz++;
+  if(curQuiz>=quizzes.length){
+    // 全部答完，结算
+    const pass = quizCorrect >= Math.ceil(quizzes.length * 0.6);
+    const res=document.getElementById('quizResult');
+    res.className='quiz-result show '+(pass?'ok':'no');
+    res.style.display='block';
+    let msg = `🎓 全部 ${quizzes.length} 题已完成，答对 ${quizCorrect} 题（${Math.round(quizCorrect/quizzes.length*100)}%）。`;
+    if(pass){
+      if(typeof PageProgress !== 'undefined'){
+        PageProgress.markDone('02-periodic');
+        msg += ' 已记录完成 ✓';
+      }
+    } else {
+      msg += ' 正确率 ≥60% 才记录完成，可继续刷新重试。';
+    }
+    res.innerHTML = msg;
+    document.getElementById('quizQ').textContent='📊 结算';
+    document.getElementById('quizOpts').innerHTML='';
+    curQuiz = quizzes.length - 1; // 防止继续 ++
+    return;
+  }
+  renderQuiz();
+}
+renderQuiz();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中化学"></script>
+</body>
+</html>

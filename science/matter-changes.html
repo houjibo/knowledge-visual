@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>物质的变化 · 小学科学互动可视化</title>
+<style>
+  :root {
+    --primary: #f59e0b;
+    --solid: #3b82f6;
+    --liquid: #10b981;
+    --gas: #a855f7;
+    --heat: #ef4444;
+    --cool: #06b6d4;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.7);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e3a5f 0%, #2d1b4e 50%, #1e3a5f 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.4rem; background: linear-gradient(90deg, var(--solid), var(--primary), var(--gas)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 1rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab { padding: 12px 24px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(245,158,11,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); cursor: pointer; }
+  .legend { display: flex; gap: 16px; justify-content: center; font-size: 13px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .legend .l-solid::before { background: var(--solid); }
+  .legend .l-liquid::before { background: var(--liquid); }
+  .legend .l-gas::before { background: var(--gas); }
+  .legend .l-heat::before { background: var(--heat); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 680px; }
+  .panel h3 { font-size: 1.15rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .concept-box { font-size: 1.05rem; text-align: left; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 12px 0; line-height: 1.9; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--solid); font-weight: 600; }
+  .concept-box .hl2 { color: var(--liquid); font-weight: 600; }
+  .concept-box .hl3 { color: var(--gas); font-weight: 600; }
+  .concept-box .hlr { color: var(--heat); font-weight: 600; }
+  .concept-box .hlc { color: var(--cool); font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; font-size: 13px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 16px; border-radius: 10px; background: rgba(59,130,246,0.1); border: 2px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 14px; color: #93c5fd; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .state-diagram { margin: 14px 0; padding: 16px; background: rgba(255,255,255,0.04); border-radius: 12px; }
+  .state-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0; font-size: 14px; flex-wrap: wrap; }
+  .state-badge { padding: 8px 16px; border-radius: 10px; font-weight: 600; font-size: 13px; }
+  .state-badge.solid { background: rgba(59,130,246,0.2); color: #93c5fd; border: 2px solid rgba(59,130,246,0.4); }
+  .state-badge.liquid { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 2px solid rgba(16,185,129,0.4); }
+  .state-badge.gas { background: rgba(168,85,247,0.2); color: #c4b5fd; border: 2px solid rgba(168,85,247,0.4); }
+  .arrow-label { font-size: 12px; color: #94a3b8; text-align: center; }
+  .arrow-label .hlr { color: var(--heat); }
+  .arrow-label .hlc { color: var(--cool); }
+
+  .quiz { margin-top: 16px; padding: 18px; background: rgba(245,158,11,0.1); border-radius: 14px; border: 2px solid rgba(245,158,11,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 10px; }
+  .quiz-opt { padding: 12px 16px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 12px; font-size: 14px; color: #fbbf24; min-height: 22px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 14px; }
+  .quiz-nav button { padding: 8px 18px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .thermo-bar { height: 24px; border-radius: 12px; margin: 10px 0; position: relative; overflow: hidden; background: linear-gradient(90deg, #06b6d4 0%, #10b981 30%, #f59e0b 60%, #ef4444 100%); }
+  .thermo-indicator { position: absolute; top: -3px; width: 4px; height: 30px; background: white; border-radius: 2px; transition: left 0.3s; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+
+  .experiment-result { padding: 14px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-top: 12px; font-size: 14px; line-height: 1.8; border-left: 4px solid var(--primary); min-height: 60px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔬 物质的变化</h1>
+    <p>探索物质三态、物态变化与热胀冷缩的奥秘 <span id="done-mark" style="display:none;margin-left:6px;color:#34d399;font-weight:700;">✓ 已完成</span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="0">🧊 物质三态</div>
+    <div class="tab" data-tab="1">🌡️ 物态变化</div>
+    <div class="tab" data-tab="2">🔬 热胀冷缩</div>
+    <div class="tab" data-tab="3">🧪 互动实验</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="700" height="500"></canvas>
+      <div class="legend">
+        <span class="l-solid">固态</span>
+        <span class="l-liquid">液态</span>
+        <span class="l-gas">气态</span>
+        <span class="l-heat">加热/粒子运动</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <!-- Section 0: 物质三态 -->
+      <div class="section active" data-section="0">
+        <h3>🧊 物质的三种状态</h3>
+        <div class="concept-box">
+          物质世界丰富多彩，但大多数物质都有<span class="hl">固态</span>、<span class="hl2">液态</span>、<span class="hl3">气态</span>三种状态。<br>
+          比如水：冰→水→水蒸气 🧊💧☁️
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-state="solid">固态（冰）</div>
+          <div class="mode-btn" data-state="liquid">液态（水）</div>
+          <div class="mode-btn" data-state="gas">气态（水蒸气）</div>
+        </div>
+
+        <div class="info-grid">
+          <div><b>🧊 固态</b><br>分子排列紧密，只能在原位振动，有固定形状和体积</div>
+          <div><b>💧 液态</b><br>分子间距较大，可以滑动流动，有固定体积但无固定形状</div>
+          <div><b>☁️ 气态</b><br>分子间距很大，高速运动，无固定形状和体积</div>
+          <div><b>🔑 关键</b><br>温度越高，分子运动越剧烈，间距越大</div>
+        </div>
+
+        <div class="quiz" id="quiz0">
+          <div class="quiz-q"></div>
+          <div class="quiz-opts"></div>
+          <div class="quiz-feedback"></div>
+          <div class="quiz-nav">
+            <button onclick="quizPrev(0)">上一题</button>
+            <button onclick="quizNext(0)">下一题</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 1: 物态变化 -->
+      <div class="section" data-section="1">
+        <h3>🌡️ 物态变化</h3>
+        <div class="concept-box">
+          物质从一种状态变成另一种状态，叫做<span class="hlr">物态变化</span>。<br>
+          <span class="hlr">吸热</span>：固态→液态→气态（熔化、汽化、升华）<br>
+          <span class="hlc">放热</span>：气态→液态→固态（液化、凝固、凝华）
+        </div>
+
+        <div class="state-diagram">
+          <div class="state-row">
+            <span class="state-badge solid">🧊 固态</span>
+            <span class="arrow-label"><span class="hlr">→ 熔化 吸热 →</span><br><span class="hlc">← 凝固 放热 ←</span></span>
+            <span class="state-badge liquid">💧 液态</span>
+            <span class="arrow-label"><span class="hlr">→ 汽化 吸热 →</span><br><span class="hlc">← 液化 放热 ←</span></span>
+            <span class="state-badge gas">☁️ 气态</span>
+          </div>
+          <div style="text-align:center; margin-top:8px; font-size:13px; color:#94a3b8;">
+            固态 ⇌ 气态：<span class="hlr">升华吸热</span> / <span class="hlc">凝华放热</span>（如霜的形成）
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <label>🌡️ 温度</label>
+          <input type="range" id="tempSlider" min="-20" max="120" value="0" step="1">
+          <span class="val" id="tempVal">0°C</span>
+        </div>
+        <div class="thermo-bar">
+          <div class="thermo-indicator" id="thermoInd"></div>
+        </div>
+
+        <div class="info-grid">
+          <div><b>🧊→💧 熔化</b><br>冰在 0°C 开始熔化成水，需要不断吸热</div>
+          <div><b>💧→☁️ 汽化</b><br>水在 100°C 沸腾汽化，蒸发在任何温度都可发生</div>
+          <div><b>☁️→💧 液化</b><br>水蒸气遇冷变成小水滴（露珠、雾）</div>
+          <div><b>💧→🧊 凝固</b><br>水在 0°C 以下结成冰，放出热量</div>
+        </div>
+
+        <div class="quiz" id="quiz1">
+          <div class="quiz-q"></div>
+          <div class="quiz-opts"></div>
+          <div class="quiz-feedback"></div>
+          <div class="quiz-nav">
+            <button onclick="quizPrev(1)">上一题</button>
+            <button onclick="quizNext(1)">下一题</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: 热胀冷缩 -->
+      <div class="section" data-section="2">
+        <h3>📏 热胀冷缩</h3>
+        <div class="concept-box">
+          大多数物质都有<span class="hlr">热胀冷缩</span>的性质：<br>
+          温度升高 → 分子运动加快 → 间距增大 → <span class="hlr">体积膨胀</span><br>
+          温度降低 → 分子运动减慢 → 间距缩小 → <span class="hlc">体积收缩</span>
+        </div>
+
+        <div class="slider-row">
+          <label>🌡️ 温度</label>
+          <input type="range" id="expandSlider" min="0" max="100" value="20" step="1">
+          <span class="val" id="expandVal">20°C</span>
+        </div>
+
+        <div class="info-grid">
+          <div><b>🌡️ 温度计</b><br>利用液体热胀冷缩原理，水银/酒精随温度升降</div>
+          <div><b>🌉 桥梁伸缩缝</b><br>铁桥留有缝隙，防止夏天热胀变形</div>
+          <div><b>🫙 瓶盖打不开</b><br>用热水烫瓶盖，金属盖膨胀就能拧开</div>
+          <div><b>⚠️ 水的反常</b><br>水在 0~4°C 反常膨胀：冷胀热缩！所以冰浮在水面</div>
+        </div>
+
+        <div class="quiz" id="quiz2">
+          <div class="quiz-q"></div>
+          <div class="quiz-opts"></div>
+          <div class="quiz-feedback"></div>
+          <div class="quiz-nav">
+            <button onclick="quizPrev(2)">上一题</button>
+            <button onclick="quizNext(2)">下一题</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: 互动实验 -->
+      <div class="section" data-section="3">
+        <h3>🧪 互动实验：加热水</h3>
+        <div class="concept-box">
+          点击<span class="hlr">「开始加热」</span>按钮，观察水从冰→水→水蒸气的完整变化过程！<br>
+          注意观察分子运动的<span class="hlr">速度变化</span>和<span class="hl3">间距变化</span>。
+        </div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" id="btnHeat" onclick="toggleHeating()">🔥 开始加热</div>
+          <div class="mode-btn" id="btnReset" onclick="resetExperiment()">🔄 重置</div>
+        </div>
+
+        <div class="slider-row">
+          <label>当前温度</label>
+          <div style="flex:1; height:20px; border-radius:10px; background: linear-gradient(90deg, #06b6d4, #10b981, #f59e0b, #ef4444); position:relative;">
+            <div id="expThermo" style="position:absolute; top:-4px; width:4px; height:28px; background:white; border-radius:2px; left:0%; box-shadow:0 0 8px rgba(255,255,255,0.6); transition:left 0.3s;"></div>
+          </div>
+          <span class="val" id="expTempVal">-10°C</span>
+        </div>
+
+        <div class="experiment-result" id="expResult">
+          🧊 当前状态：<b>固态（冰）</b> — 温度较低，分子紧密排列，在原位振动。
+        </div>
+
+        <div class="quiz" id="quiz3">
+          <div class="quiz-q"></div>
+          <div class="quiz-opts"></div>
+          <div class="quiz-feedback"></div>
+          <div class="quiz-nav">
+            <button onclick="quizPrev(3)">上一题</button>
+            <button onclick="quizNext(3)">下一题</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// ─── PageProgress 接线（r140）───
+const SLUG = 'matter-changes';
+const ALL_TABS = [0, 1, 2, 3];
+const visitedTabs = new Set([0]);
+const quizAttempted = new Set();
+const quizFirstTryCorrect = new Set();
+const TOTAL_QUIZZES = 12; // 4 tabs × 3 questions
+
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize() {
+  const r = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  W = canvas.width = rect.width * r;
+  H = canvas.height = rect.height * r;
+  ctx.setTransform(r, 0, 0, r, 0, 0);
+}
+resize();
+window.addEventListener('resize', resize);
+const cW = () => canvas.getBoundingClientRect().width;
+const cH = () => canvas.getBoundingClientRect().height;
+
+let currentTab = 0;
+let currentState = 'solid';
+let temp = 0;
+let expandTemp = 20;
+let heating = false;
+let expTemp = -10;
+
+// Particles
+const NUM = 60;
+let particles = [];
+function initParticles() {
+  particles = [];
+  for (let i = 0; i < NUM; i++) {
+    particles.push({
+      x: Math.random() * 0.8 + 0.1,
+      y: Math.random() * 0.8 + 0.1,
+      vx: (Math.random() - 0.5) * 0.002,
+      vy: (Math.random() - 0.5) * 0.002,
+      baseX: 0.1 + (i % 8) * 0.1,
+      baseY: 0.1 + Math.floor(i / 8) * 0.12,
+      r: 6 + Math.random() * 3,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+}
+initParticles();
+
+function getStateForTemp(t) {
+  if (t <= 0) return 'solid';
+  if (t <= 100) return 'liquid';
+  return 'gas';
+}
+
+function drawParticles(state, temperature) {
+  const w = cW(), h = cH();
+  ctx.clearRect(0, 0, w, h);
+
+  // Container
+  const cx = w * 0.08, cy = h * 0.06, cw = w * 0.84, ch = h * 0.88;
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(cx, cy, cw, ch, 12);
+  ctx.stroke();
+
+  // State label
+  const labels = { solid: '🧊 固态', liquid: '💧 液态', gas: '☁️ 气态' };
+  const colors = { solid: '#3b82f6', liquid: '#10b981', gas: '#a855f7' };
+  ctx.fillStyle = colors[state] || '#f59e0b';
+  ctx.font = 'bold 18px "PingFang SC", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(labels[state] || '', cx + 12, cy + 28);
+
+  const t = performance.now() / 1000;
+  const speed = state === 'solid' ? 0.3 : state === 'liquid' ? 1.5 : 3.5;
+  const spacing = state === 'solid' ? 0.02 : state === 'liquid' ? 0.06 : 0.15;
+
+  particles.forEach((p, i) => {
+    if (state === 'solid') {
+      // Vibrate around grid position
+      const gx = cx + 20 + (i % 8) * (cw - 40) / 7;
+      const gy = cy + 40 + Math.floor(i / 8) * (ch - 60) / 7;
+      const ox = Math.sin(t * 3 + p.phase) * 3;
+      const oy = Math.cos(t * 2.5 + p.phase) * 3;
+      p.x = gx + ox;
+      p.y = gy + oy;
+    } else if (state === 'liquid') {
+      p.x += p.vx * speed;
+      p.y += p.vy * speed;
+      // Keep in container, settle at bottom
+      p.vy += 0.00005; // gravity
+      if (p.x < cx + 15) { p.x = cx + 15; p.vx *= -0.8; }
+      if (p.x > cx + cw - 15) { p.x = cx + cw - 15; p.vx *= -0.8; }
+      if (p.y > cy + ch - 15) { p.y = cy + ch - 15; p.vy *= -0.5; p.vx += (Math.random() - 0.5) * 0.001; }
+      if (p.y < cy + ch * 0.3) { p.vy += 0.0002; }
+      // Random direction change
+      if (Math.random() < 0.02) { p.vx += (Math.random() - 0.5) * 0.001; p.vy += (Math.random() - 0.5) * 0.001; }
+    } else {
+      // Gas - fast, fill space
+      p.x += p.vx * speed;
+      p.y += p.vy * speed;
+      if (p.x < cx + 10 || p.x > cx + cw - 10) p.vx *= -1;
+      if (p.y < cy + 10 || p.y > cy + ch - 10) p.vy *= -1;
+      p.x = Math.max(cx + 10, Math.min(cx + cw - 10, p.x));
+      p.y = Math.max(cy + 10, Math.min(cy + ch - 10, p.y));
+      if (Math.random() < 0.03) { p.vx += (Math.random() - 0.5) * 0.003; p.vy += (Math.random() - 0.5) * 0.003; }
+    }
+
+    // Draw particle
+    const alpha = state === 'gas' ? 0.5 : 0.8;
+    const color = state === 'solid' ? '59,130,246' : state === 'liquid' ? '16,185,129' : '168,85,247';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * (state === 'gas' ? 0.7 : 1), 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${color},${alpha})`;
+    ctx.fill();
+
+    // Glow for hot particles
+    if (state !== 'solid') {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * 2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${color},0.1)`;
+      ctx.fill();
+    }
+
+    // Motion trails for gas
+    if (state === 'gas') {
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x - p.vx * 200, p.y - p.vy * 200);
+      ctx.strokeStyle = `rgba(${color},0.15)`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  });
+}
+
+function drawExpansion(temp) {
+  const w = cW(), h = cH();
+  ctx.clearRect(0, 0, w, h);
+
+  const scale = 1 + (temp - 20) * 0.003;
+  const baseW = 120, baseH = 200;
+  const sw = baseW * scale, sh = baseH * scale;
+
+  // Draw ruler background
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillRect(w * 0.1, h * 0.1, w * 0.8, h * 0.8);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    const y = h * 0.1 + i * (h * 0.8) / 10;
+    ctx.beginPath(); ctx.moveTo(w * 0.1, y); ctx.lineTo(w * 0.9, y); ctx.stroke();
+  }
+
+  // Original size outline
+  const ox = w * 0.5 - baseW / 2, oy = h * 0.5 - baseH / 2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.setLineDash([5, 5]);
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(ox, oy, baseW, baseH);
+  ctx.setLineDash([]);
+
+  // Current size
+  const cx = w * 0.5 - sw / 2, cy = h * 0.5 - sh / 2;
+  const hue = temp > 20 ? `rgba(239,68,68,0.6)` : `rgba(6,182,212,0.6)`;
+  ctx.fillStyle = hue;
+  ctx.beginPath();
+  ctx.roundRect(cx, cy, sw, sh, 6);
+  ctx.fill();
+  ctx.strokeStyle = temp > 20 ? '#ef4444' : '#06b6d4';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#f1f5f9';
+  ctx.font = 'bold 16px "PingFang SC", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${temp > 20 ? '膨胀' : temp < 20 ? '收缩' : '标准'} ${((scale - 1) * 100).toFixed(1)}%`, w * 0.5, cy - 16);
+
+  // Draw metal ball experiment
+  const ballY = h * 0.82;
+  const ballR = 20 * scale;
+  // Ring
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(w * 0.3, ballY, 22, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#64748b';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('铁环', w * 0.3, ballY + 38);
+
+  // Ball
+  const ballGrad = ctx.createRadialGradient(w * 0.65 - ballR * 0.3, ballY - ballR * 0.3, 2, w * 0.65, ballY, ballR);
+  ballGrad.addColorStop(0, '#fbbf24');
+  ballGrad.addColorStop(1, '#b45309');
+  ctx.fillStyle = ballGrad;
+  ctx.beginPath();
+  ctx.arc(w * 0.65, ballY, ballR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#64748b';
+  ctx.fillText('金属球', w * 0.65, ballY + 38);
+
+  // Thermometer
+  const tx = w * 0.88, ty = h * 0.15, th = h * 0.7;
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.beginPath();
+  ctx.roundRect(tx - 8, ty, 16, th, 8);
+  ctx.fill();
+
+  const fillH = th * (temp / 100);
+  const tGrad = ctx.createLinearGradient(0, ty + th - fillH, 0, ty + th);
+  tGrad.addColorStop(0, '#ef4444');
+  tGrad.addColorStop(1, '#dc2626');
+  ctx.fillStyle = tGrad;
+  ctx.beginPath();
+  ctx.roundRect(tx - 5, ty + th - fillH, 10, fillH, 5);
+  ctx.fill();
+
+  // Temp marks
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px monospace';
+  ctx.textAlign = 'right';
+  for (let t = 0; t <= 100; t += 20) {
+    const my = ty + th - (t / 100) * th;
+    ctx.fillText(`${t}°`, tx - 14, my + 4);
+    ctx.beginPath(); ctx.moveTo(tx - 8, my); ctx.lineTo(tx + 8, my);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+}
+
+function drawExperiment() {
+  const state = getStateForTemp(expTemp);
+  drawParticles(state, expTemp);
+}
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = parseInt(tab.dataset.tab);
+    visitedTabs.add(currentTab);
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelector(`.section[data-section="${currentTab}"]`).classList.add('active');
+    maybeMarkDone();
+  });
+});
+
+// State buttons
+document.querySelectorAll('.mode-btn[data-state]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn[data-state]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentState = btn.dataset.state;
+  });
+});
+
+// Temperature slider
+document.getElementById('tempSlider').addEventListener('input', e => {
+  temp = parseInt(e.target.value);
+  document.getElementById('tempVal').textContent = temp + '°C';
+  const pct = ((temp + 20) / 140) * 100;
+  document.getElementById('thermoInd').style.left = pct + '%';
+  currentState = getStateForTemp(temp);
+});
+
+// Expansion slider
+document.getElementById('expandSlider').addEventListener('input', e => {
+  expandTemp = parseInt(e.target.value);
+  document.getElementById('expandVal').textContent = expandTemp + '°C';
+});
+
+// Heating experiment
+function toggleHeating() {
+  heating = !heating;
+  document.getElementById('btnHeat').textContent = heating ? '⏸️ 暂停加热' : '🔥 继续加热';
+  document.getElementById('btnHeat').classList.toggle('active', heating);
+}
+function resetExperiment() {
+  heating = false;
+  expTemp = -10;
+  document.getElementById('btnHeat').textContent = '🔥 开始加热';
+  document.getElementById('btnHeat').classList.remove('active');
+  updateExpUI();
+}
+function updateExpUI() {
+  const pct = Math.max(0, Math.min(100, ((expTemp + 10) / 130) * 100));
+  document.getElementById('expThermo').style.left = pct + '%';
+  document.getElementById('expTempVal').textContent = Math.round(expTemp) + '°C';
+  const state = getStateForTemp(expTemp);
+  const stateNames = { solid: '固态（冰）', liquid: '液态（水）', gas: '气态（水蒸气）' };
+  const stateDesc = {
+    solid: '温度较低，分子紧密排列，在原位振动。',
+    liquid: '温度升高，分子可以滑动流动，形成水面。',
+    gas: '温度很高，分子高速运动，充满整个空间！'
+  };
+  const icons = { solid: '🧊', liquid: '💧', gas: '☁️' };
+  document.getElementById('expResult').innerHTML = `${icons[state]} 当前状态：<b>${stateNames[state]}</b> — ${stateDesc[state]}`;
+}
+
+// Animation loop
+function animate() {
+  if (currentTab === 0) {
+    drawParticles(currentState, 0);
+  } else if (currentTab === 1) {
+    drawParticles(currentState, temp);
+  } else if (currentTab === 2) {
+    drawExpansion(expandTemp);
+  } else if (currentTab === 3) {
+    if (heating && expTemp < 120) {
+      expTemp += 0.3;
+      updateExpUI();
+    }
+    drawExperiment();
+  }
+  requestAnimationFrame(animate);
+}
+animate();
+
+// Quizzes
+const quizzes = [
+  // Tab 0: 物质三态
+  [
+    { q: '冰属于物质的哪种状态？', opts: ['固态', '液态', '气态', '等离子态'], ans: 0, exp: '冰是水的固态形式，分子排列紧密有序。' },
+    { q: '哪种状态的物质没有固定形状也没有固定体积？', opts: ['固态', '液态', '气态', '都有固定体积'], ans: 2, exp: '气态物质分子间距大，高速运动，既无固定形状也无固定体积。' },
+    { q: '液态水的特点是什么？', opts: ['有固定形状', '有固定体积但无固定形状', '无固定体积', '分子不动'], ans: 1, exp: '液态水有固定体积，但会随着容器改变形状。' },
+  ],
+  // Tab 1: 物态变化
+  [
+    { q: '冰融化成水需要什么？', opts: ['放热', '吸热', '不加也不放热', '加压'], ans: 1, exp: '熔化是吸热过程，冰需要从外界吸收热量才能变成水。' },
+    { q: '冬天窗户上的冰花是什么现象？', opts: ['凝固', '液化', '凝华', '升华'], ans: 2, exp: '冰花是室内水蒸气直接变成固态冰晶，属于凝华现象。' },
+    { q: '湿衣服晾干是什么物态变化？', opts: ['熔化', '汽化（蒸发）', '升华', '液化'], ans: 1, exp: '水在常温下慢慢变成水蒸气散发到空气中，属于蒸发（汽化的一种）。' },
+  ],
+  // Tab 2: 热胀冷缩
+  [
+    { q: '温度计利用的是什么原理？', opts: ['热传导', '热胀冷缩', '热辐射', '光的折射'], ans: 1, exp: '温度计里的液体（如水银、酒精）随温度升高膨胀、降低收缩，从而显示温度。' },
+    { q: '水在哪个温度范围内有"反常膨胀"？', opts: ['100°C以上', '0~4°C', '50~100°C', '没有反常'], ans: 1, exp: '水在0~4°C之间反常膨胀（冷胀热缩），所以冰的密度比水小，能浮在水面。' },
+    { q: '铁轨之间为什么要留缝隙？', opts: ['美观', '节省材料', '防止热胀变形', '方便维修'], ans: 2, exp: '铁轨受热会膨胀，不留缝隙会因挤压而弯曲变形。' },
+  ],
+  // Tab 3: 互动实验
+  [
+    { q: '水沸腾时的温度是多少？', opts: ['0°C', '50°C', '100°C', '200°C'], ans: 2, exp: '在标准大气压下，水在100°C时沸腾，大量气泡从底部上升。' },
+    { q: '水结冰时体积会怎样变化？', opts: ['缩小', '不变', '膨胀', '先缩后胀'], ans: 2, exp: '水结冰时体积膨胀约9%，这就是为什么冬天水管可能被冻裂。' },
+    { q: '蒸发和沸腾有什么区别？', opts: ['没有区别', '蒸发只在表面、任何温度；沸腾在内部和表面、特定温度', '蒸发更快', '沸腾不需要热量'], ans: 1, exp: '蒸发是液体表面在任何温度下缓慢汽化；沸腾是液体内部和表面同时剧烈汽化，需要达到沸点。' },
+  ]
+];
+
+const quizState = [0, 0, 0, 0]; // current question index per tab
+const quizAnswered = [[false,false,false],[false,false,false],[false,false,false],[false,false,false]]; // track answered per tab/question
+
+function renderQuiz(tabIdx) {
+  const container = document.getElementById('quiz' + tabIdx);
+  if (!container) return;
+  const qs = quizzes[tabIdx];
+  const qi = quizState[tabIdx];
+  const q = qs[qi];
+  const answeredCount = quizAnswered[tabIdx].filter(Boolean).length;
+  container.querySelector('.quiz-q').textContent = `Q${qi + 1}/${qs.length}（已答 ${answeredCount}/${qs.length}）: ${q.q}`;
+  const optsDiv = container.querySelector('.quiz-opts');
+  optsDiv.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.onclick = () => {
+      if (optsDiv.querySelector('.correct') || optsDiv.querySelector('.wrong')) return;
+      div.classList.add(i === q.ans ? 'correct' : 'wrong');
+      if (i !== q.ans) optsDiv.children[q.ans].classList.add('correct');
+      quizAnswered[tabIdx][qi] = true;
+      // ─── PageProgress：首答记录（r140）───
+      const qKey = `${tabIdx}-${qi}`;
+      if (!quizAttempted.has(qKey)) {
+        quizAttempted.add(qKey);
+        if (i === q.ans) quizFirstTryCorrect.add(qKey);
+        maybeMarkDone();
+      }
+      const newCount = quizAnswered[tabIdx].filter(Boolean).length;
+      container.querySelector('.quiz-q').textContent = `Q${qi + 1}/${qs.length}（已答 ${newCount}/${qs.length}）: ${q.q}`;
+      container.querySelector('.quiz-feedback').textContent = (i === q.ans ? '✅ 正确！' : '❌ 错误。') + q.exp;
+    };
+    optsDiv.appendChild(div);
+  });
+  container.querySelector('.quiz-feedback').textContent = '';
+}
+
+function quizNext(tabIdx) {
+  const qs = quizzes[tabIdx];
+  if (quizState[tabIdx] < qs.length - 1) { quizState[tabIdx]++; renderQuiz(tabIdx); }
+}
+function quizPrev(tabIdx) {
+  if (quizState[tabIdx] > 0) { quizState[tabIdx]--; renderQuiz(tabIdx); }
+}
+
+// Init quizzes
+for (let i = 0; i < 4; i++) renderQuiz(i);
+
+// ─── PageProgress：完成判定 + toast（r140）───
+function maybeMarkDone() {
+  if (typeof PageProgress === 'undefined') return;
+  if (PageProgress.isDone(SLUG)) return;
+  const allVisited = ALL_TABS.every(t => visitedTabs.has(t));
+  const allCorrect = quizFirstTryCorrect.size === TOTAL_QUIZZES;
+  if (allVisited && allCorrect) {
+    PageProgress.markDone(SLUG);
+    showMatterToast('🎉 「物质的变化」知识地图已点亮！');
+    updateDoneMark();
+  }
+}
+
+function showMatterToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(52,199,89,.95);color:#fff;padding:12px 22px;border-radius:12px;font-size:14px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .4s'; setTimeout(() => t.remove(), 400); }, 2200);
+}
+
+function updateDoneMark() {
+  if (typeof PageProgress === 'undefined') return;
+  if (PageProgress.isDone(SLUG)) {
+    const m = document.getElementById('done-mark');
+    if (m) m.style.display = 'inline';
+  }
+}
+updateDoneMark();
+
+// Init thermo indicator
+document.getElementById('thermoInd').style.left = ((0 + 20) / 140 * 100) + '%';
+updateExpUI();
+</script>
+  <script src="assets/nav.js" data-home="../index.html" data-back="index.html" data-label="小学科学"></script>
+</body>
+</html>

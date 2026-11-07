@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>多普勒效应 · 大学物理互动可视化</title>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --source: #3b82f6;
+    --observer: #10b981;
+    --wave: #f59e0b;
+    --redshift: #ef4444;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px;
+    font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #c4b5fd; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #8b5cf6, #a78bfa, #c4b5fd); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); color: #1e1b4b; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%); touch-action: none; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #c4b5fd; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 120px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 110px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #c4b5fd; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.source { border-color: var(--source); }
+  .concept-card.observer { border-color: var(--observer); }
+  .concept-card.wave { border-color: var(--wave); }
+  .concept-card.redshift { border-color: var(--redshift); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.source .title { color: var(--source); }
+  .concept-card.observer .title { color: var(--observer); }
+  .concept-card.wave .title { color: var(--wave); }
+  .concept-card.redshift .title { color: var(--redshift); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-source::before { background: var(--source); }
+  .legend .l-observer::before { background: var(--observer); }
+  .legend .l-wave::before { background: var(--wave); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 36px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: #1e1b4b; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #c4b5fd; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #1e1b4b; font-weight: 700; min-height: 36px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">🔭 物理</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">大学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">多普勒效应</span>
+  </nav>
+
+  <header>
+    <h1>🔊 多普勒效应</h1>
+    <p>波源运动 · 观察者运动 · 频率偏移 · 红移与蓝移 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 学习</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 学习模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="learnCanvas" width="700" height="420"></canvas>
+        <div class="legend">
+          <span class="l-source">波源 S</span>
+          <span class="l-observer">观察者 O</span>
+          <span class="l-wave">波前</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📐 核心公式</h3>
+        <div class="equation">
+          观察者接收频率：<b>f' = f₀ × (v ± v<sub>o</sub>) / (v ∓ v<sub>s</sub>)</b><br/>
+          声速 v = 340 m/s（15°C 空气中）<br/>
+          马赫数：<b>Ma = v<sub>s</sub> / v</b>
+        </div>
+        <div class="slider-row">
+          <label>波源速度 vₛ (m/s)</label>
+          <input type="range" id="vs" min="0" max="400" step="5" value="100" />
+          <span class="val" id="vsv">100 m/s</span>
+        </div>
+        <div class="slider-row">
+          <label>观察者速度 vₒ (m/s)</label>
+          <input type="range" id="vo" min="0" max="100" step="5" value="0" />
+          <span class="val" id="vov">0 m/s</span>
+        </div>
+        <div class="slider-row">
+          <label>波源频率 f₀ (Hz)</label>
+          <input type="range" id="f0" min="100" max="2000" step="50" value="500" />
+          <span class="val" id="f0v">500 Hz</span>
+        </div>
+        <div class="info-grid">
+          <div>接收频率 f'：<b id="calc-f">—</b></div>
+          <div>频率偏移 Δf：<b id="calc-df">—</b></div>
+          <div>马赫数 Ma：<b id="calc-ma">—</b></div>
+          <div>状态：<b id="calc-state">—</b></div>
+        </div>
+        <div class="concept-card source">
+          <div class="title">🔵 波源运动</div>
+          波源向观察者运动时，波长被压缩，频率升高（蓝移）；远离时波长被拉伸，频率降低（红移）。公式分母用 ∓：靠近用减号，远离用加号。
+        </div>
+        <div class="concept-card observer">
+          <div class="title">🟢 观察者运动</div>
+          观察者向波源运动时，单位时间接收更多波前，频率升高；远离时接收更少，频率降低。公式分子用 ±：靠近用加号，远离用减号。
+        </div>
+        <div class="concept-card wave">
+          <div class="title">🌊 冲击波与音爆</div>
+          当波源速度超过波速（Ma > 1），波前无法向前传播，在后方形成锥形冲击波。半锥角 sinθ = v/vₛ = 1/Ma。这就是音爆和船首波的原理。
+        </div>
+        <div class="concept-card redshift">
+          <div class="title">🔴 宇宙学红移</div>
+          遥远星系的光谱线向红端移动，说明它们在远离我们。哈勃定律 v = H₀D 将红移量与距离关联，是宇宙膨胀的直接证据。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🧪 练习：调参达到目标</h3>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-target="approach">靠近（蓝移）</button>
+          <button class="mode-btn" data-target="recede">远离（红移）</button>
+          <button class="mode-btn" data-target="shock">冲击波</button>
+        </div>
+        <div class="slider-row">
+          <label>波源速度 vₛ (m/s)</label>
+          <input type="range" id="pvs" min="0" max="400" step="5" value="100" />
+          <span class="val" id="pvsv">100 m/s</span>
+        </div>
+        <div class="slider-row">
+          <label>观察者速度 vₒ (m/s)</label>
+          <input type="range" id="pvo" min="0" max="100" step="5" value="0" />
+          <span class="val" id="pvov">0 m/s</span>
+        </div>
+        <div class="slider-row">
+          <label>波源频率 f₀ (Hz)</label>
+          <input type="range" id="pf0" min="100" max="2000" step="50" value="500" />
+          <span class="val" id="pf0v">500 Hz</span>
+        </div>
+        <div class="info-grid">
+          <div>当前 f'：<b id="p-f">—</b></div>
+          <div>当前 Δf：<b id="p-df">—</b></div>
+          <div>当前 Ma：<b id="p-ma">—</b></div>
+          <div>状态：<b id="p-status">未达成</b></div>
+        </div>
+        <div class="concept-card wave">
+          <div class="title">💡 提示</div>
+          <span id="p-hint">让波源向观察者运动（vₛ > 0），观察频率升高现象。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="quizCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🎯 随堂测验（4 题，3/4 合格）</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q">题目加载中…</div>
+          <div class="quiz-opts" id="quiz-opts"></div>
+          <div class="quiz-feedback" id="quiz-fb"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev">⬅ 上一题</button>
+            <button id="quiz-next">下一题 ➡</button>
+            <button id="quiz-submit" class="hidden">📊 提交评分</button>
+            <button id="quiz-retry" class="hidden">🔄 重新测验</button>
+          </div>
+          <div class="quiz-result hidden" id="quiz-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Knowledge Visual · 大学物理 · 多普勒效应 · <span id="done-mark"></span></footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+let mode = 'learn';
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    mode = t.dataset.mode;
+    Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+    if (mode === 'quiz') renderQuiz();
+    draw();
+  });
+});
+
+/* ============================================================
+ * 多普勒计算
+ * ============================================================ */
+function doppler(vs, vo, f0) {
+  const v = 340; // 声速 m/s
+  // 波源向观察者运动（vs > 0），观察者静止或向波源运动（vo > 0）
+  // f' = f0 * (v + vo) / (v - vs)  — 假设相互靠近
+  const f_prime = f0 * (v + vo) / (v - vs);
+  const df = f_prime - f0;
+  const ma = vs / v;
+  let state;
+  if (ma >= 1) state = '冲击波';
+  else if (df > 0) state = '蓝移（频率升高）';
+  else if (df < 0) state = '红移（频率降低）';
+  else state = '无偏移';
+  return { f_prime, df, ma, state };
+}
+
+/* ============================================================
+ * 学习模式
+ * ============================================================ */
+const vsEl = document.getElementById('vs');
+const voEl = document.getElementById('vo');
+const f0El = document.getElementById('f0');
+function updLearn() {
+  document.getElementById('vsv').textContent = vsEl.value + ' m/s';
+  document.getElementById('vov').textContent = voEl.value + ' m/s';
+  document.getElementById('f0v').textContent = f0El.value + ' Hz';
+  const d = doppler(+vsEl.value, +voEl.value, +f0El.value);
+  document.getElementById('calc-f').textContent = d.f_prime.toFixed(1) + ' Hz';
+  document.getElementById('calc-df').textContent = (d.df >= 0 ? '+' : '') + d.df.toFixed(1) + ' Hz';
+  document.getElementById('calc-ma').textContent = d.ma.toFixed(2);
+  document.getElementById('calc-state').textContent = d.state;
+}
+[vsEl, voEl, f0El].forEach(el => el.addEventListener('input', () => { updLearn(); draw(); }));
+updLearn();
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const pvs = document.getElementById('pvs');
+const pvo = document.getElementById('pvo');
+const pf0 = document.getElementById('pf0');
+let practiceTarget = 'approach';
+const targetDesc = {
+  approach: { text: '靠近（蓝移）', check: d => d.df > 50, hint: '让波源向观察者运动（vₛ > 0），频率升高超过 50 Hz。' },
+  recede:   { text: '远离（红移）', check: d => d.df < -50, hint: '让波源远离观察者（vₛ 为负方向，即 vₛ 设为较小值，vₒ 设为较大值），或增大 vₒ 使相对速度远离。' },
+  shock:    { text: '冲击波', check: d => d.ma >= 1, hint: '让波源速度超过声速 340 m/s（Ma ≥ 1），形成冲击波。' }
+};
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    practiceTarget = btn.dataset.target;
+    document.getElementById('p-hint').textContent = targetDesc[practiceTarget].hint;
+    updPractice(); draw();
+  });
+});
+function updPractice() {
+  document.getElementById('pvsv').textContent = pvs.value + ' m/s';
+  document.getElementById('pvov').textContent = pvo.value + ' m/s';
+  document.getElementById('pf0v').textContent = pf0.value + ' Hz';
+  const d = doppler(+pvs.value, +pvo.value, +pf0.value);
+  document.getElementById('p-f').textContent = d.f_prime.toFixed(1) + ' Hz';
+  document.getElementById('p-df').textContent = (d.df >= 0 ? '+' : '') + d.df.toFixed(1) + ' Hz';
+  document.getElementById('p-ma').textContent = d.ma.toFixed(2);
+  const ok = targetDesc[practiceTarget].check(d);
+  document.getElementById('p-status').textContent = ok ? '✅ 达成！' : '未达成';
+  document.getElementById('p-status').style.color = ok ? '#10b981' : '#f59e0b';
+}
+[pvs, pvo, pf0].forEach(el => el.addEventListener('input', () => { updPractice(); draw(); }));
+updPractice();
+
+/* ============================================================
+ * Canvas 绘制：多普勒效应示意
+ * ============================================================ */
+function drawScene(ctx, W, H, vs, vo, f0, showLabels) {
+  const d = doppler(vs, vo, f0);
+  ctx.clearRect(0, 0, W, H);
+
+  const t = Date.now() / 1000;
+  const v = 340; // 声速
+
+  // 波源位置（从左向右运动）
+  const srcX = 100 + (t * vs * 0.3) % (W - 250);
+  const srcY = H / 2;
+
+  // 观察者位置（右侧）
+  const obsX = W - 120;
+  const obsY = H / 2;
+
+  // 绘制波前（同心圆，但波源移动导致偏心）
+  const waveSpeed = 0.15; // 波前传播速度（像素/帧）
+  const maxR = 250;
+  const nWaves = 8;
+  for (let i = 0; i < nWaves; i++) {
+    const age = ((t * waveSpeed * 60 + i * 30) % maxR);
+    const emitTime = t - age / (waveSpeed * 60);
+    const emitX = 100 + (emitTime * vs * 0.3) % (W - 250);
+    const alpha = 0.3 * (1 - age / maxR);
+    ctx.strokeStyle = `rgba(245,158,11,${alpha})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(emitX, srcY, age, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // 波源
+  ctx.beginPath();
+  ctx.arc(srcX, srcY, 14, 0, Math.PI * 2);
+  ctx.fillStyle = '#3b82f6';
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('S', srcX, srcY + 4);
+
+  // 观察者
+  ctx.beginPath();
+  ctx.arc(obsX, obsY, 12, 0, Math.PI * 2);
+  ctx.fillStyle = '#10b981';
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.fillText('O', obsX, obsY + 4);
+
+  // 速度箭头
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(srcX, srcY - 30);
+  ctx.lineTo(srcX + vs * 0.15, srcY - 30);
+  ctx.stroke();
+  ctx.fillStyle = '#3b82f6';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('vₛ=' + vs + ' m/s', srcX + vs * 0.15 + 5, srcY - 26);
+
+  if (vo > 0) {
+    ctx.strokeStyle = '#10b981';
+    ctx.beginPath();
+    ctx.moveTo(obsX, obsY - 30);
+    ctx.lineTo(obsX - vo * 0.15, obsY - 30);
+    ctx.stroke();
+    ctx.fillStyle = '#10b981';
+    ctx.fillText('vₒ=' + vo + ' m/s', obsX - vo * 0.15 - 70, obsY - 26);
+  }
+
+  // 冲击波锥（Ma > 1 时）
+  if (d.ma >= 1) {
+    const sinTheta = 1 / d.ma;
+    const theta = Math.asin(sinTheta);
+    const coneLen = 150;
+    ctx.strokeStyle = 'rgba(239,68,68,0.6)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    // 上锥
+    ctx.beginPath();
+    ctx.moveTo(srcX, srcY);
+    ctx.lineTo(srcX - coneLen * Math.cos(theta), srcY - coneLen * Math.sin(theta));
+    ctx.stroke();
+    // 下锥
+    ctx.beginPath();
+    ctx.moveTo(srcX, srcY);
+    ctx.lineTo(srcX - coneLen * Math.cos(theta), srcY + coneLen * Math.sin(theta));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('冲击波 θ=' + (theta * 180 / Math.PI).toFixed(1) + '°', srcX - coneLen * 0.5, srcY - coneLen * 0.35);
+  }
+
+  // 信息标注
+  if (showLabels) {
+    ctx.fillStyle = '#c4b5fd';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText("f₀ = " + f0 + " Hz", 20, 30);
+    ctx.fillText("f' = " + d.f_prime.toFixed(1) + " Hz", 20, 52);
+    ctx.fillText('Δf = ' + (d.df >= 0 ? '+' : '') + d.df.toFixed(1) + ' Hz', 20, 74);
+    ctx.fillText('Ma = ' + d.ma.toFixed(2), 20, 96);
+    ctx.fillStyle = d.state.includes('蓝移') ? '#3b82f6' : d.state.includes('红移') ? '#ef4444' : '#f59e0b';
+    ctx.fillText(d.state, 20, 118);
+  }
+}
+
+const learnCtx = document.getElementById('learnCanvas').getContext('2d');
+const practiceCtx = document.getElementById('practiceCanvas').getContext('2d');
+const quizCtx = document.getElementById('quizCanvas').getContext('2d');
+
+function draw() {
+  if (mode === 'learn') drawScene(learnCtx, 700, 420, +vsEl.value, +voEl.value, +f0El.value, true);
+  else if (mode === 'practice') drawScene(practiceCtx, 700, 420, +pvs.value, +pvo.value, +pf0.value, true);
+  else drawQuizScene(quizCtx, 700, 420);
+}
+setInterval(draw, 50);
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const quizData = [
+  {
+    q: '1️⃣ 火车鸣笛驶近车站时，站台上的观察者听到音调变高，这是因为？',
+    opts: ['声速变大了', '波长被压缩，频率升高', '声波振幅变大了', '空气密度变大了'],
+    ans: 1,
+    fb: '波源向观察者运动时，波长被压缩 λ\' = λ - vₛT，频率 f\' = v/λ\' 升高。这是多普勒效应的典型表现。'
+  },
+  {
+    q: '2️⃣ 下列哪种情况会产生冲击波（音爆）？',
+    opts: ['波源速度等于声速', '波源速度大于声速', '观察者速度大于声速', '波源频率极高时'],
+    ans: 1,
+    fb: '当波源速度超过波速（Ma > 1），波前无法向前传播，在后方形成锥形冲击波。半锥角 sinθ = 1/Ma。'
+  },
+  {
+    q: '3️⃣ 遥远星系的光谱线向红端移动，说明？',
+    opts: ['星系在靠近我们', '星系在远离我们', '星系温度极高', '光速在变慢'],
+    ans: 1,
+    fb: '红移说明波源在远离观察者。哈勃定律 v = H₀D 将红移量与距离关联，是宇宙膨胀的直接证据。'
+  },
+  {
+    q: '4️⃣ 多普勒效应中，波源和观察者相互靠近时，接收频率 f\' 与波源频率 f₀ 的关系是？',
+    opts: ["f' < f₀", "f' = f₀", "f' > f₀", '取决于波速'],
+    ans: 2,
+    fb: '相互靠近时，f\' = f₀ × (v + vₒ)/(v - vₛ)，分子分母都使 f\' > f₀。'
+  }
+];
+let quizIdx = 0;
+let quizAnswers = new Array(quizData.length).fill(-1);
+let quizSubmitted = false;
+
+const qEl = document.getElementById('quiz-q');
+const qOpts = document.getElementById('quiz-opts');
+const qFb = document.getElementById('quiz-fb');
+const qPrev = document.getElementById('quiz-prev');
+const qNext = document.getElementById('quiz-next');
+const qSubmit = document.getElementById('quiz-submit');
+const qRetry = document.getElementById('quiz-retry');
+const qResult = document.getElementById('quiz-result');
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  qEl.textContent = q.q;
+  qOpts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = String.fromCharCode(65 + i) + '. ' + opt;
+    if (quizAnswers[quizIdx] === i) div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+    if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) div.classList.add('correct');
+    div.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizAnswers[quizIdx] = i;
+      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
+      renderQuizOpts();
+    });
+    qOpts.appendChild(div);
+  });
+  function renderQuizOpts() {
+    [...qOpts.children].forEach((ch, i) => {
+      ch.classList.remove('correct', 'wrong');
+      if (quizAnswers[quizIdx] === i) ch.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+      if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) ch.classList.add('correct');
+    });
+  }
+  qFb.textContent = quizAnswers[quizIdx] === -1 ? '' : (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
+  qPrev.disabled = quizIdx === 0;
+  qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
+  qSubmit.classList.toggle('hidden', quizIdx !== quizData.length - 1 || quizSubmitted);
+  qRetry.classList.toggle('hidden', !quizSubmitted);
+}
+qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+qSubmit.addEventListener('click', () => {
+  quizSubmitted = true;
+  const score = quizData.reduce((s, q, i) => s + (quizAnswers[i] === q.ans ? 1 : 0), 0);
+  const pass = score >= 3;
+  qResult.classList.remove('hidden');
+  qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
+  qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  qResult.textContent = pass ? '🎉 得分 ' + score + '/4，合格！本知识点已标记完成' : '😅 得分 ' + score + '/4，未达到 3/4，请复习后重试';
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('doppler');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+  renderQuiz();
+});
+qRetry.addEventListener('click', () => {
+  quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
+  qResult.classList.add('hidden');
+  renderQuiz();
+});
+
+function drawQuizScene(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('🎯 第 ' + (quizIdx + 1) + '/' + quizData.length + ' 题', 30, 40);
+  drawScene(ctx, W, H - 100, 100, 0, 500, false);
+}
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('doppler')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+renderQuiz();
+draw();
+</script>
+</body>
+</html>

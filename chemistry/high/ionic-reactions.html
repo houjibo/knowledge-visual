@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>离子反应 · 高中化学互动可视化</title>
+<style>
+  :root {
+    --primary: #a78bfa;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #2e1065 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #c4b5fd; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #8b5cf6, #a78bfa, #c4b5fd); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(167,139,250,.4); color: #2e1065; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .hidden { display: none !important; }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .stage > * { min-width: 0; }
+  @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #2c1a52 0%, #0f172a 100%); touch-action: none; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #cbd5e1; flex-wrap: wrap; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.02rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #c4b5fd; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #c4b5fd; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid var(--primary); line-height: 1.7; font-size: 14px; }
+  .concept-card.warn { border-color: #f59e0b; }
+  .concept-card .title { font-weight: 700; margin-bottom: 4px; color: var(--primary); }
+  .concept-card.warn .title { color: #f59e0b; }
+  .rxn-btns { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .rxn-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 44px; min-width: 44px; }
+  .rxn-btn.active { background: var(--primary); border-color: var(--primary); color: #2e1065; font-weight: 700; }
+  .act-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; cursor: pointer; font-size: 15px; font-weight: 700; background: var(--primary); color: #2e1065; margin: 10px 0; min-height: 44px; transition: all .2s; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(167,139,250,0.08); border-radius: 12px; border: 1px solid rgba(167,139,250,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #c4b5fd; min-height: 18px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #2e1065; font-weight: 700; min-height: 44px; min-width: 44px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  .practice-item { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+  .practice-item h4 { color: #e2e8f0; margin-bottom: 10px; font-size: 15px; line-height: 1.6; }
+  .practice-opts { display: grid; gap: 6px; }
+  .practice-fb { margin-top: 8px; font-size: 13px; min-height: 18px; line-height: 1.6; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 28px; }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .container { padding: 10px 14px; }
+    .breadcrumb { padding: 6px 10px; font-size: 12px; margin-bottom: 8px; }
+    header { margin-bottom: 10px; }
+    header h1 { font-size: 1.5rem; }
+    header p { font-size: 12px; margin-top: 2px; }
+    .tabs { gap: 6px; margin-bottom: 10px; }
+    .tab { padding: 6px 14px; font-size: 12px; min-height: 36px; }
+    .canvas-wrap, .panel { padding: 10px; border-radius: 12px; }
+    .panel h3 { font-size: 1rem; margin-bottom: 8px; }
+    .equation { padding: 8px; font-size: 0.9rem; margin: 6px 0; }
+    .concept-card { padding: 10px; margin: 6px 0; font-size: 13px; }
+  }
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    header h1 { font-size: 1.6rem; }
+    .tabs { gap: 6px; }
+    .tab { padding: 8px 12px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">⚗️ 化学</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">高中</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">离子反应</span>
+    <span id="done-mark" style="margin-left:auto;color:#10b981;font-weight:600;"></span>
+  </nav>
+
+  <header>
+    <h1>⚡ 离子反应</h1>
+    <p>电解质电离 · 离子方程式 · 复分解反应条件 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 探究</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 探究模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div>
+        <div class="canvas-wrap">
+          <canvas id="ionCanvas" width="720" height="460"></canvas>
+          <div class="legend">
+            <span style="color:#4ade80">● 阳离子</span>
+            <span style="color:#f87171">● 阴离子</span>
+            <span>⬇ 沉淀</span>
+          </div>
+        </div>
+        <button class="act-btn" id="mixBtn">🧪 混合两种溶液</button>
+      </div>
+      <div class="panel">
+        <h3>选择反应</h3>
+        <div class="rxn-btns" id="rxnBtns">
+          <button class="rxn-btn active" data-rxn="agcl">AgNO₃ + NaCl</button>
+          <button class="rxn-btn" data-rxn="baso4">BaCl₂ + Na₂SO₄</button>
+          <button class="rxn-btn" data-rxn="neutral">HCl + NaOH</button>
+        </div>
+        <div class="equation" id="eqBox">AgNO₃ + NaCl → AgCl↓ + NaNO₃<br><b>Ag⁺ + Cl⁻ → AgCl↓</b></div>
+        <div class="info-grid">
+          <div>实际反应的离子<br><b id="infoIon">Ag⁺、Cl⁻</b></div>
+          <div>旁观离子<br><b id="infoSpect">Na⁺、NO₃⁻</b></div>
+        </div>
+        <div class="concept-card">
+          <div class="title">电离：溶液导电的原因</div>
+          电解质溶于水（或熔融）时<b>电离</b>出自由移动的离子——所以 NaCl 固体不导电，NaCl <b>溶液</b>导电。酸、碱、盐都是电解质；蔗糖水溶液不导电（非电解质）。
+        </div>
+        <div class="concept-card">
+          <div class="title">离子方程式：只写"真正干活的"离子</div>
+          书写步骤：写（化学方程式）→ 拆（强酸强碱可溶性盐拆成离子）→ <b>删（删去两边相同的旁观离子）</b>→ 查（电荷守恒、质量守恒）。它揭示了反应的<b>本质</b>：如 H⁺ + OH⁻ → H₂O 代表一切强酸强碱中和。
+        </div>
+        <div class="concept-card warn">
+          <div class="title">⚠️ 复分解反应发生的条件</div>
+          生成物中有 <b>沉淀↓、气体↑ 或水</b>（难电离物质）生成，反应才能发生——本质是使溶液中某些离子<b>浓度减小</b>。不能拆的物质：沉淀、气体、水、弱酸弱碱、单质、氧化物。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="practice-item" id="p1">
+      <h4>1️⃣ 盐酸与氢氧化钠溶液反应的离子方程式是？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="1">H⁺ + OH⁻ → H₂O</button>
+        <button class="quiz-opt" data-ok="0">HCl + NaOH → NaCl + H₂O</button>
+        <button class="quiz-opt" data-ok="0">Na⁺ + Cl⁻ → NaCl</button>
+        <button class="quiz-opt" data-ok="0">H⁺ + NaOH → Na⁺ + H₂O</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+    <div class="practice-item" id="p2">
+      <h4>2️⃣ 在 BaCl₂ + Na₂SO₄ → BaSO₄↓ + 2NaCl 中，旁观离子是？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">Ba²⁺ 和 SO₄²⁻</button>
+        <button class="quiz-opt" data-ok="1">Na⁺ 和 Cl⁻</button>
+        <button class="quiz-opt" data-ok="0">Ba²⁺ 和 Cl⁻</button>
+        <button class="quiz-opt" data-ok="0">没有旁观离子</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+    <div class="practice-item" id="p3">
+      <h4>3️⃣ 下列各组离子在溶液中能大量共存的是？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">Ag⁺ 和 Cl⁻</button>
+        <button class="quiz-opt" data-ok="0">H⁺ 和 OH⁻</button>
+        <button class="quiz-opt" data-ok="1">Na⁺ 和 NO₃⁻</button>
+        <button class="quiz-opt" data-ok="0">Ba²⁺ 和 SO₄²⁻</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="panel">
+      <h3>🎯 离子反应 · 小测验（5 题，≥80% 通关）</h3>
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">点击「开始答题」</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFb"></div>
+        <div class="quiz-nav">
+          <button id="quizStart">开始答题</button>
+          <button id="quizPrev" disabled>上一题</button>
+          <button id="quizNext" disabled>下一题</button>
+        </div>
+        <div class="quiz-result hidden" id="quizResult"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>高中化学 · 离子反应 · 互动可视化 | 知识可视化全学科项目</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+let mode = 'learn';
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+}));
+
+/* ============================================================
+ * 探究模式
+ * ============================================================ */
+const canvas = document.getElementById('ionCanvas');
+const ctx = canvas.getContext('2d');
+let rxn = 'agcl';
+let mixed = false;
+let mixT = 0;
+let lastT = performance.now();
+
+const RXNS = {
+  agcl: {
+    eq: 'AgNO₃ + NaCl → AgCl↓ + NaNO₃',
+    ionic: 'Ag⁺ + Cl⁻ → AgCl↓',
+    catName: 'Ag⁺', anName: 'Cl⁻',
+    spectCat: 'Na⁺', spectAn: 'NO₃⁻',
+    precipColor: '#f1f5f9', precipName: 'AgCl 白色沉淀',
+    info: ['Ag⁺、Cl⁻', 'Na⁺、NO₃⁻']
+  },
+  baso4: {
+    eq: 'BaCl₂ + Na₂SO₄ → BaSO₄↓ + 2NaCl',
+    ionic: 'Ba²⁺ + SO₄²⁻ → BaSO₄↓',
+    catName: 'Ba²⁺', anName: 'SO₄²⁻',
+    spectCat: 'Na⁺', spectAn: 'Cl⁻',
+    precipColor: '#e2e8f0', precipName: 'BaSO₄ 白色沉淀',
+    info: ['Ba²⁺、SO₄²⁻', 'Na⁺、Cl⁻']
+  },
+  neutral: {
+    eq: 'HCl + NaOH → NaCl + H₂O',
+    ionic: 'H⁺ + OH⁻ → H₂O',
+    catName: 'H⁺', anName: 'OH⁻',
+    spectCat: 'Na⁺', spectAn: 'Cl⁻',
+    precipColor: null, precipName: '生成水（无可见现象）',
+    info: ['H⁺、OH⁻', 'Na⁺、Cl⁻']
+  }
+};
+
+let ions = [];
+function buildIons() {
+  ions = [];
+  const R = RXNS[rxn];
+  for (let i = 0; i < 8; i++) ions.push({ type: 'cat', label: R.catName, x: 100 + Math.random() * 200, y: 100 + Math.random() * 240, vx: (Math.random() - .5) * 40, vy: (Math.random() - .5) * 40, reacted: false });
+  for (let i = 0; i < 8; i++) ions.push({ type: 'an', label: R.anName, x: 100 + Math.random() * 200, y: 100 + Math.random() * 240, vx: (Math.random() - .5) * 40, vy: (Math.random() - .5) * 40, reacted: false });
+  for (let i = 0; i < 6; i++) ions.push({ type: 'spectCat', label: R.spectCat, x: 100 + Math.random() * 200, y: 100 + Math.random() * 240, vx: (Math.random() - .5) * 40, vy: (Math.random() - .5) * 40, reacted: false });
+  for (let i = 0; i < 6; i++) ions.push({ type: 'spectAn', label: R.spectAn, x: 100 + Math.random() * 200, y: 100 + Math.random() * 240, vx: (Math.random() - .5) * 40, vy: (Math.random() - .5) * 40, reacted: false });
+  precip = [];
+}
+let precip = [];
+
+document.querySelectorAll('.rxn-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.rxn-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  rxn = b.dataset.rxn;
+  mixed = false;
+  document.getElementById('mixBtn').textContent = '🧪 混合两种溶液';
+  document.getElementById('eqBox').innerHTML = RXNS[rxn].eq + '<br><b>' + RXNS[rxn].ionic + '</b>';
+  document.getElementById('infoIon').textContent = RXNS[rxn].info[0];
+  document.getElementById('infoSpect').textContent = RXNS[rxn].info[1];
+  buildIons();
+}));
+document.getElementById('mixBtn').addEventListener('click', () => {
+  mixed = !mixed;
+  mixT = 0;
+  document.getElementById('mixBtn').textContent = mixed ? '↩️ 分开溶液（重置）' : '🧪 混合两种溶液';
+  if (!mixed) buildIons();
+});
+
+const ION_STYLE = {
+  cat: { color: '#4ade80', r: 14 },
+  an: { color: '#f87171', r: 14 },
+  spectCat: { color: '#86efac', r: 12 },
+  spectAn: { color: '#fca5a5', r: 12 }
+};
+const BOX = { x: 80, y: 70, w: 280, h: 300 };
+
+function draw() {
+  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
+  const now = performance.now();
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+  if (mixed) mixT += dt;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const R = RXNS[rxn];
+  // 烧杯
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(BOX.x, BOX.y - 14); ctx.lineTo(BOX.x, BOX.y + BOX.h);
+  ctx.lineTo(BOX.x + BOX.w, BOX.y + BOX.h); ctx.lineTo(BOX.x + BOX.w, BOX.y - 14);
+  ctx.stroke();
+  // 液体
+  ctx.fillStyle = 'rgba(56,189,248,0.10)';
+  ctx.fillRect(BOX.x + 3, BOX.y + 30, BOX.w - 6, BOX.h - 33);
+  ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
+  ctx.fillText(mixed ? '混合溶液' : '两种溶液（未混合）', BOX.x + 90, BOX.y + 20);
+  // 未混合分隔线
+  if (!mixed) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(BOX.x + BOX.w / 2, BOX.y + 26); ctx.lineTo(BOX.x + BOX.w / 2, BOX.y + BOX.h); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  // 离子运动
+  ions.forEach((ion, i) => {
+    const st = ION_STYLE[ion.type];
+    if (!ion.reacted) {
+      ion.x += ion.vx * dt;
+      ion.y += ion.vy * dt;
+      const xmin = mixed ? BOX.x + st.r + 4 : (i % 2 ? BOX.x + BOX.w / 2 + st.r : BOX.x + st.r + 4);
+      const xmax = mixed ? BOX.x + BOX.w - st.r - 4 : (i % 2 ? BOX.x + BOX.w - st.r - 4 : BOX.x + BOX.w / 2 - st.r);
+      if (ion.x < xmin) { ion.x = xmin; ion.vx = Math.abs(ion.vx); }
+      if (ion.x > xmax) { ion.x = xmax; ion.vx = -Math.abs(ion.vx); }
+      if (ion.y < BOX.y + 30 + st.r) { ion.y = BOX.y + 30 + st.r; ion.vy = Math.abs(ion.vy); }
+      if (ion.y > BOX.y + BOX.h - st.r - 4) { ion.y = BOX.y + BOX.h - st.r - 4; ion.vy = -Math.abs(ion.vy); }
+      // 混合后反应离子逐渐结合沉降
+      if (mixed && mixT > 0.5 && (ion.type === 'cat' || ion.type === 'an')) {
+        if (Math.random() < dt * 0.9) {
+          ion.reacted = true;
+          if (R.precipColor) precip.push({ x: ion.x, y: BOX.y + BOX.h - 6, r: 3.5 });
+        }
+      }
+    }
+    if (!ion.reacted) {
+      const st2 = ION_STYLE[ion.type];
+      ctx.fillStyle = st2.color;
+      ctx.beginPath(); ctx.arc(ion.x, ion.y, st2.r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#0f172a'; ctx.font = 'bold 9px sans-serif';
+      ctx.fillText(ion.label.replace('⁺', '⁺').replace('⁻', '⁻'), ion.x - st2.r + 2, ion.y + 3);
+    }
+  });
+  // 沉淀堆积
+  if (R.precipColor) {
+    precip.forEach((p, i) => {
+      const py = BOX.y + BOX.h - 4 - Math.floor(i / 40) * 7;
+      ctx.fillStyle = R.precipColor;
+      ctx.beginPath(); ctx.arc(p.x, py, p.r, 0, Math.PI * 2); ctx.fill();
+    });
+  }
+  // 反应说明（右侧）
+  ctx.fillStyle = '#cbd5e1'; ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('化学方程式：', 420, 110);
+  ctx.font = '13px sans-serif';
+  ctx.fillText(R.eq, 420, 134);
+  ctx.fillStyle = '#c4b5fd'; ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('离子方程式：', 420, 178);
+  ctx.fillText(R.ionic, 420, 202);
+  ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
+  ctx.fillText(`旁观离子（不参与反应）：${R.spectCat}、${R.spectAn}`, 420, 240);
+  ctx.fillStyle = mixed ? '#4ade80' : '#fbbf24'; ctx.font = '13px sans-serif';
+  if (mixed) {
+    const reactedN = ions.filter(i => i.reacted).length;
+    ctx.fillText(reactedN > 0 ? `已结合 ${reactedN} 个离子 → ${R.precipName}` : '离子正在靠近…', 420, 280);
+  } else {
+    ctx.fillText('点击「混合两种溶液」观察反应', 420, 280);
+  }
+  // 底部
+  ctx.fillStyle = '#64748b'; ctx.font = '12px sans-serif';
+  ctx.fillText('微观视角：反应的本质是某些离子结合离开溶液（沉淀/气体/水）', 130, 420);
+  requestAnimationFrame(draw);
+}
+buildIons();
+requestAnimationFrame(draw);
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const PRACTICE_TIPS = {
+  p1: '✅ 正确！Na⁺ 和 Cl⁻ 是旁观离子删去后：H⁺ + OH⁻ → H₂O。',
+  p2: '✅ 正确！Na⁺ 和 Cl⁻ 反应前后没变化，是旁观离子；Ba²⁺ 与 SO₄²⁻ 才真正反应。',
+  p3: '✅ 正确！其余三组会生成沉淀（AgCl、BaSO₄）或水（H₂O），不能大量共存。'
+};
+document.querySelectorAll('.practice-item').forEach(item => {
+  const fb = item.querySelector('.practice-fb');
+  item.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const ok = opt.dataset.ok === '1';
+      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      opt.classList.add(ok ? 'correct' : 'wrong');
+      fb.style.color = ok ? '#10b981' : '#ef4444';
+      fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
+    });
+  });
+});
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const QUIZ = [
+  { q: '下列物质的水溶液能导电的是（　　）',
+    opts: ['蔗糖溶液', '酒精溶液', '食盐水', '纯水'],
+    ans: 2, ex: 'NaCl 电离出 Na⁺ 和 Cl⁻ → 导电；蔗糖/酒精不电离（非电解质），纯水几乎不导电。' },
+  { q: '离子方程式 H⁺ + OH⁻ → H₂O 可以表示（　　）',
+    opts: ['所有化学反应', '强酸与强碱生成可溶性盐和水的中和反应', '任何酸与任何碱的反应', '只有盐酸和氢氧化钠'],
+    ans: 1, ex: '它代表强酸强碱中和生成可溶性盐和水的一类反应（如 HCl+NaOH、HNO₃+KOH）。' },
+  { q: '复分解反应能发生的条件是生成物中有（　　）',
+    opts: ['沉淀、气体或水', '只有沉淀', '只有气体', '颜色变化'],
+    ans: 0, ex: '生成沉淀↓、气体↑或难电离的水 → 离子浓度减小 → 反应进行。' },
+  { q: '写离子方程式时，下列物质应"拆"成离子的是（　　）',
+    opts: ['CaCO₃（难溶）', 'H₂O', 'NaCl（可溶性强电解质）', 'CO₂（气体）'],
+    ans: 2, ex: '强酸、强碱、可溶性盐拆；沉淀、气体、水、弱电解质、单质、氧化物不拆。' },
+  { q: '离子方程式必须满足的守恒有（　　）',
+    opts: ['只有质量守恒', '只有电荷守恒', '质量守恒和电荷守恒', '不需要守恒'],
+    ans: 2, ex: '检查"两守恒"：原子个数（质量）守恒 + 两边总电荷相等。' }
+];
+let qi = 0, qScore = 0, qAnswered = false;
+const quizQ = document.getElementById('quizQ');
+const quizOpts = document.getElementById('quizOpts');
+const quizFb = document.getElementById('quizFb');
+const quizResult = document.getElementById('quizResult');
+const btnStart = document.getElementById('quizStart');
+const btnPrev = document.getElementById('quizPrev');
+const btnNext = document.getElementById('quizNext');
+
+function renderQ() {
+  const q = QUIZ[qi];
+  qAnswered = false;
+  quizQ.textContent = `第${qi + 1}题 / 共${QUIZ.length}题：${q.q}`;
+  quizFb.textContent = '';
+  quizOpts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const d = document.createElement('div');
+    d.className = 'quiz-opt';
+    d.textContent = o;
+    d.addEventListener('click', () => {
+      if (qAnswered) return;
+      qAnswered = true;
+      const ok = i === q.ans;
+      if (ok) qScore++;
+      quizOpts.children[q.ans].classList.add('correct');
+      if (!ok) d.classList.add('wrong');
+      quizFb.textContent = (ok ? '✅ ' : '❌ ') + q.ex;
+    });
+    quizOpts.appendChild(d);
+  });
+  btnPrev.disabled = qi === 0;
+  btnNext.disabled = false;
+  btnNext.textContent = qi === QUIZ.length - 1 ? '查看成绩' : '下一题';
+}
+function finishQuiz() {
+  const pass = qScore >= Math.ceil(QUIZ.length * 0.8);
+  quizQ.textContent = '测验完成！';
+  quizOpts.innerHTML = '';
+  quizFb.textContent = '';
+  quizResult.classList.remove('hidden');
+  quizResult.innerHTML = `得分：<b>${qScore} / ${QUIZ.length}</b>　${pass ? '🎉 通关！' : '继续加油，再试一次！'}`;
+  btnNext.disabled = true;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('ionic-reactions');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+btnStart.addEventListener('click', () => {
+  qi = 0; qScore = 0;
+  quizResult.classList.add('hidden');
+  btnStart.textContent = '重新答题';
+  renderQ();
+});
+btnPrev.addEventListener('click', () => { if (qi > 0) { qi--; renderQ(); } });
+btnNext.addEventListener('click', () => {
+  if (qi < QUIZ.length - 1) { qi++; renderQ(); }
+  else finishQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('ionic-reactions')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>极限与连续 · 大学数学互动可视化</title>
+<script src="assets/common.js"></script>
+<style>
+  :root {
+    --primary: #6366f1;
+    --curve: #3b82f6;
+    --limit: #ef4444;
+    --eps: #10b981;
+    --delta: #fbbf24;
+    --cont: #a855f7;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.7);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--curve), var(--eps), var(--delta)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 0.95rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab { padding: 10px 22px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(99,102,241,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .stage { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 16px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .legend .l-f::before { background: var(--curve); }
+  .legend .l-eps::before { background: var(--eps); }
+  .legend .l-delta::before { background: var(--delta); }
+  .legend .l-lim::before { background: var(--limit); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 680px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .equation { font-family: "Times New Roman", "STSong", serif; font-size: 1.15rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.8; }
+  .equation .hl { color: var(--eps); font-weight: 600; }
+  .equation .hl2 { color: var(--delta); font-weight: 600; }
+  .equation .hlr { color: var(--limit); font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--eps); font-weight: 600; font-size: 13px; }
+
+  .func-select, .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .func-btn, .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 13px; color: #93c5fd; transition: all .2s; user-select: none; }
+  .func-btn.active, .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .func-btn:hover:not(.active), .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.1); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px; line-height: 1.5; }
+  .info-grid b { color: #fbbf24; }
+
+  .steps { margin: 12px 0; }
+  .step { padding: 10px 14px; margin: 6px 0; background: rgba(255,255,255,0.04); border-radius: 8px; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--primary); transition: all .3s; }
+  .step.active { background: rgba(99,102,241,0.12); border-left-color: var(--eps); }
+  .step .sn { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: white; text-align: center; line-height: 22px; font-size: 11px; margin-right: 8px; font-weight: 700; }
+  .step.active .sn { background: var(--eps); }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(99,102,241,0.08); border-radius: 12px; border: 1px solid rgba(99,102,241,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; color: #fbbf24; min-height: 20px; line-height: 1.5; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 12px; }
+  .quiz-nav button { padding: 6px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; transition: all .2s; }
+  .quiz-nav button:hover { opacity: 0.85; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-score { font-size: 13px; color: #94a3b8; margin-top: 8px; }
+
+  .desc { font-size: 13px; color: #94a3b8; line-height: 1.7; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; }
+
+  footer { text-align: center; color: #475569; font-size: 12px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>∞ 极限与连续 Interactive</h1>
+    <p>ε-δ 定义 · 极限运算 · 连续性分析 · 互动练习</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="epsilon">🎯 ε-δ 定义</div>
+    <div class="tab" data-mode="compute">📝 极限计算</div>
+    <div class="tab" data-mode="continuous">🔗 连续性</div>
+    <div class="tab" data-mode="quiz">🏆 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="780" height="620"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>大学数学 · 极限与连续 · 拖动滑块探索 ε-δ 邻域与极限</footer>
+</div>
+
+<script>
+(() => {
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const panel = document.getElementById('panel');
+  const legendEl = document.getElementById('legend');
+
+  let mode = 'epsilon';
+  let animId = null;
+
+  /* ========== 工具函数 ========== */
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const fmt = (v, d=4) => Number(v).toFixed(d);
+
+  function clearCanvas() {
+    ctx.clearRect(0, 0, W, H);
+  }
+
+  /* 坐标变换：数学坐标 <-> 像素 */
+  const viewState = { xMin: -3, xMax: 3, yMin: -2, yMax: 4 };
+  function toPixel(x, y) {
+    const px = (x - viewState.xMin) / (viewState.xMax - viewState.xMin) * W;
+    const py = H - (y - viewState.yMin) / (viewState.yMax - viewState.yMin) * H;
+    return [px, py];
+  }
+  function toMath(px, py) {
+    const x = px / W * (viewState.xMax - viewState.xMin) + viewState.xMin;
+    const y = (H - py) / H * (viewState.yMax - viewState.yMin) + viewState.yMin;
+    return [x, y];
+  }
+
+  function drawGrid() {
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    for (let x = Math.ceil(viewState.xMin); x <= viewState.xMax; x++) {
+      const [px] = toPixel(x, 0);
+      ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+    }
+    for (let y = Math.ceil(viewState.yMin); y <= viewState.yMax; y++) {
+      const [, py] = toPixel(0, y);
+      ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+    }
+    /* 坐标轴 */
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1.5;
+    const [ox, oy] = toPixel(0, 0);
+    ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(W, oy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, H); ctx.stroke();
+    /* 刻度 */
+    ctx.fillStyle = '#64748b';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'center';
+    for (let x = Math.ceil(viewState.xMin); x <= viewState.xMax; x++) {
+      if (x === 0) continue;
+      const [px] = toPixel(x, 0);
+      ctx.fillText(x, px, oy + 14);
+    }
+    ctx.textAlign = 'right';
+    for (let y = Math.ceil(viewState.yMin); y <= viewState.yMax; y++) {
+      if (y === 0) continue;
+      const [, py] = toPixel(0, y);
+      ctx.fillText(y, ox - 6, py + 4);
+    }
+  }
+
+  function drawFunc(f, color, lineWidth=2.5, dash=[]) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.setLineDash(dash);
+    ctx.beginPath();
+    let first = true;
+    const steps = 600;
+    for (let i = 0; i <= steps; i++) {
+      const x = viewState.xMin + (viewState.xMax - viewState.xMin) * i / steps;
+      const y = f(x);
+      if (!isFinite(y) || Math.abs(y) > 100) { first = true; continue; }
+      const [px, py] = toPixel(x, y);
+      if (first) { ctx.moveTo(px, py); first = false; } else { ctx.lineTo(px, py); }
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawPoint(x, y, r, color, label='', labelPos='top') {
+    const [px, py] = toPixel(x, y);
+    ctx.beginPath();
+    ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    if (label) {
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = '12px "PingFang SC", sans-serif';
+      ctx.textAlign = 'center';
+      const dy = labelPos === 'top' ? -r - 8 : r + 14;
+      ctx.fillText(label, px, py + dy);
+    }
+  }
+
+  function drawHLine(y, color, dash=[6,4]) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash(dash);
+    const [, py] = toPixel(0, y);
+    ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawVLine(x, color, dash=[6,4]) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash(dash);
+    const [px] = toPixel(x, 0);
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawBand(x0, xRange, y0, yRange, color) {
+    const [px1] = toPixel(x0 - xRange, 0);
+    const [px2] = toPixel(x0 + xRange, 0);
+    const [, py1] = toPixel(0, y0 + yRange);
+    const [, py2] = toPixel(0, y0 - yRange);
+    ctx.fillStyle = color;
+    ctx.fillRect(px1, py1, px2 - px1, py2 - py1);
+  }
+
+  /* ========== 函数库 ========== */
+  const funcLib = {
+    'sin(x)/x': {
+      f: x => Math.abs(x) < 1e-10 ? 1 : Math.sin(x) / x,
+      x0: 0, L: 1,
+      label: 'f(x) = sin(x)/x, x₀=0, L=1'
+    },
+    'x²': {
+      f: x => x * x,
+      x0: 2, L: 4,
+      label: 'f(x) = x², x₀=2, L=4'
+    },
+    '(x²-1)/(x-1)': {
+      f: x => Math.abs(x - 1) < 1e-10 ? NaN : (x*x - 1) / (x - 1),
+      x0: 1, L: 2,
+      label: 'f(x) = (x²-1)/(x-1), x₀=1, L=2'
+    },
+    '√x': {
+      f: x => x >= 0 ? Math.sqrt(x) : NaN,
+      x0: 1, L: 1,
+      label: 'f(x) = √x, x₀=1, L=1'
+    },
+    'x·sin(1/x)': {
+      f: x => Math.abs(x) < 1e-10 ? 0 : x * Math.sin(1/x),
+      x0: 0, L: 0,
+      label: 'f(x) = x·sin(1/x), x₀=0, L=0'
+    }
+  };
+
+  /* ========== 模式 1: ε-δ 定义 ========== */
+  let epsDelta = { eps: 0.5, delta: 0.5, funcKey: 'sin(x)/x', autoDelta: true };
+
+  function renderEpsilonDelta() {
+    clearCanvas();
+    drawGrid();
+
+    const fd = funcLib[epsDelta.funcKey];
+    const { x0, L, f } = fd;
+    const eps = epsDelta.eps;
+
+    /* 自动找合适的 delta */
+    let delta = epsDelta.delta;
+    if (epsDelta.autoDelta) {
+      delta = findDelta(f, x0, L, eps);
+      epsDelta.delta = delta;
+    }
+
+    /* 绘制 ε 带 (水平) */
+    drawBand(x0, viewState.xMax - x0, L, eps, 'rgba(16,185,129,0.08)');
+    drawHLine(L + eps, 'rgba(16,185,129,0.5)');
+    drawHLine(L - eps, 'rgba(16,185,129,0.5)');
+    drawHLine(L, 'rgba(239,68,68,0.4)', [3,3]);
+
+    /* 绘制 δ 带 (垂直) */
+    drawBand(x0, delta, L, viewState.yMax - L, 'rgba(251,191,36,0.06)');
+    drawVLine(x0 - delta, 'rgba(251,191,36,0.5)');
+    drawVLine(x0 + delta, 'rgba(251,191,36,0.5)');
+    drawVLine(x0, 'rgba(239,68,68,0.4)', [3,3]);
+
+    /* 绘制函数 */
+    drawFunc(f, '#3b82f6', 2.5);
+
+    /* 标注极限点 */
+    drawPoint(x0, L, 6, '#ef4444', `(${x0}, ${L})`, 'top');
+
+    /* 动画粒子 */
+    const t = Date.now() / 1000;
+    for (let i = 0; i < 8; i++) {
+      const phase = t * 0.8 + i * Math.PI / 4;
+      const px = x0 + delta * Math.cos(phase) * 0.9;
+      const py = f(px);
+      if (isFinite(py) && Math.abs(py - L) < eps) {
+        drawPoint(px, py, 3, 'rgba(99,102,241,0.7)');
+      }
+    }
+
+    /* 标注 */
+    ctx.font = '13px "PingFang SC", sans-serif';
+    ctx.fillStyle = '#10b981';
+    ctx.textAlign = 'left';
+    const [, pyEpsP] = toPixel(0, L + eps);
+    ctx.fillText(`L + ε = ${fmt(L+eps, 3)}`, 10, pyEpsP - 4);
+    const [, pyEpsM] = toPixel(0, L - eps);
+    ctx.fillText(`L − ε = ${fmt(L-eps, 3)}`, 10, pyEpsM + 14);
+    ctx.fillStyle = '#fbbf24';
+    const [pxDp] = toPixel(x0 + delta, 0);
+    ctx.textAlign = 'center';
+    const [, oy] = toPixel(0, 0);
+    ctx.fillText(`x₀+δ = ${fmt(x0+delta, 3)}`, pxDp, oy + 28);
+    const [pxDm] = toPixel(x0 - delta, 0);
+    ctx.fillText(`x₀−δ = ${fmt(x0-delta, 3)}`, pxDm, oy + 28);
+
+    /* 更新图例 */
+    legendEl.innerHTML = '<span class="l-f">f(x)</span><span class="l-eps">ε 邻域 (L±ε)</span><span class="l-delta">δ 邻域 (x₀±δ)</span><span class="l-lim">极限点 L</span>';
+
+    /* 面板 */
+    panel.innerHTML = `
+      <h3>🎯 ε-δ 极限定义</h3>
+      <div class="equation">
+        lim<sub>x→x₀</sub> f(x) = L<br/>
+        <span style="font-size:0.9em">∀ <span class="hl">ε</span> > 0, ∃ <span class="hl2">δ</span> > 0,<br/>
+        使得 0 < |x − x₀| < <span class="hl2">δ</span> ⟹ |f(x) − L| < <span class="hl">ε</span></span>
+      </div>
+      <div class="func-select">
+        ${Object.keys(funcLib).map(k => `<div class="func-btn ${epsDelta.funcKey===k?'active':''}" data-fk="${k}">${k}</div>`).join('')}
+      </div>
+      <div class="slider-row">
+        <label>ε =</label>
+        <input type="range" min="0.01" max="2" step="0.01" value="${eps}" id="epsSlider" />
+        <span class="val" id="epsVal" style="color:var(--eps)">${fmt(eps, 2)}</span>
+      </div>
+      <div class="slider-row">
+        <label>δ =</label>
+        <input type="range" min="0.01" max="2" step="0.01" value="${fmt(delta,2)}" id="deltaSlider" />
+        <span class="val" id="deltaVal" style="color:var(--delta)">${fmt(delta, 2)}</span>
+      </div>
+      <div class="mode-switch">
+        <div class="mode-btn ${epsDelta.autoDelta?'active':''}" id="autoBtn">🤖 自动 δ</div>
+        <div class="mode-btn ${!epsDelta.autoDelta?'active':''}" id="manualBtn">✋ 手动 δ</div>
+      </div>
+      <div class="desc">
+        <b>直觉：</b>无论你把 ε 带缩得多窄（绿色），总能找到对应的 δ 带（黄色），使得 x 落入 δ 邻域时，f(x) 一定落在 ε 邻域内。这就是极限的精确定义！
+      </div>
+      <div class="info-grid">
+        <div><b>函数</b><br/>${fd.label}</div>
+        <div><b>x₀</b> = ${x0}, <b>L</b> = ${L}</div>
+        <div><b>ε</b> = <span style="color:#10b981">${fmt(eps, 3)}</span></div>
+        <div><b>δ</b> = <span style="color:#fbbf24">${fmt(delta, 3)}</span></div>
+        <div><b>δ/ε</b> = ${fmt(delta/eps, 3)}<br/><span style="font-size:11px;color:#64748b">反映函数的局部 Lipschitz 常数</span></div>
+        <div><b>验证</b><br/>${verifyDelta(f, x0, L, eps, delta) ? '✅ 满足条件' : '❌ 不满足'}</div>
+      </div>
+    `;
+
+    bindEpsilonEvents();
+  }
+
+  function findDelta(f, x0, L, eps) {
+    let d = 1.0;
+    const N = 2000;
+    while (d > 0.001) {
+      let ok = true;
+      for (let i = 1; i <= N; i++) {
+        const x = x0 + d * i / N;
+        const y = f(x);
+        if (isFinite(y) && Math.abs(y - L) >= eps) { ok = false; break; }
+        const x2 = x0 - d * i / N;
+        const y2 = f(x2);
+        if (isFinite(y2) && Math.abs(y2 - L) >= eps) { ok = false; break; }
+      }
+      if (ok) return d;
+      d *= 0.95;
+    }
+    return d;
+  }
+
+  function verifyDelta(f, x0, L, eps, delta) {
+    const N = 1000;
+    for (let i = 1; i <= N; i++) {
+      const x = x0 + delta * i / N;
+      const y = f(x);
+      if (!isFinite(y) || Math.abs(y - L) >= eps) return false;
+      const x2 = x0 - delta * i / N;
+      const y2 = f(x2);
+      if (!isFinite(y2) || Math.abs(y2 - L) >= eps) return false;
+    }
+    return true;
+  }
+
+  function bindEpsilonEvents() {
+    const epsSlider = document.getElementById('epsSlider');
+    const deltaSlider = document.getElementById('deltaSlider');
+    if (epsSlider) {
+      epsSlider.addEventListener('input', e => {
+        epsDelta.eps = parseFloat(e.target.value);
+        document.getElementById('epsVal').textContent = fmt(epsDelta.eps, 2);
+        renderEpsilonDelta();
+      });
+    }
+    if (deltaSlider) {
+      deltaSlider.addEventListener('input', e => {
+        epsDelta.delta = parseFloat(e.target.value);
+        epsDelta.autoDelta = false;
+        document.getElementById('deltaVal').textContent = fmt(epsDelta.delta, 2);
+        renderEpsilonDelta();
+      });
+    }
+    panel.querySelectorAll('.func-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        epsDelta.funcKey = btn.dataset.fk;
+        epsDelta.eps = 0.5;
+        renderEpsilonDelta();
+      });
+    });
+    const autoBtn = document.getElementById('autoBtn');
+    const manualBtn = document.getElementById('manualBtn');
+    if (autoBtn) autoBtn.addEventListener('click', () => { epsDelta.autoDelta = true; renderEpsilonDelta(); });
+    if (manualBtn) manualBtn.addEventListener('click', () => { epsDelta.autoDelta = false; renderEpsilonDelta(); });
+  }
+
+  /* ========== 模式 2: 极限计算 ========== */
+  const limitProblems = [
+    {
+      title: 'lim(x→0) sin(x)/x',
+      steps: [
+        '识别类型：0/0 不定式',
+        '方法：这是一个经典极限，可用夹逼定理证明',
+        '几何证明：利用单位圆中 sin(x) < x < tan(x)',
+        '由夹逼定理：cos(x) < sin(x)/x < 1',
+        '当 x→0 时，cos(x)→1',
+        '∴ lim(x→0) sin(x)/x = 1'
+      ],
+      result: '1',
+      f: x => Math.abs(x) < 1e-10 ? 1 : Math.sin(x)/x,
+      x0: 0, L: 1
+    },
+    {
+      title: 'lim(x→1) (x²-1)/(x-1)',
+      steps: [
+        '识别类型：0/0 不定式',
+        '方法：因式分解消去公因子',
+        'x² - 1 = (x+1)(x-1)',
+        '(x²-1)/(x-1) = (x+1)(x-1)/(x-1) = x+1',
+        '当 x→1 时，x+1 → 2',
+        '∴ lim(x→1) (x²-1)/(x-1) = 2'
+      ],
+      result: '2',
+      f: x => Math.abs(x-1) < 1e-10 ? NaN : (x*x-1)/(x-1),
+      x0: 1, L: 2
+    },
+    {
+      title: 'lim(x→∞) (1+1/x)^x',
+      steps: [
+        '识别类型：1^∞ 不定式',
+        '令 y = (1+1/x)^x，取对数',
+        'ln(y) = x · ln(1+1/x)',
+        '当 x→∞ 时，这是 ∞·0 型',
+        'ln(y) = ln(1+1/x)/(1/x)，用 L\'Hospital',
+        '= (1/(1+1/x)·(-1/x²))/(-1/x²) = 1/(1+1/x) → 1',
+        '∴ ln(y)→1，即 y→e'
+      ],
+      result: 'e ≈ 2.718',
+      f: x => x > 0.5 ? Math.pow(1 + 1/x, x) : NaN,
+      x0: 100, L: Math.E,
+      xRange: [0.5, 200], yRange: [0, 4]
+    },
+    {
+      title: 'lim(x→0) (1-cos(x))/x²',
+      steps: [
+        '识别类型：0/0 不定式',
+        '方法一：等价无穷小替换',
+        '1 - cos(x) ~ x²/2 (当 x→0)',
+        '∴ (1-cos(x))/x² ~ (x²/2)/x² = 1/2',
+        '方法二：L\'Hospital 法则（两次）',
+        '= lim sin(x)/(2x) = lim cos(x)/2 = 1/2'
+      ],
+      result: '1/2',
+      f: x => Math.abs(x) < 1e-10 ? 0.5 : (1-Math.cos(x))/(x*x),
+      x0: 0, L: 0.5
+    }
+  ];
+  let currentLimitIdx = 0;
+  let currentStep = 0;
+
+  function renderLimitCompute() {
+    clearCanvas();
+    const prob = limitProblems[currentLimitIdx];
+
+    if (prob.xRange) {
+      viewState.xMin = prob.xRange[0]; viewState.xMax = prob.xRange[1];
+      viewState.yMin = prob.yRange[0]; viewState.yMax = prob.yRange[1];
+    } else {
+      viewState.xMin = prob.x0 - 3; viewState.xMax = prob.x0 + 3;
+      viewState.yMin = prob.L - 2; viewState.yMax = prob.L + 2;
+    }
+
+    drawGrid();
+    drawFunc(prob.f, '#3b82f6', 2.5);
+    drawPoint(prob.x0, prob.L, 7, '#ef4444', `L = ${prob.result}`, 'top');
+
+    /* 动画：趋近箭头 */
+    const t = (Date.now() / 1500) % 1;
+    const approachX = prob.x0 + (1 - t) * 2;
+    const approachY = prob.f(approachX);
+    if (isFinite(approachY)) {
+      drawPoint(approachX, approachY, 4, 'rgba(168,85,247,0.8)');
+    }
+    const approachX2 = prob.x0 - (1 - t) * 2;
+    const approachY2 = prob.f(approachX2);
+    if (isFinite(approachY2)) {
+      drawPoint(approachX2, approachY2, 4, 'rgba(168,85,247,0.8)');
+    }
+
+    legendEl.innerHTML = '<span class="l-f">f(x)</span><span class="l-lim">极限值 L</span>';
+
+    panel.innerHTML = `
+      <h3>📝 极限计算 — 逐步求解</h3>
+      <div class="equation" style="font-size:1.25rem; color:#93c5fd;">${prob.title}</div>
+      <div class="func-select">
+        ${limitProblems.map((p, i) => `<div class="func-btn ${i===currentLimitIdx?'active':''}" data-li="${i}">题${i+1}</div>`).join('')}
+      </div>
+      <div class="steps">
+        ${prob.steps.map((s, i) => `<div class="step ${i<=currentStep?'active':''}"><span class="sn">${i+1}</span>${s}</div>`).join('')}
+      </div>
+      <div class="quiz-nav">
+        <button id="prevStep" ${currentStep<=0?'disabled':''}>◀ 上一步</button>
+        <button id="nextStep" ${currentStep>=prob.steps.length-1?'disabled':''}>下一步 ▶</button>
+        <button id="resetStep">🔄 重置</button>
+      </div>
+      <div class="equation" style="margin-top:14px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3);">
+        结果：<b style="color:#10b981; font-size:1.3rem">${prob.result}</b>
+      </div>
+      <div class="desc">
+        💡 <b>提示：</b>点击"下一步"逐步查看求解过程。注意观察画面上点从两侧趋近极限值的过程。
+      </div>
+    `;
+
+    panel.querySelectorAll('.func-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentLimitIdx = parseInt(btn.dataset.li);
+        currentStep = 0;
+        renderLimitCompute();
+      });
+    });
+    const prevBtn = document.getElementById('prevStep');
+    const nextBtn = document.getElementById('nextStep');
+    const resetBtn = document.getElementById('resetStep');
+    if (prevBtn) prevBtn.addEventListener('click', () => { if (currentStep > 0) { currentStep--; renderLimitCompute(); }});
+    if (nextBtn) nextBtn.addEventListener('click', () => { if (currentStep < prob.steps.length - 1) { currentStep++; renderLimitCompute(); }});
+    if (resetBtn) resetBtn.addEventListener('click', () => { currentStep = 0; renderLimitCompute(); });
+  }
+
+  /* ========== 模式 3: 连续性 ========== */
+  const contFuncs = {
+    '连续函数': {
+      f: x => Math.sin(x) * 2,
+      desc: 'sin(x)·2 在整个实数域上连续',
+      discs: []
+    },
+    '可去间断点': {
+      f: x => Math.abs(x*x - 1) < 0.01 ? NaN : (x*x - 1) / (x - 1),
+      desc: '(x²-1)/(x-1) 在 x=1 处有可去间断点，极限存在但函数未定义',
+      discs: [{ x: 1, type: 'removable', label: '可去间断' }]
+    },
+    '跳跃间断点': {
+      f: x => x < 0 ? -1 : (x === 0 ? NaN : 1),
+      desc: 'sgn(x) 在 x=0 处有跳跃间断点，左右极限都存在但不相等',
+      discs: [{ x: 0, type: 'jump', label: '跳跃间断', leftL: -1, rightL: 1 }]
+    },
+    '振荡间断点': {
+      f: x => Math.abs(x) < 1e-10 ? NaN : Math.sin(1/x),
+      desc: 'sin(1/x) 在 x=0 处振荡间断，极限不存在',
+      discs: [{ x: 0, type: 'oscillate', label: '振荡间断' }]
+    },
+    '无穷间断点': {
+      f: x => Math.abs(x) < 0.02 ? NaN : 1/x,
+      desc: '1/x 在 x=0 处有无穷间断点，极限为无穷',
+      discs: [{ x: 0, type: 'infinite', label: '无穷间断' }]
+    }
+  };
+  let contKey = '连续函数';
+
+  function renderContinuity() {
+    clearCanvas();
+    viewState.xMin = -3; viewState.xMax = 3;
+    viewState.yMin = -3; viewState.yMax = 3;
+    drawGrid();
+
+    const cf = contFuncs[contKey];
+    drawFunc(cf.f, '#3b82f6', 2.5);
+
+    /* 绘制间断点标注 */
+    cf.discs.forEach(d => {
+      const [px, py] = toPixel(d.x, 0);
+      if (d.type === 'removable') {
+        drawPoint(d.x, d.type === 'removable' ? 2 : 0, 7, 'rgba(251,191,36,0.8)', d.label, 'top');
+        ctx.beginPath();
+        ctx.arc(px, toPixel(d.x, 2)[1], 7, 0, Math.PI * 2);
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([3,3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else if (d.type === 'jump') {
+        drawPoint(d.x, d.leftL, 5, '#ef4444');
+        drawPoint(d.x, d.rightL, 5, '#ef4444');
+        const [pxl, pyl] = toPixel(d.x, d.leftL);
+        const [pxr, pyr] = toPixel(d.x, d.rightL);
+        ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(pxl, pyl); ctx.lineTo(pxr, pyr); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#fca5a5';
+        ctx.font = '12px "PingFang SC"';
+        ctx.textAlign = 'center';
+        ctx.fillText(d.label, px, (pyl + pyr) / 2 - 12);
+      } else if (d.type === 'oscillate') {
+        ctx.fillStyle = '#fca5a5';
+        ctx.font = '12px "PingFang SC"';
+        ctx.textAlign = 'center';
+        const [, py0] = toPixel(0, 0);
+        ctx.fillText(d.label, px, py0 - 20);
+        /* 画闪烁效果 */
+        const t = Date.now() / 500;
+        const alpha = 0.3 + 0.3 * Math.sin(t);
+        drawPoint(d.x, 0, 8, `rgba(239,68,68,${alpha})`);
+      } else if (d.type === 'infinite') {
+        ctx.fillStyle = '#fca5a5';
+        ctx.font = '12px "PingFang SC"';
+        ctx.textAlign = 'center';
+        const [, py0] = toPixel(0, 0);
+        ctx.fillText(d.label, px, py0 - 20);
+        drawVLine(d.x, 'rgba(239,68,68,0.6)', [4,4]);
+      }
+    });
+
+    legendEl.innerHTML = '<span class="l-f">f(x)</span><span class="l-lim">间断点</span>';
+
+    panel.innerHTML = `
+      <h3>🔗 函数的连续性与间断点</h3>
+      <div class="equation">
+        f(x) 在 x₀ 连续 ⟺ lim<sub>x→x₀</sub> f(x) = f(x₀)<br/>
+        <span style="font-size:0.85em; color:#94a3b8">三个条件：① f(x₀) 有定义 ② 极限存在 ③ 极限 = 函数值</span>
+      </div>
+      <div class="func-select">
+        ${Object.keys(contFuncs).map(k => `<div class="func-btn ${contKey===k?'active':''}" data-ck="${k}">${k}</div>`).join('')}
+      </div>
+      <div class="desc">
+        ${cf.desc}
+      </div>
+      <div class="info-grid">
+        <div><b>间断点分类</b></div>
+        <div></div>
+        <div>第一类<br/>• 可去间断（极限存在）<br/>• 跳跃间断（左右极限不等）</div>
+        <div>第二类<br/>• 无穷间断（极限为∞）<br/>• 振荡间断（极限不存在）</div>
+      </div>
+      <div class="desc" style="margin-top:12px;">
+        💡 <b>连续函数的性质：</b><br/>
+        • 介值定理：连续函数取到两端点间的一切值<br/>
+        • 最值定理：闭区间上的连续函数必有最大最小值<br/>
+        • 一致连续：闭区间上的连续函数必一致连续
+      </div>
+    `;
+
+    panel.querySelectorAll('.func-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        contKey = btn.dataset.ck;
+        renderContinuity();
+      });
+    });
+  }
+
+  /* ========== 模式 4: 互动练习 ========== */
+  const quizBank = [
+    {
+      q: 'lim(x→0) sin(3x)/x = ?',
+      opts: ['1', '3', '0', '不存在'],
+      ans: 1,
+      explain: 'sin(3x)/x = 3·sin(3x)/(3x) → 3·1 = 3'
+    },
+    {
+      q: 'lim(x→∞) (3x²+2x)/(x²+1) = ?',
+      opts: ['0', '2', '3', '∞'],
+      ans: 2,
+      explain: '分子分母同除以 x²：(3+2/x)/(1+1/x²) → 3/1 = 3'
+    },
+    {
+      q: 'lim(x→0) (e^x - 1)/x = ?',
+      opts: ['0', '1', 'e', '不存在'],
+      ans: 1,
+      explain: '这是 e^x 在 x=0 处的导数定义，即 (e^x)\'|₀ = e⁰ = 1'
+    },
+    {
+      q: '函数 f(x) = |x|/x 在 x=0 处是什么间断点？',
+      opts: ['可去间断点', '跳跃间断点', '无穷间断点', '振荡间断点'],
+      ans: 1,
+      explain: '左极限 = -1，右极限 = 1，左右极限都存在但不相等，是跳跃间断点'
+    },
+    {
+      q: 'lim(x→0) x·sin(1/x) = ?',
+      opts: ['0', '1', '不存在', '∞'],
+      ans: 0,
+      explain: '|x·sin(1/x)| ≤ |x| → 0，由夹逼定理知极限为 0'
+    },
+    {
+      q: 'lim(x→1) ln(x)/(x-1) = ?',
+      opts: ['0', '1', 'e', '∞'],
+      ans: 1,
+      explain: 'L\'Hospital 法则：(1/x)/1 = 1/x → 1 (当 x→1)'
+    },
+    {
+      q: '若 lim(x→0) f(x)/x = 2，则 f(0) = ?（f 连续）',
+      opts: ['0', '1', '2', '不确定'],
+      ans: 0,
+      explain: 'f(x)/x → 2 且 x→0，则 f(x) → 0。因 f 连续，f(0) = lim f(x) = 0'
+    },
+    {
+      q: 'lim(n→∞) (1 + 1/n)^n = ?',
+      opts: ['1', '2', 'e', '∞'],
+      ans: 2,
+      explain: '这是自然常数 e 的经典定义，e ≈ 2.71828...'
+    }
+  ];
+  let quizIdx = 0;
+  let quizAnswered = false;
+  let quizScore = 0;
+  let quizTotal = 0;
+
+  function renderQuiz() {
+    clearCanvas();
+    viewState.xMin = -3; viewState.xMax = 3;
+    viewState.yMin = -2; viewState.yMax = 4;
+    drawGrid();
+
+    const q = quizBank[quizIdx];
+
+    /* 画一些装饰 */
+    const t = Date.now() / 2000;
+    ctx.globalAlpha = 0.15;
+    for (let i = 0; i < 5; i++) {
+      const angle = t + i * Math.PI * 2 / 5;
+      const cx = W/2 + Math.cos(angle) * 150;
+      const cy = H/2 + Math.sin(angle) * 120;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 30 + 10 * Math.sin(t * 2 + i), 0, Math.PI * 2);
+      ctx.fillStyle = ['#6366f1', '#3b82f6', '#10b981', '#fbbf24', '#ef4444'][i];
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    /* 中间大字 */
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 28px "PingFang SC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`第 ${quizIdx + 1} / ${quizBank.length} 题`, W/2, H/2 - 20);
+    ctx.font = '18px "PingFang SC", sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(`得分：${quizScore} / ${quizTotal}`, W/2, H/2 + 20);
+
+    legendEl.innerHTML = '';
+
+    panel.innerHTML = `
+      <h3>🏆 极限与连续 — 互动练习</h3>
+      <div class="quiz">
+        <div class="quiz-q" style="font-size:15px; font-weight:600;">${q.q}</div>
+        <div class="quiz-opts" id="quizOpts">
+          ${q.opts.map((o, i) => `<div class="quiz-opt" data-oi="${i}">${String.fromCharCode(65+i)}. ${o}</div>`).join('')}
+        </div>
+        <div class="quiz-feedback" id="quizFb"></div>
+        <div class="quiz-nav">
+          <button id="prevQ" ${quizIdx<=0?'disabled':''}>◀ 上一题</button>
+          <button id="nextQ" ${quizIdx>=quizBank.length-1?'disabled':''}>下一题 ▶</button>
+          <button id="resetQuiz">🔄 重置</button>
+        </div>
+        <div class="quiz-score">进度：${quizIdx + 1} / ${quizBank.length} | 正确率：${quizTotal > 0 ? Math.round(quizScore/quizTotal*100) : 0}%${typeof PageProgress !== 'undefined' && PageProgress.isDone('limit') ? ' · ✅ 已记录完成' : ''}</div>
+      </div>
+    `;
+
+    quizAnswered = false;
+    panel.querySelectorAll('.quiz-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        if (quizAnswered) return;
+        quizAnswered = true;
+        quizTotal++;
+        const oi = parseInt(opt.dataset.oi);
+        const fb = document.getElementById('quizFb');
+        if (oi === q.ans) {
+          opt.classList.add('correct');
+          quizScore++;
+          fb.innerHTML = `✅ 正确！${q.explain}`;
+          fb.style.color = '#10b981';
+        } else {
+          opt.classList.add('wrong');
+          panel.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+          fb.innerHTML = `❌ 错误。${q.explain}`;
+          fb.style.color = '#ef4444';
+        }
+        if (typeof PageProgress !== 'undefined' && quizScore >= Math.ceil(quizBank.length * 0.6) && !PageProgress.isDone('limit')) {
+          PageProgress.markDone('limit');
+        }
+        renderQuiz();
+      });
+    });
+
+    const prevQ = document.getElementById('prevQ');
+    const nextQ = document.getElementById('nextQ');
+    const resetQ = document.getElementById('resetQuiz');
+    if (prevQ) prevQ.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); }});
+    if (nextQ) nextQ.addEventListener('click', () => { if (quizIdx < quizBank.length - 1) { quizIdx++; renderQuiz(); }});
+    if (resetQ) resetQ.addEventListener('click', () => { quizIdx = 0; quizScore = 0; quizTotal = 0; renderQuiz(); });
+  }
+
+  /* ========== 主循环 ========== */
+  function switchMode(m) {
+    mode = m;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+    /* 恢复默认视图 */
+    viewState.xMin = -3; viewState.xMax = 3; viewState.yMin = -2; viewState.yMax = 4;
+    render();
+  }
+
+  function render() {
+    /* 完整渲染：canvas + DOM。只在模式切换或用户交互时调用 */
+    switch (mode) {
+      case 'epsilon': renderEpsilonDelta(); break;
+      case 'compute': renderLimitCompute(); break;
+      case 'continuous': renderContinuity(); break;
+      case 'quiz': renderQuiz(); break;
+    }
+  }
+
+  /* Canvas-only 动画循环：只重绘 canvas，不重建 DOM */
+  function animateCanvas() {
+    clearCanvas();
+    if (mode === 'epsilon') {
+      // 重绘 epsilon-delta 模式的 canvas 部分
+      drawGrid();
+      const fd = funcLib[epsDelta.funcKey];
+      const { x0, L, f } = fd;
+      const eps = epsDelta.eps;
+      let delta = epsDelta.delta;
+      if (epsDelta.autoDelta) {
+        delta = findDelta(f, x0, L, eps);
+        epsDelta.delta = delta;
+      }
+      drawBand(x0, viewState.xMax - x0, L, eps, 'rgba(16,185,129,0.08)');
+      drawHLine(L + eps, 'rgba(16,185,129,0.5)');
+      drawHLine(L - eps, 'rgba(16,185,129,0.5)');
+      drawHLine(L, 'rgba(239,68,68,0.4)', [3,3]);
+      drawBand(x0, delta, L, viewState.yMax - L, 'rgba(251,191,36,0.06)');
+      drawVLine(x0 - delta, 'rgba(251,191,36,0.5)');
+      drawVLine(x0 + delta, 'rgba(251,191,36,0.5)');
+      drawVLine(x0, 'rgba(239,68,68,0.4)', [3,3]);
+      drawFunc(f, '#3b82f6', 2.5);
+      drawPoint(x0, L, 6, '#ef4444', `(${x0}, ${L})`, 'top');
+      // 动画粒子
+      const t = Date.now() / 1000;
+      for (let i = 0; i < 8; i++) {
+        const phase = t * 0.8 + i * Math.PI / 4;
+        const px = x0 + delta * Math.cos(phase) * 0.9;
+        const py = f(px);
+        if (isFinite(py) && Math.abs(py - L) < eps) {
+          drawPoint(px, py, 3, 'rgba(99,102,241,0.7)');
+        }
+      }
+    } else if (mode === 'compute') {
+      // 重绘极限计算模式的 canvas 部分
+      const prob = limitProblems[currentLimitIdx];
+      if (prob.xRange) {
+        viewState.xMin = prob.xRange[0]; viewState.xMax = prob.xRange[1];
+        viewState.yMin = prob.yRange[0]; viewState.yMax = prob.yRange[1];
+      } else {
+        viewState.xMin = prob.x0 - 3; viewState.xMax = prob.x0 + 3;
+        viewState.yMin = prob.L - 2; viewState.yMax = prob.L + 2;
+      }
+      drawGrid();
+      drawFunc(prob.f, '#3b82f6', 2.5);
+      drawPoint(prob.x0, prob.L, 7, '#ef4444', `L = ${prob.result}`, 'top');
+      // 趋近箭头动画
+      const t = (Date.now() / 1500) % 1;
+      const approachX = prob.x0 + (1 - t) * 2;
+      const approachY = prob.f(approachX);
+      if (isFinite(approachY)) drawPoint(approachX, approachY, 4, 'rgba(168,85,247,0.8)');
+      const approachX2 = prob.x0 - (1 - t) * 2;
+      const approachY2 = prob.f(approachX2);
+      if (isFinite(approachY2)) drawPoint(approachX2, approachY2, 4, 'rgba(168,85,247,0.8)');
+    } else if (mode === 'continuous') {
+      // 重绘连续性模式的 canvas 部分
+      viewState.xMin = -3; viewState.xMax = 3;
+      viewState.yMin = -3; viewState.yMax = 3;
+      drawGrid();
+      const cf = contFuncs[contKey];
+      drawFunc(cf.f, '#3b82f6', 2.5);
+      cf.discs.forEach(d => {
+        const [px, py] = toPixel(d.x, 0);
+        if (d.type === 'removable') {
+          drawPoint(d.x, 2, 7, 'rgba(251,191,36,0.8)', d.label, 'top');
+          ctx.beginPath();
+          ctx.arc(px, toPixel(d.x, 2)[1], 7, 0, Math.PI * 2);
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([3,3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        } else if (d.type === 'jump') {
+          drawPoint(d.x, d.leftL, 5, '#ef4444');
+          drawPoint(d.x, d.rightL, 5, '#ef4444');
+          const [pxl, pyl] = toPixel(d.x, d.leftL);
+          const [pxr, pyr] = toPixel(d.x, d.rightL);
+          ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4,4]);
+          ctx.beginPath(); ctx.moveTo(pxl, pyl); ctx.lineTo(pxr, pyr); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = '#fca5a5';
+          ctx.font = '12px "PingFang SC"';
+          ctx.textAlign = 'center';
+          ctx.fillText(d.label, px, (pyl + pyr) / 2 - 12);
+        } else if (d.type === 'oscillate') {
+          ctx.fillStyle = '#fca5a5';
+          ctx.font = '12px "PingFang SC"';
+          ctx.textAlign = 'center';
+          const [, py0] = toPixel(0, 0);
+          ctx.fillText(d.label, px, py0 - 20);
+          const t = Date.now() / 500;
+          const alpha = 0.3 + 0.3 * Math.sin(t);
+          drawPoint(d.x, 0, 8, `rgba(239,68,68,${alpha})`);
+        } else if (d.type === 'infinite') {
+          ctx.fillStyle = '#fca5a5';
+          ctx.font = '12px "PingFang SC"';
+          ctx.textAlign = 'center';
+          const [, py0] = toPixel(0, 0);
+          ctx.fillText(d.label, px, py0 - 20);
+          drawVLine(d.x, 'rgba(239,68,68,0.6)', [4,4]);
+        }
+      });
+    } else if (mode === 'quiz') {
+      // 重绘测验模式的 canvas 部分
+      viewState.xMin = -3; viewState.xMax = 3;
+      viewState.yMin = -2; viewState.yMax = 4;
+      drawGrid();
+      const t = Date.now() / 2000;
+      ctx.globalAlpha = 0.15;
+      for (let i = 0; i < 5; i++) {
+        const angle = t + i * Math.PI * 2 / 5;
+        const cx = W/2 + Math.cos(angle) * 150;
+        const cy = H/2 + Math.sin(angle) * 120;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 30 + 10 * Math.sin(t * 2 + i), 0, Math.PI * 2);
+        ctx.fillStyle = ['#6366f1', '#3b82f6', '#10b981', '#fbbf24', '#ef4444'][i];
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = 'bold 28px "PingFang SC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`第 ${quizIdx + 1} / ${quizBank.length} 题`, W/2, H/2 - 20);
+      ctx.font = '18px "PingFang SC", sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(`得分：${quizScore} / ${quizTotal}`, W/2, H/2 + 20);
+    }
+    requestAnimationFrame(animateCanvas);
+  }
+
+  /* 绑定 tab 事件 */
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => switchMode(tab.dataset.mode));
+  });
+
+  /* 启动：先做一次完整渲染建立面板，然后启动 canvas 动画循环 */
+  render();
+  requestAnimationFrame(animateCanvas);
+})();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

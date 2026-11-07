@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>线性方程组 · 大学数学互动可视化</title>
+<style>
+  :root {
+    --primary: #7c3aed;
+    --surface: #3b82f6;
+    --accent1: #ef4444;
+    --accent2: #10b981;
+    --accent3: #f59e0b;
+    --accent4: #ec4899;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.78);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1a1040 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1380px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 22px; }
+  header h1 { font-size: 2.1rem; background: linear-gradient(90deg, var(--surface), var(--accent1), var(--accent2)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; font-size: 0.95rem; margin-top: 4px; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 22px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(124,58,237,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 720px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .equation { font-family: "Times New Roman", "STSong", serif; font-size: 1.05rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .eq-r { color: var(--accent1); font-weight: 600; }
+  .eq-g { color: var(--accent2); font-weight: 600; }
+  .eq-b { color: var(--surface); font-weight: 600; }
+  .eq-y { color: var(--accent3); font-weight: 600; }
+  .eq-p { color: var(--accent4); font-weight: 600; }
+
+  .matrix-grid { display: inline-grid; gap: 4px; margin: 8px auto; text-align: center; }
+  .matrix-grid .cell { padding: 6px 10px; background: rgba(255,255,255,0.06); border-radius: 6px; font-family: monospace; font-size: 14px; min-width: 42px; transition: all .3s; }
+  .matrix-grid .cell.hl1 { background: rgba(239,68,68,0.25); color: var(--accent1); }
+  .matrix-grid .cell.hl2 { background: rgba(16,185,129,0.25); color: var(--accent2); }
+  .matrix-grid .cell.hl3 { background: rgba(59,130,246,0.25); color: var(--surface); }
+  .matrix-grid .cell.pivot { background: rgba(245,158,11,0.3); color: var(--accent3); font-weight: 700; }
+  .matrix-grid .cell.zero { color: #475569; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 130px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--accent3); font-weight: 600; font-size: 13px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 13px; color: #93c5fd; transition: all .2s; user-select: none; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.1); }
+
+  .steps { margin: 12px 0; }
+  .step { padding: 10px 14px; margin: 6px 0; background: rgba(255,255,255,0.04); border-radius: 8px; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--primary); transition: all .3s; }
+  .step.active { background: rgba(124,58,237,0.12); border-left-color: var(--accent2); }
+  .step .sn { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: white; text-align: center; line-height: 22px; font-size: 11px; margin-right: 8px; font-weight: 700; }
+  .step.active .sn { background: var(--accent2); }
+
+  .desc { font-size: 13px; color: #94a3b8; line-height: 1.7; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(124,58,237,0.08); border-radius: 12px; border: 1px solid rgba(124,58,237,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.2); border-color: var(--accent2); color: var(--accent2); }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.2); border-color: var(--accent1); color: var(--accent1); }
+  .quiz-msg { margin-top: 10px; font-size: 13px; font-weight: 600; }
+
+  .btn { padding: 8px 20px; border-radius: 8px; background: var(--primary); color: white; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: all .2s; }
+  .btn:hover { background: #6d28d9; transform: translateY(-1px); }
+  .btn.secondary { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+  .btn.secondary:hover { background: rgba(255,255,255,0.15); }
+
+  .input-row { display: flex; gap: 6px; align-items: center; margin: 6px 0; font-size: 14px; flex-wrap: wrap; }
+  .input-row input { width: 56px; padding: 6px 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: var(--light); text-align: center; font-family: monospace; font-size: 14px; }
+  .input-row input:focus { outline: none; border-color: var(--primary); background: rgba(124,58,237,0.1); }
+  .input-row .eq-sign { color: #64748b; margin: 0 2px; }
+
+  .result-box { padding: 14px; border-radius: 10px; margin: 12px 0; font-size: 14px; line-height: 1.7; }
+  .result-box.unique { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); }
+  .result-box.infinite { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); }
+  .result-box.none { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); }
+
+  .hide { display: none; }
+  .section { margin-bottom: 16px; }
+  .bracket { position: relative; display: inline-block; }
+  .bracket::before, .bracket::after { content: ""; position: absolute; top: -4px; bottom: -4px; width: 3px; background: #94a3b8; border-radius: 2px; }
+  .bracket::before { left: -8px; }
+  .bracket::after { right: -8px; }
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📐 线性方程组</h1>
+    <p>高斯消元 · 解的几何意义 · 解的结构 · 互动练习</p>
+    <div id="quizScoreLine" style="font-size:12px;color:#94a3b8;margin-top:4px"></div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="gauss">高斯消元</div>
+    <div class="tab" data-tab="geometry">几何意义</div>
+    <div class="tab" data-tab="structure">解的结构</div>
+    <div class="tab" data-tab="practice">互动练习</div>
+  </div>
+
+  <!-- ===== TAB 1: 高斯消元 ===== -->
+  <div id="tab-gauss" class="tab-content">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="gaussCanvas" width="700" height="520"></canvas>
+        <div class="legend">
+          <span style="--c:var(--accent3)">主元</span>
+          <span style="--c:var(--accent1)">消去行</span>
+          <span style="--c:var(--accent2)">行变换</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🔢 高斯消元法</h3>
+        <div class="desc">通过初等行变换将增广矩阵化为行阶梯形，再回代求解。拖动滑块调整方程系数，点击"下一步"观察消元过程。</div>
+
+        <div class="section">
+          <div style="font-size:13px;color:#94a3b8;margin-bottom:8px;">方程组（3元）：</div>
+          <div class="input-row">
+            <input id="a00" value="1" /><span style="color:#94a3b8">x +</span>
+            <input id="a01" value="2" /><span style="color:#94a3b8">y +</span>
+            <input id="a02" value="1" /><span style="color:#94a3b8">z =</span>
+            <input id="b0" value="9" />
+          </div>
+          <div class="input-row">
+            <input id="a10" value="2" /><span style="color:#94a3b8">x +</span>
+            <input id="a11" value="4" /><span style="color:#94a3b8">y −</span>
+            <input id="a12" value="1" /><span style="color:#94a3b8">z =</span>
+            <input id="b1" value="4" />
+          </div>
+          <div class="input-row">
+            <input id="a20" value="3" /><span style="color:#94a3b8">x +</span>
+            <input id="a21" value="6" /><span style="color:#94a3b8">y +</span>
+            <input id="a22" value="2" /><span style="color:#94a3b8">z =</span>
+            <input id="b2" value="15" />
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap;">
+          <button class="btn" id="gaussNext">▶ 下一步</button>
+          <button class="btn secondary" id="gaussAuto">⏩ 自动播放</button>
+          <button class="btn secondary" id="gaussReset">↺ 重置</button>
+        </div>
+
+        <div id="gaussSteps" class="steps"></div>
+        <div id="gaussResult"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB 2: 几何意义 ===== -->
+  <div id="tab-geometry" class="tab-content hide">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="geoCanvas" width="700" height="520"></canvas>
+        <div class="legend">
+          <span style="background:rgba(239,68,68,0.5)">平面 1</span>
+          <span style="background:rgba(59,130,246,0.5)">平面 2</span>
+          <span style="background:rgba(16,185,129,0.5)">平面 3</span>
+          <span style="background:var(--accent3)">交点/交线</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🌐 解的几何意义</h3>
+        <div class="desc">三元一次方程组的每个方程代表三维空间中的一个平面。方程组的解就是三个平面的公共交点。</div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-geo="unique">唯一解（一点）</div>
+          <div class="mode-btn" data-geo="line">无穷解（一线）</div>
+          <div class="mode-btn" data-geo="plane">无穷解（一面）</div>
+          <div class="mode-btn" data-geo="none">无解</div>
+        </div>
+
+        <div class="slider-row">
+          <label>旋转 X</label>
+          <input type="range" id="geoRotX" min="-30" max="30" value="15" />
+          <span class="val" id="geoRotXVal">15°</span>
+        </div>
+        <div class="slider-row">
+          <label>旋转 Y</label>
+          <input type="range" id="geoRotY" min="-45" max="45" value="25" />
+          <span class="val" id="geoRotYVal">25°</span>
+        </div>
+
+        <div id="geoInfo" class="desc"></div>
+
+        <div id="geoCaseInfo"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB 3: 解的结构 ===== -->
+  <div id="tab-structure" class="tab-content hide">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="structCanvas" width="700" height="520"></canvas>
+        <div class="legend">
+          <span style="background:var(--accent2)">特解</span>
+          <span style="background:var(--surface)">基础解系</span>
+          <span style="background:var(--accent3)">通解</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🧬 解的结构</h3>
+        <div class="desc">齐次方程组 Ax=0 的解构成向量空间（解空间）。非齐次方程组 Ax=b 的通解 = 特解 + 齐次通解。</div>
+
+        <div class="mode-switch">
+          <div class="mode-btn active" data-struct="unique">唯一零解</div>
+          <div class="mode-btn" data-struct="line">一维解空间</div>
+          <div class="mode-btn" data-struct="plane">二维解空间</div>
+          <div class="mode-btn" data-struct="affine">仿射通解</div>
+        </div>
+
+        <div class="slider-row">
+          <label>参数 t</label>
+          <input type="range" id="structT" min="-30" max="30" value="10" />
+          <span class="val" id="structTVal">1.0</span>
+        </div>
+        <div class="slider-row" id="structSRow">
+          <label>参数 s</label>
+          <input type="range" id="structS" min="-30" max="30" value="10" />
+          <span class="val" id="structSVal">1.0</span>
+        </div>
+
+        <div id="structInfo" class="desc"></div>
+
+        <div id="structFormula" class="equation"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB 4: 互动练习 ===== -->
+  <div id="tab-practice" class="tab-content hide">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="520"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🎯 互动练习</h3>
+        <div id="practiceArea"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Tab switching =====
+const tabs = document.querySelectorAll('.tab');
+const tabContents = document.querySelectorAll('.tab-content');
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  tabContents.forEach(x => x.classList.add('hide'));
+  t.classList.add('active');
+  document.getElementById('tab-' + t.dataset.tab).classList.remove('hide');
+}));
+
+// ===== Utility =====
+function fmt(n) { return Math.abs(n) < 1e-9 ? '0' : (Math.round(n * 100) / 100).toString(); }
+function fmtF(n) { return (Math.round(n * 100) / 100).toFixed(2); }
+
+// ================================================================
+//  TAB 1: 高斯消元
+// ================================================================
+const gaussCanvas = document.getElementById('gaussCanvas');
+const gaussCtx = gaussCanvas.getContext('2d');
+let gaussMatrix = [];
+let gaussStep = 0;
+let gaussSteps = [];
+let gaussAnimTimer = null;
+
+function readGaussInput() {
+  const A = [], b = [];
+  for (let i = 0; i < 3; i++) {
+    A[i] = [];
+    for (let j = 0; j < 3; j++) {
+      A[i][j] = parseFloat(document.getElementById(`a${i}${j}`).value) || 0;
+    }
+    b[i] = parseFloat(document.getElementById(`b${i}`).value) || 0;
+  }
+  return { A, b };
+}
+
+function buildAugMatrix() {
+  const { A, b } = readGaussInput();
+  return A.map((row, i) => [...row, b[i]]);
+}
+
+function cloneMatrix(m) { return m.map(r => [...r]); }
+
+function computeGaussSteps(mat) {
+  const M = cloneMatrix(mat);
+  const steps = [{ matrix: cloneMatrix(M), desc: '初始增广矩阵 [A|b]', op: '' }];
+  const n = 3;
+
+  for (let col = 0; col < n; col++) {
+    // Find pivot
+    let maxRow = col;
+    for (let row = col + 1; row < n; row++) {
+      if (Math.abs(M[row][col]) > Math.abs(M[maxRow][col])) maxRow = row;
+    }
+    if (Math.abs(M[maxRow][col]) < 1e-9) continue;
+
+    if (maxRow !== col) {
+      [M[col], M[maxRow]] = [M[maxRow], M[col]];
+      steps.push({ matrix: cloneMatrix(M), desc: `交换 R${col+1} ↔ R${maxRow+1}`, op: 'swap', r1: col, r2: maxRow });
+    }
+
+    for (let row = col + 1; row < n; row++) {
+      if (Math.abs(M[row][col]) < 1e-9) continue;
+      const factor = M[row][col] / M[col][col];
+      for (let j = col; j <= n; j++) {
+        M[row][j] -= factor * M[col][j];
+      }
+      steps.push({ matrix: cloneMatrix(M), desc: `R${row+1} ← R${row+1} − (${fmtF(factor)})·R${col+1}`, op: 'elim', r: row, pivot: col });
+    }
+  }
+
+  // Back substitution steps
+  for (let col = n - 1; col >= 0; col--) {
+    if (Math.abs(M[col][col]) < 1e-9) continue;
+    for (let row = col - 1; row >= 0; row--) {
+      if (Math.abs(M[row][col]) < 1e-9) continue;
+      const factor = M[row][col] / M[col][col];
+      for (let j = col; j <= n; j++) {
+        M[row][j] -= factor * M[col][j];
+      }
+      steps.push({ matrix: cloneMatrix(M), desc: `R${row+1} ← R${row+1} − (${fmtF(factor)})·R${col+1}`, op: 'back', r: row, pivot: col });
+    }
+  }
+
+  // Normalize
+  for (let i = 0; i < n; i++) {
+    if (Math.abs(M[i][i]) > 1e-9 && Math.abs(M[i][i] - 1) > 1e-9) {
+      const d = M[i][i];
+      for (let j = i; j <= n; j++) M[i][j] /= d;
+      steps.push({ matrix: cloneMatrix(M), desc: `R${i+1} ÷ ${fmtF(d)}`, op: 'scale', r: i });
+    }
+  }
+
+  return steps;
+}
+
+function drawGaussMatrix(ctx, mat, step, W, H) {
+  ctx.clearRect(0, 0, W, H);
+
+  const rows = mat.length, cols = mat[0].length;
+  const cellW = 80, cellH = 50;
+  const startX = (W - cols * cellW) / 2;
+  const startY = 60;
+
+  // Title
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('增广矩阵 [A | b]', W / 2, 30);
+
+  // Separator line between A and b
+  const sepX = startX + 3 * cellW;
+
+  // Draw matrix
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      const x = startX + j * cellW;
+      const y = startY + i * cellH;
+      const val = mat[i][j];
+
+      // Background
+      let bg = 'rgba(255,255,255,0.05)';
+      let fg = '#e2e8f0';
+
+      if (step) {
+        if (step.op === 'elim' || step.op === 'back') {
+          if (i === step.r) { bg = 'rgba(239,68,68,0.15)'; fg = '#fca5a5'; }
+          if (i === step.pivot && j === step.pivot) { bg = 'rgba(245,158,11,0.25)'; fg = '#fcd34d'; }
+        }
+        if (step.op === 'swap') {
+          if (i === step.r1 || i === step.r2) { bg = 'rgba(16,185,129,0.15)'; fg = '#6ee7b7'; }
+        }
+        if (step.op === 'scale') {
+          if (i === step.r) { bg = 'rgba(59,130,246,0.15)'; fg = '#93c5fd'; }
+        }
+      }
+
+      // Pivot highlight
+      if (j === i && Math.abs(val) > 1e-9 && (!step || step.op === '')) {
+        bg = 'rgba(245,158,11,0.15)'; fg = '#fcd34d';
+      }
+
+      // Zero dimming
+      if (Math.abs(val) < 1e-9) fg = '#475569';
+
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.roundRect(x + 3, y + 3, cellW - 6, cellH - 6, 8);
+      ctx.fill();
+
+      ctx.fillStyle = fg;
+      ctx.font = 'bold 16px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(fmt(val), x + cellW / 2, y + cellH / 2);
+    }
+  }
+
+  // Separator
+  ctx.strokeStyle = 'rgba(245,158,11,0.4)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(sepX, startY);
+  ctx.lineTo(sepX, startY + rows * cellH);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Column labels
+  const labels = ['x', 'y', 'z', 'b'];
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  for (let j = 0; j < cols; j++) {
+    ctx.fillText(labels[j], startX + j * cellW + cellW / 2, startY - 12);
+  }
+
+  // Bracket decorations
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  const bx = startX + 4, by = startY + 4;
+  const bw = cols * cellW - 8, bh = rows * cellH - 8;
+  // Left bracket
+  ctx.beginPath();
+  ctx.moveTo(bx + 10, by); ctx.lineTo(bx, by); ctx.lineTo(bx, by + bh); ctx.lineTo(bx + 10, by + bh);
+  ctx.stroke();
+  // Right bracket
+  ctx.beginPath();
+  ctx.moveTo(bx + bw - 10, by); ctx.lineTo(bx + bw, by); ctx.lineTo(bx + bw, by + bh); ctx.lineTo(bx + bw - 10, by + bh);
+  ctx.stroke();
+
+  // Step description
+  if (step) {
+    ctx.fillStyle = 'rgba(124,58,237,0.15)';
+    ctx.beginPath();
+    ctx.roundRect(W / 2 - 200, startY + rows * cellH + 30, 400, 40, 10);
+    ctx.fill();
+    ctx.fillStyle = '#c4b5fd';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(step.desc, W / 2, startY + rows * cellH + 55);
+  }
+
+  // Solution display
+  if (gaussStep >= gaussSteps.length - 1) {
+    const solY = startY + rows * cellH + 90;
+    const sol = solveFromRREF(mat);
+    if (sol) {
+      ctx.fillStyle = 'rgba(16,185,129,0.12)';
+      ctx.beginPath();
+      ctx.roundRect(W / 2 - 180, solY, 360, 50, 10);
+      ctx.fill();
+      ctx.fillStyle = '#6ee7b7';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText(`x = ${fmt(sol[0])},  y = ${fmt(sol[1])},  z = ${fmt(sol[2])}`, W / 2, solY + 30);
+    }
+  }
+}
+
+function solveFromRREF(mat) {
+  if (Math.abs(mat[0][0]) < 1e-9 || Math.abs(mat[1][1]) < 1e-9 || Math.abs(mat[2][2]) < 1e-9) return null;
+  return [mat[0][3] / mat[0][0], mat[1][3] / mat[1][1], mat[2][3] / mat[2][2]];
+}
+
+function initGauss() {
+  gaussMatrix = buildAugMatrix();
+  gaussSteps = computeGaussSteps(gaussMatrix);
+  gaussStep = 0;
+  renderGaussStep();
+}
+
+function renderGaussStep() {
+  const step = gaussSteps[gaussStep];
+  const W = gaussCanvas.width, H = gaussCanvas.height;
+  drawGaussMatrix(gaussCtx, step.matrix, step, W, H);
+
+  const stepsDiv = document.getElementById('gaussSteps');
+  stepsDiv.innerHTML = '';
+  for (let i = 0; i <= gaussStep && i < gaussSteps.length; i++) {
+    const div = document.createElement('div');
+    div.className = 'step' + (i === gaussStep ? ' active' : '');
+    div.innerHTML = `<span class="sn">${i}</span>${gaussSteps[i].desc}`;
+    stepsDiv.appendChild(div);
+  }
+
+  const resultDiv = document.getElementById('gaussResult');
+  if (gaussStep >= gaussSteps.length - 1) {
+    const sol = solveFromRREF(gaussSteps[gaussSteps.length - 1].matrix);
+    if (sol) {
+      resultDiv.innerHTML = `<div class="result-box unique">✅ 唯一解：x = ${fmt(sol[0])}, y = ${fmt(sol[1])}, z = ${fmt(sol[2])}</div>`;
+    } else {
+      resultDiv.innerHTML = `<div class="result-box none">⚠️ 方程组无唯一解（存在自由变量或矛盾方程）</div>`;
+    }
+  } else {
+    resultDiv.innerHTML = '';
+  }
+}
+
+document.getElementById('gaussNext').addEventListener('click', () => {
+  if (gaussStep < gaussSteps.length - 1) {
+    gaussStep++;
+    renderGaussStep();
+  }
+});
+
+document.getElementById('gaussAuto').addEventListener('click', () => {
+  if (gaussAnimTimer) { clearInterval(gaussAnimTimer); gaussAnimTimer = null; return; }
+  gaussAnimTimer = setInterval(() => {
+    if (gaussStep < gaussSteps.length - 1) {
+      gaussStep++;
+      renderGaussStep();
+    } else {
+      clearInterval(gaussAnimTimer);
+      gaussAnimTimer = null;
+    }
+  }, 800);
+});
+
+document.getElementById('gaussReset').addEventListener('click', () => {
+  if (gaussAnimTimer) { clearInterval(gaussAnimTimer); gaussAnimTimer = null; }
+  initGauss();
+});
+
+// Re-init on input change
+for (let i = 0; i < 3; i++) {
+  for (let j = 0; j < 3; j++) {
+    document.getElementById(`a${i}${j}`).addEventListener('change', initGauss);
+  }
+  document.getElementById(`b${i}`).addEventListener('change', initGauss);
+}
+
+// ================================================================
+//  TAB 2: 几何意义
+// ================================================================
+const geoCanvas = document.getElementById('geoCanvas');
+const geoCtx = geoCanvas.getContext('2d');
+let geoMode = 'unique';
+let geoRotXVal = 15, geoRotYVal = 25;
+
+const geoCases = {
+  unique: {
+    planes: [
+      { a: 1, b: 0, c: 0, d: 1 },
+      { a: 0, b: 1, c: 0, d: 2 },
+      { a: 0, b: 0, c: 1, d: 3 }
+    ],
+    solution: '(1, 2, 3)',
+    desc: '三个平面交于唯一一点 (1, 2, 3)。系数矩阵满秩 (rank=3)，方程组有唯一解。'
+  },
+  line: {
+    planes: [
+      { a: 1, b: 0, c: 0, d: 1 },
+      { a: 0, b: 1, c: 0, d: 2 },
+      { a: 1, b: 1, c: 0, d: 3 }
+    ],
+    solution: '点 (1, 2, t)，t 任意',
+    desc: '平面 x=1 与 y=2 交于直线 (1, 2, t)。第三平面 x+y=3 是该直线的线性组合，故三平面共线。rank(A)=rank([A|b])=2 < 3，解集为一条直线。'
+  },
+  plane: {
+    planes: [
+      { a: 1, b: 1, c: 0, d: 1 },
+      { a: 2, b: 2, c: 0, d: 2 },
+      { a: 3, b: 3, c: 0, d: 3 }
+    ],
+    solution: '平面 x+y=1',
+    desc: '三个平面完全重合。rank(A)=rank([A|b])=1 < 3，解集为一个二维平面。'
+  },
+  none: {
+    planes: [
+      { a: 1, b: 0, c: 0, d: 1 },
+      { a: 1, b: 0, c: 0, d: 2 },
+      { a: 0, b: 1, c: 0, d: 0 }
+    ],
+    solution: '无解',
+    desc: '平面 x=1 与 x=2 平行不重合，三个平面无公共点。rank(A)=2 < rank([A|b])=3，方程组无解。'
+  }
+};
+
+function project3D(x, y, z, rotX, rotY) {
+  const rx = rotX * Math.PI / 180;
+  const ry = rotY * Math.PI / 180;
+  // Rotate Y
+  let x1 = x * Math.cos(ry) - z * Math.sin(ry);
+  let z1 = x * Math.sin(ry) + z * Math.cos(ry);
+  let y1 = y;
+  // Rotate X
+  let y2 = y1 * Math.cos(rx) - z1 * Math.sin(rx);
+  let z2 = y1 * Math.sin(rx) + z1 * Math.cos(rx);
+  // Perspective
+  const scale = 400 / (400 + z2 * 30);
+  return { x: 350 + x1 * 60 * scale, y: 260 - y2 * 60 * scale, z: z2, scale };
+}
+
+function drawPlane(ctx, plane, color, rotX, rotY) {
+  const { a, b, c, d } = plane;
+  const pts = [];
+  const range = 3;
+
+  // Generate grid points on the plane
+  for (let u = -range; u <= range; u += 0.8) {
+    for (let v = -range; v <= range; v += 0.8) {
+      let x, y, z;
+      if (Math.abs(c) > 1e-9) {
+        x = u; y = v; z = (d - a * x - b * y) / c;
+      } else if (Math.abs(b) > 1e-9) {
+        x = u; z = v; y = (d - a * x - c * z) / b;
+      } else {
+        y = u; z = v; x = (d - b * y - c * z) / a;
+      }
+      if (Math.abs(x) <= range && Math.abs(y) <= range && Math.abs(z) <= range) {
+        pts.push(project3D(x, y, z, rotX, rotY));
+      }
+    }
+  }
+
+  // Draw points
+  pts.forEach(p => {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2.5 * p.scale, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawGeoAxes(ctx, rotX, rotY) {
+  const o = project3D(0, 0, 0, rotX, rotY);
+  const axes = [
+    { dir: [3, 0, 0], color: '#ef4444', label: 'x' },
+    { dir: [0, 3, 0], color: '#10b981', label: 'y' },
+    { dir: [0, 0, 3], color: '#3b82f6', label: 'z' }
+  ];
+
+  axes.forEach(ax => {
+    const end = project3D(...ax.dir, rotX, rotY);
+    const neg = project3D(-ax.dir[0], -ax.dir[1], -ax.dir[2], rotX, rotY);
+
+    ctx.strokeStyle = ax.color;
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(neg.x, neg.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = ax.color;
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(ax.label, end.x + 10, end.y - 5);
+  });
+
+  // Origin
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('O', o.x - 12, o.y + 14);
+}
+
+function drawGeo() {
+  const W = geoCanvas.width, H = geoCanvas.height;
+  geoCtx.clearRect(0, 0, W, H);
+
+  const caseData = geoCases[geoMode];
+  drawGeoAxes(geoCtx, geoRotXVal, geoRotYVal);
+
+  const colors = ['rgba(239,68,68,0.35)', 'rgba(59,130,246,0.35)', 'rgba(16,185,129,0.35)'];
+  caseData.planes.forEach((p, i) => drawPlane(geoCtx, p, colors[i], geoRotXVal, geoRotYVal));
+
+  // Draw solution point/line
+  if (geoMode === 'unique') {
+    const pt = project3D(1, 2, 3, geoRotXVal, geoRotYVal);
+    geoCtx.fillStyle = '#fbbf24';
+    geoCtx.beginPath();
+    geoCtx.arc(pt.x, pt.y, 8 * pt.scale, 0, Math.PI * 2);
+    geoCtx.fill();
+    geoCtx.strokeStyle = '#fbbf24';
+    geoCtx.lineWidth = 2;
+    geoCtx.beginPath();
+    geoCtx.arc(pt.x, pt.y, 14 * pt.scale, 0, Math.PI * 2);
+    geoCtx.stroke();
+  } else if (geoMode === 'line') {
+    const p1 = project3D(1, 2, -3, geoRotXVal, geoRotYVal);
+    const p2 = project3D(1, 2, 3, geoRotXVal, geoRotYVal);
+    geoCtx.strokeStyle = '#fbbf24';
+    geoCtx.lineWidth = 3;
+    geoCtx.setLineDash([8, 4]);
+    geoCtx.beginPath();
+    geoCtx.moveTo(p1.x, p1.y);
+    geoCtx.lineTo(p2.x, p2.y);
+    geoCtx.stroke();
+    geoCtx.setLineDash([]);
+  }
+
+  // Info
+  document.getElementById('geoCaseInfo').innerHTML = `
+    <div class="result-box ${geoMode === 'none' ? 'none' : geoMode === 'unique' ? 'unique' : 'infinite'}">
+      <b>${caseData.solution}</b><br/>
+      <span style="font-size:13px;color:#94a3b8">${caseData.desc}</span>
+    </div>
+  `;
+}
+
+document.querySelectorAll('[data-geo]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-geo]').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+    geoMode = btn.dataset.geo;
+    drawGeo();
+  });
+});
+
+document.getElementById('geoRotX').addEventListener('input', e => {
+  geoRotXVal = parseInt(e.target.value);
+  document.getElementById('geoRotXVal').textContent = geoRotXVal + '°';
+  drawGeo();
+});
+document.getElementById('geoRotY').addEventListener('input', e => {
+  geoRotYVal = parseInt(e.target.value);
+  document.getElementById('geoRotYVal').textContent = geoRotYVal + '°';
+  drawGeo();
+});
+
+// ================================================================
+//  TAB 3: 解的结构
+// ================================================================
+const structCanvas = document.getElementById('structCanvas');
+const structCtx = structCanvas.getContext('2d');
+let structMode = 'unique';
+let structT = 1.0, structS = 1.0;
+
+const structCases = {
+  unique: {
+    title: '唯一零解 (齐次)',
+    formula: 'Ax = 0, rank(A) = n ⟹ x = 0',
+    desc: '系数矩阵满秩，齐次方程组只有零解。解空间退化为原点。',
+    type: 'point'
+  },
+  line: {
+    title: '一维解空间',
+    formula: 'x = t·ξ₁,  ξ₁ = (1, -2, 1)ᵀ',
+    desc: 'rank(A) = 2, 自由变量 1 个。解空间是一条过原点的直线，基础解系含 1 个向量。',
+    type: 'line'
+  },
+  plane: {
+    title: '二维解空间',
+    formula: 'x = t·ξ₁ + s·ξ₂,  ξ₁=(1,0,-1)ᵀ, ξ₂=(0,1,-1)ᵀ',
+    desc: 'rank(A) = 1, 自由变量 2 个。解空间是一个过原点的平面，基础解系含 2 个向量。',
+    type: 'plane'
+  },
+  affine: {
+    title: '非齐次通解',
+    formula: 'x = x* + t·ξ₁,  x*=(1,2,0)ᵀ, ξ₁=(1,-1,1)ᵀ',
+    desc: '非齐次方程组的通解 = 一个特解 x* + 齐次方程组的通解。几何上是不经过原点的直线/平面。',
+    type: 'affine'
+  }
+};
+
+function drawStruct() {
+  const W = structCanvas.width, H = structCanvas.height;
+  structCtx.clearRect(0, 0, W, H);
+
+  const rotX = 15, rotY = 25;
+
+  // Draw axes
+  const o = project3D(0, 0, 0, rotX, rotY);
+  const axes = [
+    { dir: [3, 0, 0], color: '#ef4444', label: 'x₁' },
+    { dir: [0, 3, 0], color: '#10b981', label: 'x₂' },
+    { dir: [0, 0, 3], color: '#3b82f6', label: 'x₃' }
+  ];
+  axes.forEach(ax => {
+    const end = project3D(...ax.dir, rotX, rotY);
+    const neg = project3D(-ax.dir[0], -ax.dir[1], -ax.dir[2], rotX, rotY);
+    structCtx.strokeStyle = ax.color;
+    structCtx.lineWidth = 1;
+    structCtx.globalAlpha = 0.4;
+    structCtx.beginPath();
+    structCtx.moveTo(neg.x, neg.y);
+    structCtx.lineTo(end.x, end.y);
+    structCtx.stroke();
+    structCtx.globalAlpha = 1;
+    structCtx.fillStyle = ax.color;
+    structCtx.font = 'bold 13px sans-serif';
+    structCtx.textAlign = 'center';
+    structCtx.fillText(ax.label, end.x + 12, end.y - 5);
+  });
+  structCtx.fillStyle = '#64748b';
+  structCtx.font = '11px sans-serif';
+  structCtx.fillText('O', o.x - 10, o.y + 12);
+
+  const caseData = structCases[structMode];
+
+  if (caseData.type === 'point') {
+    // Just origin
+    structCtx.fillStyle = '#10b981';
+    structCtx.beginPath();
+    structCtx.arc(o.x, o.y, 8, 0, Math.PI * 2);
+    structCtx.fill();
+    structCtx.fillStyle = '#6ee7b7';
+    structCtx.font = 'bold 14px sans-serif';
+    structCtx.fillText('x = (0, 0, 0)', o.x + 20, o.y - 10);
+  }
+
+  if (caseData.type === 'line') {
+    // Line through origin: direction (1, -2, 1)
+    const dir = [1, -2, 1];
+    const p1 = project3D(dir[0] * -3 * structT, dir[1] * -3 * structT, dir[2] * -3 * structT, rotX, rotY);
+    const p2 = project3D(dir[0] * 3 * structT, dir[1] * 3 * structT, dir[2] * 3 * structT, rotX, rotY);
+    structCtx.strokeStyle = '#3b82f6';
+    structCtx.lineWidth = 3;
+    structCtx.beginPath();
+    structCtx.moveTo(p1.x, p1.y);
+    structCtx.lineTo(p2.x, p2.y);
+    structCtx.stroke();
+
+    // Current point
+    const cur = project3D(dir[0] * structT, dir[1] * structT, dir[2] * structT, rotX, rotY);
+    structCtx.fillStyle = '#10b981';
+    structCtx.beginPath();
+    structCtx.arc(cur.x, cur.y, 7, 0, Math.PI * 2);
+    structCtx.fill();
+
+    // Basis vector arrow
+    const base = project3D(0, 0, 0, rotX, rotY);
+    const tip = project3D(dir[0], dir[1], dir[2], rotX, rotY);
+    structCtx.strokeStyle = '#f59e0b';
+    structCtx.lineWidth = 2;
+    structCtx.beginPath();
+    structCtx.moveTo(base.x, base.y);
+    structCtx.lineTo(tip.x, tip.y);
+    structCtx.stroke();
+    structCtx.fillStyle = '#f59e0b';
+    structCtx.font = 'bold 12px sans-serif';
+    structCtx.fillText('ξ₁', tip.x + 10, tip.y);
+  }
+
+  if (caseData.type === 'plane') {
+    // Plane: span{(1,0,-1), (0,1,-1)}
+    const d1 = [1, 0, -1], d2 = [0, 1, -1];
+    const pts = [];
+    for (let u = -2.5; u <= 2.5; u += 0.5) {
+      for (let v = -2.5; v <= 2.5; v += 0.5) {
+        const x = u * d1[0] + v * d2[0];
+        const y = u * d1[1] + v * d2[1];
+        const z = u * d1[2] + v * d2[2];
+        if (Math.abs(x) <= 3 && Math.abs(y) <= 3 && Math.abs(z) <= 3) {
+          pts.push(project3D(x, y, z, rotX, rotY));
+        }
+      }
+    }
+    pts.forEach(p => {
+      structCtx.fillStyle = 'rgba(59,130,246,0.25)';
+      structCtx.beginPath();
+      structCtx.arc(p.x, p.y, 3 * p.scale, 0, Math.PI * 2);
+      structCtx.fill();
+    });
+
+    // Current point
+    const cx = structT * d1[0] + structS * d2[0];
+    const cy = structT * d1[1] + structS * d2[1];
+    const cz = structT * d1[2] + structS * d2[2];
+    const cur = project3D(cx, cy, cz, rotX, rotY);
+    structCtx.fillStyle = '#10b981';
+    structCtx.beginPath();
+    structCtx.arc(cur.x, cur.y, 7, 0, Math.PI * 2);
+    structCtx.fill();
+
+    // Basis vectors
+    const base = project3D(0, 0, 0, rotX, rotY);
+    const t1 = project3D(d1[0], d1[1], d1[2], rotX, rotY);
+    const t2 = project3D(d2[0], d2[1], d2[2], rotX, rotY);
+    structCtx.strokeStyle = '#f59e0b';
+    structCtx.lineWidth = 2;
+    structCtx.beginPath(); structCtx.moveTo(base.x, base.y); structCtx.lineTo(t1.x, t1.y); structCtx.stroke();
+    structCtx.strokeStyle = '#ec4899';
+    structCtx.beginPath(); structCtx.moveTo(base.x, base.y); structCtx.lineTo(t2.x, t2.y); structCtx.stroke();
+    structCtx.fillStyle = '#f59e0b';
+    structCtx.font = 'bold 12px sans-serif';
+    structCtx.fillText('ξ₁', t1.x + 10, t1.y);
+    structCtx.fillStyle = '#ec4899';
+    structCtx.fillText('ξ₂', t2.x + 10, t2.y);
+  }
+
+  if (caseData.type === 'affine') {
+    // Affine: x* = (1,2,0) + t*(1,-1,1)
+    const xStar = [1, 2, 0];
+    const dir = [1, -1, 1];
+
+    // Draw the homogeneous line through origin (dashed)
+    const h1 = project3D(dir[0] * -3, dir[1] * -3, dir[2] * -3, rotX, rotY);
+    const h2 = project3D(dir[0] * 3, dir[1] * 3, dir[2] * 3, rotX, rotY);
+    structCtx.strokeStyle = 'rgba(59,130,246,0.4)';
+    structCtx.lineWidth = 2;
+    structCtx.setLineDash([6, 4]);
+    structCtx.beginPath();
+    structCtx.moveTo(h1.x, h1.y);
+    structCtx.lineTo(h2.x, h2.y);
+    structCtx.stroke();
+    structCtx.setLineDash([]);
+
+    // Draw the affine line
+    const p1 = project3D(xStar[0] + dir[0] * -3 * structT, xStar[1] + dir[1] * -3 * structT, xStar[2] + dir[2] * -3 * structT, rotX, rotY);
+    const p2 = project3D(xStar[0] + dir[0] * 3 * structT, xStar[1] + dir[1] * 3 * structT, xStar[2] + dir[2] * 3 * structT, rotX, rotY);
+    structCtx.strokeStyle = '#f59e0b';
+    structCtx.lineWidth = 3;
+    structCtx.beginPath();
+    structCtx.moveTo(p1.x, p1.y);
+    structCtx.lineTo(p2.x, p2.y);
+    structCtx.stroke();
+
+    // Special point x*
+    const sp = project3D(xStar[0], xStar[1], xStar[2], rotX, rotY);
+    structCtx.fillStyle = '#10b981';
+    structCtx.beginPath();
+    structCtx.arc(sp.x, sp.y, 8, 0, Math.PI * 2);
+    structCtx.fill();
+    structCtx.fillStyle = '#6ee7b7';
+    structCtx.font = 'bold 12px sans-serif';
+    structCtx.fillText('x*', sp.x + 14, sp.y - 8);
+
+    // Current point
+    const cx = xStar[0] + dir[0] * structT;
+    const cy = xStar[1] + dir[1] * structT;
+    const cz = xStar[2] + dir[2] * structT;
+    const cur = project3D(cx, cy, cz, rotX, rotY);
+    structCtx.fillStyle = '#ef4444';
+    structCtx.beginPath();
+    structCtx.arc(cur.x, cur.y, 6, 0, Math.PI * 2);
+    structCtx.fill();
+
+    // Arrow from x* to current
+    structCtx.strokeStyle = 'rgba(239,68,68,0.5)';
+    structCtx.lineWidth = 1.5;
+    structCtx.setLineDash([4, 3]);
+    structCtx.beginPath();
+    structCtx.moveTo(sp.x, sp.y);
+    structCtx.lineTo(cur.x, cur.y);
+    structCtx.stroke();
+    structCtx.setLineDash([]);
+  }
+
+  // Update info
+  document.getElementById('structInfo').innerHTML = `
+    <div class="desc">
+      <b style="color:#e2e8f0">${caseData.title}</b><br/>
+      ${caseData.desc}
+    </div>
+  `;
+  document.getElementById('structFormula').innerHTML = caseData.formula;
+
+  // Show/hide s slider
+  document.getElementById('structSRow').style.display = (structMode === 'plane') ? 'flex' : 'none';
+}
+
+document.querySelectorAll('[data-struct]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-struct]').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+    structMode = btn.dataset.struct;
+    drawStruct();
+  });
+});
+
+document.getElementById('structT').addEventListener('input', e => {
+  structT = parseInt(e.target.value) / 10;
+  document.getElementById('structTVal').textContent = structT.toFixed(1);
+  drawStruct();
+});
+document.getElementById('structS').addEventListener('input', e => {
+  structS = parseInt(e.target.value) / 10;
+  document.getElementById('structSVal').textContent = structS.toFixed(1);
+  drawStruct();
+});
+
+// ================================================================
+//  TAB 4: 互动练习
+// ================================================================
+const practiceCanvas = document.getElementById('practiceCanvas');
+const practiceCtx = practiceCanvas.getContext('2d');
+let currentQuiz = 0;
+const quizCorrectSet = new Set();
+
+function updateQuizScoreLine() {
+  const el = document.getElementById('quizScoreLine');
+  if (!el) return;
+  const total = quizzes.length;
+  const answered = quizCorrectSet.size;
+  el.textContent = `已答对 ${answered}/${total}`;
+  if (answered >= total && total > 0) {
+    el.textContent += ' ✅ 已掌握';
+    if (typeof PageProgress !== 'undefined') PageProgress.markDone('linear-systems');
+  }
+}
+
+const quizzes = [
+  {
+    q: '方程组的增广矩阵经行变换后化为：<br/>[1 0 0 | 3]<br/>[0 1 0 | -1]<br/>[0 0 1 | 2]<br/>则方程组的解为？',
+    opts: ['x=3, y=-1, z=2', 'x=-1, y=3, z=2', '无解', '无穷多解'],
+    ans: 0,
+    explain: '行最简形直接给出唯一解：x₁=3, x₂=-1, x₃=2。'
+  },
+  {
+    q: '齐次方程组 Ax=0 中，A 是 3×5 矩阵，rank(A)=2，则解空间的维数是？',
+    opts: ['1', '2', '3', '5'],
+    ans: 2,
+    explain: '解空间维数 = n - rank(A) = 5 - 2 = 3。基础解系含 n-r = 3 个线性无关向量，因此解空间维数为 3。'
+  },
+  {
+    q: '非齐次方程组 Ax=b 有特解 x*=(1,0,1)ᵀ，对应齐次方程组基础解系为 ξ=(1,-1,0)ᵀ，则通解为？',
+    opts: ['x=(1+t, -t, 1)ᵀ', 'x=(1, 0, 1)ᵀ + t(1, -1, 0)ᵀ', 'x=t(1, 0, 1)ᵀ', 'x=(1+ t, t, 1)ᵀ'],
+    ans: 1,
+    explain: '非齐次通解 = 特解 + t·齐次基础解系 = (1,0,1)ᵀ + t(1,-1,0)ᵀ。选项 A 和 B 实际等价，但 B 是标准写法。'
+  },
+  {
+    q: '三元方程组中，三个平面两两相交但无公共交点，这种情况说明？',
+    opts: ['rank(A) = 3', 'rank(A) = rank([A|b]) = 2', 'rank(A) < rank([A|b])', '方程组有唯一解'],
+    ans: 2,
+    explain: '三平面两两相交但无公共点（如三棱柱的侧面），说明 rank(A)=2 < rank([A|b])=3，方程组无解。'
+  },
+  {
+    q: '高斯消元中，若某步主元为 0，应该？',
+    opts: ['直接跳过该列', '将方程组无解', '交换行使主元非零', '将该列全置为 0'],
+    ans: 2,
+    explain: '主元为 0 时，应在下方行中找非零元素进行行交换（选主元）。若整列都为 0，则该变量为自由变量。'
+  }
+];
+
+// Fix quiz 2 answer
+quizzes[1].ans = 2; // 5-2=3
+
+function drawPractice() {
+  const W = practiceCanvas.width, H = practiceCanvas.height;
+  practiceCtx.clearRect(0, 0, W, H);
+
+  // Draw decorative background
+  practiceCtx.fillStyle = 'rgba(124,58,237,0.05)';
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 6; j++) {
+      if ((i + j) % 2 === 0) {
+        practiceCtx.fillRect(i * 90 + 10, j * 90 + 10, 80, 80);
+      }
+    }
+  }
+
+  // Draw matrix decoration
+  const labels = ['A', 'x', '=', 'b'];
+  const colors = ['#7c3aed', '#10b981', '#64748b', '#3b82f6'];
+  labels.forEach((l, i) => {
+    practiceCtx.fillStyle = colors[i];
+    practiceCtx.font = 'bold 48px serif';
+    practiceCtx.textAlign = 'center';
+    practiceCtx.globalAlpha = 0.15;
+    practiceCtx.fillText(l, 120 + i * 140, 260);
+  });
+  practiceCtx.globalAlpha = 1;
+
+  // Progress
+  practiceCtx.fillStyle = '#94a3b8';
+  practiceCtx.font = '16px sans-serif';
+  practiceCtx.textAlign = 'center';
+  practiceCtx.fillText(`练习 ${currentQuiz + 1} / ${quizzes.length}`, W / 2, 40);
+
+  // Progress bar
+  const barW = 300, barH = 6;
+  practiceCtx.fillStyle = 'rgba(255,255,255,0.1)';
+  practiceCtx.beginPath();
+  practiceCtx.roundRect(W / 2 - barW / 2, 50, barW, barH, 3);
+  practiceCtx.fill();
+  practiceCtx.fillStyle = '#7c3aed';
+  practiceCtx.beginPath();
+  practiceCtx.roundRect(W / 2 - barW / 2, 50, barW * ((currentQuiz) / quizzes.length), barH, 3);
+  practiceCtx.fill();
+
+  // Key concepts
+  practiceCtx.fillStyle = 'rgba(124,58,237,0.1)';
+  practiceCtx.beginPath();
+  practiceCtx.roundRect(50, 380, W - 100, 120, 12);
+  practiceCtx.fill();
+  practiceCtx.fillStyle = '#c4b5fd';
+  practiceCtx.font = 'bold 14px sans-serif';
+  practiceCtx.textAlign = 'center';
+  practiceCtx.fillText('核心知识点', W / 2, 405);
+  practiceCtx.font = '12px sans-serif';
+  practiceCtx.fillStyle = '#94a3b8';
+  const tips = [
+    '• rank(A) = rank([A|b]) = n → 唯一解',
+    '• rank(A) = rank([A|b]) < n → 无穷多解',
+    '• rank(A) < rank([A|b]) → 无解',
+    '• 通解 = 特解 + 齐次通解'
+  ];
+  tips.forEach((t, i) => practiceCtx.fillText(t, W / 2, 425 + i * 18));
+}
+
+function renderQuiz() {
+  const quiz = quizzes[currentQuiz];
+  const area = document.getElementById('practiceArea');
+  area.innerHTML = `
+    <div class="quiz">
+      <div class="quiz-q">${quiz.q}</div>
+      <div class="quiz-opts">
+        ${quiz.opts.map((o, i) => `<div class="quiz-opt" data-idx="${i}">${String.fromCharCode(65 + i)}. ${o}</div>`).join('')}
+      </div>
+      <div class="quiz-msg" id="quizMsg"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn secondary" id="quizPrev" ${currentQuiz === 0 ? 'disabled' : ''}>← 上一题</button>
+      <button class="btn" id="quizNext" ${currentQuiz === quizzes.length - 1 ? 'disabled' : ''}>下一题 →</button>
+    </div>
+  `;
+
+  area.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const idx = parseInt(opt.dataset.idx);
+      const msg = document.getElementById('quizMsg');
+      area.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+      if (idx === quiz.ans) {
+        opt.classList.add('correct');
+        msg.style.color = '#10b981';
+        msg.textContent = '✅ 正确！' + quiz.explain;
+        quizCorrectSet.add(currentQuiz);
+      } else {
+        opt.classList.add('wrong');
+        area.querySelectorAll('.quiz-opt')[quiz.ans].classList.add('correct');
+        msg.style.color = '#ef4444';
+        msg.textContent = '❌ 错误。' + quiz.explain;
+        quizCorrectSet.delete(currentQuiz);
+      }
+      updateQuizScoreLine();
+    });
+  });
+
+  document.getElementById('quizPrev')?.addEventListener('click', () => {
+    if (currentQuiz > 0) { currentQuiz--; renderQuiz(); drawPractice(); }
+  });
+  document.getElementById('quizNext')?.addEventListener('click', () => {
+    if (currentQuiz < quizzes.length - 1) { currentQuiz++; renderQuiz(); drawPractice(); }
+  });
+
+  drawPractice();
+}
+
+// ===== Init all =====
+initGauss();
+drawGeo();
+drawStruct();
+renderQuiz();
+updateQuizScoreLine();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

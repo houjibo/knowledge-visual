@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>近代物理 · 高中物理互动可视化</title>
+<style>
+:root {
+  --photon: #fbbf24;
+  --electron: #3b82f6;
+  --nucleus: #ef4444;
+  --energy: #10b981;
+  --wave: #8b5cf6;
+  --dark: #0f172a;
+  --light: #f1f5f9;
+  --primary: #0891b2;
+}
+body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", sans-serif; margin: 0; }
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+header { text-align: center; margin-bottom: 20px; }
+header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--photon), var(--electron), var(--nucleus)); -webkit-background-clip: text; color: transparent; margin: 0; }
+header p { color: #94a3b8; margin: 6px 0 0; font-size: 14px; }
+.tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+.tab { padding: 8px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; color: #cbd5e1; }
+.tab.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 20px rgba(8,145,178,.4); }
+.tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+.stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+.canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+.panel { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); overflow-y: auto; max-height: 640px; }
+.panel h3 { margin: 0 0 10px; font-size: 1.05rem; color: #e2e8f0; }
+.eq { font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 8px 0; }
+.slider-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
+.slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+.slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+.slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+.card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--primary); }
+.card .ct { font-weight: 600; color: #67e8f9; margin-bottom: 4px; }
+.mode-switch { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
+.mode-btn { padding: 5px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 12px; color: #e2e8f0; transition: all .2s; }
+.mode-btn.active { background: var(--primary); border-color: var(--primary); }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; font-size: 12px; }
+.info-grid div { background: rgba(255,255,255,0.04); padding: 6px 8px; border-radius: 8px; }
+.info-grid b { color: #fbbf24; }
+.quiz { margin-top: 10px; padding: 12px; background: rgba(8,145,178,0.08); border-radius: 12px; border: 1px solid rgba(8,145,178,0.3); }
+.quiz-q { font-size: 13px; margin-bottom: 8px; }
+.quiz-opts { display: grid; gap: 5px; }
+.quiz-opt { padding: 7px 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 12px; transition: all .2s; border: 1px solid transparent; }
+.quiz-opt:hover { background: rgba(255,255,255,0.1); }
+.quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+.quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+.quiz-fb { margin-top: 6px; font-size: 12px; min-height: 16px; }
+.legend { display: flex; gap: 12px; justify-content: center; font-size: 11px; color: #cbd5e1; margin-top: 6px; flex-wrap: wrap; }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
+.legend .l-photon::before { background: var(--photon); }
+.legend .l-electron::before { background: var(--electron); }
+.legend .l-nucleus::before { background: var(--nucleus); }
+.legend .l-energy::before { background: var(--energy); }
+footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 16px; }
+.highlight { color: #fbbf24; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚛️ 近代物理 Interactive</h1>
+    <p>光电效应 · 波粒二象性 · 能级跃迁 · 核反应</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="photoelectric">💡 光电效应</div>
+    <div class="tab" data-mode="waveparticle">🌊 波粒二象性</div>
+    <div class="tab" data-mode="energy">⚡ 能级跃迁</div>
+    <div class="tab" data-mode="nuclear">☢️ 核反应</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="canvas" width="700" height="500"></canvas>
+      <div class="legend">
+        <span class="l-photon">光子</span>
+        <span class="l-electron">电子</span>
+        <span class="l-nucleus">原子核</span>
+        <span class="l-energy">能量</span>
+      </div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+</div>
+
+<script src="assets/touch.js"></script>
+<script src="assets/common.js"></script>
+<script>
+// r109: 进度追踪接入
+let totalCorrect = 0;
+function bumpTotalCorrect() {
+  totalCorrect++;
+  if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('modern-physics')) {
+    PageProgress.markDone('modern-physics');
+    if (typeof showToast === 'function') showToast('🎉 本页知识点已点亮！');
+  }
+}
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
+
+let mode = 'photoelectric';
+let animTime = 0;
+let animFrame = null;
+
+// 状态
+const state = {
+  photoelectric: {
+    frequency: 6, // ×10^14 Hz
+    intensity: 50, // %
+    workFunction: 4.5, // eV (钨)
+    photons: [],
+    electrons: []
+  },
+  waveparticle: {
+    mode: 'double', // double | single | diffraction
+    wavelength: 500, // nm
+    slitDistance: 50, // μm
+    particles: []
+  },
+  energy: {
+    level: 1, // n=1,2,3...
+    targetLevel: 3,
+    animating: false,
+    electronY: 0,
+    photonX: 0
+  },
+  nuclear: {
+    reaction: 'alpha', // alpha | beta | fission | fusion
+    progress: 0,
+    particles: []
+  }
+};
+
+// 光电效应
+function drawPhotoelectric() {
+  ctx.clearRect(0, 0, 700, 500);
+  const s = state.photoelectric;
+  
+  // 金属板
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(400, 100, 200, 300);
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(400, 100, 200, 300);
+  
+  // 金属标签
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('金属板', 500, 420);
+  
+  // 光子
+  const photonEnergy = 4.14 * s.frequency / 10; // eV (简化)
+  const canEject = photonEnergy >= s.workFunction;
+  
+  // 发射光子
+  if (Math.random() < s.intensity / 100) {
+    s.photons.push({
+      x: 50,
+      y: 150 + Math.random() * 200,
+      vx: 3 + Math.random() * 2,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+  
+  // 绘制和更新光子
+  s.photons.forEach((p, i) => {
+    p.x += p.vx;
+    p.phase += 0.3;
+    
+    // 绘制光子（波浪线）
+    ctx.beginPath();
+    for (let j = 0; j < 20; j++) {
+      const px = p.x - j * 2;
+      const py = p.y + Math.sin(p.phase + j * 0.5) * 5;
+      if (j === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // 光子到达金属板
+    if (p.x >= 400) {
+      s.photons.splice(i, 1);
+      if (canEject && Math.random() < 0.3) {
+        s.electrons.push({
+          x: 400,
+          y: p.y,
+          vx: -2 - Math.random() * 2,
+          vy: (Math.random() - 0.5) * 2
+        });
+      }
+    }
+  });
+  
+  // 绘制和更新电子
+  s.electrons.forEach((e, i) => {
+    e.x += e.vx;
+    e.y += e.vy;
+    
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#3b82f6';
+    ctx.fill();
+    ctx.strokeStyle = '#60a5fa';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    if (e.x < 0 || e.x > 700 || e.y < 0 || e.y > 500) {
+      s.electrons.splice(i, 1);
+    }
+  });
+  
+  // 能量图
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(50, 50, 150, 100);
+  ctx.strokeStyle = '#64748b';
+  ctx.strokeRect(50, 50, 150, 100);
+  
+  // 光子能量条
+  const maxE = 10;
+  const photonH = Math.min(photonEnergy / maxE, 1) * 80;
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillRect(70, 130 - photonH, 30, photonH);
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('E光子', 85, 145);
+  ctx.fillText(`${photonEnergy.toFixed(1)}eV`, 85, 45);
+  
+  // 逸出功条
+  const workH = Math.min(s.workFunction / maxE, 1) * 80;
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(130, 130 - workH, 30, workH);
+  ctx.fillStyle = '#ef4444';
+  ctx.fillText('W₀', 145, 145);
+  ctx.fillText(`${s.workFunction}eV`, 145, 45);
+  
+  // 结果
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'left';
+  if (canEject) {
+    ctx.fillStyle = '#10b981';
+    ctx.fillText(`✓ 发生光电效应`, 50, 180);
+    const Ek = photonEnergy - s.workFunction;
+    ctx.fillText(`Ek = ${Ek.toFixed(2)} eV`, 50, 200);
+  } else {
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText(`✗ 频率不足`, 50, 180);
+    ctx.fillText(`需要 ≥ ${s.workFunction} eV`, 50, 200);
+  }
+  
+  ctx.textAlign = 'left';
+}
+
+// 波粒二象性
+function drawWaveParticle() {
+  ctx.clearRect(0, 0, 700, 500);
+  const s = state.waveparticle;
+  
+  // 双缝实验
+  if (s.mode === 'double') {
+    // 光源
+    ctx.beginPath();
+    ctx.arc(50, 250, 15, 0, Math.PI * 2);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fill();
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('光源', 50, 290);
+    
+    // 挡板
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(250, 0, 20, 200);
+    ctx.fillRect(250, 230, 20, 40);
+    ctx.fillRect(250, 300, 20, 200);
+    
+    // 缝
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(250, 200, 20, 30);
+    ctx.fillRect(250, 270, 20, 30);
+    
+    // 屏幕
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(600, 50, 50, 400);
+    ctx.strokeStyle = '#64748b';
+    ctx.strokeRect(600, 50, 50, 400);
+    
+    // 干涉条纹
+    const wavelength = s.wavelength / 100;
+    for (let y = 50; y < 450; y++) {
+      const d = 30; // 缝间距
+      const L = 350; // 到屏幕距离
+      const yRel = y - 250;
+      const pathDiff = d * yRel / L;
+      const intensity = Math.cos(Math.PI * pathDiff / wavelength) ** 2;
+      
+      ctx.fillStyle = `rgba(251, 191, 36, ${intensity * 0.8})`;
+      ctx.fillRect(600, y, 50, 1);
+    }
+    
+    // 粒子发射
+    if (Math.random() < 0.1) {
+      s.particles.push({
+        x: 65,
+        y: 250,
+        vx: 3,
+        slit: Math.random() < 0.5 ? 0 : 1,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+    
+    s.particles.forEach((p, i) => {
+      p.x += p.vx;
+      p.phase += 0.2;
+      
+      // 波动效果
+      if (p.x > 250 && p.x < 600) {
+        const wave = Math.sin(p.phase) * 3;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y + wave, 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#3b82f6';
+        ctx.fill();
+      } else if (p.x >= 600) {
+        s.particles.splice(i, 1);
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#3b82f6';
+        ctx.fill();
+      }
+    });
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('双缝干涉', 350, 30);
+    ctx.fillText('屏幕', 625, 40);
+    
+  } else if (s.mode === 'single') {
+    // 单缝衍射
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(250, 0, 20, 220);
+    ctx.fillRect(250, 280, 20, 220);
+    
+    // 缝
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(250, 220, 20, 60);
+    
+    // 光源
+    ctx.beginPath();
+    ctx.arc(50, 250, 15, 0, Math.PI * 2);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fill();
+    
+    // 屏幕
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(600, 50, 50, 400);
+    
+    // 衍射条纹
+    const wavelength = s.wavelength / 100;
+    for (let y = 50; y < 450; y++) {
+      const a = 30; // 缝宽
+      const L = 350;
+      const yRel = y - 250;
+      const theta = Math.atan(yRel / L);
+      const alpha = Math.PI * a * Math.sin(theta) / wavelength;
+      const intensity = alpha === 0 ? 1 : (Math.sin(alpha) / alpha) ** 2;
+      
+      ctx.fillStyle = `rgba(251, 191, 36, ${intensity * 0.8})`;
+      ctx.fillRect(600, y, 50, 1);
+    }
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('单缝衍射', 350, 30);
+    
+  } else {
+    // 光电效应说明粒子性
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(400, 100, 200, 300);
+    
+    // 光子粒子
+    for (let i = 0; i < 5; i++) {
+      const x = 100 + i * 60;
+      const y = 200 + Math.sin(animTime * 0.05 + i) * 30;
+      
+      ctx.beginPath();
+      ctx.arc(x, y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fill();
+      
+      // 能量标签
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('E=hν', x, y - 15);
+    }
+    
+    // 电子被打出
+    for (let i = 0; i < 3; i++) {
+      const x = 450 + (animTime * 2 + i * 80) % 200;
+      const y = 200 + i * 50;
+      
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#3b82f6';
+      ctx.fill();
+    }
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('光子作为粒子', 350, 30);
+  }
+}
+
+// 能级跃迁
+function drawEnergy() {
+  ctx.clearRect(0, 0, 700, 500);
+  const s = state.energy;
+  
+  // 能级
+  const levels = [
+    { n: 1, E: -13.6, y: 400 },
+    { n: 2, E: -3.4, y: 300 },
+    { n: 3, E: -1.51, y: 230 },
+    { n: 4, E: -0.85, y: 180 },
+    { n: 5, E: -0.54, y: 145 },
+    { n: '∞', E: 0, y: 100 }
+  ];
+  
+  // 绘制能级线
+  levels.forEach(l => {
+    ctx.beginPath();
+    ctx.moveTo(100, l.y);
+    ctx.lineTo(500, l.y);
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`n=${l.n}`, 510, l.y + 4);
+    ctx.fillText(`E=${l.E}eV`, 560, l.y + 4);
+  });
+  
+  // 原子核
+  ctx.beginPath();
+  ctx.arc(300, 450, 20, 0, Math.PI * 2);
+  ctx.fillStyle = '#ef4444';
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('H', 300, 455);
+  
+  // 电子位置
+  const currentLevel = levels.find(l => l.n === s.level) || levels[0];
+  const targetLevel = levels.find(l => l.n === s.targetLevel) || levels[2];
+  
+  let electronY = currentLevel.y;
+  if (s.animating) {
+    electronY = currentLevel.y + (targetLevel.y - currentLevel.y) * (s.electronY / 100);
+  }
+  
+  // 电子轨道
+  ctx.beginPath();
+  ctx.arc(300, electronY, 15, 0, Math.PI * 2);
+  ctx.fillStyle = '#3b82f6';
+  ctx.fill();
+  ctx.strokeStyle = '#60a5fa';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  ctx.fillStyle = '#fff';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('e⁻', 300, electronY + 4);
+  
+  // 跃迁光子
+  if (s.animating && s.electronY > 0 && s.electronY < 100) {
+    const photonX = 300 + (s.electronY / 100) * 200;
+    const photonY = electronY;
+    
+    // 光子
+    ctx.beginPath();
+    for (let i = 0; i < 30; i++) {
+      const px = photonX + i * 3;
+      const py = photonY + Math.sin(i * 0.5 + animTime * 0.1) * 5;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // 能量标签
+    const dE = Math.abs(targetLevel.E - currentLevel.E);
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(`E=${dE.toFixed(2)}eV`, photonX + 50, photonY - 10);
+  }
+  
+  // 标题
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('氢原子能级图', 350, 30);
+  
+  // 公式
+  ctx.fillStyle = '#10b981';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('En = -13.6/n² eV', 50, 480);
+}
+
+// 核反应
+function drawNuclear() {
+  ctx.clearRect(0, 0, 700, 500);
+  const s = state.nuclear;
+  
+  s.progress = (s.progress + 1) % 200;
+  
+  if (s.reaction === 'alpha') {
+    // α衰变
+    // 原子核
+    ctx.beginPath();
+    ctx.arc(350, 250, 40, 0, Math.PI * 2);
+    ctx.fillStyle = '#ef4444';
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('²³⁸U', 350, 255);
+    
+    // α粒子
+    const alphaX = 350 + s.progress * 2;
+    const alphaY = 250 - s.progress * 0.5;
+    
+    if (alphaX < 700 && alphaY > 0) {
+      ctx.beginPath();
+      ctx.arc(alphaX, alphaY, 10, 0, Math.PI * 2);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.font = '10px sans-serif';
+      ctx.fillText('α', alphaX, alphaY + 4);
+    }
+    
+    // 反冲核
+    const recoilX = 350 - s.progress * 0.3;
+    ctx.beginPath();
+    ctx.arc(recoilX, 250 + s.progress * 0.1, 35, 0, Math.PI * 2);
+    ctx.fillStyle = '#3b82f6';
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('²³⁴Th', recoilX, 255);
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('α衰变：放出氦核', 50, 50);
+    ctx.fillText('²³⁸U → ²³⁴Th + ⁴He', 50, 70);
+    
+  } else if (s.reaction === 'beta') {
+    // β衰变
+    ctx.beginPath();
+    ctx.arc(350, 250, 40, 0, Math.PI * 2);
+    ctx.fillStyle = '#ef4444';
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('¹⁴C', 350, 255);
+    
+    // 电子
+    const eX = 350 + s.progress * 2;
+    const eY = 250 + Math.sin(s.progress * 0.1) * 30;
+    
+    if (eX < 700) {
+      ctx.beginPath();
+      ctx.arc(eX, eY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#3b82f6';
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '10px sans-serif';
+      ctx.fillText('e⁻', eX, eY + 4);
+    }
+    
+    // 反冲核
+    const recoilX = 350 - s.progress * 0.2;
+    ctx.beginPath();
+    ctx.arc(recoilX, 250, 35, 0, Math.PI * 2);
+    ctx.fillStyle = '#10b981';
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('¹⁴N', recoilX, 255);
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('β衰变：放出电子', 50, 50);
+    ctx.fillText('¹⁴C → ¹⁴N + e⁻', 50, 70);
+    
+  } else if (s.reaction === 'fission') {
+    // 核裂变
+    const progress = s.progress / 200;
+    
+    if (progress < 0.3) {
+      // 中子接近
+      const nX = 100 + progress * 500;
+      ctx.beginPath();
+      ctx.arc(nX, 250, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#8b5cf6';
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('n', nX, 254);
+      
+      // 铀核
+      ctx.beginPath();
+      ctx.arc(400, 250, 50, 0, Math.PI * 2);
+      ctx.fillStyle = '#ef4444';
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('²³⁵U', 400, 255);
+    } else {
+      // 裂变
+      const expand = (progress - 0.3) * 300;
+      
+      // 碎片1
+      ctx.beginPath();
+      ctx.arc(400 - expand, 250 - expand * 0.5, 30, 0, Math.PI * 2);
+      ctx.fillStyle = '#3b82f6';
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('¹⁴¹Ba', 400 - expand, 254 - expand * 0.5);
+      
+      // 碎片2
+      ctx.beginPath();
+      ctx.arc(400 + expand, 250 + expand * 0.5, 30, 0, Math.PI * 2);
+      ctx.fillStyle = '#10b981';
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillText('⁹²Kr', 400 + expand, 254 + expand * 0.5);
+      
+      // 中子
+      for (let i = 0; i < 3; i++) {
+        const angle = (i / 3) * Math.PI * 2 + progress * 5;
+        const nX = 400 + Math.cos(angle) * expand * 1.5;
+        const nY = 250 + Math.sin(angle) * expand * 1.5;
+        
+        ctx.beginPath();
+        ctx.arc(nX, nY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#8b5cf6';
+        ctx.fill();
+      }
+    }
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('核裂变：重核分裂', 50, 50);
+    ctx.fillText('²³⁵U + n → ¹⁴¹Ba + ⁹²Kr + 3n', 50, 70);
+    
+  } else {
+    // 核聚变
+    const progress = s.progress / 200;
+    
+    if (progress < 0.5) {
+      // 两个核接近
+      const d = (0.5 - progress) * 400;
+      
+      ctx.beginPath();
+      ctx.arc(350 - d, 250, 25, 0, Math.PI * 2);
+      ctx.fillStyle = '#3b82f6';
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('²H', 350 - d, 254);
+      
+      ctx.beginPath();
+      ctx.arc(350 + d, 250, 25, 0, Math.PI * 2);
+      ctx.fillStyle = '#10b981';
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillText('³H', 350 + d, 254);
+    } else {
+      // 聚变
+      const expand = (progress - 0.5) * 200;
+      
+      // 氦核
+      ctx.beginPath();
+      ctx.arc(350, 250, 35, 0, Math.PI * 2);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('⁴He', 350, 255);
+      
+      // 中子
+      const nX = 350 + expand * 2;
+      ctx.beginPath();
+      ctx.arc(nX, 250, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#8b5cf6';
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '10px sans-serif';
+      ctx.fillText('n', nX, 254);
+      
+      // 能量释放
+      ctx.fillStyle = `rgba(251, 191, 36, ${1 - expand / 100})`;
+      ctx.beginPath();
+      ctx.arc(350, 250, 50 + expand, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('核聚变：轻核结合', 50, 50);
+    ctx.fillText('²H + ³H → ⁴He + n + 能量', 50, 70);
+  }
+}
+
+// 面板内容
+function renderPanel() {
+  if (mode === 'photoelectric') {
+    const s = state.photoelectric;
+    const photonEnergy = 4.14 * s.frequency / 10;
+    const canEject = photonEnergy >= s.workFunction;
+    const Ek = canEject ? photonEnergy - s.workFunction : 0;
+    
+    panel.innerHTML = `
+      <h3>💡 光电效应</h3>
+      <div class="eq">E<sub>k</sub> = hν - W₀</div>
+      
+      <div class="slider-row">
+        <label>频率 ν</label>
+        <input type="range" min="3" max="10" step="0.5" value="${s.frequency}" id="freq">
+        <span class="val">${s.frequency}×10¹⁴Hz</span>
+      </div>
+      <div class="slider-row">
+        <label>光强</label>
+        <input type="range" min="10" max="100" step="10" value="${s.intensity}" id="intensity">
+        <span class="val">${s.intensity}%</span>
+      </div>
+      <div class="slider-row">
+        <label>逸出功 W₀</label>
+        <input type="range" min="2" max="6" step="0.5" value="${s.workFunction}" id="work">
+        <span class="val">${s.workFunction}eV</span>
+      </div>
+      
+      <div class="info-grid">
+        <div>光子能量: <b style="color:#fbbf24">${photonEnergy.toFixed(2)} eV</b></div>
+        <div>最大初动能: <b style="color:#3b82f6">${Ek.toFixed(2)} eV</b></div>
+      </div>
+      
+      <div class="card">
+        <div class="ct">📐 光电效应特点</div>
+        • 存在<b>截止频率</b>ν₀ = W₀/h<br>
+        • 光电子最大初动能与<b>频率</b>成正比<br>
+        • 光电流强度与<b>光强</b>成正比<br>
+        • 瞬时性：响应时间 < 10⁻⁹s
+      </div>
+      
+      <div class="card">
+        <div class="ct">💡 爱因斯坦光电效应方程</div>
+        • hν = W₀ + E<sub>k</sub><br>
+        • 光子能量 = 逸出功 + 最大初动能<br>
+        • 证明光具有<b>粒子性</b>
+      </div>
+    `;
+    
+    ['freq', 'intensity', 'work'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.oninput = () => {
+          if (id === 'freq') s.frequency = parseFloat(el.value);
+          else if (id === 'intensity') s.intensity = parseFloat(el.value);
+          else s.workFunction = parseFloat(el.value);
+          renderPanel();
+        };
+      }
+    });
+    
+  } else if (mode === 'waveparticle') {
+    const s = state.waveparticle;
+    
+    panel.innerHTML = `
+      <h3>🌊 波粒二象性</h3>
+      <div class="eq">λ = h / p</div>
+      
+      <div class="mode-switch">
+        <div class="mode-btn ${s.mode==='double'?'active':''}" data-mode="double">双缝干涉</div>
+        <div class="mode-btn ${s.mode==='single'?'active':''}" data-mode="single">单缝衍射</div>
+        <div class="mode-btn ${s.mode==='particle'?'active':''}" data-mode="particle">粒子性</div>
+      </div>
+      
+      <div class="slider-row">
+        <label>波长 λ</label>
+        <input type="range" min="400" max="700" step="10" value="${s.wavelength}" id="wavelength">
+        <span class="val">${s.wavelength}nm</span>
+      </div>
+      
+      <div class="info-grid">
+        <div>波长: <b style="color:#8b5cf6">${s.wavelength} nm</b></div>
+        <div>频率: <b style="color:#fbbf24">${(3e8 / (s.wavelength * 1e-9) / 1e14).toFixed(1)}×10¹⁴Hz</b></div>
+      </div>
+      
+      <div class="card">
+        <div class="ct">📐 波粒二象性</div>
+        • 光既具有<b>波动性</b>（干涉、衍射）<br>
+        • 又具有<b>粒子性</b>（光电效应）<br>
+        • 德布罗意波长：λ = h/p<br>
+        • 一切微观粒子都具有波粒二象性
+      </div>
+      
+      <div class="card">
+        <div class="ct">💡 双缝干涉</div>
+        • 明纹条件：d·sinθ = kλ<br>
+        • 暗纹条件：d·sinθ = (k+½)λ<br>
+        • 条纹间距：Δy = Lλ/d
+      </div>
+    `;
+    
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.onclick = () => {
+        s.mode = btn.dataset.mode;
+        renderPanel();
+      };
+    });
+    
+    const wl = document.getElementById('wavelength');
+    if (wl) {
+      wl.oninput = () => {
+        s.wavelength = parseInt(wl.value);
+        renderPanel();
+      };
+    }
+    
+  } else if (mode === 'energy') {
+    const s = state.energy;
+    const levels = {1: -13.6, 2: -3.4, 3: -1.51, 4: -0.85, 5: -0.54};
+    const currentE = levels[s.level] || -13.6;
+    const targetE = levels[s.targetLevel] || -1.51;
+    const dE = Math.abs(targetE - currentE);
+    
+    panel.innerHTML = `
+      <h3>⚡ 能级跃迁</h3>
+      <div class="eq">E<sub>n</sub> = -13.6/n² eV</div>
+      
+      <div class="slider-row">
+        <label>当前能级 n</label>
+        <input type="range" min="1" max="5" step="1" value="${s.level}" id="level">
+        <span class="val">n=${s.level}</span>
+      </div>
+      <div class="slider-row">
+        <label>目标能级</label>
+        <input type="range" min="1" max="5" step="1" value="${s.targetLevel}" id="target">
+        <span class="val">n=${s.targetLevel}</span>
+      </div>
+      
+      <button id="jumpBtn" style="width:100%;padding:10px;background:#10b981;border:none;border-radius:8px;color:#fff;font-size:14px;cursor:pointer;margin:10px 0;">
+        ⚡ 跃迁
+      </button>
+      
+      <div class="info-grid">
+        <div>当前能量: <b style="color:#3b82f6">${currentE} eV</b></div>
+        <div>目标能量: <b style="color:#10b981">${targetE} eV</b></div>
+        <div>光子能量: <b style="color:#fbbf24">${dE.toFixed(2)} eV</b></div>
+        <div>光子波长: <b style="color:#8b5cf6">${(1240/dE).toFixed(0)} nm</b></div>
+      </div>
+      
+      <div class="card">
+        <div class="ct">📐 玻尔原子模型</div>
+        • 电子在<b>特定轨道</b>上运动，不辐射能量<br>
+        • 轨道半径：r<sub>n</sub> = n²r₁<br>
+        • 能量：E<sub>n</sub> = -13.6/n² eV<br>
+        • 跃迁时吸收/发射光子：hν = |E<sub>m</sub> - E<sub>n</sub>|
+      </div>
+      
+      <div class="card">
+        <div class="ct">💡 氢原子光谱</div>
+        • 莱曼系：跃迁到n=1（紫外）<br>
+        • 巴耳末系：跃迁到n=2（可见光）<br>
+        • 帕邢系：跃迁到n=3（红外）
+      </div>
+    `;
+    
+    ['level', 'target'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.oninput = () => {
+          s[id === 'level' ? 'level' : 'targetLevel'] = parseInt(el.value);
+          renderPanel();
+        };
+      }
+    });
+    
+    document.getElementById('jumpBtn').onclick = () => {
+      s.animating = true;
+      s.electronY = 0;
+      const jump = () => {
+        if (s.electronY < 100) {
+          s.electronY += 2;
+          drawEnergy();
+          requestAnimationFrame(jump);
+        } else {
+          s.level = s.targetLevel;
+          s.animating = false;
+          s.electronY = 0;
+          renderPanel();
+        }
+      };
+      jump();
+    };
+    
+  } else if (mode === 'nuclear') {
+    const s = state.nuclear;
+    
+    panel.innerHTML = `
+      <h3>☢️ 核反应</h3>
+      <div class="eq">E = mc²</div>
+      
+      <div class="mode-switch">
+        <div class="mode-btn ${s.reaction==='alpha'?'active':''}" data-type="alpha">α衰变</div>
+        <div class="mode-btn ${s.reaction==='beta'?'active':''}" data-type="beta">β衰变</div>
+        <div class="mode-btn ${s.reaction==='fission'?'active':''}" data-type="fission">核裂变</div>
+        <div class="mode-btn ${s.reaction==='fusion'?'active':''}" data-type="fusion">核聚变</div>
+      </div>
+      
+      <div class="card">
+        <div class="ct">📐 核反应特点</div>
+        • 质量亏损：Δm = m<sub>反应物</sub> - m<sub>生成物</sub><br>
+        • 释放能量：ΔE = Δmc²<br>
+        • 质能方程：E = mc²<br>
+        • 1u = 931.5 MeV
+      </div>
+      
+      <div class="card">
+        <div class="ct">💡 核反应类型</div>
+        • <b>α衰变</b>：放出氦核 ⁴He<br>
+        • <b>β衰变</b>：放出电子 e⁻<br>
+        • <b>核裂变</b>：重核分裂为轻核<br>
+        • <b>核聚变</b>：轻核结合为重核
+      </div>
+      
+      <div class="card">
+        <div class="ct">⚛️ 应用</div>
+        • 核电站：可控裂变<br>
+        • 原子弹：不可控裂变<br>
+        • 氢弹：核聚变<br>
+        • 太阳：持续聚变
+      </div>
+    `;
+    
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.onclick = () => {
+        s.reaction = btn.dataset.type;
+        s.progress = 0;
+        renderPanel();
+      };
+    });
+    
+  } else {
+    // 互动练习
+    panel.innerHTML = `
+      <h3>🎯 互动练习</h3>
+      
+      <div class="quiz">
+        <div class="quiz-q">1. 光电效应中，光电子的最大初动能与什么成正比？</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="false">A. 光强</div>
+          <div class="quiz-opt" data-correct="false">B. 光频率的平方</div>
+          <div class="quiz-opt" data-correct="true">C. 光频率</div>
+          <div class="quiz-opt" data-correct="false">D. 光照时间</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+      
+      <div class="quiz" style="margin-top:15px;">
+        <div class="quiz-q">2. 氢原子从n=3跃迁到n=1时，发射光子的能量为？</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="false">A. 1.51 eV</div>
+          <div class="quiz-opt" data-correct="false">B. 3.4 eV</div>
+          <div class="quiz-opt" data-correct="true">C. 12.09 eV</div>
+          <div class="quiz-opt" data-correct="false">D. 13.6 eV</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+      
+      <div class="quiz" style="margin-top:15px;">
+        <div class="quiz-q">3. 下列哪种现象证明光具有粒子性？</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="false">A. 双缝干涉</div>
+          <div class="quiz-opt" data-correct="false">B. 单缝衍射</div>
+          <div class="quiz-opt" data-correct="true">C. 光电效应</div>
+          <div class="quiz-opt" data-correct="false">D. 光的折射</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+      
+      <div class="quiz" style="margin-top:15px;">
+        <div class="quiz-q">4. 核裂变和核聚变的共同点是？</div>
+        <div class="quiz-opts">
+          <div class="quiz-opt" data-correct="false">A. 都需要高温</div>
+          <div class="quiz-opt" data-correct="true">B. 都有质量亏损，释放能量</div>
+          <div class="quiz-opt" data-correct="false">C. 都放出中子</div>
+          <div class="quiz-opt" data-correct="false">D. 都是轻核反应</div>
+        </div>
+        <div class="quiz-fb"></div>
+      </div>
+    `;
+    
+    document.querySelectorAll('.quiz-opt').forEach(opt => {
+      opt.onclick = () => {
+        const quiz = opt.closest('.quiz');
+        const fb = quiz.querySelector('.quiz-fb');
+        const isCorrect = opt.dataset.correct === 'true';
+        
+        quiz.querySelectorAll('.quiz-opt').forEach(o => {
+          o.style.pointerEvents = 'none';
+          if (o.dataset.correct === 'true') o.classList.add('correct');
+        });
+        
+        if (isCorrect) {
+          opt.classList.add('correct');
+          fb.textContent = '✓ 正确！';
+          fb.style.color = '#10b981';
+          if (!quiz.dataset.solved) {
+            quiz.dataset.solved = '1';
+            bumpTotalCorrect();
+          }
+        } else {
+          opt.classList.add('wrong');
+          fb.textContent = '✗ 错误，正确答案已标出';
+          fb.style.color = '#ef4444';
+        }
+      };
+    });
+  }
+}
+
+// 动画循环
+function animate() {
+  animTime++;
+  
+  if (mode === 'photoelectric') drawPhotoelectric();
+  else if (mode === 'waveparticle') drawWaveParticle();
+  else if (mode === 'energy') drawEnergy();
+  else if (mode === 'nuclear') drawNuclear();
+  
+  animFrame = requestAnimationFrame(animate);
+}
+
+// 切换模式
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    renderPanel();
+  };
+});
+
+// 初始化
+renderPanel();
+animate();
+</script>
+
+<footer>
+  高中物理 · 近代物理互动可视化 · 光电效应 · 波粒二象性 · 能级跃迁 · 核反应
+</footer>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中物理"></script>
+</body>
+</html>

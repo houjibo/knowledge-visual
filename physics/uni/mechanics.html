@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>力学基础 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #0ea5e9;
+    --motion: #3b82f6;
+    --force: #ef4444;
+    --energy: #10b981;
+    --momentum: #f59e0b;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--motion), var(--force), var(--energy)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(14,165,233,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.8; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 90px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.motion { border-color: var(--motion); }
+  .concept-card.force { border-color: var(--force); }
+  .concept-card.energy { border-color: var(--energy); }
+  .concept-card.momentum { border-color: var(--momentum); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.motion .title { color: var(--motion); }
+  .concept-card.force .title { color: var(--force); }
+  .concept-card.energy .title { color: var(--energy); }
+  .concept-card.momentum .title { color: var(--momentum); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-motion::before { background: var(--motion); }
+  .legend .l-force::before { background: var(--force); }
+  .legend .l-energy::before { background: var(--energy); }
+  .legend .l-momentum::before { background: var(--momentum); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(14,165,233,0.08); border-radius: 12px; border: 1px solid rgba(14,165,233,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; }
+  .quiz-nav button { padding: 6px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚛️ 力学基础 Interactive</h1>
+    <p>质点运动学 · 牛顿定律 · 动量守恒 · 能量守恒</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="kinematics">📐 运动学</div>
+    <div class="tab" data-mode="newton">🍎 牛顿定律</div>
+    <div class="tab" data-mode="momentum">💥 动量守恒</div>
+    <div class="tab" data-mode="energy">⚡ 能量守恒</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="600" height="450"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>知识可视化 · 大学物理 · 力学基础</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
+const legendEl = document.getElementById('legend');
+let currentMode = 'kinematics';
+let animFrame = 0;
+let animId = null;
+
+// 进度追踪：累计答对 3 题点亮知识地图（本页共 5 题）
+let totalCorrect = 0;
+function bumpTotalCorrect() {
+  totalCorrect++;
+  if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('mechanics')) {
+    PageProgress.markDone('mechanics');
+    if (typeof showToast === 'function') {
+      showToast('🎉 「力学基础」知识地图已点亮！');
+    } else {
+      const t = document.createElement('div');
+      t.textContent = '🎉 「力学基础」知识地图已点亮！';
+      t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:10px 18px;border-radius:10px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.3)';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2500);
+    }
+  }
+}
+
+const C = {
+  motion: '#3b82f6', force: '#ef4444', energy: '#10b981', momentum: '#f59e0b',
+  white: '#f1f5f9', gray: '#94a3b8', dark: '#0f172a', accent: '#8b5cf6'
+};
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    cancelAnimationFrame(animId);
+    animFrame = 0;
+    render();
+  });
+});
+
+function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+function drawText(text, x, y, { color = C.white, size = 14, align = 'center', bold = false, font = '' } = {}) {
+  ctx.fillStyle = color;
+  ctx.font = `${bold ? 'bold ' : ''}${size}px ${font || '-apple-system, "PingFang SC", sans-serif'}`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+function drawArrow(x1, y1, x2, y2, color, width = 2) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const len = 10;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - len * Math.cos(angle - 0.4), y2 - len * Math.sin(angle - 0.4));
+  ctx.lineTo(x2 - len * Math.cos(angle + 0.4), y2 - len * Math.sin(angle + 0.4));
+  ctx.fill();
+}
+function drawCircle(x, y, r, color, alpha = 1) {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+function lerp(a, b, t) { return a + (b - a) * t; }
+function easeInOut(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
+
+// ===== MODE 1: Kinematics =====
+function renderKinematics() {
+  legendEl.innerHTML = '<span class="l-motion">轨迹</span><span class="l-force">速度</span><span class="l-energy">加速度</span>';
+  panel.innerHTML = `
+    <h3>📐 质点运动学</h3>
+    <div class="mode-switch" id="kinSwitch">
+      <div class="mode-btn active" data-type="uniform">匀速运动</div>
+      <div class="mode-btn" data-type="accel">匀加速</div>
+      <div class="mode-btn" data-type="projectile">抛体运动</div>
+    </div>
+    <div class="equation" id="kinEq"></div>
+    <div class="slider-row">
+      <label>初速度 v₀</label>
+      <input type="range" id="v0Slider" min="1" max="10" step="0.5" value="3">
+      <span class="val" id="v0Val">3.0</span>
+    </div>
+    <div class="slider-row">
+      <label>加速度 a</label>
+      <input type="range" id="aSlider" min="-2" max="2" step="0.1" value="0.5">
+      <span class="val" id="aVal">0.5</span>
+    </div>
+    <div class="info-grid" id="kinInfo"></div>
+    <div class="concept-card motion">
+      <div class="title">📝 运动学基本公式</div>
+      v = v₀ + at<br>
+      s = v₀t + ½at²<br>
+      v² = v₀² + 2as
+    </div>
+  `;
+  document.querySelectorAll('#kinSwitch .mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#kinSwitch .mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      kinType = btn.dataset.type;
+      animFrame = 0;
+      updateKinEq();
+    });
+  });
+  document.getElementById('v0Slider').addEventListener('input', e => {
+    v0 = parseFloat(e.target.value);
+    document.getElementById('v0Val').textContent = v0.toFixed(1);
+  });
+  document.getElementById('aSlider').addEventListener('input', e => {
+    a = parseFloat(e.target.value);
+    document.getElementById('aVal').textContent = a.toFixed(1);
+  });
+  let kinType = 'uniform';
+  let v0 = 3, a = 0.5;
+  window._kin = { get type() { return kinType; }, get v0() { return v0; }, get a() { return a; } };
+  updateKinEq();
+  animateKinematics();
+}
+
+function updateKinEq() {
+  const k = window._kin;
+  const eqs = {
+    uniform: 'x = v₀t = ' + k.v0.toFixed(1) + 't',
+    accel: 'x = v₀t + ½at² = ' + k.v0.toFixed(1) + 't + ' + (0.5 * k.a).toFixed(2) + 't²',
+    projectile: 'x = v₀t,  y = ½gt²'
+  };
+  document.getElementById('kinEq').textContent = eqs[k.type];
+}
+
+function animateKinematics() {
+  clearCanvas();
+  const k = window._kin;
+  const t = (animFrame * 0.02) % 5;
+  const cx = 300;
+
+  drawText('质点运动学演示', cx, 25, { size: 16, bold: true });
+
+  if (k.type === 'uniform' || k.type === 'accel') {
+    // Ground
+    ctx.strokeStyle = C.gray;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(50, 280);
+    ctx.lineTo(550, 280);
+    ctx.stroke();
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 10; i++) {
+      const x = 50 + i * 50;
+      ctx.beginPath();
+      ctx.moveTo(x, 280);
+      ctx.lineTo(x, 100);
+      ctx.stroke();
+    }
+
+    // Position calculation
+    let x, v;
+    if (k.type === 'uniform') {
+      x = k.v0 * t;
+      v = k.v0;
+    } else {
+      x = k.v0 * t + 0.5 * k.a * t * t;
+      v = k.v0 + k.a * t;
+    }
+
+    const px = 50 + (x % 10) * 50;
+    const py = 260;
+
+    // Trail
+    for (let i = 0; i < 20; i++) {
+      const tt = t - i * 0.05;
+      if (tt < 0) break;
+      let tx;
+      if (k.type === 'uniform') {
+        tx = k.v0 * tt;
+      } else {
+        tx = k.v0 * tt + 0.5 * k.a * tt * tt;
+      }
+      const tpx = 50 + (tx % 10) * 50;
+      drawCircle(tpx, py, 3, C.motion, 0.3 - i * 0.015);
+    }
+
+    // Particle
+    drawCircle(px, py, 12, C.motion, 0.8);
+    drawText('●', px, py, { size: 10, color: C.white });
+
+    // Velocity arrow
+    const vScale = 15;
+    drawArrow(px, py, px + v * vScale, py, C.force, 2.5);
+    drawText('v', px + v * vScale + 10, py, { size: 12, color: C.force });
+
+    // Acceleration arrow (if accel mode)
+    if (k.type === 'accel') {
+      const aScale = 20;
+      drawArrow(px, py + 20, px + k.a * aScale, py + 20, C.energy, 2);
+      drawText('a', px + k.a * aScale + 10, py + 20, { size: 12, color: C.energy });
+    }
+
+    // Info update
+    document.getElementById('kinInfo').innerHTML = `
+      <div><b>时间</b>：${t.toFixed(2)} s</div>
+      <div><b>位移</b>：${x.toFixed(2)} m</div>
+      <div><b>速度</b>：${v.toFixed(2)} m/s</div>
+      <div><b>加速度</b>：${k.type === 'uniform' ? '0' : k.a.toFixed(1)} m/s²</div>
+    `;
+
+    // Graph
+    const graphY = 350;
+    ctx.strokeStyle = C.gray;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(50, graphY);
+    ctx.lineTo(550, graphY);
+    ctx.stroke();
+
+    // v-t graph
+    drawText('v-t 图', 100, graphY - 40, { size: 11, color: C.gray });
+    ctx.strokeStyle = C.force;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 500; i++) {
+      const gt = i / 100;
+      let gv;
+      if (k.type === 'uniform') {
+        gv = k.v0;
+      } else {
+        gv = k.v0 + k.a * gt;
+      }
+      const gx = 50 + i;
+      const gy = graphY - 10 - gv * 5;
+      if (i === 0) ctx.moveTo(gx, gy);
+      else ctx.lineTo(gx, gy);
+    }
+    ctx.stroke();
+
+    // Current point on graph
+    const curGx = 50 + t * 100;
+    const curGv = k.type === 'uniform' ? k.v0 : k.v0 + k.a * t;
+    const curGy = graphY - 10 - curGv * 5;
+    drawCircle(curGx, curGy, 5, C.force);
+
+  } else if (k.type === 'projectile') {
+    // Projectile motion
+    const g = 9.8;
+    const angle = Math.PI / 4;
+    const v0 = k.v0 * 2;
+
+    // Ground
+    ctx.strokeStyle = C.gray;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(50, 350);
+    ctx.lineTo(550, 350);
+    ctx.stroke();
+
+    // Trajectory
+    ctx.strokeStyle = C.motion;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    let maxX = 0;
+    for (let i = 0; i <= 100; i++) {
+      const tt = i * 0.05;
+      const px = 50 + v0 * Math.cos(angle) * tt * 10;
+      const py = 350 - (v0 * Math.sin(angle) * tt - 0.5 * g * tt * tt) * 5;
+      if (py > 350) break;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+      maxX = Math.max(maxX, px);
+    }
+    ctx.stroke();
+
+    // Current position
+    const curX = 50 + v0 * Math.cos(angle) * t * 10;
+    const curY = 350 - (v0 * Math.sin(angle) * t - 0.5 * g * t * t) * 5;
+
+    if (curY <= 350) {
+      drawCircle(curX, curY, 10, C.motion, 0.8);
+
+      // Velocity components
+      const vx = v0 * Math.cos(angle);
+      const vy = v0 * Math.sin(angle) - g * t;
+
+      drawArrow(curX, curY, curX + vx * 8, curY, C.force, 2);
+      drawArrow(curX, curY, curX, curY - vy * 8, C.energy, 2);
+
+      drawText('vx', curX + vx * 8 + 10, curY, { size: 11, color: C.force });
+      drawText('vy', curX, curY - vy * 8 - 10, { size: 11, color: C.energy });
+
+      document.getElementById('kinInfo').innerHTML = `
+        <div><b>时间</b>：${t.toFixed(2)} s</div>
+        <div><b>水平位移</b>：${(vx * t).toFixed(2)} m</div>
+        <div><b>竖直位移</b>：${(v0 * Math.sin(angle) * t - 0.5 * g * t * t).toFixed(2)} m</div>
+        <div><b>速度</b>：(${vx.toFixed(1)}, ${vy.toFixed(1)}) m/s</div>
+      `;
+    } else {
+      animFrame = 0;
+    }
+  }
+
+  animFrame++;
+  animId = requestAnimationFrame(animateKinematics);
+}
+
+// ===== MODE 2: Newton's Laws =====
+function renderNewton() {
+  legendEl.innerHTML = '<span class="l-force">力</span><span class="l-motion">加速度</span><span class="l-energy">摩擦力</span>';
+  panel.innerHTML = `
+    <h3>🍎 牛顿运动定律</h3>
+    <div class="mode-switch" id="newtonSwitch">
+      <div class="mode-btn active" data-law="1">第一定律</div>
+      <div class="mode-btn" data-law="2">第二定律</div>
+      <div class="mode-btn" data-law="3">第三定律</div>
+    </div>
+    <div class="equation" id="newtonEq"></div>
+    <div class="slider-row">
+      <label>质量 m</label>
+      <input type="range" id="mSlider" min="1" max="10" step="0.5" value="2">
+      <span class="val" id="mVal">2.0 kg</span>
+    </div>
+    <div class="slider-row">
+      <label>力 F</label>
+      <input type="range" id="fSlider" min="0" max="20" step="1" value="10">
+      <span class="val" id="fVal">10 N</span>
+    </div>
+    <div class="info-grid" id="newtonInfo"></div>
+    <div class="concept-card force">
+      <div class="title">📝 牛顿三定律</div>
+      <strong>第一定律</strong>（惯性定律）：物体不受力时保持静止或匀速直线运动<br>
+      <strong>第二定律</strong>：F = ma<br>
+      <strong>第三定律</strong>：作用力与反作用力大小相等、方向相反
+    </div>
+  `;
+  document.querySelectorAll('#newtonSwitch .mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#newtonSwitch .mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      lawType = btn.dataset.law;
+      updateNewtonEq();
+    });
+  });
+  document.getElementById('mSlider').addEventListener('input', e => {
+    mass = parseFloat(e.target.value);
+    document.getElementById('mVal').textContent = mass.toFixed(1) + ' kg';
+    updateNewtonEq();
+  });
+  document.getElementById('fSlider').addEventListener('input', e => {
+    force = parseFloat(e.target.value);
+    document.getElementById('fVal').textContent = force.toFixed(0) + ' N';
+    updateNewtonEq();
+  });
+  let lawType = '1';
+  let mass = 2, force = 10;
+  window._newton = { get type() { return lawType; }, get mass() { return mass; }, get force() { return force; } };
+  updateNewtonEq();
+  animateNewton();
+}
+
+function updateNewtonEq() {
+  const n = window._newton;
+  const eqs = {
+    '1': 'F = 0 → a = 0（物体保持静止或匀速）',
+    '2': `F = ma → ${n.force.toFixed(0)} = ${n.mass.toFixed(1)} × a → a = ${(n.force / n.mass).toFixed(2)} m/s²`,
+    '3': 'F₁₂ = -F₂₁（作用力与反作用力）'
+  };
+  document.getElementById('newtonEq').textContent = eqs[n.type];
+}
+
+function animateNewton() {
+  clearCanvas();
+  const n = window._newton;
+  const t = animFrame * 0.02;
+  const cx = 300;
+
+  drawText('牛顿运动定律演示', cx, 25, { size: 16, bold: true });
+
+  if (n.type === '1') {
+    // First law - inertia
+    const groundY = 280;
+    ctx.strokeStyle = C.gray;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(50, groundY);
+    ctx.lineTo(550, groundY);
+    ctx.stroke();
+
+    // Object moving at constant velocity
+    const x = (t * 50) % 500 + 50;
+    drawCircle(x, groundY - 20, 20, C.motion, 0.7);
+    drawText('m', x, groundY - 20, { size: 14, bold: true, color: C.white });
+
+    // Velocity arrow
+    drawArrow(x, groundY - 20, x + 60, groundY - 20, C.force, 2.5);
+    drawText('v = 常数', x + 70, groundY - 20, { size: 12, color: C.force });
+
+    drawText('不受力 → 匀速直线运动', cx, 350, { size: 14, color: C.gray });
+    drawText('这就是惯性定律', cx, 375, { size: 12, color: C.gray });
+
+    document.getElementById('newtonInfo').innerHTML = `
+      <div><b>状态</b>：匀速直线运动</div>
+      <div><b>合力</b>：0 N</div>
+      <div><b>加速度</b>：0 m/s²</div>
+      <div><b>速度</b>：恒定</div>
+    `;
+
+  } else if (n.type === '2') {
+    // Second law - F = ma
+    const groundY = 280;
+    ctx.strokeStyle = C.gray;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(50, groundY);
+    ctx.lineTo(550, groundY);
+    ctx.stroke();
+
+    const acc = n.force / n.mass;
+    const x = 100 + 0.5 * acc * t * t * 5;
+    const px = Math.min(x, 500);
+
+    // Object
+    drawCircle(px, groundY - 20, 20 + n.mass * 2, C.motion, 0.7);
+    drawText('m', px, groundY - 20, { size: 14, bold: true, color: C.white });
+
+    // Force arrow
+    drawArrow(px - 30, groundY - 20, px - 30 + n.force * 3, groundY - 20, C.force, 3);
+    drawText('F', px - 30 + n.force * 3 + 10, groundY - 20, { size: 14, bold: true, color: C.force });
+
+    // Acceleration arrow
+    drawArrow(px, groundY + 10, px + acc * 10, groundY + 10, C.energy, 2.5);
+    drawText('a', px + acc * 10 + 10, groundY + 10, { size: 12, color: C.energy });
+
+    document.getElementById('newtonInfo').innerHTML = `
+      <div><b>质量</b>：${n.mass.toFixed(1)} kg</div>
+      <div><b>力</b>：${n.force.toFixed(0)} N</div>
+      <div><b>加速度</b>：${acc.toFixed(2)} m/s²</div>
+      <div><b>公式</b>：a = F/m</div>
+    `;
+
+  } else if (n.type === '3') {
+    // Third law - action-reaction
+    const cy = 220;
+
+    // Two objects
+    const x1 = 200, x2 = 400;
+    drawCircle(x1, cy, 30, C.motion, 0.7);
+    drawText('A', x1, cy, { size: 16, bold: true, color: C.white });
+    drawCircle(x2, cy, 30, C.force, 0.7);
+    drawText('B', x2, cy, { size: 16, bold: true, color: C.white });
+
+    // Action force
+    const pulse = 0.8 + 0.2 * Math.sin(t * 3);
+    drawArrow(x1 + 35, cy, x2 - 35, cy, C.force, 3 * pulse);
+    drawText('F(A→B)', cx, cy - 25, { size: 13, bold: true, color: C.force });
+
+    // Reaction force
+    drawArrow(x2 - 35, cy + 30, x1 + 35, cy + 30, C.energy, 3 * pulse);
+    drawText('F(B→A)', cx, cy + 55, { size: 13, bold: true, color: C.energy });
+
+    // Impact effect
+    const impactAlpha = 0.5 + 0.5 * Math.sin(t * 5);
+    drawCircle(cx, cy + 15, 15, C.momentum, impactAlpha * 0.3);
+
+    drawText('作用力与反作用力', cx, 340, { size: 14, bold: true, color: C.white });
+    drawText('大小相等 · 方向相反 · 作用在不同物体上', cx, 365, { size: 12, color: C.gray });
+
+    document.getElementById('newtonInfo').innerHTML = `
+      <div><b>作用力</b>：F(A→B)</div>
+      <div><b>反作用力</b>：F(B→A)</div>
+      <div><b>关系</b>：大小相等</div>
+      <div><b>方向</b>：相反</div>
+    `;
+  }
+
+  animFrame++;
+  animId = requestAnimationFrame(animateNewton);
+}
+
+// ===== MODE 3: Momentum =====
+function renderMomentum() {
+  legendEl.innerHTML = '<span class="l-momentum">动量</span><span class="l-force">力</span><span class="l-motion">速度</span>';
+  panel.innerHTML = `
+    <h3>💥 动量守恒定律</h3>
+    <div class="mode-switch" id="momSwitch">
+      <div class="mode-btn active" data-type="elastic">弹性碰撞</div>
+      <div class="mode-btn" data-type="inelastic">完全非弹性</div>
+      <div class="mode-btn" data-type="explosion">爆炸分离</div>
+    </div>
+    <div class="equation" id="momEq"></div>
+    <div class="slider-row">
+      <label>m₁</label>
+      <input type="range" id="m1Slider" min="1" max="5" step="0.5" value="2">
+      <span class="val" id="m1Val">2.0 kg</span>
+    </div>
+    <div class="slider-row">
+      <label>m₂</label>
+      <input type="range" id="m2Slider" min="1" max="5" step="0.5" value="3">
+      <span class="val" id="m2Val">3.0 kg</span>
+    </div>
+    <div class="info-grid" id="momInfo"></div>
+    <div class="concept-card momentum">
+      <div class="title">📝 动量守恒条件</div>
+      系统不受外力或所受外力之和为零时，系统总动量守恒。<br>
+      <strong>m₁v₁ + m₂v₂ = m₁v₁' + m₂v₂'</strong>
+    </div>
+  `;
+  document.querySelectorAll('#momSwitch .mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#momSwitch .mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      momType = btn.dataset.type;
+      animFrame = 0;
+      updateMomEq();
+    });
+  });
+  document.getElementById('m1Slider').addEventListener('input', e => {
+    m1 = parseFloat(e.target.value);
+    document.getElementById('m1Val').textContent = m1.toFixed(1) + ' kg';
+    updateMomEq();
+  });
+  document.getElementById('m2Slider').addEventListener('input', e => {
+    m2 = parseFloat(e.target.value);
+    document.getElementById('m2Val').textContent = m2.toFixed(1) + ' kg';
+    updateMomEq();
+  });
+  let momType = 'elastic';
+  let m1 = 2, m2 = 3;
+  window._mom = { get type() { return momType; }, get m1() { return m1; }, get m2() { return m2; } };
+  updateMomEq();
+  animateMomentum();
+}
+
+function updateMomEq() {
+  const m = window._mom;
+  const eqs = {
+    elastic: 'm₁v₁ + m₂v₂ = m₁v₁\' + m₂v₂\'（动能也守恒）',
+    inelastic: 'm₁v₁ + m₂v₂ = (m₁+m₂)v\'（动能不守恒）',
+    explosion: '0 = m₁v₁ + m₂v₂（初动量为零）'
+  };
+  document.getElementById('momEq').textContent = eqs[m.type];
+}
+
+function animateMomentum() {
+  clearCanvas();
+  const m = window._mom;
+  const t = (animFrame * 0.015) % 4;
+  const cx = 300;
+
+  drawText('动量守恒演示', cx, 25, { size: 16, bold: true });
+
+  const groundY = 250;
+  ctx.strokeStyle = C.gray;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(50, groundY + 30);
+  ctx.lineTo(550, groundY + 30);
+  ctx.stroke();
+
+  const v1 = 3, v2 = 0;
+  const collisionT = 1.5;
+
+  if (m.type === 'elastic') {
+    // Elastic collision
+    let x1, x2, v1f, v2f;
+    if (t < collisionT) {
+      x1 = 100 + v1 * t * 40;
+      x2 = 350;
+      v1f = v1;
+      v2f = 0;
+    } else {
+      const dt = t - collisionT;
+      x1 = 100 + v1 * collisionT * 40;
+      x2 = 350;
+      // Elastic collision formulas
+      v1f = (m.m1 - m.m2) / (m.m1 + m.m2) * v1;
+      v2f = 2 * m.m1 / (m.m1 + m.m2) * v1;
+      x1 += v1f * dt * 40;
+      x2 += v2f * dt * 40;
+    }
+
+    // Draw balls
+    drawCircle(x1, groundY, 15 + m.m1 * 3, C.motion, 0.7);
+    drawText('m₁', x1, groundY, { size: 12, bold: true, color: C.white });
+    drawCircle(x2, groundY, 15 + m.m2 * 3, C.force, 0.7);
+    drawText('m₂', x2, groundY, { size: 12, bold: true, color: C.white });
+
+    // Velocity arrows
+    if (t < collisionT) {
+      drawArrow(x1, groundY - 25, x1 + v1 * 15, groundY - 25, C.momentum, 2);
+    } else {
+      drawArrow(x1, groundY - 25, x1 + v1f * 15, groundY - 25, C.momentum, 2);
+      drawArrow(x2, groundY - 25, x2 + v2f * 15, groundY - 25, C.momentum, 2);
+    }
+
+    const p1 = t < collisionT ? m.m1 * v1 : m.m1 * v1f;
+    const p2 = t < collisionT ? 0 : m.m2 * v2f;
+    document.getElementById('momInfo').innerHTML = `
+      <div><b>碰撞前p₁</b>：${(m.m1 * v1).toFixed(1)} kg·m/s</div>
+      <div><b>碰撞前p₂</b>：0 kg·m/s</div>
+      <div><b>碰撞后p₁</b>：${p1.toFixed(1)} kg·m/s</div>
+      <div><b>碰撞后p₂</b>：${p2.toFixed(1)} kg·m/s</div>
+      <div><b>总动量</b>：${(m.m1 * v1).toFixed(1)} kg·m/s</div>
+      <div><b>状态</b>：${t < collisionT ? '碰撞前' : '碰撞后'}</div>
+    `;
+
+  } else if (m.type === 'inelastic') {
+    // Perfectly inelastic collision
+    let x1, x2, vf;
+    if (t < collisionT) {
+      x1 = 100 + v1 * t * 40;
+      x2 = 350;
+    } else {
+      const dt = t - collisionT;
+      vf = m.m1 * v1 / (m.m1 + m.m2);
+      x1 = 100 + v1 * collisionT * 40 + vf * dt * 40;
+      x2 = 350 + vf * dt * 40;
+    }
+
+    // Draw balls (merge after collision)
+    if (t < collisionT) {
+      drawCircle(x1, groundY, 15 + m.m1 * 3, C.motion, 0.7);
+      drawText('m₁', x1, groundY, { size: 12, bold: true, color: C.white });
+      drawCircle(x2, groundY, 15 + m.m2 * 3, C.force, 0.7);
+      drawText('m₂', x2, groundY, { size: 12, bold: true, color: C.white });
+      drawArrow(x1, groundY - 25, x1 + v1 * 15, groundY - 25, C.momentum, 2);
+    } else {
+      const combinedR = 15 + (m.m1 + m.m2) * 2;
+      drawCircle(x1, groundY, combinedR, C.accent, 0.7);
+      drawText('m₁+m₂', x1, groundY, { size: 11, bold: true, color: C.white });
+      vf = m.m1 * v1 / (m.m1 + m.m2);
+      drawArrow(x1, groundY - 25, x1 + vf * 15, groundY - 25, C.momentum, 2);
+    }
+
+    vf = m.m1 * v1 / (m.m1 + m.m2);
+    document.getElementById('momInfo').innerHTML = `
+      <div><b>碰前总动量</b>：${(m.m1 * v1).toFixed(1)} kg·m/s</div>
+      <div><b>碰后总动量</b>：${((m.m1 + m.m2) * vf).toFixed(1)} kg·m/s</div>
+      <div><b>碰后速度</b>：${vf.toFixed(2)} m/s</div>
+      <div><b>动能损失</b>：${(0.5 * m.m1 * v1 * v1 - 0.5 * (m.m1 + m.m2) * vf * vf).toFixed(1)} J</div>
+    `;
+
+  } else if (m.type === 'explosion') {
+    // Explosion
+    const explodeT = 1;
+    if (t < explodeT) {
+      // Together
+      drawCircle(cx, groundY, 25, C.accent, 0.7);
+      drawText('m₁+m₂', cx, groundY, { size: 11, bold: true, color: C.white });
+    } else {
+      const dt = t - explodeT;
+      const v1f = m.m2 * 2 / m.m1;
+      const v2f = -2;
+      const x1 = cx + v1f * dt * 40;
+      const x2 = cx + v2f * dt * 40;
+
+      drawCircle(x1, groundY, 15 + m.m1 * 3, C.motion, 0.7);
+      drawText('m₁', x1, groundY, { size: 12, bold: true, color: C.white });
+      drawCircle(x2, groundY, 15 + m.m2 * 3, C.force, 0.7);
+      drawText('m₂', x2, groundY, { size: 12, bold: true, color: C.white });
+
+      drawArrow(x1, groundY - 25, x1 + v1f * 10, groundY - 25, C.momentum, 2);
+      drawArrow(x2, groundY - 25, x2 + v2f * 10, groundY - 25, C.momentum, 2);
+
+      // Explosion effect
+      const sparkAlpha = Math.max(0, 1 - (t - explodeT) * 2);
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const r = (t - explodeT) * 80;
+        drawCircle(cx + r * Math.cos(angle), groundY + r * Math.sin(angle) * 0.5, 3, C.momentum, sparkAlpha);
+      }
+    }
+
+    document.getElementById('momInfo').innerHTML = `
+      <div><b>初动量</b>：0 kg·m/s</div>
+      <div><b>m₁动量</b>：${(m.m1 * m.m2 * 2 / m.m1).toFixed(1)} kg·m/s</div>
+      <div><b>m₂动量</b>：${(m.m2 * -2).toFixed(1)} kg·m/s</div>
+      <div><b>总动量</b>：0 kg·m/s（守恒）</div>
+    `;
+  }
+
+  animFrame++;
+  animId = requestAnimationFrame(animateMomentum);
+}
+
+// ===== MODE 4: Energy =====
+function renderEnergy() {
+  legendEl.innerHTML = '<span class="l-energy">势能</span><span class="l-momentum">动能</span><span class="l-force">重力</span>';
+  panel.innerHTML = `
+    <h3>⚡ 能量守恒定律</h3>
+    <div class="mode-switch" id="energySwitch">
+      <div class="mode-btn active" data-type="freefall">自由落体</div>
+      <div class="mode-btn" data-type="pendulum">单摆</div>
+      <div class="mode-btn" data-type="spring">弹簧振子</div>
+    </div>
+    <div class="equation" id="energyEq"></div>
+    <div class="slider-row">
+      <label>质量 m</label>
+      <input type="range" id="emSlider" min="1" max="5" step="0.5" value="2">
+      <span class="val" id="emVal">2.0 kg</span>
+    </div>
+    <div class="info-grid" id="energyInfo"></div>
+    <div class="concept-card energy">
+      <div class="title">📝 机械能守恒</div>
+      只有重力或弹力做功时，物体的动能和势能相互转化，但机械能总量保持不变。<br>
+      <strong>Eₖ + Eₚ = 常数</strong>
+    </div>
+  `;
+  document.querySelectorAll('#energySwitch .mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#energySwitch .mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      energyType = btn.dataset.type;
+      animFrame = 0;
+      updateEnergyEq();
+    });
+  });
+  document.getElementById('emSlider').addEventListener('input', e => {
+    eMass = parseFloat(e.target.value);
+    document.getElementById('emVal').textContent = eMass.toFixed(1) + ' kg';
+  });
+  let energyType = 'freefall';
+  let eMass = 2;
+  window._energy = { get type() { return energyType; }, get mass() { return eMass; } };
+  updateEnergyEq();
+  animateEnergy();
+}
+
+function updateEnergyEq() {
+  const e = window._energy;
+  const eqs = {
+    freefall: 'mgh = ½mv²（重力势能转化为动能）',
+    pendulum: 'mgh_max = ½mv²_max（势能与动能相互转化）',
+    spring: '½kx² = ½mv²_max（弹性势能转化为动能）'
+  };
+  document.getElementById('energyEq').textContent = eqs[e.type];
+}
+
+function animateEnergy() {
+  clearCanvas();
+  const e = window._energy;
+  const t = animFrame * 0.02;
+  const cx = 300;
+
+  drawText('能量守恒演示', cx, 25, { size: 16, bold: true });
+
+  const g = 9.8;
+  const h0 = 8;
+
+  if (e.type === 'freefall') {
+    // Free fall
+    const period = 3;
+    const phase = (t % period) / period;
+
+    // Height bar
+    const barX = 100;
+    ctx.strokeStyle = C.gray;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(barX, 100);
+    ctx.lineTo(barX, 350);
+    ctx.stroke();
+
+    // Height marks
+    for (let i = 0; i <= 4; i++) {
+      const y = 350 - i * 62.5;
+      ctx.beginPath();
+      ctx.moveTo(barX - 5, y);
+      ctx.lineTo(barX + 5, y);
+      ctx.stroke();
+      drawText((i * 2) + 'm', barX - 20, y, { size: 10, color: C.gray });
+    }
+
+    // Current height
+    let h, v;
+    if (phase < 0.5) {
+      const p = phase * 2;
+      h = h0 * (1 - p * p);
+      v = Math.sqrt(2 * g * (h0 - h));
+    } else {
+      const p = (phase - 0.5) * 2;
+      h = 0;
+      v = Math.sqrt(2 * g * h0);
+    }
+
+    const ballY = 350 - h / h0 * 250;
+    const ballX = 300;
+
+    // Ball
+    drawCircle(ballX, ballY, 15 + e.mass * 2, C.motion, 0.7);
+    drawText('m', ballX, ballY, { size: 12, bold: true, color: C.white });
+
+    // Energy bars
+    const Ep = e.mass * g * h;
+    const Ek = 0.5 * e.mass * v * v;
+    const Etotal = e.mass * g * h0;
+
+    const barWidth = 40;
+    const maxBarH = 200;
+
+    // Potential energy bar
+    const epH = (Ep / Etotal) * maxBarH;
+    ctx.fillStyle = C.energy;
+    ctx.fillRect(450, 350 - epH, barWidth, epH);
+    drawText('Ep', 470, 370, { size: 12, color: C.energy });
+
+    // Kinetic energy bar
+    const ekH = (Ek / Etotal) * maxBarH;
+    ctx.fillStyle = C.momentum;
+    ctx.fillRect(510, 350 - ekH, barWidth, ekH);
+    drawText('Ek', 530, 370, { size: 12, color: C.momentum });
+
+    document.getElementById('energyInfo').innerHTML = `
+      <div><b>高度</b>：${h.toFixed(2)} m</div>
+      <div><b>速度</b>：${v.toFixed(2)} m/s</div>
+      <div><b>势能 Ep</b>：${Ep.toFixed(1)} J</div>
+      <div><b>动能 Ek</b>：${Ek.toFixed(1)} J</div>
+      <div><b>总能量</b>：${Etotal.toFixed(1)} J</div>
+      <div><b>状态</b>：${phase < 0.5 ? '下落中' : '落地'}</div>
+    `;
+
+  } else if (e.type === 'pendulum') {
+    // Pendulum
+    const pivotX = cx, pivotY = 80;
+    const length = 200;
+    const angle = Math.PI / 4 * Math.cos(t * 2);
+
+    const bobX = pivotX + length * Math.sin(angle);
+    const bobY = pivotY + length * Math.cos(angle);
+
+    // String
+    ctx.strokeStyle = C.gray;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(pivotX, pivotY);
+    ctx.lineTo(bobX, bobY);
+    ctx.stroke();
+
+    // Pivot
+    drawCircle(pivotX, pivotY, 5, C.gray);
+
+    // Bob
+    drawCircle(bobX, bobY, 15 + e.mass * 2, C.motion, 0.7);
+    drawText('m', bobX, bobY, { size: 12, bold: true, color: C.white });
+
+    // Height reference
+    const h0 = length * (1 - Math.cos(Math.PI / 4));
+    const h = length * (1 - Math.cos(angle));
+    const v = Math.sqrt(2 * g * (h0 - h));
+
+    // Energy
+    const Ep = e.mass * g * h;
+    const Ek = 0.5 * e.mass * v * v;
+    const Etotal = e.mass * g * h0;
+
+    // Energy bars
+    const barWidth = 40;
+    const maxBarH = 150;
+    const barY = 350;
+
+    ctx.fillStyle = C.energy;
+    ctx.fillRect(450, barY - (Ep / Etotal) * maxBarH, barWidth, (Ep / Etotal) * maxBarH);
+    drawText('Ep', 470, barY + 15, { size: 12, color: C.energy });
+
+    ctx.fillStyle = C.momentum;
+    ctx.fillRect(510, barY - (Ek / Etotal) * maxBarH, barWidth, (Ek / Etotal) * maxBarH);
+    drawText('Ek', 530, barY + 15, { size: 12, color: C.momentum });
+
+    document.getElementById('energyInfo').innerHTML = `
+      <div><b>角度</b>：${(angle * 180 / Math.PI).toFixed(1)}°</div>
+      <div><b>高度</b>：${h.toFixed(3)} m</div>
+      <div><b>势能 Ep</b>：${Ep.toFixed(2)} J</div>
+      <div><b>动能 Ek</b>：${Ek.toFixed(2)} J</div>
+      <div><b>总能量</b>：${Etotal.toFixed(2)} J</div>
+      <div><b>状态</b>：摆动中</div>
+    `;
+
+  } else if (e.type === 'spring') {
+    // Spring oscillator
+    const springX = 100;
+    const equilibriumX = 350;
+    const amplitude = 100;
+    const displacement = amplitude * Math.cos(t * 3);
+
+    const blockX = equilibriumX + displacement;
+
+    // Wall
+    ctx.fillStyle = C.gray;
+    ctx.fillRect(springX - 10, 200, 10, 100);
+
+    // Spring (zigzag)
+    ctx.strokeStyle = C.force;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const springLen = blockX - springX - 20;
+    const segments = 10;
+    for (let i = 0; i <= segments; i++) {
+      const x = springX + (i / segments) * springLen;
+      const y = 250 + (i % 2 === 0 ? -10 : 10);
+      if (i === 0) ctx.moveTo(springX, 250);
+      else ctx.lineTo(x, y);
+    }
+    ctx.lineTo(blockX - 20, 250);
+    ctx.stroke();
+
+    // Block
+    drawCircle(blockX, 250, 20 + e.mass * 2, C.motion, 0.7);
+    drawText('m', blockX, 250, { size: 12, bold: true, color: C.white });
+
+    // Ground
+    ctx.strokeStyle = C.gray;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(50, 280);
+    ctx.lineTo(550, 280);
+    ctx.stroke();
+
+    // Energy calculation
+    const k = 10;
+    const Ep = 0.5 * k * (displacement / 50) * (displacement / 50);
+    const Ek = 0.5 * e.mass * Math.pow(Math.sqrt(k / e.mass) * amplitude / 50 * Math.sin(t * 3), 2);
+    const Etotal = 0.5 * k * (amplitude / 50) * (amplitude / 50);
+
+    // Energy bars
+    const barWidth = 40;
+    const maxBarH = 120;
+    const barY = 380;
+
+    ctx.fillStyle = C.energy;
+    ctx.fillRect(450, barY - (Ep / Etotal) * maxBarH, barWidth, (Ep / Etotal) * maxBarH);
+    drawText('Ep', 470, barY + 15, { size: 12, color: C.energy });
+
+    ctx.fillStyle = C.momentum;
+    ctx.fillRect(510, barY - (Ek / Etotal) * maxBarH, barWidth, (Ek / Etotal) * maxBarH);
+    drawText('Ek', 530, barY + 15, { size: 12, color: C.momentum });
+
+    document.getElementById('energyInfo').innerHTML = `
+      <div><b>位移</b>：${(displacement / 50).toFixed(2)} m</div>
+      <div><b>弹性系数k</b>：${k} N/m</div>
+      <div><b>势能 Ep</b>：${Ep.toFixed(2)} J</div>
+      <div><b>动能 Ek</b>：${Ek.toFixed(2)} J</div>
+      <div><b>总能量</b>：${Etotal.toFixed(2)} J</div>
+      <div><b>状态</b>：振动中</div>
+    `;
+  }
+
+  animFrame++;
+  animId = requestAnimationFrame(animateEnergy);
+}
+
+// ===== MODE 5: Quiz =====
+const quizData = [
+  {
+    q: '一个物体做匀加速直线运动，初速度为2m/s，加速度为1m/s²，2秒后的速度是？',
+    opts: ['2 m/s', '3 m/s', '4 m/s', '5 m/s'],
+    ans: 2,
+    explain: 'v = v₀ + at = 2 + 1×2 = 4 m/s'
+  },
+  {
+    q: '关于牛顿第一定律，下列说法正确的是？',
+    opts: ['物体不受力时一定静止', '力是维持物体运动的原因', '物体具有保持原来运动状态的性质', '以上都不对'],
+    ans: 2,
+    explain: '牛顿第一定律指出物体具有惯性，即保持原来运动状态的性质。不受力时物体可以静止或匀速直线运动。'
+  },
+  {
+    q: '两个质量分别为m和2m的物体发生完全非弹性碰撞，碰前m以速度v运动，2m静止。碰后共同速度是？',
+    opts: ['v', 'v/2', 'v/3', '2v/3'],
+    ans: 2,
+    explain: '动量守恒：mv = (m+2m)v\'，所以v\' = v/3'
+  },
+  {
+    q: '一个物体从高度h处自由落下，落地时的速度是？（不计空气阻力）',
+    opts: ['√(gh)', '√(2gh)', '2√(gh)', 'gh'],
+    ans: 1,
+    explain: '由能量守恒：mgh = ½mv²，所以v = √(2gh)'
+  },
+  {
+    q: '关于动量守恒的条件，下列说法正确的是？',
+    opts: ['系统不受任何外力', '系统所受合外力为零', '系统内力远大于外力', '系统必须是两个物体'],
+    ans: 1,
+    explain: '动量守恒的条件是系统所受合外力为零，或者内力远大于外力（近似守恒）。'
+  }
+];
+
+let quizIdx = 0;
+let quizAnswered = false;
+
+function renderQuiz() {
+  legendEl.innerHTML = '';
+  quizIdx = 0;
+  quizAnswered = false;
+  drawQuizCanvas();
+  showQuiz();
+}
+
+function showQuiz() {
+  const q = quizData[quizIdx];
+  panel.innerHTML = `
+    <h3>🎯 互动练习 (${quizIdx + 1}/${quizData.length})</h3>
+    <div class="quiz">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts" id="quizOpts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-idx="${i}">${String.fromCharCode(65 + i)}. ${o}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="quizFb"></div>
+      <div class="quiz-nav">
+        <button id="prevQ" ${quizIdx === 0 ? 'disabled' : ''}>← 上一题</button>
+        <button id="nextQ" ${quizIdx === quizData.length - 1 ? 'disabled' : ''}>下一题 →</button>
+      </div>
+    </div>
+  `;
+  quizAnswered = false;
+  document.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const idx = parseInt(opt.dataset.idx);
+      const correct = idx === q.ans;
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) {
+        document.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+      }
+      document.getElementById('quizFb').textContent = correct ? '✅ 正确！' : `❌ 正确答案是 ${String.fromCharCode(65 + q.ans)}。${q.explain}`;
+      if (correct) bumpTotalCorrect();
+    });
+  });
+  document.getElementById('prevQ')?.addEventListener('click', () => {
+    if (quizIdx > 0) { quizIdx--; showQuiz(); }
+  });
+  document.getElementById('nextQ')?.addEventListener('click', () => {
+    if (quizIdx < quizData.length - 1) { quizIdx++; showQuiz(); }
+  });
+}
+
+function drawQuizCanvas() {
+  clearCanvas();
+  const cx = 300;
+  drawText('🎯 力学基础练习', cx, 30, { size: 18, bold: true });
+
+  const t = animFrame * 0.02;
+
+  // Decorative elements
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2 + t * 0.3;
+    const r = 100 + 20 * Math.sin(t + i);
+    const px = cx + r * Math.cos(angle);
+    const py = 230 + r * 0.5 * Math.sin(angle);
+    const colors = [C.motion, C.force, C.energy, C.momentum, C.accent, C.white];
+    drawCircle(px, py, 8 + 3 * Math.sin(t * 2 + i), colors[i], 0.4);
+  }
+
+  // Center
+  const pulse = 1 + 0.1 * Math.sin(t * 3);
+  drawCircle(cx, 230, 50 * pulse, 'rgba(14,165,233,0.1)');
+  drawText('?', cx, 230, { size: 48, bold: true, color: C.motion });
+
+  drawText('选择题：选出正确答案', cx, 350, { size: 14, color: C.gray });
+  drawText(`共 ${quizData.length} 题`, cx, 375, { size: 12, color: C.gray });
+
+  animFrame++;
+  animId = requestAnimationFrame(drawQuizCanvas);
+}
+
+// ===== Main Render =====
+function render() {
+  cancelAnimationFrame(animId);
+  animFrame = 0;
+  switch (currentMode) {
+    case 'kinematics': renderKinematics(); break;
+    case 'newton': renderNewton(); break;
+    case 'momentum': renderMomentum(); break;
+    case 'energy': renderEnergy(); break;
+    case 'quiz': renderQuiz(); break;
+  }
+}
+
+render();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学物理"></script>
+</body>
+</html>

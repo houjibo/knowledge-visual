@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>曲线运动 - 高中物理互动可视化</title>
+<style>
+:root {
+  --primary: #1a73e8;
+  --accent: #e8553a;
+  --success: #34a853;
+  --warning: #fbbc04;
+  --purple: #9c27b0;
+  --bg-dark: #0d1b2a;
+  --bg-card: #1b2838;
+  --text: #e8eaed;
+  --text-dim: #9aa0a6;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-dark);
+  color: var(--text);
+  overflow-x: hidden;
+}
+.header {
+  background: linear-gradient(135deg, #0d1b2a 0%, #1a3a5c 100%);
+  padding: 20px 24px;
+  text-align: center;
+  border-bottom: 2px solid var(--primary);
+}
+.header h1 { font-size: 1.6em; margin-bottom: 4px; }
+.header p { color: var(--text-dim); font-size: 0.9em; }
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  flex-wrap: wrap;
+}
+.tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.3s;
+}
+.tab.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.section {
+  display: none;
+  padding: 20px 16px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.section.active { display: block; }
+.section-title {
+  font-size: 1.15em;
+  margin-bottom: 14px;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+canvas {
+  width: 100%;
+  border-radius: 8px;
+  background: #0a1628;
+  touch-action: none;
+}
+.controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+  align-items: center;
+}
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 130px;
+}
+.control-group label {
+  font-size: 0.75em;
+  color: var(--text-dim);
+}
+.control-group input[type="range"] {
+  width: 100%;
+  accent-color: var(--primary);
+}
+.btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.2s;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-accent { background: var(--accent); color: white; }
+.btn-success { background: var(--success); color: white; }
+.btn:active { transform: scale(0.95); }
+.info-box {
+  background: rgba(26,115,232,0.1);
+  border: 1px solid rgba(26,115,232,0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+  font-size: 0.85em;
+  line-height: 1.6;
+}
+.formula {
+  font-family: 'Times New Roman', serif;
+  font-style: italic;
+  color: var(--warning);
+  font-size: 1.05em;
+}
+.data-display {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.data-item {
+  background: rgba(255,255,255,0.05);
+  padding: 8px 10px;
+  border-radius: 6px;
+  text-align: center;
+}
+.data-item .value {
+  font-size: 1.15em;
+  font-weight: bold;
+  color: var(--warning);
+}
+.data-item .label {
+  font-size: 0.68em;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.quiz-option {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  margin: 8px 0;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9em;
+}
+.quiz-option:hover { background: rgba(255,255,255,0.1); }
+.quiz-option.correct { background: rgba(52,168,83,0.3); border-color: var(--success); }
+.quiz-option.wrong { background: rgba(232,85,58,0.3); border-color: var(--accent); }
+</style>
+<script src="./assets/common.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <h1>🌀 曲线运动</h1>
+  <p>高中物理 · 互动可视化</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab(0)">运动合成</button>
+  <button class="tab" onclick="switchTab(1)">抛体运动</button>
+  <button class="tab" onclick="switchTab(2)">圆周运动</button>
+  <button class="tab" onclick="switchTab(3)">互动练习</button>
+</div>
+
+<!-- Section 0: 运动合成 -->
+<div class="section active" id="sec0">
+  <div class="section-title">🚣 运动合成与分解 · 小船渡河</div>
+  <div class="card">
+    <canvas id="boatCanvas" height="280"></canvas>
+    <div class="controls">
+      <button class="btn btn-primary" onclick="toggleBoat()">▶ 开始/暂停</button>
+      <button class="btn btn-accent" onclick="resetBoat()">🔄 重置</button>
+    </div>
+    <div class="controls">
+      <div class="control-group">
+        <label>船速 v₁ (m/s): <span id="boatSpeedVal">3</span></label>
+        <input type="range" id="boatSpeedSlider" min="1" max="8" value="3" oninput="updateBoat()">
+      </div>
+      <div class="control-group">
+        <label>水速 v₂ (m/s): <span id="waterSpeedVal">2</span></label>
+        <input type="range" id="waterSpeedSlider" min="0" max="6" value="2" oninput="updateBoat()">
+      </div>
+      <div class="control-group">
+        <label>船头角度 θ: <span id="boatAngleVal">90</span>°</label>
+        <input type="range" id="boatAngleSlider" min="30" max="150" value="90" oninput="updateBoat()">
+      </div>
+    </div>
+    <div class="data-display">
+      <div class="data-item"><div class="value" id="boatTime">--</div><div class="label">渡河时间 (s)</div></div>
+      <div class="data-item"><div class="value" id="boatDrift">--</div><div class="label">下游漂移 (m)</div></div>
+      <div class="data-item"><div class="value" id="boatResult">--</div><div class="label">合速度 (m/s)</div></div>
+    </div>
+    <div class="info-box">
+      <strong>运动合成：</strong>船的实际运动 = 船相对水的运动 + 水的运动<br>
+      <span class="formula">v<sub>合</sub> = v<sub>船</sub> + v<sub>水</sub></span><br>
+      🎯 <strong>最短时间渡河：</strong>船头垂直河岸 (θ=90°)，t = d/v₁<br>
+      🎯 <strong>最短位移渡河：</strong>合速度垂直河岸（当 v₁ > v₂ 时）
+    </div>
+  </div>
+</div>
+
+<!-- Section 1: 抛体运动 -->
+<div class="section" id="sec1">
+  <div class="section-title">🎯 平抛运动</div>
+  <div class="card">
+    <canvas id="projectileCanvas" height="300"></canvas>
+    <div class="controls">
+      <button class="btn btn-primary" onclick="toggleProjectile()">▶ 发射/暂停</button>
+      <button class="btn btn-accent" onclick="resetProjectile()">🔄 重置</button>
+    </div>
+    <div class="controls">
+      <div class="control-group">
+        <label>初速度 v₀ (m/s): <span id="projV0Val">10</span></label>
+        <input type="range" id="projV0Slider" min="2" max="25" value="10" oninput="updateProjectile()">
+      </div>
+      <div class="control-group">
+        <label>高度 h (m): <span id="projHVal">5</span></label>
+        <input type="range" id="projHSlider" min="1" max="10" value="5" oninput="updateProjectile()">
+      </div>
+    </div>
+    <div class="data-display">
+      <div class="data-item"><div class="value" id="projTime">--</div><div class="label">落地时间 (s)</div></div>
+      <div class="data-item"><div class="value" id="projRange">--</div><div class="label">水平射程 (m)</div></div>
+      <div class="data-item"><div class="value" id="projVf">--</div><div class="label">落地速度 (m/s)</div></div>
+    </div>
+    <div class="info-box">
+      <strong>平抛运动分解：</strong><br>
+      水平方向：<span class="formula">x = v₀t</span>（匀速直线运动）<br>
+      竖直方向：<span class="formula">y = ½gt²</span>（自由落体）<br>
+      轨迹方程：<span class="formula">y = gx²/(2v₀²)</span>（抛物线）
+    </div>
+  </div>
+
+  <div class="section-title">🏹 斜抛运动</div>
+  <div class="card">
+    <canvas id="angledCanvas" height="280"></canvas>
+    <div class="controls">
+      <button class="btn btn-primary" onclick="toggleAngled()">▶ 发射/暂停</button>
+      <button class="btn btn-accent" onclick="resetAngled()">🔄 重置</button>
+    </div>
+    <div class="controls">
+      <div class="control-group">
+        <label>初速度 v₀ (m/s): <span id="aV0Val">20</span></label>
+        <input type="range" id="aV0Slider" min="5" max="40" value="20" oninput="updateAngled()">
+      </div>
+      <div class="control-group">
+        <label>发射角 θ: <span id="aAngleVal">45</span>°</label>
+        <input type="range" id="aAngleSlider" min="10" max="80" value="45" oninput="updateAngled()">
+      </div>
+    </div>
+    <div class="data-display">
+      <div class="data-item"><div class="value" id="aMaxH">--</div><div class="label">最大高度 (m)</div></div>
+      <div class="data-item"><div class="value" id="aRange">--</div><div class="label">射程 (m)</div></div>
+      <div class="data-item"><div class="value" id="aTime">--</div><div class="label">飞行时间 (s)</div></div>
+    </div>
+    <div class="info-box">
+      <span class="formula">射程 R = v₀²sin2θ/g</span> → 45° 时射程最远<br>
+      <span class="formula">最大高度 H = v₀²sin²θ/(2g)</span>
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: 圆周运动 -->
+<div class="section" id="sec2">
+  <div class="section-title">🔄 匀速圆周运动</div>
+  <div class="card">
+    <canvas id="circularCanvas" height="300"></canvas>
+    <div class="controls">
+      <button class="btn btn-primary" onclick="toggleCircular()">▶ 开始/暂停</button>
+      <button class="btn btn-accent" onclick="resetCircular()">🔄 重置</button>
+    </div>
+    <div class="controls">
+      <div class="control-group">
+        <label>角速度 ω (rad/s): <span id="omegaVal">2</span></label>
+        <input type="range" id="omegaSlider" min="1" max="8" value="2" oninput="updateCircular()">
+      </div>
+      <div class="control-group">
+        <label>半径 r (m): <span id="radiusVal">3</span></label>
+        <input type="range" id="radiusSlider" min="1" max="6" value="3" oninput="updateCircular()">
+      </div>
+    </div>
+    <div class="data-display">
+      <div class="data-item"><div class="value" id="circVel">--</div><div class="label">线速度 (m/s)</div></div>
+      <div class="data-item"><div class="value" id="circAccel">--</div><div class="label">向心加速度 (m/s²)</div></div>
+      <div class="data-item"><div class="value" id="circPeriod">--</div><div class="label">周期 T (s)</div></div>
+      <div class="data-item"><div class="value" id="circForce">--</div><div class="label">向心力 (N)</div></div>
+    </div>
+    <div class="info-box">
+      <span class="formula">v = ωr</span> | <span class="formula">a = ω²r = v²/r</span> | <span class="formula">F = mω²r</span><br>
+      向心力始终指向圆心，只改变速度方向，不改变速度大小
+    </div>
+  </div>
+
+  <div class="section-title">🎢 竖直面圆周运动 · 绳模型</div>
+  <div class="card">
+    <canvas id="vertCircleCanvas" height="300"></canvas>
+    <div class="controls">
+      <button class="btn btn-primary" onclick="toggleVertCircle()">▶ 开始/暂停</button>
+      <button class="btn btn-accent" onclick="resetVertCircle()">🔄 重置</button>
+      <div class="control-group">
+        <label>初始速度倍率: <span id="vertSpeedVal">1.0</span>x</label>
+        <input type="range" id="vertSpeedSlider" min="5" max="20" value="10" oninput="updateVertCircle()">
+      </div>
+    </div>
+    <div class="data-display">
+      <div class="data-item"><div class="value" id="vertTensionTop">--</div><div class="label">最高点张力 (N)</div></div>
+      <div class="data-item"><div class="value" id="vertTensionBot">--</div><div class="label">最低点张力 (N)</div></div>
+      <div class="data-item"><div class="value" id="vertCritical">--</div><div class="label">临界速度 (m/s)</div></div>
+    </div>
+    <div class="info-box">
+      <strong>临界条件（最高点）：</strong><span class="formula">v<sub>min</sub> = √(gr)</span>（仅重力提供向心力）<br>
+      最高点：<span class="formula">T + mg = mv²/r</span><br>
+      最低点：<span class="formula">T - mg = mv²/r</span>
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: 互动练习 -->
+<div class="section" id="sec3">
+  <div class="section-title">📝 互动练习</div>
+  <div class="card" id="quizCard">
+    <div id="quizContent"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-primary" onclick="nextQuiz()">下一题 →</button>
+    </div>
+  </div>
+  <div class="card">
+    <div style="text-align:center">
+      <div style="font-size:0.8em;color:var(--text-dim)">得分</div>
+      <div style="font-size:2em;font-weight:bold;color:var(--warning)" id="scoreDisplay">0 / 0</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const g = 9.8;
+const DPR = window.devicePixelRatio || 1;
+
+function switchTab(idx) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.section').forEach((s,i) => s.classList.toggle('active', i===idx));
+}
+
+function resizeC(c) {
+  c.width = c.clientWidth * DPR;
+  c.height = c.clientHeight * DPR;
+  c.getContext('2d').scale(DPR, DPR);
+}
+
+// ===== 小船渡河 =====
+const boatC = document.getElementById('boatCanvas');
+const bctx = boatC.getContext('2d');
+let boat = { x: 40, y: 0, running: false, v1: 3, v2: 2, angle: 90, trail: [], time: 0 };
+
+function drawBoat() {
+  resizeC(boatC);
+  const w = boatC.clientWidth, h = boatC.clientHeight;
+  bctx.clearRect(0,0,w,h);
+  
+  const riverTop = 40, riverBot = h - 40;
+  const riverW = riverBot - riverTop;
+  
+  // Banks
+  bctx.fillStyle = '#2a4a2a';
+  bctx.fillRect(0, 0, w, riverTop);
+  bctx.fillRect(0, riverBot, w, h - riverBot);
+  
+  // Water
+  bctx.fillStyle = 'rgba(26,115,232,0.15)';
+  bctx.fillRect(0, riverTop, w, riverW);
+  
+  // Water flow arrows
+  for(let y = riverTop + 20; y < riverBot; y += 30) {
+    for(let x = 20; x < w; x += 60) {
+      bctx.strokeStyle = 'rgba(26,115,232,0.3)';
+      bctx.beginPath();
+      bctx.moveTo(x, y);
+      bctx.lineTo(x + 15, y);
+      bctx.lineTo(x + 10, y - 3);
+      bctx.moveTo(x + 15, y);
+      bctx.lineTo(x + 10, y + 3);
+      bctx.stroke();
+    }
+  }
+  
+  // Labels
+  bctx.fillStyle = '#9aa0a6';
+  bctx.font = '11px sans-serif';
+  bctx.fillText('对岸', w/2 - 12, riverTop - 8);
+  bctx.fillText('此岸', w/2 - 12, riverBot + 18);
+  bctx.fillText('→ v₂ (水流)', w - 90, riverTop + 15);
+  
+  // Trail
+  if(boat.trail.length > 1) {
+    bctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    bctx.setLineDash([4,4]);
+    bctx.beginPath();
+    bctx.moveTo(boat.trail[0].x, boat.trail[0].y);
+    boat.trail.forEach(p => bctx.lineTo(p.x, p.y));
+    bctx.stroke();
+    bctx.setLineDash([]);
+  }
+  
+  // Boat position
+  const bx = boat.x, by = boat.y;
+  
+  // Velocity vectors
+  const scale = 8;
+  const rad = boat.angle * Math.PI / 180;
+  const vx1 = boat.v1 * Math.cos(rad) * scale;
+  const vy1 = -boat.v1 * Math.sin(rad) * scale;
+  const vx2 = boat.v2 * scale;
+  
+  // v1 (boat relative to water) - blue
+  bctx.strokeStyle = '#4a90d9';
+  bctx.lineWidth = 2;
+  bctx.beginPath();
+  bctx.moveTo(bx, by);
+  bctx.lineTo(bx + vx1, by + vy1);
+  bctx.stroke();
+  bctx.fillStyle = '#4a90d9';
+  bctx.fillText('v₁', bx + vx1/2 - 10, by + vy1/2 - 5);
+  
+  // v2 (water) - green
+  bctx.strokeStyle = '#34a853';
+  bctx.beginPath();
+  bctx.moveTo(bx, by);
+  bctx.lineTo(bx + vx2, by);
+  bctx.stroke();
+  bctx.fillStyle = '#34a853';
+  bctx.fillText('v₂', bx + vx2/2 - 5, by - 8);
+  
+  // v_resultant - red
+  bctx.strokeStyle = '#e8553a';
+  bctx.lineWidth = 2.5;
+  bctx.beginPath();
+  bctx.moveTo(bx, by);
+  bctx.lineTo(bx + vx1 + vx2, by + vy1);
+  bctx.stroke();
+  bctx.fillStyle = '#e8553a';
+  bctx.fillText('v合', bx + (vx1+vx2)/2, by + vy1/2 - 8);
+  bctx.lineWidth = 1;
+  
+  // Boat icon
+  bctx.fillStyle = '#fbbc04';
+  bctx.beginPath();
+  bctx.arc(bx, by, 8, 0, Math.PI*2);
+  bctx.fill();
+  bctx.fillStyle = '#0d1b2a';
+  bctx.font = 'bold 10px sans-serif';
+  bctx.fillText('船', bx-6, by+4);
+  
+  // Data
+  const vResult = Math.sqrt((boat.v1*Math.cos(rad)+boat.v2)**2 + (boat.v1*Math.sin(rad))**2);
+  const riverWidth = 100; // meters
+  const crossSpeed = boat.v1 * Math.sin(rad);
+  const crossTime = crossSpeed > 0 ? (riverWidth / crossSpeed) : Infinity;
+  const drift = boat.v2 * crossTime + (boat.v1 * Math.cos(rad)) * crossTime;
+  
+  document.getElementById('boatTime').textContent = crossTime < 999 ? crossTime.toFixed(1) : '∞';
+  document.getElementById('boatDrift').textContent = drift.toFixed(1);
+  document.getElementById('boatResult').textContent = vResult.toFixed(1);
+}
+
+function toggleBoat() {
+  boat.running = !boat.running;
+  if(boat.running) boatLoop();
+}
+
+function resetBoat() {
+  boat.x = 40;
+  boat.y = boatC.clientHeight - 60;
+  boat.running = false;
+  boat.trail = [];
+  boat.time = 0;
+  drawBoat();
+}
+
+function updateBoat() {
+  boat.v1 = +document.getElementById('boatSpeedSlider').value;
+  boat.v2 = +document.getElementById('waterSpeedSlider').value;
+  boat.angle = +document.getElementById('boatAngleSlider').value;
+  document.getElementById('boatSpeedVal').textContent = boat.v1;
+  document.getElementById('waterSpeedVal').textContent = boat.v2;
+  document.getElementById('boatAngleVal').textContent = boat.angle;
+  drawBoat();
+}
+
+function boatLoop() {
+  if(!boat.running) return;
+  const dt = 0.05;
+  const rad = boat.angle * Math.PI / 180;
+  const scale = 3;
+  
+  boat.x += (boat.v1 * Math.cos(rad) + boat.v2) * dt * scale;
+  boat.y -= boat.v1 * Math.sin(rad) * dt * scale;
+  boat.time += dt;
+  
+  boat.trail.push({x: boat.x, y: boat.y});
+  if(boat.trail.length > 200) boat.trail.shift();
+  
+  const h = boatC.clientHeight;
+  if(boat.y < 40 || boat.y > h - 40 || boat.x > boatC.clientWidth - 10 || boat.x < 10) {
+    boat.running = false;
+  }
+  
+  drawBoat();
+  if(boat.running) requestAnimationFrame(boatLoop);
+}
+
+// ===== 平抛运动 =====
+const projC = document.getElementById('projectileCanvas');
+const pctx = projC.getContext('2d');
+let proj = { x: 0, y: 0, vx: 10, vy: 0, running: false, v0: 10, h: 5, trail: [], time: 0 };
+
+function drawProjectile() {
+  resizeC(projC);
+  const w = projC.clientWidth, h = projC.clientHeight;
+  pctx.clearRect(0,0,w,h);
+  
+  const ground = h - 40;
+  const startX = 40, startY = ground - (proj.h / 10) * (ground - 60);
+  
+  // Ground
+  pctx.fillStyle = '#2a3a4a';
+  pctx.fillRect(0, ground, w, h - ground);
+  
+  // Height marker
+  pctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  pctx.setLineDash([4,4]);
+  pctx.beginPath();
+  pctx.moveTo(startX, startY);
+  pctx.lineTo(startX, ground);
+  pctx.stroke();
+  pctx.setLineDash([]);
+  pctx.fillStyle = '#9aa0a6';
+  pctx.font = '11px sans-serif';
+  pctx.fillText('h=' + proj.h + 'm', startX + 5, (startY + ground)/2);
+  
+  // Platform
+  pctx.fillStyle = '#4a5a6a';
+  pctx.fillRect(startX - 15, startY - 5, 30, 8);
+  
+  // Trail
+  if(proj.trail.length > 1) {
+    pctx.strokeStyle = '#e8553a';
+    pctx.lineWidth = 2;
+    pctx.beginPath();
+    pctx.moveTo(proj.trail[0].x, proj.trail[0].y);
+    proj.trail.forEach(p => pctx.lineTo(p.x, p.y));
+    pctx.stroke();
+    pctx.lineWidth = 1;
+    
+    // Decomposition lines (dashed)
+    const last = proj.trail[proj.trail.length - 1];
+    pctx.strokeStyle = 'rgba(74,144,217,0.4)';
+    pctx.setLineDash([3,3]);
+    pctx.beginPath();
+    pctx.moveTo(last.x, last.y);
+    pctx.lineTo(last.x, startY);
+    pctx.stroke();
+    pctx.beginPath();
+    pctx.moveTo(last.x, last.y);
+    pctx.lineTo(startX, last.y);
+    pctx.stroke();
+    pctx.setLineDash([]);
+    
+    // Labels
+    pctx.fillStyle = '#4a90d9';
+    pctx.fillText('x=' + ((last.x - startX) * 0.5).toFixed(1) + 'm', (startX + last.x)/2 - 15, startY - 8);
+    pctx.fillStyle = '#34a853';
+    pctx.fillText('y=' + ((last.y - startY) * 0.5).toFixed(1) + 'm', last.x + 5, (startY + last.y)/2);
+  }
+  
+  // Ball
+  pctx.fillStyle = '#fbbc04';
+  pctx.beginPath();
+  pctx.arc(proj.x || startX, proj.y || startY, 7, 0, Math.PI*2);
+  pctx.fill();
+  
+  // Velocity arrows at current position
+  const cx = proj.x || startX, cy = proj.y || startY;
+  if(proj.time > 0) {
+    const scale = 3;
+    // vx
+    pctx.strokeStyle = '#4a90d9';
+    pctx.lineWidth = 2;
+    pctx.beginPath();
+    pctx.moveTo(cx, cy);
+    pctx.lineTo(cx + proj.vx * scale, cy);
+    pctx.stroke();
+    pctx.fillStyle = '#4a90d9';
+    pctx.fillText('vx', cx + proj.vx * scale/2, cy - 8);
+    
+    // vy
+    pctx.strokeStyle = '#34a853';
+    pctx.beginPath();
+    pctx.moveTo(cx, cy);
+    pctx.lineTo(cx, cy + proj.vy * scale);
+    pctx.stroke();
+    pctx.fillStyle = '#34a853';
+    pctx.fillText('vy', cx + 8, cy + proj.vy * scale/2);
+    pctx.lineWidth = 1;
+  }
+  
+  // Data
+  const fallTime = Math.sqrt(2 * proj.h / g);
+  const range = proj.v0 * fallTime;
+  const vf = Math.sqrt(proj.v0**2 + (g * fallTime)**2);
+  document.getElementById('projTime').textContent = fallTime.toFixed(2);
+  document.getElementById('projRange').textContent = range.toFixed(1);
+  document.getElementById('projVf').textContent = vf.toFixed(1);
+}
+
+function toggleProjectile() {
+  proj.running = !proj.running;
+  if(proj.running) {
+    if(proj.time === 0) {
+      const ground = projC.clientHeight - 40;
+      const startY = ground - (proj.h / 10) * (ground - 60);
+      proj.x = 40; proj.y = startY;
+    }
+    projLoop();
+  }
+}
+
+function resetProjectile() {
+  proj.running = false;
+  proj.time = 0;
+  proj.vy = 0;
+  proj.trail = [];
+  const ground = projC.clientHeight - 40;
+  const startY = ground - (proj.h / 10) * (ground - 60);
+  proj.x = 40; proj.y = startY;
+  drawProjectile();
+}
+
+function updateProjectile() {
+  proj.v0 = +document.getElementById('projV0Slider').value;
+  proj.h = +document.getElementById('projHSlider').value;
+  proj.vx = proj.v0;
+  document.getElementById('projV0Val').textContent = proj.v0;
+  document.getElementById('projHVal').textContent = proj.h;
+  resetProjectile();
+}
+
+function projLoop() {
+  if(!proj.running) return;
+  const dt = 0.03;
+  const scale = 15; // pixels per m/s
+  
+  proj.vx = proj.v0;
+  proj.vy += g * dt;
+  proj.x += proj.vx * dt * scale / 10;
+  proj.y += proj.vy * dt * scale / 10;
+  proj.time += dt;
+  
+  proj.trail.push({x: proj.x, y: proj.y});
+  if(proj.trail.length > 300) proj.trail.shift();
+  
+  const ground = projC.clientHeight - 40;
+  if(proj.y >= ground) {
+    proj.y = ground;
+    proj.running = false;
+  }
+  
+  drawProjectile();
+  if(proj.running) requestAnimationFrame(projLoop);
+}
+
+// ===== 斜抛运动 =====
+const angC = document.getElementById('angledCanvas');
+const actx = angC.getContext('2d');
+let angled = { x: 0, y: 0, vx: 0, vy: 0, running: false, v0: 20, angle: 45, trail: [], time: 0 };
+
+function drawAngled() {
+  resizeC(angC);
+  const w = angC.clientWidth, h = angC.clientHeight;
+  actx.clearRect(0,0,w,h);
+  
+  const ground = h - 40;
+  const startX = 40, startY = ground;
+  
+  // Ground
+  actx.fillStyle = '#2a3a4a';
+  actx.fillRect(0, ground, w, h - ground);
+  
+  // Angle arc
+  const rad = angled.angle * Math.PI / 180;
+  actx.strokeStyle = 'rgba(255,255,255,0.3)';
+  actx.beginPath();
+  actx.arc(startX, startY, 30, -Math.PI/2, -Math.PI/2 + rad, false);
+  actx.stroke();
+  actx.fillStyle = '#9aa0a6';
+  actx.font = '11px sans-serif';
+  actx.fillText('θ=' + angled.angle + '°', startX + 35, startY - 10);
+  
+  // Theoretical trajectory (dotted)
+  const vx = angled.v0 * Math.cos(rad);
+  const vy = angled.v0 * Math.sin(rad);
+  const totalTime = 2 * vy / g;
+  const maxH = vy * vy / (2 * g);
+  const range = vx * totalTime;
+  
+  const pixScale = Math.min((w - 80) / (range || 1), (ground - 40) / (maxH || 1)) * 0.8;
+  
+  actx.strokeStyle = 'rgba(255,255,255,0.15)';
+  actx.setLineDash([3,3]);
+  actx.beginPath();
+  for(let t = 0; t <= totalTime; t += totalTime/50) {
+    const px = startX + vx * t * pixScale;
+    const py = startY - (vy * t - 0.5 * g * t * t) * pixScale;
+    if(t === 0) actx.moveTo(px, py);
+    else actx.lineTo(px, py);
+  }
+  actx.stroke();
+  actx.setLineDash([]);
+  
+  // Trail
+  if(angled.trail.length > 1) {
+    actx.strokeStyle = '#e8553a';
+    actx.lineWidth = 2;
+    actx.beginPath();
+    actx.moveTo(angled.trail[0].x, angled.trail[0].y);
+    angled.trail.forEach(p => actx.lineTo(p.x, p.y));
+    actx.stroke();
+    actx.lineWidth = 1;
+  }
+  
+  // Ball
+  const bx = angled.x || startX, by = angled.y || startY;
+  actx.fillStyle = '#fbbc04';
+  actx.beginPath();
+  actx.arc(bx, by, 7, 0, Math.PI*2);
+  actx.fill();
+  
+  // Velocity at current position
+  if(angled.time > 0) {
+    const sc = 2;
+    actx.strokeStyle = '#4a90d9';
+    actx.lineWidth = 2;
+    actx.beginPath();
+    actx.moveTo(bx, by);
+    actx.lineTo(bx + angled.vx * sc, by);
+    actx.stroke();
+    actx.strokeStyle = '#34a853';
+    actx.beginPath();
+    actx.moveTo(bx, by);
+    actx.lineTo(bx, by - angled.vy * sc);
+    actx.stroke();
+    actx.lineWidth = 1;
+  }
+  
+  // Data
+  document.getElementById('aMaxH').textContent = maxH.toFixed(1);
+  document.getElementById('aRange').textContent = range.toFixed(1);
+  document.getElementById('aTime').textContent = totalTime.toFixed(2);
+}
+
+function toggleAngled() {
+  angled.running = !angled.running;
+  if(angled.running) {
+    if(angled.time === 0) {
+      const ground = angC.clientHeight - 40;
+      angled.x = 40; angled.y = ground;
+      const rad = angled.angle * Math.PI / 180;
+      angled.vx = angled.v0 * Math.cos(rad);
+      angled.vy = angled.v0 * Math.sin(rad);
+    }
+    angledLoop();
+  }
+}
+
+function resetAngled() {
+  angled.running = false;
+  angled.time = 0;
+  angled.trail = [];
+  const ground = angC.clientHeight - 40;
+  angled.x = 40; angled.y = ground;
+  const rad = angled.angle * Math.PI / 180;
+  angled.vx = angled.v0 * Math.cos(rad);
+  angled.vy = angled.v0 * Math.sin(rad);
+  drawAngled();
+}
+
+function updateAngled() {
+  angled.v0 = +document.getElementById('aV0Slider').value;
+  angled.angle = +document.getElementById('aAngleSlider').value;
+  document.getElementById('aV0Val').textContent = angled.v0;
+  document.getElementById('aAngleVal').textContent = angled.angle;
+  resetAngled();
+}
+
+function angledLoop() {
+  if(!angled.running) return;
+  const dt = 0.03;
+  const rad = angled.angle * Math.PI / 180;
+  const vx0 = angled.v0 * Math.cos(rad);
+  const vy0 = angled.v0 * Math.sin(rad);
+  const totalTime = 2 * vy0 / g;
+  const maxH = vy0 * vy0 / (2 * g);
+  const range = vx0 * totalTime;
+  
+  const w = angC.clientWidth, ground = angC.clientHeight - 40;
+  const pixScale = Math.min((w - 80) / (range || 1), (ground - 40) / (maxH || 1)) * 0.8;
+  
+  angled.vy -= g * dt;
+  angled.x += angled.vx * dt * pixScale / 5;
+  angled.y -= angled.vy * dt * pixScale / 5;
+  angled.time += dt;
+  
+  angled.trail.push({x: angled.x, y: angled.y});
+  if(angled.trail.length > 300) angled.trail.shift();
+  
+  if(angled.y >= ground || angled.x > w - 20) {
+    angled.y = ground;
+    angled.running = false;
+  }
+  
+  drawAngled();
+  if(angled.running) requestAnimationFrame(angledLoop);
+}
+
+// ===== 匀速圆周运动 =====
+const circC = document.getElementById('circularCanvas');
+const cctx = circC.getContext('2d');
+let circ = { angle: 0, omega: 2, r: 3, running: false, mass: 1, trail: [] };
+
+function drawCircular() {
+  resizeC(circC);
+  const w = circC.clientWidth, h = circC.clientHeight;
+  cctx.clearRect(0,0,w,h);
+  
+  const cx = w/2, cy = h/2;
+  const rPx = circ.r * 25;
+  
+  // Circle path
+  cctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  cctx.setLineDash([4,4]);
+  cctx.beginPath();
+  cctx.arc(cx, cy, rPx, 0, Math.PI*2);
+  cctx.stroke();
+  cctx.setLineDash([]);
+  
+  // Center
+  cctx.fillStyle = '#9aa0a6';
+  cctx.beginPath();
+  cctx.arc(cx, cy, 3, 0, Math.PI*2);
+  cctx.fill();
+  cctx.fillText('O', cx + 6, cy - 6);
+  
+  // Radius line
+  const bx = cx + rPx * Math.cos(circ.angle);
+  const by = cy - rPx * Math.sin(circ.angle);
+  
+  cctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  cctx.beginPath();
+  cctx.moveTo(cx, cy);
+  cctx.lineTo(bx, by);
+  cctx.stroke();
+  
+  // Trail
+  if(circ.trail.length > 1) {
+    cctx.strokeStyle = 'rgba(232,85,58,0.4)';
+    cctx.lineWidth = 2;
+    cctx.beginPath();
+    circ.trail.forEach((p,i) => {
+      if(i===0) cctx.moveTo(p.x, p.y);
+      else cctx.lineTo(p.x, p.y);
+    });
+    cctx.stroke();
+    cctx.lineWidth = 1;
+  }
+  
+  // Ball
+  cctx.fillStyle = '#fbbc04';
+  cctx.beginPath();
+  cctx.arc(bx, by, 10, 0, Math.PI*2);
+  cctx.fill();
+  cctx.fillStyle = '#0d1b2a';
+  cctx.font = 'bold 9px sans-serif';
+  cctx.fillText('m', bx-5, by+3);
+  
+  // Velocity vector (tangent)
+  const v = circ.omega * circ.r;
+  const vScale = 12;
+  const vx = -v * Math.sin(circ.angle) * vScale;
+  const vy = -v * Math.cos(circ.angle) * vScale;
+  
+  cctx.strokeStyle = '#34a853';
+  cctx.lineWidth = 2.5;
+  cctx.beginPath();
+  cctx.moveTo(bx, by);
+  cctx.lineTo(bx + vx, by + vy);
+  cctx.stroke();
+  // Arrowhead
+  cctx.fillStyle = '#34a853';
+  cctx.beginPath();
+  const aLen = 8;
+  const aAngle = Math.atan2(vy, vx);
+  cctx.moveTo(bx + vx, by + vy);
+  cctx.lineTo(bx + vx - aLen*Math.cos(aAngle-0.4), by + vy - aLen*Math.sin(aAngle-0.4));
+  cctx.lineTo(bx + vx - aLen*Math.cos(aAngle+0.4), by + vy - aLen*Math.sin(aAngle+0.4));
+  cctx.fill();
+  cctx.fillText('v', bx + vx/2 + 5, by + vy/2);
+  
+  // Centripetal acceleration (toward center)
+  const a = circ.omega * circ.omega * circ.r;
+  const aScale = 5;
+  const ax = (cx - bx) / rPx * a * aScale;
+  const ay = (cy - by) / rPx * a * aScale;
+  
+  cctx.strokeStyle = '#e8553a';
+  cctx.lineWidth = 2;
+  cctx.beginPath();
+  cctx.moveTo(bx, by);
+  cctx.lineTo(bx + ax, by + ay);
+  cctx.stroke();
+  cctx.fillStyle = '#e8553a';
+  cctx.fillText('a', bx + ax/2 + 5, by + ay/2);
+  cctx.lineWidth = 1;
+  
+  // r label
+  cctx.fillStyle = '#9aa0a6';
+  cctx.font = '11px sans-serif';
+  cctx.fillText('r=' + circ.r + 'm', (cx+bx)/2 + 5, (cy+by)/2 - 5);
+  
+  // Data
+  const F = circ.mass * a;
+  document.getElementById('circVel').textContent = v.toFixed(1);
+  document.getElementById('circAccel').textContent = a.toFixed(1);
+  document.getElementById('circPeriod').textContent = (2 * Math.PI / circ.omega).toFixed(2);
+  document.getElementById('circForce').textContent = F.toFixed(1);
+}
+
+function toggleCircular() {
+  circ.running = !circ.running;
+  if(circ.running) circLoop();
+}
+
+function resetCircular() {
+  circ.angle = 0;
+  circ.running = false;
+  circ.trail = [];
+  drawCircular();
+}
+
+function updateCircular() {
+  circ.omega = +document.getElementById('omegaSlider').value;
+  circ.r = +document.getElementById('radiusSlider').value;
+  document.getElementById('omegaVal').textContent = circ.omega;
+  document.getElementById('radiusVal').textContent = circ.r;
+  drawCircular();
+}
+
+function circLoop() {
+  if(!circ.running) return;
+  const dt = 0.03;
+  circ.angle += circ.omega * dt;
+  
+  const w = circC.clientWidth, h = circC.clientHeight;
+  const cx = w/2, cy = h/2;
+  const rPx = circ.r * 25;
+  circ.trail.push({
+    x: cx + rPx * Math.cos(circ.angle),
+    y: cy - rPx * Math.sin(circ.angle)
+  });
+  if(circ.trail.length > 100) circ.trail.shift();
+  
+  drawCircular();
+  requestAnimationFrame(circLoop);
+}
+
+// ===== 竖直面圆周运动 =====
+const vertC = document.getElementById('vertCircleCanvas');
+const vctx = vertC.getContext('2d');
+let vert = { angle: Math.PI, omega: 0, r: 3, running: false, speedMult: 1.0, trail: [] };
+
+function drawVertCircle() {
+  resizeC(vertC);
+  const w = vertC.clientWidth, h = vertC.clientHeight;
+  vctx.clearRect(0,0,w,h);
+  
+  const cx = w/2, cy = h/2;
+  const rPx = 80;
+  const r = 3; // meters
+  const m = 1; // kg
+  
+  // Circle
+  vctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  vctx.setLineDash([4,4]);
+  vctx.beginPath();
+  vctx.arc(cx, cy, rPx, 0, Math.PI*2);
+  vctx.stroke();
+  vctx.setLineDash([]);
+  
+  // Center
+  vctx.fillStyle = '#9aa0a6';
+  vctx.beginPath();
+  vctx.arc(cx, cy, 3, 0, Math.PI*2);
+  vctx.fill();
+  
+  // Ball position (angle from top, clockwise)
+  const bx = cx + rPx * Math.sin(vert.angle);
+  const by = cy - rPx * Math.cos(vert.angle);
+  
+  // Calculate speed using energy conservation
+  // v² = v0² + 2g*r*(1 - cos(angle))  -- from top reference
+  // At top: minimum v = sqrt(g*r) for circular motion
+  const vTopMin = Math.sqrt(g * r);
+  const vTop = vTopMin * vert.speedMult;
+  // Energy: 1/2*m*v^2 + mgh = const. h measured from center
+  // At angle from top: h = -r*cos(angle), top h = -r
+  // v^2 = vTop^2 + 2*g*r*(1 - cos(angle))... wait
+  // Let's use: height from top = r - r*cos(angle) = r(1-cos(angle))
+  // Going down from top: gains KE = mgh
+  // v^2 = vTop^2 + 2*g*r*(1 - cos(angle))
+  const heightFromTop = r * (1 - Math.cos(vert.angle));
+  const v2 = vTop * vTop + 2 * g * heightFromTop;
+  const v = Math.sqrt(Math.max(0, v2));
+  
+  // Tension at current position
+  // T + mg*cos(angle_from_top_outward) = mv²/r
+  // At angle θ from top: component of gravity toward center = mg*cos(π-θ) = -mg*cos(θ)
+  // Actually: toward center = mg*cos(angle measured from bottom)
+  // Let's use: at angle θ from top, radial component of gravity (toward center) = -mg*cos(θ)
+  // T - mg*cos(θ) = -mv²/r (if we define toward center as positive for centripetal)
+  // Actually: centripetal direction is toward center
+  // Forces toward center: T + mg*cos(θ) where θ is from top
+  // Wait: at top (θ=0), gravity is toward center: mg
+  // At bottom (θ=π), gravity is away from center: -mg
+  // So: T + mg*cos(θ) = mv²/r → T = mv²/r - mg*cos(θ)
+  const T = m * v2 / r - m * g * Math.cos(vert.angle);
+  
+  // Tension at top and bottom for display
+  const vTopActual = vTop;
+  const Ttop = m * vTopActual * vTopActual / r - m * g;
+  const vBot = Math.sqrt(vTopActual * vTopActual + 2 * g * 2 * r);
+  const Tbot = m * vBot * vBot / r + m * g;
+  
+  // Trail
+  if(vert.trail.length > 1) {
+    vctx.strokeStyle = 'rgba(156,39,176,0.4)';
+    vctx.lineWidth = 2;
+    vctx.beginPath();
+    vert.trail.forEach((p,i) => {
+      if(i===0) vctx.moveTo(p.x, p.y);
+      else vctx.lineTo(p.x, p.y);
+    });
+    vctx.stroke();
+    vctx.lineWidth = 1;
+  }
+  
+  // String
+  vctx.strokeStyle = '#aaa';
+  vctx.lineWidth = 1.5;
+  vctx.beginPath();
+  vctx.moveTo(cx, cy);
+  vctx.lineTo(bx, by);
+  vctx.stroke();
+  vctx.lineWidth = 1;
+  
+  // Ball
+  vctx.fillStyle = T > 0 ? '#fbbc04' : '#e8553a';
+  vctx.beginPath();
+  vctx.arc(bx, by, 10, 0, Math.PI*2);
+  vctx.fill();
+  
+  // Gravity arrow (always down)
+  const gScale = 4;
+  vctx.strokeStyle = '#34a853';
+  vctx.lineWidth = 2;
+  vctx.beginPath();
+  vctx.moveTo(bx, by);
+  vctx.lineTo(bx, by + m * g * gScale);
+  vctx.stroke();
+  vctx.fillStyle = '#34a853';
+  vctx.font = '11px sans-serif';
+  vctx.fillText('mg', bx + 5, by + m * g * gScale);
+  
+  // Tension arrow (toward center)
+  if(Math.abs(T) > 0.1) {
+    const tLen = Math.min(Math.abs(T) * 3, 50);
+    const dx = cx - bx, dy = cy - by;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const dir = T > 0 ? 1 : -1;
+    vctx.strokeStyle = T > 0 ? '#e8553a' : '#fbbc04';
+    vctx.beginPath();
+    vctx.moveTo(bx, by);
+    vctx.lineTo(bx + dir * dx/dist * tLen, by + dir * dy/dist * tLen);
+    vctx.stroke();
+    vctx.fillStyle = T > 0 ? '#e8553a' : '#fbbc04';
+    vctx.fillText('T', bx + dir * dx/dist * tLen/2 + 5, by + dir * dy/dist * tLen/2);
+  }
+  vctx.lineWidth = 1;
+  
+  // Labels
+  vctx.fillStyle = '#9aa0a6';
+  vctx.fillText('最高点', cx - 12, cy - rPx - 10);
+  vctx.fillText('最低点', cx - 12, cy + rPx + 20);
+  
+  // Status
+  if(T < 0) {
+    vctx.fillStyle = '#e8553a';
+    vctx.font = 'bold 12px sans-serif';
+    vctx.fillText('⚠ 绳松弛！无法完成圆周运动', cx - 80, 20);
+  }
+  
+  document.getElementById('vertTensionTop').textContent = Ttop.toFixed(1);
+  document.getElementById('vertTensionBot').textContent = Tbot.toFixed(1);
+  document.getElementById('vertCritical').textContent = vTopMin.toFixed(2);
+}
+
+function toggleVertCircle() {
+  vert.running = !vert.running;
+  if(vert.running) vertLoop();
+}
+
+function resetVertCircle() {
+  vert.angle = Math.PI; // start from bottom
+  vert.running = false;
+  vert.trail = [];
+  drawVertCircle();
+}
+
+function updateVertCircle() {
+  vert.speedMult = +document.getElementById('vertSpeedSlider').value / 10;
+  document.getElementById('vertSpeedVal').textContent = vert.speedMult.toFixed(1);
+  drawVertCircle();
+}
+
+function vertLoop() {
+  if(!vert.running) return;
+  const dt = 0.03;
+  const r = 3;
+  const vTopMin = Math.sqrt(g * r);
+  const vTop = vTopMin * vert.speedMult;
+  
+  // Calculate current speed from energy conservation
+  const heightFromTop = r * (1 - Math.cos(vert.angle));
+  const v2 = vTop * vTop + 2 * g * heightFromTop;
+  const v = Math.sqrt(Math.max(0.01, v2));
+  
+  // Angular velocity = v / r
+  const omega = v / r;
+  vert.angle += omega * dt;
+  
+  if(vert.angle > Math.PI * 4) vert.angle -= Math.PI * 4;
+  
+  const w = vertC.clientWidth, h = vertC.clientHeight;
+  const cx = w/2, cy = h/2;
+  const rPx = 80;
+  vert.trail.push({
+    x: cx + rPx * Math.sin(vert.angle),
+    y: cy - rPx * Math.cos(vert.angle)
+  });
+  if(vert.trail.length > 150) vert.trail.shift();
+  
+  drawVertCircle();
+  requestAnimationFrame(vertLoop);
+}
+
+// ===== Quiz =====
+const quizzes = [
+  {
+    q: '关于曲线运动，下列说法正确的是？',
+    opts: ['曲线运动的速度方向可以不变', '曲线运动一定是变速运动', '做曲线运动的物体加速度一定变化', '曲线运动的速度大小一定变化'],
+    ans: 1,
+    explain: '曲线运动速度方向时刻改变，所以一定是变速运动。但速度大小和加速度可以不变（如平抛运动）。'
+  },
+  {
+    q: '小船渡河时，要使渡河时间最短，船头应该？',
+    opts: ['指向上游', '指向下游', '垂直于河岸', '与河岸成45°角'],
+    ans: 2,
+    explain: '渡河时间 t = d/(v₁sinθ)，当 θ=90°（船头垂直河岸）时，sinθ=1 最大，时间最短。'
+  },
+  {
+    q: '平抛运动中，物体落地时间取决于？',
+    opts: ['初速度', '抛出高度', '初速度和高度', '物体质量'],
+    ans: 1,
+    explain: '平抛运动竖直方向是自由落体：h = ½gt²，所以 t = √(2h/g)，只与高度有关。'
+  },
+  {
+    q: '斜抛运动中，以下哪个角度射程最远？',
+    opts: ['30°', '45°', '60°', '75°'],
+    ans: 1,
+    explain: 'R = v₀²sin2θ/g，当 θ=45° 时 sin2θ=1 最大，射程最远。'
+  },
+  {
+    q: '匀速圆周运动中，向心加速度的方向？',
+    opts: ['与速度方向相同', '与速度方向相反', '始终指向圆心', '沿切线方向'],
+    ans: 2,
+    explain: '向心加速度始终指向圆心，只改变速度方向，不改变速度大小。'
+  },
+  {
+    q: '竖直面绳模型中，小球能通过最高点的临界条件是？',
+    opts: ['速度为零', '张力为零，仅重力提供向心力', '加速度为零', '张力等于重力'],
+    ans: 1,
+    explain: '临界条件：T=0，mg = mv²/r，v_min = √(gr)。此时仅重力提供向心力。'
+  },
+  {
+    q: '一个物体同时做匀速直线运动（水平3m/s）和自由落体运动，2秒后水平位移是？',
+    opts: ['3m', '6m', '20m', '10m'],
+    ans: 1,
+    explain: '水平方向匀速：x = vt = 3×2 = 6m。两个分运动互不影响。'
+  },
+  {
+    q: '匀速圆周运动的周期加倍，角速度变为原来的？',
+    opts: ['2倍', '1/2', '4倍', '不变'],
+    ans: 1,
+    explain: 'ω = 2π/T，T变为2倍，则ω变为原来的1/2。'
+  }
+];
+
+let quizIdx = 0, score = 0, total = 0;
+
+function renderQuiz() {
+  const q = quizzes[quizIdx % quizzes.length];
+  let html = `<div style="font-weight:bold;margin-bottom:12px">${quizIdx+1}. ${q.q}</div>`;
+  q.opts.forEach((opt, i) => {
+    html += `<button class="quiz-option" onclick="answerQuiz(${i})" id="qopt${i}">${String.fromCharCode(65+i)}. ${opt}</button>`;
+  });
+  html += `<div id="quizExplain" style="margin-top:12px;display:none" class="info-box"></div>`;
+  document.getElementById('quizContent').innerHTML = html;
+}
+
+function answerQuiz(idx) {
+  const q = quizzes[quizIdx % quizzes.length];
+  total++;
+  document.querySelectorAll('.quiz-option').forEach(o => o.disabled = true);
+  if(idx === q.ans) {
+    score++;
+    document.getElementById('qopt'+idx).classList.add('correct');
+  } else {
+    document.getElementById('qopt'+idx).classList.add('wrong');
+    document.getElementById('qopt'+q.ans).classList.add('correct');
+  }
+  document.getElementById('quizExplain').style.display = 'block';
+  document.getElementById('quizExplain').innerHTML = '<strong>解析：</strong>' + q.explain;
+  document.getElementById('scoreDisplay').textContent = score + ' / ' + total;
+  if (score >= Math.ceil(quizzes.length * 0.6) && typeof PageProgress !== 'undefined' && !PageProgress.isDone('curve-motion')) {
+    PageProgress.markDone('curve-motion');
+    document.getElementById('scoreDisplay').textContent += ' ✅ 已记录完成';
+  }
+}
+
+function nextQuiz() {
+  quizIdx++;
+  renderQuiz();
+}
+
+// ===== Init =====
+function init() {
+  resetBoat();
+  resetProjectile();
+  resetAngled();
+  drawCircular();
+  resetVertCircle();
+  renderQuiz();
+  
+  window.addEventListener('resize', () => {
+    drawBoat();
+    drawProjectile();
+    drawAngled();
+    drawCircular();
+    drawVertCircle();
+  });
+}
+
+init();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中物理"></script>
+</body>
+</html>

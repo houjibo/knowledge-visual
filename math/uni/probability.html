@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概率论基础 · 互动可视化</title>
+<script src="assets/common.js"></script>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --accent: #06b6d4;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: var(--text);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 {
+    font-size: 2rem;
+    background: linear-gradient(90deg, var(--primary), var(--accent), var(--success));
+    -webkit-background-clip: text;
+    color: transparent;
+    margin-bottom: 6px;
+  }
+  header p { color: var(--muted); font-size: 14px; }
+
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 8px; justify-content: center;
+    margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .tab {
+    padding: 10px 18px; border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    cursor: pointer; transition: all .25s;
+    border: 1px solid var(--border);
+    font-size: 14px; user-select: none;
+  }
+  .tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 4px 20px rgba(139,92,246,.4);
+  }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  /* Sections */
+  .section { display: none; }
+  .section.active { display: block; }
+  .stage {
+    display: grid; grid-template-columns: 1.2fr 1fr;
+    gap: 20px; margin-bottom: 20px;
+  }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 16px;
+    backdrop-filter: blur(10px);
+  }
+  canvas {
+    width: 100%; height: auto; display: block;
+    border-radius: 10px;
+    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+  .panel h3 { font-size: 1rem; margin-bottom: 12px; color: #c4b5fd; }
+
+  /* Controls */
+  .controls { display: flex; flex-direction: column; gap: 10px; }
+  .slider-row {
+    display: flex; align-items: center; gap: 10px; font-size: 13px;
+  }
+  .slider-row label { flex: 0 0 100px; color: var(--muted); }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val {
+    flex: 0 0 60px; text-align: right;
+    font-family: monospace; color: var(--primary); font-weight: 600;
+  }
+
+  .btn {
+    padding: 8px 16px; border-radius: 8px;
+    background: var(--primary); color: white;
+    border: none; cursor: pointer; font-size: 13px;
+    transition: all .2s;
+  }
+  .btn:hover { filter: brightness(1.15); }
+  .btn.secondary { background: rgba(255,255,255,0.1); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Info */
+  .formula {
+    font-family: "Times New Roman", serif;
+    font-size: 1.1rem; text-align: center;
+    padding: 12px; background: rgba(255,255,255,0.05);
+    border-radius: 10px; margin: 10px 0;
+    color: #fbbf24;
+  }
+  .info-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-top: 10px; font-size: 13px;
+  }
+  .info-grid div {
+    background: rgba(255,255,255,0.04);
+    padding: 8px 10px; border-radius: 8px;
+  }
+  .info-grid b { color: #fbbf24; }
+
+  /* Quiz */
+  .quiz {
+    padding: 16px; background: rgba(139,92,246,0.08);
+    border-radius: 12px; border: 1px solid rgba(139,92,246,0.3);
+    margin-top: 12px;
+  }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.5; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt {
+    padding: 10px 14px; background: rgba(255,255,255,0.05);
+    border-radius: 8px; cursor: pointer; font-size: 13px;
+    transition: all .2s; border: 1px solid transparent;
+  }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: var(--success); }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: var(--danger); }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; color: #fbbf24; min-height: 20px; }
+
+  /* Legend */
+  .legend {
+    display: flex; gap: 14px; justify-content: center;
+    font-size: 12px; color: var(--muted); margin-top: 8px; flex-wrap: wrap;
+  }
+  .legend span::before {
+    content: ""; display: inline-block; width: 10px; height: 10px;
+    border-radius: 50%; margin-right: 4px; vertical-align: middle;
+  }
+
+  /* Tree diagram */
+  .tree-node {
+    display: inline-block; padding: 6px 12px;
+    background: rgba(139,92,246,0.2); border-radius: 6px;
+    font-size: 12px; margin: 4px;
+  }
+
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🎲 概率论基础 Interactive</h1>
+    <p>随机事件 · 条件概率 · 全概率公式 · 贝叶斯公式</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="events">🎯 随机事件</div>
+    <div class="tab" data-mode="conditional">📊 条件概率</div>
+    <div class="tab" data-mode="bayes">🔬 贝叶斯公式</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <!-- Section 1: Random Events -->
+  <div class="section active" id="sec-events">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvEvents" width="560" height="400"></canvas>
+        <div class="legend">
+          <span style="--c:#8b5cf6"><span style="background:#8b5cf6" class="legend span::before"></span>样本空间 Ω</span>
+          <span>事件 A</span>
+          <span>事件 B</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🎯 随机事件与概率</h3>
+        <div class="formula">P(A) = |A| / |Ω|</div>
+        <div class="controls">
+          <div class="slider-row">
+            <label>试验次数</label>
+            <input type="range" id="slTrials" min="10" max="1000" value="100">
+            <span class="val" id="vTrials">100</span>
+          </div>
+          <div class="btn-row">
+            <button class="btn" id="btnRunExp">🎲 进行试验</button>
+            <button class="btn secondary" id="btnResetExp">重置</button>
+          </div>
+        </div>
+        <div class="info-grid" id="eventInfo">
+          <div>样本空间: <b id="infoOmega">-</b></div>
+          <div>事件A发生: <b id="infoA">-</b></div>
+          <div>事件B发生: <b id="infoB">-</b></div>
+          <div>A∩B发生: <b id="infoAB">-</b></div>
+          <div>P(A)实验: <b id="infoPA">-</b></div>
+          <div>P(B)实验: <b id="infoPB">-</b></div>
+        </div>
+        <div style="margin-top:12px;font-size:13px;color:var(--muted);line-height:1.6">
+          <p>💡 拖拽圆圈调整事件区域，观察概率变化。点击"进行试验"模拟随机事件。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Conditional Probability -->
+  <div class="section" id="sec-conditional">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvCond" width="560" height="400"></canvas>
+      </div>
+      <div class="panel">
+        <h3>📊 条件概率</h3>
+        <div class="formula">P(A|B) = P(A∩B) / P(B)</div>
+        <div class="controls">
+          <div class="slider-row">
+            <label>P(A)</label>
+            <input type="range" id="slPA" min="10" max="90" value="40">
+            <span class="val" id="vPA">0.40</span>
+          </div>
+          <div class="slider-row">
+            <label>P(B)</label>
+            <input type="range" id="slPB" min="10" max="90" value="50">
+            <span class="val" id="vPB">0.50</span>
+          </div>
+          <div class="slider-row">
+            <label>P(A∩B)</label>
+            <input type="range" id="slPAB" min="5" max="40" value="15">
+            <span class="val" id="vPAB">0.15</span>
+          </div>
+        </div>
+        <div class="info-grid">
+          <div>P(A|B) = <b id="infoPAB_cond">-</b></div>
+          <div>P(B|A) = <b id="infoPBA_cond">-</b></div>
+          <div>P(A∪B) = <b id="infoPAUB">-</b></div>
+          <div>独立性: <b id="infoIndep">-</b></div>
+        </div>
+        <div style="margin-top:12px;font-size:13px;color:var(--muted)">
+          💡 调整滑块观察条件概率变化。当 P(A∩B) = P(A)×P(B) 时，A、B 独立。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Bayes -->
+  <div class="section" id="sec-bayes">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="cvBayes" width="560" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🔬 贝叶斯公式</h3>
+        <div class="formula">P(Bᵢ|A) = P(A|Bᵢ)P(Bᵢ) / Σ P(A|Bⱼ)P(Bⱼ)</div>
+        <div class="controls">
+          <div class="slider-row">
+            <label>P(B₁) 患病</label>
+            <input type="range" id="slPB1" min="1" max="30" value="5">
+            <span class="val" id="vPB1">0.05</span>
+          </div>
+          <div class="slider-row">
+            <label>P(A|B₁) 检出</label>
+            <input type="range" id="slPAB1" min="70" max="99" value="95">
+            <span class="val" id="vPAB1">0.95</span>
+          </div>
+          <div class="slider-row">
+            <label>P(A|B₂) 误诊</label>
+            <input type="range" id="slPAB2" min="1" max="20" value="5">
+            <span class="val" id="vPAB2">0.05</span>
+          </div>
+          <div class="btn-row">
+            <button class="btn" id="btnCalcBayes">计算后验概率</button>
+          </div>
+        </div>
+        <div class="info-grid">
+          <div>P(B₁|A) = <b id="infoBayes1">-</b></div>
+          <div>P(B₂|A) = <b id="infoBayes2">-</b></div>
+          <div>P(A) 全概率 = <b id="infoBayesTotal">-</b></div>
+          <div>含义: <b id="infoBayesMean">-</b></div>
+        </div>
+        <div style="margin-top:12px;font-size:13px;color:var(--muted);line-height:1.6">
+          💡 经典场景：已知某检测的准确率和患病率，求检测阳性时真正患病的概率。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Quiz -->
+  <div class="section" id="sec-quiz">
+    <div class="panel" style="max-width:700px;margin:0 auto">
+      <h3>🎯 互动练习</h3>
+      <div id="quizContainer"></div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn" id="btnNextQuiz">下一题</button>
+        <button class="btn secondary" id="btnResetQuiz">重新开始</button>
+      </div>
+      <div style="margin-top:12px;font-size:13px">
+        得分: <b id="quizScore" style="color:var(--success)">0</b> / <b id="quizTotal">0</b>
+      </div>
+    </div>
+  </div>
+
+  <footer>大学数学 · 概率论基础 · 互动可视化</footer>
+</div>
+
+<script>
+// ===== Tab Navigation =====
+const tabs = document.querySelectorAll('.tab');
+const sections = document.querySelectorAll('.section');
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    sections.forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('sec-' + tab.dataset.mode).classList.add('active');
+  });
+});
+
+// ===== Section 1: Random Events =====
+const cvEvents = document.getElementById('cvEvents');
+const ctxE = cvEvents.getContext('2d');
+let eventState = {
+  trials: 100,
+  omega: 0, aCount: 0, bCount: 0, abCount: 0,
+  // Circle positions (normalized 0-1)
+  cA: { x: 0.35, y: 0.5, r: 0.22 },
+  cB: { x: 0.65, y: 0.5, r: 0.2 },
+  dragging: null
+};
+
+function drawEvents() {
+  const W = cvEvents.width, H = cvEvents.height;
+  ctxE.clearRect(0, 0, W, H);
+
+  // Sample space
+  ctxE.fillStyle = 'rgba(139,92,246,0.08)';
+  ctxE.strokeStyle = 'rgba(139,92,246,0.5)';
+  ctxE.lineWidth = 2;
+  ctxE.beginPath();
+  ctxE.roundRect(20, 20, W-40, H-40, 12);
+  ctxE.fill();
+  ctxE.stroke();
+
+  // Label
+  ctxE.fillStyle = '#c4b5fd';
+  ctxE.font = '14px sans-serif';
+  ctxE.fillText('Ω 样本空间', 30, 40);
+
+  // Event A
+  const ax = eventState.cA.x * W, ay = eventState.cA.y * H, ar = eventState.cA.r * W;
+  ctxE.fillStyle = 'rgba(59,130,246,0.2)';
+  ctxE.strokeStyle = 'rgba(59,130,246,0.8)';
+  ctxE.lineWidth = 2;
+  ctxE.beginPath();
+  ctxE.arc(ax, ay, ar, 0, Math.PI * 2);
+  ctxE.fill();
+  ctxE.stroke();
+  ctxE.fillStyle = '#60a5fa';
+  ctxE.font = 'bold 16px sans-serif';
+  ctxE.fillText('A', ax - ar + 10, ay - ar + 20);
+
+  // Event B
+  const bx = eventState.cB.x * W, by = eventState.cB.y * H, br = eventState.cB.r * W;
+  ctxE.fillStyle = 'rgba(16,185,129,0.2)';
+  ctxE.strokeStyle = 'rgba(16,185,129,0.8)';
+  ctxE.beginPath();
+  ctxE.arc(bx, by, br, 0, Math.PI * 2);
+  ctxE.fill();
+  ctxE.stroke();
+  ctxE.fillStyle = '#34d399';
+  ctxE.font = 'bold 16px sans-serif';
+  ctxE.fillText('B', bx + br - 20, by - br + 20);
+
+  // Intersection highlight
+  const dist = Math.sqrt((ax-bx)**2 + (ay-by)**2);
+  if (dist < ar + br) {
+    ctxE.fillStyle = 'rgba(251,191,36,0.15)';
+    ctxE.beginPath();
+    // Approximate intersection area
+    const mx = (ax + bx) / 2, my = (ay + by) / 2;
+    ctxE.arc(mx, my, Math.min(ar, br) * 0.5, 0, Math.PI * 2);
+    ctxE.fill();
+    ctxE.fillStyle = '#fbbf24';
+    ctxE.font = '12px sans-serif';
+    ctxE.fillText('A∩B', mx - 12, my + 4);
+  }
+
+  // Scatter points from trials
+  for (let i = 0; i < eventState.trials; i++) {
+    const px = 40 + Math.random() * (W - 80);
+    const py = 40 + Math.random() * (H - 80);
+    const inA = (px-ax)**2 + (py-ay)**2 < ar**2;
+    const inB = (px-bx)**2 + (py-by)**2 < br**2;
+    let color = 'rgba(255,255,255,0.3)';
+    if (inA && inB) color = 'rgba(251,191,36,0.8)';
+    else if (inA) color = 'rgba(59,130,246,0.7)';
+    else if (inB) color = 'rgba(16,185,129,0.7)';
+    ctxE.fillStyle = color;
+    ctxE.beginPath();
+    ctxE.arc(px, py, 2.5, 0, Math.PI * 2);
+    ctxE.fill();
+  }
+}
+
+function runEventExperiment() {
+  const W = cvEvents.width, H = cvEvents.height;
+  const ax = eventState.cA.x * W, ay = eventState.cA.y * H, ar = eventState.cA.r * W;
+  const bx = eventState.cB.x * W, by = eventState.cB.y * H, br = eventState.cB.r * W;
+
+  let omega = 0, aC = 0, bC = 0, abC = 0;
+  for (let i = 0; i < eventState.trials; i++) {
+    const px = 40 + Math.random() * (W - 80);
+    const py = 40 + Math.random() * (H - 80);
+    omega++;
+    const inA = (px-ax)**2 + (py-ay)**2 < ar**2;
+    const inB = (px-bx)**2 + (py-by)**2 < br**2;
+    if (inA) aC++;
+    if (inB) bC++;
+    if (inA && inB) abC++;
+  }
+  eventState.omega = omega;
+  eventState.aCount = aC;
+  eventState.bCount = bC;
+  eventState.abCount = abC;
+
+  document.getElementById('infoOmega').textContent = omega;
+  document.getElementById('infoA').textContent = aC;
+  document.getElementById('infoB').textContent = bC;
+  document.getElementById('infoAB').textContent = abC;
+  document.getElementById('infoPA').textContent = (aC/omega).toFixed(3);
+  document.getElementById('infoPB').textContent = (bC/omega).toFixed(3);
+
+  drawEvents();
+}
+
+document.getElementById('slTrials').addEventListener('input', e => {
+  eventState.trials = parseInt(e.target.value);
+  document.getElementById('vTrials').textContent = eventState.trials;
+});
+document.getElementById('btnRunExp').addEventListener('click', runEventExperiment);
+document.getElementById('btnResetExp').addEventListener('click', () => {
+  eventState.omega = 0; eventState.aCount = 0;
+  eventState.bCount = 0; eventState.abCount = 0;
+  document.getElementById('infoOmega').textContent = '-';
+  document.getElementById('infoA').textContent = '-';
+  document.getElementById('infoB').textContent = '-';
+  document.getElementById('infoAB').textContent = '-';
+  document.getElementById('infoPA').textContent = '-';
+  document.getElementById('infoPB').textContent = '-';
+  drawEvents();
+});
+
+// Drag events
+cvEvents.addEventListener('mousedown', e => {
+  const rect = cvEvents.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (cvEvents.width / rect.width);
+  const my = (e.clientY - rect.top) * (cvEvents.height / rect.height);
+  const ax = eventState.cA.x * cvEvents.width, ay = eventState.cA.y * cvEvents.height;
+  const bx = eventState.cB.x * cvEvents.width, by = eventState.cB.y * cvEvents.height;
+  if (Math.sqrt((mx-ax)**2+(my-ay)**2) < eventState.cA.r * cvEvents.width) {
+    eventState.dragging = 'A';
+  } else if (Math.sqrt((mx-bx)**2+(my-by)**2) < eventState.cB.r * cvEvents.width) {
+    eventState.dragging = 'B';
+  }
+});
+cvEvents.addEventListener('mousemove', e => {
+  if (!eventState.dragging) return;
+  const rect = cvEvents.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) / rect.width;
+  const my = (e.clientY - rect.top) / rect.height;
+  if (eventState.dragging === 'A') {
+    eventState.cA.x = Math.max(0.1, Math.min(0.9, mx));
+    eventState.cA.y = Math.max(0.1, Math.min(0.9, my));
+  } else {
+    eventState.cB.x = Math.max(0.1, Math.min(0.9, mx));
+    eventState.cB.y = Math.max(0.1, Math.min(0.9, my));
+  }
+  drawEvents();
+});
+cvEvents.addEventListener('mouseup', () => { eventState.dragging = null; });
+cvEvents.addEventListener('mouseleave', () => { eventState.dragging = null; });
+
+drawEvents();
+
+// ===== Section 2: Conditional Probability =====
+const cvCond = document.getElementById('cvCond');
+const ctxC = cvCond.getContext('2d');
+
+function updateConditional() {
+  const pa = parseInt(document.getElementById('slPA').value) / 100;
+  const pb = parseInt(document.getElementById('slPB').value) / 100;
+  const pab = parseInt(document.getElementById('slPAB').value) / 100;
+
+  document.getElementById('vPA').textContent = pa.toFixed(2);
+  document.getElementById('vPB').textContent = pb.toFixed(2);
+  document.getElementById('vPAB').textContent = pab.toFixed(2);
+
+  const paub = pa + pb - pab;
+  const pabCond = pab / pb; // P(A|B)
+  const pbaCond = pab / pa; // P(B|A)
+  const independent = Math.abs(pab - pa * pb) < 0.01;
+
+  document.getElementById('infoPAB_cond').textContent = pabCond.toFixed(3);
+  document.getElementById('infoPBA_cond').textContent = pbaCond.toFixed(3);
+  document.getElementById('infoPAUB').textContent = paub.toFixed(3);
+  document.getElementById('infoIndep').textContent = independent ? '✅ 独立' : '❌ 不独立';
+  document.getElementById('infoIndep').style.color = independent ? 'var(--success)' : 'var(--danger)';
+
+  drawConditional(pa, pb, pab);
+}
+
+function drawConditional(pa, pb, pab) {
+  const W = cvCond.width, H = cvCond.height;
+  ctxC.clearRect(0, 0, W, H);
+
+  // Venn diagram
+  const cx = W / 2, cy = H / 2;
+  const rA = pa * 200 + 40;
+  const rB = pb * 200 + 40;
+  const overlap = pab * 200 + 20;
+  const dist = rA + rB - overlap;
+
+  const ax = cx - dist/2, bx = cx + dist/2;
+
+  // A
+  ctxC.fillStyle = 'rgba(59,130,246,0.2)';
+  ctxC.strokeStyle = 'rgba(59,130,246,0.8)';
+  ctxC.lineWidth = 2;
+  ctxC.beginPath();
+  ctxC.arc(ax, cy, rA, 0, Math.PI * 2);
+  ctxC.fill(); ctxC.stroke();
+
+  // B
+  ctxC.fillStyle = 'rgba(16,185,129,0.2)';
+  ctxC.strokeStyle = 'rgba(16,185,129,0.8)';
+  ctxC.beginPath();
+  ctxC.arc(bx, cy, rB, 0, Math.PI * 2);
+  ctxC.fill(); ctxC.stroke();
+
+  // Labels
+  ctxC.fillStyle = '#60a5fa';
+  ctxC.font = 'bold 18px sans-serif';
+  ctxC.fillText('A', ax - rA + 15, cy - rA + 25);
+  ctxC.fillStyle = '#34d399';
+  ctxC.fillText('B', bx + rB - 25, cy - rB + 25);
+
+  // Probability values
+  ctxC.font = '14px sans-serif';
+  ctxC.fillStyle = '#93c5fd';
+  ctxC.fillText(`P(A) = ${pa.toFixed(2)}`, ax - 30, cy + 5);
+  ctxC.fillStyle = '#6ee7b7';
+  ctxC.fillText(`P(B) = ${pb.toFixed(2)}`, bx - 30, cy + 5);
+  ctxC.fillStyle = '#fbbf24';
+  ctxC.fillText(`P(A∩B) = ${pab.toFixed(2)}`, cx - 35, cy + 30);
+
+  // Conditional probability bars at bottom
+  const barY = H - 60;
+  const barH = 30;
+  // P(A|B) bar
+  ctxC.fillStyle = 'rgba(255,255,255,0.05)';
+  ctxC.fillRect(40, barY, W - 80, barH);
+  ctxC.fillStyle = 'rgba(139,92,246,0.6)';
+  ctxC.fillRect(40, barY, (W-80) * (pab/pb), barH);
+  ctxC.fillStyle = '#e2e8f0';
+  ctxC.font = '12px sans-serif';
+  ctxC.fillText(`P(A|B) = ${(pab/pb).toFixed(3)}`, 50, barY + 20);
+
+  // P(B|A) bar
+  ctxC.fillStyle = 'rgba(255,255,255,0.05)';
+  ctxC.fillRect(40, barY + 35, W - 80, barH);
+  ctxC.fillStyle = 'rgba(6,182,212,0.6)';
+  ctxC.fillRect(40, barY + 35, (W-80) * (pab/pa), barH);
+  ctxC.fillStyle = '#e2e8f0';
+  ctxC.fillText(`P(B|A) = ${(pab/pa).toFixed(3)}`, 50, barY + 55);
+}
+
+['slPA', 'slPB', 'slPAB'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateConditional);
+});
+updateConditional();
+
+// ===== Section 3: Bayes =====
+const cvBayes = document.getElementById('cvBayes');
+const ctxB = cvBayes.getContext('2d');
+
+function updateBayes() {
+  const pb1 = parseInt(document.getElementById('slPB1').value) / 100;
+  const pab1 = parseInt(document.getElementById('slPAB1').value) / 100;
+  const pab2 = parseInt(document.getElementById('slPAB2').value) / 100;
+  const pb2 = 1 - pb1;
+
+  document.getElementById('vPB1').textContent = pb1.toFixed(2);
+  document.getElementById('vPAB1').textContent = pab1.toFixed(2);
+  document.getElementById('vPAB2').textContent = pab2.toFixed(2);
+
+  // Total probability P(A)
+  const pa = pab1 * pb1 + pab2 * pb2;
+  // Posterior
+  const pb1a = (pab1 * pb1) / pa;
+  const pb2a = (pab2 * pb2) / pa;
+
+  document.getElementById('infoBayes1').textContent = pb1a.toFixed(4);
+  document.getElementById('infoBayes2').textContent = pb2a.toFixed(4);
+  document.getElementById('infoBayesTotal').textContent = pa.toFixed(4);
+  document.getElementById('infoBayesMean').textContent =
+    pb1a > 0.5 ? '检测阳性，很可能患病' :
+    pb1a > 0.1 ? '需进一步检查' : '大概率未患病';
+
+  drawBayes(pb1, pab1, pab2, pa, pb1a);
+}
+
+function drawBayes(pb1, pab1, pab2, pa, pb1a) {
+  const W = cvBayes.width, H = cvBayes.height;
+  ctxB.clearRect(0, 0, W, H);
+
+  // Tree diagram
+  const levels = [
+    { x: 60, y: H/2, label: '人群', color: '#c4b5fd' },
+    { x: 200, y: [H*0.3, H*0.7], labels: ['B₁ 患病', 'B₂ 健康'], color: ['#f59e0b', '#10b981'], probs: [pb1, 1-pb1] },
+    { x: 380, y: [H*0.15, H*0.4, H*0.6, H*0.85], labels: ['A+检出', 'A-未检出', 'A+误诊', 'A-正常'], color: ['#ef4444', '#94a3b8', '#f59e0b', '#94a3b8'], probs: [pab1, 1-pab1, pab2, 1-pab2] }
+  ];
+
+  // Draw branches
+  ctxB.lineWidth = 2;
+  // Level 0 -> 1
+  for (let i = 0; i < 2; i++) {
+    ctxB.strokeStyle = levels[1].color[i] + '80';
+    ctxB.beginPath();
+    ctxB.moveTo(levels[0].x, levels[0].y);
+    ctxB.lineTo(levels[1].x, levels[1].y[i]);
+    ctxB.stroke();
+    // Probability label
+    ctxB.fillStyle = levels[1].color[i];
+    ctxB.font = '12px sans-serif';
+    ctxB.fillText(levels[1].probs[i].toFixed(2), 120 + i * 10, (levels[0].y + levels[1].y[i])/2 - 5);
+  }
+
+  // Level 1 -> 2
+  for (let i = 0; i < 2; i++) {
+    for (let j = 0; j < 2; j++) {
+      const idx = i * 2 + j;
+      ctxB.strokeStyle = levels[2].color[idx] + '80';
+      ctxB.beginPath();
+      ctxB.moveTo(levels[1].x, levels[1].y[i]);
+      ctxB.lineTo(levels[2].x, levels[2].y[idx]);
+      ctxB.stroke();
+      ctxB.fillStyle = levels[2].color[idx];
+      ctxB.font = '11px sans-serif';
+      ctxB.fillText(levels[2].probs[idx].toFixed(2), 280, (levels[1].y[i] + levels[2].y[idx])/2);
+    }
+  }
+
+  // Nodes
+  // Level 0
+  ctxB.fillStyle = levels[0].color;
+  ctxB.beginPath();
+  ctxB.arc(levels[0].x, levels[0].y, 12, 0, Math.PI * 2);
+  ctxB.fill();
+  ctxB.fillStyle = '#e2e8f0';
+  ctxB.font = '13px sans-serif';
+  ctxB.fillText(levels[0].label, levels[0].x - 15, levels[0].y - 20);
+
+  // Level 1
+  for (let i = 0; i < 2; i++) {
+    ctxB.fillStyle = levels[1].color[i];
+    ctxB.beginPath();
+    ctxB.arc(levels[1].x, levels[1].y[i], 10, 0, Math.PI * 2);
+    ctxB.fill();
+    ctxB.fillStyle = '#e2e8f0';
+    ctxB.font = '12px sans-serif';
+    ctxB.fillText(levels[1].labels[i], levels[1].x - 20, levels[1].y[i] - 16);
+  }
+
+  // Level 2
+  for (let i = 0; i < 4; i++) {
+    ctxB.fillStyle = levels[2].color[i];
+    ctxB.beginPath();
+    ctxB.arc(levels[2].x, levels[2].y[i], 8, 0, Math.PI * 2);
+    ctxB.fill();
+    ctxB.fillStyle = '#e2e8f0';
+    ctxB.font = '11px sans-serif';
+    ctxB.fillText(levels[2].labels[i], levels[2].x + 14, levels[2].y[i] + 4);
+  }
+
+  // Result box
+  ctxB.fillStyle = 'rgba(139,92,246,0.15)';
+  ctxB.strokeStyle = 'rgba(139,92,246,0.5)';
+  ctxB.lineWidth = 1;
+  ctxB.beginPath();
+  ctxB.roundRect(420, H - 100, 130, 80, 8);
+  ctxB.fill(); ctxB.stroke();
+  ctxB.fillStyle = '#c4b5fd';
+  ctxB.font = 'bold 13px sans-serif';
+  ctxB.fillText('后验概率', 445, H - 78);
+  ctxB.fillStyle = '#fbbf24';
+  ctxB.font = '12px sans-serif';
+  ctxB.fillText(`P(B₁|A)`, 440, H - 55);
+  ctxB.font = 'bold 18px monospace';
+  ctxB.fillText((pb1a * 100).toFixed(1) + '%', 440, H - 32);
+}
+
+['slPB1', 'slPAB1', 'slPAB2'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateBayes);
+});
+document.getElementById('btnCalcBayes').addEventListener('click', updateBayes);
+updateBayes();
+
+// ===== Section 4: Quiz =====
+const quizQuestions = [
+  {
+    q: '掷两个骰子，点数之和为7的概率是多少？',
+    opts: ['1/6', '1/12', '5/36', '7/36'],
+    ans: 0,
+    explain: '共36种组合，和为7的有(1,6)(2,5)(3,4)(4,3)(5,2)(6,1)共6种，P = 6/36 = 1/6'
+  },
+  {
+    q: 'P(A) = 0.6, P(B) = 0.5, P(A∩B) = 0.3，则 P(A|B) = ?',
+    opts: ['0.5', '0.6', '0.3', '0.8'],
+    ans: 1,
+    explain: 'P(A|B) = P(A∩B)/P(B) = 0.3/0.5 = 0.6'
+  },
+  {
+    q: '某病患病率1%，检测准确率95%（真阳性），误诊率5%（假阳性）。检测阳性时真正患病的概率？',
+    opts: ['约95%', '约16%', '约1%', '约50%'],
+    ans: 1,
+    explain: 'P(患|阳) = 0.95×0.01 / (0.95×0.01 + 0.05×0.99) ≈ 0.161，即约16%'
+  },
+  {
+    q: '事件A和B独立，P(A)=0.3, P(B)=0.4，则 P(A∪B) = ?',
+    opts: ['0.7', '0.58', '0.12', '0.42'],
+    ans: 1,
+    explain: '独立时 P(A∩B) = P(A)P(B) = 0.12，P(A∪B) = 0.3+0.4-0.12 = 0.58'
+  },
+  {
+    q: '全概率公式的本质是？',
+    opts: ['条件概率的推广', '对样本空间的划分求和', '贝叶斯公式的逆', '大数定律的特例'],
+    ans: 1,
+    explain: '全概率公式将样本空间划分为互斥完备的事件组，对每个分支求加权概率和。'
+  },
+  {
+    q: '从52张扑克牌中随机抽2张，都是红心的概率？',
+    opts: ['1/4', '1/17', '3/51', '13/102'],
+    ans: 1,
+    explain: '第一张红心13/52，第二张12/51，P = (13×12)/(52×51) = 1/17 ≈ 0.0588'
+  }
+];
+
+let quizIdx = 0, quizScore = 0, quizAnswered = 0;
+
+function renderQuiz() {
+  const container = document.getElementById('quizContainer');
+  if (quizIdx >= quizQuestions.length) {
+    const pass = quizScore >= Math.ceil(quizQuestions.length * 0.6);
+    if (pass && typeof PageProgress !== 'undefined' && !PageProgress.isDone('probability')) {
+      PageProgress.markDone('probability');
+    }
+    container.innerHTML = `<div class="quiz"><div class="quiz-q">🎉 全部完成！得分：${quizScore}/${quizQuestions.length}${pass ? ' · ✅ 已记录完成' : ' · 继续加油，≥60% 才算通过'}</div></div>`;
+    return;
+  }
+  const q = quizQuestions[quizIdx];
+  container.innerHTML = `
+    <div class="quiz">
+      <div class="quiz-q">第 ${quizIdx+1} 题：${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-idx="${i}">${o}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="qf"></div>
+    </div>
+  `;
+  container.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (opt.classList.contains('correct') || opt.classList.contains('wrong')) return;
+      const idx = parseInt(opt.dataset.idx);
+      const feedback = document.getElementById('qf');
+      quizAnswered++;
+      if (idx === q.ans) {
+        opt.classList.add('correct');
+        quizScore++;
+        feedback.textContent = '✅ ' + q.explain;
+        feedback.style.color = 'var(--success)';
+      } else {
+        opt.classList.add('wrong');
+        container.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        feedback.textContent = '❌ ' + q.explain;
+        feedback.style.color = 'var(--danger)';
+      }
+      document.getElementById('quizScore').textContent = quizScore;
+      document.getElementById('quizTotal').textContent = quizAnswered;
+    });
+  });
+}
+
+document.getElementById('btnNextQuiz').addEventListener('click', () => {
+  quizIdx++;
+  renderQuiz();
+});
+document.getElementById('btnResetQuiz').addEventListener('click', () => {
+  quizIdx = 0; quizScore = 0; quizAnswered = 0;
+  document.getElementById('quizScore').textContent = 0;
+  document.getElementById('quizTotal').textContent = 0;
+  renderQuiz();
+});
+renderQuiz();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

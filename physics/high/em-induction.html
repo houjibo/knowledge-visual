@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电磁感应 - 高中物理互动可视化</title>
+<style>
+:root {
+  --primary: #0d47a1;
+  --accent: #ff6f00;
+  --flux: #42a5f5;
+  --current: #ffca28;
+  --emf: #ef5350;
+  --bg-dark: #0a1929;
+  --bg-card: #1a2744;
+  --text: #e3f2fd;
+  --text-dim: #90caf9;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-dark);
+  color: var(--text);
+  overflow-x: hidden;
+}
+.header {
+  background: linear-gradient(135deg, #0a1929 0%, #0d47a1 100%);
+  padding: 20px 24px;
+  text-align: center;
+  border-bottom: 2px solid var(--primary);
+}
+.header h1 { font-size: 1.6em; margin-bottom: 4px; }
+.header p { color: var(--text-dim); font-size: 0.9em; }
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  flex-wrap: wrap;
+}
+.tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.3s;
+}
+.tab.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.section { display: none; padding: 20px 16px; max-width: 800px; margin: 0 auto; }
+.section.active { display: block; }
+.section-title {
+  font-size: 1.2em;
+  margin-bottom: 16px;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+canvas {
+  width: 100%;
+  border-radius: 8px;
+  background: #050d18;
+  touch-action: none;
+}
+.controls {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.control-group label {
+  font-size: 0.85em;
+  color: var(--text-dim);
+}
+input[type="range"] {
+  width: 100px;
+  accent-color: var(--primary);
+}
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.2s;
+}
+.btn:hover { background: #1565c0; }
+.btn.active { background: var(--accent); }
+.info-box {
+  background: rgba(13,71,161,0.2);
+  border: 1px solid rgba(66,165,245,0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+  font-size: 0.85em;
+  line-height: 1.6;
+}
+.formula {
+  font-family: 'Times New Roman', serif;
+  font-style: italic;
+  color: var(--current);
+  font-size: 1.1em;
+}
+.data-display {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.data-item {
+  background: rgba(0,0,0,0.3);
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-align: center;
+}
+.data-item .label { font-size: 0.75em; color: var(--text-dim); }
+.data-item .value { font-size: 1.1em; font-weight: bold; margin-top: 2px; }
+.quiz-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.2);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.quiz-option:hover { background: rgba(13,71,161,0.3); }
+.quiz-option.correct { background: rgba(76,175,80,0.3); border-color: #4caf50; }
+.quiz-option.wrong { background: rgba(244,67,54,0.3); border-color: #f44336; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚡ 电磁感应</h1>
+  <p>高中物理 · 法拉第定律 · 楞次定律 · 交变电流</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab(0)">磁通量变化</button>
+  <button class="tab" onclick="switchTab(1)">感应电流方向</button>
+  <button class="tab" onclick="switchTab(2)">交变电流</button>
+  <button class="tab" onclick="switchTab(3)">互动练习</button>
+</div>
+
+<!-- Section 0: 磁通量变化 -->
+<div class="section active" id="sec0">
+  <h2 class="section-title">🧲 磁通量变化与感应电动势</h2>
+  <div class="card">
+    <canvas id="fluxCanvas" height="300"></canvas>
+    <div class="controls">
+      <div class="control-group">
+        <label>磁铁速度</label>
+        <input type="range" id="magnetSpeed" min="1" max="10" value="5">
+      </div>
+      <div class="control-group">
+        <label>线圈匝数</label>
+        <input type="range" id="coilTurns" min="1" max="20" value="10">
+      </div>
+      <button class="btn" id="magnetToggle">开始运动</button>
+    </div>
+    <div class="data-display">
+      <div class="data-item">
+        <div class="label">磁通量 Φ (Wb)</div>
+        <div class="value" id="fluxVal">0.00</div>
+      </div>
+      <div class="data-item">
+        <div class="label">dΦ/dt</div>
+        <div class="value" id="dfluxVal">0.00</div>
+      </div>
+      <div class="data-item">
+        <div class="label">感应电动势 ε (V)</div>
+        <div class="value" id="emfVal" style="color:var(--emf)">0.00</div>
+      </div>
+    </div>
+    <div class="info-box">
+      <strong>法拉第定律：</strong><span class="formula">ε = -N × dΦ/dt</span><br>
+      感应电动势等于磁通量变化率的负值乘以匝数。拖动磁铁或调整参数观察变化。
+    </div>
+  </div>
+</div>
+
+<!-- Section 1: 感应电流方向 -->
+<div class="section" id="sec1">
+  <h2 class="section-title">🔄 楞次定律 - 感应电流方向</h2>
+  <div class="card">
+    <canvas id="lenzCanvas" height="320"></canvas>
+    <div class="controls">
+      <button class="btn" id="northIn">N极插入</button>
+      <button class="btn" id="northOut">N极拔出</button>
+      <button class="btn" id="southIn">S极插入</button>
+      <button class="btn" id="southOut">S极拔出</button>
+    </div>
+    <div class="info-box">
+      <strong>楞次定律：</strong>感应电流的磁场总是<strong>阻碍</strong>引起感应电流的磁通量变化。<br>
+      • 磁通量增大 → 感应电流磁场与原磁场反向<br>
+      • 磁通量减小 → 感应电流磁场与原磁场同向<br>
+      <em>记忆口诀：增反减同</em>
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: 交变电流 -->
+<div class="section" id="sec2">
+  <h2 class="section-title">〰️ 交变电流的产生</h2>
+  <div class="card">
+    <canvas id="acCanvas" height="300"></canvas>
+    <div class="controls">
+      <div class="control-group">
+        <label>转速</label>
+        <input type="range" id="acSpeed" min="1" max="10" value="3">
+      </div>
+      <div class="control-group">
+        <label>磁场强度</label>
+        <input type="range" id="acField" min="1" max="10" value="5">
+      </div>
+      <button class="btn" id="acToggle">暂停</button>
+    </div>
+    <div class="data-display">
+      <div class="data-item">
+        <div class="label">角度 θ</div>
+        <div class="value" id="acAngle">0°</div>
+      </div>
+      <div class="data-item">
+        <div class="label">电动势 ε (V)</div>
+        <div class="value" id="acEmf" style="color:var(--emf)">0.00</div>
+      </div>
+      <div class="data-item">
+        <div class="label">峰值 Em</div>
+        <div class="value" id="acPeak">0.00</div>
+      </div>
+    </div>
+    <div class="info-box">
+      <strong>交变电流：</strong>线圈在匀强磁场中匀速转动产生正弦交变电动势。<br>
+      <span class="formula">ε = Em·sin(ωt)</span>，其中 <span class="formula">Em = NBSω</span><br>
+      中性面：线圈平面与磁场垂直时，磁通量最大，电动势为零。
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: 互动练习 -->
+<div class="section" id="sec3">
+  <h2 class="section-title">📝 互动练习</h2>
+  <div class="card" id="quizCard">
+    <p id="quizQ" style="margin-bottom:16px;line-height:1.6;"></p>
+    <div id="quizOptions"></div>
+    <p id="quizFeedback" style="margin-top:12px;font-size:0.9em;"></p>
+    <button class="btn" id="nextQuiz" style="margin-top:12px;">下一题</button>
+  </div>
+</div>
+
+<script src="assets/touch.js"></script>
+<script src="assets/common.js"></script>
+<script>
+// 进度追踪：累计答对 3 题点亮「电磁感应」
+let totalCorrect = 0;
+function bumpTotalCorrect() {
+  totalCorrect++;
+  if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('em-induction')) {
+    PageProgress.markDone('em-induction');
+    if (typeof showToast === 'function') showToast('🎉 「电磁感应」知识地图已点亮！');
+  }
+}
+
+// Tab switching
+function switchTab(idx) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.section').forEach((s,i) => s.classList.toggle('active', i===idx));
+}
+
+// ===== Section 0: Flux Change =====
+const fluxCanvas = document.getElementById('fluxCanvas');
+const fctx = fluxCanvas.getContext('2d');
+let magnetX = 50, magnetDir = 1, magnetMoving = false;
+let prevFlux = 0, fluxAnimId;
+
+function resizeFlux() {
+  fluxCanvas.width = fluxCanvas.offsetWidth * 2;
+  fluxCanvas.height = 600;
+}
+resizeFlux();
+
+function drawFluxScene() {
+  const W = fluxCanvas.width, H = fluxCanvas.height;
+  fctx.clearRect(0,0,W,H);
+  
+  // Draw coil at center
+  const coilX = W/2, coilY = H/2;
+  const coilW = 80, coilH = 200;
+  const turns = +document.getElementById('coilTurns').value;
+  
+  fctx.strokeStyle = '#ff8f00';
+  fctx.lineWidth = 3;
+  for (let i = 0; i < turns; i++) {
+    const offset = (i - turns/2) * 4;
+    fctx.strokeRect(coilX + offset - coilW/2, coilY - coilH/2, coilW, coilH);
+  }
+  
+  // Draw magnet
+  const magW = 120, magH = 50;
+  const mx = magnetX * W / 400;
+  // N pole (red) and S pole (blue)
+  fctx.fillStyle = '#e53935';
+  fctx.fillRect(mx, coilY - magH/2, magW/2, magH);
+  fctx.fillStyle = '#1e88e5';
+  fctx.fillRect(mx + magW/2, coilY - magH/2, magW/2, magH);
+  fctx.fillStyle = 'white';
+  fctx.font = 'bold 24px sans-serif';
+  fctx.textAlign = 'center';
+  fctx.fillText('N', mx + magW/4, coilY + 8);
+  fctx.fillText('S', mx + 3*magW/4, coilY + 8);
+  
+  // Draw field lines
+  fctx.strokeStyle = 'rgba(66,165,245,0.4)';
+  fctx.lineWidth = 1.5;
+  for (let i = -2; i <= 2; i++) {
+    fctx.beginPath();
+    const startY = coilY + i * 20;
+    fctx.moveTo(mx, startY);
+    fctx.bezierCurveTo(mx - 60, startY - 30, mx + magW + 60, startY - 30, mx + magW, startY);
+    fctx.stroke();
+  }
+  
+  // Flux through coil
+  const dist = Math.abs(mx + magW/2 - coilX);
+  const flux = Math.max(0, 1 - dist / (W/3)) * turns / 10;
+  const dflux = (flux - prevFlux) * 60;
+  const emf = -turns * dflux;
+  prevFlux = flux;
+  
+  document.getElementById('fluxVal').textContent = flux.toFixed(3);
+  document.getElementById('dfluxVal').textContent = dflux.toFixed(3);
+  document.getElementById('emfVal').textContent = emf.toFixed(2);
+  
+  // Current direction indicator
+  if (Math.abs(emf) > 0.1) {
+    fctx.strokeStyle = emf > 0 ? '#4caf50' : '#ff5252';
+    fctx.lineWidth = 4;
+    const arrowDir = emf > 0 ? 1 : -1;
+    fctx.beginPath();
+    fctx.moveTo(coilX, coilY - coilH/2 - 20);
+    fctx.lineTo(coilX + arrowDir * 30, coilY - coilH/2 - 40);
+    fctx.stroke();
+    fctx.fillStyle = fctx.strokeStyle;
+    fctx.font = '16px sans-serif';
+    fctx.fillText(emf > 0 ? '↑ 电流' : '↓ 电流', coilX, coilY - coilH/2 - 50);
+  }
+}
+
+function animateMagnet() {
+  if (!magnetMoving) return;
+  const speed = +document.getElementById('magnetSpeed').value;
+  magnetX += magnetDir * speed * 0.5;
+  if (magnetX > 350) magnetDir = -1;
+  if (magnetX < -100) magnetDir = 1;
+  drawFluxScene();
+  fluxAnimId = requestAnimationFrame(animateMagnet);
+}
+
+document.getElementById('magnetToggle').onclick = function() {
+  magnetMoving = !magnetMoving;
+  this.textContent = magnetMoving ? '暂停' : '开始运动';
+  if (magnetMoving) animateMagnet();
+};
+
+document.getElementById('coilTurns').oninput = () => { if(!magnetMoving) drawFluxScene(); };
+fluxCanvas.addEventListener('pointermove', (e) => {
+  if (magnetMoving) return;
+  const rect = fluxCanvas.getBoundingClientRect();
+  magnetX = ((e.clientX - rect.left) / rect.width) * 400;
+  drawFluxScene();
+});
+
+// Initial draw
+setTimeout(() => { resizeFlux(); drawFluxScene(); }, 100);
+
+// ===== Section 1: Lenz's Law =====
+const lenzCanvas = document.getElementById('lenzCanvas');
+const lctx = lenzCanvas.getContext('2d');
+let lenzMagnetY = 50, lenzTarget = 50, lenzCurrentDir = 0, lenzAnimId;
+
+function resizeLenz() {
+  lenzCanvas.width = lenzCanvas.offsetWidth * 2;
+  lenzCanvas.height = 640;
+}
+resizeLenz();
+
+function drawLenzScene() {
+  const W = lenzCanvas.width, H = lenzCanvas.height;
+  lctx.clearRect(0,0,W,H);
+  
+  const coilX = W/2, coilY = H/2;
+  const coilW = 100, coilH = 160;
+  
+  // Coil
+  lctx.strokeStyle = '#ff8f00';
+  lctx.lineWidth = 4;
+  lctx.strokeRect(coilX - coilW/2, coilY - coilH/2, coilW, coilH);
+  
+  // Magnet
+  const magW = 60, magH = 120;
+  const my = lenzMagnetY;
+  lctx.fillStyle = '#e53935';
+  lctx.fillRect(coilX - magW/2, my, magW, magH/2);
+  lctx.fillStyle = '#1e88e5';
+  lctx.fillRect(coilX - magW/2, my + magH/2, magW, magH/2);
+  lctx.fillStyle = 'white';
+  lctx.font = 'bold 20px sans-serif';
+  lctx.textAlign = 'center';
+  lctx.fillText('N', coilX, my + magH/4 + 6);
+  lctx.fillText('S', coilX, my + 3*magH/4 + 6);
+  
+  // Current arrows
+  if (Math.abs(lenzCurrentDir) > 0) {
+    lctx.strokeStyle = lenzCurrentDir > 0 ? '#4caf50' : '#ff5252';
+    lctx.lineWidth = 5;
+    const r = coilW/2 + 30;
+    lctx.beginPath();
+    lctx.arc(coilX, coilY, r, 0, Math.PI * 2);
+    lctx.stroke();
+    // Arrow head
+    const angle = lenzCurrentDir > 0 ? -Math.PI/4 : Math.PI/4;
+    const ax = coilX + r * Math.cos(angle);
+    const ay = coilY + r * Math.sin(angle);
+    lctx.beginPath();
+    lctx.moveTo(ax, ay);
+    lctx.lineTo(ax + (lenzCurrentDir > 0 ? 15 : -15), ay - 15);
+    lctx.stroke();
+    
+    lctx.fillStyle = lctx.strokeStyle;
+    lctx.font = '16px sans-serif';
+    lctx.fillText(lenzCurrentDir > 0 ? '感应电流（俯视逆时针）' : '感应电流（俯视顺时针）', coilX, coilY + coilH/2 + 40);
+  }
+  
+  // Induced B field
+  if (Math.abs(lenzCurrentDir) > 0) {
+    lctx.strokeStyle = 'rgba(76,175,80,0.5)';
+    lctx.lineWidth = 2;
+    lctx.setLineDash([5,5]);
+    for (let i = -1; i <= 1; i++) {
+      lctx.beginPath();
+      lctx.moveTo(coilX + i*20, coilY - coilH);
+      lctx.lineTo(coilX + i*20, coilY + coilH);
+      lctx.stroke();
+    }
+    lctx.setLineDash([]);
+    lctx.fillStyle = 'rgba(76,175,80,0.7)';
+    lctx.font = '14px sans-serif';
+    lctx.fillText('感应磁场 B\'', coilX, coilY - coilH - 10);
+  }
+}
+
+function animateLenz() {
+  const diff = lenzTarget - lenzMagnetY;
+  if (Math.abs(diff) > 1) {
+    lenzMagnetY += diff * 0.05;
+    drawLenzScene();
+    lenzAnimId = requestAnimationFrame(animateLenz);
+  }
+}
+
+function lenzAction(dir) {
+  // dir: 'N_in', 'N_out', 'S_in', 'S_out'
+  const W = lenzCanvas.width;
+  if (dir === 'N_in') { lenzTarget = 200; lenzCurrentDir = -1; } // N approaching from top, flux increases, oppose
+  else if (dir === 'N_out') { lenzTarget = 50; lenzCurrentDir = 1; } // N leaving, flux decreases, aid
+  else if (dir === 'S_in') { lenzTarget = 300; lenzCurrentDir = 1; } // S entering from below
+  else if (dir === 'S_out') { lenzTarget = 500; lenzCurrentDir = -1; } // S leaving from below
+  cancelAnimationFrame(lenzAnimId);
+  animateLenz();
+}
+
+document.getElementById('northIn').onclick = () => lenzAction('N_in');
+document.getElementById('northOut').onclick = () => lenzAction('N_out');
+document.getElementById('southIn').onclick = () => lenzAction('S_in');
+document.getElementById('southOut').onclick = () => lenzAction('S_out');
+setTimeout(() => { resizeLenz(); drawLenzScene(); }, 100);
+
+// ===== Section 2: AC Current =====
+const acCanvas = document.getElementById('acCanvas');
+const actx = acCanvas.getContext('2d');
+let acAngle = 0, acRunning = true, acTime = 0;
+let acHistory = [];
+
+function resizeAc() {
+  acCanvas.width = acCanvas.offsetWidth * 2;
+  acCanvas.height = 600;
+}
+resizeAc();
+
+function drawAcScene() {
+  const W = acCanvas.width, H = acCanvas.height;
+  actx.clearRect(0,0,W,H);
+  
+  const speed = +document.getElementById('acSpeed').value;
+  const field = +document.getElementById('acField').value;
+  const N = 10;
+  const Em = N * field * 0.5 * speed;
+  
+  // Left: rotating coil
+  const cx = W * 0.25, cy = H/2;
+  const coilR = 80;
+  
+  // Magnetic field (uniform, horizontal)
+  actx.strokeStyle = 'rgba(66,165,245,0.3)';
+  actx.lineWidth = 1;
+  for (let y = cy - 120; y <= cy + 120; y += 20) {
+    actx.beginPath();
+    actx.moveTo(cx - 150, y);
+    actx.lineTo(cx + 150, y);
+    actx.stroke();
+    // Arrow
+    actx.beginPath();
+    actx.moveTo(cx + 150, y);
+    actx.lineTo(cx + 140, y - 5);
+    actx.moveTo(cx + 150, y);
+    actx.lineTo(cx + 140, y + 5);
+    actx.stroke();
+  }
+  actx.fillStyle = 'rgba(66,165,245,0.5)';
+  actx.font = '14px sans-serif';
+  actx.textAlign = 'center';
+  actx.fillText('B →', cx, cy - 140);
+  
+  // Coil (side view - appears as line when edge-on)
+  const projW = coilR * Math.cos(acAngle);
+  actx.strokeStyle = '#ff8f00';
+  actx.lineWidth = 4;
+  actx.beginPath();
+  actx.moveTo(cx + projW, cy - coilR);
+  actx.lineTo(cx + projW, cy + coilR);
+  actx.moveTo(cx - projW, cy - coilR);
+  actx.lineTo(cx - projW, cy + coilR);
+  actx.stroke();
+  
+  // Rotation arrow
+  actx.strokeStyle = 'rgba(255,255,255,0.3)';
+  actx.lineWidth = 1;
+  actx.beginPath();
+  actx.arc(cx, cy, coilR + 20, 0, Math.PI * 2);
+  actx.stroke();
+  
+  // Angle indicator
+  actx.strokeStyle = '#ffca28';
+  actx.lineWidth = 2;
+  actx.beginPath();
+  actx.moveTo(cx, cy);
+  actx.lineTo(cx + (coilR+20) * Math.cos(acAngle), cy - (coilR+20) * Math.sin(acAngle));
+  actx.stroke();
+  
+  // Right: EMF waveform
+  const graphX = W * 0.5, graphY = H/2;
+  const graphW = W * 0.45, graphH = H * 0.7;
+  
+  // Axes
+  actx.strokeStyle = 'rgba(255,255,255,0.3)';
+  actx.lineWidth = 1;
+  actx.beginPath();
+  actx.moveTo(graphX, graphY - graphH/2);
+  actx.lineTo(graphX, graphY + graphH/2);
+  actx.moveTo(graphX - graphW/2, graphY);
+  actx.lineTo(graphX + graphW/2, graphY);
+  actx.stroke();
+  
+  actx.fillStyle = 'rgba(255,255,255,0.5)';
+  actx.font = '12px sans-serif';
+  actx.textAlign = 'left';
+  actx.fillText('ε', graphX + 5, graphY - graphH/2 + 10);
+  actx.fillText('t', graphX + graphW/2 - 10, graphY + 15);
+  
+  // Waveform
+  actx.strokeStyle = '#ef5350';
+  actx.lineWidth = 2;
+  actx.beginPath();
+  for (let i = 0; i < graphW; i++) {
+    const t = (i / graphW) * 4 * Math.PI;
+    const val = Em * Math.sin(t + acAngle);
+    const x = graphX - graphW/2 + i;
+    const y = graphY - (val / (Em + 0.01)) * graphH/2 * 0.8;
+    if (i === 0) actx.moveTo(x, y);
+    else actx.lineTo(x, y);
+  }
+  actx.stroke();
+  
+  // Current position marker
+  const curEmf = Em * Math.sin(acAngle);
+  const markerX = graphX - graphW/2 + (acAngle % (4*Math.PI)) / (4*Math.PI) * graphW;
+  const markerY = graphY - (curEmf / (Em + 0.01)) * graphH/2 * 0.8;
+  actx.fillStyle = '#ffca28';
+  actx.beginPath();
+  actx.arc(markerX, markerY, 6, 0, Math.PI * 2);
+  actx.fill();
+  
+  // Update displays
+  const angleDeg = ((acAngle * 180 / Math.PI) % 360).toFixed(0);
+  document.getElementById('acAngle').textContent = angleDeg + '°';
+  document.getElementById('acEmf').textContent = curEmf.toFixed(2);
+  document.getElementById('acPeak').textContent = Em.toFixed(2);
+}
+
+function animateAc() {
+  if (!acRunning) return;
+  const speed = +document.getElementById('acSpeed').value;
+  acAngle += speed * 0.02;
+  drawAcScene();
+  requestAnimationFrame(animateAc);
+}
+
+document.getElementById('acToggle').onclick = function() {
+  acRunning = !acRunning;
+  this.textContent = acRunning ? '暂停' : '继续';
+  if (acRunning) animateAc();
+};
+setTimeout(() => { resizeAc(); animateAc(); }, 100);
+
+// ===== Section 3: Quiz =====
+const quizzes = [
+  {
+    q: '一根导体棒在匀强磁场中做切割磁力线运动，如果运动方向与磁场方向平行，则：',
+    opts: ['产生最大感应电动势', '产生最小感应电动势', '不产生感应电动势', '产生恒定电流'],
+    ans: 2,
+    explain: '当导体运动方向与磁场方向平行时，不切割磁力线，磁通量不变化，因此不产生感应电动势。'
+  },
+  {
+    q: '将条形磁铁N极快速插入线圈时，从上往下看，线圈中感应电流方向为：',
+    opts: ['顺时针', '逆时针', '无感应电流', '先顺后逆'],
+    ans: 1,
+    explain: 'N极插入，穿过线圈向下的磁通量增大。由楞次定律，感应电流产生的磁场向上（阻碍增大），由右手定则，俯视逆时针。'
+  },
+  {
+    q: '交流发电机线圈转至中性面时（线圈平面与磁场垂直）：',
+    opts: ['磁通量最大，电动势最大', '磁通量最大，电动势为零', '磁通量为零，电动势最大', '磁通量为零，电动势为零'],
+    ans: 1,
+    explain: '中性面时线圈平面⊥磁场，磁通量Φ=BS最大，但此时磁通量变化率dΦ/dt=0，所以感应电动势为零。'
+  },
+  {
+    q: '法拉第电磁感应定律 ε = -NdΦ/dt 中负号的物理意义是：',
+    opts: ['电动势方向与磁通量方向相反', '表示楞次定律（感应电流阻碍磁通量变化）', '电动势总是负值', '能量守恒的体现'],
+    ans: 1,
+    explain: '负号体现了楞次定律：感应电动势（及感应电流）总是阻碍引起它的磁通量变化。这是能量守恒的必然结果。'
+  },
+  {
+    q: '线圈匝数增加3倍，其他条件不变，感应电动势将：',
+    opts: ['不变', '增大3倍', '增大9倍', '减小为1/3'],
+    ans: 1,
+    explain: '由 ε = NdΦ/dt，匝数N增大3倍，感应电动势也增大3倍（每匝产生的电动势相同，总电动势为各匝之和）。'
+  }
+];
+
+let currentQuiz = 0;
+function showQuiz() {
+  const q = quizzes[currentQuiz];
+  document.getElementById('quizQ').textContent = `第${currentQuiz+1}题：${q.q}`;
+  const optsDiv = document.getElementById('quizOptions');
+  optsDiv.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.textContent = `${'ABCD'[i]}. ${opt}`;
+    btn.onclick = () => {
+      document.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('correct','wrong'));
+      if (i === q.ans) {
+        btn.classList.add('correct');
+        document.getElementById('quizFeedback').innerHTML = `✅ 正确！${q.explain}`;
+        bumpTotalCorrect();
+      } else {
+        btn.classList.add('wrong');
+        document.querySelectorAll('.quiz-option')[q.ans].classList.add('correct');
+        document.getElementById('quizFeedback').innerHTML = `❌ 错误。${q.explain}`;
+      }
+    };
+    optsDiv.appendChild(btn);
+  });
+  document.getElementById('quizFeedback').textContent = '';
+}
+document.getElementById('nextQuiz').onclick = () => {
+  currentQuiz = (currentQuiz + 1) % quizzes.length;
+  showQuiz();
+};
+showQuiz();
+
+// Resize handler
+window.addEventListener('resize', () => {
+  resizeFlux(); resizeLenz(); resizeAc();
+  drawFluxScene(); drawLenzScene(); drawAcScene();
+});
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中物理"></script>
+</body>
+</html>

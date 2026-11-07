@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>化学键与分子结构 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --ionic: #ef4444;
+    --covalent: #3b82f6;
+    --electron: #fbbf24;
+    --orbital: #10b981;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--ionic), var(--electron), var(--covalent)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.15rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.8; }
+  .equation .ion { color: var(--ionic); font-weight: 600; }
+  .equation .cov { color: var(--covalent); font-weight: 600; }
+  .equation .el { color: var(--electron); font-weight: 600; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 90px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 60px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.ion { border-color: var(--ionic); }
+  .concept-card.cov { border-color: var(--covalent); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.ion .title { color: var(--ionic); }
+  .concept-card.cov .title { color: var(--covalent); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-ion::before { background: var(--ionic); }
+  .legend .l-cov::before { background: var(--covalent); }
+  .legend .l-el::before { background: var(--electron); }
+  .legend .l-orb::before { background: var(--orbital); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; }
+  .quiz-nav button { padding: 6px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .molecule-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+  .mol-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all .2s; border: 2px solid transparent; }
+  .mol-card:hover { background: rgba(255,255,255,0.08); }
+  .mol-card.selected { border-color: var(--primary); background: rgba(139,92,246,0.15); }
+  .mol-card .formula { font-size: 1.3rem; font-weight: 600; color: var(--light); margin-bottom: 4px; }
+  .mol-card .name { font-size: 12px; color: #94a3b8; }
+  .info-box { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; margin: 10px 0; font-size: 13px; line-height: 1.7; }
+  .info-box b { color: var(--electron); }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔬 化学键与分子结构</h1>
+    <p>探索离子键、共价键、杂化轨道与分子构型的奥秘</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="bond">① 化学键形成</div>
+    <div class="tab" data-tab="hybrid">② 杂化轨道</div>
+    <div class="tab" data-tab="geometry">③ 分子构型</div>
+    <div class="tab" data-tab="polarity">④ 分子极性</div>
+  </div>
+
+  <!-- Tab 1: 化学键形成 -->
+  <div class="stage" id="stage-bond">
+    <div class="canvas-wrap">
+      <canvas id="bondCanvas" width="560" height="420"></canvas>
+      <div class="legend">
+        <span class="l-ion">阳离子</span>
+        <span class="l-el">电子</span>
+        <span class="l-cov">共用电子对</span>
+      </div>
+      <div class="mode-switch">
+        <div class="mode-btn active" data-mode="ionic">离子键 NaCl</div>
+        <div class="mode-btn" data-mode="covalent">共价键 H₂</div>
+        <div class="mode-btn" data-mode="polar">极性键 HCl</div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>化学键形成过程</h3>
+      <div class="equation" id="bondEq">
+        <span class="ion">Na</span> + <span class="ion">Cl</span> → <span class="ion">Na⁺Cl⁻</span>
+      </div>
+      <div class="concept-card ion" id="bondConcept">
+        <div class="title">离子键</div>
+        活泼金属（Na）失去电子形成阳离子，活泼非金属（Cl）得到电子形成阴离子，阴阳离子通过静电作用结合。
+      </div>
+      <div class="info-box">
+        <b>电负性差 Δχ > 1.7</b> → 离子键<br>
+        <b>Δχ < 1.7</b> → 共价键（极性/非极性）
+      </div>
+      <div class="quiz" id="bondQuiz">
+        <div class="quiz-q" id="bondQ">下列哪种化合物主要含离子键？</div>
+        <div class="quiz-opts" id="bondOpts"></div>
+        <div class="quiz-feedback" id="bondFb"></div>
+        <div class="quiz-nav">
+          <button id="bondPrev" disabled>上一题</button>
+          <button id="bondNext">下一题</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: 杂化轨道 -->
+  <div class="stage hidden" id="stage-hybrid">
+    <div class="canvas-wrap">
+      <canvas id="hybridCanvas" width="560" height="420"></canvas>
+      <div class="legend">
+        <span class="l-orb">杂化轨道</span>
+        <span class="l-el">未杂化p轨道</span>
+      </div>
+      <div class="mode-switch">
+        <div class="mode-btn active" data-hybrid="sp3">sp³ 四面体</div>
+        <div class="mode-btn" data-hybrid="sp2">sp² 平面三角</div>
+        <div class="mode-btn" data-hybrid="sp">sp 直线形</div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>杂化轨道理论</h3>
+      <div class="equation" id="hybridEq">
+        1个s + 3个p → <span class="cov">4个sp³</span> 杂化轨道
+      </div>
+      <div class="concept-card cov" id="hybridConcept">
+        <div class="title">sp³ 杂化</div>
+        碳原子基态 2s²2p²，激发后 1个2s电子跃迁到2p，形成4个等价的sp³杂化轨道，键角109°28'，空间构型为正四面体。
+      </div>
+      <div class="slider-row">
+        <label>旋转角度</label>
+        <input type="range" id="hybridRot" min="0" max="360" value="30" />
+        <span class="val" id="hybridRotVal">30°</span>
+      </div>
+      <div class="info-box">
+        <b>典型分子：</b><br>
+        sp³ → CH₄, NH₃, H₂O<br>
+        sp² → C₂H₄, BF₃<br>
+        sp → C₂H₂, BeCl₂, CO₂
+      </div>
+      <div class="quiz" id="hybridQuiz">
+        <div class="quiz-q" id="hybridQ">CH₄中碳原子的杂化类型是？</div>
+        <div class="quiz-opts" id="hybridOpts"></div>
+        <div class="quiz-feedback" id="hybridFb"></div>
+        <div class="quiz-nav">
+          <button id="hybridPrev" disabled>上一题</button>
+          <button id="hybridNext">下一题</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: 分子构型 -->
+  <div class="stage hidden" id="stage-geometry">
+    <div class="canvas-wrap">
+      <canvas id="geomCanvas" width="560" height="420"></canvas>
+      <div class="legend">
+        <span class="l-orb">成键电子对</span>
+        <span class="l-el">孤对电子</span>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>VSEPR 分子构型预测</h3>
+      <div class="molecule-grid" id="molGrid"></div>
+      <div class="equation" id="geomEq">
+        价层电子对数 = <span class="cov">σ键</span> + <span class="el">孤对电子</span>
+      </div>
+      <div class="concept-card cov" id="geomConcept">
+        <div class="title">选择分子查看构型</div>
+        点击上方分子卡片，查看其空间构型、键角和VSEPR分析。
+      </div>
+      <div class="info-box" id="geomInfo">
+        <b>VSEPR规则：</b><br>
+        电子对互相排斥，尽可能远离<br>
+        2对 → 直线 180°<br>
+        3对 → 平面三角 120°<br>
+        4对 → 四面体 109°28'
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: 分子极性 -->
+  <div class="stage hidden" id="stage-polarity">
+    <div class="canvas-wrap">
+      <canvas id="polarCanvas" width="560" height="420"></canvas>
+      <div class="legend">
+        <span class="l-ion">δ⁺ 正电端</span>
+        <span class="l-cov">δ⁻ 负电端</span>
+        <span class="l-el">偶极矩 →</span>
+      </div>
+      <div class="mode-switch">
+        <div class="mode-btn active" data-polar="h2o">H₂O 极性</div>
+        <div class="mode-btn" data-polar="co2">CO₂ 非极性</div>
+        <div class="mode-btn" data-polar="hcl">HCl 极性</div>
+        <div class="mode-btn" data-polar="ch4">CH₄ 非极性</div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>分子极性判断</h3>
+      <div class="equation" id="polarEq">
+        H₂O：V形结构 → <span class="ion">极性分子</span>
+      </div>
+      <div class="concept-card ion" id="polarConcept">
+        <div class="title">极性分子</div>
+        正负电荷中心不重合，分子有偶极矩。H₂O中O-H键为极性键，且分子为V形不对称结构，键的极性不能抵消。
+      </div>
+      <div class="info-box" id="polarInfo">
+        <b>判断方法：</b><br>
+        ① 看键的极性（电负性差）<br>
+        ② 看分子对称性<br>
+        ③ 对称 → 非极性；不对称 → 极性
+      </div>
+      <div class="quiz" id="polarQuiz">
+        <div class="quiz-q" id="polarQ">下列哪个是非极性分子？</div>
+        <div class="quiz-opts" id="polarOpts"></div>
+        <div class="quiz-feedback" id="polarFb"></div>
+        <div class="quiz-nav">
+          <button id="polarPrev" disabled>上一题</button>
+          <button id="polarNext">下一题</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ Tab切换 ============
+const tabs = document.querySelectorAll('.tab');
+const stages = {
+  bond: document.getElementById('stage-bond'),
+  hybrid: document.getElementById('stage-hybrid'),
+  geometry: document.getElementById('stage-geometry'),
+  polarity: document.getElementById('stage-polarity')
+};
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    Object.values(stages).forEach(s => s.classList.add('hidden'));
+    stages[tab.dataset.tab].classList.remove('hidden');
+  });
+});
+
+// ============ Tab 1: 化学键形成 ============
+const bondCanvas = document.getElementById('bondCanvas');
+const bCtx = bondCanvas.getContext('2d');
+let bondMode = 'ionic';
+let bondAnim = 0;
+
+const bondData = {
+  ionic: {
+    eq: '<span class="ion">Na</span> + <span class="ion">Cl</span> → <span class="ion">Na⁺Cl⁻</span>',
+    concept: '<div class="title">离子键</div>活泼金属（Na）失去电子形成阳离子，活泼非金属（Cl）得到电子形成阴离子，阴阳离子通过静电作用结合。',
+    conceptClass: 'ion'
+  },
+  covalent: {
+    eq: '<span class="cov">H</span> + <span class="cov">H</span> → <span class="cov">H:H</span>',
+    concept: '<div class="title">非极性共价键</div>两个相同原子（H-H）共用电子对，电子对不偏向任何一方，键无极性。',
+    conceptClass: 'cov'
+  },
+  polar: {
+    eq: '<span class="cov">H</span> + <span class="ion">Cl</span> → <span class="cov">H</span>:<span class="el">Cl</span>',
+    concept: '<div class="title">极性共价键</div>不同原子（H-Cl）共用电子对偏向Cl（电负性更大），Cl端带部分负电荷（δ⁻），H端带部分正电荷（δ⁺）。',
+    conceptClass: 'cov'
+  }
+};
+
+function drawBond() {
+  bCtx.clearRect(0, 0, 560, 420);
+  const cx = 280, cy = 200;
+  const t = bondAnim / 60;
+  
+  if (bondMode === 'ionic') {
+    // Na atom
+    const naX = 150 + Math.min(t * 30, 80);
+    bCtx.beginPath();
+    bCtx.arc(naX, cy, 35, 0, Math.PI * 2);
+    bCtx.fillStyle = 'rgba(239,68,68,0.3)';
+    bCtx.fill();
+    bCtx.strokeStyle = '#ef4444';
+    bCtx.lineWidth = 2;
+    bCtx.stroke();
+    bCtx.fillStyle = '#fca5a5';
+    bCtx.font = 'bold 20px sans-serif';
+    bCtx.textAlign = 'center';
+    bCtx.fillText('Na', naX, cy + 7);
+    
+    // Electron transfer
+    if (t > 1 && t < 3) {
+      const elX = naX + 40 + (t - 1) * 40;
+      bCtx.beginPath();
+      bCtx.arc(elX, cy - 20, 6, 0, Math.PI * 2);
+      bCtx.fillStyle = '#fbbf24';
+      bCtx.fill();
+      bCtx.shadowColor = '#fbbf24';
+      bCtx.shadowBlur = 10;
+      bCtx.fill();
+      bCtx.shadowBlur = 0;
+    }
+    
+    // Cl atom
+    const clX = 410 - Math.min(t * 30, 80);
+    bCtx.beginPath();
+    bCtx.arc(clX, cy, 40, 0, Math.PI * 2);
+    bCtx.fillStyle = 'rgba(59,130,246,0.3)';
+    bCtx.fill();
+    bCtx.strokeStyle = '#3b82f6';
+    bCtx.lineWidth = 2;
+    bCtx.stroke();
+    bCtx.fillStyle = '#93c5fd';
+    bCtx.font = 'bold 20px sans-serif';
+    bCtx.fillText('Cl', clX, cy + 7);
+    
+    // After transfer
+    if (t > 3) {
+      bCtx.fillStyle = '#fbbf24';
+      bCtx.font = '14px sans-serif';
+      bCtx.fillText('Na⁺', 230, cy + 7);
+      bCtx.fillText('Cl⁻', 330, cy + 7);
+      
+      // Attraction lines
+      for (let i = 0; i < 5; i++) {
+        const angle = (i / 5) * Math.PI * 2 + t * 0.02;
+        const r1 = 45, r2 = 50;
+        bCtx.beginPath();
+        bCtx.moveTo(230 + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+        bCtx.lineTo(330 + Math.cos(angle + Math.PI) * r2, cy + Math.sin(angle + Math.PI) * r2);
+        bCtx.strokeStyle = 'rgba(251,191,36,0.3)';
+        bCtx.lineWidth = 1;
+        bCtx.stroke();
+      }
+    }
+  } else if (bondMode === 'covalent') {
+    // H atoms
+    const h1X = 200 + Math.min(t * 20, 50);
+    const h2X = 360 - Math.min(t * 20, 50);
+    
+    bCtx.beginPath();
+    bCtx.arc(h1X, cy, 25, 0, Math.PI * 2);
+    bCtx.fillStyle = 'rgba(59,130,246,0.3)';
+    bCtx.fill();
+    bCtx.strokeStyle = '#3b82f6';
+    bCtx.lineWidth = 2;
+    bCtx.stroke();
+    bCtx.fillStyle = '#93c5fd';
+    bCtx.font = 'bold 18px sans-serif';
+    bCtx.fillText('H', h1X, cy + 6);
+    
+    bCtx.beginPath();
+    bCtx.arc(h2X, cy, 25, 0, Math.PI * 2);
+    bCtx.fillStyle = 'rgba(59,130,246,0.3)';
+    bCtx.fill();
+    bCtx.strokeStyle = '#3b82f6';
+    bCtx.lineWidth = 2;
+    bCtx.stroke();
+    bCtx.fillStyle = '#93c5fd';
+    bCtx.fillText('H', h2X, cy + 6);
+    
+    // Shared electrons
+    if (t > 2) {
+      const midX = (h1X + h2X) / 2;
+      bCtx.beginPath();
+      bCtx.arc(midX - 8, cy, 5, 0, Math.PI * 2);
+      bCtx.fillStyle = '#fbbf24';
+      bCtx.fill();
+      bCtx.beginPath();
+      bCtx.arc(midX + 8, cy, 5, 0, Math.PI * 2);
+      bCtx.fillStyle = '#fbbf24';
+      bCtx.fill();
+      
+      // Overlap region
+      bCtx.beginPath();
+      bCtx.ellipse(midX, cy, 30, 20, 0, 0, Math.PI * 2);
+      bCtx.fillStyle = 'rgba(251,191,36,0.15)';
+      bCtx.fill();
+    }
+  } else { // polar
+    const hX = 180 + Math.min(t * 20, 60);
+    const clX = 380 - Math.min(t * 20, 60);
+    
+    bCtx.beginPath();
+    bCtx.arc(hX, cy, 28, 0, Math.PI * 2);
+    bCtx.fillStyle = 'rgba(59,130,246,0.3)';
+    bCtx.fill();
+    bCtx.strokeStyle = '#3b82f6';
+    bCtx.lineWidth = 2;
+    bCtx.stroke();
+    bCtx.fillStyle = '#93c5fd';
+    bCtx.font = 'bold 18px sans-serif';
+    bCtx.fillText('H', hX, cy + 6);
+    if (t > 3) {
+      bCtx.fillStyle = '#fca5a5';
+      bCtx.font = '12px sans-serif';
+      bCtx.fillText('δ⁺', hX, cy - 35);
+    }
+    
+    bCtx.beginPath();
+    bCtx.arc(clX, cy, 38, 0, Math.PI * 2);
+    bCtx.fillStyle = 'rgba(239,68,68,0.3)';
+    bCtx.fill();
+    bCtx.strokeStyle = '#ef4444';
+    bCtx.lineWidth = 2;
+    bCtx.stroke();
+    bCtx.fillStyle = '#fca5a5';
+    bCtx.font = 'bold 18px sans-serif';
+    bCtx.fillText('Cl', clX, cy + 6);
+    if (t > 3) {
+      bCtx.fillStyle = '#93c5fd';
+      bCtx.font = '12px sans-serif';
+      bCtx.fillText('δ⁻', clX, cy - 45);
+    }
+    
+    if (t > 2) {
+      const midX = (hX + clX) / 2;
+      bCtx.beginPath();
+      bCtx.arc(midX - 6, cy, 5, 0, Math.PI * 2);
+      bCtx.fillStyle = '#fbbf24';
+      bCtx.fill();
+      bCtx.beginPath();
+      bCtx.arc(midX + 6, cy, 5, 0, Math.PI * 2);
+      bCtx.fillStyle = '#fbbf24';
+      bCtx.fill();
+      
+      // Electron density shifted to Cl
+      bCtx.beginPath();
+      bCtx.ellipse(midX + 20, cy, 35, 22, 0, 0, Math.PI * 2);
+      bCtx.fillStyle = 'rgba(251,191,36,0.12)';
+      bCtx.fill();
+    }
+  }
+  
+  bondAnim++;
+  if (bondAnim < 300) requestAnimationFrame(drawBond);
+}
+
+document.querySelectorAll('[data-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    bondMode = btn.dataset.mode;
+    bondAnim = 0;
+    const d = bondData[bondMode];
+    document.getElementById('bondEq').innerHTML = d.eq;
+    const concept = document.getElementById('bondConcept');
+    concept.innerHTML = d.concept;
+    concept.className = 'concept-card ' + d.conceptClass;
+    drawBond();
+  });
+});
+
+// Bond quiz
+// 进度追踪：答对去重集合，≥6/9 (67%) 触发 PageProgress.markDone
+const _correctSet = new Set();
+let _doneMarked = false;
+function recordCorrect(quiz, idx) {
+  _correctSet.add(quiz + '-' + idx);
+  if (!_doneMarked && _correctSet.size >= 6) {
+    _doneMarked = true;
+    if (typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('chemical-bond');
+      const toast = document.createElement('div');
+      toast.textContent = '🎉 「化学键与分子结构」知识地图已点亮（' + _correctSet.size + '/9）';
+      toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:10px 20px;border-radius:999px;font-size:14px;z-index:9999;box-shadow:0 4px 15px rgba(16,185,129,0.5);';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2600);
+    }
+  }
+}
+const bondQuestions = [
+  { q: '下列哪种化合物主要含离子键？', opts: ['NaCl', 'H₂O', 'CO₂', 'CH₄'], ans: 0 },
+  { q: '共价键形成的原因是？', opts: ['电子转移', '电子共用', '静电吸引', '范德华力'], ans: 1 },
+  { q: 'HCl中的化学键是？', opts: ['离子键', '非极性共价键', '极性共价键', '金属键'], ans: 2 }
+];
+let bondQIdx = 0;
+
+function renderBondQ() {
+  const q = bondQuestions[bondQIdx];
+  document.getElementById('bondQ').textContent = q.q;
+  const optsEl = document.getElementById('bondOpts');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.onclick = () => {
+      optsEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+      if (i === q.ans) { div.classList.add('correct'); document.getElementById('bondFb').textContent = '✓ 正确！'; recordCorrect('bond', bondQIdx); }
+      else { div.classList.add('wrong'); document.getElementById('bondFb').textContent = '✗ 再想想'; }
+    };
+    optsEl.appendChild(div);
+  });
+  document.getElementById('bondFb').textContent = '';
+  document.getElementById('bondPrev').disabled = bondQIdx === 0;
+  document.getElementById('bondNext').disabled = bondQIdx === bondQuestions.length - 1;
+}
+document.getElementById('bondPrev').onclick = () => { if (bondQIdx > 0) { bondQIdx--; renderBondQ(); } };
+document.getElementById('bondNext').onclick = () => { if (bondQIdx < bondQuestions.length - 1) { bondQIdx++; renderBondQ(); } };
+renderBondQ();
+
+// ============ Tab 2: 杂化轨道 ============
+const hybridCanvas = document.getElementById('hybridCanvas');
+const hCtx = hybridCanvas.getContext('2d');
+let hybridType = 'sp3';
+let hybridRot = 30;
+
+function drawHybrid() {
+  hCtx.clearRect(0, 0, 560, 420);
+  const cx = 280, cy = 210;
+  const rot = hybridRot * Math.PI / 180;
+  
+  hCtx.save();
+  hCtx.translate(cx, cy);
+  hCtx.rotate(rot);
+  
+  if (hybridType === 'sp3') {
+    // Tetrahedral - 4 orbitals
+    const angles = [
+      { x: 0, y: -80 },
+      { x: 70, y: 40 },
+      { x: -70, y: 40 },
+      { x: 0, y: 0 }
+    ];
+    // Draw 3D-like tetrahedral
+    const orbitals = [
+      { x: 0, y: -90, z: 0 },
+      { x: 75, y: 45, z: 30 },
+      { x: -75, y: 45, z: -30 },
+      { x: 0, y: 20, z: -60 }
+    ];
+    
+    orbitals.forEach((orb, i) => {
+      const scale = 1 + orb.z / 200;
+      const ox = orb.x * scale;
+      const oy = orb.y * scale;
+      
+      // Orbital lobe
+      hCtx.beginPath();
+      hCtx.ellipse(ox / 2, oy / 2, 35 * scale, 20 * scale, Math.atan2(oy, ox), 0, Math.PI * 2);
+      hCtx.fillStyle = `rgba(16,185,129,${0.2 + i * 0.05})`;
+      hCtx.fill();
+      hCtx.strokeStyle = '#10b981';
+      hCtx.lineWidth = 2;
+      hCtx.stroke();
+      
+      // Label
+      hCtx.fillStyle = '#a7f3d0';
+      hCtx.font = '12px sans-serif';
+      hCtx.textAlign = 'center';
+      hCtx.fillText(`sp³`, ox * 0.7, oy * 0.7);
+    });
+    
+    // Center atom
+    hCtx.beginPath();
+    hCtx.arc(0, 0, 18, 0, Math.PI * 2);
+    hCtx.fillStyle = 'rgba(139,92,246,0.5)';
+    hCtx.fill();
+    hCtx.strokeStyle = '#8b5cf6';
+    hCtx.lineWidth = 2;
+    hCtx.stroke();
+    hCtx.fillStyle = '#c4b5fd';
+    hCtx.font = 'bold 14px sans-serif';
+    hCtx.fillText('C', 0, 5);
+    
+    // Bond angle
+    hCtx.beginPath();
+    hCtx.moveTo(0, 0);
+    hCtx.lineTo(0, -60);
+    hCtx.moveTo(0, 0);
+    hCtx.lineTo(52, 30);
+    hCtx.strokeStyle = 'rgba(251,191,36,0.5)';
+    hCtx.lineWidth = 1;
+    hCtx.stroke();
+    
+    hCtx.beginPath();
+    hCtx.arc(0, 0, 25, -Math.PI / 2, Math.atan2(30, 52));
+    hCtx.strokeStyle = '#fbbf24';
+    hCtx.lineWidth = 1.5;
+    hCtx.stroke();
+    hCtx.fillStyle = '#fbbf24';
+    hCtx.font = '11px sans-serif';
+    hCtx.fillText('109°28\'', 30, -20);
+    
+  } else if (hybridType === 'sp2') {
+    // Trigonal planar
+    const orbitals = [
+      { x: 0, y: -90 },
+      { x: 78, y: 45 },
+      { x: -78, y: 45 }
+    ];
+    
+    orbitals.forEach((orb, i) => {
+      hCtx.beginPath();
+      hCtx.ellipse(orb.x / 2, orb.y / 2, 38, 18, Math.atan2(orb.y, orb.x), 0, Math.PI * 2);
+      hCtx.fillStyle = 'rgba(16,185,129,0.25)';
+      hCtx.fill();
+      hCtx.strokeStyle = '#10b981';
+      hCtx.lineWidth = 2;
+      hCtx.stroke();
+      
+      hCtx.fillStyle = '#a7f3d0';
+      hCtx.font = '12px sans-serif';
+      hCtx.textAlign = 'center';
+      hCtx.fillText(`sp²`, orb.x * 0.65, orb.y * 0.65);
+    });
+    
+    // Unhybridized p orbital (vertical)
+    hCtx.beginPath();
+    hCtx.ellipse(0, -50, 12, 45, 0, 0, Math.PI * 2);
+    hCtx.fillStyle = 'rgba(251,191,36,0.15)';
+    hCtx.fill();
+    hCtx.strokeStyle = '#fbbf24';
+    hCtx.lineWidth = 1.5;
+    hCtx.setLineDash([4, 4]);
+    hCtx.stroke();
+    hCtx.setLineDash([]);
+    hCtx.fillStyle = '#fbbf24';
+    hCtx.font = '11px sans-serif';
+    hCtx.fillText('p (未杂化)', 50, -70);
+    
+    // Center
+    hCtx.beginPath();
+    hCtx.arc(0, 0, 18, 0, Math.PI * 2);
+    hCtx.fillStyle = 'rgba(139,92,246,0.5)';
+    hCtx.fill();
+    hCtx.strokeStyle = '#8b5cf6';
+    hCtx.lineWidth = 2;
+    hCtx.stroke();
+    hCtx.fillStyle = '#c4b5fd';
+    hCtx.font = 'bold 14px sans-serif';
+    hCtx.fillText('C', 0, 5);
+    
+    // Angle
+    hCtx.beginPath();
+    hCtx.arc(0, 0, 30, -Math.PI / 2, Math.PI / 6);
+    hCtx.strokeStyle = '#fbbf24';
+    hCtx.lineWidth = 1.5;
+    hCtx.stroke();
+    hCtx.fillStyle = '#fbbf24';
+    hCtx.font = '11px sans-serif';
+    hCtx.fillText('120°', 35, -30);
+    
+  } else { // sp
+    // Linear
+    const orbitals = [
+      { x: -90, y: 0 },
+      { x: 90, y: 0 }
+    ];
+    
+    orbitals.forEach((orb, i) => {
+      hCtx.beginPath();
+      hCtx.ellipse(orb.x / 2, 0, 45, 16, 0, 0, Math.PI * 2);
+      hCtx.fillStyle = 'rgba(16,185,129,0.25)';
+      hCtx.fill();
+      hCtx.strokeStyle = '#10b981';
+      hCtx.lineWidth = 2;
+      hCtx.stroke();
+      
+      hCtx.fillStyle = '#a7f3d0';
+      hCtx.font = '12px sans-serif';
+      hCtx.textAlign = 'center';
+      hCtx.fillText(`sp`, orb.x * 0.5, 5);
+    });
+    
+    // Two unhybridized p orbitals
+    hCtx.beginPath();
+    hCtx.ellipse(0, -45, 12, 40, 0, 0, Math.PI * 2);
+    hCtx.fillStyle = 'rgba(251,191,36,0.12)';
+    hCtx.fill();
+    hCtx.strokeStyle = '#fbbf24';
+    hCtx.lineWidth = 1.5;
+    hCtx.setLineDash([4, 4]);
+    hCtx.stroke();
+    hCtx.setLineDash([]);
+    
+    hCtx.beginPath();
+    hCtx.ellipse(0, 0, 40, 12, 0, 0, Math.PI * 2);
+    hCtx.fillStyle = 'rgba(251,191,36,0.12)';
+    hCtx.fill();
+    hCtx.strokeStyle = '#fbbf24';
+    hCtx.lineWidth = 1.5;
+    hCtx.setLineDash([4, 4]);
+    hCtx.stroke();
+    hCtx.setLineDash([]);
+    
+    hCtx.fillStyle = '#fbbf24';
+    hCtx.font = '11px sans-serif';
+    hCtx.textAlign = 'left';
+    hCtx.fillText('2个p未杂化', 50, -50);
+    
+    // Center
+    hCtx.beginPath();
+    hCtx.arc(0, 0, 18, 0, Math.PI * 2);
+    hCtx.fillStyle = 'rgba(139,92,246,0.5)';
+    hCtx.fill();
+    hCtx.strokeStyle = '#8b5cf6';
+    hCtx.lineWidth = 2;
+    hCtx.stroke();
+    hCtx.fillStyle = '#c4b5fd';
+    hCtx.font = 'bold 14px sans-serif';
+    hCtx.textAlign = 'center';
+    hCtx.fillText('C', 0, 5);
+    
+    // Angle
+    hCtx.beginPath();
+    hCtx.moveTo(-60, 25);
+    hCtx.lineTo(60, 25);
+    hCtx.strokeStyle = '#fbbf24';
+    hCtx.lineWidth = 1;
+    hCtx.stroke();
+    hCtx.fillStyle = '#fbbf24';
+    hCtx.font = '11px sans-serif';
+    hCtx.fillText('180°', 0, 40);
+  }
+  
+  hCtx.restore();
+}
+
+document.querySelectorAll('[data-hybrid]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-hybrid]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    hybridType = btn.dataset.hybrid;
+    const eqs = {
+      sp3: '1个s + 3个p → <span class="cov">4个sp³</span> 杂化轨道',
+      sp2: '1个s + 2个p → <span class="cov">3个sp²</span> + 1个p未杂化',
+      sp: '1个s + 1个p → <span class="cov">2个sp</span> + 2个p未杂化'
+    };
+    const concepts = {
+      sp3: '<div class="title">sp³ 杂化</div>碳原子基态 2s²2p²，激发后 1个2s电子跃迁到2p，形成4个等价的sp³杂化轨道，键角109°28\'，空间构型为正四面体。',
+      sp2: '<div class="title">sp² 杂化</div>形成3个等价的sp²杂化轨道（平面三角，120°），剩余1个p轨道垂直于平面，可形成π键。如C₂H₄中的C=C双键。',
+      sp: '<div class="title">sp 杂化</div>形成2个sp杂化轨道（直线形，180°），剩余2个p轨道互相垂直。如C₂H₂中的C≡C三键（1个σ键+2个π键）。'
+    };
+    document.getElementById('hybridEq').innerHTML = eqs[hybridType];
+    const concept = document.getElementById('hybridConcept');
+    concept.innerHTML = concepts[hybridType];
+    concept.className = 'concept-card cov';
+    drawHybrid();
+  });
+});
+
+document.getElementById('hybridRot').addEventListener('input', (e) => {
+  hybridRot = parseInt(e.target.value);
+  document.getElementById('hybridRotVal').textContent = hybridRot + '°';
+  drawHybrid();
+});
+
+// Hybrid quiz
+const hybridQuestions = [
+  { q: 'CH₄中碳原子的杂化类型是？', opts: ['sp', 'sp²', 'sp³', '不杂化'], ans: 2 },
+  { q: 'sp²杂化的空间构型是？', opts: ['直线形', '平面三角形', '四面体', '三角锥形'], ans: 1 },
+  { q: 'CO₂中碳原子的杂化类型是？', opts: ['sp', 'sp²', 'sp³', 'sp³d'], ans: 0 }
+];
+let hybridQIdx = 0;
+
+function renderHybridQ() {
+  const q = hybridQuestions[hybridQIdx];
+  document.getElementById('hybridQ').textContent = q.q;
+  const optsEl = document.getElementById('hybridOpts');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.onclick = () => {
+      optsEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+      if (i === q.ans) { div.classList.add('correct'); document.getElementById('hybridFb').textContent = '✓ 正确！'; recordCorrect('hybrid', hybridQIdx); }
+      else { div.classList.add('wrong'); document.getElementById('hybridFb').textContent = '✗ 再想想'; }
+    };
+    optsEl.appendChild(div);
+  });
+  document.getElementById('hybridFb').textContent = '';
+  document.getElementById('hybridPrev').disabled = hybridQIdx === 0;
+  document.getElementById('hybridNext').disabled = hybridQIdx === hybridQuestions.length - 1;
+}
+document.getElementById('hybridPrev').onclick = () => { if (hybridQIdx > 0) { hybridQIdx--; renderHybridQ(); } };
+document.getElementById('hybridNext').onclick = () => { if (hybridQIdx < hybridQuestions.length - 1) { hybridQIdx++; renderHybridQ(); } };
+renderHybridQ();
+
+// ============ Tab 3: 分子构型 ============
+const geomCanvas = document.getElementById('geomCanvas');
+const gCtx = geomCanvas.getContext('2d');
+
+const molecules = [
+  { formula: 'CH₄', name: '甲烷', pairs: 4, lone: 0, geom: '正四面体', angle: '109°28\'', color: '#10b981' },
+  { formula: 'NH₃', name: '氨', pairs: 4, lone: 1, geom: '三角锥', angle: '107°', color: '#3b82f6' },
+  { formula: 'H₂O', name: '水', pairs: 4, lone: 2, geom: 'V形', angle: '104.5°', color: '#ef4444' },
+  { formula: 'BF₃', name: '三氟化硼', pairs: 3, lone: 0, geom: '平面三角', angle: '120°', color: '#f59e0b' },
+  { formula: 'CO₂', name: '二氧化碳', pairs: 2, lone: 0, geom: '直线形', angle: '180°', color: '#8b5cf6' },
+  { formula: 'BeCl₂', name: '氯化铍', pairs: 2, lone: 0, geom: '直线形', angle: '180°', color: '#ec4899' }
+];
+
+let selectedMol = 0;
+
+function drawMolecule() {
+  gCtx.clearRect(0, 0, 560, 420);
+  const cx = 280, cy = 200;
+  const mol = molecules[selectedMol];
+  
+  gCtx.fillStyle = '#e2e8f0';
+  gCtx.font = 'bold 16px sans-serif';
+  gCtx.textAlign = 'center';
+  gCtx.fillText(mol.formula + ' - ' + mol.geom, cx, 30);
+  
+  if (mol.geom === '正四面体') {
+    // Draw tetrahedral
+    const bonds = [
+      { x: 0, y: -80 },
+      { x: 70, y: 40 },
+      { x: -70, y: 40 },
+      { x: 0, y: 20 }
+    ];
+    
+    bonds.forEach((b, i) => {
+      gCtx.beginPath();
+      gCtx.moveTo(cx, cy);
+      gCtx.lineTo(cx + b.x, cy + b.y);
+      gCtx.strokeStyle = mol.color;
+      gCtx.lineWidth = 3;
+      gCtx.stroke();
+      
+      // Atom at end
+      gCtx.beginPath();
+      gCtx.arc(cx + b.x, cy + b.y, 15, 0, Math.PI * 2);
+      gCtx.fillStyle = mol.color + '60';
+      gCtx.fill();
+      gCtx.strokeStyle = mol.color;
+      gCtx.lineWidth = 2;
+      gCtx.stroke();
+      gCtx.fillStyle = '#fff';
+      gCtx.font = '12px sans-serif';
+      gCtx.fillText('H', cx + b.x, cy + b.y + 4);
+    });
+    
+    // Center atom
+    gCtx.beginPath();
+    gCtx.arc(cx, cy, 20, 0, Math.PI * 2);
+    gCtx.fillStyle = 'rgba(139,92,246,0.6)';
+    gCtx.fill();
+    gCtx.strokeStyle = '#8b5cf6';
+    gCtx.lineWidth = 2;
+    gCtx.stroke();
+    gCtx.fillStyle = '#fff';
+    gCtx.font = 'bold 14px sans-serif';
+    gCtx.fillText('C', cx, cy + 5);
+    
+  } else if (mol.geom === '三角锥') {
+    // NH3 - trigonal pyramidal
+    const bonds = [
+      { x: 0, y: -70 },
+      { x: 65, y: 50 },
+      { x: -65, y: 50 }
+    ];
+    
+    bonds.forEach((b) => {
+      gCtx.beginPath();
+      gCtx.moveTo(cx, cy - 10);
+      gCtx.lineTo(cx + b.x, cy + b.y);
+      gCtx.strokeStyle = mol.color;
+      gCtx.lineWidth = 3;
+      gCtx.stroke();
+      
+      gCtx.beginPath();
+      gCtx.arc(cx + b.x, cy + b.y, 15, 0, Math.PI * 2);
+      gCtx.fillStyle = mol.color + '60';
+      gCtx.fill();
+      gCtx.strokeStyle = mol.color;
+      gCtx.lineWidth = 2;
+      gCtx.stroke();
+      gCtx.fillStyle = '#fff';
+      gCtx.font = '12px sans-serif';
+      gCtx.fillText('H', cx + b.x, cy + b.y + 4);
+    });
+    
+    // Lone pair
+    gCtx.beginPath();
+    gCtx.arc(cx, cy - 50, 10, 0, Math.PI * 2);
+    gCtx.fillStyle = 'rgba(251,191,36,0.4)';
+    gCtx.fill();
+    gCtx.strokeStyle = '#fbbf24';
+    gCtx.setLineDash([3, 3]);
+    gCtx.stroke();
+    gCtx.setLineDash([]);
+    gCtx.fillStyle = '#fbbf24';
+    gCtx.font = '10px sans-serif';
+    gCtx.fillText('孤对', cx, cy - 65);
+    
+    // Center N
+    gCtx.beginPath();
+    gCtx.arc(cx, cy - 10, 20, 0, Math.PI * 2);
+    gCtx.fillStyle = 'rgba(59,130,246,0.6)';
+    gCtx.fill();
+    gCtx.strokeStyle = '#3b82f6';
+    gCtx.lineWidth = 2;
+    gCtx.stroke();
+    gCtx.fillStyle = '#fff';
+    gCtx.font = 'bold 14px sans-serif';
+    gCtx.fillText('N', cx, cy - 5);
+    
+  } else if (mol.geom === 'V形') {
+    // H2O - bent
+    const bonds = [
+      { x: -60, y: 50 },
+      { x: 60, y: 50 }
+    ];
+    
+    bonds.forEach((b) => {
+      gCtx.beginPath();
+      gCtx.moveTo(cx, cy - 10);
+      gCtx.lineTo(cx + b.x, cy + b.y);
+      gCtx.strokeStyle = mol.color;
+      gCtx.lineWidth = 3;
+      gCtx.stroke();
+      
+      gCtx.beginPath();
+      gCtx.arc(cx + b.x, cy + b.y, 15, 0, Math.PI * 2);
+      gCtx.fillStyle = mol.color + '60';
+      gCtx.fill();
+      gCtx.strokeStyle = mol.color;
+      gCtx.lineWidth = 2;
+      gCtx.stroke();
+      gCtx.fillStyle = '#fff';
+      gCtx.font = '12px sans-serif';
+      gCtx.fillText('H', cx + b.x, cy + b.y + 4);
+    });
+    
+    // Two lone pairs
+    gCtx.beginPath();
+    gCtx.arc(cx - 25, cy - 45, 8, 0, Math.PI * 2);
+    gCtx.fillStyle = 'rgba(251,191,36,0.4)';
+    gCtx.fill();
+    gCtx.beginPath();
+    gCtx.arc(cx + 25, cy - 45, 8, 0, Math.PI * 2);
+    gCtx.fillStyle = 'rgba(251,191,36,0.4)';
+    gCtx.fill();
+    gCtx.fillStyle = '#fbbf24';
+    gCtx.font = '10px sans-serif';
+    gCtx.fillText('孤对×2', cx, cy - 60);
+    
+    // Angle arc
+    gCtx.beginPath();
+    gCtx.arc(cx, cy - 10, 35, Math.PI * 0.3, Math.PI * 0.7);
+    gCtx.strokeStyle = '#fbbf24';
+    gCtx.lineWidth = 1.5;
+    gCtx.stroke();
+    gCtx.fillStyle = '#fbbf24';
+    gCtx.font = '12px sans-serif';
+    gCtx.fillText('104.5°', cx, cy + 25);
+    
+    // Center O
+    gCtx.beginPath();
+    gCtx.arc(cx, cy - 10, 20, 0, Math.PI * 2);
+    gCtx.fillStyle = 'rgba(239,68,68,0.6)';
+    gCtx.fill();
+    gCtx.strokeStyle = '#ef4444';
+    gCtx.lineWidth = 2;
+    gCtx.stroke();
+    gCtx.fillStyle = '#fff';
+    gCtx.font = 'bold 14px sans-serif';
+    gCtx.fillText('O', cx, cy - 5);
+    
+  } else if (mol.geom === '平面三角') {
+    // BF3
+    const bonds = [
+      { x: 0, y: -80 },
+      { x: 70, y: 40 },
+      { x: -70, y: 40 }
+    ];
+    
+    bonds.forEach((b) => {
+      gCtx.beginPath();
+      gCtx.moveTo(cx, cy);
+      gCtx.lineTo(cx + b.x, cy + b.y);
+      gCtx.strokeStyle = mol.color;
+      gCtx.lineWidth = 3;
+      gCtx.stroke();
+      
+      gCtx.beginPath();
+      gCtx.arc(cx + b.x, cy + b.y, 15, 0, Math.PI * 2);
+      gCtx.fillStyle = mol.color + '60';
+      gCtx.fill();
+      gCtx.strokeStyle = mol.color;
+      gCtx.lineWidth = 2;
+      gCtx.stroke();
+      gCtx.fillStyle = '#fff';
+      gCtx.font = '12px sans-serif';
+      gCtx.fillText('F', cx + b.x, cy + b.y + 4);
+    });
+    
+    // Angle
+    gCtx.beginPath();
+    gCtx.arc(cx, cy, 30, -Math.PI / 2, Math.PI / 6);
+    gCtx.strokeStyle = '#fbbf24';
+    gCtx.lineWidth = 1.5;
+    gCtx.stroke();
+    gCtx.fillStyle = '#fbbf24';
+    gCtx.font = '12px sans-serif';
+    gCtx.fillText('120°', cx + 40, cy - 20);
+    
+    // Center B
+    gCtx.beginPath();
+    gCtx.arc(cx, cy, 20, 0, Math.PI * 2);
+    gCtx.fillStyle = 'rgba(245,158,11,0.6)';
+    gCtx.fill();
+    gCtx.strokeStyle = '#f59e0b';
+    gCtx.lineWidth = 2;
+    gCtx.stroke();
+    gCtx.fillStyle = '#fff';
+    gCtx.font = 'bold 14px sans-serif';
+    gCtx.fillText('B', cx, cy + 5);
+    
+  } else { // Linear
+    const bonds = [
+      { x: -80, y: 0 },
+      { x: 80, y: 0 }
+    ];
+    
+    bonds.forEach((b) => {
+      gCtx.beginPath();
+      gCtx.moveTo(cx, cy);
+      gCtx.lineTo(cx + b.x, cy + b.y);
+      gCtx.strokeStyle = mol.color;
+      gCtx.lineWidth = 3;
+      gCtx.stroke();
+      
+      gCtx.beginPath();
+      gCtx.arc(cx + b.x, cy + b.y, 15, 0, Math.PI * 2);
+      gCtx.fillStyle = mol.color + '60';
+      gCtx.fill();
+      gCtx.strokeStyle = mol.color;
+      gCtx.lineWidth = 2;
+      gCtx.stroke();
+      gCtx.fillStyle = '#fff';
+      gCtx.font = '12px sans-serif';
+      gCtx.fillText(mol.formula === 'CO₂' ? 'O' : 'Cl', cx + b.x, cy + b.y + 4);
+    });
+    
+    // Angle
+    gCtx.beginPath();
+    gCtx.moveTo(cx - 50, cy + 25);
+    gCtx.lineTo(cx + 50, cy + 25);
+    gCtx.strokeStyle = '#fbbf24';
+    gCtx.lineWidth = 1;
+    gCtx.stroke();
+    gCtx.fillStyle = '#fbbf24';
+    gCtx.font = '12px sans-serif';
+    gCtx.fillText('180°', cx, cy + 45);
+    
+    // Center
+    gCtx.beginPath();
+    gCtx.arc(cx, cy, 20, 0, Math.PI * 2);
+    gCtx.fillStyle = 'rgba(139,92,246,0.6)';
+    gCtx.fill();
+    gCtx.strokeStyle = '#8b5cf6';
+    gCtx.lineWidth = 2;
+    gCtx.stroke();
+    gCtx.fillStyle = '#fff';
+    gCtx.font = 'bold 14px sans-serif';
+    gCtx.fillText(mol.formula === 'CO₂' ? 'C' : 'Be', cx, cy + 5);
+  }
+}
+
+// Render molecule grid
+const molGrid = document.getElementById('molGrid');
+molecules.forEach((mol, i) => {
+  const card = document.createElement('div');
+  card.className = 'mol-card' + (i === 0 ? ' selected' : '');
+  card.innerHTML = `<div class="formula">${mol.formula}</div><div class="name">${mol.name}</div>`;
+  card.onclick = () => {
+    document.querySelectorAll('.mol-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedMol = i;
+    drawMolecule();
+    
+    const concept = document.getElementById('geomConcept');
+    concept.innerHTML = `<div class="title">${mol.formula} - ${mol.geom}</div>价层电子对数：${mol.pairs}，孤对电子：${mol.lone}对<br>空间构型：<b>${mol.geom}</b>，键角：<b>${mol.angle}</b>`;
+    concept.className = 'concept-card cov';
+  };
+  molGrid.appendChild(card);
+});
+
+// ============ Tab 4: 分子极性 ============
+const polarCanvas = document.getElementById('polarCanvas');
+const pCtx = polarCanvas.getContext('2d');
+let polarMode = 'h2o';
+
+const polarData = {
+  h2o: { eq: 'H₂O：V形结构 → <span class="ion">极性分子</span>', concept: '<div class="title">极性分子</div>正负电荷中心不重合，分子有偶极矩。H₂O中O-H键为极性键，且分子为V形不对称结构，键的极性不能抵消。', conceptClass: 'ion' },
+  co2: { eq: 'CO₂：直线形结构 → <span class="cov">非极性分子</span>', concept: '<div class="title">非极性分子</div>正负电荷中心重合，分子无偶极矩。CO₂中C=O键为极性键，但分子为直线形对称结构，两个键的极性相互抵消。', conceptClass: 'cov' },
+  hcl: { eq: 'HCl：直线形 → <span class="ion">极性分子</span>', concept: '<div class="title">极性分子</div>H-Cl为极性键，且分子不对称（只有两个原子），键的极性不能抵消，分子有偶极矩。', conceptClass: 'ion' },
+  ch4: { eq: 'CH₄：正四面体 → <span class="cov">非极性分子</span>', concept: '<div class="title">非极性分子</div>CH₄中C-H键极性很小，且分子为正四面体高度对称结构，即使有微弱极性也完全抵消。', conceptClass: 'cov' }
+};
+
+function drawPolar() {
+  pCtx.clearRect(0, 0, 560, 420);
+  const cx = 280, cy = 200;
+  
+  if (polarMode === 'h2o') {
+    // Bent polar molecule
+    const bonds = [{ x: -55, y: 50 }, { x: 55, y: 50 }];
+    bonds.forEach((b) => {
+      // Bond
+      pCtx.beginPath();
+      pCtx.moveTo(cx, cy - 10);
+      pCtx.lineTo(cx + b.x, cy + b.y);
+      pCtx.strokeStyle = '#3b82f6';
+      pCtx.lineWidth = 4;
+      pCtx.stroke();
+      
+      // Dipole arrow
+      const mx = cx + b.x * 0.5;
+      const my = cy - 10 + (b.y + 10) * 0.5;
+      pCtx.beginPath();
+      pCtx.moveTo(mx - b.x * 0.3, my - b.y * 0.3);
+      pCtx.lineTo(mx + b.x * 0.3, my + b.y * 0.3);
+      pCtx.strokeStyle = '#fbbf24';
+      pCtx.lineWidth = 2;
+      pCtx.stroke();
+      // Arrow head
+      pCtx.beginPath();
+      pCtx.moveTo(mx + b.x * 0.3, my + b.y * 0.3);
+      pCtx.lineTo(mx + b.x * 0.2 - 5, my + b.y * 0.2 - 5);
+      pCtx.lineTo(mx + b.x * 0.2 + 5, my + b.y * 0.2 + 5);
+      pCtx.fillStyle = '#fbbf24';
+      pCtx.fill();
+      
+      // H atom
+      pCtx.beginPath();
+      pCtx.arc(cx + b.x, cy + b.y, 18, 0, Math.PI * 2);
+      pCtx.fillStyle = 'rgba(59,130,246,0.4)';
+      pCtx.fill();
+      pCtx.strokeStyle = '#3b82f6';
+      pCtx.lineWidth = 2;
+      pCtx.stroke();
+      pCtx.fillStyle = '#93c5fd';
+      pCtx.font = 'bold 14px sans-serif';
+      pCtx.textAlign = 'center';
+      pCtx.fillText('H', cx + b.x, cy + b.y + 5);
+      pCtx.fillStyle = '#fca5a5';
+      pCtx.font = '11px sans-serif';
+      pCtx.fillText('δ⁺', cx + b.x, cy + b.y - 22);
+    });
+    
+    // O atom
+    pCtx.beginPath();
+    pCtx.arc(cx, cy - 10, 22, 0, Math.PI * 2);
+    pCtx.fillStyle = 'rgba(239,68,68,0.4)';
+    pCtx.fill();
+    pCtx.strokeStyle = '#ef4444';
+    pCtx.lineWidth = 2;
+    pCtx.stroke();
+    pCtx.fillStyle = '#fca5a5';
+    pCtx.font = 'bold 14px sans-serif';
+    pCtx.fillText('O', cx, cy - 5);
+    pCtx.fillStyle = '#93c5fd';
+    pCtx.font = '11px sans-serif';
+    pCtx.fillText('δ⁻', cx, cy - 38);
+    
+    // Net dipole
+    pCtx.beginPath();
+    pCtx.moveTo(cx, cy + 30);
+    pCtx.lineTo(cx, cy + 80);
+    pCtx.strokeStyle = '#fbbf24';
+    pCtx.lineWidth = 3;
+    pCtx.stroke();
+    pCtx.beginPath();
+    pCtx.moveTo(cx, cy + 80);
+    pCtx.lineTo(cx - 8, cy + 70);
+    pCtx.lineTo(cx + 8, cy + 70);
+    pCtx.fillStyle = '#fbbf24';
+    pCtx.fill();
+    pCtx.fillStyle = '#fbbf24';
+    pCtx.font = '12px sans-serif';
+    pCtx.fillText('偶极矩 μ', cx, cy + 100);
+    
+  } else if (polarMode === 'co2') {
+    // Linear nonpolar
+    const bonds = [{ x: -80, y: 0 }, { x: 80, y: 0 }];
+    bonds.forEach((b) => {
+      // Double bond
+      pCtx.beginPath();
+      pCtx.moveTo(cx, cy - 4);
+      pCtx.lineTo(cx + b.x, cy - 4);
+      pCtx.moveTo(cx, cy + 4);
+      pCtx.lineTo(cx + b.x, cy + 4);
+      pCtx.strokeStyle = '#3b82f6';
+      pCtx.lineWidth = 3;
+      pCtx.stroke();
+      
+      // Dipole arrows (opposite)
+      const mx = cx + b.x * 0.5;
+      pCtx.beginPath();
+      pCtx.moveTo(mx - 20, cy);
+      pCtx.lineTo(mx + 20, cy);
+      pCtx.strokeStyle = '#fbbf24';
+      pCtx.lineWidth = 2;
+      pCtx.stroke();
+      // Arrow pointing opposite directions
+      const dir = b.x > 0 ? -1 : 1;
+      pCtx.beginPath();
+      pCtx.moveTo(mx + dir * 20, cy);
+      pCtx.lineTo(mx + dir * 12, cy - 6);
+      pCtx.lineTo(mx + dir * 12, cy + 6);
+      pCtx.fillStyle = '#fbbf24';
+      pCtx.fill();
+      
+      // O atom
+      pCtx.beginPath();
+      pCtx.arc(cx + b.x, cy, 20, 0, Math.PI * 2);
+      pCtx.fillStyle = 'rgba(239,68,68,0.4)';
+      pCtx.fill();
+      pCtx.strokeStyle = '#ef4444';
+      pCtx.lineWidth = 2;
+      pCtx.stroke();
+      pCtx.fillStyle = '#fca5a5';
+      pCtx.font = 'bold 14px sans-serif';
+      pCtx.textAlign = 'center';
+      pCtx.fillText('O', cx + b.x, cy + 5);
+      pCtx.fillStyle = '#93c5fd';
+      pCtx.font = '11px sans-serif';
+      pCtx.fillText('δ⁻', cx + b.x, cy - 28);
+    });
+    
+    // C atom
+    pCtx.beginPath();
+    pCtx.arc(cx, cy, 18, 0, Math.PI * 2);
+    pCtx.fillStyle = 'rgba(139,92,246,0.4)';
+    pCtx.fill();
+    pCtx.strokeStyle = '#8b5cf6';
+    pCtx.lineWidth = 2;
+    pCtx.stroke();
+    pCtx.fillStyle = '#c4b5fd';
+    pCtx.font = 'bold 14px sans-serif';
+    pCtx.fillText('C', cx, cy + 5);
+    pCtx.fillStyle = '#fca5a5';
+    pCtx.font = '11px sans-serif';
+    pCtx.fillText('δ⁺', cx, cy - 25);
+    
+    // Cancel indicator
+    pCtx.fillStyle = '#10b981';
+    pCtx.font = '13px sans-serif';
+    pCtx.fillText('μ = 0（对称抵消）', cx, cy + 60);
+    
+  } else if (polarMode === 'hcl') {
+    // Diatomic polar
+    pCtx.beginPath();
+    pCtx.moveTo(cx - 60, cy);
+    pCtx.lineTo(cx + 60, cy);
+    pCtx.strokeStyle = '#3b82f6';
+    pCtx.lineWidth = 4;
+    pCtx.stroke();
+    
+    // Dipole arrow
+    pCtx.beginPath();
+    pCtx.moveTo(cx - 40, cy + 30);
+    pCtx.lineTo(cx + 40, cy + 30);
+    pCtx.strokeStyle = '#fbbf24';
+    pCtx.lineWidth = 3;
+    pCtx.stroke();
+    pCtx.beginPath();
+    pCtx.moveTo(cx - 40, cy + 30);
+    pCtx.lineTo(cx - 30, cy + 24);
+    pCtx.lineTo(cx - 30, cy + 36);
+    pCtx.fillStyle = '#fbbf24';
+    pCtx.fill();
+    pCtx.fillStyle = '#fbbf24';
+    pCtx.font = '12px sans-serif';
+    pCtx.fillText('μ', cx, cy + 55);
+    
+    // H
+    pCtx.beginPath();
+    pCtx.arc(cx - 60, cy, 22, 0, Math.PI * 2);
+    pCtx.fillStyle = 'rgba(59,130,246,0.4)';
+    pCtx.fill();
+    pCtx.strokeStyle = '#3b82f6';
+    pCtx.lineWidth = 2;
+    pCtx.stroke();
+    pCtx.fillStyle = '#93c5fd';
+    pCtx.font = 'bold 16px sans-serif';
+    pCtx.fillText('H', cx - 60, cy + 6);
+    pCtx.fillStyle = '#fca5a5';
+    pCtx.font = '12px sans-serif';
+    pCtx.fillText('δ⁺', cx - 60, cy - 30);
+    
+    // Cl
+    pCtx.beginPath();
+    pCtx.arc(cx + 60, cy, 28, 0, Math.PI * 2);
+    pCtx.fillStyle = 'rgba(239,68,68,0.4)';
+    pCtx.fill();
+    pCtx.strokeStyle = '#ef4444';
+    pCtx.lineWidth = 2;
+    pCtx.stroke();
+    pCtx.fillStyle = '#fca5a5';
+    pCtx.font = 'bold 16px sans-serif';
+    pCtx.fillText('Cl', cx + 60, cy + 6);
+    pCtx.fillStyle = '#93c5fd';
+    pCtx.font = '12px sans-serif';
+    pCtx.fillText('δ⁻', cx + 60, cy - 36);
+    
+  } else { // ch4
+    // Tetrahedral nonpolar
+    const bonds = [
+      { x: 0, y: -70 },
+      { x: 60, y: 35 },
+      { x: -60, y: 35 },
+      { x: 0, y: 15 }
+    ];
+    
+    bonds.forEach((b) => {
+      pCtx.beginPath();
+      pCtx.moveTo(cx, cy);
+      pCtx.lineTo(cx + b.x, cy + b.y);
+      pCtx.strokeStyle = '#3b82f6';
+      pCtx.lineWidth = 3;
+      pCtx.stroke();
+      
+      pCtx.beginPath();
+      pCtx.arc(cx + b.x, cy + b.y, 14, 0, Math.PI * 2);
+      pCtx.fillStyle = 'rgba(59,130,246,0.3)';
+      pCtx.fill();
+      pCtx.strokeStyle = '#3b82f6';
+      pCtx.lineWidth = 1.5;
+      pCtx.stroke();
+      pCtx.fillStyle = '#93c5fd';
+      pCtx.font = '11px sans-serif';
+      pCtx.textAlign = 'center';
+      pCtx.fillText('H', cx + b.x, cy + b.y + 4);
+    });
+    
+    // Center C
+    pCtx.beginPath();
+    pCtx.arc(cx, cy, 18, 0, Math.PI * 2);
+    pCtx.fillStyle = 'rgba(139,92,246,0.4)';
+    pCtx.fill();
+    pCtx.strokeStyle = '#8b5cf6';
+    pCtx.lineWidth = 2;
+    pCtx.stroke();
+    pCtx.fillStyle = '#c4b5fd';
+    pCtx.font = 'bold 13px sans-serif';
+    pCtx.fillText('C', cx, cy + 5);
+    
+    // Symmetry indicator
+    pCtx.fillStyle = '#10b981';
+    pCtx.font = '13px sans-serif';
+    pCtx.fillText('高度对称 → μ = 0', cx, cy + 90);
+  }
+}
+
+document.querySelectorAll('[data-polar]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-polar]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    polarMode = btn.dataset.polar;
+    const d = polarData[polarMode];
+    document.getElementById('polarEq').innerHTML = d.eq;
+    const concept = document.getElementById('polarConcept');
+    concept.innerHTML = d.concept;
+    concept.className = 'concept-card ' + d.conceptClass;
+    drawPolar();
+  });
+});
+
+// Polarity quiz
+const polarQuestions = [
+  { q: '下列哪个是非极性分子？', opts: ['H₂O', 'NH₃', 'CO₂', 'HCl'], ans: 2 },
+  { q: '判断分子极性的依据是？', opts: ['只看键的极性', '只看分子构型', '键的极性和分子构型', '原子种类'], ans: 2 },
+  { q: 'CH₄是非极性分子的原因是？', opts: ['C-H键非极性', '分子高度对称', '没有孤对电子', '碳原子电负性小'], ans: 1 }
+];
+let polarQIdx = 0;
+
+function renderPolarQ() {
+  const q = polarQuestions[polarQIdx];
+  document.getElementById('polarQ').textContent = q.q;
+  const optsEl = document.getElementById('polarOpts');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.onclick = () => {
+      optsEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+      if (i === q.ans) { div.classList.add('correct'); document.getElementById('polarFb').textContent = '✓ 正确！'; recordCorrect('polar', polarQIdx); }
+      else { div.classList.add('wrong'); document.getElementById('polarFb').textContent = '✗ 再想想'; }
+    };
+    optsEl.appendChild(div);
+  });
+  document.getElementById('polarFb').textContent = '';
+  document.getElementById('polarPrev').disabled = polarQIdx === 0;
+  document.getElementById('polarNext').disabled = polarQIdx === polarQuestions.length - 1;
+}
+document.getElementById('polarPrev').onclick = () => { if (polarQIdx > 0) { polarQIdx--; renderPolarQ(); } };
+document.getElementById('polarNext').onclick = () => { if (polarQIdx < polarQuestions.length - 1) { polarQIdx++; renderPolarQ(); } };
+renderPolarQ();
+
+// Initial draws
+drawBond();
+drawHybrid();
+drawMolecule();
+drawPolar();
+</script>
+<script src="assets/common.js"></script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中化学"></script>
+</body>
+</html>

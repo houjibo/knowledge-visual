@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>透镜及其应用 · 初中物理互动可视化</title>
+<style>
+  :root {
+    --primary: #3b82f6;
+    --lens: #8b5cf6;
+    --ray1: #ef4444;
+    --ray2: #10b981;
+    --ray3: #f59e0b;
+    --obj: #ec4899;
+    --img: #06b6d4;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.78);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #0c1a3a 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1340px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 22px; }
+  header h1 { font-size: 2.1rem; background: linear-gradient(90deg, var(--primary), var(--lens), var(--img)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; font-size: 0.95rem; margin-top: 4px; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 22px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 24px rgba(59,130,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .stage { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 720px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 12px; color: #e2e8f0; }
+
+  .equation { font-family: "Times New Roman", "STSong", serif; font-size: 1.05rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .eq-r { color: var(--ray1); font-weight: 600; }
+  .eq-g { color: var(--ray2); font-weight: 600; }
+  .eq-y { color: var(--ray3); font-weight: 600; }
+  .eq-p { color: var(--obj); font-weight: 600; }
+  .eq-c { color: var(--img); font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 100px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--ray3); font-weight: 600; font-size: 13px; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 13px; color: #93c5fd; transition: all .2s; user-select: none; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.1); }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px; line-height: 1.6; }
+  .info-grid b { color: #fbbf24; }
+
+  .steps { margin: 12px 0; }
+  .step { padding: 10px 14px; margin: 6px 0; background: rgba(255,255,255,0.04); border-radius: 8px; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--primary); transition: all .3s; }
+  .step.active { background: rgba(59,130,246,0.12); border-left-color: var(--ray2); }
+  .step .sn { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: white; text-align: center; line-height: 22px; font-size: 11px; margin-right: 8px; font-weight: 700; }
+  .step.active .sn { background: var(--ray2); }
+
+  .desc { font-size: 13px; color: #94a3b8; line-height: 1.7; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(59,130,246,0.08); border-radius: 12px; border: 1px solid rgba(59,130,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.2); border-color: #10b981; color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.2); border-color: #ef4444; color: #ef4444; }
+  .quiz-result { margin-top: 10px; font-size: 13px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🔍 透镜及其应用</h1>
+    <p>初中物理 · 八年级光学 — 凸透镜成像规律 · 光线追踪 · 照相机/投影仪/放大镜</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="trace">光线追踪实验</div>
+    <div class="tab" data-tab="compare">透镜类型对比</div>
+    <div class="tab" data-tab="app">应用场景探索</div>
+    <div class="tab" data-tab="quiz">知识闯关</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="640" height="480"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const panel = document.getElementById('panel');
+const legendEl = document.getElementById('legend');
+
+let currentTab = 'trace';
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelector('.tab.active').classList.remove('active');
+    t.classList.add('active');
+    currentTab = t.dataset.tab;
+    init();
+  });
+});
+
+function clearCanvas() { ctx.clearRect(0, 0, W, H); }
+
+/* ── Draw lens shape ── */
+function drawLens(x, y, h, f, type) {
+  // type: 'convex' or 'concave'
+  ctx.save();
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.lineWidth = 2.5;
+  ctx.fillStyle = 'rgba(139,92,246,0.1)';
+
+  if (type === 'convex') {
+    // convex lens shape
+    ctx.beginPath();
+    ctx.ellipse(x-8, y, 12, h, 0, -Math.PI/2, Math.PI/2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(x+8, y, 12, h, 0, Math.PI/2, -Math.PI/2);
+    ctx.stroke();
+    // fill between
+    ctx.beginPath();
+    ctx.ellipse(x-8, y, 12, h, 0, -Math.PI/2, Math.PI/2);
+    ctx.ellipse(x+8, y, 12, h, 0, Math.PI/2, -Math.PI/2);
+    ctx.fill();
+    // arrows at tips
+    ctx.fillStyle = '#8b5cf6';
+    ctx.beginPath(); ctx.moveTo(x, y-h-6); ctx.lineTo(x-6, y-h+4); ctx.lineTo(x+6, y-h+4); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x, y+h+6); ctx.lineTo(x-6, y+h-4); ctx.lineTo(x+6, y+h-4); ctx.fill();
+  } else {
+    // concave lens shape
+    ctx.beginPath();
+    ctx.ellipse(x+14, y, 12, h, 0, Math.PI/2, -Math.PI/2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(x-14, y, 12, h, 0, -Math.PI/2, Math.PI/2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(x+14, y, 12, h, 0, Math.PI/2, -Math.PI/2);
+    ctx.ellipse(x-14, y, 12, h, 0, -Math.PI/2, Math.PI/2);
+    ctx.fill();
+    ctx.fillStyle = '#8b5cf6';
+    ctx.beginPath(); ctx.moveTo(x, y-h-6); ctx.lineTo(x-6, y-h+4); ctx.lineTo(x+6, y-h+4); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x, y+h+6); ctx.lineTo(x-6, y+h-4); ctx.lineTo(x+6, y+h-4); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ── Draw arrow (object/image) ── */
+function drawArrowV(x, baseY, tipY, color, label, dashed) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2.5;
+  if (dashed) ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(x, baseY); ctx.lineTo(x, tipY); ctx.stroke();
+  ctx.setLineDash([]);
+  // arrowhead
+  const dir = tipY < baseY ? -1 : 1;
+  ctx.beginPath();
+  ctx.moveTo(x, tipY);
+  ctx.lineTo(x-5, tipY + dir*10);
+  ctx.lineTo(x+5, tipY + dir*10);
+  ctx.fill();
+  if (label) {
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x, tipY + dir*16);
+  }
+  ctx.restore();
+}
+
+/* ── Draw ray ── */
+function drawRay(x1, y1, x2, y2, color, dashed) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.8;
+  if (dashed) ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+/* ════════════════════════════════════════════
+   TAB 1: 光线追踪实验
+   ════════════════════════════════════════════ */
+let objDist = 180; // object distance from lens (px)
+let objHeight = 60; // object height (px)
+let focalLen = 100; // focal length (px)
+
+function initTrace() {
+  clearCanvas();
+  const axisY = H / 2;
+  const lensX = W / 2;
+
+  // axis
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, axisY); ctx.lineTo(W, axisY); ctx.stroke();
+
+  // focal points & 2F points
+  const F1 = lensX - focalLen, F2 = lensX + focalLen;
+  const F1l = lensX - focalLen, F2l = lensX + focalLen;
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  [F1, F2].forEach((fx, i) => {
+    ctx.beginPath(); ctx.arc(fx, axisY, 4, 0, Math.PI*2); ctx.fill();
+    ctx.fillText('F', fx, axisY + 18);
+  });
+  [lensX - 2*focalLen, lensX + 2*focalLen].forEach(fx => {
+    ctx.fillStyle = 'rgba(245,158,11,0.5)';
+    ctx.beginPath(); ctx.arc(fx, axisY, 3, 0, Math.PI*2); ctx.fill();
+    ctx.fillText('2F', fx, axisY + 18);
+    ctx.fillStyle = '#f59e0b';
+  });
+
+  // lens
+  drawLens(lensX, axisY, 100, focalLen, 'convex');
+
+  // object
+  const objX = lensX - objDist;
+  const objTop = axisY - objHeight;
+  drawArrowV(objX, axisY, objTop, '#ec4899', '物', false);
+
+  // thin lens equation: 1/u + 1/v = 1/f → v = uf/(u-f)
+  const u = objDist;
+  const f = focalLen;
+  let v, imgH, imgType, imgDesc;
+
+  if (Math.abs(u - f) < 2) {
+    // u ≈ f, image at infinity
+    v = Infinity;
+    imgH = Infinity;
+    imgType = 'parallel';
+  } else if (u > f) {
+    v = u * f / (u - f);
+    imgH = objHeight * v / u;
+    imgType = 'real';
+  } else {
+    v = u * f / (u - f); // negative
+    imgH = objHeight * Math.abs(v) / u;
+    imgType = 'virtual';
+  }
+
+  // Three special rays
+  const rayColors = ['#ef4444', '#10b981', '#f59e0b'];
+
+  if (imgType === 'real') {
+    const imgX = lensX + v;
+    const imgTop = axisY + imgH; // inverted
+
+    // Ray 1: parallel to axis → through F2
+    drawRay(objTop.x || objX, objTop, lensX, objTop, rayColors[0], false);
+    drawRay(lensX, objTop, imgX, imgTop, rayColors[0], false);
+    // extend ray1 beyond image
+    const dx1 = imgX - lensX, dy1 = imgTop - objTop;
+    drawRay(imgX, imgTop, imgX + dx1*0.3, imgTop + dy1*0.3, rayColors[0], true);
+
+    // Ray 2: through F1 → parallel after lens
+    // from obj top through F1 to lens
+    const slope2in = (objTop - axisY) / (objX - F1);
+    const yAtLens2 = axisY + slope2in * (lensX - F1);
+    drawRay(objX, objTop, lensX, yAtLens2, rayColors[1], false);
+    drawRay(lensX, yAtLens2, imgX, imgTop, rayColors[1], false);
+
+    // Ray 3: through center → straight
+    drawRay(objX, objTop, lensX, axisY, rayColors[2], false);
+    drawRay(lensX, axisY, imgX, imgTop, rayColors[2], false);
+
+    // image arrow
+    drawArrowV(imgX, axisY, imgTop, '#06b6d4', '像(实)', false);
+
+    imgDesc = `倒立、${Math.abs(v/u) > 1.05 ? '放大' : Math.abs(v/u) < 0.95 ? '缩小' : '等大'}的实像`;
+  } else if (imgType === 'virtual') {
+    const imgX = lensX + v; // v is negative, so imgX < lensX
+    const imgTop = axisY - imgH; // upright
+
+    // Ray 1: parallel → refracts through F2
+    drawRay(objX, objTop, lensX, objTop, rayColors[0], false);
+    // after lens, goes toward F2 direction (downward from lens)
+    const ext1x = lensX + focalLen*2, ext1y = objTop + (objTop - axisY) / focalLen * focalLen * 2;
+    // actual refracted ray direction: from lens point (lensX, objTop) toward F2
+    // diverging: draw forward ray and backward extension
+    drawRay(lensX, objTop, lensX + 200, objTop + (axisY - objTop)/focalLen * 200, rayColors[0], false);
+    // backward extension (dashed) to virtual image
+    drawRay(lensX, objTop, imgX, imgTop, rayColors[0], true);
+
+    // Ray 2: toward F1 → parallel after lens
+    const slope2 = (axisY - objTop) / (F1 - objX);
+    const yAtLens2 = objTop + slope2 * (lensX - objX);
+    drawRay(objX, objTop, lensX, yAtLens2, rayColors[1], false);
+    drawRay(lensX, yAtLens2, lensX + 200, yAtLens2, rayColors[1], false);
+    drawRay(lensX, yAtLens2, imgX, imgTop, rayColors[1], true);
+
+    // Ray 3: through center
+    drawRay(objX, objTop, lensX, axisY, rayColors[2], false);
+    drawRay(lensX, axisY, lensX + 200, axisY + (axisY - objTop)/(lensX - objX) * 200, rayColors[2], false);
+    drawRay(lensX, axisY, imgX, imgTop, rayColors[2], true);
+
+    // virtual image
+    drawArrowV(imgX, axisY, imgTop, '#06b6d4', '像(虚)', true);
+
+    imgDesc = `正立、放大的虚像`;
+  } else {
+    // u = f, parallel rays
+    drawRay(objX, objTop, lensX, objTop, rayColors[0], false);
+    drawRay(lensX, objTop, W, objTop, rayColors[0], false);
+
+    const slope3 = (axisY - objTop) / (lensX - objX);
+    drawRay(objX, objTop, lensX, axisY, rayColors[2], false);
+    drawRay(lensX, axisY, W, axisY + slope3 * (W - lensX), rayColors[2], false);
+
+    imgDesc = '不成像（出射光线平行）';
+  }
+
+  // Labels
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#94a3b8';
+  const uLabel = `u = ${(u/f).toFixed(1)}f`;
+  ctx.fillText(uLabel, objX + 10, axisY + 30);
+  if (imgType !== 'parallel') {
+    const vLabel = `v = ${Math.abs(v/f).toFixed(1)}f`;
+    const imgXPos = lensX + (imgType === 'real' ? v : v);
+    ctx.fillText(vLabel, Math.min(Math.max(imgXPos, 50), W-80), axisY + 30);
+  }
+
+  legendEl.innerHTML = '<span style="color:#ef4444">● 平行光线</span><span style="color:#10b981">● 过焦点光线</span><span style="color:#f59e0b">● 过中心光线</span><span style="color:#ec4899">● 物体</span><span style="color:#06b6d4">● 像</span>';
+
+  // Determine region
+  let region = '';
+  const ratio = u / f;
+  if (ratio > 2.05) region = 'u > 2f：缩小倒立实像';
+  else if (ratio > 1.95 && ratio < 2.05) region = 'u = 2f：等大倒立实像';
+  else if (ratio > 1.05) region = 'f < u < 2f：放大倒立实像';
+  else if (ratio > 0.95 && ratio < 1.05) region = 'u = f：不成像';
+  else region = 'u < f：放大正立虚像';
+
+  panel.innerHTML = `
+    <h3>🔬 光线追踪实验</h3>
+    <div class="desc">
+      凸透镜对光线有<b>会聚</b>作用。三条特殊光线：
+      ① 平行于主光轴 → 过焦点 F'；
+      ② 过焦点 F → 平行于主光轴；
+      ③ 过光心 → 方向不变。
+    </div>
+    <div class="equation">
+      薄透镜公式：<span class="eq-y">1/u</span> + <span class="eq-c">1/v</span> = <span class="eq-r">1/f</span>
+    </div>
+    <div class="slider-row"><label>物距 u</label><input type="range" min="30" max="300" step="1" value="${objDist}" id="s_u"><span class="val">${(objDist/f).toFixed(1)}f</span></div>
+    <div class="slider-row"><label>物高 h</label><input type="range" min="20" max="100" step="1" value="${objHeight}" id="s_h"><span class="val">${objHeight}px</span></div>
+    <div class="slider-row"><label>焦距 f</label><input type="range" min="50" max="150" step="5" value="${focalLen}" id="s_f"><span class="val">${focalLen}px</span></div>
+    <div class="info-grid">
+      <div><b>物距</b><br>u = ${(u/f).toFixed(2)}f</div>
+      <div><b>像距</b><br>${imgType==='parallel'?'∞':`v = ${Math.abs(v/f).toFixed(2)}f`}</div>
+      <div><b>放大率</b><br>${imgType==='parallel'?'—':`|v/u| = ${imgType==='real'?Math.abs(v/u).toFixed(2):Math.abs(v/u).toFixed(2)}`}</div>
+      <div><b>成像特点</b><br>${imgDesc}</div>
+    </div>
+    <div style="margin-top:10px;padding:10px;background:rgba(59,130,246,0.08);border-radius:8px;font-size:13px;color:#93c5fd">
+      📍 当前区域：<b>${region}</b>
+    </div>
+    <div class="steps">
+      <div class="step active"><span class="sn">1</span>拖动"物距"滑块，观察像的变化</div>
+      <div class="step"><span class="sn">2</span>注意 u=f 和 u=2f 两个临界点</div>
+      <div class="step"><span class="sn">3</span>比较实像（倒立）与虚像（正立）</div>
+    </div>
+  `;
+
+  const su = document.getElementById('s_u');
+  const sh = document.getElementById('s_h');
+  const sf = document.getElementById('s_f');
+  su.addEventListener('input', () => { objDist = +su.value; su.nextElementSibling.textContent = (objDist/focalLen).toFixed(1)+'f'; initTrace(); });
+  sh.addEventListener('input', () => { objHeight = +sh.value; sh.nextElementSibling.textContent = objHeight+'px'; initTrace(); });
+  sf.addEventListener('input', () => { focalLen = +sf.value; sf.nextElementSibling.textContent = focalLen+'px'; initTrace(); });
+}
+
+/* ════════════════════════════════════════════
+   TAB 2: 透镜类型对比
+   ════════════════════════════════════════════ */
+let cmpType = 'convex';
+
+function initCompare() {
+  clearCanvas();
+  const axisY = H / 2;
+  const lensX = W / 2;
+
+  // axis
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, axisY); ctx.lineTo(W, axisY); ctx.stroke();
+
+  // Parallel rays from left
+  const rays = [-60, -30, 0, 30, 60];
+  const f = 100;
+
+  if (cmpType === 'convex') {
+    drawLens(lensX, axisY, 100, f, 'convex');
+    // focal point
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.arc(lensX + f, axisY, 5, 0, Math.PI*2); ctx.fill();
+    ctx.font = '12px sans-serif'; ctx.fillText("F'", lensX+f, axisY+18);
+    ctx.beginPath(); ctx.arc(lensX - f, axisY, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillText("F", lensX-f, axisY+18);
+
+    rays.forEach(ry => {
+      const y = axisY + ry;
+      // incoming parallel
+      drawRay(0, y, lensX, y, 'rgba(239,68,68,0.6)', false);
+      // refracted through F'
+      const slope = (axisY + ry - axisY) / (lensX - (lensX+f));
+      const ex = W, ey = y + (axisY - y) / f * (W - lensX);
+      drawRay(lensX, y, W, ey, 'rgba(239,68,68,0.8)', false);
+    });
+
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillStyle = '#8b5cf6';
+    ctx.textAlign = 'center';
+    ctx.fillText('凸透镜（会聚）', lensX, 30);
+  } else {
+    drawLens(lensX, axisY, 100, f, 'concave');
+    // virtual focal points
+    ctx.fillStyle = 'rgba(245,158,11,0.5)';
+    ctx.beginPath(); ctx.arc(lensX + f, axisY, 5, 0, Math.PI*2); ctx.fill();
+    ctx.font = '12px sans-serif'; ctx.fillText("F'", lensX+f, axisY+18);
+    ctx.beginPath(); ctx.arc(lensX - f, axisY, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillText("F", lensX-f, axisY+18);
+
+    rays.forEach(ry => {
+      const y = axisY + ry;
+      drawRay(0, y, lensX, y, 'rgba(239,68,68,0.6)', false);
+      // diverging: appears to come from F (left focal point)
+      const dx = lensX - (lensX - f);
+      const dy = y - axisY;
+      const ex = W, ey = y + dy/dx * (W - lensX);
+      drawRay(lensX, y, W, ey, 'rgba(239,68,68,0.8)', false);
+      // dashed backward extension to F
+      drawRay(lensX, y, lensX - f, axisY, 'rgba(239,68,68,0.3)', true);
+    });
+
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillStyle = '#8b5cf6';
+    ctx.textAlign = 'center';
+    ctx.fillText('凹透镜（发散）', lensX, 30);
+  }
+
+  legendEl.innerHTML = '<span style="color:#ef4444">● 入射平行光</span><span style="color:#ef4444">● 折射光线</span><span style="color:#f59e0b">● 焦点</span>';
+
+  panel.innerHTML = `
+    <h3>🔍 透镜类型对比</h3>
+    <div class="mode-switch">
+      <div class="mode-btn ${cmpType==='convex'?'active':''}" data-t="convex">凸透镜</div>
+      <div class="mode-btn ${cmpType==='concave'?'active':''}" data-t="concave">凹透镜</div>
+    </div>
+    <div class="desc">
+      <b>凸透镜</b>：中间厚、边缘薄，对光线有<b>会聚</b>作用。平行光经过凸透镜后会聚于焦点。
+      <br><br>
+      <b>凹透镜</b>：中间薄、边缘厚，对光线有<b>发散</b>作用。平行光经过凹透镜后发散，反向延长线交于虚焦点。
+    </div>
+    <div class="info-grid">
+      <div><b>透镜类型</b><br>${cmpType === 'convex' ? '凸透镜（会聚）' : '凹透镜（发散）}'}</div>
+      <div><b>焦点</b><br>${cmpType === 'convex' ? '实焦点（光线实际会聚）' : '虚焦点（反向延长线交点）'}</div>
+      <div><b>成像</b><br>${cmpType === 'convex' ? '可成实像或虚像' : '只能成正立缩小虚像'}</div>
+      <div><b>应用</b><br>${cmpType === 'convex' ? '放大镜、照相机、投影仪' : '近视眼镜'}</div>
+    </div>
+    <div class="steps">
+      <div class="step active"><span class="sn">1</span>切换凸透镜/凹透镜观察区别</div>
+      <div class="step"><span class="sn">2</span>凸透镜：平行光会聚于焦点</div>
+      <div class="step"><span class="sn">3</span>凹透镜：平行光发散，虚线指向虚焦点</div>
+    </div>
+  `;
+
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.addEventListener('click', () => { cmpType = b.dataset.t; initCompare(); });
+  });
+}
+
+/* ════════════════════════════════════════════
+   TAB 3: 应用场景探索
+   ════════════════════════════════════════════ */
+let appMode = 'camera';
+
+function initApp() {
+  clearCanvas();
+  const axisY = H / 2 + 20;
+
+  if (appMode === 'camera') {
+    // Camera: u > 2f → inverted, reduced real image
+    const lensX = 300, f = 80;
+    const objX = 60, objTop = axisY - 100;
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.beginPath(); ctx.moveTo(0, axisY); ctx.lineTo(W, axisY); ctx.stroke();
+
+    drawLens(lensX, axisY, 80, f, 'convex');
+
+    // object (far away)
+    drawArrowV(objX, axisY, objTop, '#ec4899', '远处物体', false);
+
+    // image (between f and 2f on other side)
+    const u = lensX - objX;
+    const v = u * f / (u - f);
+    const imgH = 100 * v / u;
+    const imgX = lensX + v;
+    drawArrowV(imgX, axisY, axisY + imgH, '#06b6d4', '底片上的像', false);
+
+    // rays
+    drawRay(objTop.x || objX, objTop, lensX, objTop, 'rgba(239,68,68,0.5)', false);
+    const slope = (axisY - objTop) / f;
+    drawRay(lensX, objTop, imgX, axisY + imgH, 'rgba(239,68,68,0.7)', false);
+    drawRay(objX, objTop, lensX, axisY, 'rgba(245,158,11,0.5)', false);
+    drawRay(lensX, axisY, imgX, axisY + imgH, 'rgba(245,158,11,0.7)', false);
+
+    // camera body outline
+    ctx.strokeStyle = 'rgba(148,163,184,0.4)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(imgX - 20, axisY - 50, 80, 100);
+    ctx.fillStyle = 'rgba(148,163,184,0.1)';
+    ctx.fillRect(imgX - 20, axisY - 50, 80, 100);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('胶片/传感器', imgX + 20, axisY + 70);
+
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillStyle = '#3b82f6';
+    ctx.textAlign = 'center';
+    ctx.fillText('📷 照相机原理', W/2, 30);
+
+    legendEl.innerHTML = '<span style="color:#ec4899">● 物体</span><span style="color:#06b6d4">● 倒立缩小实像</span><span style="color:#94a3b8">● 暗箱</span>';
+
+    panel.innerHTML = `
+      <h3>📷 照相机</h3>
+      <div class="mode-switch">
+        <div class="mode-btn ${appMode==='camera'?'active':''}" data-a="camera">照相机</div>
+        <div class="mode-btn ${appMode==='projector'?'active':''}" data-a="projector">投影仪</div>
+        <div class="mode-btn ${appMode==='magnifier'?'active':''}" data-a="magnifier">放大镜</div>
+      </div>
+      <div class="desc">
+        照相机利用<b>凸透镜</b>成像：当物距 <b>u > 2f</b> 时，在胶片上形成<b>倒立、缩小的实像</b>。
+        <br><br>
+        镜头相当于凸透镜，胶片（或数码传感器）相当于光屏。调节镜头到胶片的距离（像距）可以对焦。
+      </div>
+      <div class="equation">
+        u > 2f → <span class="eq-c">倒立、缩小、实像</span>
+      </div>
+      <div class="info-grid">
+        <div><b>物距条件</b><br>u > 2f（物体很远）</div>
+        <div><b>像的特点</b><br>倒立、缩小、实像</div>
+        <div><b>像距范围</b><br>f < v < 2f</div>
+        <div><b>应用</b><br>拍照、录像</div>
+      </div>
+    `;
+  } else if (appMode === 'projector') {
+    const lensX = 250, f = 80;
+    const objX = lensX - 1.5*f; // f < u < 2f
+    const objTop = axisY - 40;
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.beginPath(); ctx.moveTo(0, axisY); ctx.lineTo(W, axisY); ctx.stroke();
+
+    drawLens(lensX, axisY, 80, f, 'convex');
+
+    drawArrowV(objX, axisY, objTop, '#ec4899', '投影片', false);
+
+    const u = lensX - objX;
+    const v = u * f / (u - f);
+    const imgH = 40 * v / u;
+    const imgX = lensX + v;
+    drawArrowV(imgX, axisY, axisY + imgH, '#06b6d4', '屏幕上的像', false);
+
+    drawRay(objX, objTop, lensX, objTop, 'rgba(239,68,68,0.5)', false);
+    drawRay(lensX, objTop, imgX, axisY + imgH, 'rgba(239,68,68,0.7)', false);
+    drawRay(objX, objTop, lensX, axisY, 'rgba(245,158,11,0.5)', false);
+    drawRay(lensX, axisY, imgX, axisY + imgH, 'rgba(245,158,11,0.7)', false);
+
+    // screen
+    ctx.fillStyle = 'rgba(148,163,184,0.15)';
+    ctx.fillRect(imgX + 10, axisY - imgH - 20, 10, imgH*2 + 40);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('屏幕', imgX + 15, axisY + imgH + 40);
+
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillStyle = '#3b82f6';
+    ctx.textAlign = 'center';
+    ctx.fillText('📽️ 投影仪原理', W/2, 30);
+
+    legendEl.innerHTML = '<span style="color:#ec4899">● 投影片</span><span style="color:#06b6d4">● 倒立放大实像</span>';
+
+    panel.innerHTML = `
+      <h3>📽️ 投影仪</h3>
+      <div class="mode-switch">
+        <div class="mode-btn ${appMode==='camera'?'active':''}" data-a="camera">照相机</div>
+        <div class="mode-btn ${appMode==='projector'?'active':''}" data-a="projector">投影仪</div>
+        <div class="mode-btn ${appMode==='magnifier'?'active':''}" data-a="magnifier">放大镜</div>
+      </div>
+      <div class="desc">
+        投影仪利用<b>凸透镜</b>成像：当 <b>f < u < 2f</b> 时，在屏幕上形成<b>倒立、放大的实像</b>。
+        <br><br>
+        投影片放在 f 和 2f 之间，通过调节镜头位置使像清晰地投射到屏幕上。
+      </div>
+      <div class="equation">
+        f < u < 2f → <span class="eq-c">倒立、放大、实像</span>
+      </div>
+      <div class="info-grid">
+        <div><b>物距条件</b><br>f < u < 2f</div>
+        <div><b>像的特点</b><br>倒立、放大、实像</div>
+        <div><b>像距范围</b><br>v > 2f</div>
+        <div><b>应用</b><br>投影、幻灯机</div>
+      </div>
+    `;
+  } else {
+    const lensX = 320, f = 100;
+    const objX = lensX - 50; // u < f
+    const objTop = axisY - 50;
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.beginPath(); ctx.moveTo(0, axisY); ctx.lineTo(W, axisY); ctx.stroke();
+
+    drawLens(lensX, axisY, 80, f, 'convex');
+
+    drawArrowV(objX, axisY, objTop, '#ec4899', '物体', false);
+
+    // virtual image (upright, magnified, same side as object)
+    const u = lensX - objX;
+    const v = u * f / (u - f); // negative
+    const imgH = 50 * Math.abs(v) / u;
+    const imgX = lensX + v; // < lensX
+    drawArrowV(imgX, axisY, axisY - imgH, '#06b6d4', '虚像', true);
+
+    // rays
+    drawRay(objX, objTop, lensX, objTop, 'rgba(239,68,68,0.5)', false);
+    drawRay(lensX, objTop, W, objTop + (axisY - objTop)/f * (W - lensX), 'rgba(239,68,68,0.7)', false);
+    drawRay(lensX, objTop, imgX, axisY - imgH, 'rgba(239,68,68,0.3)', true);
+
+    drawRay(objX, objTop, lensX, axisY, 'rgba(245,158,11,0.5)', false);
+    const slope = (axisY - objTop) / (lensX - objX);
+    drawRay(lensX, axisY, W, axisY + slope * (W - lensX), 'rgba(245,158,11,0.7)', false);
+    drawRay(lensX, axisY, imgX, axisY - imgH, 'rgba(245,158,11,0.3)', true);
+
+    // eye
+    ctx.font = '24px sans-serif';
+    ctx.fillText('👁️', W - 50, axisY - 20);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
+    ctx.fillText('眼睛透过透镜看', W - 80, axisY + 10);
+
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillStyle = '#3b82f6';
+    ctx.textAlign = 'center';
+    ctx.fillText('🔍 放大镜原理', W/2, 30);
+
+    legendEl.innerHTML = '<span style="color:#ec4899">● 物体</span><span style="color:#06b6d4">● 正立放大虚像</span><span style="color:rgba(239,68,68,0.3)">--- 反向延长线</span>';
+
+    panel.innerHTML = `
+      <h3>🔍 放大镜</h3>
+      <div class="mode-switch">
+        <div class="mode-btn ${appMode==='camera'?'active':''}" data-a="camera">照相机</div>
+        <div class="mode-btn ${appMode==='projector'?'active':''}" data-a="projector">投影仪</div>
+        <div class="mode-btn ${appMode==='magnifier'?'active':''}" data-a="magnifier">放大镜</div>
+      </div>
+      <div class="desc">
+        放大镜利用<b>凸透镜</b>成像：当 <b>u < f</b> 时，形成<b>正立、放大的虚像</b>。
+        <br><br>
+        物体放在焦点以内，眼睛透过透镜看到的是放大的虚像（不能用光屏承接）。虚线表示光线的反向延长线。
+      </div>
+      <div class="equation">
+        u < f → <span class="eq-c">正立、放大、虚像</span>
+      </div>
+      <div class="info-grid">
+        <div><b>物距条件</b><br>u < f（物体在焦点内）</div>
+        <div><b>像的特点</b><br>正立、放大、虚像</div>
+        <div><b>像的位置</b><br>与物体同侧</div>
+        <div><b>应用</b><br>放大镜、老花镜</div>
+      </div>
+    `;
+  }
+
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.addEventListener('click', () => { appMode = b.dataset.a; initApp(); });
+  });
+}
+
+/* ════════════════════════════════════════════
+   TAB 4: 知识闯关
+   ════════════════════════════════════════════ */
+const quizzes = [
+  { q: '凸透镜对光线的作用是？', opts: ['发散', '会聚', '不改变方向', '反射'], ans: 1, explain: '凸透镜中间厚边缘薄，对光线有会聚作用。' },
+  { q: '物体放在凸透镜 2 倍焦距以外（u > 2f），成像特点是？', opts: ['正立放大虚像', '倒立缩小实像', '倒立放大实像', '正立缩小实像'], ans: 1, explain: 'u > 2f 时，成倒立、缩小的实像，应用：照相机。' },
+  { q: '放大镜工作时，物体应放在什么位置？', opts: ['u > 2f', 'u = 2f', 'f < u < 2f', 'u < f'], ans: 3, explain: '放大镜要求 u < f，成正立、放大的虚像。' },
+  { q: '投影仪成的像是？', opts: ['正立放大虚像', '倒立缩小实像', '倒立放大实像', '正立缩小实像'], ans: 2, explain: '投影仪中 f < u < 2f，成倒立、放大的实像。' },
+  { q: '当物体恰好放在焦点上（u = f）时？', opts: ['成等大实像', '成放大虚像', '不成像', '成缩小实像'], ans: 2, explain: 'u = f 时，出射光线平行，不成像。这是实像和虚像的分界点。' },
+  { q: '近视眼镜用的是哪种透镜？', opts: ['凸透镜', '凹透镜', '平面镜', '三棱镜'], ans: 1, explain: '近视眼成像在视网膜前，需要凹透镜发散光线，使像后移到视网膜上。' }
+];
+
+let quizIdx = 0, quizAnswered = false;
+let totalCorrect = 0, lensDone = false;
+function bumpCorrect() {
+  totalCorrect++;
+  if (!lensDone && totalCorrect >= 4 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('lens')) {
+    lensDone = true;
+    PageProgress.markDone('lens');
+    showLensToast('🎉 「透镜及其应用」知识地图已点亮！');
+  }
+}
+function showLensToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(52,199,89,.95);color:#fff;padding:12px 24px;border-radius:12px;font-size:15px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:opacity .3s';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2600);
+}
+
+function initQuiz() {
+  clearCanvas();
+  quizIdx = 0;
+  quizAnswered = false;
+  renderQuiz();
+  drawQuizBg();
+}
+
+function drawQuizBg() {
+  clearCanvas();
+  const axisY = H/2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.beginPath(); ctx.moveTo(0, axisY); ctx.lineTo(W, axisY); ctx.stroke();
+
+  // decorative lens
+  drawLens(W/2, axisY, 80, 80, 'convex');
+
+  // animated question mark
+  ctx.font = 'bold 60px sans-serif';
+  ctx.fillStyle = `rgba(124,58,237,${0.3 + 0.2*Math.sin(Date.now()/500)})`;
+  ctx.textAlign = 'center';
+  ctx.fillText('?', W/2, axisY + 20);
+  ctx.textAlign = 'left';
+
+  requestAnimationFrame(drawQuizBg);
+}
+
+function renderQuiz() {
+  const q = quizzes[quizIdx];
+  legendEl.innerHTML = '';
+  panel.innerHTML = `
+    <h3>🏆 知识闯关 (${quizIdx+1}/${quizzes.length})</h3>
+    <div class="quiz">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts" id="qopts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-i="${i}">${String.fromCharCode(65+i)}. ${o}</div>`).join('')}
+      </div>
+      <div class="quiz-result" id="qres"></div>
+    </div>
+  `;
+  quizAnswered = false;
+  document.querySelectorAll('.quiz-opt').forEach(o => {
+    o.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const i = +o.dataset.i;
+      if (i === q.ans) {
+        o.classList.add('correct');
+        bumpCorrect();
+        document.getElementById('qres').innerHTML = `<span style="color:#10b981">✅ 正确！</span> ${q.explain}`;
+      } else {
+        o.classList.add('wrong');
+        document.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        document.getElementById('qres').innerHTML = `<span style="color:#ef4444">❌ 不对</span> ${q.explain}`;
+      }
+      if (quizIdx < quizzes.length - 1) {
+        document.getElementById('qres').innerHTML += `<br><button id="nextq" style="margin-top:10px;padding:8px 20px;border-radius:8px;background:var(--primary);color:white;border:none;cursor:pointer;font-size:14px">下一题 →</button>`;
+        document.getElementById('nextq').addEventListener('click', () => { quizIdx++; renderQuiz(); });
+      } else {
+        document.getElementById('qres').innerHTML += `<br><span style="color:#fbbf24;margin-top:8px;display:block">🎉 闯关完成！你已经掌握了透镜的基本知识！</span>`;
+      }
+    });
+  });
+}
+
+function init() {
+  if (currentTab === 'trace') initTrace();
+  else if (currentTab === 'compare') initCompare();
+  else if (currentTab === 'app') initApp();
+  else if (currentTab === 'quiz') initQuiz();
+}
+init();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中物理"></script>
+</body>
+</html>

@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>玻尔原子模型 - 大学物理互动可视化</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0a0e27 0%, #1a1a3e 50%, #0d1b2a 100%);
+    color: #e0e6ed;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  header {
+    text-align: center; padding: 40px 20px 20px;
+    background: linear-gradient(180deg, rgba(10,14,39,0.9) 0%, transparent 100%);
+  }
+  h1 {
+    font-size: 2.5em; font-weight: 700;
+    background: linear-gradient(135deg, #64b5f6, #ba68c8, #4fc3f7);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 10px;
+  }
+  .subtitle { font-size: 1.1em; color: #90a4ae; letter-spacing: 2px; }
+  .nav-tabs {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; justify-content: center; flex-wrap: wrap;
+    gap: 8px; padding: 15px 10px;
+    background: rgba(10, 14, 39, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(100,181,246,0.2);
+  }
+  .tab {
+    padding: 10px 18px; border-radius: 25px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #b0bec5; cursor: pointer;
+    font-size: 0.95em; transition: all 0.3s;
+    white-space: nowrap;
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tab:hover { background: rgba(100,181,246,0.15); color: #fff; }
+  .tab.active {
+    background: linear-gradient(135deg, #1976d2, #7b1fa2);
+    color: white; border-color: transparent;
+    box-shadow: 0 4px 15px rgba(25,118,210,0.4);
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px 60px; }
+  .mode-section { animation: fadeIn 0.5s ease; }
+  .hidden { display: none !important; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .card {
+    background: rgba(20, 30, 60, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(100,181,246,0.2);
+    border-radius: 20px; padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .card h2 {
+    font-size: 1.5em; margin-bottom: 15px; color: #64b5f6;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card h2::before {
+    content: ''; width: 6px; height: 28px;
+    background: linear-gradient(180deg, #64b5f6, #ba68c8);
+    border-radius: 3px;
+  }
+  .intro { color: #b0bec5; line-height: 1.8; margin-bottom: 20px; font-size: 1.05em; }
+  .stage { display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap {
+    position: relative; background: rgba(0,0,0,0.4);
+    border-radius: 15px; padding: 15px;
+    border: 1px solid rgba(100,181,246,0.15);
+    display: flex; justify-content: center; align-items: center;
+  }
+  canvas { display: block; width: 100%; max-width: 100%; border-radius: 10px; background: #050814; }
+  .panel {
+    background: rgba(20,30,60,0.6);
+    border: 1px solid rgba(100,181,246,0.2);
+    border-radius: 15px; padding: 20px;
+  }
+  .panel h3 { color: #64b5f6; margin-bottom: 15px; font-size: 1.15em; }
+  .slider-row {
+    display: grid; grid-template-columns: 1fr auto; gap: 8px;
+    margin-bottom: 12px; align-items: center;
+  }
+  .slider-row label { grid-column: 1 / -1; font-size: 0.9em; color: #90a4ae; }
+  .slider-row input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,0.1); outline: none;
+  }
+  .slider-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: linear-gradient(135deg, #64b5f6, #42a5f5);
+    cursor: pointer; box-shadow: 0 0 10px rgba(100,181,246,0.6);
+  }
+  .val { color: #64b5f6; font-weight: 600; min-width: 60px; text-align: right; }
+  .mode-switch { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+  .mode-btn {
+    padding: 8px 14px; border: 1px solid rgba(100,181,246,0.3);
+    background: rgba(100,181,246,0.08); color: #90a4ae;
+    border-radius: 18px; cursor: pointer; font-size: 0.85em;
+    transition: all 0.2s;
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mode-btn:hover { background: rgba(100,181,246,0.2); color: #fff; }
+  .mode-btn.active {
+    background: linear-gradient(135deg, #1976d2, #7b1fa2);
+    color: white; border-color: transparent;
+  }
+  .info-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    background: rgba(0,0,0,0.3); padding: 12px;
+    border-radius: 10px; margin: 12px 0;
+    font-size: 0.9em; color: #b0bec5;
+  }
+  .info-grid b { color: #64b5f6; }
+  .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; }
+  .concept-card {
+    background: rgba(255,255,255,0.04);
+    border-left: 4px solid #64b5f6;
+    padding: 14px; border-radius: 10px;
+    color: #b0bec5; line-height: 1.7; font-size: 0.95em;
+  }
+  .concept-card .title { color: #64b5f6; font-weight: 700; margin-bottom: 8px; font-size: 1.05em; }
+  .concept-card.orbit { border-left-color: #4fc3f7; }
+  .concept-card.orbit .title { color: #4fc3f7; }
+  .concept-card.photon { border-left-color: #ba68c8; }
+  .concept-card.photon .title { color: #ba68c8; }
+  .concept-card.spectrum { border-left-color: #ffb74d; }
+  .concept-card.spectrum .title { color: #ffb74d; }
+  .quiz { display: flex; flex-direction: column; gap: 12px; }
+  .quiz-q { font-size: 1.1em; color: #fff; font-weight: 600; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opts > div {
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px; cursor: pointer;
+    transition: all 0.2s; line-height: 1.5;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  .quiz-opts > div:hover { background: rgba(100,181,246,0.15); border-color: #64b5f6; }
+  .quiz-opts > div.correct { background: rgba(16,185,129,0.2); border-color: #10b981; }
+  .quiz-opts > div.wrong { background: rgba(239,68,68,0.2); border-color: #ef4444; }
+  .quiz-feedback { min-height: 28px; color: #90a4ae; font-size: 0.95em; line-height: 1.5; }
+  .quiz-nav { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .quiz-nav button {
+    padding: 10px 20px; border: none; border-radius: 20px;
+    background: linear-gradient(135deg, #1976d2, #7b1fa2);
+    color: white; cursor: pointer; font-size: 0.95em;
+    transition: transform 0.2s;
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .quiz-nav button:hover:not(:disabled) { transform: translateY(-2px); }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .quiz-result {
+    padding: 15px; border-radius: 12px;
+    border: 2px solid; text-align: center;
+    font-size: 1.05em; font-weight: 600;
+  }
+  footer {
+    text-align: center; padding: 20px;
+    color: #607d8b; font-size: 0.9em;
+    border-top: 1px solid rgba(100,181,246,0.1);
+    margin-top: 30px;
+  }
+  .spectrum-bar {
+    display: flex; height: 22px; border-radius: 6px;
+    overflow: hidden; margin-top: 8px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  /* 横屏矮视口适配（手机横屏） */
+  @media (max-height: 500px) and (orientation: landscape) {
+    header { padding: 16px 20px 10px; }
+    h1 { font-size: 1.6em; margin-bottom: 4px; }
+    .subtitle { font-size: 0.9em; letter-spacing: 1px; }
+    .nav-tabs { padding: 8px 10px; gap: 6px; }
+    .tab { padding: 6px 14px; font-size: 0.85em; min-height: 36px; }
+    .container { padding: 15px 15px 30px; }
+    .card { padding: 15px; margin-bottom: 15px; border-radius: 15px; }
+    .card h2 { font-size: 1.2em; margin-bottom: 10px; }
+    .canvas-wrap { padding: 8px; }
+    .panel { padding: 12px; }
+    .intro { margin-bottom: 12px; font-size: 0.95em; line-height: 1.6; }
+    footer { padding: 12px; margin-top: 15px; font-size: 0.8em; }
+  }
+  /* 窄屏折行（小平板/横屏手机） */
+  @media (max-width: 1100px) {
+    .stage { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚛️ 玻尔原子模型</h1>
+  <div class="subtitle">Bohr Model · 能级量子化 · 光谱线</div>
+</header>
+
+<nav class="nav-tabs">
+  <button class="tab active" data-mode="learn">📖 学习模式</button>
+  <button class="tab" data-mode="practice">🧪 练习模式</button>
+  <button class="tab" data-mode="quiz">🎯 测验模式</button>
+</nav>
+
+<div class="container">
+
+  <!-- ==================== 学习模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="card">
+      <h2>能级与跃迁</h2>
+      <p class="intro">
+        1913 年玻尔提出原子模型：电子只能处于分立的稳定轨道上，对应量子化能级
+        E<sub>n</sub> = −13.6/n² eV。电子在不同能级之间跃迁时，会吸收或发射特定频率的光子，
+        这就是氢原子光谱的来源。拖动滑块切换主量子数 n，观察电子轨道半径、能量与跃迁光的颜色。
+      </p>
+      <div class="stage">
+        <div class="canvas-wrap">
+          <canvas id="learnCanvas" width="700" height="480"></canvas>
+        </div>
+        <div class="panel">
+          <h3>⚙️ 参数控制</h3>
+          <div class="slider-row">
+            <label>当前能级 n</label>
+            <input type="range" id="ln" min="1" max="6" step="1" value="1" />
+            <span class="val" id="lnv">1</span>
+          </div>
+          <div class="slider-row">
+            <label>跃迁目标 n'</label>
+            <input type="range" id="ltarget" min="1" max="6" step="1" value="2" />
+            <span class="val" id="ltargetv">2</span>
+          </div>
+          <div class="mode-switch">
+            <button class="mode-btn active" data-anim="idle">稳定</button>
+            <button class="mode-btn" data-anim="jump">跃迁</button>
+            <button class="mode-btn" data-anim="orbit">旋转</button>
+          </div>
+          <div class="info-grid">
+            <div>E(n) = <b id="i-en">−13.60</b> eV</div>
+            <div>r(n) = <b id="i-rn">0.053</b> nm</div>
+            <div>ΔE = <b id="i-de">—</b></div>
+            <div>λ = <b id="i-lambda">—</b></div>
+            <div>ν = <b id="i-nu">—</b></div>
+            <div>谱系：<b id="i-series">—</b></div>
+          </div>
+          <div class="concept-card photon">
+            <div class="title">💡 提示</div>
+            <span id="learn-hint">n 越大，电子离核越远，能量越接近 0（束缚越弱）。从高能级跳到低能级会发射光子。</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>核心概念</h2>
+      <div class="concept-grid">
+        <div class="concept-card orbit">
+          <div class="title">🪐 量子化轨道</div>
+          电子只能处于 r<sub>n</sub> = n²·a₀ 的轨道上，a₀ = 0.053 nm 为玻尔半径。角动量 L = n·ℏ 也量子化。
+        </div>
+        <div class="concept-card photon">
+          <div class="title">💡 能级跃迁</div>
+          电子吸收光子从低能级跃迁到高能级，或发射光子从高能级落到低能级。光子能量 hν = |E<sub>初</sub> − E<sub>末</sub>|。
+        </div>
+        <div class="concept-card spectrum">
+          <div class="title">🌈 氢光谱系</div>
+          落到 n=1：莱曼系（紫外）；落到 n=2：巴耳末系（可见光）；落到 n=3：帕邢系（红外）；更高为布拉开、普丰德系。
+        </div>
+        <div class="concept-card">
+          <div class="title">📉 电离能</div>
+          从基态 n=1 把电子打到无穷远所需能量 13.6 eV，称为氢原子的电离能。激态电离能更小。
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>巴耳末系可见谱线</h2>
+      <p class="intro">n ≥ 3 → n' = 2 的跃迁落在可见光区，构成巴耳末系。下面是几条主要谱线：</p>
+      <div class="concept-card spectrum">
+        <div class="title">H-α (3→2)</div>
+        波长 656.3 nm，红色。最亮的氢谱线，天文观测常用。
+        <div class="spectrum-bar" style="background: linear-gradient(90deg,#ff1744 0%,#ff1744 4%,transparent 4%,transparent 100%);"></div>
+      </div>
+      <div class="concept-card spectrum" style="margin-top:10px;">
+        <div class="title">H-β (4→2)</div>
+        波长 486.1 nm，青蓝色。
+        <div class="spectrum-bar" style="background: linear-gradient(90deg,transparent 0%,transparent 30%,#00b0ff 30%,#00b0ff 34%,transparent 34%,transparent 100%);"></div>
+      </div>
+      <div class="concept-card spectrum" style="margin-top:10px;">
+        <div class="title">H-γ (5→2)</div>
+        波长 434.0 nm，紫色。
+        <div class="spectrum-bar" style="background: linear-gradient(90deg,transparent 0%,transparent 60%,#7c4dff 60%,#7c4dff 64%,transparent 64%,transparent 100%);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="480"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🧪 练习：调参达到目标</h3>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-target="balmer">发出巴耳末系</button>
+          <button class="mode-btn" data-target="lyman">发出莱曼系</button>
+          <button class="mode-btn" data-target="ionize">电离基态氢</button>
+        </div>
+        <div class="slider-row">
+          <label>初态 n<sub>i</sub></label>
+          <input type="range" id="pni" min="1" max="6" step="1" value="3" />
+          <span class="val" id="pniv">3</span>
+        </div>
+        <div class="slider-row">
+          <label>末态 n<sub>f</sub></label>
+          <input type="range" id="pnf" min="1" max="7" step="1" value="2" />
+          <span class="val" id="pnfv">2</span>
+        </div>
+        <div class="info-grid">
+          <div>ΔE = <b id="p-de">1.89</b> eV</div>
+          <div>λ = <b id="p-lambda">656</b> nm</div>
+          <div>谱系：<b id="p-series">巴耳末</b></div>
+          <div>状态：<b id="p-status">未达成</b></div>
+        </div>
+        <div class="concept-card photon">
+          <div class="title">💡 提示</div>
+          <span id="p-hint">巴耳末系要求末态 n<sub>f</sub> = 2 且 n<sub>i</sub> ≥ 3。将 n<sub>f</sub> 设为 7 代表电子逃逸（电离）。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="quizCanvas" width="700" height="480"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🎯 随堂测验（4 题，3/4 合格）</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q">题目加载中…</div>
+          <div class="quiz-opts" id="quiz-opts"></div>
+          <div class="quiz-feedback" id="quiz-fb"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev">⬅ 上一题</button>
+            <button id="quiz-next">下一题 ➡</button>
+            <button id="quiz-submit" class="hidden">📊 提交评分</button>
+            <button id="quiz-retry" class="hidden">🔄 重新测验</button>
+          </div>
+          <div class="quiz-result hidden" id="quiz-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Knowledge Visual · 大学物理 · 玻尔原子模型 · <span id="done-mark"></span></footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 通用：模式切换
+ * ============================================================ */
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+let mode = 'learn';
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    mode = t.dataset.mode;
+    Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+    if (mode === 'quiz') renderQuiz();
+    draw();
+  });
+});
+
+/* ============================================================
+ * 物理常量与计算
+ * ============================================================ */
+const E0 = 13.6;          // eV
+const A0 = 0.053;         // nm
+const H_C = 1240;         // eV·nm
+const C_LIGHT = 3e17;     // nm/s  (c in nm/s)
+
+function energyN(n) { return n >= 7 ? 0 : -E0 / (n * n); }
+function radiusN(n) { return n >= 7 ? Infinity : n * n * A0; }
+function photonLambda(ni, nf) {
+  if (nf >= 7) return H_C / Math.abs(energyN(ni));
+  const dE = Math.abs(energyN(ni) - energyN(nf));
+  if (dE < 1e-9) return Infinity;
+  return H_C / dE;
+}
+function photonFreq(ni, nf) {
+  const lam = photonLambda(ni, nf);
+  if (!isFinite(lam) || lam <= 0) return Infinity;
+  return C_LIGHT / lam;
+}
+function seriesOf(nf) {
+  if (nf >= 7) return '电离';
+  return ['', '莱曼', '巴耳末', '帕邢', '布拉开', '普丰德', '汉弗莱'][nf] || '—';
+}
+function lambdaToColor(lam) {
+  if (!isFinite(lam)) return '#ffffff';
+  if (lam < 380) return '#9c27b0';      // UV
+  if (lam < 450) return '#7c4dff';
+  if (lam < 495) return '#2196f3';
+  if (lam < 570) return '#4caf50';
+  if (lam < 590) return '#ffeb3b';
+  if (lam < 620) return '#ff9800';
+  if (lam < 750) return '#f44336';
+  return '#b71c1c';                      // IR
+}
+
+/* ============================================================
+ * 学习模式
+ * ============================================================ */
+const lnEl = document.getElementById('ln');
+const ltEl = document.getElementById('ltarget');
+const lnvEl = document.getElementById('lnv');
+const ltvEl = document.getElementById('ltargetv');
+const iEn = document.getElementById('i-en');
+const iRn = document.getElementById('i-rn');
+const iDe = document.getElementById('i-de');
+const iLambda = document.getElementById('i-lambda');
+const iNu = document.getElementById('i-nu');
+const iSeries = document.getElementById('i-series');
+const learnHint = document.getElementById('learn-hint');
+
+let animMode = 'idle';
+let orbitPhase = 0;
+let jumpAnim = 0; // 0..1 transition progress
+let jumpFrom = 1, jumpTo = 2;
+let jumpDir = 0;  // -1 emit, +1 absorb, 0 none
+
+document.querySelectorAll('#sec-learn .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#sec-learn .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    animMode = btn.dataset.anim;
+    if (animMode === 'jump') {
+      jumpFrom = parseInt(lnEl.value, 10);
+      jumpTo = parseInt(ltEl.value, 10);
+      if (jumpFrom === jumpTo) { jumpDir = 0; learnHint.textContent = '初末态相同，无跃迁。'; }
+      else {
+        jumpDir = jumpTo > jumpFrom ? +1 : -1;
+        jumpAnim = 0;
+        const lam = photonLambda(jumpFrom, jumpTo);
+        const act = jumpDir > 0 ? '吸收' : '发射';
+        learnHint.textContent = `n=${jumpFrom} → n=${jumpTo}，${act}光子，λ ≈ ${lam.toFixed(1)} nm（${seriesOf(jumpDir > 0 ? jumpFrom : jumpTo)}系）。`;
+      }
+    }
+  });
+});
+
+function updateLearnInfo() {
+  const n = parseInt(lnEl.value, 10);
+  const nt = parseInt(ltEl.value, 10);
+  lnvEl.textContent = n;
+  ltvEl.textContent = nt;
+  iEn.textContent = energyN(n).toFixed(2);
+  iRn.textContent = radiusN(n).toFixed(3);
+  if (n === nt) {
+    iDe.textContent = '0';
+    iLambda.textContent = '—';
+    iNu.textContent = '—';
+    iSeries.textContent = '—';
+  } else {
+    const dE = Math.abs(energyN(n) - energyN(nt));
+    const lam = photonLambda(n, nt);
+    const nu = photonFreq(n, nt);
+    iDe.textContent = dE.toFixed(2) + ' eV';
+    iLambda.textContent = isFinite(lam) ? lam.toFixed(1) + ' nm' : '—';
+    iNu.textContent = isFinite(nu) ? (nu / 1e14).toFixed(2) + ' ×10¹⁴ Hz' : '—';
+    const lower = Math.min(n, nt);
+    iSeries.textContent = seriesOf(lower);
+  }
+}
+
+/* ============================================================
+ * 画布绘制
+ * ============================================================ */
+function drawAtom(ctx, W, H, nCurrent, nTarget, jumpProg, animMode) {
+  ctx.fillStyle = '#050814';
+  ctx.fillRect(0, 0, W, H);
+
+  // 星空
+  for (let i = 0; i < 40; i++) {
+    const sx = (i * 73) % W, sy = (i * 137) % H;
+    ctx.fillStyle = `rgba(255,255,255,${0.1 + 0.1 * Math.sin(orbitPhase * 0.05 + i)})`;
+    ctx.fillRect(sx, sy, 1.5, 1.5);
+  }
+
+  const cx = W / 2, cy = H / 2;
+  const maxR = Math.min(W, H) * 0.42;
+  // 比例：r(6)=36·a₀ → 画成 maxR；r(1) 最小
+  const scale = maxR / (36 * A0);
+
+  // 轨道
+  for (let k = 1; k <= 6; k++) {
+    const r = k * k * A0 * scale;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = k === nCurrent ? 'rgba(100,181,246,0.7)' : 'rgba(100,181,246,0.18)';
+    ctx.lineWidth = k === nCurrent ? 2 : 1;
+    ctx.stroke();
+    // 标注能级
+    ctx.fillStyle = 'rgba(144,164,174,0.8)';
+    ctx.font = '11px sans-serif';
+    ctx.fillText('n=' + k, cx + r + 4, cy - 4);
+  }
+
+  // 原子核
+  const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, 14);
+  grad.addColorStop(0, '#fff59d');
+  grad.addColorStop(0.5, '#ffb74d');
+  grad.addColorStop(1, 'rgba(255,183,77,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('p⁺', cx - 7, cy + 4);
+
+  // 电子位置
+  let electronN = nCurrent;
+  let electronR = electronN * electronN * A0 * scale;
+  let angle = animMode === 'orbit' ? orbitPhase * 0.04 : Math.PI / 4;
+  if (jumpProg > 0 && jumpProg < 1) {
+    // 跃迁动画：从内向外或反向插值
+    const fromR = jumpFrom * jumpFrom * A0 * scale;
+    const toR = jumpTo >= 7 ? maxR * 1.3 : jumpTo * jumpTo * A0 * scale;
+    electronR = fromR + (toR - fromR) * jumpProg;
+    angle = Math.PI / 4 + jumpProg * Math.PI * 0.6;
+  }
+  const ex = cx + electronR * Math.cos(angle);
+  const ey = cy + electronR * Math.sin(angle);
+
+  // 跃迁时光子轨迹
+  if (jumpProg > 0 && jumpProg < 1 && jumpDir !== 0) {
+    const lam = photonLambda(jumpFrom, jumpTo);
+    const col = lambdaToColor(lam);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([6, 5]);
+    ctx.beginPath();
+    if (jumpDir < 0) {
+      // 发射：向外辐射
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex + 80 * Math.cos(angle), ey + 80 * Math.sin(angle));
+    } else {
+      // 吸收：从外向内
+      ctx.moveTo(ex + 80 * Math.cos(angle + Math.PI / 3), ey + 80 * Math.sin(angle + Math.PI / 3));
+      ctx.lineTo(ex, ey);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // 光子符号
+    ctx.fillStyle = col;
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('hν', ex + 50 * Math.cos(angle), ey + 50 * Math.sin(angle) - 6);
+  }
+
+  // 电子
+  const eGrad = ctx.createRadialGradient(ex, ey, 0, ex, ey, 10);
+  eGrad.addColorStop(0, '#fff');
+  eGrad.addColorStop(0.4, '#64b5f6');
+  eGrad.addColorStop(1, 'rgba(100,181,246,0)');
+  ctx.fillStyle = eGrad;
+  ctx.beginPath();
+  ctx.arc(ex, ey, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 右下角能量刻度
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`E = ${energyN(nCurrent).toFixed(2)} eV`, 14, H - 14);
+}
+
+function drawSpectrumHint(ctx, W, H) {
+  // 底部画个氢光谱示意
+  const y = H - 50, h = 14;
+  const grad = ctx.createLinearGradient(40, 0, W - 40, 0);
+  grad.addColorStop(0, '#7c4dff');
+  grad.addColorStop(0.5, '#2196f3');
+  grad.addColorStop(0.75, '#ff9800');
+  grad.addColorStop(1, '#f44336');
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillRect(40, y, W - 80, h);
+  // 几条主要谱线位置
+  const lines = [
+    { lam: 656.3, name: 'H-α' },
+    { lam: 486.1, name: 'H-β' },
+    { lam: 434.0, name: 'H-γ' },
+    { lam: 410.2, name: 'H-δ' }
+  ];
+  lines.forEach(L => {
+    // 把 380..750 nm 线性映射
+    const t = (L.lam - 380) / (750 - 380);
+    const x = 40 + t * (W - 80);
+    ctx.strokeStyle = lambdaToColor(L.lam);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + h);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '10px sans-serif';
+    ctx.fillText(L.name, x - 12, y + h + 12);
+  });
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = '11px sans-serif';
+  ctx.fillText('巴耳末系（可见）', 44, y - 6);
+}
+
+function draw() {
+  orbitPhase++;
+  if (mode === 'learn') {
+    const c = document.getElementById('learnCanvas');
+    const ctx = c.getContext('2d');
+    const n = parseInt(lnEl.value, 10);
+    const nt = parseInt(ltEl.value, 10);
+    let prog = 0;
+    if (animMode === 'jump' && jumpDir !== 0) {
+      jumpAnim += 0.02;
+      if (jumpAnim > 1) { jumpAnim = 0; }
+      prog = jumpAnim;
+    }
+    drawAtom(ctx, c.width, c.height, n, nt, prog, animMode);
+    drawSpectrumHint(ctx, c.width, c.height);
+    updateLearnInfo();
+  } else if (mode === 'practice') {
+    drawPractice();
+  } else if (mode === 'quiz') {
+    drawQuizScene();
+  }
+  requestAnimationFrame(draw);
+}
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const pni = document.getElementById('pni');
+const pnf = document.getElementById('pnf');
+const pniv = document.getElementById('pniv');
+const pnfv = document.getElementById('pnfv');
+const pDe = document.getElementById('p-de');
+const pLam = document.getElementById('p-lambda');
+const pSeries = document.getElementById('p-series');
+const pStatus = document.getElementById('p-status');
+const pHint = document.getElementById('p-hint');
+let practiceTarget = 'balmer';
+
+document.querySelectorAll('#sec-practice .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#sec-practice .mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    practiceTarget = btn.dataset.target;
+    if (practiceTarget === 'balmer') pHint.textContent = '巴耳末系：末态 n_f = 2 且 n_i ≥ 3。';
+    else if (practiceTarget === 'lyman') pHint.textContent = '莱曼系：末态 n_f = 1 且 n_i ≥ 2。';
+    else pHint.textContent = '电离：n_f = 7 表示电子逃逸，需要 |ΔE| ≥ 13.6 eV（基态时）。';
+  });
+});
+
+function updatePractice() {
+  const ni = parseInt(pni.value, 10);
+  const nf = parseInt(pnf.value, 10);
+  pniv.textContent = ni;
+  pnfv.textContent = nf >= 7 ? '∞' : nf;
+  const dE = Math.abs(energyN(ni) - energyN(nf));
+  pDe.textContent = dE.toFixed(2);
+  const lam = photonLambda(ni, nf);
+  pLam.textContent = isFinite(lam) ? lam.toFixed(0) : '—';
+  pSeries.textContent = seriesOf(nf);
+  let ok = false, msg = '';
+  if (practiceTarget === 'balmer') {
+    ok = (nf === 2 && ni >= 3);
+    msg = ok ? '✅ 巴耳末系' : '未达成';
+  } else if (practiceTarget === 'lyman') {
+    ok = (nf === 1 && ni >= 2);
+    msg = ok ? '✅ 莱曼系' : '未达成';
+  } else {
+    ok = (nf >= 7 && ni === 1 && dE >= 13.6 - 1e-6);
+    msg = ok ? '✅ 已电离基态氢' : '未达成';
+  }
+  pStatus.textContent = msg;
+  pStatus.style.color = ok ? '#10b981' : '#ef4444';
+}
+
+[pni, pnf].forEach(el => el.addEventListener('input', updatePractice));
+
+function drawPractice() {
+  const c = document.getElementById('practiceCanvas');
+  const ctx = c.getContext('2d');
+  const ni = parseInt(pni.value, 10);
+  const nf = parseInt(pnf.value, 10);
+  drawAtom(ctx, c.width, c.height, ni, nf, 0, 'idle');
+  // 底部画一个跃迁示意
+  const cx = c.width / 2, cy = c.height / 2;
+  const maxR = Math.min(c.width, c.height) * 0.42;
+  const scale = maxR / (36 * A0);
+  const fromR = ni * ni * A0 * scale;
+  const toR = nf >= 7 ? maxR * 1.25 : nf * nf * A0 * scale;
+  ctx.strokeStyle = lambdaToColor(photonLambda(ni, nf));
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(cx + fromR, cy);
+  ctx.lineTo(cx + toR, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const quizData = [
+  {
+    q: '氢原子基态（n=1）的能量是多少？',
+    opts: ['−13.6 eV', '−3.4 eV', '0 eV', '+13.6 eV'],
+    ans: 0,
+    fb: 'E₁ = −13.6/1² = −13.6 eV，这就是氢原子的电离能。'
+  },
+  {
+    q: '电子从 n=3 跃迁到 n=2 发射的光属于哪个谱系？',
+    opts: ['莱曼系', '巴耳末系', '帕邢系', '布拉开系'],
+    ans: 1,
+    fb: '末态 n=2 → 巴耳末系（可见光），即 H-α 红线 656.3 nm。'
+  },
+  {
+    q: '氢原子的轨道半径 r 与主量子数 n 的关系是？',
+    opts: ['r ∝ n', 'r ∝ n²', 'r ∝ 1/n', 'r ∝ 1/n²'],
+    ans: 1,
+    fb: 'rₙ = n²·a₀，随 n 平方增长。n=2 的半径是 n=1 的 4 倍。'
+  },
+  {
+    q: '把基态氢原子的电子电离所需的最小能量约为？',
+    opts: ['3.4 eV', '10.2 eV', '13.6 eV', '27.2 eV'],
+    ans: 2,
+    fb: '电离能 = |E₁| = 13.6 eV，对应紫外光子（λ ≈ 91.2 nm）。'
+  }
+];
+const quizAnswers = new Array(quizData.length).fill(-1);
+let quizIdx = 0, quizSubmitted = false;
+const qQ = document.getElementById('quiz-q');
+const qOpts = document.getElementById('quiz-opts');
+const qFb = document.getElementById('quiz-fb');
+const qPrev = document.getElementById('quiz-prev');
+const qNext = document.getElementById('quiz-next');
+const qSubmit = document.getElementById('quiz-submit');
+const qRetry = document.getElementById('quiz-retry');
+const qResult = document.getElementById('quiz-result');
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  qQ.textContent = `${quizIdx + 1}. ${q.q}`;
+  qOpts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+    if (quizAnswers[quizIdx] === i) {
+      div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+    }
+    if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) div.classList.add('correct');
+    div.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizAnswers[quizIdx] = i;
+      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
+      renderQuizOpts();
+    });
+    qOpts.appendChild(div);
+  });
+  function renderQuizOpts() {
+    [...qOpts.children].forEach((c, i) => {
+      c.classList.remove('correct', 'wrong');
+      if (quizAnswers[quizIdx] === i) c.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+      if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) c.classList.add('correct');
+    });
+  }
+  qFb.textContent = quizAnswers[quizIdx] === -1 ? '' : (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
+  qPrev.disabled = quizIdx === 0;
+  qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
+  qSubmit.classList.toggle('hidden', quizIdx !== quizData.length - 1 || quizSubmitted);
+  qRetry.classList.toggle('hidden', !quizSubmitted);
+}
+qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+qSubmit.addEventListener('click', () => {
+  quizSubmitted = true;
+  const score = quizData.reduce((s, q, i) => s + (quizAnswers[i] === q.ans ? 1 : 0), 0);
+  const pass = score >= 3;
+  qResult.classList.remove('hidden');
+  qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
+  qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  qResult.textContent = pass ? `🎉 得分 ${score}/4，合格！本知识点已标记完成` : `😅 得分 ${score}/4，未达到 3/4，请复习后重试`;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('atom-physics');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+  renderQuiz();
+});
+qRetry.addEventListener('click', () => {
+  quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
+  qResult.classList.add('hidden');
+  renderQuiz();
+});
+
+function drawQuizScene() {
+  const c = document.getElementById('quizCanvas');
+  const ctx = c.getContext('2d');
+  drawAtom(ctx, c.width, c.height, 2, 3, 0, 'orbit');
+  drawSpectrumHint(ctx, c.width, c.height);
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`🎯 第 ${quizIdx + 1}/${quizData.length} 题`, 16, 26);
+}
+
+[lnEl, ltEl].forEach(el => el.addEventListener('input', updateLearnInfo));
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('atom-physics')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+updateLearnInfo();
+updatePractice();
+renderQuiz();
+draw();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学物理"></script>
+</body>
+</html>

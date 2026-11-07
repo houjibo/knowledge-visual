@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RLC 交流电路 · 阻抗与谐振 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --resistor: #ef4444;
+    --inductor: #f59e0b;
+    --capacitor: #38bdf8;
+    --signal: #a855f7;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 60%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px;
+    font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #c4b5fd; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #8b5cf6, #c4b5fd, #ddd6fe); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); color: #1e1b4b; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); touch-action: none; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #c4b5fd; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 100px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #c4b5fd; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.r { border-color: var(--resistor); }
+  .concept-card.l { border-color: var(--inductor); }
+  .concept-card.c { border-color: var(--capacitor); }
+  .concept-card.z { border-color: var(--signal); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.r .title { color: var(--resistor); }
+  .concept-card.l .title { color: var(--inductor); }
+  .concept-card.c .title { color: var(--capacitor); }
+  .concept-card.z .title { color: var(--signal); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 36px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: #1e1b4b; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #c4b5fd; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #1e1b4b; font-weight: 700; min-height: 36px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">🔭 物理</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">大学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">RLC 交流电路</span>
+  </nav>
+
+  <header>
+    <h1>🔌 RLC 交流电路 · 阻抗与谐振</h1>
+    <p>感抗 · 容抗 · 阻抗 · 谐振频率 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 学习</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 学习模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="learnCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>📐 核心公式</h3>
+        <div class="equation">
+          感抗：<b>X_L = ωL</b><br/>
+          容抗：<b>X_C = 1 / (ωC)</b><br/>
+          阻抗：<b>Z = √(R² + (X_L − X_C)²)</b><br/>
+          谐振：<b>ω₀ = 1 / √(LC)</b>
+        </div>
+        <div class="slider-row">
+          <label>频率 f (Hz)</label>
+          <input type="range" id="f" min="10" max="200" step="1" value="50" />
+          <span class="val" id="fv">50 Hz</span>
+        </div>
+        <div class="slider-row">
+          <label>电阻 R (Ω)</label>
+          <input type="range" id="r" min="5" max="100" step="1" value="30" />
+          <span class="val" id="rv">30 Ω</span>
+        </div>
+        <div class="slider-row">
+          <label>电感 L (mH)</label>
+          <input type="range" id="l" min="10" max="500" step="5" value="150" />
+          <span class="val" id="lv">150 mH</span>
+        </div>
+        <div class="slider-row">
+          <label>电容 C (μF)</label>
+          <input type="range" id="c" min="5" max="200" step="1" value="50" />
+          <span class="val" id="cv">50 μF</span>
+        </div>
+        <div class="info-grid">
+          <div>感抗 X_L = <b id="calc-xl">47.1</b> Ω</div>
+          <div>容抗 X_C = <b id="calc-xc">63.7</b> Ω</div>
+          <div>阻抗 Z = <b id="calc-z">34.3</b> Ω</div>
+          <div>谐振 f₀ = <b id="calc-f0">58.1</b> Hz</div>
+        </div>
+        <div class="concept-card r">
+          <div class="title">🔴 电阻 R</div>
+          阻碍电流并消耗能量，阻抗与频率无关，电压与电流同相位。
+        </div>
+        <div class="concept-card l">
+          <div class="title">🟡 电感 L</div>
+          感抗 X_L = ωL 随频率升高而增大；电压超前电流 90°。高频「阻流」。
+        </div>
+        <div class="concept-card c">
+          <div class="title">🔵 电容 C</div>
+          容抗 X_C = 1/(ωC) 随频率升高而减小；电压滞后电流 90°。低频「阻流」。
+        </div>
+        <div class="concept-card z">
+          <div class="title">🟣 谐振</div>
+          当 X_L = X_C 时 Z = R 最小，电流最大，电路呈纯电阻性，发生串联谐振。应用：调谐、滤波、选频。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🧪 练习：调参达到目标</h3>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-target="resonance">达到谐振</button>
+          <button class="mode-btn" data-target="inductive">呈感性 (X_L&gt;X_C)</button>
+          <button class="mode-btn" data-target="capacitive">呈容性 (X_C&gt;X_L)</button>
+        </div>
+        <div class="slider-row">
+          <label>频率 f (Hz)</label>
+          <input type="range" id="pf" min="10" max="200" step="1" value="40" />
+          <span class="val" id="pfv">40 Hz</span>
+        </div>
+        <div class="slider-row">
+          <label>电阻 R (Ω)</label>
+          <input type="range" id="pr" min="5" max="100" step="1" value="30" />
+          <span class="val" id="prv">30 Ω</span>
+        </div>
+        <div class="slider-row">
+          <label>电感 L (mH)</label>
+          <input type="range" id="pl" min="10" max="500" step="5" value="200" />
+          <span class="val" id="plv">200 mH</span>
+        </div>
+        <div class="slider-row">
+          <label>电容 C (μF)</label>
+          <input type="range" id="pc" min="5" max="200" step="1" value="50" />
+          <span class="val" id="pcv">50 μF</span>
+        </div>
+        <div class="info-grid">
+          <div>X_L = <b id="p-xl">50.3</b> Ω</div>
+          <div>X_C = <b id="p-xc">79.6</b> Ω</div>
+          <div>Z = <b id="p-z">41.9</b> Ω</div>
+          <div>状态：<b id="p-status">容性</b></div>
+        </div>
+        <div class="concept-card z">
+          <div class="title">💡 提示</div>
+          <span id="p-hint">调 f 使 X_L = X_C，达到串联谐振，此时 Z = R 最小。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="quizCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🎯 随堂测验（4 题，3/4 合格）</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q">题目加载中…</div>
+          <div class="quiz-opts" id="quiz-opts"></div>
+          <div class="quiz-feedback" id="quiz-fb"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev">⬅ 上一题</button>
+            <button id="quiz-next">下一题 ➡</button>
+            <button id="quiz-submit" class="hidden">📊 提交评分</button>
+            <button id="quiz-retry" class="hidden">🔄 重新测验</button>
+          </div>
+          <div class="quiz-result hidden" id="quiz-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Knowledge Visual · 大学物理 · RLC 交流电路 · <span id="done-mark"></span></footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+let mode = 'learn';
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    mode = t.dataset.mode;
+    Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+    if (mode === 'quiz') renderQuiz();
+    draw();
+  });
+});
+
+/* ============================================================
+ * 物理计算
+ * ============================================================ */
+function physics(f, R, L_mH, C_uF) {
+  const w = 2 * Math.PI * f;
+  const L = L_mH / 1000;
+  const C = C_uF / 1e6;
+  const XL = w * L;
+  const XC = 1 / (w * C);
+  const Z = Math.sqrt(R * R + (XL - XC) * (XL - XC));
+  const f0 = 1 / (2 * Math.PI * Math.sqrt(L * C));
+  let state = 'resistive';
+  if (XL > XC * 1.02) state = 'inductive';
+  else if (XC > XL * 1.02) state = 'capacitive';
+  return { w, XL, XC, Z, f0, state };
+}
+
+/* ============================================================
+ * 学习模式
+ * ============================================================ */
+const fEl = document.getElementById('f');
+const rEl = document.getElementById('r');
+const lEl = document.getElementById('l');
+const cEl = document.getElementById('c');
+function updLearn() {
+  document.getElementById('fv').textContent = fEl.value + ' Hz';
+  document.getElementById('rv').textContent = rEl.value + ' Ω';
+  document.getElementById('lv').textContent = lEl.value + ' mH';
+  document.getElementById('cv').textContent = cEl.value + ' μF';
+  const p = physics(+fEl.value, +rEl.value, +lEl.value, +cEl.value);
+  document.getElementById('calc-xl').textContent = p.XL.toFixed(1);
+  document.getElementById('calc-xc').textContent = p.XC.toFixed(1);
+  document.getElementById('calc-z').textContent = p.Z.toFixed(1);
+  document.getElementById('calc-f0').textContent = p.f0.toFixed(1);
+}
+[fEl, rEl, lEl, cEl].forEach(el => el.addEventListener('input', () => { updLearn(); draw(); }));
+updLearn();
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const pf = document.getElementById('pf');
+const pr = document.getElementById('pr');
+const pl = document.getElementById('pl');
+const pc = document.getElementById('pc');
+let practiceTarget = 'resonance';
+const targetDesc = {
+  resonance:  { text: '达到谐振', check: p => p.state === 'resistive', hint: '调 f 使 X_L = X_C，达到串联谐振，此时 Z = R 最小。' },
+  inductive:  { text: '呈感性',   check: p => p.state === 'inductive', hint: '提高 f 或增大 L、减小 C，让 X_L > X_C。' },
+  capacitive: { text: '呈容性',   check: p => p.state === 'capacitive', hint: '降低 f 或减小 L、增大 C，让 X_C > X_L。' }
+};
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    practiceTarget = btn.dataset.target;
+    document.getElementById('p-hint').textContent = targetDesc[practiceTarget].hint;
+    updPractice(); draw();
+  });
+});
+function updPractice() {
+  document.getElementById('pfv').textContent = pf.value + ' Hz';
+  document.getElementById('prv').textContent = pr.value + ' Ω';
+  document.getElementById('plv').textContent = pl.value + ' mH';
+  document.getElementById('pcv').textContent = pc.value + ' μF';
+  const p = physics(+pf.value, +pr.value, +pl.value, +pc.value);
+  document.getElementById('p-xl').textContent = p.XL.toFixed(1);
+  document.getElementById('p-xc').textContent = p.XC.toFixed(1);
+  document.getElementById('p-z').textContent = p.Z.toFixed(1);
+  const ok = targetDesc[practiceTarget].check(p);
+  const stateLabel = p.state === 'resistive' ? '谐振 ✨' : (p.state === 'inductive' ? '感性' : '容性');
+  document.getElementById('p-status').textContent = ok ? `✅ ${stateLabel}` : stateLabel;
+  document.getElementById('p-status').style.color = ok ? '#10b981' : '#c4b5fd';
+}
+[pf, pr, pl, pc].forEach(el => el.addEventListener('input', () => { updPractice(); draw(); }));
+updPractice();
+
+/* ============================================================
+ * Canvas：阻抗 |Z| 随频率 f 曲线 + 当前点
+ * ============================================================ */
+function drawScene(ctx, W, H, R, L_mH, C_uF, currentF, showLabels) {
+  ctx.clearRect(0, 0, W, H);
+  const padL = 50, padR = 20, padT = 30, padB = 40;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const fMax = 200;
+
+  // 计算 Z 曲线并找最大值（限定显示范围）
+  const L = L_mH / 1000, C = C_uF / 1e6;
+  const f0 = 1 / (2 * Math.PI * Math.sqrt(L * C));
+  let zMax = 0;
+  const samples = [];
+  for (let f = 1; f <= fMax; f += 1) {
+    const w = 2 * Math.PI * f;
+    const XL = w * L, XC = 1 / (w * C);
+    const Z = Math.sqrt(R * R + (XL - XC) * (XL - XC));
+    samples.push([f, Z]);
+    if (Z > zMax) zMax = Z;
+  }
+  zMax = Math.min(zMax, 5 * Math.max(R, 50));
+  const x2c = f => padL + (f / fMax) * plotW;
+  const y2c = z => padT + plotH - (z / zMax) * plotH;
+
+  // 网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = padT + (plotH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+  }
+
+  // 坐标轴
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + plotH); ctx.lineTo(padL + plotW, padT + plotH); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('f (Hz)', padL + plotW - 50, padT + plotH + 25);
+  ctx.save(); ctx.translate(15, padT + plotH / 2 + 20); ctx.rotate(-Math.PI / 2); ctx.fillText('|Z| (Ω)', 0, 0); ctx.restore();
+  for (let f = 0; f <= fMax; f += 50) {
+    ctx.fillText(String(f), x2c(f) - 8, padT + plotH + 15);
+  }
+
+  // Z 曲线
+  ctx.strokeStyle = '#a855f7';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  samples.forEach(([f, z], i) => {
+    const x = x2c(f), y = y2c(Math.min(z, zMax));
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // R 水平参考线（谐振最小值）
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(239,68,68,0.6)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(padL, y2c(R)); ctx.lineTo(padL + plotW, y2c(R)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#ef4444';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`R = ${R} Ω`, padL + 6, y2c(R) - 5);
+
+  // 谐振频率标记
+  if (f0 > 0 && f0 <= fMax) {
+    ctx.strokeStyle = 'rgba(16,185,129,0.6)';
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(x2c(f0), padT); ctx.lineTo(x2c(f0), padT + plotH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(`f₀=${f0.toFixed(1)}`, x2c(f0) + 4, padT + 14);
+  }
+
+  // 当前频率点
+  const cur = physics(currentF, R, L_mH, C_uF);
+  const curZ = Math.min(cur.Z, zMax);
+  ctx.beginPath();
+  ctx.arc(x2c(currentF), y2c(curZ), 7, 0, Math.PI * 2);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  if (showLabels) {
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(`f=${currentF} Hz, |Z|=${cur.Z.toFixed(1)} Ω`, x2c(currentF) + 10, y2c(curZ) - 10);
+  }
+}
+
+const learnCtx = document.getElementById('learnCanvas').getContext('2d');
+const practiceCtx = document.getElementById('practiceCanvas').getContext('2d');
+const quizCtx = document.getElementById('quizCanvas').getContext('2d');
+
+function draw() {
+  if (mode === 'learn') drawScene(learnCtx, 700, 420, +rEl.value, +lEl.value, +cEl.value, +fEl.value, true);
+  else if (mode === 'practice') drawScene(practiceCtx, 700, 420, +pr.value, +pl.value, +pc.value, +pf.value, true);
+  else drawQuizScene(quizCtx, 700, 420);
+}
+
+function drawQuizScene(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`🎯 第 ${quizIdx + 1}/${quizData.length} 题`, 30, 40);
+  drawScene(ctx, W, H - 50, 30, 150, 50, 50, false);
+}
+
+/* ============================================================
+ * 测验
+ * ============================================================ */
+const quizData = [
+  {
+    q: '1️⃣ RLC 串联电路中，感抗 X_L 与频率 f 的关系是？',
+    opts: ['与 f 成正比', '与 f 成反比', '与 f 无关', '与 f² 成正比'],
+    ans: 0,
+    fb: 'X_L = ωL = 2πfL，与 f 成正比。'
+  },
+  {
+    q: '2️⃣ 串联谐振时，电路的总阻抗 Z 等于？',
+    opts: ['X_L + X_C', 'R', '√(R² + X_L²)', '∞'],
+    ans: 1,
+    fb: '谐振时 X_L = X_C 相互抵消，Z = R，达到最小值。'
+  },
+  {
+    q: '3️⃣ L = 100 mH, C = 100 μF，谐振频率 f₀ 约为？',
+    opts: ['16 Hz', '50 Hz', '160 Hz', '1.6 kHz'],
+    ans: 1,
+    fb: 'f₀ = 1/(2π√(LC)) = 1/(2π√(0.1×1e-4)) ≈ 50.3 Hz。'
+  },
+  {
+    q: '4️⃣ 在 RLC 串联电路中，若频率 f < f₀，则电路呈？',
+    opts: ['纯电阻性', '感性', '容性', '无法判断'],
+    ans: 2,
+    fb: 'f < f₀ 时 X_C > X_L，电路呈容性，电流超前电压。'
+  }
+];
+let quizIdx = 0;
+let quizAnswers = new Array(quizData.length).fill(-1);
+let quizSubmitted = false;
+
+const qEl = document.getElementById('quiz-q');
+const qOpts = document.getElementById('quiz-opts');
+const qFb = document.getElementById('quiz-fb');
+const qPrev = document.getElementById('quiz-prev');
+const qNext = document.getElementById('quiz-next');
+const qSubmit = document.getElementById('quiz-submit');
+const qRetry = document.getElementById('quiz-retry');
+const qResult = document.getElementById('quiz-result');
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  qEl.textContent = q.q;
+  qOpts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+    if (quizAnswers[quizIdx] === i) div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+    if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) div.classList.add('correct');
+    div.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizAnswers[quizIdx] = i;
+      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
+      [...qOpts.children].forEach((c, j) => {
+        c.classList.remove('correct', 'wrong');
+        if (quizAnswers[quizIdx] === j) c.classList.add('correct');
+      });
+    });
+    qOpts.appendChild(div);
+  });
+  qFb.textContent = quizAnswers[quizIdx] === -1 ? '' : (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
+  qPrev.disabled = quizIdx === 0;
+  qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
+  qSubmit.classList.toggle('hidden', quizIdx !== quizData.length - 1 || quizSubmitted);
+  qRetry.classList.toggle('hidden', !quizSubmitted);
+}
+qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+qSubmit.addEventListener('click', () => {
+  quizSubmitted = true;
+  const score = quizData.reduce((s, q, i) => s + (quizAnswers[i] === q.ans ? 1 : 0), 0);
+  const pass = score >= 3;
+  qResult.classList.remove('hidden');
+  qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
+  qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  qResult.textContent = pass ? `🎉 得分 ${score}/4，合格！本知识点已标记完成` : `😅 得分 ${score}/4，未达到 3/4，请复习后重试`;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('rlc-circuit');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+  renderQuiz();
+});
+qRetry.addEventListener('click', () => {
+  quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
+  qResult.classList.add('hidden');
+  renderQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('rlc-circuit')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+renderQuiz();
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>相对论 · 互动可视化</title>
+<style>
+:root {
+  --primary: #6366f1;
+  --secondary: #8b5cf6;
+  --accent: #ec4899;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --dark: #0f172a;
+  --card: rgba(15,23,42,0.85);
+  --border: rgba(255,255,255,0.1);
+  --light: #f1f5f9;
+  --glow: rgba(99,102,241,0.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%);color:var(--light);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh;overflow-x:hidden;}
+.container{max-width:1400px;margin:0 auto;padding:20px;}
+
+header{text-align:center;padding:40px 20px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2));border-radius:20px;margin-bottom:30px;border:1px solid var(--border);position:relative;overflow:hidden;}
+header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(99,102,241,0.1) 0%,transparent 70%);animation:pulse 4s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:0.5;}50%{transform:scale(1.1);opacity:1;}}
+header h1{font-size:2.8em;background:linear-gradient(135deg,#6366f1,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px;position:relative;}
+header .sub{font-size:1.1em;opacity:.8;position:relative;}
+header .einstein{font-size:4em;position:absolute;right:30px;top:50%;transform:translateY(-50%);opacity:0.3;}
+
+.tabs{display:flex;gap:10px;margin-bottom:25px;flex-wrap:wrap;justify-content:center;}
+.tab{padding:12px 24px;background:var(--card);border:1px solid var(--border);border-radius:30px;cursor:pointer;transition:all .3s;font-size:.95em;min-height:44px;display:inline-flex;align-items:center;}
+.tab:hover{transform:translateY(-2px);border-color:var(--primary);}
+.tab.active{background:linear-gradient(135deg,var(--primary),var(--secondary));border-color:transparent;font-weight:600;}
+
+.section{display:none;background:var(--card);border-radius:20px;padding:30px;border:1px solid var(--border);margin-bottom:20px;backdrop-filter:blur(10px);}
+.section.active{display:block;}
+.section h2{font-size:1.6em;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.section h2 .icon{font-size:1.4em;}
+
+canvas{border-radius:12px;background:rgba(0,0,0,0.4);display:block;margin:0 auto;border:1px solid var(--border);}
+
+.controls{display:flex;flex-wrap:wrap;gap:15px;margin:20px 0;align-items:center;justify-content:center;}
+.ctrl-group{display:flex;flex-direction:column;gap:5px;min-width:180px;}
+.ctrl-group label{font-size:.85em;opacity:.7;}
+.ctrl-group input[type=range]{width:100%;accent-color:var(--primary);min-height:44px;}
+.ctrl-group select{padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.1);border:1px solid var(--border);color:var(--light);font-size:.9em;min-height:44px;}
+
+.btn{padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-size:.9em;font-weight:600;transition:all .3s;min-height:44px;min-width:44px;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 15px var(--glow);}
+.btn-sm{padding:6px 14px;font-size:.8em;border-radius:8px;}
+.btn-success{background:linear-gradient(135deg,var(--success),#059669);color:#fff;}
+.btn-warning{background:linear-gradient(135deg,var(--warning),#d97706);color:#fff;}
+
+.info-box{background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:12px;padding:15px 20px;margin:15px 0;font-size:.9em;line-height:1.8;}
+.info-box strong{color:#a5b4fc;}
+
+.data-row{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin:15px 0;}
+.data-item{background:rgba(255,255,255,0.05);border-radius:10px;padding:12px 20px;text-align:center;min-width:140px;border:1px solid var(--border);}
+.data-item .val{font-size:1.5em;font-weight:700;color:#a5b4fc;}
+.data-item .lbl{font-size:.75em;opacity:.6;margin-top:4px;}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr;}}
+
+/* 横屏矮视口适配（手机横屏高度<500px） */
+@media (max-height:500px) and (orientation:landscape){
+  header{padding:12px 20px;margin-bottom:12px;}
+  header h1{font-size:1.6em;}
+  header .sub{font-size:.85em;}
+  header .einstein{display:none;}
+  .tabs{gap:6px;margin-bottom:10px;}
+  .tab{padding:6px 14px;font-size:.8em;min-height:36px;}
+  .section{padding:14px;margin-bottom:12px;}
+  .section h2{font-size:1.2em;margin-bottom:10px;}
+  .controls{gap:8px;margin:8px 0;}
+  .data-item{padding:8px 12px;min-width:100px;}
+  .data-item .val{font-size:1.1em;}
+  .twin-scene{padding:12px;}
+  .twin-person{padding:8px;}
+  .twin-person .emoji{font-size:2em;}
+  .twin-person .age{font-size:1.4em;}
+  .quiz-q{padding:12px;margin-bottom:8px;}
+  footer{padding:12px;font-size:.75em;}
+}
+
+/* 移动端紧凑布局 */
+@media (max-width:768px){
+  .container{padding:12px;}
+  header{padding:18px 12px;margin-bottom:14px;}
+  header h1{font-size:1.8em;}
+  header .einstein{display:none;}
+  .tabs{gap:6px;margin-bottom:12px;}
+  .tab{padding:8px 14px;font-size:.8em;min-height:44px;}
+  .section{padding:16px;margin-bottom:14px;}
+  .section h2{font-size:1.3em;margin-bottom:12px;}
+  .controls{gap:10px;margin:12px 0;flex-direction:column;align-items:stretch;}
+  .ctrl-group{min-width:0;width:100%;}
+  .btn{width:100%;}
+  .compare-box{flex-direction:column;}
+  .compare-item{max-width:100%;min-width:0;}
+  .data-row{gap:8px;}
+  .data-item{min-width:100px;padding:8px 12px;flex:1;}
+  .twin-scene{flex-direction:column;gap:10px;padding:14px;}
+  .twin-arrow{transform:rotate(90deg);}
+  canvas{max-width:100%;height:auto;}
+}
+
+.formula{background:rgba(255,255,255,0.05);border-radius:8px;padding:10px 16px;font-family:"Courier New",monospace;display:inline-block;margin:5px 0;font-size:1em;color:#c4b5fd;border:1px solid var(--border);}
+.formula-big{font-size:1.3em;padding:15px 25px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2));}
+
+.speed-display{position:relative;width:200px;height:200px;margin:20px auto;}
+.speed-circle{width:100%;height:100%;border-radius:50%;border:4px solid var(--border);position:relative;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,rgba(99,102,241,0.1) 0%,transparent 70%);}
+.speed-value{font-size:2em;font-weight:700;color:#a5b4fc;}
+.speed-unit{font-size:.7em;opacity:.6;}
+.speed-bar{position:absolute;bottom:-10px;left:10%;width:80%;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;}
+.speed-fill{height:100%;background:linear-gradient(90deg,var(--success),var(--warning),var(--accent));border-radius:4px;transition:width .3s;}
+
+.twin-scene{display:flex;justify-content:space-around;align-items:center;padding:30px;background:rgba(0,0,0,0.2);border-radius:16px;margin:20px 0;}
+.twin-person{text-align:center;padding:20px;}
+.twin-person .emoji{font-size:4em;display:block;margin-bottom:10px;}
+.twin-person .age{font-size:2em;font-weight:700;color:#a5b4fc;}
+.twin-person .label{font-size:.9em;opacity:.7;margin-top:5px;}
+.twin-arrow{font-size:2em;color:var(--primary);}
+
+.quiz-area{margin-top:20px;}
+.quiz-q{background:rgba(255,255,255,0.05);border-radius:12px;padding:20px;margin-bottom:15px;border:1px solid var(--border);}
+.quiz-q .q-text{font-size:1em;margin-bottom:12px;font-weight:600;}
+.quiz-q .opts{display:flex;flex-direction:column;gap:8px;}
+.quiz-q .opt{padding:12px 16px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);cursor:pointer;transition:all .2s;font-size:.9em;min-height:44px;display:flex;align-items:center;}
+.quiz-q .opt:hover{border-color:var(--primary);background:rgba(99,102,241,0.1);}
+.quiz-q .opt.correct{background:rgba(16,185,129,0.2);border-color:#10b981;}
+.quiz-q .opt.wrong{background:rgba(239,68,68,0.2);border-color:#ef4444;}
+.quiz-q .feedback{margin-top:10px;font-size:.85em;padding:8px 12px;border-radius:8px;display:none;}
+.quiz-q .feedback.show{display:block;}
+
+.spacetime-diagram{position:relative;}
+.axis-label{position:absolute;font-size:.8em;opacity:.7;}
+
+.particle-trail{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--accent);opacity:0.6;}
+
+.compare-box{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin:20px 0;}
+.compare-item{flex:1;min-width:200px;max-width:300px;padding:20px;border-radius:12px;text-align:center;}
+.compare-item.earth{background:linear-gradient(135deg,rgba(16,185,129,0.2),rgba(16,185,129,0.05));border:1px solid rgba(16,185,129,0.3);}
+.compare-item.ship{background:linear-gradient(135deg,rgba(236,72,153,0.2),rgba(236,72,153,0.05));border:1px solid rgba(236,72,153,0.3);}
+.compare-item h4{margin-bottom:10px;font-size:1.1em;}
+.compare-item .big{font-size:2.5em;font-weight:700;margin:10px 0;}
+
+footer{text-align:center;padding:30px;opacity:.5;font-size:.85em;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>⚡ 相对论</h1>
+  <p class="sub">大学物理 · 狭义相对论 · 时空观 · 质能关系 <span id="done-mark" style="color:#10b981;font-weight:700;margin-left:8px;"></span></p>
+  <span class="einstein">🧠</span>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="time">⏰ 时间膨胀</div>
+  <div class="tab" data-tab="length">📏 长度收缩</div>
+  <div class="tab" data-tab="mass">⚛️ 质能关系</div>
+  <div class="tab" data-tab="twin">👥 双生子佯谬</div>
+  <div class="tab" data-tab="spacetime">🌌 时空图</div>
+  <div class="tab" data-tab="quiz">📝 练习</div>
+</div>
+
+<!-- ===== 时间膨胀 ===== -->
+<div class="section active" id="sec-time">
+  <h2><span class="icon">⏰</span> 时间膨胀效应</h2>
+  <div class="info-box">
+    <strong>核心原理：</strong>运动的时钟走得慢。当物体以接近光速运动时，相对于静止观察者，其时间流逝变慢。<br>
+    <strong>时间膨胀公式：</strong><span class="formula">Δt = γΔt₀ = Δt₀ / √(1 - v²/c²)</span><br>
+    <strong>洛伦兹因子：</strong><span class="formula">γ = 1 / √(1 - v²/c²)</span>
+  </div>
+  
+  <div class="grid-2">
+    <div>
+      <canvas id="timeCanvas" width="500" height="400"></canvas>
+      <div class="controls">
+        <div class="ctrl-group">
+          <label>速度 v/c: <span id="timeSpeedVal">0.5</span></label>
+          <input type="range" id="timeSpeed" min="0" max="0.99" step="0.01" value="0.5">
+        </div>
+        <button class="btn btn-primary" id="timeStartBtn">▶ 开始</button>
+        <button class="btn btn-warning" id="timeResetBtn">↺ 重置</button>
+      </div>
+    </div>
+    <div>
+      <div class="data-row">
+        <div class="data-item">
+          <div class="val" id="gammaVal">1.15</div>
+          <div class="lbl">洛伦兹因子 γ</div>
+        </div>
+        <div class="data-item">
+          <div class="val" id="timeDilation">1.15s</div>
+          <div class="lbl">地球时间 (Δt)</div>
+        </div>
+        <div class="data-item">
+          <div class="val" id="properTime">1.00s</div>
+          <div class="lbl">飞船时间 (Δt₀)</div>
+        </div>
+      </div>
+      
+      <div class="speed-display">
+        <div class="speed-circle">
+          <div>
+            <div class="speed-value" id="speedPercent">50%</div>
+            <div class="speed-unit">光速</div>
+          </div>
+        </div>
+        <div class="speed-bar">
+          <div class="speed-fill" id="speedFill" style="width:50%"></div>
+        </div>
+      </div>
+      
+      <div class="info-box" style="margin-top:20px;">
+        💡 <strong>观察：</strong>当速度接近光速时，γ 因子急剧增大，时间膨胀效应变得显著。在 v=0.99c 时，γ≈7，飞船1秒等于地球7秒！
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 长度收缩 ===== -->
+<div class="section" id="sec-length">
+  <h2><span class="icon">📏</span> 长度收缩效应</h2>
+  <div class="info-box">
+    <strong>核心原理：</strong>运动的物体在其运动方向上缩短。<br>
+    <strong>长度收缩公式：</strong><span class="formula">L = L₀/γ = L₀√(1 - v²/c²)</span><br>
+    <strong>固有长度：</strong>L₀ 是物体在静止系中的长度（最长）
+  </div>
+  
+  <canvas id="lengthCanvas" width="900" height="350"></canvas>
+  
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>速度 v/c: <span id="lengthSpeedVal">0.5</span></label>
+      <input type="range" id="lengthSpeed" min="0" max="0.99" step="0.01" value="0.5">
+    </div>
+    <div class="ctrl-group">
+      <label>物体选择</label>
+      <select id="lengthObject">
+        <option value="ruler">标尺 (1m)</option>
+        <option value="train">火车 (100m)</option>
+        <option value="ship">飞船 (50m)</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" id="lengthAnimate">▶ 运动演示</button>
+  </div>
+  
+  <div class="data-row">
+    <div class="data-item">
+      <div class="val" id="properLength">1.00m</div>
+      <div class="lbl">固有长度 L₀</div>
+    </div>
+    <div class="data-item">
+      <div class="val" id="contractedLength">0.87m</div>
+      <div class="lbl">观测长度 L</div>
+    </div>
+    <div class="data-item">
+      <div class="val" id="contractionRatio">87%</div>
+      <div class="lbl">收缩比例</div>
+    </div>
+  </div>
+  
+  <div class="info-box">
+    💡 <strong>注意：</strong>长度收缩只发生在运动方向上。垂直于运动方向的尺寸不变。这就是为什么高速运动的物体看起来"压扁"了。
+  </div>
+</div>
+
+<!-- ===== 质能关系 ===== -->
+<div class="section" id="sec-mass">
+  <h2><span class="icon">⚛️</span> 质能等价</h2>
+  <div style="text-align:center;margin:20px 0;">
+    <span class="formula formula-big">E = mc²</span>
+  </div>
+  
+  <div class="info-box">
+    <strong>核心思想：</strong>质量和能量是等价的，可以相互转化。即使静止的物体也具有静止能量 E₀ = m₀c²。<br>
+    <strong>相对论能量：</strong><span class="formula">E = γm₀c² = m₀c²/√(1-v²/c²)</span><br>
+    <strong>动能：</strong><span class="formula">Eₖ = (γ-1)m₀c²</span>
+  </div>
+  
+  <div class="grid-2">
+    <div>
+      <canvas id="massCanvas" width="450" height="350"></canvas>
+      <div class="controls">
+        <div class="ctrl-group">
+          <label>质量 (kg): <span id="massVal">1.0</span></label>
+          <input type="range" id="massInput" min="0.1" max="10" step="0.1" value="1">
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:15px;">🌟 质能转换计算器</h3>
+      <div class="data-row">
+        <div class="data-item">
+          <div class="val" id="restEnergy">9×10¹⁶ J</div>
+          <div class="lbl">静止能量 E₀</div>
+        </div>
+        <div class="data-item">
+          <div class="val" id="tntEquiv">21.5 MT</div>
+          <div class="lbl">TNT当量</div>
+        </div>
+      </div>
+      
+      <div class="compare-box">
+        <div class="compare-item earth">
+          <h4>🏭 日常能量</h4>
+          <div style="font-size:.9em;opacity:.8;">1kg 煤燃烧</div>
+          <div class="big" style="color:#10b981;">2.9×10⁷ J</div>
+          <div style="font-size:.8em;opacity:.6;">仅为质能的 3.2×10⁻¹⁰</div>
+        </div>
+        <div class="compare-item ship">
+          <h4>⚛️ 质能转换</h4>
+          <div style="font-size:.9em;opacity:.8;">1kg 完全转化</div>
+          <div class="big" style="color:#ec4899;">9×10¹⁶ J</div>
+          <div style="font-size:.8em;opacity:.6;">相当于 2150 万吨TNT</div>
+        </div>
+      </div>
+      
+      <div class="info-box">
+        💡 <strong>核反应：</strong>核裂变中约 0.1% 的质量转化为能量，核聚变中约 0.7%。这就是为什么核武器威力如此巨大！
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 双生子佯谬 ===== -->
+<div class="section" id="sec-twin">
+  <h2><span class="icon">👥</span> 双生子佯谬</h2>
+  <div class="info-box">
+    <strong>思想实验：</strong>一对双胞胎，一个留在地球，一个乘坐接近光速的飞船旅行。当旅行者返回时，他会比地球上的兄弟年轻！<br>
+    <strong>关键点：</strong>旅行者经历了加速和减速（非惯性系），所以不对称，这不是真正的"佯谬"。
+  </div>
+  
+  <div class="twin-scene">
+    <div class="twin-person">
+      <span class="emoji">👨‍🚀</span>
+      <div>太空旅行者</div>
+      <div class="age" id="travelerAge">30岁</div>
+      <div class="label">出发时 30 岁</div>
+    </div>
+    <div class="twin-arrow">
+      <span id="twinYears">旅行 10 年</span>
+      →
+    </div>
+    <div class="twin-person">
+      <span class="emoji">👨</span>
+      <div>地球兄弟</div>
+      <div class="age" id="earthAge">30岁</div>
+      <div class="label">出发时 30 岁</div>
+    </div>
+  </div>
+  
+  <canvas id="twinCanvas" width="800" height="300"></canvas>
+  
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>飞船速度 v/c: <span id="twinSpeedVal">0.8</span></label>
+      <input type="range" id="twinSpeed" min="0.1" max="0.99" step="0.01" value="0.8">
+    </div>
+    <div class="ctrl-group">
+      <label>飞船时间 (年): <span id="twinTimeVal">10</span></label>
+      <input type="range" id="twinTime" min="1" max="50" step="1" value="10">
+    </div>
+    <button class="btn btn-primary" id="twinCalc">🔄 计算</button>
+  </div>
+  
+  <div class="data-row">
+    <div class="data-item">
+      <div class="val" id="twinGamma">1.67</div>
+      <div class="lbl">洛伦兹因子 γ</div>
+    </div>
+    <div class="data-item">
+      <div class="val" id="earthElapsed">16.7年</div>
+      <div class="lbl">地球流逝时间</div>
+    </div>
+    <div class="data-item">
+      <div class="val" id="ageDiff">6.7岁</div>
+      <div class="lbl">年龄差</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 时空图 ===== -->
+<div class="section" id="sec-spacetime">
+  <h2><span class="icon">🌌</span> 闵可夫斯基时空图</h2>
+  <div class="info-box">
+    <strong>时空图：</strong>纵轴是 ct（时间×光速），横轴是 x（空间）。光的世界线与轴成 45°。<br>
+    <strong>世界线：</strong>物体在时空中的轨迹。静止物体的世界线是垂直的，运动物体倾斜。<br>
+    <strong>光锥：</strong>事件能影响的区域。
+  </div>
+  
+  <canvas id="spacetimeCanvas" width="700" height="600"></canvas>
+  
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>粒子速度 v/c: <span id="stSpeedVal">0.6</span></label>
+      <input type="range" id="stSpeed" min="-0.99" max="0.99" step="0.01" value="0.6">
+    </div>
+    <div class="ctrl-group">
+      <label>显示选项</label>
+      <select id="stOption">
+        <option value="worldline">世界线</option>
+        <option value="lightcone">光锥</option>
+        <option value="simultaneity">同时性</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" id="stDraw">🎨 绘制</button>
+  </div>
+  
+  <div class="info-box">
+    💡 <strong>同时性的相对性：</strong>在不同参考系中，"同时"发生的事件是不同的。运动观察者的同时线是倾斜的！
+  </div>
+</div>
+
+<!-- ===== 练习 ===== -->
+<div class="section" id="sec-quiz">
+  <h2><span class="icon">📝</span> 相对论练习</h2>
+  
+  <div class="quiz-area">
+    <div class="quiz-q" data-correct="1">
+      <div class="q-text">1. 宇航员以 0.8c 飞行，飞船上过了 3 年，地球上过了多少年？</div>
+      <div class="opts">
+        <div class="opt" data-idx="0">A. 3.75 年</div>
+        <div class="opt" data-idx="1">B. 5 年</div>
+        <div class="opt" data-idx="2">C. 2.4 年</div>
+        <div class="opt" data-idx="3">D. 15 年</div>
+      </div>
+      <div class="feedback"></div>
+    </div>
+    
+    <div class="quiz-q" data-correct="2">
+      <div class="q-text">2. 一把 1m 的尺以 0.6c 运动，观测者测得的长度是？</div>
+      <div class="opts">
+        <div class="opt" data-idx="0">A. 1.25 m</div>
+        <div class="opt" data-idx="1">B. 0.6 m</div>
+        <div class="opt" data-idx="2">C. 0.8 m</div>
+        <div class="opt" data-idx="3">D. 1 m</div>
+      </div>
+      <div class="feedback"></div>
+    </div>
+    
+    <div class="quiz-q" data-correct="0">
+      <div class="q-text">3. 1 kg 物质完全转化为能量，相当于多少吨 TNT？（1吨TNT ≈ 4.2×10⁹ J）</div>
+      <div class="opts">
+        <div class="opt" data-idx="0">A. 约 2140 万吨</div>
+        <div class="opt" data-idx="1">B. 约 214 万吨</div>
+        <div class="opt" data-idx="2">C. 约 21.4 万吨</div>
+        <div class="opt" data-idx="3">D. 约 9000 万吨</div>
+      </div>
+      <div class="feedback"></div>
+    </div>
+    
+    <div class="quiz-q" data-correct="3">
+      <div class="q-text">4. 关于相对论，下列说法正确的是？</div>
+      <div class="opts">
+        <div class="opt" data-idx="0">A. 运动物体的时间变快</div>
+        <div class="opt" data-idx="1">B. 运动物体在运动方向上变长</div>
+        <div class="opt" data-idx="2">C. 质量与能量无关</div>
+        <div class="opt" data-idx="3">D. 光速是所有惯性系的不变量</div>
+      </div>
+      <div class="feedback"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  大学物理 · 相对论互动可视化 | 爱因斯坦改变了对时空的理解 🌌
+</footer>
+
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('sec-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ========== 时间膨胀 ==========
+const timeCanvas = document.getElementById('timeCanvas');
+const timeCtx = timeCanvas.getContext('2d');
+let timeRunning = false;
+let timeAnimId = null;
+let earthTime = 0, shipTime = 0;
+
+function calcGamma(v) {
+  return 1 / Math.sqrt(1 - v * v);
+}
+
+function updateTimeDisplay() {
+  const v = parseFloat(document.getElementById('timeSpeed').value);
+  const gamma = calcGamma(v);
+  document.getElementById('timeSpeedVal').textContent = v.toFixed(2);
+  document.getElementById('gammaVal').textContent = gamma.toFixed(2);
+  document.getElementById('speedPercent').textContent = (v * 100).toFixed(0) + '%';
+  document.getElementById('speedFill').style.width = (v * 100) + '%';
+  document.getElementById('timeDilation').textContent = gamma.toFixed(2) + 's';
+}
+
+function drawTimeClock(ctx, x, y, radius, time, label, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  
+  // Clock face
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  
+  // Hour markers
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+    const inner = radius * 0.85;
+    const outer = radius * 0.95;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
+    ctx.lineTo(Math.cos(angle) * outer, Math.sin(angle) * outer);
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  
+  // Second hand
+  const angle = (time % 60) / 60 * Math.PI * 2 - Math.PI / 2;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(Math.cos(angle) * radius * 0.8, Math.sin(angle) * radius * 0.8);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  // Center dot
+  ctx.beginPath();
+  ctx.arc(0, 0, 5, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  
+  // Label
+  ctx.fillStyle = '#fff';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, 0, radius + 25);
+  ctx.fillText(time.toFixed(1) + 's', 0, radius + 45);
+  
+  ctx.restore();
+}
+
+function drawTimeScene() {
+  timeCtx.clearRect(0, 0, 500, 400);
+  
+  // Background stars
+  for (let i = 0; i < 50; i++) {
+    const x = (i * 137.5) % 500;
+    const y = (i * 73.3) % 400;
+    const size = (i % 3) + 1;
+    timeCtx.beginPath();
+    timeCtx.arc(x, y, size, 0, Math.PI * 2);
+    timeCtx.fillStyle = `rgba(255,255,255,${0.3 + (i % 5) * 0.1})`;
+    timeCtx.fill();
+  }
+  
+  // Earth clock
+  drawTimeClock(timeCtx, 125, 180, 70, earthTime, '🌍 地球', '#10b981');
+  
+  // Ship clock
+  drawTimeClock(timeCtx, 375, 180, 70, shipTime, '🚀 飞船', '#ec4899');
+  
+  // Spaceship animation
+  const shipX = 250 + Math.sin(earthTime * 0.5) * 80;
+  timeCtx.font = '30px sans-serif';
+  timeCtx.fillText('🚀', shipX, 50);
+  
+  // Speed indicator
+  const v = parseFloat(document.getElementById('timeSpeed').value);
+  timeCtx.fillStyle = 'rgba(255,255,255,0.7)';
+  timeCtx.font = '12px sans-serif';
+  timeCtx.textAlign = 'center';
+  timeCtx.fillText(`v = ${v.toFixed(2)}c`, 250, 350);
+}
+
+function timeAnimate() {
+  if (!timeRunning) return;
+  const v = parseFloat(document.getElementById('timeSpeed').value);
+  const gamma = calcGamma(v);
+  
+  earthTime += 0.1;
+  shipTime += 0.1 / gamma;
+  
+  document.getElementById('properTime').textContent = shipTime.toFixed(2) + 's';
+  
+  drawTimeScene();
+  timeAnimId = requestAnimationFrame(timeAnimate);
+}
+
+document.getElementById('timeSpeed').addEventListener('input', updateTimeDisplay);
+document.getElementById('timeStartBtn').addEventListener('click', () => {
+  timeRunning = !timeRunning;
+  document.getElementById('timeStartBtn').textContent = timeRunning ? '⏸ 暂停' : '▶ 开始';
+  if (timeRunning) timeAnimate();
+});
+document.getElementById('timeResetBtn').addEventListener('click', () => {
+  timeRunning = false;
+  earthTime = shipTime = 0;
+  document.getElementById('timeStartBtn').textContent = '▶ 开始';
+  document.getElementById('properTime').textContent = '1.00s';
+  drawTimeScene();
+});
+
+updateTimeDisplay();
+drawTimeScene();
+
+// ========== 长度收缩 ==========
+const lengthCanvas = document.getElementById('lengthCanvas');
+const lengthCtx = lengthCanvas.getContext('2d');
+let lengthAnimating = false;
+let lengthOffset = 0;
+
+const objectLengths = { ruler: 1, train: 100, ship: 50 };
+
+function updateLengthDisplay() {
+  const v = parseFloat(document.getElementById('lengthSpeed').value);
+  const obj = document.getElementById('lengthObject').value;
+  const L0 = objectLengths[obj];
+  const gamma = calcGamma(v);
+  const L = L0 / gamma;
+  const ratio = L / L0 * 100;
+  
+  document.getElementById('lengthSpeedVal').textContent = v.toFixed(2);
+  document.getElementById('properLength').textContent = L0.toFixed(2) + 'm';
+  document.getElementById('contractedLength').textContent = L.toFixed(2) + 'm';
+  document.getElementById('contractionRatio').textContent = ratio.toFixed(0) + '%';
+  
+  drawLengthScene(v, obj);
+}
+
+function drawLengthScene(v, obj) {
+  lengthCtx.clearRect(0, 0, 900, 350);
+  
+  const gamma = calcGamma(v);
+  const L0 = objectLengths[obj];
+  const L = L0 / gamma;
+  
+  // Scale for display
+  const maxDisplayWidth = 350;
+  const scale = maxDisplayWidth / L0;
+  
+  // Rest length (top)
+  const restWidth = L0 * scale;
+  const restX = (900 - restWidth) / 2;
+  lengthCtx.fillStyle = 'rgba(16,185,129,0.3)';
+  lengthCtx.fillRect(restX, 80, restWidth, 40);
+  lengthCtx.strokeStyle = '#10b981';
+  lengthCtx.lineWidth = 2;
+  lengthCtx.strokeRect(restX, 80, restWidth, 40);
+  
+  lengthCtx.fillStyle = '#10b981';
+  lengthCtx.font = '14px sans-serif';
+  lengthCtx.textAlign = 'center';
+  lengthCtx.fillText(`静止长度 L₀ = ${L0}m`, 450, 70);
+  
+  // Moving length (bottom)
+  const moveWidth = L * scale;
+  const moveX = (900 - moveWidth) / 2 + (lengthAnimating ? lengthOffset : 0);
+  lengthCtx.fillStyle = 'rgba(236,72,153,0.3)';
+  lengthCtx.fillRect(moveX, 200, moveWidth, 40);
+  lengthCtx.strokeStyle = '#ec4899';
+  lengthCtx.lineWidth = 2;
+  lengthCtx.strokeRect(moveX, 200, moveWidth, 40);
+  
+  lengthCtx.fillStyle = '#ec4899';
+  lengthCtx.fillText(`运动长度 L = ${L.toFixed(2)}m`, 450, 190);
+  
+  // Object emoji
+  const emojis = { ruler: '📏', train: '🚂', ship: '🚀' };
+  lengthCtx.font = '30px sans-serif';
+  lengthCtx.fillText(emojis[obj], moveX + moveWidth / 2, 235);
+  
+  // Speed arrow
+  if (v > 0) {
+    lengthCtx.beginPath();
+    lengthCtx.moveTo(100, 280);
+    lengthCtx.lineTo(200, 280);
+    lengthCtx.lineTo(190, 275);
+    lengthCtx.moveTo(200, 280);
+    lengthCtx.lineTo(190, 285);
+    lengthCtx.strokeStyle = '#f59e0b';
+    lengthCtx.lineWidth = 2;
+    lengthCtx.stroke();
+    lengthCtx.fillStyle = '#f59e0b';
+    lengthCtx.font = '12px sans-serif';
+    lengthCtx.fillText(`v = ${v.toFixed(2)}c`, 150, 300);
+  }
+  
+  // Comparison bar
+  lengthCtx.fillStyle = 'rgba(255,255,255,0.1)';
+  lengthCtx.fillRect(50, 320, 800, 10);
+  lengthCtx.fillStyle = '#10b981';
+  lengthCtx.fillRect(50, 320, restWidth, 10);
+}
+
+document.getElementById('lengthSpeed').addEventListener('input', updateLengthDisplay);
+document.getElementById('lengthObject').addEventListener('change', updateLengthDisplay);
+document.getElementById('lengthAnimate').addEventListener('click', () => {
+  lengthAnimating = !lengthAnimating;
+  if (lengthAnimating) {
+    const animate = () => {
+      if (!lengthAnimating) return;
+      lengthOffset = (lengthOffset + 2) % 200;
+      updateLengthDisplay();
+      requestAnimationFrame(animate);
+    };
+    animate();
+  }
+});
+
+updateLengthDisplay();
+
+// ========== 质能关系 ==========
+const massCanvas = document.getElementById('massCanvas');
+const massCtx = massCanvas.getContext('2d');
+const c = 3e8; // speed of light
+
+function updateMassDisplay() {
+  const m = parseFloat(document.getElementById('massInput').value);
+  document.getElementById('massVal').textContent = m.toFixed(1);
+  
+  const E = m * c * c;
+  const tnt = E / 4.2e9;
+  
+  // Format large numbers
+  let eStr, tntStr;
+  if (E >= 1e15) {
+    eStr = (E / 1e15).toFixed(1) + '×10¹⁵';
+  } else if (E >= 1e12) {
+    eStr = (E / 1e12).toFixed(1) + '×10¹²';
+  } else {
+    eStr = E.toExponential(2);
+  }
+  
+  if (tnt >= 1e6) {
+    tntStr = (tnt / 1e6).toFixed(1) + ' MT';
+  } else if (tnt >= 1e3) {
+    tntStr = (tnt / 1e3).toFixed(1) + ' kt';
+  } else {
+    tntStr = tnt.toFixed(1) + ' t';
+  }
+  
+  document.getElementById('restEnergy').textContent = eStr + ' J';
+  document.getElementById('tntEquiv').textContent = tntStr;
+  
+  drawMassScene(m);
+}
+
+function drawMassScene(m) {
+  massCtx.clearRect(0, 0, 450, 350);
+  
+  // Atom visualization
+  const centerX = 225, centerY = 175;
+  
+  // Nucleus
+  const radius = 20 + m * 3;
+  const gradient = massCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+  gradient.addColorStop(0, '#ec4899');
+  gradient.addColorStop(0.5, '#8b5cf6');
+  gradient.addColorStop(1, 'transparent');
+  
+  massCtx.beginPath();
+  massCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  massCtx.fillStyle = gradient;
+  massCtx.fill();
+  
+  // Energy waves
+  const time = Date.now() / 1000;
+  for (let i = 0; i < 5; i++) {
+    const waveRadius = radius + 30 + i * 25 + Math.sin(time * 2 + i) * 10;
+    massCtx.beginPath();
+    massCtx.arc(centerX, centerY, waveRadius, 0, Math.PI * 2);
+    massCtx.strokeStyle = `rgba(139,92,246,${0.5 - i * 0.1})`;
+    massCtx.lineWidth = 2;
+    massCtx.stroke();
+  }
+  
+  // E = mc² label
+  massCtx.fillStyle = '#fff';
+  massCtx.font = 'bold 24px sans-serif';
+  massCtx.textAlign = 'center';
+  massCtx.fillText('E = mc²', centerX, 320);
+  
+  // Mass label
+  massCtx.font = '14px sans-serif';
+  massCtx.fillText(`m = ${m.toFixed(1)} kg`, centerX, 30);
+}
+
+document.getElementById('massInput').addEventListener('input', updateMassDisplay);
+updateMassDisplay();
+
+// Animate mass scene
+function animateMass() {
+  drawMassScene(parseFloat(document.getElementById('massInput').value));
+  requestAnimationFrame(animateMass);
+}
+animateMass();
+
+// ========== 双生子佯谬 ==========
+function updateTwinDisplay() {
+  const v = parseFloat(document.getElementById('twinSpeed').value);
+  const shipYears = parseFloat(document.getElementById('twinTime').value);
+  const gamma = calcGamma(v);
+  const earthYears = shipYears * gamma;
+  const ageDiff = earthYears - shipYears;
+  
+  document.getElementById('twinSpeedVal').textContent = v.toFixed(2);
+  document.getElementById('twinTimeVal').textContent = shipYears;
+  document.getElementById('twinGamma').textContent = gamma.toFixed(2);
+  document.getElementById('earthElapsed').textContent = earthYears.toFixed(1) + '年';
+  document.getElementById('ageDiff').textContent = ageDiff.toFixed(1) + '岁';
+  
+  const travelerAge = 30 + shipYears;
+  const earthAge = 30 + earthYears;
+  document.getElementById('travelerAge').textContent = travelerAge + '岁';
+  document.getElementById('earthAge').textContent = earthAge + '岁';
+  document.getElementById('twinYears').textContent = `飞船 ${shipYears} 年`;
+  
+  drawTwinScene(v, shipYears, earthYears);
+}
+
+function drawTwinScene(v, shipYears, earthYears) {
+  const canvas = document.getElementById('twinCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 800, 300);
+  
+  // Timeline
+  const startY = 150;
+  const leftX = 100;
+  const rightX = 700;
+  const scale = (rightX - leftX) / earthYears;
+  
+  // Earth line
+  ctx.beginPath();
+  ctx.moveTo(leftX, startY);
+  ctx.lineTo(rightX, startY);
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  
+  // Ship path (out and back)
+  const turnX = leftX + (rightX - leftX) / 2;
+  ctx.beginPath();
+  ctx.moveTo(leftX, startY);
+  ctx.lineTo(turnX, startY - 80);
+  ctx.lineTo(rightX, startY);
+  ctx.strokeStyle = '#ec4899';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  
+  // Earth person
+  ctx.font = '30px sans-serif';
+  ctx.fillText('👨', leftX - 40, startY + 10);
+  ctx.fillStyle = '#10b981';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('地球', leftX, startY + 40);
+  
+  // Ship at current position
+  const progress = shipYears / earthYears;
+  let shipX, shipY;
+  if (progress <= 0.5) {
+    shipX = leftX + (turnX - leftX) * (progress * 2);
+    shipY = startY - 80 * (progress * 2);
+  } else {
+    shipX = turnX + (rightX - turnX) * ((progress - 0.5) * 2);
+    shipY = startY - 80 * (1 - (progress - 0.5) * 2);
+  }
+  ctx.fillText('🚀', shipX - 15, shipY + 10);
+  
+  // Labels
+  ctx.fillStyle = '#fff';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`地球: ${earthYears.toFixed(1)}年`, 400, startY + 60);
+  ctx.fillText(`飞船: ${shipYears}年`, 400, startY - 100);
+  
+  // Speed label
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`v = ${v.toFixed(2)}c`, 400, 30);
+}
+
+document.getElementById('twinSpeed').addEventListener('input', updateTwinDisplay);
+document.getElementById('twinTime').addEventListener('input', updateTwinDisplay);
+document.getElementById('twinCalc').addEventListener('click', updateTwinDisplay);
+updateTwinDisplay();
+
+// ========== 时空图 ==========
+function drawSpacetime() {
+  const canvas = document.getElementById('spacetimeCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 700, 600);
+  
+  const v = parseFloat(document.getElementById('stSpeed').value);
+  const option = document.getElementById('stOption').value;
+  document.getElementById('stSpeedVal').textContent = v.toFixed(2);
+  
+  const originX = 350, originY = 550;
+  const scale = 200; // pixels per unit
+  
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  for (let i = -3; i <= 3; i++) {
+    ctx.beginPath();
+    ctx.moveTo(originX + i * scale / 2, 0);
+    ctx.lineTo(originX + i * scale / 2, 600);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, originY - i * scale / 2);
+    ctx.lineTo(700, originY - i * scale / 2);
+    ctx.stroke();
+  }
+  
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = 2;
+  // ct axis (time)
+  ctx.beginPath();
+  ctx.moveTo(originX, originY);
+  ctx.lineTo(originX, 50);
+  ctx.stroke();
+  // x axis (space)
+  ctx.beginPath();
+  ctx.moveTo(originX, originY);
+  ctx.lineTo(650, originY);
+  ctx.stroke();
+  
+  // Axis labels
+  ctx.fillStyle = '#fff';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('ct (时间)', originX, 35);
+  ctx.fillText('x (空间)', 670, originY + 5);
+  ctx.fillText('O', originX - 15, originY + 15);
+  
+  // Light cones (45 degree lines)
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  // Future light cone
+  ctx.beginPath();
+  ctx.moveTo(originX, originY);
+  ctx.lineTo(originX + 500, originY - 500);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(originX, originY);
+  ctx.lineTo(originX - 500, originY - 500);
+  ctx.stroke();
+  // Past light cone
+  ctx.beginPath();
+  ctx.moveTo(originX, originY);
+  ctx.lineTo(originX + 500, originY + 500);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(originX, originY);
+  ctx.lineTo(originX - 500, originY + 500);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('光锥', originX + 250, originY - 260);
+  
+  // Worldline of particle
+  if (option === 'worldline' || option === 'lightcone') {
+    const slope = 1 / v; // ct/x = c/v
+    ctx.strokeStyle = '#ec4899';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(originX, originY);
+    
+    if (Math.abs(v) < 0.01) {
+      // Stationary - vertical line
+      ctx.lineTo(originX, 100);
+    } else {
+      const endY = 100;
+      const endX = originX + (originY - endY) * v;
+      ctx.lineTo(endX, endY);
+    }
+    ctx.stroke();
+    
+    // Particle emoji
+    const particleY = 150;
+    const particleX = originX + (originY - particleY) * v;
+    ctx.font = '24px sans-serif';
+    ctx.fillText('⚛️', particleX - 12, particleY + 8);
+  }
+  
+  // Simultaneity lines
+  if (option === 'simultaneity') {
+    // Stationary frame simultaneity (horizontal)
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 5]);
+    const simY = 300;
+    ctx.beginPath();
+    ctx.moveTo(50, simY);
+    ctx.lineTo(650, simY);
+    ctx.stroke();
+    ctx.fillStyle = '#10b981';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('静止系同时线', 580, simY - 10);
+    
+    // Moving frame simultaneity (tilted)
+    ctx.strokeStyle = '#ec4899';
+    const tilt = v * 0.5;
+    ctx.beginPath();
+    ctx.moveTo(50, simY + tilt * 300);
+    ctx.lineTo(650, simY - tilt * 300);
+    ctx.stroke();
+    ctx.fillStyle = '#ec4899';
+    ctx.fillText('运动系同时线', 580, simY - tilt * 300 - 10);
+    ctx.setLineDash([]);
+  }
+  
+  // Labels
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`v = ${v.toFixed(2)}c`, 20, 30);
+  const gamma = calcGamma(v);
+  ctx.fillText(`γ = ${gamma.toFixed(2)}`, 20, 50);
+}
+
+document.getElementById('stSpeed').addEventListener('input', drawSpacetime);
+document.getElementById('stOption').addEventListener('change', drawSpacetime);
+document.getElementById('stDraw').addEventListener('click', drawSpacetime);
+drawSpacetime();
+
+// ========== 练习 ==========
+document.querySelectorAll('.quiz-q').forEach(q => {
+  const correct = parseInt(q.dataset.correct);
+  const opts = q.querySelectorAll('.opt');
+  const feedback = q.querySelector('.feedback');
+  
+  const quizKey = 'relativity';
+  let quizScore = 0;
+  const quizTotal = document.querySelectorAll('.quiz-q').length;
+  opts.forEach(opt => {
+    opt.addEventListener('click', () => {
+      const idx = parseInt(opt.dataset.idx);
+      opts.forEach(o => o.classList.remove('correct', 'wrong'));
+      
+      if (idx === correct) {
+        opt.classList.add('correct');
+        quizScore++;
+        feedback.textContent = '✅ 正确！';
+        feedback.style.background = 'rgba(16,185,129,0.2)';
+        feedback.style.color = '#10b981';
+        if (quizScore >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone(quizKey)) {
+          PageProgress.markDone(quizKey);
+          feedback.textContent = '✅ 正确！🎉 已点亮「相对论」知识地图';
+        }
+      } else {
+        opt.classList.add('wrong');
+        opts[correct].classList.add('correct');
+        feedback.textContent = '❌ 错误，正确答案已标出。';
+        feedback.style.background = 'rgba(239,68,68,0.2)';
+        feedback.style.color = '#ef4444';
+      }
+      feedback.classList.add('show');
+    });
+  });
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('relativity')) {
+  const dm = document.getElementById('done-mark');
+  if (dm) dm.textContent = '✓ 已完成';
+}
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学物理"></script>
+</body>
+</html>

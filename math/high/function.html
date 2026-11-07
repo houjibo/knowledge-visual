@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>函数 - 互动可视化</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  color: #fff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.header {
+  text-align: center;
+  padding: 24px 16px 8px;
+}
+.header h1 {
+  font-size: 28px;
+  background: linear-gradient(90deg, #f7971e, #ffd200);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+.header p { font-size: 14px; color: #aaa; }
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+}
+.tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #ccc;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s;
+  user-select: none;
+}
+.tab:hover { background: rgba(255,255,255,0.15); }
+.tab.active {
+  background: linear-gradient(135deg, #f7971e, #ffd200);
+  color: #1a1a2e;
+  font-weight: 600;
+  border-color: transparent;
+}
+.panel { display: none; padding: 16px; max-width: 800px; margin: 0 auto; }
+.panel.active { display: block; }
+.card {
+  background: rgba(255,255,255,0.06);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card h3 {
+  font-size: 17px;
+  color: #ffd200;
+  margin-bottom: 12px;
+}
+.info-text { font-size: 14px; color: #bbb; line-height: 1.8; margin: 8px 0; }
+.highlight { color: #ffd200; font-weight: 600; }
+.formula {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  padding: 12px;
+  background: rgba(247,151,30,0.12);
+  border-radius: 12px;
+  margin: 10px 0;
+}
+canvas { display: block; margin: 0 auto; border-radius: 12px; }
+.btn {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin: 4px;
+  user-select: none;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+.btn:active { transform: scale(0.96); }
+.btn.orange { background: linear-gradient(135deg, #f7971e, #ffd200); color: #1a1a2e; }
+.btn.green { background: linear-gradient(135deg, #11998e, #38ef7d); }
+.btn.red { background: linear-gradient(135deg, #eb3349, #f45c43); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* 函数图像探索 */
+.func-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin: 12px 0;
+}
+.func-controls label {
+  font-size: 14px;
+  color: #ccc;
+}
+.func-controls select, .func-controls input[type="range"] {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  color: #fff;
+  padding: 6px 10px;
+  font-size: 14px;
+}
+.func-controls input[type="range"] {
+  width: 120px;
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.2);
+  outline: none;
+  padding: 0;
+}
+.func-controls input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #ffd200;
+  cursor: pointer;
+}
+.func-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0;
+}
+.func-info-item {
+  padding: 10px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  text-align: center;
+}
+.func-info-item .label { font-size: 12px; color: #888; margin-bottom: 4px; }
+.func-info-item .value { font-size: 16px; font-weight: 600; color: #ffd200; }
+
+/* 性质判定 */
+.property-card {
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 10px 0;
+  text-align: center;
+}
+.property-card .func-display {
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  margin: 8px 0;
+}
+.prop-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.prop-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  color: #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.prop-btn:hover { border-color: #ffd200; color: #ffd200; }
+.prop-btn.correct { border-color: #38ef7d; background: rgba(56,239,125,0.2); color: #38ef7d; }
+.prop-btn.wrong { border-color: #f45c43; background: rgba(244,92,67,0.2); color: #f45c43; }
+.feedback {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  display: none;
+}
+.feedback.show { display: block; }
+.feedback.ok { background: rgba(56,239,125,0.12); color: #38ef7d; }
+.feedback.no { background: rgba(244,92,67,0.12); color: #f45c43; }
+
+/* 互动练习 */
+.quiz-progress {
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  margin: 10px 0;
+  overflow: hidden;
+}
+.quiz-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f7971e, #ffd200);
+  border-radius: 3px;
+  transition: width 0.4s;
+}
+.quiz-q { font-size: 16px; font-weight: 500; margin: 12px 0; line-height: 1.6; }
+.quiz-opt {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  margin: 8px 0;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 15px;
+}
+.quiz-opt:hover { background: rgba(255,255,255,0.12); }
+.quiz-opt.correct { background: rgba(56,239,125,0.2); border-color: #38ef7d; color: #38ef7d; }
+.quiz-opt.wrong { background: rgba(244,92,67,0.2); border-color: #f45c43; color: #f45c43; }
+.quiz-feedback {
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-top: 10px;
+  display: none;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.ok { background: rgba(56,239,125,0.1); color: #38ef7d; }
+.quiz-feedback.no { background: rgba(244,92,67,0.1); color: #f45c43; }
+.score-display {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  color: #ffd200;
+  padding: 16px;
+}
+
+/* 定义域探索器 */
+.domain-explorer {
+  margin: 12px 0;
+}
+.domain-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  margin: 8px 0;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid transparent;
+}
+.domain-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,210,0,0.3); }
+.domain-item.active { border-color: #ffd200; background: rgba(255,210,0,0.08); }
+.domain-item .func-label { font-weight: 600; color: #ffd200; min-width: 100px; }
+.domain-item .func-domain { font-size: 13px; color: #bbb; }
+.domain-canvas-wrap {
+  text-align: center;
+  margin: 12px 0;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📈 函数</h1>
+  <p>高中数学 · 函数概念 / 图像 / 性质 / 互动练习</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-panel="concept">函数概念</div>
+  <div class="tab" data-panel="graph">图像探索</div>
+  <div class="tab" data-panel="property">性质判定</div>
+  <div class="tab" data-panel="quiz">互动练习</div>
+</div>
+
+<!-- Panel 1: 函数概念 -->
+<div class="panel active" id="panel-concept">
+  <div class="card">
+    <h3>📌 什么是函数？</h3>
+    <p class="info-text">
+      设 A、B 是非空数集，如果按照某种确定的对应关系 <span class="highlight">f</span>，使得集合 A 中的<span class="highlight">任意一个</span>元素 x，在集合 B 中都有<span class="highlight">唯一确定</span>的元素 y 与之对应，那么就称 f: A→B 为从集合 A 到集合 B 的一个<span class="highlight">函数</span>。
+    </p>
+    <div class="formula">y = f(x)，x ∈ A</div>
+    <p class="info-text">
+      其中 x 叫做<span class="highlight">自变量</span>，x 的取值范围 A 叫做函数的<span class="highlight">定义域</span>，与 x 对应的 y 值叫做<span class="highlight">函数值</span>，函数值的集合叫做<span class="highlight">值域</span>。
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>🔍 定义域探索器</h3>
+    <p class="info-text">点击不同函数，查看其定义域和值域的确定方法：</p>
+    <div class="domain-explorer" id="domainExplorer"></div>
+    <div class="domain-canvas-wrap">
+      <canvas id="domainCanvas" width="340" height="220"></canvas>
+    </div>
+    <div id="domainExplain" class="info-text" style="text-align:center;"></div>
+  </div>
+
+  <div class="card">
+    <h3>📐 函数三要素</h3>
+    <div class="grid-2">
+      <div style="padding:14px;background:rgba(247,151,30,0.1);border-radius:12px;text-align:center;">
+        <div style="font-size:24px;margin-bottom:6px;">📋</div>
+        <div style="font-weight:600;color:#ffd200;margin-bottom:4px;">定义域</div>
+        <div style="font-size:13px;color:#bbb;">自变量 x 的取值范围</div>
+      </div>
+      <div style="padding:14px;background:rgba(102,126,234,0.1);border-radius:12px;text-align:center;">
+        <div style="font-size:24px;margin-bottom:6px;">⚙️</div>
+        <div style="font-weight:600;color:#667eea;margin-bottom:4px;">对应法则</div>
+        <div style="font-size:13px;color:#bbb;">从 x 到 y 的对应规则 f</div>
+      </div>
+      <div style="padding:14px;background:rgba(56,239,125,0.1);border-radius:12px;text-align:center;">
+        <div style="font-size:24px;margin-bottom:6px;">📊</div>
+        <div style="font-weight:600;color:#38ef7d;margin-bottom:4px;">值域</div>
+        <div style="font-size:13px;color:#bbb;">所有函数值 f(x) 的集合</div>
+      </div>
+      <div style="padding:14px;background:rgba(255,107,107,0.1);border-radius:12px;text-align:center;">
+        <div style="font-size:24px;margin-bottom:6px;">💡</div>
+        <div style="font-weight:600;color:#ff6b6b;margin-bottom:4px;">判断相等</div>
+        <div style="font-size:13px;color:#bbb;">三要素完全相同才是同一函数</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel 2: 图像探索 -->
+<div class="panel" id="panel-graph">
+  <div class="card">
+    <h3>📈 函数图像绘制器</h3>
+    <p class="info-text">选择函数类型，调节参数，观察图像变化：</p>
+    <div class="func-controls">
+      <label>函数：</label>
+      <select id="funcType">
+        <option value="quadratic">二次函数 ax²+bx+c</option>
+        <option value="power">幂函数 xⁿ</option>
+        <option value="inverse">反比例 k/x</option>
+        <option value="exponential">指数函数 aˣ</option>
+      </select>
+    </div>
+    <div class="func-controls" id="paramControls">
+      <label>a = <span id="paramAVal">1</span></label>
+      <input type="range" id="paramA" min="-3" max="3" step="0.5" value="1">
+    </div>
+    <canvas id="graphCanvas" width="360" height="300"></canvas>
+    <div class="func-info" id="funcInfoDisplay">
+      <div class="func-info-item"><div class="label">定义域</div><div class="value" id="infoDomain">R</div></div>
+      <div class="func-info-item"><div class="label">值域</div><div class="value" id="infoRange">—</div></div>
+      <div class="func-info-item"><div class="label">单调性</div><div class="value" id="infoMono">—</div></div>
+      <div class="func-info-item"><div class="label">奇偶性</div><div class="value" id="infoParity">—</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel 3: 性质判定 -->
+<div class="panel" id="panel-property">
+  <div class="card">
+    <h3>🧠 奇偶性判定</h3>
+    <p class="info-text">
+      <span class="highlight">偶函数</span>：f(-x) = f(x)，图像关于 y 轴对称<br>
+      <span class="highlight">奇函数</span>：f(-x) = -f(x)，图像关于原点对称
+    </p>
+    <div id="parityCards"></div>
+  </div>
+
+  <div class="card">
+    <h3>📊 单调性判定</h3>
+    <p class="info-text">
+      <span class="highlight">单调递增</span>：x₁ < x₂ 时 f(x₁) < f(x₂)<br>
+      <span class="highlight">单调递减</span>：x₁ < x₂ 时 f(x₁) > f(x₂)
+    </p>
+    <div id="monoCards"></div>
+  </div>
+</div>
+
+<!-- Panel 4: 互动练习 -->
+<div class="panel" id="panel-quiz">
+  <div class="card">
+    <h3>🎯 函数知识测验</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span id="quizProgressText" style="font-size:13px;color:#888;">第 1 题 / 共 6 题</span>
+      <span id="quizScore" style="font-size:13px;color:#ffd200;">得分：0</span>
+    </div>
+    <div class="quiz-progress"><div class="quiz-progress-fill" id="quizProgressFill" style="width:0%"></div></div>
+    <div id="quizArea"></div>
+    <div class="quiz-feedback" id="quizFeedback"></div>
+    <div style="text-align:center;margin-top:12px;">
+      <button class="btn orange" id="quizNextBtn" style="display:none;" onclick="nextQuiz()">下一题 →</button>
+      <button class="btn green" id="quizRetryBtn" style="display:none;" onclick="startQuiz()">重新测验</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+// ===== Tab Switching =====
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+  });
+});
+
+// ===== Panel 1: Domain Explorer =====
+const funcExamples = [
+  { label: 'f(x) = 1/x', domain: 'x ≠ 0', range: 'y ≠ 0', explain: '分母不能为0，所以 x ≠ 0。值域也不含0。', draw: (ctx, w, h) => { drawAxis(ctx, w, h); ctx.strokeStyle='#00d2ff'; ctx.lineWidth=2; for(let x=-5;x<=5;x+=0.01){ if(Math.abs(x)<0.1) continue; let px=(x+5)/10*w, py=h/2-1/(x)*h/10; if(x<0)ctx.moveTo(px,py); else{ ctx.beginPath(); } ctx.lineTo(px,py); } ctx.stroke(); drawDomainHole(ctx,w,h,0); }},
+  { label: 'f(x) = √x', domain: 'x ≥ 0', range: 'y ≥ 0', explain: '根号下必须非负，所以 x ≥ 0。值域也是 y ≥ 0。', draw: (ctx, w, h) => { drawAxis(ctx, w, h); ctx.strokeStyle='#38ef7d'; ctx.lineWidth=2.5; ctx.beginPath(); for(let x=0;x<=5;x+=0.05){ let px=x/5.5*w, py=h/2-Math.sqrt(x)/2.5*h/2; ctx.lineTo(px,py); } ctx.stroke(); }},
+  { label: 'f(x) = x²', domain: 'R（全体实数）', range: 'y ≥ 0', explain: 'x² 对任何实数都有意义，定义域为 R。值域为 y ≥ 0。', draw: (ctx, w, h) => { drawAxis(ctx, w, h); ctx.strokeStyle='#ffd200'; ctx.lineWidth=2.5; ctx.beginPath(); for(let x=-3;x<=3;x+=0.05){ let px=(x+3)/6*w, py=h*0.85-x*x/9*h*0.7; ctx.lineTo(px,py); } ctx.stroke(); }},
+  { label: 'f(x) = ln(x)', domain: 'x > 0', range: 'R', explain: '对数函数要求真数 > 0，定义域 (0,+∞)。值域为 R。', draw: (ctx, w, h) => { drawAxis(ctx, w, h); ctx.strokeStyle='#ff6b6b'; ctx.lineWidth=2.5; ctx.beginPath(); for(let x=0.05;x<=5;x+=0.05){ let px=x/5.5*w, py=h/2-Math.log(x)/3*h/2; if(py<0||py>h) continue; ctx.lineTo(px,py); } ctx.stroke(); }},
+  { label: 'f(x) = |x|', domain: 'R', range: 'y ≥ 0', explain: '绝对值对所有实数有意义。值域 y ≥ 0。偶函数！', draw: (ctx, w, h) => { drawAxis(ctx, w, h); ctx.strokeStyle='#667eea'; ctx.lineWidth=2.5; ctx.beginPath(); for(let x=-3;x<=3;x+=0.05){ let px=(x+3)/6*w, py=h*0.85-Math.abs(x)/3*h*0.7; ctx.lineTo(px,py); } ctx.stroke(); }}
+];
+
+let activeDomain = 0;
+
+function drawAxis(ctx, w, h) {
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle='rgba(255,255,255,0.15)';
+  ctx.lineWidth=1;
+  // x axis
+  ctx.beginPath(); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
+  // y axis
+  ctx.beginPath(); ctx.moveTo(w/2,0); ctx.lineTo(w/2,h); ctx.stroke();
+}
+
+function drawDomainHole(ctx, w, h, x) {
+  let px = (x+5)/10*w;
+  ctx.beginPath();
+  ctx.arc(px, h/2, 5, 0, Math.PI*2);
+  ctx.strokeStyle='#f45c43';
+  ctx.lineWidth=2;
+  ctx.stroke();
+}
+
+function renderDomainExplorer() {
+  const container = document.getElementById('domainExplorer');
+  container.innerHTML = '';
+  funcExamples.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = 'domain-item' + (i === activeDomain ? ' active' : '');
+    div.innerHTML = `<span class="func-label">${f.label}</span><span class="func-domain">定义域: ${f.domain}</span>`;
+    div.onclick = () => { activeDomain = i; renderDomainExplorer(); drawDomainGraph(); };
+    container.appendChild(div);
+  });
+  document.getElementById('domainExplain').innerHTML = funcExamples[activeDomain].explain;
+}
+
+function drawDomainGraph() {
+  const canvas = document.getElementById('domainCanvas');
+  const ctx = canvas.getContext('2d');
+  funcExamples[activeDomain].draw(ctx, canvas.width, canvas.height);
+}
+
+renderDomainExplorer();
+drawDomainGraph();
+
+// ===== Panel 2: Graph Explorer =====
+const graphCanvas = document.getElementById('graphCanvas');
+const gCtx = graphCanvas.getContext('2d');
+
+function drawGraph() {
+  const w = graphCanvas.width, h = graphCanvas.height;
+  gCtx.clearRect(0,0,w,h);
+
+  // grid
+  gCtx.strokeStyle='rgba(255,255,255,0.06)';
+  gCtx.lineWidth=1;
+  for(let i=0;i<=10;i++){
+    let x=i*w/10; gCtx.beginPath(); gCtx.moveTo(x,0); gCtx.lineTo(x,h); gCtx.stroke();
+    let y=i*h/10; gCtx.beginPath(); gCtx.moveTo(0,y); gCtx.lineTo(w,y); gCtx.stroke();
+  }
+
+  // axes
+  gCtx.strokeStyle='rgba(255,255,255,0.3)';
+  gCtx.lineWidth=1.5;
+  gCtx.beginPath(); gCtx.moveTo(0,h/2); gCtx.lineTo(w,h/2); gCtx.stroke();
+  gCtx.beginPath(); gCtx.moveTo(w/2,0); gCtx.lineTo(w/2,h); gCtx.stroke();
+
+  // axis labels
+  gCtx.fillStyle='rgba(255,255,255,0.4)';
+  gCtx.font='11px sans-serif';
+  gCtx.fillText('x', w-12, h/2-6);
+  gCtx.fillText('y', w/2+6, 12);
+  gCtx.fillText('O', w/2+4, h/2+14);
+
+  const type = document.getElementById('funcType').value;
+  const a = parseFloat(document.getElementById('paramA').value);
+  document.getElementById('paramAVal').textContent = a;
+
+  let color = '#ffd200';
+  let domainStr = 'R', rangeStr = '', monoStr = '', parityStr = '';
+
+  gCtx.lineWidth = 2.5;
+  gCtx.strokeStyle = color;
+
+  if (type === 'quadratic') {
+    // y = ax²
+    gCtx.beginPath();
+    let started = false;
+    for (let px = 0; px < w; px++) {
+      let x = (px - w/2) / (w/8);
+      let y = a * x * x;
+      let py = h/2 - y * (h/8);
+      if (py < -50 || py > h+50) { started = false; continue; }
+      if (!started) { gCtx.moveTo(px, py); started = true; } else gCtx.lineTo(px, py);
+    }
+    gCtx.stroke();
+    domainStr = 'R';
+    rangeStr = a > 0 ? `[${a===1?'':a}·0, +∞)` : a < 0 ? `(-∞, 0]` : '{0}';
+    if (a > 0) { rangeStr = '[0, +∞)'; monoStr = '(-∞,0)↓ (0,+∞)↑'; }
+    else if (a < 0) { rangeStr = '(-∞, 0]'; monoStr = '(-∞,0)↑ (0,+∞)↓'; }
+    else { rangeStr = '{0}'; monoStr = '常数函数'; }
+    parityStr = a === 0 ? '既奇又偶' : '偶函数';
+  } else if (type === 'power') {
+    // y = x^n
+    let n = a;
+    gCtx.beginPath();
+    let started = false;
+    for (let px = 0; px < w; px++) {
+      let x = (px - w/2) / (w/8);
+      let y;
+      if (x < 0 && n !== Math.floor(n)) continue;
+      if (x < 0 && n < 0 && Math.abs(n) % 2 === 0) continue;
+      y = Math.pow(x, n);
+      if (!isFinite(y) || Math.abs(y) > 20) { started = false; continue; }
+      let py = h/2 - y * (h/8);
+      if (py < -50 || py > h+50) { started = false; continue; }
+      if (!started) { gCtx.moveTo(px, py); started = true; } else gCtx.lineTo(px, py);
+    }
+    gCtx.stroke();
+    domainStr = n >= 0 ? 'R' : 'x ≠ 0';
+    parityStr = (n % 2 === 0) ? '偶函数' : (n % 2 === 1 ? '奇函数' : '非奇非偶');
+    monoStr = n > 0 ? '(0,+∞)↑' : '(-∞,0)↓ (0,+∞)↓';
+    rangeStr = n > 0 ? (n%2===0?'[0,+∞)':'R') : 'y ≠ 0';
+  } else if (type === 'inverse') {
+    // y = k/x
+    let k = a;
+    gCtx.beginPath();
+    let started = false;
+    for (let px = 1; px < w/2-2; px++) {
+      let x = px / (w/8);
+      let y = k / x;
+      let py = h/2 - y * (h/8);
+      if (py < -50 || py > h+50) { started = false; continue; }
+      if (!started) { gCtx.moveTo(px, py); started = true; } else gCtx.lineTo(px, py);
+    }
+    gCtx.stroke();
+    gCtx.beginPath();
+    started = false;
+    for (let px = w/2+2; px < w; px++) {
+      let x = (px - w/2) / (w/8);
+      let y = k / x;
+      let py = h/2 - y * (h/8);
+      if (py < -50 || py > h+50) { started = false; continue; }
+      if (!started) { gCtx.moveTo(px, py); started = true; } else gCtx.lineTo(px, py);
+    }
+    gCtx.stroke();
+    domainStr = 'x ≠ 0';
+    rangeStr = 'y ≠ 0';
+    monoStr = k > 0 ? '各区间上递减' : '各区间上递增';
+    parityStr = '奇函数';
+  } else if (type === 'exponential') {
+    // y = a^x (a > 0, a ≠ 1)
+    let base = a;
+    if (base <= 0) base = 0.5;
+    gCtx.beginPath();
+    let started = false;
+    for (let px = 0; px < w; px++) {
+      let x = (px - w/2) / (w/8);
+      let y = Math.pow(base, x);
+      if (!isFinite(y) || y > 20) { started = false; continue; }
+      let py = h/2 - y * (h/8);
+      if (py < -20) { started = false; continue; }
+      if (!started) { gCtx.moveTo(px, py); started = true; } else gCtx.lineTo(px, py);
+    }
+    gCtx.stroke();
+    domainStr = 'R';
+    rangeStr = '(0, +∞)';
+    monoStr = base > 1 ? 'R上递增↑' : base < 1 ? 'R上递减↓' : '常数1';
+    parityStr = '非奇非偶';
+  }
+
+  document.getElementById('infoDomain').textContent = domainStr;
+  document.getElementById('infoRange').textContent = rangeStr;
+  document.getElementById('infoMono').textContent = monoStr;
+  document.getElementById('infoParity').textContent = parityStr;
+}
+
+document.getElementById('funcType').addEventListener('change', () => {
+  const type = document.getElementById('funcType').value;
+  const controls = document.getElementById('paramControls');
+  if (type === 'quadratic') {
+    controls.innerHTML = '<label>a = <span id="paramAVal">1</span></label><input type="range" id="paramA" min="-3" max="3" step="0.5" value="1">';
+  } else if (type === 'power') {
+    controls.innerHTML = '<label>n = <span id="paramAVal">2</span></label><input type="range" id="paramA" min="-2" max="4" step="1" value="2">';
+  } else if (type === 'inverse') {
+    controls.innerHTML = '<label>k = <span id="paramAVal">1</span></label><input type="range" id="paramA" min="-3" max="3" step="0.5" value="1">';
+  } else if (type === 'exponential') {
+    controls.innerHTML = '<label>a = <span id="paramAVal">2</span></label><input type="range" id="paramA" min="0.5" max="4" step="0.5" value="2">';
+  }
+  document.getElementById('paramA').addEventListener('input', drawGraph);
+  drawGraph();
+});
+document.getElementById('paramA').addEventListener('input', drawGraph);
+drawGraph();
+
+// ===== Panel 3: Property Judgment =====
+const parityProblems = [
+  { func: 'f(x) = x³', answer: 'odd', explain: 'f(-x) = (-x)³ = -x³ = -f(x)，满足奇函数定义。' },
+  { func: 'f(x) = x² + 1', answer: 'even', explain: 'f(-x) = (-x)²+1 = x²+1 = f(x)，满足偶函数定义。' },
+  { func: 'f(x) = x + 1', answer: 'neither', explain: 'f(-x) = -x+1 ≠ f(x) 且 ≠ -f(x)，非奇非偶。' },
+  { func: 'f(x) = |x|', answer: 'even', explain: 'f(-x) = |-x| = |x| = f(x)，偶函数。图像关于y轴对称。' },
+  { func: 'f(x) = 1/x', answer: 'odd', explain: 'f(-x) = 1/(-x) = -1/x = -f(x)，奇函数。' }
+];
+
+const monoProblems = [
+  { func: 'f(x) = x² 在 (0, +∞)', answer: 'inc', explain: 'x₁ < x₂ 时，x₁² < x₂²，单调递增。' },
+  { func: 'f(x) = 1/x 在 (0, +∞)', answer: 'dec', explain: 'x₁ < x₂ 时，1/x₁ > 1/x₂，单调递减。' },
+  { func: 'f(x) = -x² 在 (-∞, 0)', answer: 'inc', explain: 'x < 0 时，x 越大 x² 越小，-x² 越大，递增。' },
+  { func: 'f(x) = 2x + 1 在 R', answer: 'inc', explain: '一次函数斜率 2 > 0，在 R 上单调递增。' },
+  { func: 'f(x) = |x| 在 (-∞, 0)', answer: 'dec', explain: 'x < 0 时 |x| = -x，斜率 -1 < 0，单调递减。' }
+];
+
+function renderPropertyCards() {
+  // Parity
+  const parityContainer = document.getElementById('parityCards');
+  parityContainer.innerHTML = '';
+  parityProblems.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'property-card';
+    div.innerHTML = `
+      <div class="func-display">${p.func}</div>
+      <div class="prop-buttons">
+        <button class="prop-btn" data-idx="${i}" data-val="odd" data-type="parity">奇函数</button>
+        <button class="prop-btn" data-idx="${i}" data-val="even" data-type="parity">偶函数</button>
+        <button class="prop-btn" data-idx="${i}" data-val="neither" data-type="parity">非奇非偶</button>
+      </div>
+      <div class="feedback" id="parityFb${i}"></div>
+    `;
+    parityContainer.appendChild(div);
+  });
+
+  // Monotonicity
+  const monoContainer = document.getElementById('monoCards');
+  monoContainer.innerHTML = '';
+  monoProblems.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'property-card';
+    div.innerHTML = `
+      <div class="func-display">${p.func}</div>
+      <div class="prop-buttons">
+        <button class="prop-btn" data-idx="${i}" data-val="inc" data-type="mono">递增 ↑</button>
+        <button class="prop-btn" data-idx="${i}" data-val="dec" data-type="mono">递减 ↓</button>
+      </div>
+      <div class="feedback" id="monoFb${i}"></div>
+    `;
+    monoContainer.appendChild(div);
+  });
+
+  // Event listeners
+  document.querySelectorAll('.prop-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.type;
+      const idx = btn.dataset.idx;
+      const val = btn.dataset.val;
+      const problem = type === 'parity' ? parityProblems[idx] : monoProblems[idx];
+      const fb = document.getElementById(`${type}Fb${idx}`);
+      const buttons = btn.parentElement.querySelectorAll('.prop-btn');
+
+      // disable further clicks
+      buttons.forEach(b => {
+        if (b.dataset.val === problem.answer) b.classList.add('correct');
+        else if (b === btn && val !== problem.answer) b.classList.add('wrong');
+        b.style.pointerEvents = 'none';
+      });
+
+      if (val === problem.answer) {
+        fb.className = 'feedback show ok';
+        fb.textContent = '✅ 正确！' + problem.explain;
+      } else {
+        fb.className = 'feedback show no';
+        fb.textContent = '❌ 错误。' + problem.explain;
+      }
+    });
+  });
+}
+renderPropertyCards();
+
+// ===== Panel 4: Quiz =====
+const quizzes = [
+  {
+    q: '函数 f(x) = √(x-1) 的定义域是：',
+    options: ['A. [1, +∞)', 'B. (1, +∞)', 'C. (-∞, 1]', 'D. R'],
+    answer: 0,
+    explain: '根号下要求 x-1 ≥ 0，即 x ≥ 1，定义域为 [1, +∞)。'
+  },
+  {
+    q: '下列函数中，既是奇函数又在 R 上单调递增的是：',
+    options: ['A. f(x) = x²', 'B. f(x) = x³', 'C. f(x) = |x|', 'D. f(x) = 1/x'],
+    answer: 1,
+    explain: 'x³ 是奇函数（(-x)³=-x³），且导数 3x²≥0，在 R 上单调递增。x²是偶函数，|x|非奇非偶，1/x在x=0不连续。'
+  },
+  {
+    q: '若 f(x) = x² - 2x + 3，则 f(x) 的最小值为：',
+    options: ['A. 1', 'B. 2', 'C. 3', 'D. 0'],
+    answer: 1,
+    explain: '配方：f(x) = (x-1)² + 2，当 x=1 时取最小值 2。'
+  },
+  {
+    q: '已知 f(x) 是偶函数，f(2) = 3，则 f(-2) = ？',
+    options: ['A. -3', 'B. 3', 'C. 0', 'D. 无法确定'],
+    answer: 1,
+    explain: '偶函数满足 f(-x) = f(x)，所以 f(-2) = f(2) = 3。'
+  },
+  {
+    q: '函数 f(x) = 2ˣ 的值域是：',
+    options: ['A. R', 'B. (0, +∞)', 'C. [0, +∞)', 'D. (1, +∞)'],
+    answer: 1,
+    explain: '指数函数 aˣ (a>0,a≠1) 的值域为 (0, +∞)，永远大于0。'
+  },
+  {
+    q: '若 f(x+1) = x²，则 f(3) = ？',
+    options: ['A. 4', 'B. 9', 'C. 8', 'D. 2'],
+    answer: 0,
+    explain: '令 x+1=3，则 x=2。f(3) = f(2+1) = 2² = 4。'
+  }
+];
+
+let quizIdx = 0, quizAnswered = false, quizScore = 0;
+
+function startQuiz() {
+  quizIdx = 0; quizAnswered = false; quizScore = 0;
+  document.getElementById('quizRetryBtn').style.display = 'none';
+  document.getElementById('quizScore').textContent = '得分：0';
+  renderQuiz();
+}
+
+function renderQuiz() {
+  quizAnswered = false;
+  const q = quizzes[quizIdx];
+  document.getElementById('quizProgressText').textContent = `第 ${quizIdx+1} 题 / 共 ${quizzes.length} 题`;
+  document.getElementById('quizProgressFill').style.width = `${quizIdx/quizzes.length*100}%`;
+
+  const area = document.getElementById('quizArea');
+  area.innerHTML = `<div class="quiz-q">${q.q}</div>`;
+  q.options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.onclick = () => answerQuiz(i, div);
+    area.appendChild(div);
+  });
+
+  document.getElementById('quizFeedback').className = 'quiz-feedback';
+  document.getElementById('quizFeedback').textContent = '';
+  document.getElementById('quizNextBtn').style.display = 'none';
+}
+
+function answerQuiz(idx, el) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = quizzes[quizIdx];
+  const fb = document.getElementById('quizFeedback');
+
+  document.querySelectorAll('.quiz-opt').forEach((opt, i) => {
+    if (i === q.answer) opt.classList.add('correct');
+    else if (i === idx) opt.classList.add('wrong');
+  });
+
+  if (idx === q.answer) {
+    quizScore++;
+    document.getElementById('quizScore').textContent = `得分：${quizScore}`;
+    fb.className = 'quiz-feedback show ok';
+    fb.textContent = '✅ 正确！' + q.explain;
+  } else {
+    fb.className = 'quiz-feedback show no';
+    fb.textContent = '❌ 错误。' + q.explain;
+  }
+
+  if (quizIdx < quizzes.length - 1) {
+    document.getElementById('quizNextBtn').style.display = 'inline-block';
+  } else {
+    document.getElementById('quizProgressFill').style.width = '100%';
+    document.getElementById('quizRetryBtn').style.display = 'inline-block';
+    // 全部答完：得分 ≥ 4/6 视为通过，标记本知识点完成
+    if (quizScore >= 4 && typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('function');
+      fb.className = 'quiz-feedback show ok';
+      fb.textContent += ` 🎉 总得分 ${quizScore}/${quizzes.length}，本知识点已标记完成！`;
+    }
+  }
+}
+
+function nextQuiz() { quizIdx++; renderQuiz(); }
+
+startQuiz();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中数学"></script>
+</body>
+</html>

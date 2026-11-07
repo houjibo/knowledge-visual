@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>激光原理 · 受激辐射与粒子数反转 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #f43f5e;
+    --absorb: #38bdf8;
+    --spont: #fbbf24;
+    --stim: #f43f5e;
+    --cavity: #a78bfa;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #450a0a 0%, #0f172a 55%, #1e1b4b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px;
+    font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #fda4af; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #f43f5e, #fda4af, #fecdd3); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(244,63,94,.4); color: #450a0a; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); touch-action: none; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #fda4af; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 100px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fda4af; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.a { border-color: var(--absorb); }
+  .concept-card.s { border-color: var(--spont); }
+  .concept-card.t { border-color: var(--stim); }
+  .concept-card.c { border-color: var(--cavity); }
+  .concept-card.a .title { color: var(--absorb); font-weight: 600; margin-bottom: 4px; }
+  .concept-card.s .title { color: var(--spont); font-weight: 600; margin-bottom: 4px; }
+  .concept-card.t .title { color: var(--stim); font-weight: 600; margin-bottom: 4px; }
+  .concept-card.c .title { color: var(--cavity); font-weight: 600; margin-bottom: 4px; }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 36px; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: #450a0a; font-weight: 700; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(244,63,94,0.08); border-radius: 12px; border: 1px solid rgba(244,63,94,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fda4af; min-height: 18px; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #450a0a; font-weight: 700; min-height: 36px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">🔭 物理</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">大学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">激光原理</span>
+  </nav>
+
+  <header>
+    <h1>💡 激光原理 · 受激辐射与粒子数反转</h1>
+    <p>吸收 · 自发辐射 · 受激辐射 · 谐振腔 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 学习</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 学习模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="learnCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>📐 核心公式</h3>
+        <div class="equation">
+          玻尔频率条件：<b>hν = E₂ − E₁</b><br/>
+          受激辐射率：<b>W₂₁ = B₂₁·ρ(ν)</b><br/>
+          反转条件：<b>N₂ &gt; N₁</b>（粒子数反转）<br/>
+          阈值增益：<b>g ≥ g_th ≈ −ln(R₁R₂) / (2L)</b>
+        </div>
+        <div class="slider-row">
+          <label>泵浦功率 P</label>
+          <input type="range" id="pump" min="0" max="100" step="1" value="30" />
+          <span class="val" id="pumpv">30 %</span>
+        </div>
+        <div class="slider-row">
+          <label>上能级寿命 τ₂</label>
+          <input type="range" id="tau" min="1" max="20" step="1" value="10" />
+          <span class="val" id="tauv">10 ms</span>
+        </div>
+        <div class="slider-row">
+          <label>镜面反射率 R</label>
+          <input type="range" id="refl" min="50" max="99" step="1" value="90" />
+          <span class="val" id="reflv">90 %</span>
+        </div>
+        <div class="info-grid">
+          <div>N₂（上能级）= <b id="calc-n2">35</b></div>
+          <div>N₁（下能级）= <b id="calc-n1">65</b></div>
+          <div>反转密度 ΔN = <b id="calc-dn">−30</b></div>
+          <div>状态：<b id="calc-state">未反转</b></div>
+        </div>
+        <div class="concept-card a">
+          <div class="title">🔵 受激吸收</div>
+          电子吸收光子能量 hν，从低能级 E₁ 跃迁到高能级 E₂。是激光泵浦的第一步。
+        </div>
+        <div class="concept-card s">
+          <div class="title">🟡 自发辐射</div>
+          电子自发从 E₂ 跃迁回 E₁，放出随机方向、随机相位的光子。这是普通光源（灯泡、荧光）的发光机制。
+        </div>
+        <div class="concept-card t">
+          <div class="title">🔴 受激辐射（激光核心）</div>
+          入射光子「诱导」激发态电子跃迁，放出与入射光子<b>同频率、同相位、同方向</b>的光子 —— 实现光放大。
+        </div>
+        <div class="concept-card c">
+          <div class="title">🟣 激光三要素</div>
+          ① <b>工作物质</b>（提供能级）② <b>泵浦源</b>（实现粒子数反转）③ <b>谐振腔</b>（两面反射镜，提供正反馈与方向选择）。激光特性：单色性、方向性、相干性、高亮度。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🧪 练习：调参达到目标</h3>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-target="invert">实现粒子数反转</button>
+          <button class="mode-btn" data-target="threshold">超过激光阈值</button>
+          <button class="mode-btn" data-target="strong">强激光输出</button>
+        </div>
+        <div class="slider-row">
+          <label>泵浦功率 P</label>
+          <input type="range" id="ppump" min="0" max="100" step="1" value="20" />
+          <span class="val" id="ppumpv">20 %</span>
+        </div>
+        <div class="slider-row">
+          <label>上能级寿命 τ₂</label>
+          <input type="range" id="ptau" min="1" max="20" step="1" value="6" />
+          <span class="val" id="ptauv">6 ms</span>
+        </div>
+        <div class="slider-row">
+          <label>镜面反射率 R</label>
+          <input type="range" id="prefl" min="50" max="99" step="1" value="80" />
+          <span class="val" id="preflv">80 %</span>
+        </div>
+        <div class="info-grid">
+          <div>反转密度 ΔN = <b id="p-dn">−40</b></div>
+          <div>增益 g = <b id="p-g">0.10</b> /m</div>
+          <div>阈值 g_th = <b id="p-gth">0.22</b> /m</div>
+          <div>状态：<b id="p-status">未达到</b></div>
+        </div>
+        <div class="concept-card c">
+          <div class="title">💡 提示</div>
+          <span id="p-hint">增大泵浦 P 与上能级寿命 τ₂，让 N₂ &gt; N₁。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="quizCanvas" width="700" height="420"></canvas>
+      </div>
+      <div class="panel">
+        <h3>🎯 随堂测验（4 题，3/4 合格）</h3>
+        <div class="quiz">
+          <div class="quiz-q" id="quiz-q">题目加载中…</div>
+          <div class="quiz-opts" id="quiz-opts"></div>
+          <div class="quiz-feedback" id="quiz-fb"></div>
+          <div class="quiz-nav">
+            <button id="quiz-prev">⬅ 上一题</button>
+            <button id="quiz-next">下一题 ➡</button>
+            <button id="quiz-submit" class="hidden">📊 提交评分</button>
+            <button id="quiz-retry" class="hidden">🔄 重新测验</button>
+          </div>
+          <div class="quiz-result hidden" id="quiz-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Knowledge Visual · 大学物理 · 激光原理 · <span id="done-mark"></span></footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+let mode = 'learn';
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    mode = t.dataset.mode;
+    Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+    if (mode === 'quiz') renderQuiz();
+    draw();
+  });
+});
+
+/* ============================================================
+ * 物理模型：三能级系统简化稳态
+ * 泵浦速率 W ∝ P；上能级寿命 τ₂；N₂ = N·Wτ₂/(1+2Wτ₂)
+ * 增益 g = σ·ΔN；阈值 g_th ∝ −ln(R₁·R₂)
+ * ============================================================ */
+const N_TOTAL = 100;
+function physics(pumpPct, tauMs, reflPct) {
+  const W = pumpPct / 100 * 0.5;           // 归一化泵浦速率 /ms
+  const tau = tauMs;                        // ms
+  const wTau = W * tau;
+  const N2 = Math.round(N_TOTAL * wTau / (1 + 2 * wTau));
+  const N1 = N_TOTAL - N2;
+  const dN = N2 - N1;
+  const sigma = 0.01;                       // 受激截面（任意单位）
+  const g = Math.max(0, sigma * dN);        // 增益 /m
+  const R1 = reflPct / 100, R2 = 1.0;       // 输出镜 R1，全反镜 R2=1
+  const L = 0.5;                            // 腔长 m
+  const gth = -Math.log(R1 * R2) / (2 * L);
+  const inverted = dN > 0;
+  const lasing = inverted && g >= gth;
+  return { N2, N1, dN, g, gth, inverted, lasing };
+}
+
+/* ============================================================
+ * 学习模式
+ * ============================================================ */
+const pumpEl = document.getElementById('pump');
+const tauEl = document.getElementById('tau');
+const reflEl = document.getElementById('refl');
+function updLearn() {
+  document.getElementById('pumpv').textContent = pumpEl.value + ' %';
+  document.getElementById('tauv').textContent = tauEl.value + ' ms';
+  document.getElementById('reflv').textContent = reflEl.value + ' %';
+  const p = physics(+pumpEl.value, +tauEl.value, +reflEl.value);
+  document.getElementById('calc-n2').textContent = p.N2;
+  document.getElementById('calc-n1').textContent = p.N1;
+  document.getElementById('calc-dn').textContent = (p.dN >= 0 ? '+' : '') + p.dN;
+  const st = p.lasing ? '✨ 激光输出' : (p.inverted ? '已反转（未达阈值）' : '未反转');
+  const el = document.getElementById('calc-state');
+  el.textContent = st;
+  el.style.color = p.lasing ? '#10b981' : (p.inverted ? '#fbbf24' : '#fda4af');
+}
+[pumpEl, tauEl, reflEl].forEach(el => el.addEventListener('input', () => { updLearn(); draw(); }));
+updLearn();
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const ppump = document.getElementById('ppump');
+const ptau = document.getElementById('ptau');
+const prefl = document.getElementById('prefl');
+let practiceTarget = 'invert';
+const targetDesc = {
+  invert:    { text: '实现粒子数反转', check: p => p.inverted,
+               hint: '增大泵浦 P 与上能级寿命 τ₂，让 N₂ > N₁。' },
+  threshold: { text: '超过激光阈值',   check: p => p.lasing,
+               hint: '在反转基础上，提高镜面反射率 R 可降低阈值 g_th。' },
+  strong:    { text: '强激光输出',     check: p => p.lasing && p.g >= 2 * p.gth,
+               hint: '让增益 g 达到阈值 g_th 的 2 倍以上。需要 P、τ、R 都很优秀。' }
+};
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    practiceTarget = btn.dataset.target;
+    document.getElementById('p-hint').textContent = targetDesc[practiceTarget].hint;
+    updPractice(); draw();
+  });
+});
+function updPractice() {
+  document.getElementById('ppumpv').textContent = ppump.value + ' %';
+  document.getElementById('ptauv').textContent = ptau.value + ' ms';
+  document.getElementById('preflv').textContent = prefl.value + ' %';
+  const p = physics(+ppump.value, +ptau.value, +prefl.value);
+  document.getElementById('p-dn').textContent = (p.dN >= 0 ? '+' : '') + p.dN;
+  document.getElementById('p-g').textContent = p.g.toFixed(2);
+  document.getElementById('p-gth').textContent = p.gth.toFixed(2);
+  const ok = targetDesc[practiceTarget].check(p);
+  const stateLabel = p.lasing ? '激光输出 ✨' : (p.inverted ? '已反转' : '未反转');
+  const el = document.getElementById('p-status');
+  el.textContent = ok ? `✅ ${stateLabel}` : stateLabel;
+  el.style.color = ok ? '#10b981' : '#fda4af';
+}
+[ppump, ptau, prefl].forEach(el => el.addEventListener('input', () => { updPractice(); draw(); }));
+updPractice();
+
+/* ============================================================
+ * Canvas：能级 + 粒子分布 + 谐振腔
+ * ============================================================ */
+function drawScene(ctx, W, H, pumpPct, tauMs, reflPct) {
+  ctx.clearRect(0, 0, W, H);
+  const p = physics(pumpPct, tauMs, reflPct);
+
+  // 左半：能级图
+  const lx = 40, lw = 240;
+  const levels = [
+    { name: 'E₂ 上能级', y: 90,  N: p.N2, color: '#f43f5e' },
+    { name: 'E₁ 下能级', y: 260, N: p.N1, color: '#38bdf8' }
+  ];
+  ctx.font = 'bold 13px sans-serif';
+  levels.forEach(l => {
+    ctx.strokeStyle = l.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(lx, l.y); ctx.lineTo(lx + lw, l.y); ctx.stroke();
+    ctx.fillStyle = l.color;
+    ctx.fillText(l.name, lx, l.y - 8);
+    // 粒子点
+    const dotsPerRow = 12;
+    for (let i = 0; i < l.N; i++) {
+      const row = Math.floor(i / dotsPerRow);
+      const col = i % dotsPerRow;
+      const dx = lx + 10 + col * (lw - 20) / dotsPerRow;
+      const dy = l.y - 14 - row * 8;
+      ctx.beginPath();
+      ctx.arc(dx, dy, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = l.color;
+      ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.fillText(`N = ${l.N}`, lx + lw - 60, l.y + 18);
+  });
+
+  // 跃迁箭头
+  // 泵浦（吸收）— 向上
+  ctx.strokeStyle = 'rgba(251,191,36,0.85)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(lx + 30, levels[1].y - 4);
+  ctx.lineTo(lx + 30, levels[0].y + 4);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // 箭头头部
+  ctx.fillStyle = 'rgba(251,191,36,0.9)';
+  ctx.beginPath();
+  ctx.moveTo(lx + 30, levels[0].y + 2);
+  ctx.lineTo(lx + 25, levels[0].y + 12);
+  ctx.lineTo(lx + 35, levels[0].y + 12);
+  ctx.closePath(); ctx.fill();
+  ctx.font = '11px sans-serif';
+  ctx.fillText('泵浦吸收', lx + 38, (levels[0].y + levels[1].y) / 2);
+
+  // 受激辐射 — 向下
+  if (p.inverted) {
+    ctx.strokeStyle = '#f43f5e';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(lx + lw - 30, levels[0].y + 4);
+    ctx.lineTo(lx + lw - 30, levels[1].y - 4);
+    ctx.stroke();
+    ctx.fillStyle = '#f43f5e';
+    ctx.beginPath();
+    ctx.moveTo(lx + lw - 30, levels[1].y - 2);
+    ctx.lineTo(lx + lw - 35, levels[1].y - 12);
+    ctx.lineTo(lx + lw - 25, levels[1].y - 12);
+    ctx.closePath(); ctx.fill();
+    ctx.fillText('受激辐射', lx + lw - 95, (levels[0].y + levels[1].y) / 2);
+  }
+
+  // 右半：谐振腔
+  const cx = 340, cw = 320, cy = 160, ch = 80;
+  // 工作物质
+  ctx.fillStyle = p.lasing ? 'rgba(244,63,94,0.25)' : 'rgba(148,163,184,0.12)';
+  ctx.fillRect(cx + 20, cy, cw - 40, ch);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.strokeRect(cx + 20, cy, cw - 40, ch);
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('工作物质', cx + cw / 2 - 28, cy + ch + 18);
+
+  // 全反镜 R2 = 100%
+  ctx.fillStyle = '#a78bfa';
+  ctx.fillRect(cx, cy - 6, 10, ch + 12);
+  ctx.fillText('R₂=100%', cx - 6, cy - 12);
+  // 输出镜 R1
+  ctx.fillStyle = 'rgba(167,139,250,0.7)';
+  ctx.fillRect(cx + cw - 10, cy - 6, 10, ch + 12);
+  ctx.fillText(`R₁=${reflPct}%`, cx + cw - 70, cy - 12);
+
+  // 腔内光波（多次反射）
+  const waves = p.lasing ? 6 : (p.inverted ? 3 : 1);
+  for (let w = 0; w < waves; w++) {
+    const yy = cy + 12 + w * (ch - 24) / Math.max(1, waves - 1);
+    ctx.strokeStyle = p.lasing ? `rgba(244,63,94,${0.9 - w * 0.1})` : `rgba(148,163,184,${0.4 - w * 0.1})`;
+    ctx.lineWidth = p.lasing ? 2 : 1.2;
+    ctx.beginPath();
+    for (let x = 0; x <= cw - 40; x += 4) {
+      const px = cx + 20 + x;
+      const py = yy + Math.sin(x / 8 + w) * 4;
+      if (x === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  // 输出激光束
+  if (p.lasing) {
+    const grad = ctx.createLinearGradient(cx + cw, 0, cx + cw + 60, 0);
+    grad.addColorStop(0, 'rgba(244,63,94,0.95)');
+    grad.addColorStop(1, 'rgba(244,63,94,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(cx + cw, cy + ch / 2 - 8, 60, 16);
+    ctx.fillStyle = '#fda4af';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('激光输出', cx + cw + 2, cy + ch / 2 - 14);
+  }
+
+  // 状态文本
+  ctx.fillStyle = p.lasing ? '#10b981' : (p.inverted ? '#fbbf24' : '#94a3b8');
+  ctx.font = 'bold 15px sans-serif';
+  const statusTxt = p.lasing ? '✨ 激光振荡中' : (p.inverted ? '已反转，未达阈值' : '未反转');
+  ctx.fillText(`状态：${statusTxt}`, 30, H - 50);
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`ΔN = ${p.dN >= 0 ? '+' : ''}${p.dN} · g = ${p.g.toFixed(2)}/m · g_th = ${p.gth.toFixed(2)}/m`, 30, H - 30);
+}
+
+const learnCtx = document.getElementById('learnCanvas').getContext('2d');
+const practiceCtx = document.getElementById('practiceCanvas').getContext('2d');
+const quizCtx = document.getElementById('quizCanvas').getContext('2d');
+
+function draw() {
+  if (mode === 'learn') drawScene(learnCtx, 700, 420, +pumpEl.value, +tauEl.value, +reflEl.value);
+  else if (mode === 'practice') drawScene(practiceCtx, 700, 420, +ppump.value, +ptau.value, +prefl.value);
+  else drawQuizScene(quizCtx, 700, 420);
+}
+
+function drawQuizScene(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`🎯 第 ${quizIdx + 1}/${quizData.length} 题`, 30, 40);
+  drawScene(ctx, W, H - 50, 60, 12, 95);
+}
+
+/* ============================================================
+ * 测验
+ * ============================================================ */
+const quizData = [
+  {
+    q: '1️⃣ 激光的「受激辐射」与「自发辐射」最本质的区别是？',
+    opts: ['受激辐射需要吸收能量', '受激辐射产生的光子与入射光子同频同相同方向', '自发辐射只在高温发生', '受激辐射不释放光子'],
+    ans: 1,
+    fb: '受激辐射的光子与诱导它的光子完全相同（同频率、同相位、同方向），因此激光高度相干。'
+  },
+  {
+    q: '2️⃣ 实现激光振荡的必要条件是？',
+    opts: ['N₁ > N₂', 'N₂ > N₁（粒子数反转）且 g ≥ g_th', '温度低于 4K', '必须使用固体介质'],
+    ans: 1,
+    fb: '粒子数反转（N₂>N₁）让受激辐射超过吸收，且增益需克服腔损耗（≥阈值）。'
+  },
+  {
+    q: '3️⃣ 激光谐振腔的主要作用是？',
+    opts: ['产生泵浦能量', '提供正反馈 + 方向选择，使光多次通过工作物质放大', '改变激光频率', '降低工作物质温度'],
+    ans: 1,
+    fb: '谐振腔两面反射镜让光子多次往返通过增益介质，实现正反馈放大，并选择轴向模式。'
+  },
+  {
+    q: '4️⃣ 下列哪项不是激光的典型特性？',
+    opts: ['单色性好', '方向性好', '相干性高', '发散角大'],
+    ans: 3,
+    fb: '激光发散角极小（毫弧度级），这正是其方向性好的体现。其它三项均为激光特性。'
+  }
+];
+let quizIdx = 0;
+let quizAnswers = new Array(quizData.length).fill(-1);
+let quizSubmitted = false;
+
+const qEl = document.getElementById('quiz-q');
+const qOpts = document.getElementById('quiz-opts');
+const qFb = document.getElementById('quiz-fb');
+const qPrev = document.getElementById('quiz-prev');
+const qNext = document.getElementById('quiz-next');
+const qSubmit = document.getElementById('quiz-submit');
+const qRetry = document.getElementById('quiz-retry');
+const qResult = document.getElementById('quiz-result');
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  qEl.textContent = q.q;
+  qOpts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+    if (quizAnswers[quizIdx] === i) div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+    if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) div.classList.add('correct');
+    div.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizAnswers[quizIdx] = i;
+      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
+      [...qOpts.children].forEach((c, j) => {
+        c.classList.remove('correct', 'wrong');
+        if (quizAnswers[quizIdx] === j) c.classList.add('correct');
+      });
+    });
+    qOpts.appendChild(div);
+  });
+  qFb.textContent = quizAnswers[quizIdx] === -1 ? '' : (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
+  qPrev.disabled = quizIdx === 0;
+  qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
+  qSubmit.classList.toggle('hidden', quizIdx !== quizData.length - 1 || quizSubmitted);
+  qRetry.classList.toggle('hidden', !quizSubmitted);
+}
+qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+qSubmit.addEventListener('click', () => {
+  quizSubmitted = true;
+  const score = quizData.reduce((s, q, i) => s + (quizAnswers[i] === q.ans ? 1 : 0), 0);
+  const pass = score >= 3;
+  qResult.classList.remove('hidden');
+  qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
+  qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  qResult.textContent = pass ? `🎉 得分 ${score}/4，合格！本知识点已标记完成` : `😅 得分 ${score}/4，未达到 3/4，请复习后重试`;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('laser-physics');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+  renderQuiz();
+});
+qRetry.addEventListener('click', () => {
+  quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
+  qResult.classList.add('hidden');
+  renderQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('laser-physics')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+renderQuiz();
+draw();
+</script>
+</body>
+</html>

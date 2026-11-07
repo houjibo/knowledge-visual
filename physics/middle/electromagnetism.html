@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>电与磁 · 初中物理互动可视化</title>
+<style>
+  :root {
+    --primary: #818cf8;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #a5b4fc; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #6366f1, #818cf8, #a5b4fc); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(129,140,248,.4); color: #1e1b4b; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .hidden { display: none !important; }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .stage > * { min-width: 0; }
+  @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #232052 0%, #0f172a 100%); touch-action: none; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #cbd5e1; flex-wrap: wrap; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #a5b4fc; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--primary); min-height: 44px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #a5b4fc; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid var(--primary); line-height: 1.7; font-size: 14px; }
+  .concept-card.warn { border-color: #f59e0b; }
+  .concept-card .title { font-weight: 700; margin-bottom: 4px; color: var(--primary); }
+  .concept-card.warn .title { color: #f59e0b; }
+  .demo-btns { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .demo-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 44px; min-width: 44px; }
+  .demo-btn.active { background: var(--primary); border-color: var(--primary); color: #1e1b4b; font-weight: 700; }
+  .switch-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; cursor: pointer; font-size: 15px; font-weight: 700; background: #10b981; color: #052e16; margin: 10px 0; min-height: 44px; transition: all .2s; }
+  .switch-btn.off { background: #ef4444; color: #450a0a; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(129,140,248,0.08); border-radius: 12px; border: 1px solid rgba(129,140,248,0.3); }
+  .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #a5b4fc; min-height: 18px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #1e1b4b; font-weight: 700; min-height: 44px; min-width: 44px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  .practice-item { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+  .practice-item h4 { color: #e2e8f0; margin-bottom: 10px; font-size: 15px; line-height: 1.6; }
+  .practice-opts { display: grid; gap: 6px; }
+  .practice-fb { margin-top: 8px; font-size: 13px; min-height: 18px; line-height: 1.6; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 28px; }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .container { padding: 10px 14px; }
+    .breadcrumb { padding: 6px 10px; font-size: 12px; margin-bottom: 8px; }
+    header { margin-bottom: 10px; }
+    header h1 { font-size: 1.5rem; }
+    header p { font-size: 12px; margin-top: 2px; }
+    .tabs { gap: 6px; margin-bottom: 10px; }
+    .tab { padding: 6px 14px; font-size: 12px; min-height: 36px; }
+    .canvas-wrap, .panel { padding: 10px; border-radius: 12px; }
+    .panel h3 { font-size: 1rem; margin-bottom: 8px; }
+    .equation { padding: 8px; font-size: 0.95rem; margin: 6px 0; }
+    .concept-card { padding: 10px; margin: 6px 0; font-size: 13px; }
+    .slider-row { margin: 6px 0; font-size: 13px; }
+  }
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    header h1 { font-size: 1.6rem; }
+    .tabs { gap: 6px; }
+    .tab { padding: 8px 12px; font-size: 13px; }
+    .slider-row { flex-wrap: wrap; }
+    .slider-row label { flex: 0 0 auto; }
+    .slider-row .val { flex: 0 0 auto; }
+    .slider-row input[type=range] { flex: 1 1 100%; order: 3; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">🔭 物理</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">初中</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">电与磁</span>
+    <span id="done-mark" style="margin-left:auto;color:#10b981;font-weight:600;"></span>
+  </nav>
+
+  <header>
+    <h1>🧲 电与磁</h1>
+    <p>电流的磁效应 · 电磁铁 · 电动机与发电机 · 互动可视化</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="learn">📖 实验</div>
+    <div class="tab" data-mode="practice">🧪 练习</div>
+    <div class="tab" data-mode="quiz">🎯 测验</div>
+  </div>
+
+  <!-- ==================== 实验模式 ==================== -->
+  <div class="mode-section" id="sec-learn">
+    <div class="stage">
+      <div>
+        <div class="canvas-wrap">
+          <canvas id="emCanvas" width="720" height="460"></canvas>
+          <div class="legend">
+            <span style="color:#f472b6">N 极（红）</span>
+            <span style="color:#60a5fa">S 极（蓝）</span>
+            <span>⚡ 电流产生磁场</span>
+          </div>
+        </div>
+        <button class="switch-btn" id="powerBtn">🔌 接通电流</button>
+      </div>
+      <div class="panel">
+        <h3>选择实验</h3>
+        <div class="demo-btns" id="demoBtns">
+          <button class="demo-btn active" data-demo="oersted">奥斯特实验</button>
+          <button class="demo-btn" data-demo="electromagnet">电磁铁</button>
+          <button class="demo-btn" data-demo="motor">电动机</button>
+        </div>
+        <div class="slider-row" id="rowCurrent" style="display:none">
+          <label>电流大小</label>
+          <input type="range" id="sliderI" min="0" max="10" step="1" value="5">
+          <span class="val" id="valI">5 A</span>
+        </div>
+        <div class="info-grid" id="infoGrid">
+          <div>实验现象<br><b id="infoA">小磁针静止（指向南北）</b></div>
+          <div>结论<br><b id="infoB">接通电流观察变化</b></div>
+        </div>
+        <div class="concept-card">
+          <div class="title">奥斯特实验（1820 年）</div>
+          通电导线周围存在<b>磁场</b>（电流的磁效应）——小磁针发生偏转。这是人类第一次发现<b>电与磁的联系</b>。
+        </div>
+        <div class="concept-card">
+          <div class="title">右手螺旋定则（安培定则）</div>
+          用右手握住螺线管，四指指向<b>电流方向</b>，大拇指所指的一端就是螺线管的 <b>N 极</b>。
+        </div>
+        <div class="concept-card warn">
+          <div class="title">⚠️ 电动机 vs 发电机</div>
+          电动机：<b>电能 → 机械能</b>（通电导体在磁场中受力运动，有电源）；发电机：<b>机械能 → 电能</b>（电磁感应，无电源、靠外力转动）。能量转化方向相反，别混淆！
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 练习模式 ==================== -->
+  <div class="mode-section hidden" id="sec-practice">
+    <div class="practice-item" id="p1">
+      <h4>1️⃣ 奥斯特实验证明了？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="1">通电导线周围存在磁场</button>
+        <button class="quiz-opt" data-ok="0">磁能生电</button>
+        <button class="quiz-opt" data-ok="0">地球是一个大磁体</button>
+        <button class="quiz-opt" data-ok="0">同种电荷相互排斥</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+    <div class="practice-item" id="p2">
+      <h4>2️⃣ 要增强电磁铁的磁性，下列方法不可行的是？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">增大电流</button>
+        <button class="quiz-opt" data-ok="0">增加线圈匝数</button>
+        <button class="quiz-opt" data-ok="1">把铁芯换成铜芯</button>
+        <button class="quiz-opt" data-ok="0">插入铁芯</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+    <div class="practice-item" id="p3">
+      <h4>3️⃣ 电动机工作时的能量转化是？</h4>
+      <div class="practice-opts">
+        <button class="quiz-opt" data-ok="0">机械能转化为电能</button>
+        <button class="quiz-opt" data-ok="1">电能转化为机械能</button>
+        <button class="quiz-opt" data-ok="0">内能转化为电能</button>
+        <button class="quiz-opt" data-ok="0">化学能转化为内能</button>
+      </div>
+      <div class="practice-fb"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 测验模式 ==================== -->
+  <div class="mode-section hidden" id="sec-quiz">
+    <div class="panel">
+      <h3>🎯 电与磁 · 小测验（5 题，≥80% 通关）</h3>
+      <div class="quiz">
+        <div class="quiz-q" id="quizQ">点击「开始答题」</div>
+        <div class="quiz-opts" id="quizOpts"></div>
+        <div class="quiz-feedback" id="quizFb"></div>
+        <div class="quiz-nav">
+          <button id="quizStart">开始答题</button>
+          <button id="quizPrev" disabled>上一题</button>
+          <button id="quizNext" disabled>下一题</button>
+        </div>
+        <div class="quiz-result hidden" id="quizResult"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>初中物理 · 电与磁 · 互动可视化 | 知识可视化全学科项目</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * 模式切换
+ * ============================================================ */
+let mode = 'learn';
+const tabs = document.querySelectorAll('.tab');
+const sections = {
+  learn: document.getElementById('sec-learn'),
+  practice: document.getElementById('sec-practice'),
+  quiz: document.getElementById('sec-quiz')
+};
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+}));
+
+/* ============================================================
+ * 实验模式
+ * ============================================================ */
+const canvas = document.getElementById('emCanvas');
+const ctx = canvas.getContext('2d');
+let demo = 'oersted';   // oersted | electromagnet | motor
+let powered = false;    // 电流是否接通
+let needleAngle = 0;    // 小磁针角度（动画过渡）
+let coilAngle = 0;      // 电动机线圈角度
+let lastT = performance.now();
+
+const powerBtn = document.getElementById('powerBtn');
+powerBtn.addEventListener('click', () => {
+  powered = !powered;
+  powerBtn.textContent = powered ? '🔓 断开电流' : '🔌 接通电流';
+  powerBtn.classList.toggle('off', powered);
+  updInfo();
+});
+
+const sliderI = document.getElementById('sliderI');
+sliderI.addEventListener('input', updInfo);
+
+document.querySelectorAll('.demo-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.demo-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  demo = b.dataset.demo;
+  document.getElementById('rowCurrent').style.display = demo === 'electromagnet' ? 'flex' : 'none';
+  updInfo();
+}));
+
+function updInfo() {
+  document.getElementById('valI').textContent = sliderI.value + ' A';
+  const A = document.getElementById('infoA');
+  const B = document.getElementById('infoB');
+  if (demo === 'oersted') {
+    A.innerHTML = powered ? '小磁针<b>偏转</b>！' : '小磁针静止（指向南北）';
+    B.textContent = powered ? '通电导线周围存在磁场' : '接通电流观察变化';
+  } else if (demo === 'electromagnet') {
+    const pins = powered ? Math.round(+sliderI.value * 1.6) : 0;
+    A.innerHTML = powered ? `吸起大头针 <b>${pins}</b> 枚` : '无磁性，吸不起大头针';
+    B.textContent = powered ? '电流越大、磁性越强' : '接通电流产生磁性';
+  } else {
+    A.innerHTML = powered ? '线圈<b>持续转动</b>' : '线圈静止';
+    B.textContent = powered ? '电能 → 机械能' : '接通电流观察转动';
+  }
+}
+
+/* ---------- 奥斯特实验 ---------- */
+function drawOersted(dt) {
+  // 导线（水平，沿东西向架在磁针上方）
+  ctx.strokeStyle = powered ? '#fbbf24' : '#94a3b8';
+  ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(80, 150); ctx.lineTo(640, 150); ctx.stroke();
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText('直导线（架在小磁针上方，南北方向）', 230, 130);
+  if (powered) {
+    // 电流箭头
+    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 15px sans-serif';
+    ctx.fillText('I →', 640, 142);
+    // 磁感线（环绕导线的同心圆）
+    ctx.strokeStyle = 'rgba(251,191,36,0.5)';
+    ctx.setLineDash([4, 4]);
+    for (const r of [30, 55, 80]) {
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(360, 150, r, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(251,191,36,0.8)'; ctx.font = '12px sans-serif';
+    ctx.fillText('环形磁场', 428, 110);
+  }
+  // 支架
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(352, 210, 16, 60);
+  // 小磁针（目标角度：通电时偏转 75°）
+  const target = powered ? Math.PI * 0.42 : 0;
+  needleAngle += (target - needleAngle) * Math.min(1, dt * 6);
+  ctx.save();
+  ctx.translate(360, 200);
+  ctx.rotate(needleAngle);
+  // 磁针：红 N 蓝 S
+  ctx.fillStyle = '#f472b6';
+  ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(70, 0); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#60a5fa';
+  ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(-70, 0); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText(powered ? '小磁针偏转！→ 电流周围有磁场' : '小磁针指向南北（未通电）', 210, 310);
+  // 电池
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 3;
+  ctx.strokeRect(90, 330, 44, 70);
+  ctx.fillStyle = '#5eead4'; ctx.font = '13px sans-serif';
+  ctx.fillText('电源', 96, 420);
+  ctx.strokeStyle = powered ? '#fbbf24' : '#64748b'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(112, 330); ctx.lineTo(112, 250); ctx.lineTo(80, 250); ctx.lineTo(80, 150); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(134, 330); ctx.lineTo(134, 250); ctx.lineTo(660, 250); ctx.lineTo(660, 150); ctx.stroke();
+}
+
+/* ---------- 电磁铁 ---------- */
+function drawElectromagnet() {
+  // 铁芯
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillRect(200, 180, 240, 36);
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText('铁芯', 300, 170);
+  // 线圈
+  ctx.strokeStyle = powered ? '#fbbf24' : '#64748b';
+  ctx.lineWidth = 4;
+  for (let i = 0; i < 10; i++) {
+    const x = 210 + i * 23;
+    ctx.beginPath(); ctx.ellipse(x, 198, 10, 30, 0, -Math.PI / 2, Math.PI / 2); ctx.stroke();
+  }
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText('螺线管（线圈）', 460, 190);
+  // N/S 极
+  if (powered) {
+    ctx.fillStyle = '#f472b6'; ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('N', 446, 204);
+    ctx.fillStyle = '#60a5fa';
+    ctx.fillText('S', 180, 204);
+  }
+  // 电源与导线
+  ctx.strokeStyle = powered ? '#fbbf24' : '#64748b'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(210, 228); ctx.lineTo(210, 300); ctx.lineTo(300, 300); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(430, 228); ctx.lineTo(430, 300); ctx.lineTo(380, 300); ctx.stroke();
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.strokeRect(300, 280, 80, 40);
+  ctx.fillStyle = '#5eead4'; ctx.font = '12px sans-serif';
+  ctx.fillText('电源', 326, 342);
+  // 大头针
+  const pins = powered ? Math.round(+sliderI.value * 1.6) : 0;
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText('大头针盘', 460, 260);
+  ctx.strokeStyle = '#64748b';
+  ctx.strokeRect(440, 262, 110, 16);
+  for (let i = 0; i < 16; i++) {
+    const px = 448 + i * 6, py = 270;
+    if (powered && i < pins) {
+      // 被吸起到 N 极端
+      ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 2;
+      const ax = 450 + (i % 4) * 8, ay = 216 + Math.floor(i / 4) * 12;
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax, ay + 9); ctx.stroke();
+      ctx.fillStyle = '#f472b6';
+      ctx.beginPath(); ctx.arc(ax, ay + 10, 2.5, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath(); ctx.arc(px, py, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // 磁感线
+  if (powered) {
+    ctx.strokeStyle = 'rgba(244,114,182,0.45)';
+    ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5;
+    for (const k of [-1, 0, 1]) {
+      ctx.beginPath();
+      ctx.ellipse(320, 198, 190 + k * 26, 66 + k * 20, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
+  ctx.fillText(powered ? `电流 ${sliderI.value}A：吸起 ${pins} 枚大头针 → 电流越大磁性越强` : '断开状态：铁芯无磁性', 170, 400);
+}
+
+/* ---------- 电动机 ---------- */
+function drawMotor(dt) {
+  // 磁铁 N（上）S（下）
+  ctx.fillStyle = '#f472b6';
+  ctx.fillRect(220, 60, 280, 40);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 18px sans-serif';
+  ctx.fillText('N', 352, 88);
+  ctx.fillStyle = '#60a5fa';
+  ctx.fillRect(220, 340, 280, 40);
+  ctx.fillStyle = '#fff';
+  ctx.fillText('S', 352, 368);
+  // 磁感线
+  ctx.strokeStyle = 'rgba(244,114,182,0.4)'; ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+  for (let i = 0; i < 6; i++) {
+    const x = 240 + i * 48;
+    ctx.beginPath(); ctx.moveTo(x, 100); ctx.lineTo(x, 340); ctx.stroke();
+    ctx.fillStyle = 'rgba(244,114,182,0.7)';
+    ctx.beginPath(); ctx.moveTo(x, 336); ctx.lineTo(x - 4, 326); ctx.lineTo(x + 4, 326); ctx.fill();
+  }
+  ctx.setLineDash([]);
+  // 旋转线圈
+  if (powered) coilAngle += dt * 3.2;
+  const cx = 360, cy = 220, rw = 90, rh = 70;
+  const squash = Math.cos(coilAngle);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(Math.max(0.12, Math.abs(squash)) * Math.sign(squash || 1), 1);
+  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 5;
+  ctx.strokeRect(-rw, -rh, rw * 2, rh * 2);
+  ctx.restore();
+  // 轴
+  ctx.fillStyle = '#94a3b8';
+  ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.fill();
+  // 受力箭头（通电时）
+  if (powered) {
+    ctx.fillStyle = '#10b981'; ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('F ↑', cx - rw - 40, cy - 40);
+    ctx.fillText('F ↓', cx + rw + 16, cy + 50);
+    ctx.fillStyle = 'rgba(16,185,129,0.85)';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('通电线圈在磁场中受力 → 持续转动（电能 → 机械能）', 150, 420);
+  } else {
+    ctx.fillStyle = '#cbd5e1'; ctx.font = '14px sans-serif';
+    ctx.fillText('断开状态：线圈不受力，静止', 240, 420);
+  }
+  // 电源
+  if (true) {
+    ctx.strokeStyle = powered ? '#fbbf24' : '#64748b'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cx - rw, cy + rh); ctx.lineTo(120, 330); ctx.lineTo(120, 380); ctx.stroke();
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.strokeRect(96, 380, 48, 40);
+    ctx.fillStyle = '#5eead4'; ctx.font = '12px sans-serif';
+    ctx.fillText('电源', 106, 442);
+    ctx.strokeStyle = powered ? '#fbbf24' : '#64748b';
+    ctx.beginPath(); ctx.moveTo(cx + rw, cy + rh); ctx.lineTo(600, 330); ctx.lineTo(600, 400); ctx.lineTo(144, 400); ctx.stroke();
+  }
+}
+
+function draw() {
+  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
+  const now = performance.now();
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (demo === 'oersted') drawOersted(dt);
+  else if (demo === 'electromagnet') drawElectromagnet();
+  else drawMotor(dt);
+  requestAnimationFrame(draw);
+}
+updInfo();
+requestAnimationFrame(draw);
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const PRACTICE_TIPS = {
+  p1: '✅ 正确！奥斯特实验首次证明电流周围存在磁场（电流的磁效应）。',
+  p2: '✅ 正确！铜不能被磁化，换铜芯会大大减弱磁性；其余三项都能增强磁性。',
+  p3: '✅ 正确！电动机消耗电能获得转动——电能转化为机械能。'
+};
+document.querySelectorAll('.practice-item').forEach(item => {
+  const fb = item.querySelector('.practice-fb');
+  item.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const ok = opt.dataset.ok === '1';
+      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      opt.classList.add(ok ? 'correct' : 'wrong');
+      fb.style.color = ok ? '#10b981' : '#ef4444';
+      fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
+    });
+  });
+});
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const QUIZ = [
+  { q: '世界上第一个发现电流周围存在磁场的科学家是（　　）',
+    opts: ['奥斯特', '牛顿', '法拉第', '安培'],
+    ans: 0, ex: '1820 年丹麦物理学家奥斯特发现电流的磁效应。' },
+  { q: '用右手螺旋定则判断通电螺线管极性时，四指应指向（　　）',
+    opts: ['磁场方向', '电流方向', 'N 极方向', '电源正极'],
+    ans: 1, ex: '右手握住螺线管，四指指向电流方向，大拇指指向 N 极。' },
+  { q: '电磁铁与永久磁体相比，优点是（　　）',
+    opts: ['磁性有无可以控制', '永远有磁性', '不需要线圈', '体积一定更小'],
+    ans: 0, ex: '电磁铁通电有磁、断电无磁，磁性强弱和极性也可控，应用广泛（电磁继电器、起重机等）。' },
+  { q: '发电机的原理是（　　）',
+    opts: ['电流的磁效应', '电磁感应', '通电导体受力', '电荷间相互作用'],
+    ans: 1, ex: '发电机利用电磁感应：外力使线圈在磁场中转动，产生感应电流（机械能 → 电能）。' },
+  { q: '下列电器中，利用电动机原理工作的是（　　）',
+    opts: ['电饭煲', '电风扇', '电烙铁', '白炽灯'],
+    ans: 1, ex: '电风扇的核心是电动机：通电后扇叶转动，电能 → 机械能。' }
+];
+let qi = 0, qScore = 0, qAnswered = false;
+const quizQ = document.getElementById('quizQ');
+const quizOpts = document.getElementById('quizOpts');
+const quizFb = document.getElementById('quizFb');
+const quizResult = document.getElementById('quizResult');
+const btnStart = document.getElementById('quizStart');
+const btnPrev = document.getElementById('quizPrev');
+const btnNext = document.getElementById('quizNext');
+
+function renderQ() {
+  const q = QUIZ[qi];
+  qAnswered = false;
+  quizQ.textContent = `第${qi + 1}题 / 共${QUIZ.length}题：${q.q}`;
+  quizFb.textContent = '';
+  quizOpts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const d = document.createElement('div');
+    d.className = 'quiz-opt';
+    d.textContent = o;
+    d.addEventListener('click', () => {
+      if (qAnswered) return;
+      qAnswered = true;
+      const ok = i === q.ans;
+      if (ok) qScore++;
+      quizOpts.children[q.ans].classList.add('correct');
+      if (!ok) d.classList.add('wrong');
+      quizFb.textContent = (ok ? '✅ ' : '❌ ') + q.ex;
+    });
+    quizOpts.appendChild(d);
+  });
+  btnPrev.disabled = qi === 0;
+  btnNext.disabled = false;
+  btnNext.textContent = qi === QUIZ.length - 1 ? '查看成绩' : '下一题';
+}
+function finishQuiz() {
+  const pass = qScore >= Math.ceil(QUIZ.length * 0.8);
+  quizQ.textContent = '测验完成！';
+  quizOpts.innerHTML = '';
+  quizFb.textContent = '';
+  quizResult.classList.remove('hidden');
+  quizResult.innerHTML = `得分：<b>${qScore} / ${QUIZ.length}</b>　${pass ? '🎉 通关！' : '继续加油，再试一次！'}`;
+  btnNext.disabled = true;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('electromagnetism');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+btnStart.addEventListener('click', () => {
+  qi = 0; qScore = 0;
+  quizResult.classList.add('hidden');
+  btnStart.textContent = '重新答题';
+  renderQ();
+});
+btnPrev.addEventListener('click', () => { if (qi > 0) { qi--; renderQ(); } });
+btnNext.addEventListener('click', () => {
+  if (qi < QUIZ.length - 1) { qi++; renderQ(); }
+  else finishQuiz();
+});
+
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('electromagnetism')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+</script>
+</body>
+</html>

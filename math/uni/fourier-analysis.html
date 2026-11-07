@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>傅里叶级数 · 频谱可视化互动学习</title>
+<link rel="stylesheet" href="assets/common.css" />
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --signal: #ec4899;
+    --harm: #3b82f6;
+    --sum: #10b981;
+    --spec: #f59e0b;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 55%, #1e293b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1240px; margin: 0 auto; padding: 20px; }
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; font-size: 14px; border: 1px solid var(--border); }
+  .breadcrumb-item { padding: 6px 12px; border-radius: 10px; text-decoration: none; color: #c4b5fd; font-weight: 600; }
+  .breadcrumb-item:hover { background: rgba(255,255,255,0.08); }
+  .breadcrumb-sep { color: #64748b; font-size: 12px; }
+  .breadcrumb-current { padding: 6px 12px; color: #94a3b8; font-weight: 600; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--signal), var(--harm), var(--sum)); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; color: var(--light); min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); color: #1e1b4b; font-weight: 700; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+  @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  .canvas-wrap h4 { text-align: center; color: #c4b5fd; font-size: 14px; margin-bottom: 8px; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%); touch-action: none; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); max-height: 640px; overflow-y: auto; }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #c4b5fd; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; flex-wrap: wrap; }
+  .slider-row label { flex: 0 0 130px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; min-width: 140px; }
+  .slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .wave-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .wave-btn { padding: 8px 14px; border-radius: 8px; background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); cursor: pointer; font-size: 13px; color: #f9a8d4; transition: all .2s; min-height: 36px; }
+  .wave-btn.active { background: var(--signal); border-color: var(--signal); color: white; font-weight: 700; }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-target::before { background: var(--signal); }
+  .legend .l-sum::before { background: var(--sum); }
+  .legend .l-harm::before { background: var(--harm); }
+  .legend .l-spec::before { background: var(--spec); }
+  .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 10px; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; border-left: 3px solid; line-height: 1.7; font-size: 13.5px; }
+  .concept-card.c1 { border-color: var(--signal); }
+  .concept-card.c2 { border-color: var(--harm); }
+  .concept-card.c3 { border-color: var(--sum); }
+  .concept-card.c4 { border-color: var(--spec); }
+  .concept-card.c5 { border-color: #a78bfa; }
+  .concept-card.c6 { border-color: #f472b6; }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.c1 .title { color: var(--signal); }
+  .concept-card.c2 .title { color: var(--harm); }
+  .concept-card.c3 .title { color: var(--sum); }
+  .concept-card.c4 .title { color: var(--spec); }
+  .concept-card.c5 .title { color: #a78bfa; }
+  .concept-card.c6 .title { color: #f472b6; }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #c4b5fd; min-height: 18px; line-height: 1.6; }
+  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-nav button { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: #1e1b4b; font-weight: 700; min-height: 36px; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  .practice-target { padding: 12px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; font-size: 13.5px; margin: 10px 0; line-height: 1.7; }
+  .practice-target b { color: var(--sum); }
+  .practice-fb { margin-top: 8px; font-size: 13px; min-height: 18px; }
+  .err-readout { font-family: monospace; font-size: 12px; color: var(--spec); text-align: center; margin-top: 6px; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="breadcrumb">
+    <a href="../../index.html" class="breadcrumb-item">🏠 首页</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="../index.html" class="breadcrumb-item">📐 数学</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="index.html" class="breadcrumb-item">大学</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">傅里叶级数</span>
+  </nav>
+
+  <header>
+    <h1>🎼 傅里叶级数与频谱</h1>
+    <p>任何周期信号都是正弦波的叠加 · 从时域到频域</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="learn">📖 学习</div>
+    <div class="tab" data-tab="practice">🎯 练习</div>
+    <div class="tab" data-tab="quiz">✍️ 测验</div>
+  </div>
+
+  <!-- ============ LEARN ============ -->
+  <section id="tab-learn">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <h4>时域：目标波形 vs 傅里叶合成（拖动 N 看逼近过程）</h4>
+        <canvas id="waveCanvas" width="640" height="320"></canvas>
+        <h4 style="margin-top:12px;">频域：各次谐波的幅度谱 |cₙ|</h4>
+        <canvas id="specCanvas" width="640" height="200"></canvas>
+        <div class="legend">
+          <span class="l-target">目标波形</span>
+          <span class="l-sum">傅里叶合成</span>
+          <span class="l-harm">当前谐波</span>
+          <span class="l-spec">幅度谱</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>📐 核心公式</h3>
+        <div class="equation">
+          f(t) = <b>a₀/2</b> + Σ<sub>n=1..∞</sub> [ aₙ·cos(nωt) + bₙ·sin(nωt) ]
+        </div>
+        <div class="equation" style="font-size:.95rem;">
+          aₙ = (2/T)∫f(t)cos(nωt)dt &nbsp;·&nbsp; bₙ = (2/T)∫f(t)sin(nωt)dt
+        </div>
+        <h3 style="margin-top:14px;">🎛️ 选择目标波形</h3>
+        <div class="wave-switch" id="waveSwitch">
+          <button class="wave-btn active" data-w="square">方波</button>
+          <button class="wave-btn" data-w="sawtooth">锯齿波</button>
+          <button class="wave-btn" data-w="triangle">三角波</button>
+        </div>
+        <div class="slider-row">
+          <label>谐波项数 N</label>
+          <input type="range" id="nSlider" min="1" max="20" value="3" step="1">
+          <span class="val" id="nVal">3</span>
+        </div>
+        <div class="slider-row">
+          <label>播放速度</label>
+          <input type="range" id="spdSlider" min="0" max="100" value="40" step="1">
+          <span class="val" id="spdVal">0.4×</span>
+        </div>
+        <div class="err-readout" id="errReadout">均方误差：—</div>
+        <h3 style="margin-top:16px;">💡 六个核心概念</h3>
+        <div class="concept-grid">
+          <div class="concept-card c1"><div class="title">① 叠加原理</div>复杂周期信号 = 不同频率、不同幅度的正弦/余弦波线性叠加。N 越大，逼近越精确。</div>
+          <div class="concept-card c2"><div class="title">② 基频与谐波</div>最低频率 ω 称为基频，nω 是第 n 次谐波。方波只有奇次谐波，锯齿波全谐波都有。</div>
+          <div class="concept-card c3"><div class="title">③ 吉布斯现象</div>在跳变点附近，无论 N 多大都会出现约 9% 的过冲——这是截断级数的固有特性。</div>
+          <div class="concept-card c4"><div class="title">④ 频谱</div>把 (aₙ, bₙ) 合成为 |cₙ|=√(aₙ²+bₙ²)，按频率排成柱状图，即"频谱"。时域波形 ↔ 频域频谱，一一对应。</div>
+          <div class="concept-card c5"><div class="title">⑤ 正交性</div>不同频率的 sin/cos 在一个周期内积分为 0，所以每个系数都能被"单独筛出来"——这是傅里叶分析可行的根基。</div>
+          <div class="concept-card c6"><div class="title">⑥ 衰减速度</div>系数 ~1/nᵏ：方波 1/n、三角波 1/n²。波形越光滑，频谱衰减越快，需要的高频分量越少。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRACTICE ============ -->
+  <section id="tab-practice" class="hidden">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <h4>调参逼近目标波形（MSE 越小越好）</h4>
+        <canvas id="pCanvas" width="640" height="320"></canvas>
+        <div class="legend">
+          <span class="l-target">目标</span>
+          <span class="l-sum">你的合成</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🎯 任务</h3>
+        <div class="practice-target" id="pTarget">—</div>
+        <div class="slider-row">
+          <label>谐波项数 N</label>
+          <input type="range" id="pnSlider" min="1" max="20" value="1" step="1">
+          <span class="val" id="pnVal">1</span>
+        </div>
+        <div class="err-readout" id="pErr">均方误差：—</div>
+        <div class="practice-fb" id="pFb"></div>
+        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+          <button id="pCheck" style="padding:10px 18px;border-radius:8px;border:none;background:var(--sum);color:#052e1c;font-weight:700;cursor:pointer;min-height:38px;">✓ 检查</button>
+          <button id="pNext" style="padding:10px 18px;border-radius:8px;border:none;background:var(--primary);color:#1e1b4b;font-weight:700;cursor:pointer;min-height:38px;">下一关 →</button>
+        </div>
+        <h3 style="margin-top:18px;">📚 提示</h3>
+        <div style="font-size:13.5px;line-height:1.8;color:#cbd5e1;">
+          • <b>方波</b>：仅含奇次谐波，系数 ∝ 1/n。N=1 时是纯正弦。<br>
+          • <b>锯齿波</b>：所有谐波都有，系数 ∝ 1/n。<br>
+          • <b>三角波</b>：仅奇次，系数 ∝ 1/n²，收敛很快。<br>
+          • 想要 MSE &lt; 0.05：方波通常需要 N≥9，锯齿 N≥15，三角 N=3 即可。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section id="tab-quiz" class="hidden">
+    <div class="panel" style="max-width:760px; margin:0 auto;">
+      <h3>✍️ 傅里叶级数小测验</h3>
+      <div class="quiz">
+        <div class="quiz-q" id="quiz-q">题目加载中…</div>
+        <div class="quiz-opts" id="quiz-opts"></div>
+        <div class="quiz-feedback" id="quiz-fb"></div>
+        <div class="quiz-nav">
+          <button id="quiz-prev">← 上一题</button>
+          <button id="quiz-next">下一题 →</button>
+          <button id="quiz-submit" class="hidden">提交</button>
+          <button id="quiz-retry" class="hidden">重做</button>
+        </div>
+        <div id="quiz-result" class="quiz-result hidden"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>© 2026 Knowledge Visual · 大学数学 · 傅里叶级数</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+/* ============================================================
+ * Tab 切换
+ * ============================================================ */
+const tabs = document.querySelectorAll('.tab');
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.toggle('active', x === t));
+  ['learn','practice','quiz'].forEach(k => {
+    document.getElementById('tab-' + k).classList.toggle('hidden', t.dataset.tab !== k);
+  });
+}));
+
+/* ============================================================
+ * 核心数学：三种波形的傅里叶级数（真实解析式）
+ * 周期 T = 2π，定义域 t ∈ [-π, π]
+ * ============================================================ */
+const WAVES = {
+  square: {
+    name: '方波',
+    target: t => (Math.sin(t) >= 0 ? 1 : -1),
+    term: (n, t) => {
+      if (n % 2 === 0) return 0;
+      return (4 / Math.PI) * Math.sin(n * t) / n;
+    },
+    coef: n => (n % 2 === 1 ? 4 / (Math.PI * n) : 0)
+  },
+  sawtooth: {
+    name: '锯齿波',
+    target: t => {
+      let x = ((t + Math.PI) % (2 * Math.PI)) - Math.PI;
+      if (x < -Math.PI) x += 2 * Math.PI;
+      return x / Math.PI;
+    },
+    term: (n, t) => (2 / Math.PI) * Math.pow(-1, n + 1) * Math.sin(n * t) / n,
+    coef: n => 2 / (Math.PI * n)
+  },
+  triangle: {
+    name: '三角波',
+    target: t => {
+      let x = ((t + Math.PI) % (2 * Math.PI)) - Math.PI;
+      if (x < -Math.PI) x += 2 * Math.PI;
+      return (2 / Math.PI) * Math.asin(Math.sin(x));
+    },
+    term: (n, t) => {
+      if (n % 2 === 0) return 0;
+      const k = (n - 1) / 2;
+      return (8 / (Math.PI * Math.PI)) * Math.pow(-1, k) * Math.sin(n * t) / (n * n);
+    },
+    coef: n => (n % 2 === 1 ? 8 / (Math.PI * Math.PI * n * n) : 0)
+  }
+};
+
+function synthesize(wave, N, t) {
+  let s = 0;
+  for (let n = 1; n <= N; n++) s += WAVES[wave].term(n, t);
+  return s;
+}
+
+function mse(wave, N) {
+  let e = 0, M = 400;
+  for (let i = 0; i < M; i++) {
+    const t = -Math.PI + (2 * Math.PI * i) / (M - 1);
+    const d = WAVES[wave].target(t) - synthesize(wave, N, t);
+    e += d * d;
+  }
+  return e / M;
+}
+
+/* ============================================================
+ * 学习模式：波形 + 频谱 双画布
+ * ============================================================ */
+let waveType = 'square';
+let N = 3;
+let phase = 0;
+let speed = 0.4;
+
+const wCan = document.getElementById('waveCanvas');
+const wCtx = wCan.getContext('2d');
+const sCan = document.getElementById('specCanvas');
+const sCtx = sCan.getContext('2d');
+
+document.getElementById('nSlider').addEventListener('input', e => {
+  N = +e.target.value;
+  document.getElementById('nVal').textContent = N;
+});
+document.getElementById('spdSlider').addEventListener('input', e => {
+  speed = +e.target.value / 100;
+  document.getElementById('spdVal').textContent = speed.toFixed(1) + '×';
+});
+document.querySelectorAll('#waveSwitch .wave-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#waveSwitch .wave-btn').forEach(x => x.classList.toggle('active', x === b));
+    waveType = b.dataset.w;
+  });
+});
+
+function drawWave() {
+  const W = wCan.width, H = wCan.height;
+  wCtx.fillStyle = '#0f172a';
+  wCtx.fillRect(0, 0, W, H);
+  // 网格
+  wCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+  wCtx.lineWidth = 1;
+  for (let i = 0; i <= 8; i++) {
+    wCtx.beginPath();
+    wCtx.moveTo((W / 8) * i, 0); wCtx.lineTo((W / 8) * i, H);
+    wCtx.stroke();
+  }
+  for (let i = 0; i <= 4; i++) {
+    wCtx.beginPath();
+    wCtx.moveTo(0, (H / 4) * i); wCtx.lineTo(W, (H / 4) * i);
+    wCtx.stroke();
+  }
+  // 轴线
+  wCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+  wCtx.beginPath(); wCtx.moveTo(0, H / 2); wCtx.lineTo(W, H / 2); wCtx.stroke();
+
+  const x2t = x => -Math.PI + (2 * Math.PI * x) / W;
+  const y2c = y => H / 2 - y * (H * 0.35);
+
+  // 目标波形（粉色虚线）
+  wCtx.strokeStyle = '#ec4899';
+  wCtx.lineWidth = 2;
+  wCtx.setLineDash([5, 4]);
+  wCtx.beginPath();
+  for (let x = 0; x <= W; x++) {
+    const y = WAVES[waveType].target(x2t(x));
+    if (x === 0) wCtx.moveTo(x, y2c(y)); else wCtx.lineTo(x, y2c(y));
+  }
+  wCtx.stroke();
+  wCtx.setLineDash([]);
+
+  // 合成波形（绿色实线，含相位动画）
+  wCtx.strokeStyle = '#10b981';
+  wCtx.lineWidth = 2.5;
+  wCtx.beginPath();
+  for (let x = 0; x <= W; x++) {
+    const y = synthesize(waveType, N, x2t(x) - phase);
+    if (x === 0) wCtx.moveTo(x, y2c(y)); else wCtx.lineTo(x, y2c(y));
+  }
+  wCtx.stroke();
+
+  // 当前最高次谐波（蓝色细线）
+  if (N >= 1) {
+    wCtx.strokeStyle = 'rgba(59,130,246,0.7)';
+    wCtx.lineWidth = 1.2;
+    wCtx.beginPath();
+    for (let x = 0; x <= W; x++) {
+      const y = WAVES[waveType].term(N, x2t(x) - phase);
+      if (x === 0) wCtx.moveTo(x, y2c(y)); else wCtx.lineTo(x, y2c(y));
+    }
+    wCtx.stroke();
+  }
+
+  // 标注
+  wCtx.fillStyle = 'rgba(255,255,255,0.6)';
+  wCtx.font = '12px monospace';
+  wCtx.fillText(`t: -π ... π`, 8, H - 8);
+  wCtx.fillText(`${WAVES[waveType].name}  N=${N}`, W - 140, 16);
+}
+
+function drawSpec() {
+  const W = sCan.width, H = sCan.height;
+  sCtx.fillStyle = '#0f172a';
+  sCtx.fillRect(0, 0, W, H);
+  // 基线
+  sCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+  sCtx.beginPath(); sCtx.moveTo(30, H - 24); sCtx.lineTo(W, H - 24); sCtx.stroke();
+
+  const maxN = 20;
+  const bw = (W - 50) / maxN;
+  let cmax = 0.0001;
+  for (let n = 1; n <= maxN; n++) cmax = Math.max(cmax, WAVES[waveType].coef(n));
+  for (let n = 1; n <= maxN; n++) {
+    const c = WAVES[waveType].coef(n);
+    const h = (c / cmax) * (H - 50);
+    const x = 30 + (n - 1) * bw;
+    const active = n <= N;
+    sCtx.fillStyle = active ? '#f59e0b' : 'rgba(245,158,11,0.18)';
+    sCtx.fillRect(x + 1, H - 24 - h, bw - 2, h);
+    if (n % 2 === 1 || maxN <= 12) {
+      sCtx.fillStyle = 'rgba(255,255,255,0.5)';
+      sCtx.font = '10px monospace';
+      sCtx.fillText(String(n), x + 2, H - 10);
+    }
+  }
+  sCtx.fillStyle = 'rgba(255,255,255,0.6)';
+  sCtx.font = '11px monospace';
+  sCtx.fillText('谐波次数 n →', W - 110, 14);
+  sCtx.fillText('亮 = 已包含在合成中', 6, 14);
+}
+
+function updateErr() {
+  document.getElementById('errReadout').textContent =
+    `均方误差 MSE = ${mse(waveType, N).toFixed(4)}  （${WAVES[waveType].name} · N=${N}）`;
+}
+
+function loop() {
+  phase += speed * 0.04;
+  if (phase > 2 * Math.PI) phase -= 2 * Math.PI;
+  drawWave();
+  drawSpec();
+  updateErr();
+  requestAnimationFrame(loop);
+}
+loop();
+
+/* ============================================================
+ * 练习模式
+ * ============================================================ */
+const tasks = [
+  { wave: 'square', n: 1, desc: '用最少的谐波逼近<b>方波</b>：把 N 调到 <b>1</b>，看纯正弦与方波的关系。', check: n => n === 1, tip: '方波基波 = 4/π·sin(t)' },
+  { wave: 'square', n: 5, desc: '让<b>方波</b>的均方误差 <b>&lt; 0.05</b>。', check: (n, e) => e < 0.05, tip: '方波只含奇次谐波，需要 N≥9 左右' },
+  { wave: 'triangle', n: 3, desc: '让<b>三角波</b>的均方误差 <b>&lt; 0.005</b>（提示：收敛很快）。', check: (n, e) => e < 0.005, tip: '系数 ~1/n²，N=3 已足够' },
+  { wave: 'sawtooth', n: 10, desc: '让<b>锯齿波</b>的均方误差 <b>&lt; 0.02</b>。', check: (n, e) => e < 0.02, tip: '锯齿波全谐波，需要 N≥15' }
+];
+let tIdx = 0;
+let pPassed = 0;
+
+const pCan = document.getElementById('pCanvas');
+const pCtx = pCan.getContext('2d');
+let pN = 1;
+document.getElementById('pnSlider').addEventListener('input', e => {
+  pN = +e.target.value;
+  document.getElementById('pnVal').textContent = pN;
+  drawPractice();
+});
+
+function loadTask() {
+  const t = tasks[tIdx];
+  document.getElementById('pTarget').innerHTML = `<b>第 ${tIdx + 1}/${tasks.length} 关</b> · ${t.desc}`;
+  document.getElementById('pFb').textContent = '';
+  drawPractice();
+}
+
+function drawPractice() {
+  const t = tasks[tIdx];
+  const W = pCan.width, H = pCan.height;
+  pCtx.fillStyle = '#0f172a';
+  pCtx.fillRect(0, 0, W, H);
+  pCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+  pCtx.beginPath(); pCtx.moveTo(0, H / 2); pCtx.lineTo(W, H / 2); pCtx.stroke();
+
+  const x2t = x => -Math.PI + (2 * Math.PI * x) / W;
+  const y2c = y => H / 2 - y * (H * 0.35);
+
+  pCtx.strokeStyle = '#ec4899';
+  pCtx.setLineDash([5, 4]);
+  pCtx.lineWidth = 2;
+  pCtx.beginPath();
+  for (let x = 0; x <= W; x++) {
+    const y = WAVES[t.wave].target(x2t(x));
+    if (x === 0) pCtx.moveTo(x, y2c(y)); else pCtx.lineTo(x, y2c(y));
+  }
+  pCtx.stroke();
+  pCtx.setLineDash([]);
+
+  pCtx.strokeStyle = '#10b981';
+  pCtx.lineWidth = 2.5;
+  pCtx.beginPath();
+  for (let x = 0; x <= W; x++) {
+    const y = synthesize(t.wave, pN, x2t(x));
+    if (x === 0) pCtx.moveTo(x, y2c(y)); else pCtx.lineTo(x, y2c(y));
+  }
+  pCtx.stroke();
+
+  pCtx.fillStyle = 'rgba(255,255,255,0.6)';
+  pCtx.font = '12px monospace';
+  pCtx.fillText(`${WAVES[t.wave].name}  N=${pN}`, W - 150, 16);
+
+  const e = mse(t.wave, pN);
+  document.getElementById('pErr').textContent = `均方误差 MSE = ${e.toFixed(4)}`;
+}
+
+document.getElementById('pCheck').addEventListener('click', () => {
+  const t = tasks[tIdx];
+  const e = mse(t.wave, pN);
+  const ok = t.check(pN, e);
+  const fb = document.getElementById('pFb');
+  if (ok) {
+    fb.innerHTML = `<span style="color:#10b981;">✅ 过关！${t.tip}</span>`;
+    pPassed++;
+    if (typeof PageProgress !== 'undefined' && pPassed >= 2) PageProgress.markDone('fourier-analysis');
+  } else {
+    fb.innerHTML = `<span style="color:#fbbf24;">❌ 还差一些。${t.tip}</span>`;
+  }
+});
+document.getElementById('pNext').addEventListener('click', () => {
+  tIdx = (tIdx + 1) % tasks.length;
+  loadTask();
+});
+loadTask();
+
+/* ============================================================
+ * 测验模式
+ * ============================================================ */
+const quizData = [
+  {
+    q: '方波的傅里叶级数中只含有哪种谐波？',
+    opts: ['所有整数次谐波', '仅奇次谐波', '仅偶次谐波', '仅基波'],
+    ans: 1,
+    fb: '方波是奇对称（半波对称），偶次谐波系数全为 0，只保留 sin(nt) 的奇次项，系数 ∝ 1/n。'
+  },
+  {
+    q: '三角波的傅里叶系数随 n 的衰减速度是？',
+    opts: ['∝ 1/n', '∝ 1/n²', '∝ 1/n³', '不衰减'],
+    ans: 1,
+    fb: '三角波处处连续（仅一阶导不连续），系数 ∝ 1/n²，所以 N=3 已能很好逼近，与方波形成鲜明对比。'
+  },
+  {
+    q: '在跳变点附近，无论 N 取多大都会出现的约 9% 过冲称为？',
+    opts: ['香农采样定理', '吉布斯现象', '混叠效应', '帕塞瓦尔恒等式'],
+    ans: 1,
+    fb: '吉布斯现象（Gibbs phenomenon）：截断傅里叶级数在不连续点附近的固有振荡，过冲幅度不随 N 增大而消失。'
+  },
+  {
+    q: '函数 sin(3t)·cos(5t) 在一个周期 [−π, π] 上的积分等于？',
+    opts: ['π/2', '1', '0', '无法确定'],
+    ans: 2,
+    fb: '正交性：不同频率的正弦/余弦在整周期上积分为 0。这正是傅里叶系数能被"单独筛出"的数学基础。'
+  }
+];
+const quizAnswers = new Array(quizData.length).fill(-1);
+let quizIdx = 0, quizSubmitted = false;
+const qQ = document.getElementById('quiz-q');
+const qOpts = document.getElementById('quiz-opts');
+const qFb = document.getElementById('quiz-fb');
+const qPrev = document.getElementById('quiz-prev');
+const qNext = document.getElementById('quiz-next');
+const qSubmit = document.getElementById('quiz-submit');
+const qRetry = document.getElementById('quiz-retry');
+const qResult = document.getElementById('quiz-result');
+
+function renderQuiz() {
+  const q = quizData[quizIdx];
+  qQ.textContent = `${quizIdx + 1}. ${q.q}`;
+  qOpts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+    const sel = quizAnswers[quizIdx];
+    if (sel === i) div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
+    if (quizSubmitted && i === q.ans && sel !== i) div.classList.add('correct');
+    div.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizAnswers[quizIdx] = i;
+      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
+      renderQuiz();
+    });
+    qOpts.appendChild(div);
+  });
+  qFb.textContent = quizAnswers[quizIdx] === -1 ? '' :
+    (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
+  qPrev.disabled = quizIdx === 0;
+  qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
+  qSubmit.classList.toggle('hidden', quizIdx !== quizData.length - 1 || quizSubmitted);
+  qRetry.classList.toggle('hidden', !quizSubmitted);
+}
+qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
+qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+qSubmit.addEventListener('click', () => {
+  quizSubmitted = true;
+  const score = quizAnswers.reduce((s, a, i) => s + (a === quizData[i].ans ? 1 : 0), 0);
+  const pass = score >= 3;
+  qResult.classList.remove('hidden');
+  qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)';
+  qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
+  qResult.textContent = `得分：${score}/${quizData.length}  ${pass ? '🎉 通过！' : '再复习一下吧'}`;
+  if (pass && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('fourier-analysis');
+  }
+  renderQuiz();
+});
+qRetry.addEventListener('click', () => {
+  quizSubmitted = false;
+  quizIdx = 0;
+  quizAnswers.fill(-1);
+  qResult.classList.add('hidden');
+  renderQuiz();
+});
+renderQuiz();
+
+// 进入页面时若已完成，给出提示
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('fourier-analysis')) {
+  const tag = document.createElement('div');
+  tag.textContent = '✓ 已完成';
+  tag.style.cssText = 'display:inline-block;margin-left:8px;padding:2px 10px;border-radius:10px;background:rgba(16,185,129,0.2);color:#10b981;font-size:12px;font-weight:700;';
+  document.querySelector('header h1').appendChild(tag);
+}
+</script>
+</body>
+</html>

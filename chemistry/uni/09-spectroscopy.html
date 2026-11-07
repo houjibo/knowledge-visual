@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>波谱分析 · 大学化学互动可视化</title>
+<style>
+  :root {
+    --primary: #8b5cf6;
+    --accent: #f59e0b;
+    --ir: #10b981;
+    --nmr: #3b82f6;
+    --ms: #ef4444;
+    --uv: #f472b6;
+    --dark: #0f172a;
+    --panel: rgba(15,23,42,0.75);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 20px; }
+  header h1 { font-size: 2.3rem; background: linear-gradient(90deg, var(--ir), var(--nmr), var(--ms)); -webkit-background-clip: text; color: transparent; margin-bottom: 6px; }
+  header p { color: #94a3b8; font-size: 0.95rem; }
+
+  .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 11px 22px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 14px; user-select: none; font-weight: 500; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
+
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; }
+  @media (max-width: 1000px) { .stage { grid-template-columns: 1fr; } }
+
+  .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(12px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .legend .l-ir::before { background: var(--ir); }
+  .legend .l-nmr::before { background: var(--nmr); }
+  .legend .l-ms::before { background: var(--ms); }
+  .legend .l-uv::before { background: var(--uv); }
+
+  .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px; backdrop-filter: blur(12px); overflow-y: auto; max-height: 680px; }
+  .panel h3 { font-size: 1.1rem; margin-bottom: 10px; color: #e2e8f0; }
+
+  .concept-box { font-size: 0.95rem; text-align: left; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 10px 0; line-height: 1.85; border-left: 4px solid var(--primary); }
+  .concept-box .hl { color: var(--ir); font-weight: 600; }
+  .concept-box .hl2 { color: var(--nmr); font-weight: 600; }
+  .concept-box .hl3 { color: var(--ms); font-weight: 600; }
+  .concept-box .hl4 { color: var(--uv); font-weight: 600; }
+
+  .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 7px 14px; border-radius: 10px; background: rgba(139,92,246,0.1); border: 2px solid rgba(139,92,246,0.3); cursor: pointer; font-size: 13px; color: #c4b5fd; transition: all .2s; user-select: none; font-weight: 500; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+  .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
+
+  .slider-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 13px; }
+  .slider-row label { flex: 0 0 120px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 80px; text-align: right; font-family: monospace; color: var(--accent); font-weight: 600; font-size: 12px; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 12px; }
+  .info-grid div { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; line-height: 1.5; }
+  .info-grid b { color: #fbbf24; }
+
+  .formula-box { padding: 12px; background: rgba(139,92,246,0.08); border-radius: 12px; margin: 10px 0; font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; color: #c4b5fd; border: 1px solid rgba(139,92,246,0.2); }
+
+  .play-btn { display: block; margin: 12px auto; padding: 10px 28px; border-radius: 12px; background: var(--primary); color: white; border: none; cursor: pointer; font-size: 15px; font-weight: 600; transition: all .2s; }
+  .play-btn:hover { transform: scale(1.05); box-shadow: 0 4px 20px rgba(139,92,246,.4); }
+
+  .step-indicator { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
+  .step-dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: all .3s; }
+  .step-dot.active { background: var(--primary); transform: scale(1.3); }
+  .step-dot.done { background: var(--accent); }
+
+  .quiz { margin-top: 14px; padding: 16px; background: rgba(139,92,246,0.1); border-radius: 14px; border: 2px solid rgba(139,92,246,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; font-weight: 500; }
+  .quiz-opts { display: grid; gap: 8px; }
+  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 13px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 10px; font-size: 13px; color: #c4b5fd; min-height: 20px; line-height: 1.5; }
+  .quiz-nav { display: flex; gap: 10px; margin-top: 12px; }
+  .quiz-nav button { padding: 7px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
+  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .mol-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+  .mol-btn { padding: 10px 8px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 12px; text-align: center; transition: all .2s; color: #cbd5e1; }
+  .mol-btn.active { background: rgba(139,92,246,0.2); border-color: var(--primary); color: white; }
+  .mol-btn:hover:not(.active) { background: rgba(255,255,255,0.1); }
+
+  .peak-table { width: 100%; font-size: 12px; margin-top: 10px; border-collapse: collapse; }
+  .peak-table th, .peak-table td { padding: 6px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .peak-table th { color: var(--accent); font-weight: 600; }
+  .peak-table td { color: #cbd5e1; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>波谱分析 · 结构鉴定的四大利器</h1>
+    <p>红外光谱 IR · 核磁共振 NMR · 质谱 MS · 紫外光谱 UV <span id="done-mark" style="display:none;margin-left:8px;padding:2px 8px;border-radius:999px;background:#34C759;color:#fff;font-size:12px;font-weight:700;vertical-align:middle;">✓ 已完成</span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-section="ir">红外光谱 IR</div>
+    <div class="tab" data-section="nmr">核磁共振 NMR</div>
+    <div class="tab" data-section="ms">质谱 MS</div>
+    <div class="tab" data-section="practice">结构鉴定练习</div>
+  </div>
+
+  <!-- ========== 红外光谱 ========== -->
+  <div class="section active" id="sec-ir">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="irCanvas" width="700" height="420"></canvas>
+        <div class="legend">
+          <span class="l-ir">吸收峰</span>
+          <span>波数 cm⁻¹</span>
+          <span>透光率 %</span>
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-irmode="spectrum">谱图展示</div>
+          <div class="mode-btn" data-irmode="vibration">振动模式</div>
+          <div class="mode-btn" data-irmode="identify">官能团识别</div>
+        </div>
+        <div class="mol-selector" id="irMolSelector">
+          <div class="mol-btn active" data-mol="ethanol">乙醇</div>
+          <div class="mol-btn" data-mol="acetone">丙酮</div>
+          <div class="mol-btn" data-mol="acetic">乙酸</div>
+          <div class="mol-btn" data-mol="toluene">甲苯</div>
+          <div class="mol-btn" data-mol="aniline">苯胺</div>
+          <div class="mol-btn" data-mol="unknown">未知物</div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🔬 红外光谱原理</h3>
+        <div class="concept-box">
+          分子中的化学键像<span class="hl">弹簧</span>一样振动。当红外光的频率与键的振动频率<span class="hl">匹配</span>时，光能被吸收，产生吸收峰。<br><br>
+          <b>关键公式：</b><br>
+          <div class="formula-box">ν̃ = (1/2πc) √(k/μ)</div>
+          ν̃: 波数 &nbsp; k: 力常数 &nbsp; μ: 折合质量
+        </div>
+        <div id="irInfo">
+          <h3>📊 特征吸收峰</h3>
+          <table class="peak-table">
+            <tr><th>官能团</th><th>波数 (cm⁻¹)</th><th>特征</th></tr>
+            <tr><td>O-H</td><td>3200-3600</td><td>宽峰</td></tr>
+            <tr><td>C=O</td><td>1700-1750</td><td>强峰</td></tr>
+            <tr><td>C-H</td><td>2850-3000</td><td>尖峰</td></tr>
+            <tr><td>C=C</td><td>1600-1680</td><td>中强</td></tr>
+            <tr><td>N-H</td><td>3300-3500</td><td>中等</td></tr>
+          </table>
+        </div>
+        <div id="irVibInfo" style="display:none">
+          <h3>🎯 振动模式</h3>
+          <div class="concept-box">
+            <b>伸缩振动：</b><br>
+            • <span class="hl">对称伸缩</span> - 两原子同时远离/靠近中心<br>
+            • <span class="hl">不对称伸缩</span> - 一伸一缩交替进行<br><br>
+            <b>弯曲振动：</b><br>
+            • <span class="hl2">面内弯曲</span> - 剪式、摇摆<br>
+            • <span class="hl3">面外弯曲</span> - 扭曲、摇摆
+          </div>
+          <div class="slider-row">
+            <label>力常数 k:</label>
+            <input type="range" id="forceConst" min="1" max="20" value="8" />
+            <span class="val" id="forceConstVal">8 N/cm</span>
+          </div>
+          <div class="slider-row">
+            <label>原子质量:</label>
+            <input type="range" id="atomMass" min="1" max="30" value="12" />
+            <span class="val" id="atomMassVal">12 amu</span>
+          </div>
+        </div>
+        <div id="irIdentifyInfo" style="display:none">
+          <h3>🔍 点击谱图识别官能团</h3>
+          <div class="concept-box">
+            点击谱图中的吸收峰位置，系统会告诉你该位置对应哪种<span class="hl">官能团</span>的振动。
+          </div>
+          <div id="identifyResult" class="concept-box" style="border-left-color: var(--accent);">
+            👆 点击谱图上的吸收峰进行识别
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 核磁共振 ========== -->
+  <div class="section" id="sec-nmr">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="nmrCanvas" width="700" height="420"></canvas>
+        <div class="legend">
+          <span class="l-nmr">¹H NMR 谱图</span>
+          <span>化学位移 δ (ppm)</span>
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-nmrmode="spectrum">谱图展示</div>
+          <div class="mode-btn" data-nmrmode="spin">自旋状态</div>
+          <div class="mode-btn" data-nmrmode="coupling">耦合裂分</div>
+        </div>
+        <div class="mol-selector" id="nmrMolSelector">
+          <div class="mol-btn active" data-mol="ethanol">乙醇</div>
+          <div class="mol-btn" data-mol="acetone">丙酮</div>
+          <div class="mol-btn" data-mol="ethylacetate">乙酸乙酯</div>
+          <div class="mol-btn" data-mol="toluene">甲苯</div>
+          <div class="mol-btn" data-mol="unknown">未知物</div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🧲 核磁共振原理</h3>
+        <div class="concept-box">
+          氢原子核（质子）具有<span class="hl2">自旋</span>，在外加磁场中能级分裂。吸收特定频率的射频能量后发生<span class="hl2">共振跃迁</span>。<br><br>
+          <b>化学位移公式：</b>
+          <div class="formula-box">δ = (νsample - νTMS) / νspectrometer × 10⁶</div>
+        </div>
+        <div id="nmrInfo">
+          <h3>📊 化学位移参考</h3>
+          <table class="peak-table">
+            <tr><th>质子类型</th><th>δ (ppm)</th><th>特征</th></tr>
+            <tr><td>R-CH₃</td><td>0.8-1.0</td><td>三重峰</td></tr>
+            <tr><td>R-CH₂-R</td><td>1.2-1.4</td><td>多重峰</td></tr>
+            <tr><td>O-CH</td><td>3.3-4.0</td><td>去屏蔽</td></tr>
+            <tr><td>Ar-H</td><td>6.5-8.0</td><td>芳环</td></tr>
+            <tr><td>-CHO</td><td>9.0-10.0</td><td>醛基</td></tr>
+            <tr><td>-COOH</td><td>10-12</td><td>羧酸</td></tr>
+          </table>
+        </div>
+        <div id="nmrSpinInfo" style="display:none">
+          <h3>🎯 自旋与能级</h3>
+          <div class="concept-box">
+            质子自旋量子数 I = 1/2，在磁场中有两个取向：<br>
+            • <span class="hl2">α态 (↑)</span> - 与磁场同向，能量低<br>
+            • <span class="hl3">β态 (↓)</span> - 与磁场反向，能量高<br><br>
+            能级差 ΔE = γℏB₀，射频能量匹配时发生共振
+          </div>
+          <div class="slider-row">
+            <label>磁场强度 B₀:</label>
+            <input type="range" id="fieldStrength" min="1" max="10" value="5" />
+            <span class="val" id="fieldStrengthVal">5 T</span>
+          </div>
+        </div>
+        <div id="nmrCouplingInfo" style="display:none">
+          <h3>🔗 自旋-自旋耦合</h3>
+          <div class="concept-box">
+            相邻不等性质子间通过成键电子传递相互作用，导致谱峰<span class="hl2">裂分</span>。<br><br>
+            <b>n+1 规则：</b>被 n 个等价相邻质子耦合时，裂分为 <span class="hl">n+1</span> 重峰<br><br>
+            裂分比：二项式系数 (1:1, 1:2:1, 1:3:3:1...)
+          </div>
+          <div class="slider-row">
+            <label>相邻质子数 n:</label>
+            <input type="range" id="neighborN" min="0" max="5" value="2" />
+            <span class="val" id="neighborNVal">2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 质谱 ========== -->
+  <div class="section" id="sec-ms">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="msCanvas" width="700" height="420"></canvas>
+        <div class="legend">
+          <span class="l-ms">质谱图</span>
+          <span>质荷比 m/z</span>
+          <span>相对丰度 %</span>
+        </div>
+        <div class="mode-switch">
+          <div class="mode-btn active" data-msmode="spectrum">谱图展示</div>
+          <div class="mode-btn" data-msmode="fragment">碎裂机理</div>
+          <div class="mode-btn" data-msmode="isotope">同位素峰</div>
+        </div>
+        <div class="mol-selector" id="msMolSelector">
+          <div class="mol-btn active" data-mol="ethanol">乙醇</div>
+          <div class="mol-btn" data-mol="acetone">丙酮</div>
+          <div class="mol-btn" data-mol="toluene">甲苯</div>
+          <div class="mol-btn" data-mol="chlorobenzene">氯苯</div>
+          <div class="mol-btn" data-mol="unknown">未知物</div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>⚡ 质谱原理</h3>
+        <div class="concept-box">
+          分子在高能电子轰击下失去电子形成<span class="hl3">分子离子</span>，进一步碎裂产生各种<span class="hl3">碎片离子</span>。按质荷比 m/z 分离检测。
+          <div class="formula-box">M + e⁻ → M⁺· + 2e⁻ → 碎片离子</div>
+        </div>
+        <div id="msInfo">
+          <h3>📊 常见碎片</h3>
+          <table class="peak-table">
+            <tr><th>m/z</th><th>碎片</th><th>来源</th></tr>
+            <tr><td>15</td><td>CH₃⁺</td><td>甲基</td></tr>
+            <tr><td>29</td><td>C₂H₅⁺</td><td>乙基</td></tr>
+            <tr><td>43</td><td>CH₃CO⁺</td><td>酰基</td></tr>
+            <tr><td>77</td><td>C₆H₅⁺</td><td>苯基</td></tr>
+            <tr><td>91</td><td>C₇H₇⁺</td><td>苄基</td></tr>
+          </table>
+        </div>
+        <div id="msFragInfo" style="display:none">
+          <h3>🎯 碎裂规律</h3>
+          <div class="concept-box">
+            <b>主要碎裂方式：</b><br>
+            • <span class="hl3">α-裂解</span> - 自由基引发，邻键断裂<br>
+            • <span class="hl">McLafferty重排</span> - γ-H转移，烯烃丢失<br>
+            • <span class="hl2">逆Diels-Alder</span> - 环己烯碎裂<br><br>
+            <b>氮规则：</b>含偶数N，分子量为偶数
+          </div>
+        </div>
+        <div id="msIsoInfo" style="display:none">
+          <h3>🔬 同位素峰</h3>
+          <div class="concept-box">
+            <b>同位素丰度比：</b><br>
+            • <span class="hl">³⁵Cl : ³⁷Cl ≈ 3:1</span> → M, M+2 峰比<br>
+            • <span class="hl2">⁷⁹Br : ⁸¹Br ≈ 1:1</span> → M, M+2 峰等强<br>
+            • <span class="hl3">¹³C ≈ 1.1%</span> → M+1 峰估算碳数<br><br>
+            同位素峰型可判断卤素种类和数量
+          </div>
+          <div class="slider-row">
+            <label>Cl 原子数:</label>
+            <input type="range" id="clCount" min="0" max="3" value="1" />
+            <span class="val" id="clCountVal">1</span>
+          </div>
+          <div class="slider-row">
+            <label>Br 原子数:</label>
+            <input type="range" id="brCount" min="0" max="2" value="0" />
+            <span class="val" id="brCountVal">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 结构鉴定练习 ========== -->
+  <div class="section" id="sec-practice">
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="practiceCanvas" width="700" height="420"></canvas>
+        <div class="legend">
+          <span class="l-ir">IR</span>
+          <span class="l-nmr">NMR</span>
+          <span class="l-ms">MS</span>
+          <span>综合解析</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="quiz" id="structureQuiz">
+          <div class="quiz-q" id="quizQuestion">加载中...</div>
+          <div class="quiz-opts" id="quizOptions"></div>
+          <div class="quiz-feedback" id="quizFeedback"></div>
+          <div class="quiz-nav">
+            <button id="quizPrev">上一题</button>
+            <button id="quizNext">下一题</button>
+            <button id="quizCheck">确认答案</button>
+          </div>
+          <div class="step-indicator" id="quizDots"></div>
+        </div>
+        <div class="concept-box" style="margin-top: 14px;">
+          <b>解题思路：</b><br>
+          1. <span class="hl3">MS</span> → 确定分子量<br>
+          2. <span class="hl">IR</span> → 识别官能团<br>
+          3. <span class="hl2">NMR</span> → 确定氢骨架<br>
+          4. 综合推导结构
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// ============ 数据定义 ============
+const IR_DATA = {
+  ethanol: {
+    name: '乙醇 CH₃CH₂OH',
+    peaks: [
+      {pos: 3350, w: 400, h: 0.55, label: 'O-H 伸缩'},
+      {pos: 2970, w: 80, h: 0.25, label: 'C-H 伸缩'},
+      {pos: 2880, w: 60, h: 0.2, label: 'C-H 伸缩'},
+      {pos: 1450, w: 50, h: 0.15, label: 'C-H 弯曲'},
+      {pos: 1380, w: 40, h: 0.12, label: 'C-H 弯曲'},
+      {pos: 1050, w: 80, h: 0.35, label: 'C-O 伸缩'}
+    ]
+  },
+  acetone: {
+    name: '丙酮 CH₃COCH₃',
+    peaks: [
+      {pos: 3000, w: 80, h: 0.2, label: 'C-H 伸缩'},
+      {pos: 2920, w: 60, h: 0.18, label: 'C-H 伸缩'},
+      {pos: 1715, w: 50, h: 0.6, label: 'C=O 伸缩'},
+      {pos: 1420, w: 50, h: 0.12, label: 'C-H 弯曲'},
+      {pos: 1360, w: 40, h: 0.1, label: 'C-H 弯曲'}
+    ]
+  },
+  acetic: {
+    name: '乙酸 CH₃COOH',
+    peaks: [
+      {pos: 3000, w: 300, h: 0.45, label: 'O-H 伸缩(宽)'},
+      {pos: 1720, w: 50, h: 0.6, label: 'C=O 伸缩'},
+      {pos: 1410, w: 60, h: 0.2, label: 'O-H 弯曲'},
+      {pos: 1290, w: 70, h: 0.35, label: 'C-O 伸缩'},
+      {pos: 940, w: 50, h: 0.15, label: 'O-H 面外'}
+    ]
+  },
+  toluene: {
+    name: '甲苯 C₆H₅CH₃',
+    peaks: [
+      {pos: 3030, w: 50, h: 0.15, label: 'Ar-H 伸缩'},
+      {pos: 2920, w: 60, h: 0.2, label: 'C-H 伸缩'},
+      {pos: 1600, w: 40, h: 0.25, label: 'C=C 伸缩'},
+      {pos: 1500, w: 40, h: 0.2, label: 'C=C 伸缩'},
+      {pos: 1460, w: 40, h: 0.15, label: 'C-H 弯曲'},
+      {pos: 730, w: 50, h: 0.4, label: 'Ar-H 面外'},
+      {pos: 695, w: 50, h: 0.35, label: 'Ar-H 面外'}
+    ]
+  },
+  aniline: {
+    name: '苯胺 C₆H₅NH₂',
+    peaks: [
+      {pos: 3450, w: 80, h: 0.3, label: 'N-H 伸缩'},
+      {pos: 3370, w: 80, h: 0.28, label: 'N-H 伸缩'},
+      {pos: 3050, w: 50, h: 0.12, label: 'Ar-H 伸缩'},
+      {pos: 1620, w: 50, h: 0.25, label: 'N-H 弯曲'},
+      {pos: 1600, w: 40, h: 0.2, label: 'C=C 伸缩'},
+      {pos: 1500, w: 40, h: 0.18, label: 'C=C 伸缩'},
+      {pos: 1280, w: 60, h: 0.3, label: 'C-N 伸缩'},
+      {pos: 750, w: 50, h: 0.35, label: 'Ar-H 面外'},
+      {pos: 690, w: 50, h: 0.3, label: 'Ar-H 面外'}
+    ]
+  },
+  unknown: {
+    name: '未知化合物',
+    peaks: [
+      {pos: 3300, w: 200, h: 0.5, label: '?'},
+      {pos: 2950, w: 70, h: 0.2, label: '?'},
+      {pos: 1710, w: 50, h: 0.55, label: '?'},
+      {pos: 1250, w: 70, h: 0.3, label: '?'},
+      {pos: 750, w: 50, h: 0.35, label: '?'}
+    ]
+  }
+};
+
+const NMR_DATA = {
+  ethanol: {
+    name: '乙醇 CH₃CH₂OH',
+    peaks: [
+      {pos: 1.2, h: 0.9, split: 3, label: 'CH₃ (三重峰)', area: 3},
+      {pos: 3.7, h: 0.6, split: 4, label: 'CH₂ (四重峰)', area: 2},
+      {pos: 2.6, h: 0.3, split: 1, label: 'OH (单峰)', area: 1}
+    ]
+  },
+  acetone: {
+    name: '丙酮 CH₃COCH₃',
+    peaks: [
+      {pos: 2.1, h: 1.0, split: 1, label: 'CH₃ (单峰)', area: 6}
+    ]
+  },
+  ethylacetate: {
+    name: '乙酸乙酯 CH₃COOCH₂CH₃',
+    peaks: [
+      {pos: 2.0, h: 0.6, split: 1, label: 'CH₃CO (单峰)', area: 3},
+      {pos: 4.1, h: 0.5, split: 4, label: 'OCH₂ (四重峰)', area: 2},
+      {pos: 1.25, h: 0.7, split: 3, label: 'CH₃ (三重峰)', area: 3}
+    ]
+  },
+  toluene: {
+    name: '甲苯 C₆H₅CH₃',
+    peaks: [
+      {pos: 2.35, h: 0.5, split: 1, label: 'CH₃ (单峰)', area: 3},
+      {pos: 7.15, h: 0.7, split: 5, label: 'Ar-H (多重峰)', area: 5}
+    ]
+  },
+  unknown: {
+    name: '未知化合物',
+    peaks: [
+      {pos: 1.3, h: 0.6, split: 3, label: '?', area: 3},
+      {pos: 3.5, h: 0.4, split: 4, label: '?', area: 2},
+      {pos: 9.8, h: 0.2, split: 1, label: '?', area: 1},
+      {pos: 7.3, h: 0.5, split: 5, label: '?', area: 5}
+    ]
+  }
+};
+
+const MS_DATA = {
+  ethanol: {
+    name: '乙醇 (M=46)',
+    mw: 46,
+    peaks: [
+      {mz: 46, h: 0.15, label: 'M⁺·'},
+      {mz: 45, h: 0.4, label: '[M-H]⁺'},
+      {mz: 31, h: 1.0, label: 'CH₂OH⁺ (基峰)'},
+      {mz: 29, h: 0.3, label: 'CHO⁺'},
+      {mz: 27, h: 0.2, label: 'C₂H₃⁺'},
+      {mz: 15, h: 0.25, label: 'CH₃⁺'}
+    ]
+  },
+  acetone: {
+    name: '丙酮 (M=58)',
+    mw: 58,
+    peaks: [
+      {mz: 58, h: 0.3, label: 'M⁺·'},
+      {mz: 43, h: 1.0, label: 'CH₃CO⁺ (基峰)'},
+      {mz: 29, h: 0.15, label: 'CHO⁺'},
+      {mz: 15, h: 0.4, label: 'CH₃⁺'}
+    ]
+  },
+  toluene: {
+    name: '甲苯 (M=92)',
+    mw: 92,
+    peaks: [
+      {mz: 92, h: 0.6, label: 'M⁺·'},
+      {mz: 91, h: 1.0, label: 'C₇H₇⁺ (基峰)'},
+      {mz: 65, h: 0.3, label: 'C₅H₅⁺'},
+      {mz: 39, h: 0.2, label: 'C₃H₃⁺'}
+    ]
+  },
+  chlorobenzene: {
+    name: '氯苯 (M=112/114)',
+    mw: 112,
+    peaks: [
+      {mz: 112, h: 0.8, label: 'M⁺· (³⁵Cl)'},
+      {mz: 114, h: 0.27, label: 'M+2 (³⁷Cl)'},
+      {mz: 77, h: 1.0, label: 'C₆H₅⁺ (基峰)'},
+      {mz: 51, h: 0.2, label: 'C₄H₃⁺'},
+      {mz: 79, h: 0.25, label: 'C₆H₅³⁷Cl'}
+    ]
+  },
+  unknown: {
+    name: '未知化合物',
+    mw: 88,
+    peaks: [
+      {mz: 88, h: 0.2, label: 'M⁺·'},
+      {mz: 73, h: 0.3, label: '[M-CH₃]⁺'},
+      {mz: 43, h: 1.0, label: '基峰'},
+      {mz: 45, h: 0.4, label: '?'},
+      {mz: 29, h: 0.25, label: '?'},
+      {mz: 15, h: 0.15, label: '?'}
+    ]
+  }
+};
+
+// ============ 通用工具 ============
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+// ===== 进度追踪（PageProgress） =====
+const SLUG = '09-spectroscopy';
+const ALL_TABS = ['ir', 'nmr', 'ms', 'practice'];
+const visitedTabs = new Set(['ir']);
+let quizFirstTryCorrect = new Set();
+let quizTriedCurrent = false;
+
+function maybeMarkDone() {
+  const tabsOk = ALL_TABS.every(t => visitedTabs.has(t));
+  const quizOk = quizFirstTryCorrect.size === QUIZ_DATA.length;
+  if (tabsOk && quizOk && !PageProgress.isDone(SLUG)) {
+    PageProgress.markDone(SLUG);
+    const m = document.getElementById('done-mark');
+    if (m) m.style.display = 'inline-block';
+  }
+}
+
+function switchSection(sectionId) {
+  $$('.section').forEach(s => s.classList.remove('active'));
+  $$('.tab').forEach(t => t.classList.remove('active'));
+  $(`#sec-${sectionId}`).classList.add('active');
+  $(`.tab[data-section="${sectionId}"]`).classList.add('active');
+  visitedTabs.add(sectionId);
+  maybeMarkDone();
+}
+
+$$('.tab').forEach(tab => {
+  tab.addEventListener('click', () => switchSection(tab.dataset.section));
+});
+
+// ============ 红外光谱绘制 ============
+let irMode = 'spectrum';
+let irMol = 'ethanol';
+let irAnimPhase = 0;
+
+function drawIR() {
+  const canvas = $('#irCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // 坐标轴
+  const pad = {l: 60, r: 30, t: 30, b: 50};
+  const gw = W - pad.l - pad.r;
+  const gh = H - pad.t - pad.b;
+
+  // 网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    const x = pad.l + (gw / 10) * i;
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + gh); ctx.stroke();
+  }
+  for (let i = 0; i <= 5; i++) {
+    const y = pad.t + (gh / 5) * i;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gw, y); ctx.stroke();
+  }
+
+  // 轴标签
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  const wavenumbers = [4000, 3500, 3000, 2500, 2000, 1500, 1000, 500];
+  wavenumbers.forEach((wn, i) => {
+    const x = pad.l + (4000 - wn) / 3500 * gw;
+    ctx.fillText(wn.toString(), x, H - 15);
+  });
+  ctx.fillText('波数 (cm⁻¹)', pad.l + gw / 2, H - 2);
+
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 5; i++) {
+    const y = pad.t + (gh / 5) * i;
+    ctx.fillText((100 - i * 20).toString(), pad.l - 8, y + 4);
+  }
+  ctx.save();
+  ctx.translate(15, pad.t + gh / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center';
+  ctx.fillText('透光率 %', 0, 0);
+  ctx.restore();
+
+  if (irMode === 'vibration') {
+    drawVibration(ctx, pad, gw, gh);
+    return;
+  }
+
+  // 绘制谱图
+  const data = IR_DATA[irMol];
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = '#10b981';
+  ctx.shadowBlur = 4;
+  ctx.beginPath();
+
+  const points = [];
+  for (let px = 0; px <= gw; px++) {
+    const wn = 4000 - (px / gw) * 3500;
+    let transmittance = 1.0;
+    data.peaks.forEach(peak => {
+      const dist = (wn - peak.pos) / (peak.w / 2);
+      transmittance -= peak.h * Math.exp(-dist * dist * 0.5);
+    });
+    transmittance = Math.max(0.02, transmittance);
+    const x = pad.l + px;
+    const y = pad.t + (1 - transmittance) * gh;
+    points.push({x, y, wn, transmittance});
+    if (px === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // 标注峰位
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  data.peaks.forEach(peak => {
+    if (peak.h > 0.25) {
+      const x = pad.l + (4000 - peak.pos) / 3500 * gw;
+      const y = pad.t + (1 - (1 - peak.h)) * gh - 12;
+      ctx.fillText(`${peak.pos}`, x, y);
+    }
+  });
+
+  // 标题
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`IR谱: ${data.name}`, pad.l + 10, pad.t + 18);
+
+  // 识别模式交互
+  if (irMode === 'identify') {
+    ctx.fillStyle = 'rgba(245,158,11,0.15)';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('👆 点击谱图识别吸收峰', pad.l + gw / 2, pad.t + gh - 20);
+  }
+}
+
+function drawVibration(ctx, pad, gw, gh) {
+  const k = parseFloat($('#forceConst').value);
+  const m = parseFloat($('#atomMass').value);
+  const freq = Math.sqrt(k / m) * 3;
+
+  // 绘制分子振动动画
+  const cx = pad.l + gw / 2;
+  const cy = pad.t + gh / 2;
+
+  // 化学键
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 3;
+
+  const amplitude = 30;
+  const phase = irAnimPhase;
+
+  // 对称伸缩
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('伸缩振动模式', cx, pad.t + 30);
+
+  // 原子1
+  const x1 = cx - 60 - Math.sin(phase) * amplitude;
+  const y1 = cy - 40;
+  const x2 = cx + 60 + Math.sin(phase) * amplitude;
+
+  ctx.beginPath();
+  ctx.moveTo(x1 + 20, y1);
+  ctx.lineTo(x2 - 20, y1);
+  ctx.stroke();
+
+  ctx.fillStyle = '#3b82f6';
+  ctx.beginPath(); ctx.arc(x1, y1, 20, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath(); ctx.arc(x2, y1, 20, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('A', x1, y1 + 5);
+  ctx.fillText('B', x2, y1 + 5);
+
+  // 弯曲振动
+  ctx.fillText('弯曲振动模式', cx, cy + 80);
+
+  const x3 = cx - 60;
+  const x4 = cx + 60;
+  const y3 = cy + 120 + Math.sin(phase * 0.7) * amplitude * 0.6;
+  const y4 = cy + 120 - Math.sin(phase * 0.7) * amplitude * 0.6;
+
+  ctx.strokeStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.moveTo(x3 + 20, cy + 120);
+  ctx.lineTo(x4 - 20, cy + 120);
+  ctx.stroke();
+
+  ctx.fillStyle = '#3b82f6';
+  ctx.beginPath(); ctx.arc(x3, cy + 120, 20, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath(); ctx.arc(x4, y3, 16, 0, Math.PI * 2); ctx.fill();
+
+  // 频率信息
+  const wn = (1 / (2 * Math.PI * 3e10)) * Math.sqrt(k * 100 / (m * 1.66e-27)) / 100;
+  ctx.fillStyle = '#c4b5fd';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`计算波数: ~${Math.round(800 + k * 150 / Math.sqrt(m))} cm⁻¹`, cx, H - 50);
+  ctx.fillText(`力常数 k=${k} N/cm, 质量 m=${m} amu`, cx, H - 30);
+}
+
+// IR 交互
+$('#irCanvas').addEventListener('click', (e) => {
+  if (irMode !== 'identify') return;
+  const canvas = e.target;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const pad = {l: 60, r: 30};
+  const gw = canvas.width - pad.l - pad.r;
+  const px = x - pad.l;
+  const wn = Math.round(4000 - (px / gw) * 3500);
+
+  const ranges = [
+    {min: 3200, max: 3600, group: 'O-H / N-H 伸缩', desc: '醇、酚、胺类'},
+    {min: 2850, max: 3000, group: 'C-H 伸缩 (sp³)', desc: '烷基 C-H'},
+    {min: 3000, max: 3100, group: 'C-H 伸缩 (sp²)', desc: '烯/芳 C-H'},
+    {min: 1680, max: 1750, group: 'C=O 伸缩', desc: '羰基 (酮/醛/酸/酯)'},
+    {min: 1600, max: 1680, group: 'C=C 伸缩', desc: '烯烃/芳环骨架'},
+    {min: 1000, max: 1300, group: 'C-O 伸缩', desc: '醇/醚/酯'},
+    {min: 700, max: 800, group: 'Ar-H 面外', desc: '芳环取代模式'},
+    {min: 3300, max: 3500, group: 'N-H 伸缩', desc: '伯/仲胺'}
+  ];
+
+  let found = null;
+  ranges.forEach(r => {
+    if (wn >= r.min && wn <= r.max) found = r;
+  });
+
+  const result = $('#identifyResult');
+  if (found) {
+    result.innerHTML = `<b style="color:#fbbf24">波数 ${wn} cm⁻¹</b><br><br><span style="color:#10b981;font-weight:600">${found.group}</span><br>${found.desc}`;
+  } else {
+    result.innerHTML = `<b style="color:#fbbf24">波数 ${wn} cm⁻¹</b><br><br>该区域无特征吸收峰，或属于指纹区 (< 1500 cm⁻¹)`;
+  }
+});
+
+$$('.mode-btn[data-irmode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('[data-irmode]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    irMode = btn.dataset.irmode;
+    $('#irInfo').style.display = irMode === 'spectrum' ? '' : 'none';
+    $('#irVibInfo').style.display = irMode === 'vibration' ? '' : 'none';
+    $('#irIdentifyInfo').style.display = irMode === 'identify' ? '' : 'none';
+    drawIR();
+  });
+});
+
+$$('#irMolSelector .mol-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('#irMolSelector .mol-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    irMol = btn.dataset.mol;
+    drawIR();
+  });
+});
+
+// ============ NMR 绘制 ============
+let nmrMode = 'spectrum';
+let nmrMol = 'ethanol';
+let nmrAnimPhase = 0;
+
+function drawNMR() {
+  const canvas = $('#nmrCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = {l: 50, r: 30, t: 30, b: 50};
+  const gw = W - pad.l - pad.r;
+  const gh = H - pad.t - pad.b;
+
+  // 网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let ppm = 0; ppm <= 12; ppm++) {
+    const x = pad.l + (ppm / 12) * gw;
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + gh); ctx.stroke();
+  }
+
+  // 轴标签
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  for (let ppm = 0; ppm <= 12; ppm++) {
+    const x = pad.l + (ppm / 12) * gw;
+    ctx.fillText(ppm.toString(), x, H - 15);
+  }
+  ctx.fillText('化学位移 δ (ppm)', pad.l + gw / 2, H - 2);
+
+  if (nmrMode === 'spin') {
+    drawSpin(ctx, pad, gw, gh);
+    return;
+  }
+
+  if (nmrMode === 'coupling') {
+    drawCoupling(ctx, pad, gw, gh);
+    return;
+  }
+
+  // 绘制谱图
+  const data = NMR_DATA[nmrMol];
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#3b82f6';
+  ctx.shadowBlur = 3;
+
+  data.peaks.forEach(peak => {
+    const cx = pad.l + (peak.pos / 12) * gw;
+    const peakH = peak.h * gh * 0.8;
+
+    // 绘制裂分
+    const n = peak.split - 1;
+    const spacing = 8;
+    const coeffs = getPascalRow(n);
+    const sum = coeffs.reduce((a, b) => a + b, 0);
+
+    coeffs.forEach((c, i) => {
+      const offset = (i - n / 2) * spacing;
+      const h = (c / sum) * peakH;
+      const x = cx + offset;
+
+      ctx.beginPath();
+      ctx.moveTo(x, pad.t + gh);
+      ctx.lineTo(x, pad.t + gh - h);
+      ctx.stroke();
+    });
+
+    // 标注
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(peak.pos.toFixed(1), cx, pad.t + gh - peakH - 8);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px sans-serif';
+    ctx.fillText(peak.label, cx, pad.t + gh - peakH - 22);
+    ctx.shadowColor = '#3b82f6';
+    ctx.shadowBlur = 3;
+  });
+
+  ctx.shadowBlur = 0;
+
+  // 标题
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`¹H NMR: ${data.name}`, pad.l + 10, pad.t + 18);
+}
+
+function getPascalRow(n) {
+  if (n === 0) return [1];
+  if (n === 1) return [1, 1];
+  if (n === 2) return [1, 2, 1];
+  if (n === 3) return [1, 3, 3, 1];
+  if (n === 4) return [1, 4, 6, 4, 1];
+  if (n === 5) return [1, 5, 10, 10, 5, 1];
+  return [1];
+}
+
+function drawSpin(ctx, pad, gw, gh) {
+  const B = parseFloat($('#fieldStrength').value);
+  const cx = pad.l + gw / 2;
+  const cy = pad.t + gh / 2;
+
+  // 磁场线
+  ctx.strokeStyle = 'rgba(59,130,246,0.3)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 8; i++) {
+    const x = pad.l + (gw / 8) * i + gw / 16;
+    ctx.beginPath();
+    ctx.setLineDash([5, 5]);
+    ctx.moveTo(x, pad.t);
+    ctx.lineTo(x, pad.t + gh);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // 标签
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('质子自旋在磁场中的能级分裂', cx, pad.t + 30);
+
+  // 能级图
+  const gap = 60 + B * 8;
+
+  // β态 (高能量)
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.arc(cx, cy - gap / 2, 25, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.fillText('↑', cx, cy - gap / 2 + 6);
+  ctx.fillStyle = '#fca5a5';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('β态 (高能)', cx + 60, cy - gap / 2 + 5);
+
+  // α态 (低能量)
+  ctx.fillStyle = '#3b82f6';
+  ctx.beginPath();
+  ctx.arc(cx, cy + gap / 2, 25, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.fillText('↓', cx, cy + gap / 2 + 6);
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('α态 (低能)', cx + 60, cy + gap / 2 + 5);
+
+  // 跃迁箭头
+  const arrowPhase = nmrAnimPhase;
+  const arrowY = cy + Math.sin(arrowPhase) * gap / 3;
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx - 80, cy + gap / 2 - 10);
+  ctx.lineTo(cx - 80, cy - gap / 2 + 10);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx - 85, cy - gap / 2 + 20);
+  ctx.lineTo(cx - 80, cy - gap / 2 + 10);
+  ctx.lineTo(cx - 75, cy - gap / 2 + 20);
+  ctx.stroke();
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('hν = ΔE', cx - 100, cy);
+  ctx.fillText(`B₀ = ${B} T`, cx, pad.t + gh - 30);
+  ctx.fillText(`ΔE = γℏB₀ ∝ B₀`, cx, pad.t + gh - 12);
+}
+
+function drawCoupling(ctx, pad, gw, gh) {
+  const n = parseInt($('#neighborN').value);
+  const cx = pad.l + gw / 2;
+  const cy = pad.t + gh / 2;
+
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`自旋-自旋耦合裂分 (n+1 规则)`, cx, pad.t + 30);
+
+  const coeffs = getPascalRow(n);
+  const sum = coeffs.reduce((a, b) => a + b, 0);
+  const spacing = 40;
+  const startX = cx - (n * spacing) / 2;
+  const maxH = gh * 0.5;
+
+  // 绘制裂分峰
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 4;
+  ctx.shadowColor = '#3b82f6';
+  ctx.shadowBlur = 5;
+
+  coeffs.forEach((c, i) => {
+    const x = startX + i * spacing;
+    const h = (c / sum) * maxH;
+    ctx.beginPath();
+    ctx.moveTo(x, cy + maxH / 2);
+    ctx.lineTo(x, cy + maxH / 2 - h);
+    ctx.stroke();
+
+    // 系数标注
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(c.toString(), x, cy + maxH / 2 - h - 10);
+    ctx.shadowColor = '#3b82f6';
+    ctx.shadowBlur = 5;
+  });
+
+  ctx.shadowBlur = 0;
+
+  // n+1 规则说明
+  ctx.fillStyle = '#c4b5fd';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`相邻质子数 n = ${n}`, cx, cy + maxH / 2 + 40);
+  ctx.fillText(`裂分数 = n + 1 = ${n + 1}`, cx, cy + maxH / 2 + 65);
+  ctx.fillText(`强度比: ${coeffs.join(' : ')}`, cx, cy + maxH / 2 + 90);
+
+  // 示例
+  const examples = ['单峰 (s)', '二重峰 (d)', '三重峰 (t)', '四重峰 (q)', '五重峰 (quint)', '六重峰 (sex)'];
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`示例: ${examples[n]}`, cx, cy + maxH / 2 + 115);
+}
+
+$$('.mode-btn[data-nmrmode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('[data-nmrmode]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    nmrMode = btn.dataset.nmrmode;
+    $('#nmrInfo').style.display = nmrMode === 'spectrum' ? '' : 'none';
+    $('#nmrSpinInfo').style.display = nmrMode === 'spin' ? '' : 'none';
+    $('#nmrCouplingInfo').style.display = nmrMode === 'coupling' ? '' : 'none';
+    drawNMR();
+  });
+});
+
+$$('#nmrMolSelector .mol-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('#nmrMolSelector .mol-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    nmrMol = btn.dataset.mol;
+    drawNMR();
+  });
+});
+
+// ============ 质谱绘制 ============
+let msMode = 'spectrum';
+let msMol = 'ethanol';
+
+function drawMS() {
+  const canvas = $('#msCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = {l: 50, r: 30, t: 30, b: 50};
+  const gw = W - pad.l - pad.r;
+  const gh = H - pad.t - pad.b;
+
+  const data = MS_DATA[msMol];
+  const maxMz = Math.max(data.mw + 20, 120);
+
+  // 网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let mz = 0; mz <= maxMz; mz += 20) {
+    const x = pad.l + (mz / maxMz) * gw;
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + gh); ctx.stroke();
+  }
+
+  // 轴标签
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  for (let mz = 0; mz <= maxMz; mz += 20) {
+    const x = pad.l + (mz / maxMz) * gw;
+    ctx.fillText(mz.toString(), x, H - 15);
+  }
+  ctx.fillText('质荷比 m/z', pad.l + gw / 2, H - 2);
+
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 5; i++) {
+    const y = pad.t + (gh / 5) * i;
+    ctx.fillText((100 - i * 20).toString(), pad.l - 8, y + 4);
+  }
+
+  if (msMode === 'isotope') {
+    drawIsotope(ctx, pad, gw, gh, maxMz);
+    return;
+  }
+
+  // 绘制质谱峰
+  const barWidth = Math.max(4, gw / maxMz * 0.6);
+
+  data.peaks.forEach(peak => {
+    const x = pad.l + (peak.mz / maxMz) * gw;
+    const h = peak.h * gh * 0.9;
+
+    // 渐变填充
+    const grad = ctx.createLinearGradient(x, pad.t + gh, x, pad.t + gh - h);
+    grad.addColorStop(0, 'rgba(239,68,68,0.3)');
+    grad.addColorStop(1, 'rgba(239,68,68,0.8)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - barWidth / 2, pad.t + gh - h, barWidth, h);
+
+    // 峰顶线
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x - barWidth / 2, pad.t + gh - h);
+    ctx.lineTo(x + barWidth / 2, pad.t + gh - h);
+    ctx.stroke();
+
+    // 标注
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${peak.mz}`, x, pad.t + gh - h - 18);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '9px sans-serif';
+    ctx.fillText(peak.label, x, pad.t + gh - h - 6);
+  });
+
+  // 标题
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`质谱: ${data.name}`, pad.l + 10, pad.t + 18);
+
+  if (msMode === 'fragment') {
+    // 碎裂示意
+    ctx.fillStyle = 'rgba(239,68,68,0.1)';
+    ctx.fillRect(pad.l + gw - 200, pad.t + 10, 190, 80);
+    ctx.fillStyle = '#fca5a5';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('⚡ 电子轰击碎裂:', pad.l + gw - 190, pad.t + 30);
+    ctx.fillText('M → M⁺· → 碎片离子', pad.l + gw - 190, pad.t + 50);
+    ctx.fillText(`分子离子峰 m/z = ${data.mw}`, pad.l + gw - 190, pad.t + 70);
+  }
+}
+
+function drawIsotope(ctx, pad, gw, gh, maxMz) {
+  const clN = parseInt($('#clCount').value);
+  const brN = parseInt($('#brCount').value);
+
+  const cx = pad.l + gw / 2;
+  const cy = pad.t + gh / 2;
+
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('同位素峰型分布', cx, pad.t + 30);
+
+  // 计算同位素峰型
+  const clPattern = [1]; // 35Cl
+  for (let i = 0; i < clN; i++) {
+    const next = [];
+    for (let j = 0; j < clPattern.length; j++) {
+      next[j] = (next[j] || 0) + clPattern[j] * 3;
+      next[j + 1] = (next[j + 1] || 0) + clPattern[j] * 1;
+    }
+    clPattern.length = 0;
+    clPattern.push(...next);
+  }
+
+  const brPattern = [1];
+  for (let i = 0; i < brN; i++) {
+    const next = [];
+    for (let j = 0; j < brPattern.length; j++) {
+      next[j] = (next[j] || 0) + brPattern[j] * 1;
+      next[j + 1] = (next[j + 1] || 0) + brPattern[j] * 1;
+    }
+    brPattern.length = 0;
+    brPattern.push(...next);
+  }
+
+  // 卷积
+  let pattern = [1];
+  pattern = convolve(pattern, clPattern);
+  pattern = convolve(pattern, brPattern);
+
+  const maxVal = Math.max(...pattern);
+  const spacing = 50;
+  const startX = cx - ((pattern.length - 1) * spacing) / 2;
+
+  pattern.forEach((val, i) => {
+    const x = startX + i * spacing;
+    const h = (val / maxVal) * gh * 0.5;
+    const mz = `M+${i * 2}`;
+
+    // 绘制峰
+    ctx.strokeStyle = i === 0 ? '#ef4444' : '#f472b6';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x, cy + gh * 0.25);
+    ctx.lineTo(x, cy + gh * 0.25 - h);
+    ctx.stroke();
+
+    // 标注
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(mz, x, cy + gh * 0.25 - h - 15);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(`${(val / maxVal * 100).toFixed(1)}%`, x, cy + gh * 0.25 - h - 32);
+  });
+
+  // 说明
+  ctx.fillStyle = '#c4b5fd';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'center';
+  let desc = '';
+  if (clN > 0) desc += `${clN}个Cl: M:M+2 ≈ ${Math.pow(3, clN).toFixed(0)}:${clN > 0 ? '1' : '0'}`;
+  if (brN > 0) desc += ` ${brN}个Br: M:M+2 ≈ 1:1`;
+  if (!desc) desc = '调整下方滑块查看同位素峰型';
+  ctx.fillText(desc, cx, cy + gh * 0.25 + 50);
+}
+
+function convolve(a, b) {
+  const result = new Array(a.length + b.length - 1).fill(0);
+  for (let i = 0; i < a.length; i++) {
+    for (let j = 0; j < b.length; j++) {
+      result[i + j] += a[i] * b[j];
+    }
+  }
+  return result;
+}
+
+$$('.mode-btn[data-msmode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('[data-msmode]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    msMode = btn.dataset.msmode;
+    $('#msInfo').style.display = msMode === 'spectrum' ? '' : 'none';
+    $('#msFragInfo').style.display = msMode === 'fragment' ? '' : 'none';
+    $('#msIsoInfo').style.display = msMode === 'isotope' ? '' : 'none';
+    drawMS();
+  });
+});
+
+$$('#msMolSelector .mol-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('#msMolSelector .mol-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    msMol = btn.dataset.mol;
+    drawMS();
+  });
+});
+
+// ============ 结构鉴定练习 ============
+const QUIZ_DATA = [
+  {
+    q: '某化合物 IR 在 1715 cm⁻¹ 有强吸收，¹H NMR 只有一个单峰 δ=2.1，MS 分子离子峰 m/z=58。该化合物是？',
+    opts: ['乙醇', '丙酮', '丙醛', '乙酸'],
+    answer: 1,
+    explain: '1715 cm⁻¹ → C=O; δ=2.1 单峰 → 两个等价 CH₃; m/z=58 → C₃H₆O → 丙酮'
+  },
+  {
+    q: 'IR 在 3300 cm⁻¹ 宽峰，1050 cm⁻¹ 强吸收，NMR: δ 1.2(三重峰), 3.7(四重峰), 2.6(单峰)。该化合物是？',
+    opts: ['乙醚', '乙醇', '乙醛', '乙酸'],
+    answer: 1,
+    explain: '3300 宽峰 → O-H; 1050 → C-O; NMR 三重+四重 → CH₃CH₂- → 乙醇'
+  },
+  {
+    q: 'MS 显示 M⁺=92，M+1 峰很小，91 为基峰。IR 在 3030, 1600, 1500, 730 cm⁻¹ 有吸收。该化合物是？',
+    opts: ['苯酚', '苯甲醛', '甲苯', '苯乙烯'],
+    answer: 2,
+    explain: 'm/z=92 → C₇H₈; 91 基峰 → C₇H₇⁺(苄基); 芳环 IR 特征 → 甲苯'
+  },
+  {
+    q: 'IR 在 3300 cm⁻¹ 有两个峰，1600/1500 cm⁻¹ 有吸收，750 cm⁻¹ 强峰。NMR: δ 3.6(宽峰,2H), 6.6-7.2(多重峰,5H)。该化合物是？',
+    opts: ['苯胺', '苯酚', '硝基苯', 'N-甲基苯胺'],
+    answer: 0,
+    explain: '3300 双峰 → 伯胺 N-H; 芳环特征; NMR 5H 芳氢 + 2H 宽峰 → 苯胺'
+  },
+  {
+    q: 'MS: M⁺=112 与 M+2=114 强度比约 3:1。IR: 1590, 1480, 750 cm⁻¹。该化合物是？',
+    opts: ['溴苯', '氯苯', '碘苯', '氟苯'],
+    answer: 1,
+    explain: 'M:M+2 = 3:1 → 含1个Cl (³⁵Cl:³⁷Cl ≈ 3:1); 芳环 IR → 氯苯'
+  }
+];
+
+let quizIdx = 0;
+let quizAnswered = false;
+
+function renderQuiz() {
+  const q = QUIZ_DATA[quizIdx];
+  $('#quizQuestion').textContent = `第 ${quizIdx + 1} 题 / 共 ${QUIZ_DATA.length} 题\n\n${q.q}`;
+  const optsEl = $('#quizOptions');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-opt';
+    div.textContent = opt;
+    div.addEventListener('click', () => {
+      if (quizAnswered) return;
+      $$('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+      div.classList.add('selected');
+      div.style.borderColor = '#8b5cf6';
+      div.style.background = 'rgba(139,92,246,0.2)';
+    });
+    optsEl.appendChild(div);
+  });
+  $('#quizFeedback').textContent = '';
+  quizAnswered = false;
+
+  // 绘制对应谱图
+  drawPracticeSpectrum(quizIdx);
+
+  // dots
+  const dots = $('#quizDots');
+  dots.innerHTML = '';
+  QUIZ_DATA.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'step-dot' + (i === quizIdx ? ' active' : '');
+    dots.appendChild(dot);
+  });
+}
+
+function drawPracticeSpectrum(idx) {
+  const canvas = $('#practiceCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const spectra = [
+    {name: '未知物 A', ir: '1715', nmr: '2.1(s)', ms: '58'},
+    {name: '未知物 B', ir: '3300, 1050', nmr: '1.2(t), 3.7(q)', ms: '46'},
+    {name: '未知物 C', ir: '3030, 1600', nmr: '2.3(s), 7.2(m)', ms: '92(91*)'},
+    {name: '未知物 D', ir: '3300(双), 1600', nmr: '3.6(br), 6.6-7.2(m)', ms: '93'},
+    {name: '未知物 E', ir: '1590, 750', nmr: '7.3-7.5(m)', ms: '112/114(3:1)'}
+  ];
+
+  const s = spectra[idx];
+  const pad = {l: 40, r: 20, t: 30, b: 40};
+  const gw = W - pad.l - pad.r;
+  const gh = H - pad.t - pad.b;
+  const thirdH = gh / 3;
+
+  // 标题
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`综合解析: ${s.name}`, pad.l, pad.t - 10);
+
+  // IR 区域
+  ctx.fillStyle = 'rgba(16,185,129,0.1)';
+  ctx.fillRect(pad.l, pad.t, gw, thirdH - 10);
+  ctx.fillStyle = '#10b981';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('IR 谱', pad.l + 10, pad.t + 18);
+  ctx.fillStyle = '#6ee7b7';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`特征吸收: ${s.ir} cm⁻¹`, pad.l + 10, pad.t + 38);
+
+  // NMR 区域
+  ctx.fillStyle = 'rgba(59,130,246,0.1)';
+  ctx.fillRect(pad.l, pad.t + thirdH, gw, thirdH - 10);
+  ctx.fillStyle = '#3b82f6';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('¹H NMR 谱', pad.l + 10, pad.t + thirdH + 18);
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`信号: ${s.nmr}`, pad.l + 10, pad.t + thirdH + 38);
+
+  // MS 区域
+  ctx.fillStyle = 'rgba(239,68,68,0.1)';
+  ctx.fillRect(pad.l, pad.t + thirdH * 2, gw, thirdH - 10);
+  ctx.fillStyle = '#ef4444';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('质谱 MS', pad.l + 10, pad.t + thirdH * 2 + 18);
+  ctx.fillStyle = '#fca5a5';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`关键峰: ${s.ms}`, pad.l + 10, pad.t + thirdH * 2 + 38);
+
+  // 模拟谱图轮廓
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let x = pad.l + gw * 0.5; x < pad.l + gw - 10; x += 2) {
+    const noise = Math.random() * 8;
+    const y = pad.t + thirdH / 2 + noise - 4;
+    if (x === pad.l + gw * 0.5) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = '#3b82f6';
+  ctx.beginPath();
+  for (let x = pad.l + gw * 0.5; x < pad.l + gw - 10; x += 3) {
+    const peak = Math.sin((x - pad.l) * 0.05) * 15;
+    const y = pad.t + thirdH + thirdH / 2 + peak;
+    if (x === pad.l + gw * 0.5) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 2;
+  const barStart = pad.l + gw * 0.5;
+  for (let i = 0; i < 5; i++) {
+    const x = barStart + i * (gw * 0.5 / 5);
+    const h = Math.random() * thirdH * 0.5 + 10;
+    ctx.beginPath();
+    ctx.moveTo(x, pad.t + thirdH * 2 + thirdH - 15);
+    ctx.lineTo(x, pad.t + thirdH * 2 + thirdH - 15 - h);
+    ctx.stroke();
+  }
+}
+
+$('#quizCheck').addEventListener('click', () => {
+  if (quizAnswered) return;
+  const selected = $('.quiz-opt.selected');
+  if (!selected) {
+    $('#quizFeedback').textContent = '请先选择一个答案';
+    return;
+  }
+  const q = QUIZ_DATA[quizIdx];
+  const selectedIdx = Array.from($$('.quiz-opt')).indexOf(selected);
+  quizAnswered = true;
+
+  if (!quizTriedCurrent) {
+    quizTriedCurrent = true;
+    if (selectedIdx === q.answer) quizFirstTryCorrect.add(quizIdx);
+  }
+  maybeMarkDone();
+
+  $$('.quiz-opt').forEach((opt, i) => {
+    opt.classList.remove('selected');
+    opt.style.borderColor = 'transparent';
+    opt.style.background = '';
+    if (i === q.answer) opt.classList.add('correct');
+    else if (i === selectedIdx) opt.classList.add('wrong');
+  });
+
+  $('#quizFeedback').innerHTML = selectedIdx === q.answer
+    ? `✅ 正确！${q.explain}`
+    : `❌ 错误。正确答案是「${q.opts[q.answer]}」\n${q.explain}`;
+});
+
+$('#quizNext').addEventListener('click', () => {
+  quizIdx = (quizIdx + 1) % QUIZ_DATA.length;
+  quizTriedCurrent = false;
+  renderQuiz();
+});
+
+$('#quizPrev').addEventListener('click', () => {
+  quizIdx = (quizIdx - 1 + QUIZ_DATA.length) % QUIZ_DATA.length;
+  quizTriedCurrent = false;
+  renderQuiz();
+});
+
+// ============ 滑块事件 ============
+$('#forceConst').addEventListener('input', (e) => {
+  $('#forceConstVal').textContent = `${e.target.value} N/cm`;
+  drawIR();
+});
+$('#atomMass').addEventListener('input', (e) => {
+  $('#atomMassVal').textContent = `${e.target.value} amu`;
+  drawIR();
+});
+$('#fieldStrength').addEventListener('input', (e) => {
+  $('#fieldStrengthVal').textContent = `${e.target.value} T`;
+  drawNMR();
+});
+$('#neighborN').addEventListener('input', (e) => {
+  $('#neighborNVal').textContent = e.target.value;
+  drawNMR();
+});
+$('#clCount').addEventListener('input', (e) => {
+  $('#clCountVal').textContent = e.target.value;
+  drawMS();
+});
+$('#brCount').addEventListener('input', (e) => {
+  $('#brCountVal').textContent = e.target.value;
+  drawMS();
+});
+
+// ============ 动画循环 ============
+function animate() {
+  irAnimPhase += 0.06;
+  nmrAnimPhase += 0.04;
+  if (irMode === 'vibration') drawIR();
+  if (nmrMode === 'spin') drawNMR();
+  requestAnimationFrame(animate);
+}
+
+// ============ 初始化 ============
+drawIR();
+drawNMR();
+drawMS();
+renderQuiz();
+animate();
+
+// 进入页面时若已完成，回填角标
+if (PageProgress.isDone(SLUG)) {
+  const m = document.getElementById('done-mark');
+  if (m) m.style.display = 'inline-block';
+}
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学化学"></script>
+</body>
+</html>

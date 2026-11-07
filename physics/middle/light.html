@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光现象 - 初中物理互动可视化</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #0a0a1a;
+  color: #e0e0e0;
+  overflow-x: hidden;
+}
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, #1a1a3e 0%, #0d0d2b 100%);
+  padding: 20px;
+  text-align: center;
+  border-bottom: 2px solid #ffd700;
+}
+.header h1 {
+  font-size: 28px;
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255,215,0,0.5);
+}
+.header p { color: #aaa; margin-top: 6px; font-size: 14px; }
+
+/* Tab navigation */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  background: #111128;
+  flex-wrap: wrap;
+}
+.tab-btn {
+  padding: 10px 20px;
+  border: 2px solid #444;
+  border-radius: 25px;
+  background: transparent;
+  color: #ccc;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.tab-btn.active {
+  border-color: #ffd700;
+  color: #ffd700;
+  background: rgba(255,215,0,0.1);
+  box-shadow: 0 0 15px rgba(255,215,0,0.2);
+}
+.tab-btn:hover { border-color: #ffd700; color: #ffd700; }
+
+/* Content panels */
+.panel { display: none; padding: 20px; }
+.panel.active { display: block; }
+
+/* Canvas container */
+.canvas-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  background: #0d0d1f;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #333;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Controls */
+.controls {
+  max-width: 800px;
+  margin: 16px auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.control-group {
+  background: #1a1a3e;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  flex: 1;
+  min-width: 200px;
+}
+.control-group label {
+  display: block;
+  font-size: 13px;
+  color: #aaa;
+  margin-bottom: 6px;
+}
+.control-group input[type="range"] {
+  width: 100%;
+  accent-color: #ffd700;
+}
+.control-group .value {
+  text-align: right;
+  font-size: 14px;
+  color: #ffd700;
+  margin-top: 4px;
+}
+
+/* Info box */
+.info-box {
+  max-width: 800px;
+  margin: 16px auto;
+  background: linear-gradient(135deg, #1a1a3e, #0d0d2b);
+  border: 1px solid #ffd700;
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+.info-box h3 {
+  color: #ffd700;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+.info-box p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #ccc;
+}
+.formula {
+  display: inline-block;
+  background: rgba(255,215,0,0.1);
+  padding: 4px 12px;
+  border-radius: 6px;
+  color: #ffd700;
+  font-family: 'Times New Roman', serif;
+  font-style: italic;
+  margin: 4px 0;
+}
+
+/* Button styles */
+.btn {
+  padding: 10px 20px;
+  border: 2px solid #ffd700;
+  border-radius: 25px;
+  background: transparent;
+  color: #ffd700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn:hover {
+  background: rgba(255,215,0,0.15);
+}
+.btn.active {
+  background: #ffd700;
+  color: #1a1a3e;
+}
+
+/* Drag hint */
+.drag-hint {
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+/* Quiz styles */
+.quiz-box {
+  max-width: 800px;
+  margin: 16px auto;
+  background: #1a1a3e;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #333;
+}
+.quiz-box h3 { color: #ffd700; margin-bottom: 12px; }
+.quiz-option {
+  display: block;
+  padding: 12px 16px;
+  margin: 8px 0;
+  border: 2px solid #444;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+}
+.quiz-option:hover { border-color: #ffd700; }
+.quiz-option.correct { border-color: #4caf50; background: rgba(76,175,80,0.15); color: #4caf50; }
+.quiz-option.wrong { border-color: #f44336; background: rgba(244,67,54,0.15); color: #f44336; }
+.quiz-result { margin-top: 12px; font-size: 15px; min-height: 24px; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .header h1 { font-size: 22px; }
+  .tab-btn { padding: 8px 14px; font-size: 13px; }
+  .control-group { min-width: 150px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔦 光现象</h1>
+  <p>初中物理 · 八年级 · 互动可视化</p>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab(0)">🌟 光的直线传播</button>
+  <button class="tab-btn" onclick="switchTab(1)">🪞 反射定律</button>
+  <button class="tab-btn" onclick="switchTab(2)">🔮 平面镜成像</button>
+  <button class="tab-btn" onclick="switchTab(3)">📝 知识检测</button>
+</div>
+
+<!-- Panel 0: 光的直线传播 -->
+<div class="panel active" id="panel0">
+  <div class="canvas-wrap">
+    <canvas id="c0" width="800" height="500"></canvas>
+  </div>
+  <p class="drag-hint">💡 拖动光源或障碍物，观察光的直线传播与影子形成</p>
+  <div class="controls">
+    <div class="control-group">
+      <label>光源位置</label>
+      <input type="range" id="lightX" min="50" max="350" value="100">
+      <div class="value" id="lightXVal">100</div>
+    </div>
+    <div class="control-group">
+      <label>障碍物位置</label>
+      <input type="range" id="obsX" min="200" max="550" value="400">
+      <div class="value" id="obsXVal">400</div>
+    </div>
+    <div class="control-group">
+      <label>障碍物大小</label>
+      <input type="range" id="obsH" min="30" max="200" value="100">
+      <div class="value" id="obsHVal">100 px</div>
+    </div>
+  </div>
+  <div class="info-box">
+    <h3>📖 光的直线传播</h3>
+    <p>光在<b>同种均匀介质</b>中沿直线传播。当光遇到不透明物体时，在物体后面形成<b>影子</b>。</p>
+    <p>🌍 实例：日食（月球挡住太阳光）、月食（地球挡住太阳光）、小孔成像。</p>
+    <p>⚡ 光速：真空中 <span class="formula">c ≈ 3×10⁸ m/s</span></p>
+  </div>
+</div>
+
+<!-- Panel 1: 反射定律 -->
+<div class="panel" id="panel1">
+  <div class="canvas-wrap">
+    <canvas id="c1" width="800" height="500"></canvas>
+  </div>
+  <p class="drag-hint">💡 拖动入射光线改变角度，观察反射光线变化</p>
+  <div class="controls">
+    <div class="control-group">
+      <label>入射角</label>
+      <input type="range" id="incAngle" min="5" max="85" value="45">
+      <div class="value" id="incAngleVal">45°</div>
+    </div>
+    <div class="control-group">
+      <label>
+        <input type="checkbox" id="showNormal" checked> 显示法线
+      </label>
+      <label style="margin-top:8px">
+        <input type="checkbox" id="showAngles" checked> 显示角度
+      </label>
+    </div>
+  </div>
+  <div class="info-box">
+    <h3>📖 光的反射定律</h3>
+    <p>① 反射光线、入射光线和法线在<b>同一平面</b>内；</p>
+    <p>② 反射光线和入射光线分居法线<b>两侧</b>；</p>
+    <p>③ 反射角<b>等于</b>入射角：<span class="formula">∠r = ∠i</span></p>
+    <p>🔁 光路可逆：沿反射光线方向入射，光将沿原入射光线方向反射。</p>
+  </div>
+</div>
+
+<!-- Panel 2: 平面镜成像 -->
+<div class="panel" id="panel2">
+  <div class="canvas-wrap">
+    <canvas id="c2" width="800" height="500"></canvas>
+  </div>
+  <p class="drag-hint">💡 上下左右拖动箭头（物体），观察像的位置变化</p>
+  <div class="controls">
+    <div class="control-group">
+      <label>物体到镜面距离</label>
+      <input type="range" id="objDist" min="50" max="300" value="150">
+      <div class="value" id="objDistVal">150 px</div>
+    </div>
+    <div class="control-group">
+      <label>
+        <input type="checkbox" id="showRays" checked> 显示光路
+      </label>
+      <label style="margin-top:8px">
+        <input type="checkbox" id="showGrid" checked> 显示对称网格
+      </label>
+    </div>
+  </div>
+  <div class="info-box">
+    <h3>📖 平面镜成像特点</h3>
+    <p>① 像与物大小<b>相等</b>（等大）；</p>
+    <p>② 像到镜面的距离<b>等于</b>物到镜面的距离（等距）；</p>
+    <p>③ 像与物的连线与镜面<b>垂直</b>；</p>
+    <p>④ 平面镜成的是<b>虚像</b>（不能用光屏承接）。</p>
+    <p>🪞 应用：穿衣镜、潜望镜、万花筒。</p>
+  </div>
+</div>
+
+<!-- Panel 3: 知识检测 -->
+<div class="panel" id="panel3">
+  <div class="quiz-box">
+    <h3>🧠 检测题 1：下列哪个现象不能说明光的直线传播？</h3>
+    <div class="quiz-option" onclick="checkQuiz(this, false)">A. 日食和月食</div>
+    <div class="quiz-option" onclick="checkQuiz(this, false)">B. 小孔成像</div>
+    <div class="quiz-option" onclick="checkQuiz(this, true)">C. 看到水中的鱼</div>
+    <div class="quiz-option" onclick="checkQuiz(this, false)">D. 影子的形成</div>
+    <div class="quiz-result" id="qr1"></div>
+  </div>
+  <div class="quiz-box">
+    <h3>🧠 检测题 2：入射角为 30° 时，反射角为多少？</h3>
+    <div class="quiz-option" onclick="checkQuiz(this, false)">A. 15°</div>
+    <div class="quiz-option" onclick="checkQuiz(this, true)">B. 30°</div>
+    <div class="quiz-option" onclick="checkQuiz(this, false)">C. 60°</div>
+    <div class="quiz-option" onclick="checkQuiz(this, false)">D. 90°</div>
+    <div class="quiz-result" id="qr2"></div>
+  </div>
+  <div class="quiz-box">
+    <h3>🧠 检测题 3：平面镜成像的特点，以下哪项是错误的？</h3>
+    <div class="quiz-option" onclick="checkQuiz(this, false)">A. 像与物大小相等</div>
+    <div class="quiz-option" onclick="checkQuiz(this, false)">B. 像到镜面距离等于物到镜面距离</div>
+    <div class="quiz-option" onclick="checkQuiz(this, true)">C. 像是实像，可以用光屏承接</div>
+    <div class="quiz-option" onclick="checkQuiz(this, false)">D. 像与物关于镜面对称</div>
+    <div class="quiz-result" id="qr3"></div>
+  </div>
+  <div class="quiz-box">
+    <h3>🧠 检测题 4：光在真空中的传播速度约为？</h3>
+    <div class="quiz-option" onclick="checkQuiz(this, false)">A. 3×10⁶ m/s</div>
+    <div class="quiz-option" onclick="checkQuiz(this, true)">B. 3×10⁸ m/s</div>
+    <div class="quiz-option" onclick="checkQuiz(this, false)">C. 3×10¹⁰ m/s</div>
+    <div class="quiz-option" onclick="checkQuiz(this, false)">D. 340 m/s</div>
+    <div class="quiz-result" id="qr4"></div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// Tab switching
+function switchTab(idx) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+  document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+}
+
+// ===== Panel 0: Light Straight Line =====
+const c0 = document.getElementById('c0');
+const ctx0 = c0.getContext('2d');
+let lightX = 100, obsX = 400, obsH = 100;
+
+function drawPanel0() {
+  const W = 800, H = 500;
+  ctx0.clearRect(0, 0, W, H);
+  
+  // Background gradient
+  const bg = ctx0.createLinearGradient(0, 0, W, 0);
+  bg.addColorStop(0, '#0a0a1a');
+  bg.addColorStop(1, '#0d0d2b');
+  ctx0.fillStyle = bg;
+  ctx0.fillRect(0, 0, W, H);
+  
+  const screenX = 700; // Screen/wall position
+  const lightY = 250;
+  const obsTop = 250 - obsH / 2;
+  const obsBot = 250 + obsH / 2;
+  
+  // Draw light rays from source
+  ctx0.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+  ctx0.lineWidth = 1;
+  for (let y = -200; y <= 200; y += 20) {
+    ctx0.beginPath();
+    ctx0.moveTo(lightX, lightY);
+    ctx0.lineTo(screenX, lightY + y);
+    // Check if blocked by obstacle
+    const t = (obsX - lightX) / (screenX - lightX);
+    const yAtObs = lightY + y * t;
+    if (yAtObs > obsTop && yAtObs < obsBot) {
+      // Blocked - draw only to obstacle
+      ctx0.strokeStyle = 'rgba(255, 215, 0, 0.15)';
+      ctx0.setLineDash([4, 4]);
+      ctx0.lineTo(obsX, yAtObs);
+      ctx0.stroke();
+      ctx0.setLineDash([]);
+      ctx0.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+    } else {
+      ctx0.stroke();
+    }
+  }
+  
+  // Main beam rays (top and bottom of obstacle)
+  ctx0.strokeStyle = '#ffd700';
+  ctx0.lineWidth = 2;
+  ctx0.setLineDash([]);
+  
+  // Ray to top of obstacle -> continues to screen
+  ctx0.beginPath();
+  ctx0.moveTo(lightX, lightY);
+  const topScreenY = lightY + (obsTop - lightY) * (screenX - lightX) / (obsX - lightX);
+  ctx0.lineTo(obsX, obsTop);
+  ctx0.lineTo(screenX, topScreenY);
+  ctx0.stroke();
+  
+  // Ray to bottom of obstacle -> continues to screen
+  ctx0.beginPath();
+  ctx0.moveTo(lightX, lightY);
+  const botScreenY = lightY + (obsBot - lightY) * (screenX - lightX) / (obsX - lightX);
+  ctx0.lineTo(obsX, obsBot);
+  ctx0.lineTo(screenX, botScreenY);
+  ctx0.stroke();
+  
+  // Shadow region on screen
+  ctx0.fillStyle = 'rgba(255, 50, 50, 0.15)';
+  ctx0.fillRect(screenX - 5, topScreenY, 10, botScreenY - topScreenY);
+  
+  // Shadow label
+  ctx0.fillStyle = '#ff6666';
+  ctx0.font = '13px sans-serif';
+  ctx0.textAlign = 'center';
+  ctx0.fillText('影子', screenX + 25, (topScreenY + botScreenY) / 2 + 4);
+  
+  // Obstacle
+  ctx0.fillStyle = '#555';
+  ctx0.fillRect(obsX - 8, obsTop, 16, obsH);
+  ctx0.strokeStyle = '#888';
+  ctx0.lineWidth = 1;
+  ctx0.strokeRect(obsX - 8, obsTop, 16, obsH);
+  
+  // Light source (glowing)
+  const grd = ctx0.createRadialGradient(lightX, lightY, 5, lightX, lightY, 40);
+  grd.addColorStop(0, 'rgba(255,255,100,0.9)');
+  grd.addColorStop(0.5, 'rgba(255,215,0,0.3)');
+  grd.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx0.fillStyle = grd;
+  ctx0.fillRect(lightX - 40, lightY - 40, 80, 80);
+  
+  ctx0.beginPath();
+  ctx0.arc(lightX, lightY, 12, 0, Math.PI * 2);
+  ctx0.fillStyle = '#ffe066';
+  ctx0.fill();
+  ctx0.strokeStyle = '#ffd700';
+  ctx0.lineWidth = 2;
+  ctx0.stroke();
+  
+  // Labels
+  ctx0.fillStyle = '#ffd700';
+  ctx0.font = 'bold 14px sans-serif';
+  ctx0.textAlign = 'center';
+  ctx0.fillText('光源', lightX, lightY - 25);
+  
+  ctx0.fillStyle = '#aaa';
+  ctx0.fillText('障碍物', obsX, obsTop - 10);
+  ctx0.fillText('屏幕', screenX, 30);
+  
+  // Screen wall
+  ctx0.fillStyle = '#333';
+  ctx0.fillRect(screenX - 3, 50, 6, 400);
+  
+  // Speed label
+  ctx0.fillStyle = '#666';
+  ctx0.font = '12px sans-serif';
+  ctx0.textAlign = 'left';
+  ctx0.fillText('光在同种均匀介质中沿直线传播', 20, 480);
+}
+
+document.getElementById('lightX').oninput = function() {
+  lightX = +this.value;
+  document.getElementById('lightXVal').textContent = this.value;
+  drawPanel0();
+};
+document.getElementById('obsX').oninput = function() {
+  obsX = +this.value;
+  document.getElementById('obsXVal').textContent = this.value;
+  drawPanel0();
+};
+document.getElementById('obsH').oninput = function() {
+  obsH = +this.value;
+  document.getElementById('obsHVal').textContent = this.value + ' px';
+  drawPanel0();
+};
+
+// ===== Panel 1: Reflection Law =====
+const c1 = document.getElementById('c1');
+const ctx1 = c1.getContext('2d');
+let incAngle = 45;
+
+function drawPanel1() {
+  const W = 800, H = 500;
+  ctx1.clearRect(0, 0, W, H);
+  
+  // Background
+  ctx1.fillStyle = '#0a0a1a';
+  ctx1.fillRect(0, 0, W, H);
+  
+  const mirrorY = 350;
+  const hitX = 400;
+  const hitY = mirrorY;
+  const angleRad = incAngle * Math.PI / 180;
+  const rayLen = 280;
+  
+  // Mirror surface
+  ctx1.strokeStyle = '#888';
+  ctx1.lineWidth = 4;
+  ctx1.beginPath();
+  ctx1.moveTo(100, mirrorY);
+  ctx1.lineTo(700, mirrorY);
+  ctx1.stroke();
+  
+  // Hatching below mirror
+  ctx1.strokeStyle = '#555';
+  ctx1.lineWidth = 1;
+  for (let x = 100; x < 700; x += 15) {
+    ctx1.beginPath();
+    ctx1.moveTo(x, mirrorY);
+    ctx1.lineTo(x - 10, mirrorY + 15);
+    ctx1.stroke();
+  }
+  
+  // Normal line (dashed)
+  if (document.getElementById('showNormal').checked) {
+    ctx1.strokeStyle = 'rgba(100, 200, 255, 0.6)';
+    ctx1.lineWidth = 1.5;
+    ctx1.setLineDash([6, 4]);
+    ctx1.beginPath();
+    ctx1.moveTo(hitX, mirrorY - 300);
+    ctx1.lineTo(hitX, mirrorY);
+    ctx1.stroke();
+    ctx1.setLineDash([]);
+    
+    ctx1.fillStyle = '#66ccff';
+    ctx1.font = '13px sans-serif';
+    ctx1.textAlign = 'center';
+    ctx1.fillText('法线', hitX + 25, mirrorY - 280);
+  }
+  
+  // Incident ray
+  const incStartX = hitX - Math.sin(angleRad) * rayLen;
+  const incStartY = hitY - Math.cos(angleRad) * rayLen;
+  
+  // Animate light particles along incident ray
+  const time = Date.now() / 1000;
+  ctx1.strokeStyle = '#ffd700';
+  ctx1.lineWidth = 3;
+  ctx1.beginPath();
+  ctx1.moveTo(incStartX, incStartY);
+  ctx1.lineTo(hitX, hitY);
+  ctx1.stroke();
+  
+  // Light particles on incident ray
+  for (let i = 0; i < 5; i++) {
+    const t = ((time * 0.5 + i * 0.2) % 1);
+    const px = incStartX + (hitX - incStartX) * t;
+    const py = incStartY + (hitY - incStartY) * t;
+    ctx1.beginPath();
+    ctx1.arc(px, py, 4, 0, Math.PI * 2);
+    ctx1.fillStyle = `rgba(255, 215, 0, ${1 - t})`;
+    ctx1.fill();
+  }
+  
+  // Reflected ray
+  const refEndX = hitX + Math.sin(angleRad) * rayLen;
+  const refEndY = hitY - Math.cos(angleRad) * rayLen;
+  
+  ctx1.strokeStyle = '#ff6666';
+  ctx1.lineWidth = 3;
+  ctx1.beginPath();
+  ctx1.moveTo(hitX, hitY);
+  ctx1.lineTo(refEndX, refEndY);
+  ctx1.stroke();
+  
+  // Light particles on reflected ray
+  for (let i = 0; i < 5; i++) {
+    const t = ((time * 0.5 + i * 0.2) % 1);
+    const px = hitX + (refEndX - hitX) * t;
+    const py = hitY + (refEndY - hitY) * t;
+    ctx1.beginPath();
+    ctx1.arc(px, py, 4, 0, Math.PI * 2);
+    ctx1.fillStyle = `rgba(255, 100, 100, ${1 - t})`;
+    ctx1.fill();
+  }
+  
+  // Angle arcs
+  if (document.getElementById('showAngles').checked) {
+    // Incident angle arc
+    ctx1.strokeStyle = '#ffd700';
+    ctx1.lineWidth = 2;
+    ctx1.beginPath();
+    ctx1.arc(hitX, hitY, 60, -Math.PI/2 - angleRad, -Math.PI/2, false);
+    ctx1.stroke();
+    
+    // Reflected angle arc
+    ctx1.strokeStyle = '#ff6666';
+    ctx1.beginPath();
+    ctx1.arc(hitX, hitY, 60, -Math.PI/2, -Math.PI/2 + angleRad, false);
+    ctx1.stroke();
+    
+    // Angle labels
+    ctx1.fillStyle = '#ffd700';
+    ctx1.font = 'bold 16px sans-serif';
+    ctx1.textAlign = 'center';
+    const labelR = 80;
+    const incLabelAngle = -Math.PI/2 - angleRad/2;
+    ctx1.fillText(`∠i=${incAngle}°`, hitX + Math.cos(incLabelAngle) * labelR, hitY + Math.sin(incLabelAngle) * labelR);
+    
+    ctx1.fillStyle = '#ff6666';
+    const refLabelAngle = -Math.PI/2 + angleRad/2;
+    ctx1.fillText(`∠r=${incAngle}°`, hitX + Math.cos(refLabelAngle) * labelR, hitY + Math.sin(refLabelAngle) * labelR);
+  }
+  
+  // Hit point
+  ctx1.beginPath();
+  ctx1.arc(hitX, hitY, 6, 0, Math.PI * 2);
+  ctx1.fillStyle = '#fff';
+  ctx1.fill();
+  
+  // Labels
+  ctx1.fillStyle = '#ffd700';
+  ctx1.font = 'bold 14px sans-serif';
+  ctx1.textAlign = 'center';
+  ctx1.fillText('入射光线', incStartX + 30, incStartY + 20);
+  
+  ctx1.fillStyle = '#ff6666';
+  ctx1.fillText('反射光线', refEndX - 30, refEndY + 20);
+  
+  ctx1.fillStyle = '#888';
+  ctx1.font = '13px sans-serif';
+  ctx1.fillText('镜面', 400, mirrorY + 35);
+  
+  requestAnimationFrame(drawPanel1);
+}
+
+document.getElementById('incAngle').oninput = function() {
+  incAngle = +this.value;
+  document.getElementById('incAngleVal').textContent = this.value + '°';
+};
+document.getElementById('showNormal').onchange = () => {};
+document.getElementById('showAngles').onchange = () => {};
+
+// ===== Panel 2: Plane Mirror Imaging =====
+const c2 = document.getElementById('c2');
+const ctx2 = c2.getContext('2d');
+let objDist = 150;
+let objOffsetY = 0;
+
+function drawPanel2() {
+  const W = 800, H = 500;
+  ctx2.clearRect(0, 0, W, H);
+  
+  ctx2.fillStyle = '#0a0a1a';
+  ctx2.fillRect(0, 0, W, H);
+  
+  const mirrorX = 400;
+  const objX = mirrorX - objDist;
+  const objY = 250 + objOffsetY;
+  const imgX = mirrorX + objDist; // Virtual image
+  const imgY = objY;
+  const objH = 80;
+  
+  // Grid lines (symmetry visualization)
+  if (document.getElementById('showGrid').checked) {
+    ctx2.strokeStyle = 'rgba(100, 200, 255, 0.1)';
+    ctx2.lineWidth = 1;
+    for (let d = 50; d <= 300; d += 50) {
+      // Object side
+      ctx2.beginPath();
+      ctx2.moveTo(mirrorX - d, 50);
+      ctx2.lineTo(mirrorX - d, 450);
+      ctx2.stroke();
+      // Image side
+      ctx2.beginPath();
+      ctx2.moveTo(mirrorX + d, 50);
+      ctx2.lineTo(mirrorX + d, 450);
+      ctx2.stroke();
+    }
+  }
+  
+  // Mirror
+  ctx2.fillStyle = 'rgba(100, 180, 255, 0.15)';
+  ctx2.fillRect(mirrorX - 3, 60, 6, 380);
+  ctx2.strokeStyle = '#66bbff';
+  ctx2.lineWidth = 3;
+  ctx2.beginPath();
+  ctx2.moveTo(mirrorX, 60);
+  ctx2.lineTo(mirrorX, 440);
+  ctx2.stroke();
+  
+  // Hatching behind mirror
+  ctx2.strokeStyle = 'rgba(100, 180, 255, 0.3)';
+  ctx2.lineWidth = 1;
+  for (let y = 60; y < 440; y += 12) {
+    ctx2.beginPath();
+    ctx2.moveTo(mirrorX + 3, y);
+    ctx2.lineTo(mirrorX + 15, y + 12);
+    ctx2.stroke();
+  }
+  
+  // Object (arrow pointing up)
+  ctx2.strokeStyle = '#4caf50';
+  ctx2.lineWidth = 4;
+  ctx2.beginPath();
+  ctx2.moveTo(objX, objY);
+  ctx2.lineTo(objX, objY - objH);
+  ctx2.stroke();
+  // Arrow head
+  ctx2.fillStyle = '#4caf50';
+  ctx2.beginPath();
+  ctx2.moveTo(objX, objY - objH - 10);
+  ctx2.lineTo(objX - 8, objY - objH + 5);
+  ctx2.lineTo(objX + 8, objY - objH + 5);
+  ctx2.closePath();
+  ctx2.fill();
+  
+  // Virtual image (dashed arrow)
+  ctx2.strokeStyle = 'rgba(255, 100, 100, 0.7)';
+  ctx2.lineWidth = 4;
+  ctx2.setLineDash([8, 5]);
+  ctx2.beginPath();
+  ctx2.moveTo(imgX, imgY);
+  ctx2.lineTo(imgX, imgY - objH);
+  ctx2.stroke();
+  ctx2.setLineDash([]);
+  // Arrow head
+  ctx2.fillStyle = 'rgba(255, 100, 100, 0.7)';
+  ctx2.beginPath();
+  ctx2.moveTo(imgX, imgY - objH - 10);
+  ctx2.lineTo(imgX - 8, imgY - objH + 5);
+  ctx2.lineTo(imgX + 8, imgY - objH + 5);
+  ctx2.closePath();
+  ctx2.fill();
+  
+  // Light rays (if enabled)
+  if (document.getElementById('showRays').checked) {
+    // Ray 1: horizontal to mirror, reflects horizontally
+    ctx2.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+    ctx2.lineWidth = 1.5;
+    // Incident
+    ctx2.beginPath();
+    ctx2.moveTo(objX, objY - objH);
+    ctx2.lineTo(mirrorX, objY - objH);
+    ctx2.stroke();
+    // Reflected (to eye)
+    ctx2.setLineDash([4, 4]);
+    ctx2.beginPath();
+    ctx2.moveTo(mirrorX, objY - objH);
+    ctx2.lineTo(imgX, objY - objH);
+    ctx2.stroke();
+    ctx2.setLineDash([]);
+    
+    // Ray 2: to mirror center
+    const ray2endY = objY;
+    ctx2.strokeStyle = 'rgba(255, 150, 0, 0.6)';
+    ctx2.beginPath();
+    ctx2.moveTo(objX, objY - objH);
+    ctx2.lineTo(mirrorX, ray2endY - objH/2);
+    ctx2.stroke();
+    // Reflected (virtual extension)
+    ctx2.setLineDash([4, 4]);
+    ctx2.beginPath();
+    ctx2.moveTo(mirrorX, ray2endY - objH/2);
+    ctx2.lineTo(imgX, imgY - objH);
+    ctx2.stroke();
+    ctx2.setLineDash([]);
+    
+    // Eye position
+    const eyeX = objX - 60;
+    const eyeY = objY - objH - 30;
+    ctx2.fillStyle = '#fff';
+    ctx2.font = '20px sans-serif';
+    ctx2.textAlign = 'center';
+    ctx2.fillText('👁', eyeX, eyeY);
+    
+    // Lines from eye to mirror (viewing rays)
+    ctx2.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx2.lineWidth = 1;
+    ctx2.setLineDash([3, 3]);
+    ctx2.beginPath();
+    ctx2.moveTo(eyeX, eyeY);
+    ctx2.lineTo(mirrorX, objY - objH);
+    ctx2.stroke();
+    ctx2.beginPath();
+    ctx2.moveTo(eyeX, eyeY);
+    ctx2.lineTo(mirrorX, ray2endY - objH/2);
+    ctx2.stroke();
+    ctx2.setLineDash([]);
+  }
+  
+  // Distance markers
+  ctx2.strokeStyle = '#66ccff';
+  ctx2.lineWidth = 1;
+  ctx2.setLineDash([4, 3]);
+  // Object distance
+  ctx2.beginPath();
+  ctx2.moveTo(objX, objY + 20);
+  ctx2.lineTo(mirrorX, objY + 20);
+  ctx2.stroke();
+  // Image distance
+  ctx2.beginPath();
+  ctx2.moveTo(mirrorX, imgY + 20);
+  ctx2.lineTo(imgX, imgY + 20);
+  ctx2.stroke();
+  ctx2.setLineDash([]);
+  
+  // Distance labels
+  ctx2.fillStyle = '#66ccff';
+  ctx2.font = '13px sans-serif';
+  ctx2.textAlign = 'center';
+  ctx2.fillText(`物距 d=${objDist}`, (objX + mirrorX) / 2, objY + 38);
+  ctx2.fillText(`像距 d'=${objDist}`, (mirrorX + imgX) / 2, imgY + 38);
+  
+  // Labels
+  ctx2.fillStyle = '#4caf50';
+  ctx2.font = 'bold 14px sans-serif';
+  ctx2.fillText('物体', objX, objY + 60);
+  
+  ctx2.fillStyle = 'rgba(255, 100, 100, 0.8)';
+  ctx2.fillText('虚像', imgX, imgY + 60);
+  
+  ctx2.fillStyle = '#66bbff';
+  ctx2.fillText('镜面', mirrorX, 50);
+  
+  // Symmetry indicator
+  ctx2.fillStyle = '#555';
+  ctx2.font = '12px sans-serif';
+  ctx2.fillText('← 对称 →', mirrorX, 470);
+  
+  requestAnimationFrame(drawPanel2);
+}
+
+document.getElementById('objDist').oninput = function() {
+  objDist = +this.value;
+  document.getElementById('objDistVal').textContent = this.value + ' px';
+};
+document.getElementById('showRays').onchange = () => {};
+document.getElementById('showGrid').onchange = () => {};
+
+// Touch/mouse drag for object in panel 2
+let dragging2 = false;
+c2.addEventListener('mousedown', (e) => { dragging2 = true; });
+c2.addEventListener('mousemove', (e) => {
+  if (!dragging2) return;
+  const rect = c2.getBoundingClientRect();
+  const scaleX = 800 / rect.width;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleX;
+  objDist = Math.max(50, Math.min(300, 400 - x));
+  objOffsetY = Math.max(-150, Math.min(150, y - 250));
+  document.getElementById('objDist').value = Math.round(objDist);
+  document.getElementById('objDistVal').textContent = Math.round(objDist) + ' px';
+});
+c2.addEventListener('mouseup', () => { dragging2 = false; });
+c2.addEventListener('mouseleave', () => { dragging2 = false; });
+
+// Touch support
+c2.addEventListener('touchstart', (e) => { dragging2 = true; e.preventDefault(); });
+c2.addEventListener('touchmove', (e) => {
+  if (!dragging2) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const rect = c2.getBoundingClientRect();
+  const scaleX = 800 / rect.width;
+  const x = (touch.clientX - rect.left) * scaleX;
+  const y = (touch.clientY - rect.top) * scaleX;
+  objDist = Math.max(50, Math.min(300, 400 - x));
+  objOffsetY = Math.max(-150, Math.min(150, y - 250));
+  document.getElementById('objDist').value = Math.round(objDist);
+  document.getElementById('objDistVal').textContent = Math.round(objDist) + ' px';
+});
+c2.addEventListener('touchend', () => { dragging2 = false; });
+
+// ===== Quiz =====
+function checkQuiz(el, correct) {
+  const parent = el.parentElement;
+  const options = parent.querySelectorAll('.quiz-option');
+  const result = parent.querySelector('.quiz-result');
+  
+  // Prevent re-answering
+  if (parent.dataset.answered) return;
+  parent.dataset.answered = 'true';
+  
+  options.forEach(opt => {
+    opt.style.pointerEvents = 'none';
+  });
+  
+  if (correct) {
+    el.classList.add('correct');
+    result.innerHTML = '✅ 正确！';
+    result.style.color = '#4caf50';
+    bumpLightCorrect();
+  } else {
+    el.classList.add('wrong');
+    result.innerHTML = '❌ 不对哦，再想想看！';
+    result.style.color = '#f44336';
+    // Highlight correct answer
+    options.forEach(opt => {
+      if (opt.onclick && opt.onclick.toString().includes('true')) {
+        // Can't easily detect, so we skip auto-highlight
+      }
+    });
+  }
+}
+
+// ===== PageProgress: 答对 ≥3/4 即点亮 =====
+let lightCorrect = 0, lightDone = false;
+function bumpLightCorrect() {
+  lightCorrect++;
+  if (!lightDone && lightCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('light')) {
+    lightDone = true;
+    PageProgress.markDone('light');
+    showLightToast('🎉 「光现象」知识地图已点亮！');
+  }
+}
+function showLightToast(msg) {
+  if (typeof showToast === 'function') { showToast(msg); return; }
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(76,175,80,0.95);color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .4s'; setTimeout(() => t.remove(), 400); }, 2400);
+}
+
+// ===== Init =====
+drawPanel0();
+drawPanel1();
+drawPanel2();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中物理"></script>
+</body>
+</html>

@@ -177,7 +177,7 @@
 <body>
   <div class="page-container">
     <nav class="breadcrumb">
-      <a href="../../index.html" class="breadcrumb-item">🏠 首页</a><span class="breadcrumb-sep">›</span><a href="../index.html" class="breadcrumb-item">📐 数学</a><span class="breadcrumb-sep">›</span>
+      <a href="../../../index.html" class="breadcrumb-item">🏠 首页</a><span class="breadcrumb-sep">›</span><a href="../../index.html" class="breadcrumb-item">📐 数学</a><span class="breadcrumb-sep">›</span>
       <span class="breadcrumb-current">🔢 认识数字</span>
       
     </nav>
@@ -306,10 +306,13 @@
   <script src="../../assets/js/animation.js"></script>
   <script src="../../assets/js/touch.js"></script>
   <script>
-    // 返回按钮
-    document.querySelector('.nav-back').addEventListener('click', () => {
-      window.location.href = '../../index.html';
-    });
+    // 返回按钮（兼容 breadcrumb 和 nav-back 两种导航）
+    const navBack = document.querySelector('.nav-back');
+    if (navBack) {
+      navBack.addEventListener('click', () => {
+        window.location.href = '../../index.html';
+      });
+    }
 
     // 连续答对
     let streak = 0;
@@ -318,6 +321,10 @@
       const starsEl = document.getElementById('stars-display');
       starsEl.textContent = '⭐'.repeat(Math.min(streak, 10));
       if (streak >= 5) showToast(`🔥 连续 ${streak} 次正确！太棒了！`);
+      if (streak >= 10 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('numbers')) {
+        PageProgress.markDone('numbers');
+        if (typeof toast === 'function') toast('🎉 已掌握：认识数字');
+      }
     }
 
     // 模式切换
@@ -449,6 +456,27 @@
     // === 模式4: 排序（单击选中） ===
     (() => {
       let sortNums = [];
+      const sortTarget = document.getElementById('sort-target');
+      const sortPool = document.getElementById('sort-pool');
+      // 使用事件委托，只绑定一次
+      sortTarget.addEventListener('click', e => {
+        const el = e.target.closest('.sort-num');
+        if (!el) return;
+        sortPool.appendChild(el);
+        el.className = 'sort-num in-pool';
+        el.style.position = 'relative';
+        updateSortIdx();
+        Sound.play('click');
+      });
+      sortPool.addEventListener('click', e => {
+        const el = e.target.closest('.sort-num');
+        if (!el) return;
+        sortTarget.appendChild(el);
+        el.className = 'sort-num in-target';
+        el.style.position = 'relative';
+        updateSortIdx();
+        Sound.play('click');
+      });
       function newSort() {
         sortNums = [];
         const used = new Set();
@@ -458,36 +486,16 @@
           if (!used.has(n)) { used.add(n); sortNums.push(n); }
         }
         sortNums = Random.shuffle(sortNums);
-        document.getElementById('sort-target').innerHTML = '';
-        const pool = document.getElementById('sort-pool');
-        pool.innerHTML = '';
+        sortTarget.innerHTML = '';
+        sortPool.innerHTML = '';
         sortNums.forEach((n, idx) => {
           const d = document.createElement('div');
           d.className = 'sort-num in-pool';
           d.textContent = n;
           d.dataset.value = n;
           d.style.position = 'relative';
-          pool.appendChild(d);
+          sortPool.appendChild(d);
           Animator.popIn(d, idx * 50);
-        });
-        // 点击事件：池中的点选进排序区，排序区的点退回池中
-        pool.querySelectorAll('.sort-num').forEach(el => {
-          el.addEventListener('click', () => {
-            document.getElementById('sort-target').appendChild(el);
-            el.className = 'sort-num in-target';
-            el.style.position = 'relative';
-            updateSortIdx();
-            Sound.play('click');
-          });
-        });
-        document.getElementById('sort-target').addEventListener('click', e => {
-          const el = e.target.closest('.sort-num');
-          if (!el) return;
-          pool.appendChild(el);
-          el.className = 'sort-num in-pool';
-          el.style.position = 'relative';
-          updateSortIdx();
-          Sound.play('click');
         });
       }
       function updateSortIdx() {

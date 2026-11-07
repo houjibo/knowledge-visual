@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>高分子化学 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #f59e0b;
+    --chain: #a78bfa;
+    --step: #06b6d4;
+    --free: #10b981;
+    --poly: #ec4899;
+    --mono: #fbbf24;
+    --cross: #60a5fa;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.7);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #1f2937 50%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .back { display:inline-block; margin-bottom: 12px; color: #fcd34d; text-decoration: none; font-size: 14px; }
+  .back:hover { color: #fde68a; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--chain), var(--step), var(--free), var(--poly)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; min-height: 40px; }
+  .tab.active { background: var(--primary); border-color: var(--primary); color: #1f2937; font-weight: 700; box-shadow: 0 4px 20px rgba(245,158,11,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); touch-action: manipulation; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); max-height: 560px; overflow-y: auto; }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .equation { font-family: "Times New Roman", serif; font-size: 1.05rem; text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.9; }
+  .equation b { color: #fbbf24; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); min-height: 32px; }
+  .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .btn-row { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: #e2e8f0; cursor: pointer; font-size: 13px; transition: all .2s; min-height: 36px; }
+  .btn:hover { background: rgba(255,255,255,0.12); }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: #1f2937; font-weight: 700; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid; line-height: 1.7; font-size: 14px; }
+  .concept-card.chain { border-color: var(--chain); }
+  .concept-card.step { border-color: var(--step); }
+  .concept-card.free { border-color: var(--free); }
+  .concept-card.poly { border-color: var(--poly); }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; }
+  .concept-card.chain .title { color: var(--chain); }
+  .concept-card.step .title { color: var(--step); }
+  .concept-card.free .title { color: var(--free); }
+  .concept-card.poly .title { color: var(--poly); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; font-size: 12px; color: #94a3b8; justify-content: center; }
+  .legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .legend .l-mono::before { background: var(--mono); }
+  .legend .l-chain::before { background: var(--chain); }
+  .legend .l-step::before { background: var(--step); }
+  .legend .l-free::before { background: var(--free); }
+  .legend .l-cross::before { background: var(--cross); }
+  .quiz { margin-top: 14px; padding: 14px; background: rgba(245,158,11,0.08); border-radius: 12px; border: 1px solid rgba(245,158,11,0.3); }
+  .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-opts { display: grid; gap: 6px; }
+  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
+  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; line-height: 1.5; }
+  .quiz-result { margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; font-size: 14px; text-align: center; }
+  footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 24px; padding-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back" href="index.html">← 返回大学化学</a>
+  <header>
+    <h1>⛓️ 高分子化学</h1>
+    <p>加聚反应 · 缩聚反应 · 分子量分布 · 聚合物结构与性能</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-mode="addition">➕ 加聚反应</div>
+    <div class="tab" data-mode="condensation">🔗 缩聚反应</div>
+    <div class="tab" data-mode="mw">📊 分子量分布</div>
+    <div class="tab" data-mode="structure">🏗️ 结构与性能</div>
+    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="600" height="450"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <footer>知识可视化 · 大学化学 · 高分子化学</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
+const legendEl = document.getElementById('legend');
+
+let mode = 'addition';
+let animId = null;
+let time = 0;
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    initMode();
+  });
+});
+
+function initMode() {
+  if (animId) cancelAnimationFrame(animId);
+  if (mode === 'addition') initAddition();
+  else if (mode === 'condensation') initCondensation();
+  else if (mode === 'mw') initMW();
+  else if (mode === 'structure') initStructure();
+  else if (mode === 'quiz') initQuiz();
+}
+
+function startLoop(draw) {
+  function frame() {
+    time += 1;
+    draw();
+    animId = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+// ═══════════════════════════════════════════════
+// MODE 1: 加聚反应（自由基链式聚合）
+// ═══════════════════════════════════════════════
+let addMonomers = [];
+let addChainLen = 0;
+let addSpeed = 1;
+let addInitiated = false;
+const ADD_MAX_CHAIN = 14;
+
+function initAddition() {
+  legendEl.innerHTML = `<span class="l-mono">单体 CH₂=CH₂</span><span class="l-free">自由基 ·R</span><span class="l-chain">增长链</span>`;
+  addMonomers = [];
+  for (let i = 0; i < 30; i++) {
+    addMonomers.push({
+      x: 60 + Math.random() * 480,
+      y: 60 + Math.random() * 330,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      used: false
+    });
+  }
+  addChainLen = 0;
+  addInitiated = false;
+
+  panel.innerHTML = `
+    <h3>➕ 自由基链式加聚</h3>
+    <div class="concept-card free">
+      <div class="title">链引发 (Initiation)</div>
+      引发剂（如 BPO）分解产生初级自由基 R·，攻击单体双键形成链自由基 R-CH₂-CH₂·。
+    </div>
+    <div class="concept-card free">
+      <div class="title">链增长 (Propagation)</div>
+      链自由基连续进攻单体 π 键，每个周期增加一个结构单元，反应极快（~10³ L/mol·s）。
+    </div>
+    <div class="concept-card free">
+      <div class="title">链终止 (Termination)</div>
+      两个自由基偶合 (combination) 或歧化 (disproportionation)，活性链消失。
+    </div>
+    <div class="equation">
+      n CH₂=CH₂ <b>→</b> ⎡CH₂-CH₂⎤<sub>n</sub> &nbsp;(聚乙烯 PE)
+    </div>
+    <div class="slider-row">
+      <label>反应速率</label>
+      <input type="range" id="addSpeed" min="1" max="5" value="${addSpeed}">
+      <span class="val" id="addSpeedVal">${addSpeed}x</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="addRestart">↻ 重新开始</button>
+      <button class="btn" id="addInit">⚡ 注入自由基</button>
+    </div>
+    <div class="info-grid">
+      <div>典型单体<br><b>乙烯 / 苯乙烯 / MMA</b></div>
+      <div>典型引发剂<br><b>BPO / AIBN</b></div>
+      <div>链增长活化能<br><b>~20-30 kJ/mol</b></div>
+      <div>特征<br><b>无小分子副产</b></div>
+    </div>`;
+
+  document.getElementById('addSpeed').addEventListener('input', e => {
+    addSpeed = +e.target.value;
+    document.getElementById('addSpeedVal').textContent = addSpeed + 'x';
+  });
+  document.getElementById('addRestart').addEventListener('click', initAddition);
+  document.getElementById('addInit').addEventListener('click', () => { addInitiated = true; });
+
+  startLoop(drawAddition);
+}
+
+function drawAddition() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // 单体游走
+  addMonomers.forEach(m => {
+    if (m.used) return;
+    m.x += m.vx * addSpeed;
+    m.y += m.vy * addSpeed;
+    if (m.x < 20 || m.x > W - 20) m.vx *= -1;
+    if (m.y < 20 || m.y > H - 20) m.vy *= -1;
+  });
+
+  // 链增长逻辑
+  if (addInitiated && addChainLen < ADD_MAX_CHAIN && time % Math.max(2, 12 - addSpeed * 2) === 0) {
+    const free = addMonomers.find(m => !m.used);
+    if (free) { free.used = true; addChainLen++; }
+  }
+
+  // 绘制未反应单体
+  ctx.font = 'bold 13px sans-serif';
+  ctx.textAlign = 'center';
+  addMonomers.forEach(m => {
+    if (m.used) return;
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1f2937';
+    ctx.fillText('M', m.x, m.y + 4);
+  });
+
+  // 绘制聚合物链（左下角水平画出）
+  if (addChainLen > 0) {
+    const cx0 = 60, cy0 = H - 60;
+    const unitW = 32;
+    ctx.strokeStyle = '#a78bfa';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx0 - 20, cy0);
+    ctx.lineTo(cx0, cy0);
+    ctx.stroke();
+    // 起始自由基
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath();
+    ctx.arc(cx0 - 22, cy0, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('R·', cx0 - 22, cy0 + 4);
+
+    for (let i = 0; i < addChainLen; i++) {
+      const x = cx0 + i * unitW;
+      // 链节圆
+      ctx.fillStyle = '#a78bfa';
+      ctx.beginPath();
+      ctx.arc(x, cy0, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('CH₂', x, cy0 + 3);
+      // 连接到下一个
+      if (i < addChainLen - 1) {
+        ctx.strokeStyle = '#a78bfa';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x + 12, cy0);
+        ctx.lineTo(x + unitW - 12, cy0);
+        ctx.stroke();
+      }
+    }
+    // 末端自由基（闪烁表示活性）
+    if (addChainLen < ADD_MAX_CHAIN && Math.sin(time * 0.2) > 0) {
+      const lastX = cx0 + (addChainLen - 1) * unitW + 22;
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(lastX, cy0, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('·', lastX, cy0 + 4);
+    }
+
+    // 聚合度标签
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`聚合度 DP = ${addChainLen}`, 20, 30);
+    if (addChainLen >= ADD_MAX_CHAIN) {
+      ctx.fillStyle = '#10b981';
+      ctx.fillText('✓ 链终止', 20, 52);
+    }
+  } else if (addInitiated) {
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('⚡ 自由基已注入，等待与单体碰撞...', 20, 30);
+  } else {
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('点击 "⚡ 注入自由基" 启动链式反应', 20, 30);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// MODE 2: 缩聚反应
+// ═══════════════════════════════════════════════
+let condExtent = 0.5;
+let condAuto = true;
+let condDir = 1;
+
+function initCondensation() {
+  legendEl.innerHTML = `<span class="l-step">—COOH 羧基</span><span class="l-free">—OH 羟基</span><span class="l-mono">H₂O 副产</span>`;
+  condExtent = 0.5;
+  panel.innerHTML = `
+    <h3>🔗 逐步聚合（缩聚）</h3>
+    <div class="concept-card step">
+      <div class="title">反应机理</div>
+      双官能团单体（二元酸 + 二元醇）逐步酯化，每步脱去一分子 H₂O。任何两个带官能团的分子间都能反应。
+    </div>
+    <div class="concept-card step">
+      <div class="title">Carothers 方程</div>
+      X̄<sub>n</sub> = 1 / (1 - p)，p 为反应程度。p 必须非常接近 1 才能获得高分子量。
+    </div>
+    <div class="equation">
+      n HOOC-R-COOH + n HO-R'-OH <b>⇌</b> ⎡OC-R-COO-R'-O⎤<sub>n</sub> + 2n H₂O
+    </div>
+    <div class="slider-row">
+      <label>反应程度 p</label>
+      <input type="range" id="condP" min="50" max="99" value="${Math.round(condExtent*100)}">
+      <span class="val" id="condPVal">${Math.round(condExtent*100)}%</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="condToggle">${condAuto ? '⏸ 暂停' : '▶ 播放'}</button>
+    </div>
+    <div class="info-grid">
+      <div>典型产物<br><b>PET 涤纶 / 尼龙-66</b></div>
+      <div>副产物<br><b>H₂O / HCl / CH₃OH</b></div>
+      <div>DP (p=0.99)<br><b>1/(1-0.99) = 100</b></div>
+      <div>特征<br><b>需高纯度单体</b></div>
+    </div>`;
+
+  document.getElementById('condP').addEventListener('input', e => {
+    condExtent = +e.target.value / 100;
+    document.getElementById('condPVal').textContent = e.target.value + '%';
+  });
+  document.getElementById('condToggle').addEventListener('click', () => {
+    condAuto = !condAuto;
+    document.getElementById('condToggle').textContent = condAuto ? '⏸ 暂停' : '▶ 播放';
+  });
+
+  startLoop(drawCondensation);
+}
+
+function drawCondensation() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  if (condAuto) {
+    condExtent += 0.0008 * condDir;
+    if (condExtent > 0.99) { condExtent = 0.99; condDir = -1; }
+    if (condExtent < 0.5) { condExtent = 0.5; condDir = 1; }
+    const slider = document.getElementById('condP');
+    if (slider) slider.value = Math.round(condExtent * 100);
+    const valEl = document.getElementById('condPVal');
+    if (valEl) valEl.textContent = Math.round(condExtent * 100) + '%';
+  }
+
+  const DP = Math.round(1 / (1 - condExtent));
+
+  // 左侧：绘制二元酸单体 + 二元醇单体
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'center';
+  const monoY = 80;
+  // 二元酸 HOOC-R-COOH
+  ctx.fillStyle = '#06b6d4';
+  ctx.beginPath(); ctx.arc(80, monoY, 11, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.fillText('HOOC', 80, monoY - 18);
+  ctx.fillStyle = '#1f2937'; ctx.fillText('—', 80, monoY + 4);
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('R', 120, monoY + 4);
+  ctx.fillStyle = '#06b6d4';
+  ctx.beginPath(); ctx.arc(160, monoY, 11, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.fillText('COOH', 160, monoY - 18);
+
+  // 二元醇 HO-R'-OH
+  const alcY = 140;
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath(); ctx.arc(80, alcY, 11, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.fillText('HO', 80, alcY - 18);
+  ctx.fillStyle = '#94a3b8'; ctx.fillText("R'", 120, alcY + 4);
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath(); ctx.arc(160, alcY, 11, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.fillText('OH', 160, alcY - 18);
+
+  // 反应箭头
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(220, 110);
+  ctx.lineTo(260, 110);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(260, 110);
+  ctx.lineTo(253, 105);
+  ctx.lineTo(253, 115);
+  ctx.closePath();
+  ctx.fillStyle = '#fbbf24';
+  ctx.fill();
+  // 副产 H₂O
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('-H₂O', 240, 95);
+
+  // 右侧：聚合物链，长度由 DP 决定
+  const showN = Math.min(DP, 8); // 最多显示 8 个重复单元
+  const startX = 300;
+  const startY = 110;
+  const unitW = 32;
+  for (let i = 0; i < showN; i++) {
+    const x = startX + i * unitW;
+    // 酯键 O
+    ctx.fillStyle = i % 2 === 0 ? '#06b6d4' : '#10b981';
+    ctx.beginPath();
+    ctx.arc(x, startY, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.fillText(i % 2 === 0 ? 'C' : 'O', x, startY + 3);
+    if (i < showN - 1) {
+      ctx.strokeStyle = '#a78bfa';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + 9, startY);
+      ctx.lineTo(x + unitW - 9, startY);
+      ctx.stroke();
+    }
+  }
+  if (DP > showN) {
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('...', startX + showN * unitW + 10, startY + 4);
+  }
+
+  // 下方：DP 显示和分布条形
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`数均聚合度 X̄n = ${DP}`, W / 2, 220);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`p = ${(condExtent * 100).toFixed(1)}%`, W / 2, 240);
+
+  // Carothers 曲线
+  const cY = 280, cH = 130;
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(60, cY, W - 120, cH);
+  // 轴标签
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('p →', W / 2, cY + cH + 16);
+  ctx.save();
+  ctx.translate(28, cY + cH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('X̄n →', 0, 0);
+  ctx.restore();
+
+  // 曲线
+  ctx.strokeStyle = '#a78bfa';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i <= 100; i++) {
+    const p = 0.5 + i * 0.0049; // 0.50 - 0.99
+    const dp = 1 / (1 - p);
+    const x = 60 + ((p - 0.5) / 0.49) * (W - 120);
+    const y = cY + cH - Math.min(dp / 100, 1) * cH;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // 当前点
+  const curP = (condExtent - 0.5) / 0.49;
+  const curX = 60 + curP * (W - 120);
+  const curDP = Math.min(DP / 100, 1);
+  const curY = cY + cH - curDP * cH;
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.arc(curX, curY, 6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// ═══════════════════════════════════════════════
+// MODE 3: 分子量分布
+// ═══════════════════════════════════════════════
+let mwDispersity = 1.5;
+
+function initMW() {
+  legendEl.innerHTML = `<span class="l-chain">链长分布</span><span class="l-mono">M̄n / M̄w</span>`;
+  panel.innerHTML = `
+    <h3>📊 分子量分布（MWD）</h3>
+    <div class="concept-card chain">
+      <div class="title">数均分子量 M̄n</div>
+      M̄n = ΣNᵢMᵢ / ΣNᵢ — 依数性测量（渗透压、端基分析），对小分子量敏感。
+    </div>
+    <div class="concept-card chain">
+      <div class="title">重均分子量 M̄w</div>
+      M̄w = ΣNᵢMᵢ² / ΣNᵢMᵢ — 光散射测量，对大分子量敏感。
+    </div>
+    <div class="concept-card chain">
+      <div class="title">多分散指数 PDI</div>
+      Đ = M̄w / M̄n。理想活性聚合 Đ ≈ 1.0；自由基聚合 Đ ≈ 1.5-2；缩聚 Đ ≈ 2；配位聚合 Đ 可达 5+。
+    </div>
+    <div class="slider-row">
+      <label>多分散指数 Đ</label>
+      <input type="range" id="mwD" min="10" max="50" value="${Math.round(mwDispersity*10)}">
+      <span class="val" id="mwDVal">${mwDispersity.toFixed(1)}</span>
+    </div>
+    <div class="info-grid">
+      <div>典型 M̄n<br><b>10⁴ - 10⁶ g/mol</b></div>
+      <div>测定方法<br><b>GPC / SEC</b></div>
+      <div>活性聚合 Đ<br><b>&lt; 1.1</b></div>
+      <div>工业 PE Đ<br><b>3 - 20</b></div>
+    </div>`;
+
+  document.getElementById('mwD').addEventListener('input', e => {
+    mwDispersity = +e.target.value / 10;
+    document.getElementById('mwDVal').textContent = mwDispersity.toFixed(1);
+  });
+
+  startLoop(drawMW);
+}
+
+function drawMW() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const mean = 50; // M̄n
+  const sigma = mean * Math.sqrt(mwDispersity - 1);
+  const maxM = mean + 3 * sigma;
+
+  // 坐标
+  const x0 = 60, y0 = H - 60, x1 = W - 40, y1 = 60;
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x0, y1);
+  ctx.lineTo(x0, y0);
+  ctx.lineTo(x1, y0);
+  ctx.stroke();
+
+  // 标签
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('分子量 M →', (x0 + x1) / 2, H - 30);
+  ctx.save();
+  ctx.translate(22, (y0 + y1) / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('摩尔分数 →', 0, 0);
+  ctx.restore();
+
+  // 对数正态分布近似
+  ctx.fillStyle = 'rgba(167,139,250,0.5)';
+  ctx.strokeStyle = '#a78bfa';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  const N = 100;
+  let peakY = y0;
+  for (let i = 0; i <= N; i++) {
+    const m = (i / N) * maxM;
+    const logM = Math.log(m + 1);
+    const logMean = Math.log(mean);
+    const logSigma = Math.sqrt(Math.log(1 + (sigma / mean) ** 2));
+    const logMu = logMean - logSigma * logSigma / 2;
+    const f = Math.exp(-((logM - logMu) ** 2) / (2 * logSigma * logSigma)) / (m + 1);
+    const x = x0 + (i / N) * (x1 - x0);
+    const y = y0 - f * (y0 - y1) * 0.9;
+    ctx.lineTo(x, y);
+    if (y < peakY) peakY = y;
+  }
+  ctx.lineTo(x1, y0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // M̄n 和 M̄w 竖线
+  const Mn = mean;
+  const Mw = mean * mwDispersity;
+  const MnX = x0 + (Mn / maxM) * (x1 - x0);
+  const MwX = x0 + (Mw / maxM) * (x1 - x0);
+  ctx.strokeStyle = '#06b6d4';
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath(); ctx.moveTo(MnX, y1); ctx.lineTo(MnX, y0); ctx.stroke();
+  ctx.strokeStyle = '#ec4899';
+  ctx.beginPath(); ctx.moveTo(MwX, y1); ctx.lineTo(MwX, y0); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 标签
+  ctx.fillStyle = '#06b6d4';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`M̄n = ${Math.round(Mn)}`, MnX, y1 - 8);
+  ctx.fillStyle = '#ec4899';
+  ctx.fillText(`M̄w = ${Math.round(Mw)}`, MwX, y1 - 24);
+
+  // 顶部信息
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`Đ = M̄w / M̄n = ${mwDispersity.toFixed(1)}`, x0, 30);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`σ = ${Math.round(sigma)}`, x0, 48);
+}
+
+// ═══════════════════════════════════════════════
+// MODE 4: 结构与性能
+// ═══════════════════════════════════════════════
+let structCryst = 0.6;
+
+function initStructure() {
+  legendEl.innerHTML = `<span class="l-cross">交联点</span><span class="l-chain">晶区</span><span class="l-free">非晶区</span>`;
+  panel.innerHTML = `
+    <h3>🏗️ 聚合物结构与性能</h3>
+    <div class="concept-card poly">
+      <div class="title">结晶 vs 非晶</div>
+      链规整、对称 → 易结晶（PE, PP, PET）；链不规则、庞大侧基 → 非晶（PS, PMMA, PVC）。
+    </div>
+    <div class="concept-card poly">
+      <div class="title">玻璃化温度 Tg</div>
+      非晶区链段开始协同运动的温度。Tg 以下脆硬；Tg 以上韧软。Tg 取决于主链柔性、侧基、分子量。
+    </div>
+    <div class="concept-card poly">
+      <div class="title">交联密度</div>
+      轻度交联 → 弹性体（橡胶）；高度交联 → 热固性（环氧、酚醛）。交联抑制链滑移，提高强度和耐热。
+    </div>
+    <div class="slider-row">
+      <label>结晶度 χc</label>
+      <input type="range" id="crystS" min="0" max="95" value="${Math.round(structCryst*100)}">
+      <span class="val" id="crystV">${Math.round(structCryst*100)}%</span>
+    </div>
+    <div class="info-grid">
+      <div>Tg (PS)<br><b>~100 °C</b></div>
+      <div>Tg (NR)<br><b>~-70 °C</b></div>
+      <div>Tm (HDPE)<br><b>~135 °C</b></div>
+      <div>Tm (PET)<br><b>~265 °C</b></div>
+    </div>`;
+
+  document.getElementById('crystS').addEventListener('input', e => {
+    structCryst = +e.target.value / 100;
+    document.getElementById('crystV').textContent = e.target.value + '%';
+  });
+
+  startLoop(drawStructure);
+}
+
+function drawStructure() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // 上半：聚合物链示意图（晶区直线排列 + 非晶区卷曲）
+  const midY = 160;
+  const chains = 6;
+  const chainH = 18;
+  for (let c = 0; c < chains; c++) {
+    const y = midY + c * chainH;
+    // 晶区（左侧 fraction = structCryst）
+    const crystEnd = 80 + structCryst * (W - 160);
+    // 晶区：直线
+    ctx.strokeStyle = '#60a5fa';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(80, y);
+    ctx.lineTo(crystEnd, y);
+    ctx.stroke();
+    // 非晶区：卷曲
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(crystEnd, y);
+    const seg = 14;
+    let px = crystEnd;
+    let py = y;
+    while (px < W - 80) {
+      const nx = px + seg;
+      const ny = y + (Math.sin(px * 0.1 + c * 2) * 6);
+      ctx.lineTo(nx, ny);
+      px = nx; py = ny;
+    }
+    ctx.stroke();
+  }
+  // 晶区 / 非晶区标签
+  ctx.fillStyle = '#60a5fa';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('晶区（规整排列）', 80, midY - 20);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('非晶区（无规卷曲）', 80 + structCryst * (W - 160) + 20, midY - 20);
+
+  // 下半：性能条形图
+  const barX = 100, barY = 260, barH = 18, barMax = W - 240;
+  const props = [
+    { name: '强度', v: 0.2 + structCryst * 0.7, color: '#ec4899' },
+    { name: '硬度', v: 0.25 + structCryst * 0.7, color: '#f59e0b' },
+    { name: '韧性', v: 0.9 - structCryst * 0.6, color: '#10b981' },
+    { name: '透明度', v: 0.9 - structCryst * 0.7, color: '#06b6d4' },
+    { name: '耐溶剂性', v: 0.15 + structCryst * 0.8, color: '#a78bfa' }
+  ];
+  ctx.font = '12px sans-serif';
+  props.forEach((p, i) => {
+    const y = barY + i * (barH + 12);
+    // 标签
+    ctx.fillStyle = '#cbd5e1';
+    ctx.textAlign = 'right';
+    ctx.fillText(p.name, barX - 10, y + barH / 2 + 4);
+    // 背景
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.fillRect(barX, y, barMax, barH);
+    // 值
+    ctx.fillStyle = p.color;
+    ctx.fillRect(barX, y, barMax * p.v, barH);
+    // 数值
+    ctx.fillStyle = '#fbbf24';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${Math.round(p.v * 100)}%`, barX + barMax * p.v + 6, y + barH / 2 + 4);
+  });
+
+  // 结晶度读数
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`结晶度 χc = ${Math.round(structCryst * 100)}%`, 80, 240);
+}
+
+// ═══════════════════════════════════════════════
+// MODE 5: Quiz
+// ═══════════════════════════════════════════════
+const QUIZ = [
+  {
+    q: '下列哪一种聚合方式属于"连锁聚合"（chain-growth）？',
+    opts: ['A. PET 由对苯二甲酸与乙二醇缩聚', 'B. 苯乙烯在 AIBN 引发下自由基聚合', 'C. 尼龙-66 由己二酸与己二胺缩聚', 'D. 酚醛树脂由苯酚与甲醛缩合'],
+    ans: 1,
+    exp: '自由基聚合是连锁聚合：引发 → 增长 → 终止，每个活性中心快速形成高分子链；缩聚是逐步聚合，任何带官能团的分子都能互相反应。'
+  },
+  {
+    q: 'Carothers 方程 X̄n = 1/(1-p)。若缩聚反应程度 p = 0.98，则数均聚合度为？',
+    opts: ['A. 50', 'B. 98', 'C. 100', 'D. 200'],
+    ans: 0,
+    exp: 'X̄n = 1/(1-0.98) = 1/0.02 = 50。注意 p 必须非常接近 1 才能得到高分子量。'
+  },
+  {
+    q: '下列哪个量反映聚合物分子量分布的宽窄？',
+    opts: ['A. 数均分子量 M̄n', 'B. 重均分子量 M̄w', 'C. 多分散指数 Đ = M̄w/M̄n', 'D. 玻璃化温度 Tg'],
+    ans: 2,
+    exp: 'Đ（PDI）= M̄w/M̄n，Đ 越接近 1 分布越窄。理想活性聚合 Đ ≈ 1.0-1.1，常规自由基聚合 Đ ≈ 1.5-2。'
+  },
+  {
+    q: '关于玻璃化温度 Tg，下列描述正确的是？',
+    opts: ['A. Tg 是晶区熔融的温度', 'B. Tg 以下非晶区链段可自由运动', 'C. Tg 是非晶区链段开始协同运动的温度', 'D. Tg 只与结晶度有关'],
+    ans: 2,
+    exp: 'Tg 是非晶区链段开始协同运动的温度；Tg 以下链段"冻结"，聚合物呈玻璃态脆硬；Tg 以上呈高弹态。晶区熔融温度是 Tm，与 Tg 不同。'
+  },
+  {
+    q: '下列哪种材料属于热固性聚合物？',
+    opts: ['A. 聚乙烯 PE', 'B. 聚丙烯 PP', 'C. 聚苯乙烯 PS', 'D. 环氧树脂 EP'],
+    ans: 3,
+    exp: '热固性聚合物通过化学交联形成三维网络，受热不熔不溶，例如环氧、酚醛、脲醛；PE/PP/PS 是热塑性，可重复加热熔融。'
+  },
+  {
+    q: '提高聚合物结晶度通常会怎样影响力学性能？',
+    opts: ['A. 强度提高，韧性降低', 'B. 强度降低，韧性提高', 'C. 强度和韧性都提高', 'D. 强度和韧性都降低'],
+    ans: 0,
+    exp: '结晶区分子链规整排列、作用力强，强度和模量提高；但晶区限制了链段运动，韧性和抗冲击性下降，透明度也降低。'
+  },
+  {
+    q: '下列哪个方法最常用于测定聚合物分子量分布（MWD）？',
+    opts: ['A. 红外光谱 IR', 'B. 凝胶渗透色谱 GPC/SEC', 'C. 核磁共振 NMR', 'D. X 射线衍射 XRD'],
+    ans: 1,
+    exp: 'GPC/SEC 按分子流体力学体积分离，配合标样校准或在线 MALLS，可同时给出 M̄n、M̄w 和完整 MWD 曲线，是高分子表征最常用手段。'
+  },
+  {
+    q: '下列哪类聚合反应可以获得 Đ 接近 1.0 的窄分布聚合物？',
+    opts: ['A. 自由基聚合', 'B. 缩聚', 'C. 活性阴离子聚合', 'D. 配位聚合'],
+    ans: 2,
+    exp: '活性阴离子/活性自由基聚合（ATRP, RAFT, NMP）无终止无链转移，所有链同步增长，Đ 可控制在 1.05-1.10。自由基聚合 Đ ≈ 1.5-2，缩聚 Đ ≈ 2，配位聚合 Đ 较宽。'
+  }
+];
+let quizIdx = 0, quizScore = 0, quizAnswered = false;
+
+function initQuiz() {
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  legendEl.innerHTML = '';
+  quizIdx = 0; quizScore = 0;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🎯 高分子化学测验', canvas.width / 2, 80);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('共 8 题，答对 5 题以上即完成本知识点', canvas.width / 2, 110);
+  ctx.fillText('点击右侧选项作答 →', canvas.width / 2, 140);
+  renderQuiz();
+}
+
+function renderQuiz() {
+  if (quizIdx >= QUIZ.length) {
+    const pass = quizScore >= 5;
+    panel.innerHTML = `
+      <h3>🎯 测验完成！</h3>
+      <div class="quiz-result">
+        得分：<b style="font-size:1.5rem;color:${pass ? '#10b981' : '#ef4444'}">${quizScore} / ${QUIZ.length}</b><br>
+        ${pass ? '🎉 太棒了！已掌握高分子化学核心知识' : '💪 再复习一下前面几个模式，然后重试'}
+      </div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn primary" id="retryQuiz">↻ 重新测验</button>
+      </div>
+      <div class="concept-card ${pass ? 'free' : 'poly'}" style="margin-top:14px;">
+        <div class="title">知识总结</div>
+        · 加聚（连锁）：引发 → 增长 → 终止，无小分子副产<br>
+        · 缩聚（逐步）：逐步反应，X̄n = 1/(1-p)，需高反应程度<br>
+        · 分子量分布：Đ = M̄w/M̄n，GPC 测定<br>
+        · 结构与性能：Tg / Tm / 结晶度 / 交联密度
+      </div>`;
+    document.getElementById('retryQuiz').addEventListener('click', initQuiz);
+    if (pass && typeof PageProgress !== 'undefined') {
+      PageProgress.markDone('polymer');
+    }
+    return;
+  }
+  const q = QUIZ[quizIdx];
+  quizAnswered = false;
+  panel.innerHTML = `
+    <h3>第 ${quizIdx + 1} / ${QUIZ.length} 题 <span style="float:right;color:#fbbf24;">得分 ${quizScore}</span></h3>
+    <div class="quiz">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts">
+        ${q.opts.map((o, i) => `<div class="quiz-opt" data-i="${i}">${o}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="fb"></div>
+    </div>`;
+  panel.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const i = +opt.dataset.i;
+      const fb = document.getElementById('fb');
+      if (i === q.ans) {
+        opt.classList.add('correct');
+        quizScore++;
+        fb.textContent = '✓ ' + q.exp;
+        fb.style.color = '#10b981';
+      } else {
+        opt.classList.add('wrong');
+        panel.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+        fb.textContent = '✗ ' + q.exp;
+        fb.style.color = '#ef4444';
+      }
+      setTimeout(() => { quizIdx++; renderQuiz(); }, 1800);
+    });
+  });
+}
+
+// Init
+initAddition();
+</script>
+</body>
+</html>

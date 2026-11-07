@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>化学动力学 · 互动可视化</title>
+<style>
+  :root {
+    --primary: #f59e0b;
+    --energy: #ef4444;
+    --rate: #3b82f6;
+    --catalyst: #10b981;
+    --molecule: #8b5cf6;
+    --dark: #0f172a;
+    --card: rgba(15,23,42,0.75);
+    --border: rgba(255,255,255,0.08);
+    --light: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(135deg, #0f172a 0%, #451a03 40%, #0f172a 100%); color: var(--light); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 2.2rem; background: linear-gradient(90deg, #f59e0b, #ef4444, #10b981); -webkit-background-clip: text; color: transparent; }
+  header p { color: #94a3b8; margin-top: 6px; font-size: 15px; }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid var(--border); font-size: 14px; user-select: none; }
+  .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(245,158,11,.4); }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); overflow-y: auto; max-height: 520px; }
+  .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+  .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
+  .formula-display { font-family: "Times New Roman", serif; font-size: 1.2rem; text-align: center; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 10px 0; line-height: 1.8; }
+  .formula-display .eq { color: var(--energy); font-weight: 600; }
+  .formula-display .r { color: var(--rate); font-weight: 600; }
+  .formula-display .c { color: var(--catalyst); font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .info-grid div { background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 8px; }
+  .info-grid b { color: #fbbf24; }
+  .concept-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px; margin: 10px 0; border-left: 3px solid var(--primary); line-height: 1.7; font-size: 14px; }
+  .concept-card .title { font-weight: 600; margin-bottom: 4px; color: var(--primary); }
+  .legend { display: flex; gap: 14px; justify-content: center; font-size: 12px; color: #cbd5e1; margin-top: 8px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .legend .l-a::before { background: var(--energy); }
+  .legend .l-b::before { background: var(--rate); }
+  .legend .l-cat::before { background: var(--catalyst); }
+  .legend .l-mol::before { background: var(--molecule); }
+  .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; }
+  .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+  .graph-canvas { width: 100%; height: 200px; border-radius: 8px; background: rgba(0,0,0,0.3); margin: 10px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚡ 化学动力学</h1>
+    <p>碰撞理论 | 速率方程 | 催化机理 | 反应进程<span id="done-mark" style="color:#10b981;font-weight:700;margin-left:8px;font-size:14px;"></span></p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="collision">💥 碰撞理论</div>
+    <div class="tab" data-tab="rate">📊 速率方程</div>
+    <div class="tab" data-tab="catalyst">🧬 催化机理</div>
+    <div class="tab" data-tab="energy">📈 能量曲线</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="600" height="480"></canvas>
+      <div class="legend" id="legendArea">
+        <span class="l-a">反应物分子</span>
+        <span class="l-b">产物分子</span>
+        <span class="l-cat">催化剂</span>
+        <span class="l-mol">有效碰撞</span>
+      </div>
+    </div>
+    <div class="panel" id="panelArea"></div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panelArea');
+let currentTab = 'collision';
+let animFrame;
+
+/* ===== Progress tracking: visit all 4 tabs → markDone ===== */
+const ALL_TABS = ['collision', 'rate', 'catalyst', 'energy'];
+const visitedTabs = new Set(['collision']); // 默认 tab 计入
+function maybeMarkDone() {
+  if (ALL_TABS.every(t => visitedTabs.has(t)) && typeof PageProgress !== 'undefined') {
+    PageProgress.markDone('kinetics');
+    document.getElementById('done-mark').textContent = '✓ 已完成';
+  }
+}
+if (typeof PageProgress !== 'undefined' && PageProgress.isDone('kinetics')) {
+  document.getElementById('done-mark').textContent = '✓ 已完成';
+}
+
+// ===== TAB SWITCHING =====
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    currentTab = t.dataset.tab;
+    visitedTabs.add(currentTab);
+    maybeMarkDone();
+    cancelAnimationFrame(animFrame);
+    initTab();
+  });
+});
+
+// ===== COLLISION THEORY TAB =====
+let temperature = 300;
+let numMolecules = 20;
+let activationE = 50;
+let molecules = [];
+let collisionCount = 0;
+let effectiveCount = 0;
+
+function initCollision() {
+  panel.innerHTML = `
+    <h3>💥 碰撞理论动画</h3>
+    <div class="slider-row">
+      <label>温度 (K)</label>
+      <input type="range" id="tempSlider" min="200" max="800" value="${temperature}" />
+      <span class="val" id="tempVal">${temperature}K</span>
+    </div>
+    <div class="slider-row">
+      <label>分子数量</label>
+      <input type="range" id="numSlider" min="5" max="40" value="${numMolecules}" />
+      <span class="val" id="numVal">${numMolecules}</span>
+    </div>
+    <div class="slider-row">
+      <label>活化能 (kJ/mol)</label>
+      <input type="range" id="eaSlider" min="20" max="100" value="${activationE}" />
+      <span class="val" id="eaVal">${activationE}</span>
+    </div>
+    <div class="formula-display" id="collisionStats"></div>
+    <div class="concept-card">
+      <div class="title">碰撞理论要点</div>
+      ① 反应物分子必须碰撞才能反应<br>
+      ② 只有<b style="color:#f59e0b">有效碰撞</b>（能量≥活化能且取向正确）才能发生反应<br>
+      ③ 温度升高 → 分子运动加快 → 有效碰撞增多 → 速率增大<br>
+      ④ 阿伦尼乌斯公式：<i>k = Ae<sup>-Ea/RT</sup></i>
+    </div>
+  `;
+  document.getElementById('tempSlider').addEventListener('input', e => {
+    temperature = parseInt(e.target.value);
+    document.getElementById('tempVal').textContent = temperature + 'K';
+    resetMolecules();
+  });
+  document.getElementById('numSlider').addEventListener('input', e => {
+    numMolecules = parseInt(e.target.value);
+    document.getElementById('numVal').textContent = numMolecules;
+    resetMolecules();
+  });
+  document.getElementById('eaSlider').addEventListener('input', e => {
+    activationE = parseInt(e.target.value);
+    document.getElementById('eaVal').textContent = activationE;
+  });
+  resetMolecules();
+  drawCollision();
+}
+
+function resetMolecules() {
+  molecules = [];
+  collisionCount = 0;
+  effectiveCount = 0;
+  const speed = Math.sqrt(temperature / 300) * 2;
+  for (let i = 0; i < numMolecules; i++) {
+    molecules.push({
+      x: 50 + Math.random() * 500,
+      y: 50 + Math.random() * 380,
+      vx: (Math.random() - 0.5) * speed * 2,
+      vy: (Math.random() - 0.5) * speed * 2,
+      r: 12 + Math.random() * 6,
+      type: i < numMolecules / 2 ? 'A' : 'B',
+      energy: Math.random() * 100,
+      flash: 0
+    });
+  }
+}
+
+function drawCollision() {
+  ctx.clearRect(0, 0, 600, 480);
+  const speed = Math.sqrt(temperature / 300);
+
+  // Update and draw molecules
+  molecules.forEach(m => {
+    m.x += m.vx * speed;
+    m.y += m.vy * speed;
+    if (m.x < m.r || m.x > 600 - m.r) m.vx *= -1;
+    if (m.y < m.r || m.y > 480 - m.r) m.vy *= -1;
+    m.x = Math.max(m.r, Math.min(600 - m.r, m.x));
+    m.y = Math.max(m.r, Math.min(480 - m.r, m.y));
+    m.flash = Math.max(0, m.flash - 0.05);
+  });
+
+  // Check collisions
+  for (let i = 0; i < molecules.length; i++) {
+    for (let j = i + 1; j < molecules.length; j++) {
+      const a = molecules[i], b = molecules[j];
+      if (a.type === b.type) continue;
+      const dx = a.x - b.x, dy = a.y - b.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < a.r + b.r) {
+        collisionCount++;
+        const relE = Math.abs(a.vx - b.vx) + Math.abs(a.vy - b.vy);
+        const relSpeed = relE * speed;
+        if (relSpeed * 20 > activationE) {
+          effectiveCount++;
+          a.flash = 1;
+          b.flash = 1;
+        }
+        // Bounce
+        const nx = dx / dist, ny = dy / dist;
+        const dvx = a.vx - b.vx, dvy = a.vy - b.vy;
+        const dvn = dvx * nx + dvy * ny;
+        if (dvn > 0) {
+          a.vx -= dvn * nx;
+          a.vy -= dvn * ny;
+          b.vx += dvn * nx;
+          b.vy += dvn * ny;
+        }
+        // Separate
+        const overlap = (a.r + b.r - dist) / 2;
+        a.x += nx * overlap;
+        a.y += ny * overlap;
+        b.x -= nx * overlap;
+        b.y -= ny * overlap;
+      }
+    }
+  }
+
+  // Draw molecules
+  molecules.forEach(m => {
+    if (m.flash > 0) {
+      ctx.fillStyle = `rgba(139,92,246,${m.flash * 0.5})`;
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, m.r + 10, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const gradient = ctx.createRadialGradient(m.x - 3, m.y - 3, 0, m.x, m.y, m.r);
+    if (m.type === 'A') {
+      gradient.addColorStop(0, '#fca5a5');
+      gradient.addColorStop(1, '#ef4444');
+    } else {
+      gradient.addColorStop(0, '#93c5fd');
+      gradient.addColorStop(1, '#3b82f6');
+    }
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(m.type, m.x, m.y);
+
+    // Energy indicator (small bar)
+    const eRatio = m.energy / 100;
+    ctx.fillStyle = `rgba(${255 * eRatio}, ${255 * (1 - eRatio)}, 0, 0.6)`;
+    ctx.fillRect(m.x - 8, m.y + m.r + 3, 16 * eRatio, 3);
+  });
+
+  // Update stats
+  const rate = effectiveCount > 0 ? (effectiveCount / Math.max(collisionCount, 1) * 100).toFixed(1) : '0.0';
+  document.getElementById('collisionStats').innerHTML = `
+    总碰撞：<span class="eq">${collisionCount}</span> 次 | 
+    有效碰撞：<span class="r">${effectiveCount}</span> 次 | 
+    有效比率：<span class="c">${rate}%</span>
+  `;
+
+  animFrame = requestAnimationFrame(drawCollision);
+}
+
+// ===== RATE EQUATION TAB =====
+let rateOrder = 1;
+let rateConst = 0.5;
+let initConc = 1.0;
+
+function initRate() {
+  panel.innerHTML = `
+    <h3>📊 速率方程可视化</h3>
+    <div class="mode-switch">
+      <div class="mode-btn ${rateOrder === 0 ? 'active' : ''}" data-order="0">零级</div>
+      <div class="mode-btn ${rateOrder === 1 ? 'active' : ''}" data-order="1">一级</div>
+      <div class="mode-btn ${rateOrder === 2 ? 'active' : ''}" data-order="2">二级</div>
+    </div>
+    <div class="slider-row">
+      <label>速率常数 k</label>
+      <input type="range" id="kSlider" min="0.1" max="2.0" step="0.1" value="${rateConst}" />
+      <span class="val" id="kVal">${rateConst.toFixed(1)}</span>
+    </div>
+    <div class="slider-row">
+      <label>初始浓度 [A]₀</label>
+      <input type="range" id="cSlider" min="0.2" max="2.0" step="0.1" value="${initConc}" />
+      <span class="val" id="cVal">${initConc.toFixed(1)} mol/L</span>
+    </div>
+    <div class="formula-display" id="rateFormula"></div>
+    <canvas id="rateGraph" class="graph-canvas" width="560" height="200"></canvas>
+    <div class="concept-card" id="rateConcept"></div>
+  `;
+  panel.querySelectorAll('.mode-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      panel.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      rateOrder = parseInt(b.dataset.order);
+      updateRate();
+    });
+  });
+  document.getElementById('kSlider').addEventListener('input', e => {
+    rateConst = parseFloat(e.target.value);
+    document.getElementById('kVal').textContent = rateConst.toFixed(1);
+    updateRate();
+  });
+  document.getElementById('cSlider').addEventListener('input', e => {
+    initConc = parseFloat(e.target.value);
+    document.getElementById('cVal').textContent = initConc.toFixed(1) + ' mol/L';
+    updateRate();
+  });
+  updateRate();
+  drawRateGraph();
+}
+
+function updateRate() {
+  const formulas = [
+    `<i>v</i> = <span class="r">k</span> = ${rateConst.toFixed(1)} mol/(L·s)<br>[A] = [A]₀ - kt`,
+    `<i>v</i> = <span class="r">k</span>[A] = ${rateConst.toFixed(1)} × [A]<br>ln[A] = ln[A]₀ - kt<br>t<sub>½</sub> = ln2/k = ${(Math.LN2 / rateConst).toFixed(1)}s`,
+    `<i>v</i> = <span class="r">k</span>[A]² = ${rateConst.toFixed(1)} × [A]²<br>1/[A] = 1/[A]₀ + kt<br>t<sub>½</sub> = 1/(k[A]₀) = ${(1 / (rateConst * initConc)).toFixed(1)}s`
+  ];
+  document.getElementById('rateFormula').innerHTML = formulas[rateOrder];
+  const concepts = [
+    `<div class="title">零级反应</div>速率与浓度无关，常见于催化反应（催化剂饱和时）。浓度随时间线性下降。`,
+    `<div class="title">一级反应</div>速率与浓度一次方成正比。放射性衰变、药物代谢等属此类。半衰期与初始浓度无关。`,
+    `<div class="title">二级反应</div>速率与浓度平方成正比。半衰期与初始浓度成反比——浓度越高，消耗越快。`
+  ];
+  document.getElementById('rateConcept').innerHTML = concepts[rateOrder];
+}
+
+function drawRateGraph() {
+  const gCanvas = document.getElementById('rateGraph');
+  if (!gCanvas) return;
+  const g = gCanvas.getContext('2d');
+  const w = 560, h = 200;
+  g.clearRect(0, 0, w, h);
+
+  // Axes
+  g.strokeStyle = '#4b5563';
+  g.lineWidth = 1;
+  g.beginPath();
+  g.moveTo(40, 10);
+  g.lineTo(40, h - 30);
+  g.lineTo(w - 10, h - 30);
+  g.stroke();
+
+  g.fillStyle = '#94a3b8';
+  g.font = '11px sans-serif';
+  g.textAlign = 'center';
+  g.fillText('时间 t / s', w / 2, h - 8);
+  g.save();
+  g.translate(12, h / 2);
+  g.rotate(-Math.PI / 2);
+  g.fillText('[A] / mol·L⁻¹', 0, 0);
+  g.restore();
+
+  // Plot curve
+  const maxT = 10;
+  const maxC = Math.max(initConc * 1.1, 1.5);
+  g.strokeStyle = '#f59e0b';
+  g.lineWidth = 2.5;
+  g.beginPath();
+  let started = false;
+  for (let px = 0; px < w - 50; px++) {
+    const t = (px / (w - 50)) * maxT;
+    let c;
+    if (rateOrder === 0) {
+      c = initConc - rateConst * t;
+      if (c < 0) c = 0;
+    } else if (rateOrder === 1) {
+      c = initConc * Math.exp(-rateConst * t);
+    } else {
+      c = 1 / (1 / initConc + rateConst * t);
+    }
+    const x = 40 + px;
+    const y = (h - 30) - (c / maxC) * (h - 40);
+    if (!started) { g.moveTo(x, y); started = true; }
+    else g.lineTo(x, y);
+  }
+  g.stroke();
+
+  // Half-life marker for 1st and 2nd order
+  if (rateOrder > 0) {
+    const halfC = initConc / 2;
+    let halfT;
+    if (rateOrder === 1) halfT = Math.LN2 / rateConst;
+    else halfT = 1 / (rateConst * initConc);
+    if (halfT < maxT) {
+      const hx = 40 + (halfT / maxT) * (w - 50);
+      const hy = (h - 30) - (halfC / maxC) * (h - 40);
+      g.setLineDash([4, 4]);
+      g.strokeStyle = '#ef4444';
+      g.lineWidth = 1;
+      g.beginPath(); g.moveTo(hx, h - 30); g.lineTo(hx, hy); g.lineTo(40, hy); g.stroke();
+      g.setLineDash([]);
+      g.fillStyle = '#ef4444';
+      g.font = '10px sans-serif';
+      g.textAlign = 'center';
+      g.fillText(`t½=${halfT.toFixed(1)}s`, hx, h - 18);
+    }
+  }
+
+  // Multiple k comparison
+  g.strokeStyle = 'rgba(59,130,246,0.4)';
+  g.lineWidth = 1.5;
+  g.beginPath();
+  started = false;
+  const k2 = rateConst * 2;
+  for (let px = 0; px < w - 50; px++) {
+    const t = (px / (w - 50)) * maxT;
+    let c;
+    if (rateOrder === 0) { c = initConc - k2 * t; if (c < 0) c = 0; }
+    else if (rateOrder === 1) { c = initConc * Math.exp(-k2 * t); }
+    else { c = 1 / (1 / initConc + k2 * t); }
+    const x = 40 + px;
+    const y = (h - 30) - (c / maxC) * (h - 40);
+    if (!started) { g.moveTo(x, y); started = true; }
+    else g.lineTo(x, y);
+  }
+  g.stroke();
+  g.fillStyle = '#3b82f6';
+  g.font = '10px sans-serif';
+  g.textAlign = 'left';
+  g.fillText(`k=${k2.toFixed(1)} (快)`, w - 80, 30);
+  g.fillStyle = '#f59e0b';
+  g.fillText(`k=${rateConst.toFixed(1)}`, w - 80, 50);
+
+  animFrame = requestAnimationFrame(drawRateGraph);
+}
+
+// ===== CATALYST TAB =====
+let catActive = true;
+let catAnim = 0;
+let catParticles = [];
+
+function initCatalyst() {
+  catParticles = [];
+  for (let i = 0; i < 12; i++) {
+    catParticles.push({
+      x: 100 + Math.random() * 400,
+      y: 100 + Math.random() * 280,
+      vx: (Math.random() - 0.5) * 1.5,
+      vy: (Math.random() - 0.5) * 1.5,
+      type: i < 6 ? 'reactant' : 'product',
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+  panel.innerHTML = `
+    <h3>🧬 催化机理演示</h3>
+    <div class="mode-switch">
+      <div class="mode-btn ${catActive ? 'active' : ''}" id="catOn">有催化剂</div>
+      <div class="mode-btn ${!catActive ? 'active' : ''}" id="catOff">无催化剂</div>
+    </div>
+    <div class="formula-display">
+      <span class="c">催化剂</span>参与反应 → 降低<span class="eq">活化能</span> → 增大<span class="r">反应速率</span><br>
+      催化剂在反应前后质量和化学性质不变
+    </div>
+    <div class="concept-card" style="border-color: var(--catalyst);">
+      <div class="title" style="color: var(--catalyst);">催化机理</div>
+      催化剂提供新的反应路径，该路径活化能更低。<br>
+      <b>均相催化</b>：催化剂与反应物同相（如酸催化）<br>
+      <b>多相催化</b>：催化剂与反应物不同相（如Pt催化H₂+O₂）<br>
+      <b>酶催化</b>：生物大分子催化，具有高效性和专一性
+    </div>
+    <div class="info-grid">
+      <div><b> Ea(无催化)</b>：100 kJ/mol</div>
+      <div><b>Ea(有催化)</b>：60 kJ/mol</div>
+      <div><b>速率提升</b>：约 10⁴ 倍</div>
+      <div><b>类型</b>：多相催化</div>
+    </div>
+  `;
+  document.getElementById('catOn').addEventListener('click', () => { catActive = true; initCatalyst(); });
+  document.getElementById('catOff').addEventListener('click', () => { catActive = false; initCatalyst(); });
+  drawCatalyst();
+}
+
+function drawCatalyst() {
+  catAnim += 0.02;
+  ctx.clearRect(0, 0, 600, 480);
+
+  // Draw catalyst surface (if active)
+  if (catActive) {
+    // Catalyst surface
+    ctx.fillStyle = 'rgba(16,185,129,0.15)';
+    ctx.fillRect(150, 200, 300, 80);
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(150, 200, 300, 80);
+
+    // Active sites
+    for (let i = 0; i < 5; i++) {
+      const sx = 180 + i * 60;
+      const sy = 240;
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(sx, sy, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('活', sx, sy);
+    }
+
+    ctx.fillStyle = '#10b981';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('催化剂表面', 300, 190);
+  }
+
+  // Draw particles
+  catParticles.forEach(p => {
+    p.phase += 0.03;
+    const speed = catActive ? 2.5 : 1;
+    p.x += p.vx * speed;
+    p.y += p.vy * speed;
+
+    // Attraction to catalyst surface
+    if (catActive && p.type === 'reactant' && p.y > 180 && p.y < 300) {
+      // Near surface - adsorb
+      p.y += Math.sin(p.phase) * 0.5;
+    }
+
+    if (p.x < 20 || p.x > 580) p.vx *= -1;
+    if (p.y < 20 || p.y > 460) p.vy *= -1;
+    p.x = Math.max(20, Math.min(580, p.x));
+    p.y = Math.max(20, Math.min(460, p.y));
+
+    // Draw
+    const gradient = ctx.createRadialGradient(p.x - 2, p.y - 2, 0, p.x, p.y, 14);
+    if (p.type === 'reactant') {
+      gradient.addColorStop(0, '#fca5a5');
+      gradient.addColorStop(1, '#ef4444');
+    } else {
+      gradient.addColorStop(0, '#93c5fd');
+      gradient.addColorStop(1, '#3b82f6');
+    }
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Trail
+    ctx.strokeStyle = p.type === 'reactant' ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x - p.vx * speed * 5, p.y - p.vy * speed * 5);
+    ctx.stroke();
+  });
+
+  // Labels
+  ctx.fillStyle = '#ef4444';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('● 反应物 (A + B)', 20, 30);
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillText('● 产物 (C)', 20, 50);
+
+  // Speed comparison
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(catActive ? '有催化剂：反应速率快，分子运动剧烈' : '无催化剂：反应速率慢，分子运动平缓', 300, 460);
+
+  animFrame = requestAnimationFrame(drawCatalyst);
+}
+
+// ===== ENERGY CURVE TAB =====
+let showCatalystPath = true;
+let eaNoCat = 80;
+let eaCat = 50;
+let energyAnim = 0;
+
+function initEnergy() {
+  panel.innerHTML = `
+    <h3>📈 反应能量曲线</h3>
+    <div class="mode-switch">
+      <div class="mode-btn ${showCatalystPath ? 'active' : ''}" id="showCat">显示催化路径</div>
+      <div class="mode-btn ${!showCatalystPath ? 'active' : ''}" id="hideCat">仅无催化</div>
+    </div>
+    <div class="slider-row">
+      <label>Ea(无催化)</label>
+      <input type="range" id="eaNoCatS" min="40" max="120" value="${eaNoCat}" />
+      <span class="val" id="eaNoCatV">${eaNoCat} kJ</span>
+    </div>
+    <div class="slider-row">
+      <label>Ea(有催化)</label>
+      <input type="range" id="eaCatS" min="20" max="80" value="${eaCat}" />
+      <span class="val" id="eaCatV">${eaCat} kJ</span>
+    </div>
+    <div class="formula-display">
+      ΔH = <span class="eq">生成物能量 - 反应物能量</span><br>
+      催化剂只改变<span class="c">活化能</span>，不改变<span class="eq">反应热</span>
+    </div>
+    <div class="concept-card">
+      <div class="title">能量曲线解读</div>
+      • 峰顶 = 过渡态（活化络合物）<br>
+      • Ea = 活化能 = 过渡态能量 - 反应物能量<br>
+      • ΔH = 反应热 = 生成物能量 - 反应物能量<br>
+      • 催化剂降低活化能，但不改变ΔH
+    </div>
+  `;
+  document.getElementById('showCat').addEventListener('click', () => { showCatalystPath = true; initEnergy(); });
+  document.getElementById('hideCat').addEventListener('click', () => { showCatalystPath = false; initEnergy(); });
+  document.getElementById('eaNoCatS').addEventListener('input', e => {
+    eaNoCat = parseInt(e.target.value);
+    document.getElementById('eaNoCatV').textContent = eaNoCat + ' kJ';
+  });
+  document.getElementById('eaCatS').addEventListener('input', e => {
+    eaCat = parseInt(e.target.value);
+    document.getElementById('eaCatV').textContent = eaCat + ' kJ';
+  });
+  drawEnergy();
+}
+
+function drawEnergy() {
+  energyAnim += 0.01;
+  ctx.clearRect(0, 0, 600, 480);
+  const w = 600, h = 480;
+  const margin = 60;
+
+  // Axes
+  ctx.strokeStyle = '#4b5563';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(margin, 30);
+  ctx.lineTo(margin, h - 50);
+  ctx.lineTo(w - 20, h - 50);
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '13px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('反应进程', w / 2, h - 20);
+  ctx.save();
+  ctx.translate(18, h / 2 - 40);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('能量 / kJ·mol⁻¹', 0, 0);
+  ctx.restore();
+
+  // Energy levels
+  const reactantE = 100;
+  const productE = 60;
+  const peakNoCat = reactantE + eaNoCat;
+  const peakCat = showCatalystPath ? reactantE + eaCat : null;
+
+  const scaleX = (w - margin - 40) / 1;
+  const scaleY = 2.5;
+  const baseY = h - 50;
+
+  function toScreen(progress, energy) {
+    return {
+      x: margin + progress * scaleX,
+      y: baseY - energy * scaleY
+    };
+  }
+
+  // Draw reaction path (no catalyst)
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let t = 0; t <= 1; t += 0.005) {
+    let e;
+    if (t < 0.5) {
+      // Going up to peak
+      const p = t / 0.5;
+      e = reactantE + (peakNoCat - reactantE) * Math.sin(p * Math.PI / 2);
+    } else {
+      // Coming down from peak
+      const p = (t - 0.5) / 0.5;
+      e = peakNoCat - (peakNoCat - productE) * Math.sin(p * Math.PI / 2);
+    }
+    const s = toScreen(t, e);
+    if (t === 0) ctx.moveTo(s.x, s.y);
+    else ctx.lineTo(s.x, s.y);
+  }
+  ctx.stroke();
+
+  // Draw catalyzed path
+  if (showCatalystPath && peakCat !== null) {
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    for (let t = 0; t <= 1; t += 0.005) {
+      let e;
+      if (t < 0.35) {
+        const p = t / 0.35;
+        e = reactantE + (peakCat - reactantE) * Math.sin(p * Math.PI / 2);
+      } else if (t < 0.65) {
+        // Intermediate valley
+        const p = (t - 0.35) / 0.3;
+        const midE = reactantE + 20;
+        e = peakCat - (peakCat - midE) * Math.sin(p * Math.PI);
+      } else {
+        const p = (t - 0.65) / 0.35;
+        const midE = reactantE + 20;
+        e = midE + (productE - midE) * Math.sin(p * Math.PI / 2);
+      }
+      const s = toScreen(t, e);
+      if (t === 0) ctx.moveTo(s.x, s.y);
+      else ctx.lineTo(s.x, s.y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Energy level lines
+  ctx.setLineDash([4, 4]);
+  ctx.lineWidth = 1;
+  // Reactant level
+  ctx.strokeStyle = '#ef4444';
+  const rS = toScreen(0, reactantE);
+  ctx.beginPath(); ctx.moveTo(margin, rS.y); ctx.lineTo(w - 20, rS.y); ctx.stroke();
+  // Product level
+  ctx.strokeStyle = '#3b82f6';
+  const pS = toScreen(1, productE);
+  ctx.beginPath(); ctx.moveTo(margin, pS.y); ctx.lineTo(w - 20, pS.y); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ef4444';
+  ctx.fillText(`反应物 (${reactantE} kJ)`, w - 120, rS.y - 8);
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillText(`生成物 (${productE} kJ)`, w - 120, pS.y - 8);
+
+  // Ea arrows
+  const arrowX = margin + 30;
+  // Ea (no cat)
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(arrowX, rS.y);
+  ctx.lineTo(arrowX, baseY - peakNoCat * scaleY);
+  ctx.stroke();
+  ctx.fillStyle = '#ef4444';
+  ctx.textAlign = 'left';
+  ctx.fillText(`Ea=${eaNoCat}`, arrowX + 5, (rS.y + baseY - peakNoCat * scaleY) / 2);
+
+  if (showCatalystPath) {
+    const arrowX2 = arrowX + 80;
+    ctx.strokeStyle = '#10b981';
+    ctx.beginPath();
+    ctx.moveTo(arrowX2, rS.y);
+    ctx.lineTo(arrowX2, baseY - (reactantE + eaCat) * scaleY);
+    ctx.stroke();
+    ctx.fillStyle = '#10b981';
+    ctx.fillText(`Ea'=${eaCat}`, arrowX2 + 5, (rS.y + baseY - (reactantE + eaCat) * scaleY) / 2);
+  }
+
+  // ΔH arrow
+  const dhX = w - 50;
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(dhX, rS.y);
+  ctx.lineTo(dhX, pS.y);
+  ctx.stroke();
+  ctx.fillStyle = '#fbbf24';
+  ctx.textAlign = 'right';
+  ctx.fillText(`ΔH=${productE - reactantE}`, dhX - 5, (rS.y + pS.y) / 2);
+
+  // Animated ball on curve
+  const ballT = (Math.sin(energyAnim * 2) + 1) / 2;
+  let ballE;
+  if (ballT < 0.5) {
+    const p = ballT / 0.5;
+    ballE = reactantE + (peakNoCat - reactantE) * Math.sin(p * Math.PI / 2);
+  } else {
+    const p = (ballT - 0.5) / 0.5;
+    ballE = peakNoCat - (peakNoCat - productE) * Math.sin(p * Math.PI / 2);
+  }
+  const bs = toScreen(ballT, ballE);
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.arc(bs.x, bs.y, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = '8px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('●', bs.x, bs.y);
+
+  animFrame = requestAnimationFrame(drawEnergy);
+}
+
+// ===== INIT =====
+function initTab() {
+  cancelAnimationFrame(animFrame);
+  if (currentTab === 'collision') initCollision();
+  else if (currentTab === 'rate') initRate();
+  else if (currentTab === 'catalyst') initCatalyst();
+  else if (currentTab === 'energy') initEnergy();
+}
+
+initTab();
+</script>
+  <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学化学"></script>
+</body>
+</html>
