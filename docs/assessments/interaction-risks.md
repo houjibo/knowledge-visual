@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：87；含内联 while 的页面：49。同一页面可能出现在两类中。
+含候选 div 控件的页面：87；含内联 while 的页面：48。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -116,7 +116,6 @@
 - [math/topics/figure-movement/index.html](../../math/topics/figure-movement/index.html)：516 行
 - [math/topics/fraction-multiplication-division/index.html](../../math/topics/fraction-multiplication-division/index.html)：300 行、532 行、539 行
 - [math/topics/fraction-operations/index.html](../../math/topics/fraction-operations/index.html)：365 行
-- [math/topics/hectares-and-square-kilometers/index.html](../../math/topics/hectares-and-square-kilometers/index.html)：459 行
 - [math/topics/intro-to-division/index.html](../../math/topics/intro-to-division/index.html)：255 行、357 行、382 行
 - [math/topics/large-numbers/index.html](../../math/topics/large-numbers/index.html)：505 行
 - [math/topics/length-measurement/index.html](../../math/topics/length-measurement/index.html)：482 行

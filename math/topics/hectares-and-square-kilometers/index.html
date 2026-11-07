@@ -439,32 +439,22 @@
 
       var types = [
         { from: '公顷', to: '平方米', factor: 10000, gen: function() { return randInt(1, 20); } },
-        { from: '平方米', to: '公顷', factor: 10000, gen: function() { return randInt(1, 20) * 10000; } },
+        { from: '平方米', to: '公顷', factor: 10000, divide: true, gen: function() { return randInt(1, 20) * 10000; } },
         { from: '平方千米', to: '公顷', factor: 100, gen: function() { return randInt(1, 50); } },
-        { from: '公顷', to: '平方千米', factor: 100, gen: function() { return randInt(1, 50) * 100; } },
+        { from: '公顷', to: '平方千米', factor: 100, divide: true, gen: function() { return randInt(1, 50) * 100; } },
         { from: '平方千米', to: '平方米', factor: 1000000, gen: function() { return randInt(1, 10); } },
-        { from: '平方米', to: '平方千米', factor: 1000000, gen: function() { return randInt(1, 10) * 1000000; } }
+        { from: '平方米', to: '平方千米', factor: 1000000, divide: true, gen: function() { return randInt(1, 10) * 1000000; } }
       ];
 
       var type = types[randInt(0, types.length - 1)];
       var value = type.gen();
-      var answer = value * type.factor;
+      var answer = type.divide ? value / type.factor : value * type.factor;
 
       // For large numbers, use scientific notation display
-      var displayAnswer = answer >= 1000000 ? (answer / 10000).toLocaleString() + '万' : answer.toLocaleString();
       var displayValue = value.toLocaleString();
 
       // Generate wrong options
-      var wrongAnswers = new Set();
-      while (wrongAnswers.size < 3) {
-        var multiplier = [0.1, 0.01, 10, 100, 1000][randInt(0, 4)];
-        var wrong = Math.round(answer * multiplier);
-        if (wrong !== answer && wrong > 0 && !wrongAnswers.has(wrong)) {
-          wrongAnswers.add(wrong);
-        }
-      }
-
-      var options = [answer].concat(Array.from(wrongAnswers));
+      var options = [answer, answer + 1, answer * 10, answer * 100];
       shuffle(options);
 
       document.getElementById('convertProblem').innerHTML =
@@ -473,11 +463,13 @@
       var optionsHtml = '';
       options.forEach(function(opt) {
         var display = opt >= 1000000 ? (opt / 10000) + '万' : opt.toLocaleString();
-        optionsHtml += '<button class="convert-opt" onclick="checkConvert(this,' + opt + ',' + answer + ')">' + display + '</button>';
+        optionsHtml += '<button class="convert-opt" data-value="' + opt + '" onclick="checkConvert(this,' + opt + ',' + answer + ')">' + display + '</button>';
       });
       document.getElementById('convertOptions').innerHTML = optionsHtml;
 
-      document.getElementById('convertHint').textContent = '💡 提示：1' + type.from + ' = ' + type.factor.toLocaleString() + type.to;
+      document.getElementById('convertHint').textContent = type.divide
+        ? '💡 1' + type.to + ' = ' + type.factor.toLocaleString() + type.from + '；' + displayValue + ' ÷ ' + type.factor.toLocaleString() + ' = ' + answer.toLocaleString()
+        : '💡 1' + type.from + ' = ' + type.factor.toLocaleString() + type.to + '；' + displayValue + ' × ' + type.factor.toLocaleString() + ' = ' + answer.toLocaleString();
     }
 
     function checkConvert(btn, selected, answer) {
@@ -487,7 +479,7 @@
 
       var allOpts = document.querySelectorAll('#convertOptions .convert-opt');
       allOpts.forEach(function(opt) {
-        opt.style.pointerEvents = 'none';
+        opt.disabled = true;
       });
 
       if (selected === answer) {
@@ -497,7 +489,7 @@
       } else {
         btn.classList.add('wrong');
         allOpts.forEach(function(opt) {
-          if (opt.textContent.replace(/,/g, '').replace('万', '') == answer || opt.textContent == answer.toLocaleString() || (answer >= 1000000 && opt.textContent == (answer / 10000) + '万')) {
+          if (Number(opt.dataset.value) === answer) {
             opt.classList.add('correct');
           }
         });
