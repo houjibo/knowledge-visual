@@ -62,6 +62,7 @@
   - 概念切换、矩形与正方形网格边界、长宽约束及控件名称；真机和完整无障碍未全面验收。 [area-perimeter-visual-consistency.spec.js](../../tests/browser/area-perimeter-visual-consistency.spec.js)
 - [认识面积单位](../../math/topics/area-units/index.html)
   - 数格、换算、估测及挑战的随机边界、单次计分与进度保存恢复；全部题目内容和无障碍尚未全面核验。 [area-units-learning-reliability.spec.js](../../tests/browser/area-units-learning-reliability.spec.js)
+  - 面积单位示意图的网格数、单位说明及四种相邻换算提示；真实设备及其他教学内容未全面验收。 [area-units-visual-meaning.spec.js](../../tests/browser/area-units-visual-meaning.spec.js)
 - [年月日的认识](../../math/topics/calendar-units/index.html)
   - 十二个月北半球气象季节、世纪闰年与输入校验、日期计数口径、作答计数及进度保存失败恢复；历史历法和整页无障碍未全面验收。 [calendar-learning-accuracy.spec.js](../../tests/browser/calendar-learning-accuracy.spec.js)
 - [比大小与排序](../../math/topics/comparison-and-ordering/index.html)

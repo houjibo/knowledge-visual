@@ -114,7 +114,7 @@
 - [math/topics/addition/index.html](../../math/topics/addition/index.html)：346 行
 - [math/topics/addition-subtraction-within-100/index.html](../../math/topics/addition-subtraction-within-100/index.html)：800 行
 - [math/topics/addition-subtraction-within-10000/index.html](../../math/topics/addition-subtraction-within-10000/index.html)：485 行、578 行
-- [math/topics/area-units/index.html](../../math/topics/area-units/index.html)：451 行、628 行
+- [math/topics/area-units/index.html](../../math/topics/area-units/index.html)：632 行
 - [math/topics/arithmetic-laws/index.html](../../math/topics/arithmetic-laws/index.html)：376 行
 - [math/topics/bar-charts/index.html](../../math/topics/bar-charts/index.html)：406 行、417 行
 - [math/topics/chicken-rabbit/index.html](../../math/topics/chicken-rabbit/index.html)：462 行
