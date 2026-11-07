@@ -87,23 +87,46 @@ function clamp(val, min, max) {
    ============================================ */
 const PageProgress = (() => {
   const KEY = 'kv-science-progress';
-  let cache = null;
+  let cache = {};
+  let pending = {};
+  let removed = new Set();
+  let canWrite = true;
   function read() {
-    if (cache) return cache;
-    try { cache = JSON.parse(localStorage.getItem(KEY) || '{}'); }
-    catch (e) { cache = {}; }
+    try {
+      const raw = localStorage.getItem(KEY);
+      const value = raw === null ? {} : JSON.parse(raw);
+      if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('invalid progress');
+      cache = Object.assign({}, value, pending);
+      removed.forEach(slug => delete cache[slug]);
+      canWrite = true;
+    } catch (e) {
+      // 保留原始异常数据，当前页面继续使用内存状态。
+      canWrite = false;
+    }
     return cache;
   }
   function write(data) {
     cache = data;
-    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { /* 隐私模式容错 */ }
+    if (!canWrite) return false;
+    try {
+      localStorage.setItem(KEY, JSON.stringify(data));
+      pending = {}; removed.clear();
+      return true;
+    }
+    catch (e) { return false; }
   }
   return {
     markDone(slug) {
-      const d = read(); d[slug] = Date.now(); write(d);
+      const d = read(); d[slug] = Date.now();
+      const saved = write(d);
+      if (!saved) { pending[slug] = d[slug]; removed.delete(slug); }
+      return saved;
     },
     clear(slug) {
-      const d = read(); delete d[slug]; write(d);
+      const d = read(); delete d[slug];
+      const saved = write(d);
+      if (!saved) { delete pending[slug]; removed.add(slug); }
+      return saved;
     },
     isDone(slug) { return !!read()[slug]; },
     count() { return Object.keys(read()).length; },
