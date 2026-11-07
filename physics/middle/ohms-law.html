@@ -129,29 +129,31 @@
   <div class="mode-section" id="sec-learn">
     <div class="stage">
       <div class="canvas-wrap">
-        <canvas id="expCanvas" width="720" height="520"></canvas>
+        <canvas id="expCanvas" width="720" height="520" role="img"></canvas>
+        <p style="font-size:14px;color:#cbd5e1">理想电源、电阻和电流表串联；电压表并联在电阻两端。下方图线表示当前电阻的 I-U 关系。</p>
       </div>
       <div class="panel">
         <h3>🧪 虚拟实验台</h3>
         <div class="slider-row">
-          <label>电压 U</label>
+          <label for="sliderU">电压 U</label>
           <input type="range" id="sliderU" min="1" max="12" step="0.5" value="6">
           <span class="val" id="valU">6.0 V</span>
         </div>
         <div class="slider-row">
-          <label>电阻 R</label>
+          <label for="sliderR">电阻 R</label>
           <input type="range" id="sliderR" min="5" max="50" step="5" value="20">
           <span class="val" id="valR">20 Ω</span>
         </div>
         <div class="info-grid">
           <div>电流 I<br><b id="valI">0.30 A</b></div>
-          <div>图线斜率 1/R<br><b id="valK">0.050</b></div>
+          <div>图线斜率 1/R（约）<br><b id="valK">0.050 A/V</b></div>
           <div>已记录<br><b id="valN">0 组</b></div>
         </div>
         <div>
           <button class="act-btn" id="btnRecord">📥 记录本组数据</button>
           <button class="act-btn ghost" id="btnClear">清空</button>
         </div>
+        <p id="recordStatus" role="status" aria-live="polite" style="font-size:14px;color:#cbd5e1">已记录 0 / 8 组。</p>
         <table class="data-table" id="dataTable">
           <thead><tr><th>#</th><th>U / V</th><th>R / Ω</th><th>I / A</th></tr></thead>
           <tbody id="dataBody"><tr><td colspan="4" style="color:#64748b">暂无数据</td></tr></tbody>
@@ -159,7 +161,7 @@
         <div class="equation">欧姆定律：<b>I = U / R</b><br><span style="font-size:0.85em;color:#94a3b8">变形式：U = I·R　　R = U / I</span></div>
         <div class="concept-card">
           <div class="title">定律内容</div>
-          导体中的电流，跟导体两端的电压成<b>正比</b>，跟导体的电阻成<b>反比</b>。注意前提：研究对象是<b>同一段导体</b>（纯电阻电路）。
+          导体中的电流，跟导体两端的电压成<b>正比</b>，跟导体的电阻成<b>反比</b>。本实验假设温度等条件不变，使用理想电源和电表；改变 R 相当于更换定值电阻。
         </div>
         <div class="concept-card warn">
           <div class="title">⚠️ 易错点</div>
@@ -257,7 +259,10 @@ function updPanel() {
   document.getElementById('valU').textContent = s.U.toFixed(1) + ' V';
   document.getElementById('valR').textContent = s.R + ' Ω';
   document.getElementById('valI').textContent = s.I.toFixed(2) + ' A';
-  document.getElementById('valK').textContent = (1 / s.R).toFixed(3);
+  document.getElementById('valK').textContent = (1 / s.R).toFixed(3) + ' A/V';
+  canvas.setAttribute('aria-label', `理想电源、电阻和电流表串联，电压表并联在电阻两端。电压 ${s.U.toFixed(1)} 伏，电阻 ${s.R} 欧，电流 ${s.I.toFixed(2)} 安；下方图线为当前电阻的电流与电压关系。`);
+  document.getElementById('btnRecord').disabled = records.length >= 8;
+  document.getElementById('recordStatus').textContent = records.length >= 8 ? '已记录 8 / 8 组，清空后可以继续记录。' : `已记录 ${records.length} / 8 组。`;
   document.getElementById('valN').textContent = records.length + ' 组';
 }
 sliderU.addEventListener('input', () => { updPanel(); draw(); });
@@ -285,47 +290,28 @@ function renderTable() {
 
 /* ---------- 电路图 + I-U 图 ---------- */
 function drawCircuit(s) {
-  const y = 120;
-  // 导线回路
-  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(80, 40); ctx.lineTo(560, 40); ctx.lineTo(560, y + 80); ctx.lineTo(80, y + 80); ctx.closePath();
-  ctx.stroke();
-  // 电源（左上）
-  ctx.strokeStyle = '#e2e8f0';
-  ctx.beginPath(); ctx.moveTo(80, 60); ctx.lineTo(80, 74); ctx.lineWidth = 3; ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(68, 88); ctx.lineTo(92, 88); ctx.lineWidth = 6; ctx.stroke();
-  ctx.fillStyle = '#93c5fd'; ctx.font = '13px sans-serif';
-  ctx.fillText(`电源 ${s.U.toFixed(1)}V`, 100, 84);
-  // 滑动变阻器（顶部）
+  // 导线在电源、电阻和电流表处断开；电压表跨接电阻两端。
   ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 3;
-  ctx.strokeRect(220, 28, 110, 24);
-  ctx.beginPath(); ctx.moveTo(250, 16); ctx.lineTo(280, 28); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(280, 28) ; ctx.lineTo(276, 18); ctx.moveTo(280, 28); ctx.lineTo(270, 26); ctx.stroke();
-  ctx.fillStyle = '#cbd5e1'; ctx.font = '12px sans-serif';
-  ctx.fillText('滑动变阻器', 232, 14);
-  // 定值电阻 R（右侧）
-  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 3;
-  ctx.strokeRect(520, 60, 0 + 40, 0);
-  ctx.strokeRect(520, 58, 40, 0);
-  ctx.strokeRect(522, 66, 36, 0);
-  ctx.strokeRect(520, 120, 40, 24);
+  ctx.beginPath(); ctx.moveTo(80, 40); ctx.lineTo(560, 40); ctx.lineTo(560, 90); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(560, 150); ctx.lineTo(560, 200); ctx.lineTo(316, 200); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(284, 200); ctx.lineTo(80, 200); ctx.lineTo(80, 125); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(80, 105); ctx.lineTo(80, 40); ctx.stroke();
+  // 可调理想电源：长线为正极。
+  ctx.beginPath(); ctx.moveTo(68, 105); ctx.lineTo(92, 105); ctx.moveTo(73, 125); ctx.lineTo(87, 125); ctx.stroke();
   ctx.fillStyle = '#93c5fd'; ctx.font = '13px sans-serif';
-  ctx.fillText(`R = ${s.R}Ω`, 566, 138);
-  // 电流表 A（底部）
-  ctx.beginPath(); ctx.arc(300, y + 80, 16, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = '#fcd34d'; ctx.font = 'bold 14px sans-serif';
-  ctx.fillText('A', 295, y + 85);
-  ctx.fillStyle = '#e2e8f0'; ctx.font = '13px sans-serif';
-  ctx.fillText(`${s.I.toFixed(2)} A`, 326, y + 85);
-  // 电压表 V（并联在 R 两端）
-  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(540, 144); ctx.lineTo(540, 176); ctx.lineTo(480, 176); ctx.stroke();
-  ctx.beginPath(); ctx.arc(464, 176, 16, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = '#fcd34d';
-  ctx.fillText('V', 459, 181);
-  ctx.fillStyle = '#e2e8f0'; ctx.font = '13px sans-serif';
-  ctx.fillText(`${s.U.toFixed(1)} V`, 410, 181);
+  ctx.fillText(`理想电源 ${s.U.toFixed(1)} V`, 100, 120);
+  // 被测定值电阻和串联电流表。
+  ctx.strokeRect(548, 90, 24, 60);
+  ctx.fillText(`R = ${s.R} Ω`, 570, 80);
+  ctx.beginPath(); ctx.arc(300, 200, 16, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = '#fcd34d'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('A', 295, 205);
+  ctx.fillStyle = '#e2e8f0'; ctx.font = '13px sans-serif'; ctx.fillText(`${s.I.toFixed(2)} A`, 275, 232);
+  // 理想电压表与电阻并联。
+  ctx.beginPath(); ctx.moveTo(560, 90); ctx.lineTo(620, 90); ctx.lineTo(620, 104); ctx.stroke();
+  ctx.beginPath(); ctx.arc(620, 120, 16, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(620, 136); ctx.lineTo(620, 150); ctx.lineTo(560, 150); ctx.stroke();
+  ctx.fillStyle = '#fcd34d'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('V', 615, 125);
+  ctx.fillStyle = '#e2e8f0'; ctx.font = '13px sans-serif'; ctx.fillText(`${s.U.toFixed(1)} V`, 643, 125);
 }
 
 function drawPlot(s) {

@@ -99,6 +99,7 @@
   - 模式、时钟、调速、三车对比与平均速度的部分场景；测验及教学内容尚未全面核验。 [motion-controls.spec.js](../../tests/browser/motion-controls.spec.js)、[motion-simulation.spec.js](../../tests/browser/motion-simulation.spec.js)、[motion-real-clock.spec.js](../../tests/browser/motion-real-clock.spec.js)、[uniform-comparison.spec.js](../../tests/browser/uniform-comparison.spec.js)、[motion-average-speed.spec.js](../../tests/browser/motion-average-speed.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
 - [欧姆定律 · 初中物理互动可视化](../../physics/middle/ohms-law.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
+  - 理想电路的串并联路径、滑块边界、工作点、记录上限及清空；未全面验收实物电表模型和无障碍。 [ohms-law-lab.spec.js](../../tests/browser/ohms-law-lab.spec.js)
 - [电压与电阻 · 初中物理互动可视化](../../physics/middle/voltage-resistance.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [动物分类 · 小学科学互动可视化](../../science/animals.html)
