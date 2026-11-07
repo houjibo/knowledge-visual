@@ -256,14 +256,14 @@
           <svg id="practice-svg" width="240" height="200" viewBox="0 0 240 200" class="practice-shape"></svg>
           <div class="practice-question" id="practice-question"></div>
           <div class="practice-input">
-            <input type="tel" class="practice-answer" id="practice-answer" maxlength="4" inputmode="numeric" autocomplete="off">
+            <input type="tel" class="practice-answer" id="practice-answer" aria-label="练习答案" maxlength="4" inputmode="numeric" autocomplete="off">
             <span class="unit-label" id="unit-label">cm²</span>
           </div>
           <div class="action-bar">
             <button class="btn btn-primary btn-large" id="btn-check-answer">✅ 检查</button>
             <button class="btn btn-warning" id="btn-new-practice">🎲 换一个</button>
           </div>
-          <div id="practice-hint" style="font-size:16px;color:#6E6E73;margin-top:12px;min-height:24px"></div>
+          <div id="practice-hint" role="status" aria-live="polite" style="font-size:16px;color:#6E6E73;margin-top:12px;min-height:24px"></div>
         </div>
       </div>
     </div>
@@ -275,14 +275,14 @@
           <svg id="challenge-svg" width="240" height="200" viewBox="0 0 240 200" class="practice-shape"></svg>
           <div class="practice-question" id="challenge-question"></div>
           <div class="practice-input">
-            <input type="tel" class="practice-answer" id="challenge-answer" maxlength="5" inputmode="numeric" autocomplete="off">
+            <input type="tel" class="practice-answer" id="challenge-answer" aria-label="挑战答案" maxlength="5" inputmode="numeric" autocomplete="off">
             <span class="unit-label" id="challenge-unit">cm²</span>
           </div>
           <div class="action-bar">
             <button class="btn btn-primary btn-large" id="btn-check-challenge">✅ 检查</button>
             <button class="btn btn-warning" id="btn-new-challenge">🎲 换一个</button>
           </div>
-          <div id="challenge-hint" style="font-size:16px;color:#6E6E73;margin-top:12px;min-height:24px"></div>
+          <div id="challenge-hint" role="status" aria-live="polite" style="font-size:16px;color:#6E6E73;margin-top:12px;min-height:24px"></div>
           <div style="margin-top:16px;font-size:15px;color:#6E6E73">
             🏅 最高连对：<span id="challenge-best" style="color:#7B1FA2;font-weight:700">0</span>
           </div>
@@ -297,11 +297,12 @@
   <script>
     document.querySelector('.nav-back')?.addEventListener('click', () => window.location.href = '../../index.html');
 
-    let streak = 0;
-    function updateStreak() {
-      document.getElementById('streak').textContent = streak;
-      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
-      if (streak >= 5) showToast(`🔥 连续 ${streak} 次！太厉害了！`);
+    let streak = 0, challengeStreak = 0;
+    function updateStreak(announce = true) {
+      const current = document.querySelector('.mode-tab.active')?.dataset.mode === 'challenge' ? challengeStreak : streak;
+      document.getElementById('streak').textContent = current;
+      document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(current, 10));
+      if (announce && current >= 5) showToast(`🔥 连续 ${current} 次！太厉害了！`);
     }
 
     document.querySelectorAll('.mode-tab').forEach(tab => {
@@ -310,6 +311,7 @@
         document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
         tab.classList.add('active');
         document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        updateStreak(false);
         if (Sound) Sound.play('click');
       });
     });
@@ -553,11 +555,14 @@
         inp.value = ''; inp.className = 'practice-answer';
         document.getElementById('practice-hint').textContent = '';
         document.getElementById('btn-check-answer').disabled = false;
+        document.getElementById('btn-new-practice').textContent = '🎲 换一个';
       }
 
       function checkAnswer() {
         const inp = document.getElementById('practice-answer');
-        const val = parseInt(inp.value);
+        if (document.getElementById('btn-check-answer').disabled) return;
+        if (!/^\d+$/.test(inp.value.trim())) { document.getElementById('practice-hint').textContent = '请输入非负整数'; return; }
+        const val = Number(inp.value.trim());
         if (val === answer) {
           inp.className = 'practice-answer correct';
           streak++; if (Sound) Sound.play('correct'); if (typeof celebrate === 'function') celebrate();
@@ -566,7 +571,7 @@
           document.getElementById('practice-hint').innerHTML = `🎉 正确！答案是 <b>${answer}</b>`;
           document.getElementById('practice-hint').style.color = '#34C759';
           document.getElementById('btn-check-answer').disabled = true;
-          setTimeout(newPractice, 1500);
+          document.getElementById('btn-new-practice').textContent = '下一题 ➡️';
         } else {
           inp.className = 'practice-answer wrong';
           streak = 0; if (Sound) Sound.play('wrong'); updateStreak();
@@ -616,10 +621,9 @@
           w = Random.int(3, 9); h = Random.int(2, 8);
           const side = Random.int(3, 9);
           const a1 = w * h, a2 = side * side;
-          if (a1 === a2) { newChallenge(); return; }
           answer = Math.max(a1, a2);
           unit = 'cm²';
-          qEl.innerHTML = `🏆 长方形 <b>${w}×${h}</b> 和正方形 <b>${side}×${side}</b>，<br>较大的<b>面积</b>是多少？`;
+          qEl.innerHTML = `🏆 长方形 <b>${w}×${h}</b> 和正方形 <b>${side}×${side}</b>，<br>较大的<b>面积</b>是多少？相等时填写共同面积。`;
           drawTwo(svg, w, h, side);
         } else { // reverse
           // 已知长方形面积求宽（反向题）
@@ -637,7 +641,7 @@
         inp.value = ''; inp.className = 'practice-answer';
         document.getElementById('challenge-hint').textContent = '';
         document.getElementById('btn-check-challenge').disabled = false;
-        inp.focus();
+        document.getElementById('btn-new-challenge').textContent = '🎲 换一个';
       }
 
       function drawRect(svg, L, W, hideWidth) {
@@ -693,30 +697,31 @@
 
       function checkChallenge() {
         const inp = document.getElementById('challenge-answer');
-        const val = parseInt(inp.value);
-        if (isNaN(val)) return;
+        if (document.getElementById('btn-check-challenge').disabled) return;
+        if (!/^\d+$/.test(inp.value.trim())) { document.getElementById('challenge-hint').textContent = '请输入非负整数'; return; }
+        const val = Number(inp.value.trim());
         if (val === answer) {
           inp.className = 'practice-answer correct';
-          streak++; if (Sound) Sound.play('correct'); if (typeof celebrate === 'function') celebrate();
-          if (streak > best) {
-            best = streak;
+          challengeStreak++; if (Sound) Sound.play('correct'); if (typeof celebrate === 'function') celebrate();
+          if (challengeStreak > best) {
+            best = challengeStreak;
             document.getElementById('challenge-best').textContent = best;
           }
-          if (streak >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('area-and-perimeter')) {
+          if (challengeStreak >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('area-and-perimeter')) {
             PageProgress.markDone('area-and-perimeter');
           }
           updateStreak();
           document.getElementById('challenge-hint').innerHTML = `🎉 正确！答案是 <b>${answer}</b>`;
           document.getElementById('challenge-hint').style.color = '#34C759';
           document.getElementById('btn-check-challenge').disabled = true;
-          setTimeout(newChallenge, 1400);
+          document.getElementById('btn-new-challenge').textContent = '下一题 ➡️';
         } else {
           inp.className = 'practice-answer wrong';
-          streak = 0; if (Sound) Sound.play('wrong'); updateStreak();
+          challengeStreak = 0; if (Sound) Sound.play('wrong'); updateStreak();
           document.getElementById('challenge-hint').innerHTML = `❌ 不对，正确答案是 <b>${answer}</b> ${unit}`;
           document.getElementById('challenge-hint').style.color = '#FF3B30';
           document.getElementById('btn-check-challenge').disabled = true;
-          setTimeout(newChallenge, 2200);
+          document.getElementById('btn-new-challenge').textContent = '下一题 ➡️';
         }
       }
 
