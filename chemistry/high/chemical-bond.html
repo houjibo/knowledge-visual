@@ -182,7 +182,7 @@
   <!-- Tab 3: 分子构型 -->
   <div class="stage hidden" id="stage-geometry">
     <div class="canvas-wrap">
-      <canvas id="geomCanvas" width="560" height="420"></canvas>
+      <canvas id="geomCanvas" width="560" height="420" role="img" aria-label="分子构型二维示意"></canvas>
       <div class="legend">
         <span class="l-orb">成键电子对</span>
         <span class="l-el">孤对电子</span>
@@ -196,9 +196,10 @@
       </div>
       <div class="concept-card cov" id="geomConcept">
         <div class="title">选择分子查看构型</div>
-        点击上方分子卡片，查看其空间构型、键角和VSEPR分析。
+        选择分子卡片，查看其空间构型、键角和VSEPR分析。
       </div>
       <div class="info-box" id="geomInfo">
+        本图是二维示意；正四面体与三角锥的空间键角不能直接用屏幕上的投影角测量。<br>
         <b>VSEPR规则：</b><br>
         电子对互相排斥，尽可能远离<br>
         2对 → 直线 180°<br>
@@ -211,11 +212,11 @@
   <!-- Tab 4: 分子极性 -->
   <div class="stage hidden" id="stage-polarity">
     <div class="canvas-wrap">
-      <canvas id="polarCanvas" width="560" height="420"></canvas>
+      <canvas id="polarCanvas" width="560" height="420" role="img" aria-label="分子极性示意"></canvas>
       <div class="legend">
         <span class="l-ion">δ⁺ 正电端</span>
         <span class="l-cov">δ⁻ 负电端</span>
-        <span class="l-el">偶极矩 →</span>
+        <span class="l-el">化学偶极箭头：δ⁺ → δ⁻</span>
       </div>
       <div class="mode-switch">
         <button type="button" class="mode-btn active" data-polar="h2o" aria-pressed="true">H₂O 极性</button>
@@ -844,6 +845,7 @@ function drawMolecule() {
   gCtx.clearRect(0, 0, 560, 420);
   const cx = 280, cy = 200;
   const mol = molecules[selectedMol];
+  geomCanvas.setAttribute('aria-label', `${mol.formula}：${mol.geom}，键角约 ${mol.angle}；空间结构为二维示意。`);
   
   gCtx.fillStyle = '#e2e8f0';
   gCtx.font = 'bold 16px sans-serif';
@@ -947,9 +949,11 @@ function drawMolecule() {
     
   } else if (mol.geom === 'V形') {
     // H2O - bent
+    const halfAngle = 104.5 * Math.PI / 360;
+    const bondLength = 85;
     const bonds = [
-      { x: -60, y: 50 },
-      { x: 60, y: 50 }
+      { x: -bondLength * Math.sin(halfAngle), y: -10 + bondLength * Math.cos(halfAngle) },
+      { x: bondLength * Math.sin(halfAngle), y: -10 + bondLength * Math.cos(halfAngle) }
     ];
     
     bonds.forEach((b) => {
@@ -987,7 +991,7 @@ function drawMolecule() {
     
     // Angle arc
     gCtx.beginPath();
-    gCtx.arc(cx, cy - 10, 35, Math.PI * 0.3, Math.PI * 0.7);
+    gCtx.arc(cx, cy - 10, 35, Math.PI / 2 - halfAngle, Math.PI / 2 + halfAngle);
     gCtx.strokeStyle = '#fbbf24';
     gCtx.lineWidth = 1.5;
     gCtx.stroke();
@@ -1011,8 +1015,8 @@ function drawMolecule() {
     // BF3
     const bonds = [
       { x: 0, y: -80 },
-      { x: 70, y: 40 },
-      { x: -70, y: 40 }
+      { x: 40 * Math.sqrt(3), y: 40 },
+      { x: -40 * Math.sqrt(3), y: 40 }
     ];
     
     bonds.forEach((b) => {
@@ -1143,13 +1147,31 @@ const polarData = {
   ch4: { eq: 'CH₄：正四面体 → <span class="cov">非极性分子</span>', concept: '<div class="title">非极性分子</div>CH₄中C-H键极性很小，且分子为正四面体高度对称结构，即使有微弱极性也完全抵消。', conceptClass: 'cov' }
 };
 
+// 化学中偶极箭头从部分正电端指向部分负电端，尾部短线标出正端。
+function drawDipoleArrow(ctx, x1, y1, x2, y2, width = 2) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const head = 9, wing = 5;
+  ctx.strokeStyle = '#fbbf24'; ctx.fillStyle = '#fbbf24'; ctx.lineWidth = width;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - head * Math.cos(angle) + wing * Math.sin(angle), y2 - head * Math.sin(angle) - wing * Math.cos(angle));
+  ctx.lineTo(x2 - head * Math.cos(angle) - wing * Math.sin(angle), y2 - head * Math.sin(angle) + wing * Math.cos(angle));
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x1 - wing * Math.sin(angle), y1 + wing * Math.cos(angle));
+  ctx.lineTo(x1 + wing * Math.sin(angle), y1 - wing * Math.cos(angle)); ctx.stroke();
+}
+
 function drawPolar() {
   pCtx.clearRect(0, 0, 560, 420);
   const cx = 280, cy = 200;
+  const descriptions = {h2o: '水分子的键偶极箭头指向氧，合偶极也指向氧。', co2: '二氧化碳的两个键偶极箭头分别指向两侧氧原子，彼此抵消。', hcl: '氯化氢的偶极箭头从氢指向氯。', ch4: '甲烷的键偶极在正四面体构型中抵消；图为二维投影示意。'};
+  polarCanvas.setAttribute('aria-label', descriptions[polarMode]);
   
   if (polarMode === 'h2o') {
     // Bent polar molecule
-    const bonds = [{ x: -55, y: 50 }, { x: 55, y: 50 }];
+    const halfAngle = 104.5 * Math.PI / 360, bondLength = 85;
+    const bonds = [{ x: -bondLength * Math.sin(halfAngle), y: -10 + bondLength * Math.cos(halfAngle) },
+      { x: bondLength * Math.sin(halfAngle), y: -10 + bondLength * Math.cos(halfAngle) }];
     bonds.forEach((b) => {
       // Bond
       pCtx.beginPath();
@@ -1159,23 +1181,11 @@ function drawPolar() {
       pCtx.lineWidth = 4;
       pCtx.stroke();
       
-      // Dipole arrow
-      const mx = cx + b.x * 0.5;
-      const my = cy - 10 + (b.y + 10) * 0.5;
-      pCtx.beginPath();
-      pCtx.moveTo(mx - b.x * 0.3, my - b.y * 0.3);
-      pCtx.lineTo(mx + b.x * 0.3, my + b.y * 0.3);
-      pCtx.strokeStyle = '#fbbf24';
-      pCtx.lineWidth = 2;
-      pCtx.stroke();
-      // Arrow head
-      pCtx.beginPath();
-      pCtx.moveTo(mx + b.x * 0.3, my + b.y * 0.3);
-      pCtx.lineTo(mx + b.x * 0.2 - 5, my + b.y * 0.2 - 5);
-      pCtx.lineTo(mx + b.x * 0.2 + 5, my + b.y * 0.2 + 5);
-      pCtx.fillStyle = '#fbbf24';
-      pCtx.fill();
-      
+      // 沿 O—H 键从 H 的 δ⁺ 端指向 O 的 δ⁻ 端。
+      const vx = b.x, vy = b.y + 10;
+      drawDipoleArrow(pCtx, cx + vx * 0.78, cy - 10 + vy * 0.78,
+        cx + vx * 0.32, cy - 10 + vy * 0.32);
+
       // H atom
       pCtx.beginPath();
       pCtx.arc(cx + b.x, cy + b.y, 18, 0, Math.PI * 2);
@@ -1208,23 +1218,11 @@ function drawPolar() {
     pCtx.font = '11px sans-serif';
     pCtx.fillText('δ⁻', cx, cy - 38);
     
-    // Net dipole
-    pCtx.beginPath();
-    pCtx.moveTo(cx, cy + 30);
-    pCtx.lineTo(cx, cy + 80);
-    pCtx.strokeStyle = '#fbbf24';
-    pCtx.lineWidth = 3;
-    pCtx.stroke();
-    pCtx.beginPath();
-    pCtx.moveTo(cx, cy + 80);
-    pCtx.lineTo(cx - 8, cy + 70);
-    pCtx.lineTo(cx + 8, cy + 70);
-    pCtx.fillStyle = '#fbbf24';
-    pCtx.fill();
-    pCtx.fillStyle = '#fbbf24';
-    pCtx.font = '12px sans-serif';
-    pCtx.fillText('偶极矩 μ', cx, cy + 100);
-    
+    // 合偶极按化学箭头约定从氢侧指向氧侧。
+    drawDipoleArrow(pCtx, cx, cy + 105, cx, cy + 45, 3);
+    pCtx.fillStyle = '#fbbf24'; pCtx.font = '12px sans-serif';
+    pCtx.fillText('合偶极 μ', cx, cy + 125);
+
   } else if (polarMode === 'co2') {
     // Linear nonpolar
     const bonds = [{ x: -80, y: 0 }, { x: 80, y: 0 }];
@@ -1239,23 +1237,10 @@ function drawPolar() {
       pCtx.lineWidth = 3;
       pCtx.stroke();
       
-      // Dipole arrows (opposite)
-      const mx = cx + b.x * 0.5;
-      pCtx.beginPath();
-      pCtx.moveTo(mx - 20, cy);
-      pCtx.lineTo(mx + 20, cy);
-      pCtx.strokeStyle = '#fbbf24';
-      pCtx.lineWidth = 2;
-      pCtx.stroke();
-      // Arrow pointing opposite directions
-      const dir = b.x > 0 ? -1 : 1;
-      pCtx.beginPath();
-      pCtx.moveTo(mx + dir * 20, cy);
-      pCtx.lineTo(mx + dir * 12, cy - 6);
-      pCtx.lineTo(mx + dir * 12, cy + 6);
-      pCtx.fillStyle = '#fbbf24';
-      pCtx.fill();
-      
+      // 每个 C=O 键的化学偶极箭头都指向对应的氧。
+      const dir = Math.sign(b.x);
+      drawDipoleArrow(pCtx, cx + dir * 24, cy, cx + dir * 58, cy);
+
       // O atom
       pCtx.beginPath();
       pCtx.arc(cx + b.x, cy, 20, 0, Math.PI * 2);
@@ -1302,23 +1287,11 @@ function drawPolar() {
     pCtx.lineWidth = 4;
     pCtx.stroke();
     
-    // Dipole arrow
-    pCtx.beginPath();
-    pCtx.moveTo(cx - 40, cy + 30);
-    pCtx.lineTo(cx + 40, cy + 30);
-    pCtx.strokeStyle = '#fbbf24';
-    pCtx.lineWidth = 3;
-    pCtx.stroke();
-    pCtx.beginPath();
-    pCtx.moveTo(cx - 40, cy + 30);
-    pCtx.lineTo(cx - 30, cy + 24);
-    pCtx.lineTo(cx - 30, cy + 36);
-    pCtx.fillStyle = '#fbbf24';
-    pCtx.fill();
-    pCtx.fillStyle = '#fbbf24';
-    pCtx.font = '12px sans-serif';
-    pCtx.fillText('μ', cx, cy + 55);
-    
+    // 氯的电负性更大：化学偶极箭头从 H 指向 Cl。
+    drawDipoleArrow(pCtx, cx - 40, cy + 38, cx + 40, cy + 38, 3);
+    pCtx.fillStyle = '#fbbf24'; pCtx.font = '12px sans-serif';
+    pCtx.fillText('μ', cx, cy + 65);
+
     // H
     pCtx.beginPath();
     pCtx.arc(cx - 60, cy, 22, 0, Math.PI * 2);

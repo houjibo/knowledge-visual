@@ -29,3 +29,17 @@ TBD - created by archiving change chemical-bond-accessible-learning. Update Purp
 #### Scenario: 查看极性判断
 - **WHEN** 学习者查看分子极性说明
 - **THEN** 页面说明偶极矩矢量和，而非单凭对称性做绝对判断
+
+### Requirement: 平面示意键角与标注一致
+水分子和 BF₃ 的构型图 SHALL 分别以约 104.5° 和 120° 绘制键角，并说明空间分子的二维投影局限。
+
+#### Scenario: 选择水和 BF₃
+- **WHEN** 学习者选择水或 BF₃ 构型
+- **THEN** 实际画布键线的夹角与标注一致
+
+### Requirement: 化学偶极箭头指向负电端
+极性图 SHALL 明确使用 δ⁺ 指向 δ⁻ 的化学箭头，水的键偶极与合偶极指向氧，CO₂ 两键分别指向氧，HCl 指向氯。
+
+#### Scenario: 查看水、二氧化碳和氯化氢
+- **WHEN** 学习者依次选择三个分子
+- **THEN** 实际画布中的箭头方向与各原子的部分电荷标注一致

@@ -9,7 +9,7 @@
 ## 已登记部分交互证据
 
 - [化学键与分子结构 · 互动可视化](../../chemistry/high/chemical-bond.html)
-  - 模式和分子键盘选择、六题进度及存储失败；二维图示和完整化学内容未全面验收。 [chemical-bond-learning.spec.js](../../tests/browser/chemical-bond-learning.spec.js)
+  - 模式和分子键盘选择、六题进度、存储失败、水与 BF₃ 键角及三种分子的化学偶极箭头；完整轨道与无障碍未验收。 [chemical-bond-learning.spec.js](../../tests/browser/chemical-bond-learning.spec.js)
 - [晶体结构 · 高中化学互动可视化](../../chemistry/high/crystal-structure.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [离子反应 · 高中化学互动可视化](../../chemistry/high/ionic-reactions.html)
