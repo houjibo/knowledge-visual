@@ -113,6 +113,7 @@
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [简单机械 · 小学科学互动可视化](../../science/simple-machines.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
+  - 杠杆力矩状态、实际杆方向和竖直吊线；理想动滑轮绕绳及条件；计算与完整物理模型未验收。 [simple-machines.spec.js](../../tests/browser/simple-machines.spec.js)
 - [沉与浮 · 小学科学互动可视化](../../science/sink-float.html)
   - 沉浮示意比例及部分测验、进度场景；不代表整页或完整科学内容验收。 [buoyancy-visualization.spec.js](../../tests/browser/buoyancy-visualization.spec.js)、[science-quiz-progress.spec.js](../../tests/browser/science-quiz-progress.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
 - [时间的测量 · 小学科学互动可视化](../../science/time-measurement.html)
