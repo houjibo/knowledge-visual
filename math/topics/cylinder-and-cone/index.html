@@ -427,7 +427,7 @@
         document.getElementById('unfold-info').textContent = '圆锥展开 = 1个扇形 + 1个圆';
         document.getElementById('unfold-explain-title').textContent = '📖 圆锥展开图';
         document.getElementById('unfold-explain-text').innerHTML =
-          '圆锥沿侧面剪开并展开：<br>• <strong>一个扇形</strong> = 侧面<br>• <strong>一个圆形</strong> = 底面<br>• 扇形的<strong>半径</strong> = 母线长 (l)<br>• 扇形的<strong>弧长</strong> = 底面周长 (2πr)<br>• 圆锥<strong>没有侧面积公式</strong>（小学不要求）';
+          '圆锥沿侧面剪开并展开：<br>• <strong>一个扇形</strong> = 侧面<br>• <strong>一个圆形</strong> = 底面<br>• 扇形的<strong>半径</strong> = 母线长 (l)<br>• 扇形的<strong>弧长</strong> = 底面周长 (2πr)<br>• 圆锥<strong>侧面积 = πrl</strong>（r 为底面半径，l 为母线长）';
       }
     }
 
@@ -445,7 +445,7 @@
       const type = randInt(0, 3);
       const r = randInt(1, 8);
       const h = randInt(2, 15);
-      const pi = Math.PI;
+      const pi = 3.14;
       let question = '', hint = '', answer = 0, unit = '', options = [];
 
       if (type === 0) {
@@ -474,20 +474,15 @@
         unit = 'cm²';
       }
 
-      // 生成选项
-      options.push(answer);
-      while (options.length < 4) {
-        let wrong;
-        const offset = randInt(1, Math.max(3, Math.floor(answer * 0.3)));
-        wrong = round2(answer + (Math.random() > 0.5 ? offset : -offset));
-        if (wrong <= 0) wrong = round2(answer + offset);
-        if (!options.includes(wrong)) options.push(wrong);
-      }
+      // 从有限的正数候选中选取不同干扰项，避免随机重复导致卡住。
+      const candidates = Array.from({length: 10}, (_, i) => round2(answer + i + 1));
+      candidates.sort(() => Math.random() - 0.5);
+      options = [answer, ...candidates.slice(0, 3)];
       // 打乱
       options.sort(() => Math.random() - 0.5);
 
       document.getElementById('calc-problem').innerHTML = question;
-      document.getElementById('calc-hint').textContent = hint;
+      document.getElementById('calc-hint').textContent = hint + '（π取3.14，结果保留两位小数）';
 
       // 画示意图
       const svgArea = document.getElementById('calc-svg-area');
@@ -591,8 +586,12 @@
 
       // 去重 & 确保4个选项
       opts = [...new Set(opts.map(o => typeof o === 'number' ? round2(o) : o))];
-      while (opts.length < 4) opts.push(round2(answer + randInt(1,10)));
+      for (let offset = 1; opts.length < 4; offset++) {
+        const candidate = round2(answer + offset);
+        if (!opts.includes(candidate)) opts.push(candidate);
+      }
       opts = opts.slice(0, 4);
+      q = q.replace('（π取3.14）', '（π取3.14，结果保留两位小数）');
       opts.sort(() => Math.random() - 0.5);
 
       return { q, opts, answer, isText: false };
@@ -620,8 +619,8 @@
       q.opts.forEach(opt => {
         const btn = document.createElement('button');
         btn.className = 'challenge-opt';
-        btn.textContent = q.isText ? opt : (round2(opt) + (q.q.includes('面积') ? (q.q.includes('体积') ? '' : ' cm²') : (q.q.includes('体积') ? ' cm³' : '')));
-        btn.textContent = opt;
+        const unit = q.q.includes('体积') ? ' cm³' : q.q.includes('面积') ? ' cm²' : '';
+        btn.textContent = q.isText ? opt : round2(opt) + unit;
         btn.onclick = () => checkCh(btn, opt, q.answer, q.isText);
         optContainer.appendChild(btn);
       });

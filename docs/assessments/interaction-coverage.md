@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：46；尚未登记：270。
+主题总数：316；已登记部分交互证据：47；尚未登记：269。
 
 ## 已登记部分交互证据
 
@@ -23,6 +23,8 @@
   - 综合练习逐题得分、重试及完成；未覆盖平衡和相图模拟。 [equilibrium-quiz.spec.js](../../tests/browser/equilibrium-quiz.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
   - 从首页进入加法并获得练习正确、错误反馈；未覆盖全部学习模式。 [learning-paths.spec.js](../../tests/browser/learning-paths.spec.js)
+- [圆柱与圆锥](../../math/topics/cylinder-and-cone/index.html)
+  - 圆锥展开公式、计算题随机边界及挑战数值题部分场景；未覆盖所有互动或完整教学内容。 [cylinder-cone.spec.js](../../tests/browser/cylinder-cone.spec.js)
 - [有余数的除法](../../math/topics/division-with-remainder/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [除法](../../math/topics/division/index.html)
@@ -215,7 +217,6 @@
 - [组合图形](../../math/topics/composite-shapes/index.html)
 - [复式统计图](../../math/topics/compound-charts/index.html)
 - [复式统计表](../../math/topics/compound-statistical-tables/index.html)
-- [圆柱与圆锥](../../math/topics/cylinder-and-cone/index.html)
 - [圆柱和圆锥](../../math/topics/cylinder-cone/index.html)
 - [数据收集与整理](../../math/topics/data-collection/index.html)
 - [小数加减法](../../math/topics/decimal-addition-subtraction/index.html)
