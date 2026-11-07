@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：104；含内联 while 的页面：75。同一页面可能出现在两类中。
+含候选 div 控件的页面：104；含内联 while 的页面：74。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -138,7 +138,6 @@
 - [math/topics/decimal-addition-subtraction/index.html](../../math/topics/decimal-addition-subtraction/index.html)：423 行、462 行、673 行、698 行
 - [math/topics/decimal-multiplication-division/index.html](../../math/topics/decimal-multiplication-division/index.html)：579 行
 - [math/topics/direct-inverse-proportion/index.html](../../math/topics/direct-inverse-proportion/index.html)：552 行
-- [math/topics/estimation/index.html](../../math/topics/estimation/index.html)：285 行、290 行、295 行、325 行、425 行、516 行、547 行、563 行
 - [math/topics/figure-movement/index.html](../../math/topics/figure-movement/index.html)：513 行
 - [math/topics/fraction-multiplication-division/index.html](../../math/topics/fraction-multiplication-division/index.html)：300 行、532 行、539 行
 - [math/topics/fraction-operations/index.html](../../math/topics/fraction-operations/index.html)：365 行

@@ -1,0 +1,20 @@
+# bounded-estimation-questions Specification
+
+## Purpose
+TBD - created by archiving change bounded-estimation-questions. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 估算题生成有限且选项唯一
+四舍五入、估算和生活题 SHALL 使用有限候选生成四个不重复选项，不依赖随机值发生变化才能结束。
+
+#### Scenario: 剩余金额估算为零
+- **WHEN** 生活题的估算剩余金额为 0 元
+- **THEN** 页面正常完成初始化并显示四个互不相同的选项，包含 0 元
+
+### Requirement: 估算规则可判断
+题目 SHALL 说明使用的取整规则，金额是否足够 SHALL 根据实际价格判断。
+
+#### Scenario: 价格取整后判断余额
+- **WHEN** 学习者回答购物题
+- **THEN** 正确选项同时符合指定取整规则和实际余额判断

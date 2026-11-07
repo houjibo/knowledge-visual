@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：68；尚未登记：248。
+主题总数：316；已登记部分交互证据：69；尚未登记：247。
 
 ## 已登记部分交互证据
 
@@ -57,6 +57,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [认识平均分](../../math/topics/equal-sharing/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
+- [估算](../../math/topics/estimation/index.html)
+  - 固定随机边界下四类生活题、取整与选项唯一性，以及固定种子 500 轮生成；进度存储和全部教学效果未全面验收。 [estimation-bounded.spec.js](../../tests/browser/estimation-bounded.spec.js)
 - [因数与倍数](../../math/topics/factors-and-multiples/index.html)
   - 六类闯关题目固定随机边界、重复提交及十题完成与刷新；未覆盖探索、数轴和筛法。 [factor-multiple-challenge.spec.js](../../tests/browser/factor-multiple-challenge.spec.js)
 - [分数加减法](../../math/topics/fraction-operations/index.html)
@@ -274,7 +276,6 @@
 - [数字编码](../../math/topics/digital-codes/index.html)
 - [正反比例](../../math/topics/direct-inverse-proportion/index.html)
 - [简易方程](../../math/topics/equations/index.html)
-- [估算](../../math/topics/estimation/index.html)
 - [图形的运动（平移和旋转）](../../math/topics/figure-movement/index.html)
 - [找次品](../../math/topics/finding-defective/index.html)
 - [分数乘除法](../../math/topics/fraction-multiplication-division/index.html)
