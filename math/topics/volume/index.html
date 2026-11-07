@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>体积与容积</title>
   <link rel="stylesheet" href="../../assets/css/common.css">
   <style>
@@ -26,6 +26,7 @@
     .explore-area { text-align: center; padding: 24px 16px; }
     .explore-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 20px 0; }
     .explore-box { background: white; border-radius: 16px; padding: 16px; width: 160px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .explore-box.counted { outline: 3px solid #00897B; background: #e0f2f1; }
     .explore-box .box-label { font-size: 14px; font-weight: 600; color: #6E6E73; margin-bottom: 8px; }
     .cube-grid { display: inline-grid; gap: 2px; margin: 8px auto; }
     .cube-cell { width: 24px; height: 24px; border-radius: 4px; transition: all 0.3s ease; }
@@ -148,10 +149,10 @@
         </div>
 
         <div class="explore-controls">
-          <button class="explore-btn active" data-shape="3x2x2">3×2×2</button>
-          <button class="explore-btn" data-shape="4x3x1">4×3×1</button>
-          <button class="explore-btn" data-shape="5x2x3">5×2×3</button>
-          <button class="explore-btn" data-shape="free">🎲 自由</button>
+          <button class="explore-btn active" data-shape="3x2x2" aria-pressed="true">3×2×2</button>
+          <button class="explore-btn" data-shape="4x3x1" aria-pressed="false">4×3×1</button>
+          <button class="explore-btn" data-shape="5x2x3" aria-pressed="false">5×2×3</button>
+          <button class="explore-btn" data-shape="free" aria-pressed="false">🎲 自由</button>
         </div>
 
         <div id="explore-free-controls" style="display:none;margin:12px 0;">
@@ -174,6 +175,11 @@
           </div>
         </div>
 
+        <div class="explore-controls" aria-label="逐层计数">
+          <button class="explore-btn" id="layer-next">计入下一层</button>
+          <button class="explore-btn" id="layer-reset">重新计数</button>
+        </div>
+        <p id="layer-status" role="status" aria-live="polite"></p>
         <div class="explore-container" id="explore-display"></div>
 
         <div class="explore-result" id="explore-result">
@@ -288,7 +294,26 @@
       '5x2x3': { l: 5, w: 2, h: 3 }
     };
 
+    let currentShape = {l: 3, w: 2, h: 2}, countedLayers = 0;
+    function updateLayerCount() {
+      const {l, w, h} = currentShape;
+      document.querySelectorAll('#explore-display .explore-box').forEach(box => {
+        const counted = Number(box.dataset.layer) <= countedLayers;
+        box.classList.toggle('counted', counted);
+        box.querySelector('.box-label').textContent = `第 ${box.dataset.layer} 层${counted ? '（已计入）' : ''}`;
+      });
+      document.getElementById('layer-status').textContent = `已计入 ${countedLayers} / ${h} 层：${l} × ${w} × ${countedLayers} = ${l * w * countedLayers} cm³`;
+      document.getElementById('layer-next').disabled = countedLayers === h;
+    }
+    document.getElementById('layer-next').addEventListener('click', () => {
+      if (countedLayers < currentShape.h) countedLayers++;
+      updateLayerCount();
+    });
+    document.getElementById('layer-reset').addEventListener('click', () => { countedLayers = 0; updateLayerCount(); });
+
     function renderCubes(l, w, h) {
+      currentShape = {l, w, h};
+      countedLayers = 0;
       const display = document.getElementById('explore-display');
       display.innerHTML = '';
 
@@ -296,6 +321,7 @@
       for (let layer = h - 1; layer >= 0; layer--) {
         const box = document.createElement('div');
         box.className = 'explore-box';
+        box.dataset.layer = layer + 1;
         box.innerHTML = `<div class="box-label">第 ${layer + 1} 层</div>`;
 
         const grid = document.createElement('div');
@@ -306,7 +332,6 @@
           for (let c = 0; c < l; c++) {
             const cell = document.createElement('div');
             cell.className = 'cube-cell filled';
-            cell.style.animationDelay = `${(layer * w * l + r * l + c) * 30}ms`;
             grid.appendChild(cell);
           }
         }
@@ -319,12 +344,14 @@
       const total = l * w * h;
       document.getElementById('explore-result').innerHTML =
         `体积 = ${l} × ${w} × ${h} = <b>${total}</b> cm³`;
+      updateLayerCount();
     }
 
-    document.querySelectorAll('.explore-btn').forEach(btn => {
+    document.querySelectorAll('.explore-btn[data-shape]').forEach(btn => {
       btn.addEventListener('click', function() {
-        document.querySelectorAll('.explore-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.explore-btn[data-shape]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
         this.classList.add('active');
+        this.setAttribute('aria-pressed', 'true');
 
         const shape = this.dataset.shape;
         const freeCtrl = document.getElementById('explore-free-controls');
