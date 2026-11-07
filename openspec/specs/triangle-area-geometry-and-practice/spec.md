@@ -1,0 +1,27 @@
+# triangle-area-geometry-and-practice Specification
+
+## Purpose
+TBD - created by archiving change triangle-area-geometry-and-practice. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 拼接图保留原三角形
+页面 SHALL 用两个全等三角形构造与原三角形同底等高的平行四边形，并在控件范围内显示完整图形。
+
+#### Scenario: 改变顶点和尺寸
+- **WHEN** 学习者改变底、高和顶点后切换拼图
+- **THEN** 平行四边形沿对角线分出的一个三角形与切换前相同，且图形在视窗内
+
+### Requirement: 面积练习选项唯一且按题统计
+面积计算、逆运算和判断题 SHALL 提供唯一选项，面积比较题 SHALL 提供三种不同关系，每题最多统计一次。
+
+#### Scenario: 重复提交
+- **WHEN** 学习者回答一道题后重复触发选项
+- **THEN** 正确数和总题数不会再次增加，反馈保留至主动换题
+
+### Requirement: 生活题反馈给出计算依据
+生活题答错时 SHALL 显示底、高代入面积公式的结果与面积单位。
+
+#### Scenario: 输入错误答案
+- **WHEN** 学习者提交错误面积
+- **THEN** 页面显示底乘高除以二的计算式和正确面积单位
