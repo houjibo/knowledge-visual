@@ -297,7 +297,7 @@
           <div class="speed-progress" id="speed-progress"></div>
           <div class="speed-problem" id="speed-problem">3 + 5 = ?</div>
           <div class="speed-input-area">
-            <input type="number" class="speed-input" id="speed-input" placeholder="?" inputmode="numeric" autocomplete="off">
+            <input type="number" class="speed-input" id="speed-input" placeholder="?" inputmode="numeric" autocomplete="off" aria-label="口算答案">
             <button class="speed-submit" id="speed-submit">确定</button>
           </div>
           <div class="feedback" id="speed-feedback"></div>
@@ -409,20 +409,17 @@
     }
 
     function genWrongAnswers(correct, count) {
-      const wrongs = new Set();
-      while (wrongs.size < count) {
-        let w;
-        const offset = randInt(1, Math.max(5, Math.abs(correct) + 3));
-        w = correct + (Math.random() > 0.5 ? offset : -offset);
-        if (w !== correct && w >= 0) wrongs.add(w);
+      const pool = [];
+      for (let n = Math.max(0, correct - count); n <= correct + count; n++) {
+        if (n !== correct) pool.push(n);
       }
-      return Array.from(wrongs).slice(0, count);
+      return shuffle(pool).slice(0, count);
     }
 
     // ============================================================
     // === 模式2: 限时速算 ===
     // ============================================================
-    let speedState = { op: 'add', timer: null, timeLeft: 60, correct: 0, wrong: 0, current: null, locked: false, total: 0 };
+    let speedState = { op: 'add', timer: null, nextTimer: null, timeLeft: 60, correct: 0, wrong: 0, current: null, locked: false, total: 0, results: [], running: false };
 
     document.querySelectorAll('.setting-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -435,7 +432,10 @@
     document.getElementById('speed-start').addEventListener('click', startSpeedGame);
 
     function startSpeedGame() {
+      clearInterval(speedState.timer);
+      clearTimeout(speedState.nextTimer);
       speedState.timeLeft = 60; speedState.correct = 0; speedState.wrong = 0; speedState.locked = false; speedState.total = 0;
+      speedState.results = []; speedState.running = true;
       document.getElementById('speed-setup').style.display = 'none';
       document.getElementById('speed-result').style.display = 'none';
       document.getElementById('speed-game').style.display = 'block';
@@ -443,6 +443,7 @@
       document.getElementById('speed-wrong').textContent = '0';
       document.getElementById('speed-feedback').textContent = '';
       document.getElementById('speed-timer').classList.remove('warning');
+      document.getElementById('speed-timer').textContent = '60';
       updateSpeedProgress();
       nextSpeedProblem();
       document.getElementById('speed-input').value = '';
@@ -458,6 +459,7 @@
     }
 
     function nextSpeedProblem() {
+      if (!speedState.running) return;
       const diff = speedState.correct >= 15 ? 3 : speedState.correct >= 8 ? 2 : 1;
       speedState.current = genProblem(speedState.op, diff);
       document.getElementById('speed-problem').textContent = speedState.current.text;
@@ -473,42 +475,52 @@
     function updateSpeedProgress() {
       const container = document.getElementById('speed-progress');
       container.innerHTML = '';
-      const show = Math.min(speedState.total, 20);
-      for (let i = 0; i < Math.max(show, 10); i++) {
+      const results = speedState.results.slice(-20);
+      for (let i = 0; i < Math.max(results.length + (results.length < 20 ? 1 : 0), 10); i++) {
         const dot = document.createElement('div');
         dot.className = 'speed-dot';
-        if (i < speedState.total) {
-          // We'll track results in an array
+        if (i < results.length) {
+          dot.classList.add(results[i] ? 'done' : 'wrong-dot');
+          dot.setAttribute('role', 'img');
+          dot.setAttribute('aria-label', results[i] ? '答对' : '答错');
+        } else if (i === results.length && speedState.running) {
+          dot.classList.add('current');
+          dot.setAttribute('role', 'img');
+          dot.setAttribute('aria-label', '当前题');
         }
         container.appendChild(dot);
       }
     }
 
     function handleSpeedSubmit() {
-      if (speedState.locked || !speedState.current) return;
+      if (!speedState.running || speedState.locked || !speedState.current) return;
       const input = document.getElementById('speed-input');
-      const val = parseInt(input.value);
-      if (isNaN(val)) return;
+      const raw = input.value.trim();
+      if (!/^\d+$/.test(raw)) return;
+      const val = Number(raw);
 
       speedState.locked = true;
       speedState.total++;
       const fb = document.getElementById('speed-feedback');
 
       if (val === speedState.current.answer) {
+        speedState.results.push(true);
         speedState.correct++;
         input.classList.add('correct');
         fb.textContent = '✅ 正确！';
         fb.className = 'feedback correct-fb';
         document.getElementById('speed-correct').textContent = speedState.correct;
-        setTimeout(nextSpeedProblem, 800);
+        speedState.nextTimer = setTimeout(nextSpeedProblem, 800);
       } else {
+        speedState.results.push(false);
         speedState.wrong++;
         input.classList.add('wrong');
         fb.textContent = `❌ 应该是 ${speedState.current.answer}`;
         fb.className = 'feedback wrong-fb';
         document.getElementById('speed-wrong').textContent = speedState.wrong;
-        setTimeout(nextSpeedProblem, 1500);
+        speedState.nextTimer = setTimeout(nextSpeedProblem, 1500);
       }
+      updateSpeedProgress();
     }
 
     document.getElementById('speed-submit').addEventListener('click', handleSpeedSubmit);
@@ -518,6 +530,10 @@
 
     function endSpeedGame() {
       clearInterval(speedState.timer);
+      clearTimeout(speedState.nextTimer);
+      speedState.running = false;
+      speedState.current = null;
+      speedState.locked = true;
       document.getElementById('speed-game').style.display = 'none';
       const result = document.getElementById('speed-result');
       result.style.display = 'block';
@@ -749,7 +765,7 @@
         fb.textContent = `❌ 正确答案是 ${challengeState.current.answer}`;
         fb.className = 'feedback wrong-fb';
         document.querySelectorAll('.challenge-opt').forEach(b => {
-          if (b.textContent === challengeState.current.answer) b.classList.add('correct');
+          if (b.textContent === String(challengeState.current.answer)) b.classList.add('correct');
         });
 
         if (challengeState.hp <= 0) {
