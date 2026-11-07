@@ -170,6 +170,7 @@
 - [激光原理 · 受激辐射与粒子数反转 · 互动可视化](../../physics/uni/laser-physics.html)
   - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
   - 五个大学物理同构测验键盘答题、修改答案、计分及保存异常重试；不代表教学内容或其他交互已全面核验。 [university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)
+  - 简化三能级反转、阈值目标可达及键盘滑杆；不表示真实激光输出或全部知识已核验。 [laser-population-inversion-model.spec.js](../../tests/browser/laser-population-inversion-model.spec.js)、[university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)
 - [相变与临界现象 · 大学物理互动可视化](../../physics/uni/phase-transitions.html)
   - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
   - 五个大学物理同构测验键盘答题、修改答案、计分及保存异常重试；不代表教学内容或其他交互已全面核验。 [university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)

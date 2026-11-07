@@ -115,32 +115,33 @@
           玻尔频率条件：<b>hν = E₂ − E₁</b><br/>
           受激辐射率：<b>W₂₁ = B₂₁·ρ(ν)</b><br/>
           反转条件：<b>N₂ &gt; N₁</b>（粒子数反转）<br/>
-          阈值增益：<b>g ≥ g_th ≈ −ln(R₁R₂) / (2L)</b>
+          理想腔阈值：<b>g ≥ g_th = −ln(R₁R₂) / (2L)</b><br/>示意稳态：<b>N₂ = 100Wτ₂/(1+Wτ₂)</b>
         </div>
+        <p>简化三能级示意：泵浦到更高能级后快速弛豫到 E₂，忽略泵浦能级占据、受激辐射导致的增益饱和及其他腔损耗。粒子数是总数为 100 的相对份数，光束只表示阈值判断，不计算输出功率。</p>
         <div class="slider-row">
-          <label>泵浦功率 P</label>
+          <label for="pump">泵浦档位</label>
           <input type="range" id="pump" min="0" max="100" step="1" value="30" />
           <span class="val" id="pumpv">30 %</span>
         </div>
         <div class="slider-row">
-          <label>上能级寿命 τ₂</label>
+          <label for="tau">上能级寿命 τ₂</label>
           <input type="range" id="tau" min="1" max="20" step="1" value="10" />
           <span class="val" id="tauv">10 ms</span>
         </div>
         <div class="slider-row">
-          <label>镜面反射率 R</label>
+          <label for="refl">镜面反射率 R</label>
           <input type="range" id="refl" min="50" max="99" step="1" value="90" />
           <span class="val" id="reflv">90 %</span>
         </div>
         <div class="info-grid">
           <div>N₂（上能级）= <b id="calc-n2">35</b></div>
           <div>N₁（下能级）= <b id="calc-n1">65</b></div>
-          <div>反转密度 ΔN = <b id="calc-dn">−30</b></div>
+          <div>粒子数差 ΔN = <b id="calc-dn">−30</b></div>
           <div>状态：<b id="calc-state">未反转</b></div>
         </div>
         <div class="concept-card a">
           <div class="title">🔵 受激吸收</div>
-          电子吸收光子能量 hν，从低能级 E₁ 跃迁到高能级 E₂。是激光泵浦的第一步。
+          电子可以吸收光子并从低能级跃迁到高能级。此示意假设泵浦先激发到更高能级，再快速弛豫至 E₂；泵浦方式也可以有其他形式。
         </div>
         <div class="concept-card s">
           <div class="title">🟡 自发辐射</div>
@@ -169,25 +170,25 @@
         <div class="mode-switch">
           <button class="mode-btn active" data-target="invert">实现粒子数反转</button>
           <button class="mode-btn" data-target="threshold">超过激光阈值</button>
-          <button class="mode-btn" data-target="strong">强激光输出</button>
+          <button class="mode-btn" data-target="strong">增益达到两倍阈值</button>
         </div>
         <div class="slider-row">
-          <label>泵浦功率 P</label>
+          <label for="ppump">练习泵浦档位</label>
           <input type="range" id="ppump" min="0" max="100" step="1" value="20" />
           <span class="val" id="ppumpv">20 %</span>
         </div>
         <div class="slider-row">
-          <label>上能级寿命 τ₂</label>
+          <label for="ptau">练习上能级寿命 τ₂</label>
           <input type="range" id="ptau" min="1" max="20" step="1" value="6" />
           <span class="val" id="ptauv">6 ms</span>
         </div>
         <div class="slider-row">
-          <label>镜面反射率 R</label>
+          <label for="prefl">练习镜面反射率 R</label>
           <input type="range" id="prefl" min="50" max="99" step="1" value="80" />
           <span class="val" id="preflv">80 %</span>
         </div>
         <div class="info-grid">
-          <div>反转密度 ΔN = <b id="p-dn">−40</b></div>
+          <div>粒子数差 ΔN = <b id="p-dn">−40</b></div>
           <div>增益 g = <b id="p-g">0.10</b> /m</div>
           <div>阈值 g_th = <b id="p-gth">0.22</b> /m</div>
           <div>状态：<b id="p-status">未达到</b></div>
@@ -254,7 +255,7 @@ tabs.forEach(t => {
 
 /* ============================================================
  * 物理模型：三能级系统简化稳态
- * 泵浦速率 W ∝ P；上能级寿命 τ₂；N₂ = N·Wτ₂/(1+2Wτ₂)
+ * 泵浦速率 W ∝ P；上能级寿命 τ₂；N₂ = N·Wτ₂/(1+Wτ₂)，忽略腔内受激跃迁
  * 增益 g = σ·ΔN；阈值 g_th ∝ −ln(R₁·R₂)
  * ============================================================ */
 const N_TOTAL = 100;
@@ -262,7 +263,7 @@ function physics(pumpPct, tauMs, reflPct) {
   const W = pumpPct / 100 * 0.5;           // 归一化泵浦速率 /ms
   const tau = tauMs;                        // ms
   const wTau = W * tau;
-  const N2 = Math.round(N_TOTAL * wTau / (1 + 2 * wTau));
+  const N2 = N_TOTAL * wTau / (1 + wTau);
   const N1 = N_TOTAL - N2;
   const dN = N2 - N1;
   const sigma = 0.01;                       // 受激截面（任意单位）
@@ -286,10 +287,10 @@ function updLearn() {
   document.getElementById('tauv').textContent = tauEl.value + ' ms';
   document.getElementById('reflv').textContent = reflEl.value + ' %';
   const p = physics(+pumpEl.value, +tauEl.value, +reflEl.value);
-  document.getElementById('calc-n2').textContent = p.N2;
-  document.getElementById('calc-n1').textContent = p.N1;
-  document.getElementById('calc-dn').textContent = (p.dN >= 0 ? '+' : '') + p.dN;
-  const st = p.lasing ? '✨ 激光输出' : (p.inverted ? '已反转（未达阈值）' : '未反转');
+  document.getElementById('calc-n2').textContent = p.N2.toFixed(1);
+  document.getElementById('calc-n1').textContent = p.N1.toFixed(1);
+  document.getElementById('calc-dn').textContent = (p.dN >= 0 ? '+' : '') + p.dN.toFixed(1);
+  const st = p.lasing ? '✨ 模型超过阈值' : (p.inverted ? '已反转（未达阈值）' : '未反转');
   const el = document.getElementById('calc-state');
   el.textContent = st;
   el.style.color = p.lasing ? '#10b981' : (p.inverted ? '#fbbf24' : '#fda4af');
@@ -309,7 +310,7 @@ const targetDesc = {
                hint: '增大泵浦 P 与上能级寿命 τ₂，让 N₂ > N₁。' },
   threshold: { text: '超过激光阈值',   check: p => p.lasing,
                hint: '在反转基础上，提高镜面反射率 R 可降低阈值 g_th。' },
-  strong:    { text: '强激光输出',     check: p => p.lasing && p.g >= 2 * p.gth,
+  strong:    { text: '增益达到两倍阈值',     check: p => p.lasing && p.g >= 2 * p.gth,
                hint: '让增益 g 达到阈值 g_th 的 2 倍以上。需要 P、τ、R 都很优秀。' }
 };
 document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -326,11 +327,11 @@ function updPractice() {
   document.getElementById('ptauv').textContent = ptau.value + ' ms';
   document.getElementById('preflv').textContent = prefl.value + ' %';
   const p = physics(+ppump.value, +ptau.value, +prefl.value);
-  document.getElementById('p-dn').textContent = (p.dN >= 0 ? '+' : '') + p.dN;
+  document.getElementById('p-dn').textContent = (p.dN >= 0 ? '+' : '') + p.dN.toFixed(1);
   document.getElementById('p-g').textContent = p.g.toFixed(2);
   document.getElementById('p-gth').textContent = p.gth.toFixed(2);
   const ok = targetDesc[practiceTarget].check(p);
-  const stateLabel = p.lasing ? '激光输出 ✨' : (p.inverted ? '已反转' : '未反转');
+  const stateLabel = p.lasing ? '模型超过阈值 ✨' : (p.inverted ? '已反转' : '未反转');
   const el = document.getElementById('p-status');
   el.textContent = ok ? `✅ ${stateLabel}` : stateLabel;
   el.style.color = ok ? '#10b981' : '#fda4af';
@@ -360,7 +361,7 @@ function drawScene(ctx, W, H, pumpPct, tauMs, reflPct) {
     ctx.fillText(l.name, lx, l.y - 8);
     // 粒子点
     const dotsPerRow = 12;
-    for (let i = 0; i < l.N; i++) {
+    for (let i = 0; i < Math.round(l.N); i++) {
       const row = Math.floor(i / dotsPerRow);
       const col = i % dotsPerRow;
       const dx = lx + 10 + col * (lw - 20) / dotsPerRow;
@@ -371,7 +372,7 @@ function drawScene(ctx, W, H, pumpPct, tauMs, reflPct) {
       ctx.fill();
     }
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.fillText(`N = ${l.N}`, lx + lw - 60, l.y + 18);
+    ctx.fillText(`N ≈ ${l.N.toFixed(1)}`, lx + lw - 60, l.y + 18);
   });
 
   // 跃迁箭头
@@ -392,7 +393,7 @@ function drawScene(ctx, W, H, pumpPct, tauMs, reflPct) {
   ctx.lineTo(lx + 35, levels[0].y + 12);
   ctx.closePath(); ctx.fill();
   ctx.font = '11px sans-serif';
-  ctx.fillText('泵浦吸收', lx + 38, (levels[0].y + levels[1].y) / 2);
+  ctx.fillText('泵浦与快速弛豫（示意）', lx + 38, (levels[0].y + levels[1].y) / 2);
 
   // 受激辐射 — 向下
   if (p.inverted) {
@@ -455,17 +456,17 @@ function drawScene(ctx, W, H, pumpPct, tauMs, reflPct) {
     ctx.fillRect(cx + cw, cy + ch / 2 - 8, 60, 16);
     ctx.fillStyle = '#fda4af';
     ctx.font = 'bold 13px sans-serif';
-    ctx.fillText('激光输出', cx + cw + 2, cy + ch / 2 - 14);
+    ctx.fillText('输出示意', cx + cw + 2, cy + ch / 2 - 14);
   }
 
   // 状态文本
   ctx.fillStyle = p.lasing ? '#10b981' : (p.inverted ? '#fbbf24' : '#94a3b8');
   ctx.font = 'bold 15px sans-serif';
-  const statusTxt = p.lasing ? '✨ 激光振荡中' : (p.inverted ? '已反转，未达阈值' : '未反转');
+  const statusTxt = p.lasing ? '✨ 模型超过阈值' : (p.inverted ? '已反转，未达阈值' : '未反转');
   ctx.fillText(`状态：${statusTxt}`, 30, H - 50);
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.font = '12px sans-serif';
-  ctx.fillText(`ΔN = ${p.dN >= 0 ? '+' : ''}${p.dN} · g = ${p.g.toFixed(2)}/m · g_th = ${p.gth.toFixed(2)}/m`, 30, H - 30);
+  ctx.fillText(`ΔN = ${p.dN >= 0 ? '+' : ''}${p.dN.toFixed(1)} · g = ${p.g.toFixed(2)}/m · g_th = ${p.gth.toFixed(2)}/m`, 30, H - 30);
 }
 
 const learnCtx = document.getElementById('learnCanvas').getContext('2d');
@@ -512,7 +513,7 @@ const quizData = [
     q: '4️⃣ 下列哪项不是激光的典型特性？',
     opts: ['单色性好', '方向性好', '相干性高', '发散角大'],
     ans: 3,
-    fb: '激光发散角极小（毫弧度级），这正是其方向性好的体现。其它三项均为激光特性。'
+    fb: '激光通常具有较好的方向性，但发散角因光源和光学系统而异。其他三项是常见特性。'
   }
 ];
 let quizIdx = 0;
