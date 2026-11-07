@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：87；含内联 while 的页面：45。同一页面可能出现在两类中。
+含候选 div 控件的页面：82；含内联 while 的页面：45。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -35,13 +35,8 @@
 - [chemistry/uni/quantum-chemistry.html](../../chemistry/uni/quantum-chemistry.html)：97 行（tab）、98 行（tab）、99 行（tab）、100 行（tab）
 - [chemistry/uni/stereochemistry.html](../../chemistry/uni/stereochemistry.html)：94 行（tab）、95 行（tab）、96 行（tab）、97 行（tab）、125 行（mode-btn）、126 行（mode-btn）、127 行（mode-btn）、160 行（mode-btn）、161 行（mode-btn）、162 行（mode-btn）、195 行（mode-btn）、196 行（mode-btn）、197 行（mode-btn）、198 行（mode-btn）
 - [chemistry/uni/thermodynamics.html](../../chemistry/uni/thermodynamics.html)：97 行（tab）、98 行（tab）、99 行（tab）、100 行（tab）、163 行（mode-btn）、164 行（mode-btn）、165 行（mode-btn）、166 行（mode-btn）
-- [math/high/complex-numbers.html](../../math/high/complex-numbers.html)：192 行（tab）、193 行（tab）、194 行（tab）
-- [math/high/conic-sections.html](../../math/high/conic-sections.html)：68 行（tab）、69 行（tab）、70 行（tab）、71 行（tab）、72 行（tab）、91 行（mode-btn）、92 行（mode-btn）、93 行（mode-btn）
+- [math/high/conic-sections.html](../../math/high/conic-sections.html)：93 行（mode-btn）、94 行（mode-btn）、95 行（mode-btn）
 - [math/high/counting.html](../../math/high/counting.html)：368 行（tab）、369 行（tab）、370 行（tab）、371 行（tab）、372 行（tab）
-- [math/high/derivative.html](../../math/high/derivative.html)：72 行（tab）、73 行（tab）、74 行（tab）、75 行（tab）
-- [math/high/function.html](../../math/high/function.html)：281 行（tab）、282 行（tab）、283 行（tab）、284 行（tab）
-- [math/high/inequality.html](../../math/high/inequality.html)：74 行（tab）、75 行（tab）、76 行（tab）、77 行（tab）
-- [math/high/sets.html](../../math/high/sets.html)：250 行（tab）、251 行（tab）、252 行（tab）、253 行（tab）
 - [math/high/solid-geometry.html](../../math/high/solid-geometry.html)：129 行（tab）、130 行（tab）、131 行（tab）、132 行（tab）
 - [math/high/statistics.html](../../math/high/statistics.html)：309 行（tab）、310 行（tab）、311 行（tab）、312 行（tab）
 - [math/middle/circle.html](../../math/middle/circle.html)：95 行（tab）、96 行（tab）、97 行（tab）、98 行（tab）
