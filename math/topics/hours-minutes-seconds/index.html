@@ -180,7 +180,7 @@
     <!-- 模式1: 认识秒针 -->
     <div class="mode-content active" id="mode-explore">
       <div class="clock-area">
-        <p class="time-hint">拖动滑块，观察时针、分针、秒针的变化</p>
+        <p class="time-hint">使用按钮推进时间，观察时针、分针、秒针的变化；走动模式以5倍速度演示。</p>
         <svg class="clock-svg" viewBox="0 0 200 200" id="explore-clock">
           <circle class="clock-face" cx="100" cy="100" r="90"/>
           <!-- 刻度 -->
@@ -278,6 +278,7 @@
         <div class="challenge-problem" id="challenge-problem"></div>
         <div class="challenge-options" id="challenge-options"></div>
         <div class="challenge-feedback" id="challenge-feedback"></div>
+        <button class="convert-check" id="challenge-next" type="button">👉 下一题</button>
       </div>
     </div>
   </div>
@@ -415,6 +416,7 @@
     });
     document.getElementById('exp-add1m').addEventListener('click', function() {
       expM++; if (expM >= 60) { expM = 0; expH++; }
+      if (expH >= 24) expH = 0;
       updateExploreClock();
     });
     document.getElementById('exp-add1h').addEventListener('click', function() {
@@ -436,23 +438,15 @@
       { from: '分秒', to: '秒', factor: null, genMin: 1, genMax: 5 }, // 特殊：X分Y秒=？秒
     ];
 
-    let convertAnswer = 0;
+    let convertAnswer = 0, convertAnswered = false;
 
     function genConvert() {
       const type = Random.pick(convertTypes);
       const titleEl = document.getElementById('convert-title');
-      const fromUnit = document.getElementById('convert-from-unit');
-      const toUnit = document.getElementById('convert-to-unit');
-      const inputEl = document.getElementById('convert-input');
-      const answerEl = document.getElementById('convert-answer');
       const feedback = document.getElementById('convert-feedback');
 
+      convertAnswered = false;
       feedback.textContent = '';
-      answerEl.value = '';
-      inputEl.value = '';
-      inputEl.readOnly = false;
-      inputEl.style.borderColor = '#E5E5EA';
-      answerEl.style.borderColor = '#E5E5EA';
 
       if (type.from === '分秒') {
         // X分Y秒 = ?秒
@@ -460,12 +454,6 @@
         const s = Random.int(1, 59);
         convertAnswer = m * 60 + s;
         titleEl.textContent = '单位换算';
-        fromUnit.textContent = '';
-        toUnit.textContent = '秒';
-        inputEl.value = '';
-        inputEl.readOnly = true;
-        inputEl.style.display = 'none';
-        fromUnit.style.display = 'none';
         // 用特殊显示
         document.getElementById('convert-row').innerHTML =
           '<span style="font-size:28px;font-weight:700;color:#4A90D9;">' + m + ' 分 ' + s + ' 秒</span>' +
@@ -499,17 +487,19 @@
     function checkConvert() {
       const ansEl = document.getElementById('convert-answer');
       const feedback = document.getElementById('convert-feedback');
-      const val = parseInt(ansEl.value);
-      if (isNaN(val)) { feedback.textContent = '请输入答案'; return; }
+      if (ansEl.value.trim() === '') { feedback.textContent = '请输入答案'; return; }
+      const val = Number(ansEl.value);
+      if (convertAnswered) return;
+      convertAnswered = true;
+      ansEl.readOnly = true;
       if (val === convertAnswer) {
         feedback.textContent = '✅ 正确！太棒了！';
         feedback.style.color = '#34C759';
         ansEl.style.borderColor = '#34C759';
         addScore(10);
         showToast('⭐ +10');
-        setTimeout(genConvert, 1500);
       } else {
-        feedback.textContent = '❌ 再想想，答案是 ' + convertAnswer;
+        feedback.textContent = '❌ 正确答案是 ' + convertAnswer + '，可以继续下一题。';
         feedback.style.color = '#FF3B30';
         ansEl.style.borderColor = '#FF3B30';
       }
@@ -564,21 +554,13 @@
         ? (durRemain > 0 ? durH + '时' + durRemain + '分' : durH + '时')
         : durRemain + '分';
 
-      const wrongOptions = new Set();
-      wrongOptions.add(correctText);
-      while (wrongOptions.size < 4) {
-        const offH = Random.int(-1, 2);
-        const offM = Random.pick([-30, -15, 15, 30, 60]);
-        const wMin = durMin + offH * 60 + offM;
-        if (wMin > 0 && wMin !== durMin) {
-          const wH = Math.floor(wMin / 60);
-          const wR = wMin % 60;
-          const wText = wH > 0
-            ? (wR > 0 ? wH + '时' + wR + '分' : wH + '时')
-            : wR + '分';
-          wrongOptions.add(wText);
-        }
-      }
+      const wrongOptions = new Set([correctText]);
+      Random.shuffle([-60, -30, -15, 15, 30, 60, 90]).forEach(off => {
+        const wMin = durMin + off;
+        if (wMin <= 0 || wrongOptions.size >= 4) return;
+        const wH = Math.floor(wMin / 60), wR = wMin % 60;
+        wrongOptions.add(wH > 0 ? (wR > 0 ? wH + '时' + wR + '分' : wH + '时') : wR + '分');
+      });
 
       const options = Random.shuffle([...wrongOptions]);
       const optContainer = document.getElementById('elapsed-options');
@@ -590,8 +572,9 @@
         btn.className = 'elapsed-opt';
         btn.textContent = opt;
         btn.addEventListener('click', function() {
-          if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
+          if (this.disabled) return;
           optContainer.querySelectorAll('.elapsed-opt').forEach(b => {
+            b.disabled = true;
             if (b.textContent === correctText) b.classList.add('correct');
           });
           if (opt === correctText) {
@@ -600,7 +583,6 @@
             document.getElementById('elapsed-feedback').style.color = '#34C759';
             addScore(10);
             showToast('⭐ +10');
-            setTimeout(genElapsed, 1500);
           } else {
             this.classList.add('wrong');
             document.getElementById('elapsed-feedback').textContent = '❌ 正确答案是 ' + correctText;
@@ -632,26 +614,17 @@
       return total;
     }
 
-    function genTimeStr() {
-      const h = Random.int(0, 3);
-      const m = Random.pick([0, 5, 10, 15, 20, 25, 30, 40, 45, 50, 55]);
-      const s = Random.pick([0, 10, 20, 30, 40, 50]);
-      let parts = [];
-      if (h > 0) parts.push(h + '时');
-      if (m > 0) parts.push(m + '分');
-      if (s > 0 && h === 0) parts.push(s + '秒');
-      if (parts.length === 0) parts.push(Random.int(1,59) + '分');
-      return parts.join('');
-    }
-
     function genSort() {
       sortUserOrder = [];
       const count = Random.int(3, 5);
-      const items = new Set();
-      while (items.size < count) {
-        items.add(genTimeStr());
+      const items = [];
+      for (let minutes = 1; minutes <= 180; minutes += 5) {
+        const h = Math.floor(minutes / 60), m = minutes % 60;
+        items.push((h ? h + '时' : '') + (m ? m + '分' : ''));
       }
-      const arr = [...items];
+      [10, 20, 30, 40, 50].forEach(seconds => items.push(seconds + '秒'));
+      const arr = Random.shuffle(items).slice(0, count);
+      document.getElementById('sort-check').disabled = false;
       sortCorrectOrder = [...arr].sort((a, b) => timeToSeconds(a) - timeToSeconds(b));
 
       const pool = document.getElementById('sort-pool');
@@ -705,10 +678,10 @@
       const isCorrect = sortUserOrder.every((v, i) => v === sortCorrectOrder[i]);
       if (isCorrect) {
         feedback.textContent = '✅ 完全正确！';
+        this.disabled = true;
         feedback.style.color = '#34C759';
         addScore(15);
         showToast('⭐ +15');
-        setTimeout(genSort, 1500);
       } else {
         feedback.textContent = '❌ 正确顺序：' + sortCorrectOrder.join(' < ');
         feedback.style.color = '#FF3B30';
@@ -731,8 +704,8 @@
       const pct = Math.round(challengeCorrect / total * 100);
       if (pct < 60) return;
       if (typeof PageProgress !== 'undefined' && !PageProgress.isDone('hours-minutes-seconds')) {
-        PageProgress.markDone('hours-minutes-seconds');
-        if (typeof showToast === 'function') showToast('🎉 本页标记为已完成');
+        const saved = PageProgress.markDone('hours-minutes-seconds');
+        if (saved && typeof showToast === 'function') showToast('🎉 本页标记为已完成');
       }
     }
 
@@ -747,19 +720,14 @@
       Random.pick(types)();
     }
 
-    function makeOptions(correct, genWrong) {
-      const opts = new Set([correct]);
-      let tries = 0;
-      while (opts.size < 4 && tries < 50) {
-        opts.add(genWrong());
-        tries++;
-      }
-      return Random.shuffle([...opts]);
+    function makeOptions(correct, wrongs) {
+      const uniqueWrong = [...new Set(wrongs)].filter(value => value !== correct);
+      return Random.shuffle([correct, ...Random.shuffle(uniqueWrong).slice(0, 3)]);
     }
 
-    function renderChallenge(question, correct, genWrong) {
+    function renderChallenge(question, correct, wrongs) {
       document.getElementById('challenge-problem').textContent = question;
-      const options = makeOptions(correct, genWrong);
+      const options = makeOptions(correct, wrongs);
       const container = document.getElementById('challenge-options');
       container.innerHTML = '';
       options.forEach(opt => {
@@ -767,8 +735,9 @@
         btn.className = 'challenge-opt';
         btn.textContent = opt;
         btn.addEventListener('click', function() {
-          if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
+          if (this.disabled) return;
           container.querySelectorAll('.challenge-opt').forEach(b => {
+            b.disabled = true;
             if (b.textContent === correct) b.classList.add('correct');
           });
           if (opt === correct) {
@@ -779,7 +748,6 @@
             showToast('⭐ +10');
             challengeCorrect++;
             maybeMarkDone();
-            setTimeout(genChallenge, 1500);
           } else {
             this.classList.add('wrong');
             document.getElementById('challenge-feedback').textContent = '❌ 正确答案是 ' + correct;
@@ -802,7 +770,7 @@
       const val = Random.int(1, 5);
       const question = type.q(val);
       const answer = String(type.a(val));
-      renderChallenge(question, answer, () => String(Math.max(1, type.w())));
+      renderChallenge(question, answer, [1, 2, 3, 5].map(offset => String(Number(answer) + offset)));
     }
 
     function genChElapsed() {
@@ -818,13 +786,12 @@
         ? (durR > 0 ? durH + '时' + durR + '分' : durH + '时')
         : durR + '分';
       const question = '从 ' + fmtTime(startH, startM) + ' 到 ' + fmtTime(endH, endM) + '，经过了多久？';
-      renderChallenge(question, correctText, () => {
-        const off = Random.pick([-30, -15, 15, 30, 60]);
-        const wMin = Math.max(5, durMin + off);
+      renderChallenge(question, correctText, [15, 30, 60, 90].map(off => {
+        const wMin = durMin + off;
         const wH = Math.floor(wMin / 60);
         const wR = wMin % 60;
         return wH > 0 ? (wR > 0 ? wH + '时' + wR + '分' : wH + '时') : wR + '分';
-      });
+      }));
     }
 
     function genChFill() {
@@ -838,7 +805,7 @@
         { q: '一刻 = ? 分', a: '15', w: () => String(Random.pick([10, 20, 30])) },
       ];
       const f = Random.pick(facts);
-      renderChallenge(f.q, f.a, f.w);
+      renderChallenge(f.q, f.a, [1, 2, 3, 5].map(offset => String(Number(f.a) + offset)));
     }
 
     function genChCompare() {
@@ -861,11 +828,12 @@
       const wrongs = [
         a > b ? (aText + ' < ' + bText) : (aText + ' > ' + bText),
         aText + ' = ' + bText,
-        b < a ? (fmtS(b+15) + ' < ' + aText) : (aText + ' > ' + fmtS(b+15))
+        bText + ' = ' + aText
       ];
-      renderChallenge('哪个正确？', correct, () => Random.pick(wrongs));
+      renderChallenge('哪个正确？', correct, wrongs);
     }
 
+    document.getElementById('challenge-next').addEventListener('click', genChallenge);
     genChallenge();
 
   })();
