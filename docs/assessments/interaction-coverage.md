@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：90；尚未登记：226。
+主题总数：316；已登记部分交互证据：91；尚未登记：225。
 
 ## 已登记部分交互证据
 
@@ -49,6 +49,8 @@
   - 固定随机数验证球数组成变更清空、单次及多次抽样、频率点、刻度、键盘滑块和移动视口滚动；题目内容及完整无障碍未全面核验。 [probability-experiment.spec.js](../../tests/browser/probability-experiment.spec.js)
 - [20以内进位加法与退位减法](../../math/topics/20-within-addition-subtraction/index.html)
   - 固定随机边界、凑十破十的正确反馈和重复计分、十关完成及重启；未覆盖整页视觉内容。 [carry-borrow-practice.spec.js](../../tests/browser/carry-borrow-practice.spec.js)
+- [24时计时法](../../math/topics/24h-time/index.html)
+  - 午夜、中午和晚间转换，固定随机值的唯一选项和配对、键盘配对及单次答题；时间线事件卡片键盘操作和全部无障碍未验收。 [time-conversion-reliability.spec.js](../../tests/browser/time-conversion-reliability.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
   - 从首页进入加法并获得练习正确、错误反馈；未覆盖全部学习模式。 [learning-paths.spec.js](../../tests/browser/learning-paths.spec.js)
 - [比大小与排序](../../math/topics/comparison-and-ordering/index.html)
@@ -310,7 +312,6 @@
 - [相似 - 初中数学九年级](../../math/middle/similarity.html)
 - [三角形与全等 - 初中数学八年级](../../math/middle/triangle-congruence.html)
 - [锐角三角函数 - 初中数学九年级](../../math/middle/trigonometric-functions.html)
-- [24时计时法](../../math/topics/24h-time/index.html)
 - [认识算盘](../../math/topics/abacus/index.html)
 - [100以内加减法](../../math/topics/addition-subtraction-within-100/index.html)
 - [万以内加减法](../../math/topics/addition-subtraction-within-10000/index.html)

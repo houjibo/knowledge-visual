@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>24时计时法</title>
   <link rel="stylesheet" href="../../assets/css/common.css">
   <style>
@@ -92,7 +92,7 @@
     .match-cols { display: flex; gap: 12px; justify-content: center; }
     .match-col { display: flex; flex-direction: column; gap: 10px; flex: 1; }
     .match-col-title { font-size: 13px; font-weight: 700; color: #6E6E73; text-align: center; margin-bottom: 4px; }
-    .match-card { padding: 14px 8px; border: 3px solid #E5E5EA; background: white; border-radius: 14px; font-size: 17px; font-weight: 700; text-align: center; cursor: pointer; transition: all 0.2s ease; user-select: none; }
+    .match-card { width: 100%; padding: 14px 8px; border: 3px solid #E5E5EA; background: white; border-radius: 14px; font-size: 17px; font-weight: 700; text-align: center; cursor: pointer; transition: all 0.2s ease; user-select: none; }
     .match-card:active { transform: scale(0.95); }
     .match-card.selected { border-color: #1565C0; background: #E3F2FD; box-shadow: 0 0 0 3px rgba(21,101,192,0.2); }
     .match-card.matched { border-color: #43A047; background: #E8F5E9; opacity: 0.6; pointer-events: none; }
@@ -146,7 +146,7 @@
             <div class="clock-period" id="period-label">下午（PM）</div>
           </div>
           <div class="clock-box">
-            <div class="clock-label pm">24时计时法</div>
+            <div class="clock-label pm">普通钟面与24时数字</div>
             <svg class="clock-svg" viewBox="0 0 200 200" id="svg-clock-24">
               <circle cx="100" cy="100" r="90" fill="#F8F8FA" stroke="#1565C0" stroke-width="4"/>
               <g id="ticks-24"></g>
@@ -155,13 +155,13 @@
               <circle cx="100" cy="100" r="5" fill="#1565C0"/>
             </svg>
             <div class="clock-time pm" id="time-24h">15:00</div>
-            <div class="clock-period">15 = 12 + 3</div>
+            <div class="clock-period" id="conversion-explanation">15 = 12 + 3</div>
           </div>
         </div>
 
         <div class="time-slider-wrap">
           <div class="slider-label">⬇️ 拖动滑块，看看一天怎么走过24小时</div>
-          <input type="range" class="time-slider" id="time-slider" min="0" max="1439" value="900">
+          <input type="range" class="time-slider" id="time-slider" min="0" max="1439" value="900" aria-label="选择一天中的时间">
           <div class="slider-label" id="slider-info">15:00 = 下午 3:00</div>
         </div>
 
@@ -173,11 +173,13 @@
 
         <div class="convert-rule-box" style="margin-top:20px;">
           <div class="rule-title">💡 转换规则</div>
-          <div class="rule-item">🌅 <strong>上午</strong>（凌晨0时~11时59分）：数字<strong>不变</strong></div>
+          <div class="rule-item">🌙 <strong>午夜12时</strong> = <strong>00:00</strong>；凌晨12时后按 00 时记。</div>
+          <div class="rule-item">🌅 凌晨1时至上午11时：小时数字<strong>不变</strong>。</div>
           <div class="rule-item">→ 上午8时 = <strong>08:00</strong></div>
-          <div class="rule-item">🌇 <strong>下午/晚上</strong>（12时~23时59分）：数字<strong>+12</strong></div>
+          <div class="rule-item">☀️ <strong>中午12时</strong> = <strong>12:00</strong>，中午12时后按 12 时记。</div>
+          <div class="rule-item">🌇 <strong>下午/晚上1时至11时</strong>：小时数字<strong>+12</strong>。</div>
           <div class="rule-item">→ 下午3时 = 3+12 = <strong>15:00</strong></div>
-          <div class="rule-item">🌙 <strong>反过来</strong>：24时 - 12 = 普通计时</div>
+          <div class="rule-item">🌙 <strong>反过来</strong>：13 至 23 时的小时数减 12；00 时是凌晨12时，12 时是中午12时。</div>
           <div class="rule-item">→ 20:00 = 20-12 = <strong>晚上8时</strong></div>
         </div>
       </div>
@@ -262,10 +264,7 @@
     }
 
     function to12hStr(hour, minute) {
-      if (hour === 0) return '凌晨 ' + (minute === 0 ? '12' : pad(minute === 0 ? 12 : 12)) + ':' + pad(minute);
-      if (hour < 12) return '上午 ' + pad(hour === 0 ? 12 : hour) + ':' + pad(minute);
-      if (hour === 12) return '中午 12:' + pad(minute);
-      return '下午 ' + pad(hour - 12 === 0 ? 12 : hour - 12) + ':' + pad(minute);
+      return getPeriod(hour) + ' ' + pad(hour % 12 || 12) + ':' + pad(minute);
     }
 
     function getPeriod(hour) {
@@ -276,7 +275,8 @@
       return '晚上';
     }
 
-    function getPeriodTag(hour) {
+    function getPeriodTag(hour, minute) {
+      if (minute === 0 && (hour === 0 || hour === 12)) return '<span class="period-tag">' + (hour === 0 ? '午夜' : '中午') + '</span>';
       if (hour < 12) return '<span class="period-tag am">AM</span>';
       return '<span class="period-tag pm">PM</span>';
     }
@@ -298,7 +298,7 @@
         line.setAttribute('stroke', '#9CA3AF'); line.setAttribute('stroke-width', '2');
         g.appendChild(line);
 
-        var num = is24 ? (i === 0 ? '24/0' : '' + i) : '' + (i === 0 ? 12 : i);
+        var num = '' + (i === 0 ? 12 : i);
         var tx = 100 + 66 * Math.cos(angle);
         var ty = 100 + 66 * Math.sin(angle);
         var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -333,8 +333,9 @@
       setClockHands(hour, minute, '24');
       document.getElementById('time-12h').textContent = to12hStr(hour, minute);
       document.getElementById('time-24h').textContent = to24h(hour, minute);
-      document.getElementById('period-label').textContent = getPeriod(hour) + (hour < 12 ? '（AM）' : '（PM）');
+      document.getElementById('period-label').textContent = minute === 0 && (hour === 0 || hour === 12) ? (hour === 0 ? '午夜' : '中午') : getPeriod(hour) + (hour < 12 ? '（AM）' : '（PM）');
       document.getElementById('slider-info').textContent = to24h(hour, minute) + ' = ' + to12hStr(hour, minute);
+      document.getElementById('conversion-explanation').textContent = hour === 0 ? '凌晨12时对应00时' : hour === 12 ? '中午12时对应12时' : hour > 12 ? hour + ' = 12 + ' + (hour - 12) : '小时数不变';
     }
 
     drawTicks('ticks-12', false);
@@ -390,6 +391,17 @@
       return arr;
     }
 
+    function allTimes() {
+      var times = [];
+      for (var h = 0; h < 24; h++) [0, 15, 30, 45].forEach(function(m) { times.push({hour: h, minute: m}); });
+      return times;
+    }
+
+    function makeOptions(correct, formatter) {
+      var alternatives = allTimes().map(function(t) { return formatter(t.hour, t.minute); }).filter(function(value) { return value !== correct; });
+      return shuffle([correct].concat(shuffle(alternatives).slice(0, 3)));
+    }
+
     function genQuiz() {
       quizDir = Math.random() < 0.5 ? 0 : 1;
       var hour = randInt(0, 23);
@@ -406,26 +418,14 @@
 
       if (quizDir === 0) {
         // 普通 → 24时
-        qEl.innerHTML = '把 <span class="highlight">' + h12 + '</span> ' + getPeriodTag(hour) + '<br>转换成24时计时法：';
+        qEl.innerHTML = '把 <span class="highlight">' + h12 + '</span> ' + getPeriodTag(hour, minute) + '<br>转换成24时计时法：';
         correct = h24;
-        options.push(h24);
-        while (options.length < 4) {
-          var fakeH = randInt(0, 23);
-          var fakeM = [0, 15, 30, 45][randInt(0, 3)];
-          var fake = to24h(fakeH, fakeM);
-          if (options.indexOf(fake) === -1 && fake !== correct) options.push(fake);
-        }
+        options = makeOptions(correct, to24h);
       } else {
         // 24时 → 普通
         qEl.innerHTML = '把 <span class="highlight">' + h24 + '</span><br>转换成普通计时法：';
         correct = h12;
-        options.push(h12);
-        while (options.length < 4) {
-          var fakeH2 = randInt(0, 23);
-          var fakeM2 = [0, 15, 30, 45][randInt(0, 3)];
-          var fake2 = to12hStr(fakeH2, fakeM2);
-          if (options.indexOf(fake2) === -1 && fake2 !== correct) options.push(fake2);
-        }
+        options = makeOptions(correct, to12hStr);
       }
 
       shuffle(options);
@@ -442,8 +442,8 @@
 
     function handleQuizAnswer(btn, chosen, correct) {
       var allBtns = document.querySelectorAll('.quiz-opt-btn');
-      var answered = false;
-      allBtns.forEach(function(b) { b.style.pointerEvents = 'none'; });
+      if (btn.disabled) return;
+      allBtns.forEach(function(b) { b.disabled = true; });
 
       if (chosen === correct) {
         btn.classList.add('correct');
@@ -523,21 +523,11 @@
       if (dir === 0) {
         qEl.textContent = ev.emoji + ' ' + ev.event + '是' + to12hStr(ev.hour, ev.minute) + '，24时计时法怎么写？';
         correct = to24h(ev.hour, ev.minute);
-        options.push(correct);
-        while (options.length < 4) {
-          var fh = randInt(0, 23), fm = [0, 15, 30, 45][randInt(0, 3)];
-          var f = to24h(fh, fm);
-          if (options.indexOf(f) === -1) options.push(f);
-        }
+        options = makeOptions(correct, to24h);
       } else {
         qEl.textContent = ev.emoji + ' ' + ev.event + '是' + to24h(ev.hour, ev.minute) + '，普通计时法怎么写？';
         correct = to12hStr(ev.hour, ev.minute);
-        options.push(correct);
-        while (options.length < 4) {
-          var fh2 = randInt(0, 23), fm2 = [0, 15, 30, 45][randInt(0, 3)];
-          var f2 = to12hStr(fh2, fm2);
-          if (options.indexOf(f2) === -1) options.push(f2);
-        }
+        options = makeOptions(correct, to12hStr);
       }
 
       shuffle(options);
@@ -548,7 +538,8 @@
         btn.textContent = opt;
         btn.addEventListener('click', function() {
           var allBtns = optsEl.querySelectorAll('.tl-opt-btn');
-          allBtns.forEach(function(b) { b.style.pointerEvents = 'none'; });
+          if (btn.disabled) return;
+          allBtns.forEach(function(b) { b.disabled = true; });
           if (opt === correct) {
             btn.classList.add('correct');
             fbEl.textContent = '✅ 答对了！';
@@ -569,26 +560,23 @@
     genTimelineQuiz();
 
     // ===== 模式4: 配对游戏 =====
-    var matchPairs = [], matchedCount = 0, selectedLeft = null, selectedRight = null;
+    var matchPairs = [], matchedCount = 0, selectedLeft = null, selectedRight = null, matchLocked = false;
 
     function genMatchGame() {
       matchPairs = [];
       matchedCount = 0;
       selectedLeft = null;
       selectedRight = null;
+      matchLocked = false;
 
-      var used = {};
-      while (matchPairs.length < 5) {
-        var h = randInt(0, 23), m = [0, 15, 30, 45][randInt(0, 3)];
-        var key = h + ':' + m;
-        if (used[key]) continue;
-        used[key] = true;
+      shuffle(allTimes()).slice(0, 5).forEach(function(time) {
+        var h = time.hour, m = time.minute;
         matchPairs.push({
           id: matchPairs.length,
           h12: to12hStr(h, m),
           h24: to24h(h, m)
         });
-      }
+      });
 
       document.getElementById('match-count').textContent = '0';
       document.getElementById('match-total').textContent = matchPairs.length;
@@ -604,7 +592,8 @@
       var rightOrder = shuffle(matchPairs.slice());
 
       leftOrder.forEach(function(p) {
-        var card = document.createElement('div');
+        var card = document.createElement('button');
+        card.type = 'button';
         card.className = 'match-card';
         card.textContent = p.h12;
         card.dataset.id = p.id;
@@ -614,7 +603,8 @@
       });
 
       rightOrder.forEach(function(p) {
-        var card = document.createElement('div');
+        var card = document.createElement('button');
+        card.type = 'button';
         card.className = 'match-card';
         card.textContent = p.h24;
         card.dataset.id = p.id;
@@ -625,7 +615,7 @@
     }
 
     function selectMatchCard(card, side) {
-      if (card.classList.contains('matched')) return;
+      if (matchLocked || card.classList.contains('matched')) return;
 
       if (side === 'left') {
         if (selectedLeft) selectedLeft.classList.remove('selected');
@@ -649,6 +639,8 @@
       if (leftId === rightId) {
         selectedLeft.classList.add('matched');
         selectedRight.classList.add('matched');
+        selectedLeft.disabled = true;
+        selectedRight.disabled = true;
         selectedLeft.classList.remove('selected');
         selectedRight.classList.remove('selected');
         matchedCount++;
@@ -662,12 +654,14 @@
           document.getElementById('match-restart').style.display = 'inline-block';
         }
       } else {
+        matchLocked = true;
         var l = selectedLeft, r = selectedRight;
         l.classList.add('wrong-flash');
         r.classList.add('wrong-flash');
         setTimeout(function() {
           l.classList.remove('selected', 'wrong-flash');
           r.classList.remove('selected', 'wrong-flash');
+          matchLocked = false;
         }, 500);
         selectedLeft = null;
         selectedRight = null;

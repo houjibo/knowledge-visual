@@ -1,0 +1,24 @@
+# time-conversion-reliability Specification
+
+## Purpose
+TBD - created by archiving change time-conversion-reliability. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 计时转换说明与所选时刻一致
+页面 SHALL 正确区分午夜、中午和其他时段，并随所选时间更新普通钟面及24时制数字说明。
+
+#### Scenario: 午夜及中午
+- **WHEN** 学习者选择 00:00 或 12:00
+- **THEN** 页面分别解释为凌晨12时或中午12时，且不套用加减12的错误规则
+
+### Requirement: 练习有限生成且可以键盘操作
+页面 SHALL 从有限候选生成不同的题目选项和配对，且每题只接受一次计分。
+
+#### Scenario: 随机值重复
+- **WHEN** 随机值持续重复
+- **THEN** 页面仍可加载并生成四个不同选项及五对不同的时间
+
+#### Scenario: 键盘配对
+- **WHEN** 学习者使用键盘选择相同时间的两张卡片
+- **THEN** 页面记录一次配对并禁止重复选择已配对卡片
