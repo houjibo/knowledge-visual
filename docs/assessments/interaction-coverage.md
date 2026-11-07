@@ -119,6 +119,7 @@
 - [中位数和众数](../../math/topics/median-and-mode/index.html)
   - 中位数、唯一众数及挑战的固定随机边界和部分答题；概念内容及所有题型尚未全面验收。 [median-mode.spec.js](../../tests/browser/median-mode.spec.js)
 - [乘法的初步认识](../../math/topics/multiplication-intro/index.html)
+  - 桌面与移动视口验证四项活动完成、主动切题、重复提交、完成记录刷新及目录徽章、保存失败重试；真实设备及整页无障碍尚未全面验收。 [multiplication-intro-learning-completion.spec.js](../../tests/browser/multiplication-intro-learning-completion.spec.js)
   - 桌面及移动视口检查常量随机加载、三类练习键盘作答，枚举全部整数参数并验证四个不同选项与唯一正确答案；真实设备、进度记录和整页无障碍尚未全面验收。 [multiplication-intro-question-correctness.spec.js](../../tests/browser/multiplication-intro-question-correctness.spec.js)
 - [负数的初步认识](../../math/topics/negative-numbers/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
