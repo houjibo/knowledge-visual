@@ -136,20 +136,22 @@
           <div class="slider-group">
             <div class="slider-label">选择图形</div>
             <div style="display:flex;gap:12px;justify-content:center;margin:12px 0">
-              <button class="btn btn-primary" id="btn-cylinder" style="background:#00ACC1">🥫 圆柱</button>
-              <button class="btn" id="btn-cone" style="background:#E5E5EA;color:#1D1D1F">🍦 圆锥</button>
+              <button class="btn btn-primary" id="btn-cylinder" aria-pressed="true" style="background:#00ACC1">🥫 圆柱</button>
+              <button class="btn" id="btn-cone" aria-pressed="false" style="background:#E5E5EA;color:#1D1D1F">🍦 圆锥</button>
             </div>
           </div>
           <div class="slider-group">
             <div class="slider-label">底面半径 r</div>
             <div class="slider-value" id="radius-value">3 cm</div>
-            <input type="range" id="radius-slider" min="1" max="10" value="3" step="0.5">
+            <input type="range" id="radius-slider" aria-label="底面半径" min="1" max="10" value="3" step="0.5">
           </div>
           <div class="slider-group">
             <div class="slider-label">高 h</div>
             <div class="slider-value" id="height-value">5 cm</div>
-            <input type="range" id="height-slider" min="1" max="15" value="5" step="0.5">
+            <input type="range" id="height-slider" aria-label="高" min="1" max="15" value="5" step="0.5">
           </div>
+          <svg id="shape-diagram" viewBox="0 0 240 200" width="240" height="200" role="img" aria-label="圆柱示意图" style="display:block;max-width:100%;margin:12px auto"></svg>
+          <p style="font-size:14px;color:#6E6E73">示意图以同一比例绘制半径和高度，椭圆表示透视效果。</p>
           <div class="result-box">
             <div class="result-row">
               <span class="result-label">底面积</span>
@@ -181,11 +183,11 @@
               一个圆柱的底面半径是 3 cm，高是 5 cm，求它的体积。
             </div>
             <div style="margin:16px 0">
-              <input type="number" class="answer-input" id="answer-input" placeholder="答案（保留两位小数）">
+              <input type="number" class="answer-input" id="answer-input" aria-label="体积答案" placeholder="答案（保留两位小数）">
               <span style="margin-left:8px;color:#6E6E73">cm³</span>
             </div>
             <button class="btn btn-primary" id="btn-check" style="margin-top:12px">检查答案</button>
-            <div class="feedback" id="feedback" style="display:none"></div>
+            <div class="feedback" id="feedback" role="status" aria-live="polite" style="display:none"></div>
           </div>
           <button class="btn" id="btn-next" style="background:#E5E5EA;color:#1D1D1F;margin-top:12px">换一题</button>
         </div>
@@ -245,13 +247,23 @@
       
       const baseArea = Math.PI * r * r;
       const sideArea = 2 * Math.PI * r * h;
-      const totalArea = currentShape === 'cylinder' ? 2 * baseArea + sideArea : baseArea + Math.PI * r * Math.sqrt(r*r + h*h);
+      const slant = Math.hypot(r, h);
+      const totalArea = currentShape === 'cylinder' ? 2 * baseArea + sideArea : baseArea + Math.PI * r * slant;
       const volume = currentShape === 'cylinder' ? baseArea * h : baseArea * h / 3;
       
       document.getElementById('base-area').textContent = baseArea.toFixed(2) + ' cm²';
-      document.getElementById('side-area').textContent = sideArea.toFixed(2) + ' cm²';
+      document.getElementById('side-area').textContent = currentShape === 'cylinder' ? sideArea.toFixed(2) + ' cm²' : slant.toFixed(2) + ' cm';
       document.getElementById('total-area').textContent = totalArea.toFixed(2) + ' cm²';
       document.getElementById('volume').textContent = volume.toFixed(2) + ' cm³';
+      const svg = document.getElementById('shape-diagram');
+      const scale = Math.min(12, 160 / (2 * r), 120 / h);
+      const cx = 120, bottom = 165, rp = r * scale, hp = h * scale, ry = Math.min(10, rp * 0.2);
+      const left = cx - rp, right = cx + rp, top = bottom - hp;
+      svg.setAttribute('aria-label', `${currentShape === 'cylinder' ? '圆柱' : '圆锥'}示意图，底面半径 ${r} 厘米，高 ${h} 厘米`);
+      svg.innerHTML = currentShape === 'cylinder'
+        ? `<path d="M ${left} ${top} L ${left} ${bottom} A ${rp} ${ry} 0 0 0 ${right} ${bottom} L ${right} ${top} Z" fill="#e0f7fa" stroke="#00838f"/><ellipse cx="${cx}" cy="${top}" rx="${rp}" ry="${ry}" fill="#b2ebf2" stroke="#00838f"/>`
+        : `<path d="M ${cx} ${top} L ${left} ${bottom} A ${rp} ${ry} 0 0 0 ${right} ${bottom} Z" fill="#fff3e0" stroke="#e65100"/>`;
+      svg.innerHTML += `<line x1="${cx}" y1="${top}" x2="${cx}" y2="${bottom}" stroke="#555" stroke-dasharray="4 3"/><line x1="${cx}" y1="${bottom}" x2="${right}" y2="${bottom}" stroke="#c2185b" stroke-width="2"/><text x="120" y="193" text-anchor="middle" font-size="12">半径 ${r} cm · 高 ${h} cm</text>`;
       
       if (currentShape === 'cone') {
         document.getElementById('label-side').textContent = '母线长';
@@ -267,6 +279,8 @@
     
     document.getElementById('btn-cylinder').addEventListener('click', () => {
       currentShape = 'cylinder';
+      document.getElementById('btn-cylinder').setAttribute('aria-pressed','true');
+      document.getElementById('btn-cone').setAttribute('aria-pressed','false');
       document.getElementById('btn-cylinder').style.background = '#00ACC1';
       document.getElementById('btn-cone').style.background = '#E5E5EA';
       updateExplore();
@@ -274,6 +288,8 @@
     
     document.getElementById('btn-cone').addEventListener('click', () => {
       currentShape = 'cone';
+      document.getElementById('btn-cone').setAttribute('aria-pressed','true');
+      document.getElementById('btn-cylinder').setAttribute('aria-pressed','false');
       document.getElementById('btn-cone').style.background = '#FF9800';
       document.getElementById('btn-cylinder').style.background = '#E5E5EA';
       updateExplore();
@@ -296,7 +312,7 @@
           answer: parseFloat((3.14 * r * r * h / (shape === 'cone' ? 3 : 1)).toFixed(2))
         };
       } else {
-        const cylVol = Math.PI * r * r * h;
+        const cylVol = Number((3.14 * r * r * h).toFixed(2));
         const coneVol = cylVol / 3;
         currentProblem = {
           text: `一个圆柱和一个圆锥等底等高，圆柱的体积是 ${cylVol.toFixed(2)} cm³，求圆锥的体积。（π取3.14，结果保留两位小数）`,
@@ -307,13 +323,17 @@
       document.getElementById('problem-text').textContent = currentProblem.text;
       document.getElementById('answer-input').value = '';
       document.getElementById('feedback').style.display = 'none';
+      document.getElementById('btn-check').disabled = false;
     }
     
     document.getElementById('btn-check').addEventListener('click', () => {
-      const userAnswer = parseFloat(document.getElementById('answer-input').value);
+      if (document.getElementById('btn-check').disabled) return;
+      const raw = document.getElementById('answer-input').value;
+      const userAnswer = Number(raw);
       const feedback = document.getElementById('feedback');
-      
-      if (Math.abs(userAnswer - currentProblem.answer) < 0.1) {
+      if (raw.trim() === '' || !Number.isFinite(userAnswer)) { feedback.textContent = '请输入数字'; feedback.style.display = 'block'; return; }
+      document.getElementById('btn-check').disabled = true;
+      if (userAnswer === currentProblem.answer) {
         feedback.className = 'feedback correct';
         feedback.textContent = '✓ 正确！太棒了！';
         streak++;
