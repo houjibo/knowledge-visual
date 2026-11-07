@@ -73,6 +73,7 @@
     .score-item .s-label { font-size: 13px; color: #6E6E73; }
     .score-item .s-value { font-size: 24px; font-weight: 700; color: #E65100; }
 
+    #quizNext[hidden] { display: none; }
     /* 生活模式 */
     .life-card { background: white; border-radius: 20px; padding: 24px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin: 16px 0; text-align: left; }
     .life-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
@@ -98,6 +99,7 @@
 </head>
 <body>
   <div class="page-container">
+    <p id="learningProgress" role="status" aria-live="polite"></p>
     <div class="nav-bar">
       <a href="../../index.html" class="nav-back">← 返回</a>
       <span class="nav-title">⏢ 梯形面积</span>
@@ -246,7 +248,8 @@
         <div class="quiz-q-num" id="quizNum">第 1 题</div>
         <div class="quiz-question" id="quizQuestion"></div>
         <div class="quiz-options" id="quizOptions"></div>
-        <div class="quiz-feedback" id="quizFeedback"></div>
+        <div class="quiz-feedback" id="quizFeedback" role="status" aria-live="polite"></div>
+        <button type="button" class="life-check-btn" id="quizNext" hidden>下一题</button>
       </div>
     </div>
 
@@ -260,11 +263,11 @@
         <div class="life-desc" id="lifeDesc"></div>
         <div class="life-question" id="lifeQuestion"></div>
         <div class="life-input-row">
-          <input type="number" class="life-input" id="lifeInput" placeholder="?">
+          <input type="number" class="life-input" id="lifeInput" placeholder="?" aria-label="生活题面积答案">
           <span class="life-unit" id="lifeUnit">m²</span>
         </div>
         <button class="life-check-btn" id="lifeCheckBtn">✅ 检查答案</button>
-        <div class="life-feedback" id="lifeFeedback"></div>
+        <div class="life-feedback" id="lifeFeedback" role="status" aria-live="polite"></div>
         <div class="life-answer" id="lifeAnswer"></div>
       </div>
       <div class="life-counter" id="lifeCounter"></div>
@@ -277,6 +280,27 @@
 
   <script src="../../assets/js/common.js"></script>
   <script>
+    const learningMilestones = {explore: false, quiz: false, life: false};
+    const milestoneNames = {explore: '调整图形或查看拼图', quiz: '答对三道练习题', life: '答对一道生活题'};
+    let progressSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('trapezoid-area');
+    let completionAttempted = false;
+    function showLearningProgress() {
+      const status = document.getElementById('learningProgress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      const remaining = Object.keys(learningMilestones).filter(key => !learningMilestones[key]);
+      status.textContent = '本次学习完成条件 ' + (3 - remaining.length) + '/3：还需' + remaining.map(key => milestoneNames[key]).join('、') + '。未全部达标时，刷新会清空本次阶段进度。';
+    }
+    function completeMilestone(key) {
+      learningMilestones[key] = true;
+      if (!progressSaved && !completionAttempted && Object.values(learningMilestones).every(Boolean)) {
+        completionAttempted = true;
+        progressSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('trapezoid-area');
+      }
+      showLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', () => { if (completionAttempted) { progressSaved = true; showLearningProgress(); } });
+    showLearningProgress();
     // === Mode tabs ===
     document.querySelectorAll('.mode-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -348,9 +372,7 @@
       }
     }
 
-    topSlider.addEventListener('input', updateExplore);
-    bottomSlider.addEventListener('input', updateExplore);
-    heightSlider.addEventListener('input', updateExplore);
+    [topSlider, bottomSlider, heightSlider].forEach(slider => slider.addEventListener('input', () => { updateExplore(); completeMilestone('explore'); }));
 
     document.getElementById('btnShowTrap').addEventListener('click', function() {
       showDouble = false;
@@ -362,6 +384,7 @@
     });
     document.getElementById('btnShowDouble').addEventListener('click', function() {
       showDouble = true;
+      completeMilestone('explore');
       this.setAttribute('aria-pressed', 'true');
       document.getElementById('btnShowTrap').setAttribute('aria-pressed', 'false');
       this.classList.add('active');
@@ -375,7 +398,6 @@
     var quizCorrect = 0, quizTotal = 0;
 
     function genQuiz() {
-      quizTotal++;
       var type = randInt(1, 4);
       var q, opts, ans;
 
@@ -409,12 +431,7 @@
         var correctArea = (a + b) * h / 2;
         var wrongClaim = (a + b) * h;
         q = '小明说：上底 ' + a + ' cm、下底 ' + b + ' cm、高 ' + h + ' cm 的梯形面积是 <span class="q-key">' + wrongClaim + ' cm²</span>，他说得对吗？';
-        opts = shuffle([
-          '❌ 不对，应该是 ' + correctArea + ' cm²',
-          '✅ 说得对',
-          '❌ 不对，应该是 ' + (correctArea + a) + ' cm²',
-          '❌ 不对，应该是 ' + (a + b + h) + ' cm²'
-        ]);
+        opts = shuffle(['✅ 说得对', '❌ 不对，应该是 ' + correctArea + ' cm²']);
         ans = '❌ 不对，应该是 ' + correctArea + ' cm²';
       } else {
         // 已知面积、高和下底，求上底
@@ -429,7 +446,17 @@
         ans = a + ' cm';
       }
 
-      document.getElementById('quizNum').textContent = '第 ' + quizTotal + ' 题';
+      if (type !== 3) {
+        const unique = [...new Set([ans, ...opts])];
+        const unit = type === 1 ? ' cm²' : ' cm';
+        for (let offset = 1; unique.length < 4; offset++) {
+          const candidate = (parseInt(ans, 10) + offset) + unit;
+          if (!unique.includes(candidate)) unique.push(candidate);
+        }
+        opts = shuffle(unique.slice(0, 4));
+      }
+      document.getElementById('quizNext').hidden = true;
+      document.getElementById('quizNum').textContent = '第 ' + (quizTotal + 1) + ' 题';
       document.getElementById('quizQuestion').innerHTML = q;
       document.getElementById('quizFeedback').textContent = '';
       document.getElementById('quizFeedback').className = 'quiz-feedback';
@@ -441,36 +468,40 @@
         btn.className = 'quiz-opt';
         btn.innerHTML = opt;
         btn.addEventListener('click', function() {
+          if (btn.disabled) return;
+          optsDiv.querySelectorAll('.quiz-opt').forEach(b => { b.disabled = true; });
+          quizTotal++;
           if (opt === ans) {
             btn.classList.add('correct');
             quizCorrect++;
+            if (quizCorrect >= 3) completeMilestone('quiz');
             document.getElementById('quizFeedback').textContent = '🎉 答对了！';
             document.getElementById('quizFeedback').className = 'quiz-feedback correct';
           } else {
             btn.classList.add('wrong');
             var allBtns = optsDiv.querySelectorAll('.quiz-opt');
             allBtns.forEach(function(b) { if (b.innerHTML === ans) b.classList.add('correct'); });
-            document.getElementById('quizFeedback').textContent = '❌ 正确答案已标绿';
+            document.getElementById('quizFeedback').textContent = '❌ 正确答案是 ' + ans;
             document.getElementById('quizFeedback').className = 'quiz-feedback wrong';
           }
           document.getElementById('quizCorrect').textContent = quizCorrect;
           document.getElementById('quizTotal').textContent = quizTotal;
-          optsDiv.querySelectorAll('.quiz-opt').forEach(function(b) { b.classList.add('disabled'); });
-          setTimeout(genQuiz, 1500);
+          document.getElementById('quizNext').hidden = false;
         });
         optsDiv.appendChild(btn);
       });
     }
 
+    document.getElementById('quizNext').addEventListener('click', genQuiz);
     genQuiz();
 
     // === Life mode ===
     var lifeScenarios = [
-      { emoji: '🏞️', title: '水坝截面', unit: 'm²', gen: function() { var a=randInt(3,6),b=randInt(a+2,a+5),h=randInt(3,6); if(((a+b)*h)%2!==0)h++; return { desc:'水坝的横截面是梯形的。', q:'上底 '+a+' m，下底 '+b+' m，高 '+h+' m，截面面积是多少 m²？', ans: (a+b)*h/2 }; }},
-      { emoji: '🪜', title: '梯子侧面', unit: 'cm²', gen: function() { var a=randInt(10,20),b=randInt(a+5,a+15),h=randInt(15,30); if(((a+b)*h)%2!==0)h++; return { desc:'梯子侧面是梯形的。', q:'上底 '+a+' cm，下底 '+b+' cm，高 '+h+' cm，侧面面积是多少 cm²？', ans: (a+b)*h/2 }; }},
-      { emoji: '🌿', title: '花坛设计', unit: 'm²', gen: function() { var a=randInt(4,8),b=randInt(a+2,a+6),h=randInt(3,6); if(((a+b)*h)%2!==0)h++; return { desc:'公园要建一个梯形的花坛。', q:'上底 '+a+' m，下底 '+b+' m，高 '+h+' m，花坛占地多少 m²？', ans: (a+b)*h/2 }; }},
-      { emoji: '📐', title: '手工纸片', unit: 'cm²', gen: function() { var a=randInt(5,10),b=randInt(a+3,a+8),h=randInt(4,8); if(((a+b)*h)%2!==0)h++; return { desc:'美术课上要剪一个梯形纸片。', q:'上底 '+a+' cm，下底 '+b+' cm，高 '+h+' cm，纸片面积是多少 cm²？', ans: (a+b)*h/2 }; }},
-      { emoji: '🏠', title: '屋顶面积', unit: 'm²', gen: function() { var a=randInt(4,8),b=randInt(a+3,a+7),h=randInt(3,5); if(((a+b)*h)%2!==0)h++; return { desc:'房子侧面墙上的梯形部分要刷漆。', q:'上底 '+a+' m，下底 '+b+' m，高 '+h+' m，刷漆面积是多少 m²？', ans: (a+b)*h/2 }; }},
+      { emoji: '🏞️', title: '水坝截面', unit: 'm²', gen: function() { var a=randInt(3,6),b=randInt(a+2,a+5),h=randInt(3,6); if(((a+b)*h)%2!==0)h++; return { top:a, bottom:b, height:h, desc:'水坝的横截面是梯形的。', q:'上底 '+a+' m，下底 '+b+' m，高 '+h+' m，截面面积是多少 m²？', ans: (a+b)*h/2 }; }},
+      { emoji: '🪜', title: '梯子侧面', unit: 'cm²', gen: function() { var a=randInt(10,20),b=randInt(a+5,a+15),h=randInt(15,30); if(((a+b)*h)%2!==0)h++; return { top:a, bottom:b, height:h, desc:'梯子侧面是梯形的。', q:'上底 '+a+' cm，下底 '+b+' cm，高 '+h+' cm，侧面面积是多少 cm²？', ans: (a+b)*h/2 }; }},
+      { emoji: '🌿', title: '花坛设计', unit: 'm²', gen: function() { var a=randInt(4,8),b=randInt(a+2,a+6),h=randInt(3,6); if(((a+b)*h)%2!==0)h++; return { top:a, bottom:b, height:h, desc:'公园要建一个梯形的花坛。', q:'上底 '+a+' m，下底 '+b+' m，高 '+h+' m，花坛占地多少 m²？', ans: (a+b)*h/2 }; }},
+      { emoji: '📐', title: '手工纸片', unit: 'cm²', gen: function() { var a=randInt(5,10),b=randInt(a+3,a+8),h=randInt(4,8); if(((a+b)*h)%2!==0)h++; return { top:a, bottom:b, height:h, desc:'美术课上要剪一个梯形纸片。', q:'上底 '+a+' cm，下底 '+b+' cm，高 '+h+' cm，纸片面积是多少 cm²？', ans: (a+b)*h/2 }; }},
+      { emoji: '🏠', title: '屋顶面积', unit: 'm²', gen: function() { var a=randInt(4,8),b=randInt(a+3,a+7),h=randInt(3,5); if(((a+b)*h)%2!==0)h++; return { top:a, bottom:b, height:h, desc:'房子侧面墙上的梯形部分要刷漆。', q:'上底 '+a+' m，下底 '+b+' m，高 '+h+' m，刷漆面积是多少 m²？', ans: (a+b)*h/2 }; }},
     ];
 
     var lifeIdx = 0, lifeData = null;
@@ -491,16 +522,19 @@
     }
 
     document.getElementById('lifeCheckBtn').addEventListener('click', function() {
-      var val = parseFloat(document.getElementById('lifeInput').value);
-      if (isNaN(val)) { document.getElementById('lifeFeedback').textContent = '请输入数字'; return; }
+      var input = document.getElementById('lifeInput').value;
+      var val = Number(input);
+      if (input.trim() === '' || !Number.isFinite(val)) { document.getElementById('lifeFeedback').textContent = '请输入数字'; return; }
       if (val === lifeData.ans) {
+        completeMilestone('life');
+        document.getElementById('lifeAnswer').className = 'life-answer';
         document.getElementById('lifeFeedback').textContent = '🎉 完全正确！';
         document.getElementById('lifeFeedback').className = 'life-feedback correct';
       } else {
         document.getElementById('lifeFeedback').textContent = '❌ 不对哦';
         document.getElementById('lifeFeedback').className = 'life-feedback wrong';
         var ansDiv = document.getElementById('lifeAnswer');
-        ansDiv.innerHTML = '💡 用公式 <span class="a-hl">S = (上底 + 下底) × 高 ÷ 2</span><br>' + lifeData.q.replace('是多少', ' = ' + lifeData.ans + '，所以面积是');
+        ansDiv.textContent = '💡 面积 = (上底 + 下底) × 高 ÷ 2 = (' + lifeData.top + ' + ' + lifeData.bottom + ') × ' + lifeData.height + ' ÷ 2 = ' + lifeData.ans + ' ' + lifeScenarios[lifeIdx % lifeScenarios.length].unit;
         ansDiv.className = 'life-answer show';
       }
     });

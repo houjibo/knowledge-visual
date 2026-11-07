@@ -134,6 +134,7 @@
   - 随机极值出题、整点和半点计算、跨小时调整、日历键盘选择、反馈时序及存储失败恢复；长期跨午夜运行和完整无障碍未全面验收。 [time-date-calculation-reliability.spec.js](../../tests/browser/time-date-calculation-reliability.spec.js)
 - [梯形面积](../../math/topics/trapezoid-area/index.html)
   - 故事及探索拼图的几何关系、缩放和参数边界；练习、进度、真机和完整无障碍尚未验收。 [trapezoid-area-assembly-geometry.spec.js](../../tests/browser/trapezoid-area-assembly-geometry.spec.js)
+  - 四类练习、生活题单位和解析、学习进度与保存失败恢复；真机和完整无障碍尚未全面验收。 [trapezoid-area-practice-completion.spec.js](../../tests/browser/trapezoid-area-practice-completion.spec.js)
 - [三角形面积](../../math/topics/triangle-area/index.html)
   - 静态拼图与动态极端参数下的对应顶点、平行四边形和面积，五类唯一选项与单次计分、生活题公式、跨活动完成与存储恢复；完整无障碍未全面验收。 [triangle-area-geometry-and-practice.spec.js](../../tests/browser/triangle-area-geometry-and-practice.spec.js)
 - [三角形的认识](../../math/topics/triangles/index.html)

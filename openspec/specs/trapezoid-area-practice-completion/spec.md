@@ -1,0 +1,24 @@
+# trapezoid-area-practice-completion Specification
+
+## Purpose
+TBD - created by archiving change trapezoid-area-practice-completion. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 梯形面积练习可靠计分
+页面 SHALL 提供无重复选项，并对每题的首次回答计分，允许学习者主动进入下一题。
+
+#### Scenario: 回答各类练习
+- **WHEN** 学习者选择一个答案
+- **THEN** 选项被禁用，显示正确与否及正确答案，重复操作不改变得分
+
+### Requirement: 生活题反馈与完成记录
+页面 SHALL 使用当前题目数据和对应单位解释错误，并在探索、答对三道练习和一道生活题后保存主题进度。
+
+#### Scenario: 生活题错误后重答
+- **WHEN** 学习者输入错误数值并随后输入正确数值
+- **THEN** 页面显示实际计算过程，答对后隐藏旧解析
+
+#### Scenario: 进度保存失败
+- **WHEN** 完成条件达标但存储暂时失败
+- **THEN** 页面提示未保存，存储恢复后可重试并跨刷新保留记录
