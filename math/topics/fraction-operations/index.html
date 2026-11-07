@@ -323,9 +323,9 @@
         <div class="problem-display" id="prac-problem"></div>
         <div class="answer-inputs">
           <span class="eq">=</span>
-          <input type="number" class="num-input" id="prac-num" placeholder="?" min="0" max="99">
+          <input type="number" class="num-input" id="prac-num" aria-label="答案分子" placeholder="?" min="0" max="99">
           <div class="bar-line"></div>
-          <input type="number" class="num-input" id="prac-den" placeholder="?" min="1" max="99">
+          <input type="number" class="num-input" id="prac-den" aria-label="答案分母" placeholder="?" min="1" max="99">
         </div>
         <button class="submit-btn" id="prac-submit">提交答案</button>
         <div class="feedback" id="prac-feedback"></div>
@@ -562,8 +562,7 @@
       diffState.locked = false;
       const denoms = [2, 3, 4, 5, 6, 8, 10, 12];
       let d1 = denoms[randInt(0, denoms.length - 1)];
-      let d2 = d1;
-      while (d2 === d1) d2 = denoms[randInt(0, denoms.length - 1)];
+      let d2 = denoms.filter(d => d !== d1)[randInt(0, denoms.length - 2)];
       let n1 = randInt(1, d1 - 1);
       let n2 = randInt(1, d2 - 1);
       const op = Math.random() < 0.5 ? '+' : '-';
@@ -661,19 +660,18 @@
       } else {
         const denoms = [2, 3, 4, 5, 6, 8, 10];
         d1 = denoms[randInt(0, denoms.length - 1)];
-        d2 = d1;
-        while (d2 === d1) d2 = denoms[randInt(0, denoms.length - 1)];
+        d2 = denoms.filter(d => d !== d1)[randInt(0, denoms.length - 2)];
         n1 = randInt(1, d1 - 1);
         n2 = randInt(1, d2 - 1);
       }
       const op = Math.random() < 0.5 ? '+' : '-';
       const commonD = lcm(d1, d2);
-      let adjN1 = n1, adjN2 = n2;
-      // 减法时确保结果不为负数
+      // 减法时交换整个分数，使题面与计算结果保持一致。
       if (op === '-' && n1 * (commonD / d1) < n2 * (commonD / d2)) {
-        adjN1 = n2; adjN2 = n1;
+        [n1, n2] = [n2, n1];
+        [d1, d2] = [d2, d1];
       }
-      const rawN = op === '+' ? adjN1 * (commonD / d1) + adjN2 * (commonD / d2) : adjN1 * (commonD / d1) - adjN2 * (commonD / d2);
+      const rawN = op === '+' ? n1 * (commonD / d1) + n2 * (commonD / d2) : n1 * (commonD / d1) - n2 * (commonD / d2);
       const [sn, sd] = simplify(rawN, commonD);
 
       pracState = { ...pracState, n1, d1, n2, d2, op, ansN: sn, ansD: sd, commonD, locked: false };
@@ -768,8 +766,7 @@
       } else {
         const denoms = difficulty <= 2 ? [2, 3, 4, 5, 6] : [2, 3, 4, 5, 6, 7, 8, 9, 10];
         d1 = denoms[randInt(0, denoms.length - 1)];
-        d2 = d1;
-        while (d2 === d1) d2 = denoms[randInt(0, denoms.length - 1)];
+        d2 = denoms.filter(d => d !== d1)[randInt(0, denoms.length - 2)];
       }
       n1 = randInt(1, d1 - 1);
       n2 = randInt(1, (sameDen ? d1 - n1 : d2 - 1));
@@ -861,8 +858,9 @@
         <div style="font-size:48px;margin:16px 0;">${stars}</div>
         <div style="font-size:20px;font-weight:700;color:#1D1D1F;margin:8px 0;">闯关完成！</div>
         <div style="font-size:16px;color:#6E6E73;">答对 ${correct}/${total} 题</div>
-        <button class="calc-btn" onclick="initChallenge()" style="margin-top:16px;">🔄 再来一次</button>
+        <button class="calc-btn" id="ch-restart" style="margin-top:16px;">🔄 再来一次</button>
       `;
+      document.getElementById('ch-restart').addEventListener('click', initChallenge);
       document.getElementById('ch-problem').innerHTML = '';
       document.getElementById('ch-options').innerHTML = '';
       document.getElementById('ch-feedback').textContent = '';
@@ -907,12 +905,10 @@
       }
 
       // 确保有4个选项
-      while (opts.length < 4) {
-        const n = randInt(0, 10);
-        const d = randInt(2, 12);
-        const [sn, sd] = simplify(n, d);
+      for (let n = 0; opts.length < 4 && n <= 10; n++) {
+        const [sn, sd] = simplify(n, 11);
         const key = `${sn}/${sd}`;
-        if (!seen.has(key) && sn >= 0) {
+        if (!seen.has(key)) {
           seen.add(key);
           opts.push([sn, sd]);
         }

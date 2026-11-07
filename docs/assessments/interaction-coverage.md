@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：51；尚未登记：265。
+主题总数：316；已登记部分交互证据：52；尚未登记：264。
 
 ## 已登记部分交互证据
 
@@ -33,6 +33,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [因数与倍数](../../math/topics/factors-and-multiples/index.html)
   - 六类闯关题目固定随机边界、重复提交及十题完成与刷新；未覆盖探索、数轴和筛法。 [factor-multiple-challenge.spec.js](../../tests/browser/factor-multiple-challenge.spec.js)
+- [分数加减法](../../math/topics/fraction-operations/index.html)
+  - 异分母减法题面和判分、固定随机值下五关完成及重新开始；其他探索及全部题型尚未全面验收。 [fraction-operations.spec.js](../../tests/browser/fraction-operations.spec.js)
 - [分数的初步认识](../../math/topics/fractions/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [折线统计图](../../math/topics/line-charts/index.html)
@@ -237,7 +239,6 @@
 - [图形的运动（平移和旋转）](../../math/topics/figure-movement/index.html)
 - [找次品](../../math/topics/finding-defective/index.html)
 - [分数乘除法](../../math/topics/fraction-multiplication-division/index.html)
-- [分数加减法](../../math/topics/fraction-operations/index.html)
 - [分数的基本性质](../../math/topics/fraction-properties/index.html)
 - [公顷和平方千米](../../math/topics/hectares-and-square-kilometers/index.html)
 - [时分秒](../../math/topics/hours-minutes-seconds/index.html)
