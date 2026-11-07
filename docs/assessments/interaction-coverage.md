@@ -62,6 +62,7 @@
 - [24时计时法](../../math/topics/24h-time/index.html)
   - 午夜、中午和晚间转换，固定随机值的唯一选项和配对、键盘配对及单次答题；时间线选择及换题；四项活动完成、知识地图、刷新和保存失败重试；整页无障碍未全面验收。 [time-conversion-reliability.spec.js](../../tests/browser/time-conversion-reliability.spec.js)
 - [认识算盘](../../math/topics/abacus/index.html)
+  - 桌面与移动视口验证三类活动完成、刷新及知识地图节点、存储失败重试，以及受控时钟下切换模式和模拟隐藏页面的暂停恢复；真实设备与整页无障碍尚未全面验收。 [abacus-learning-completion-and-timer.spec.js](../../tests/browser/abacus-learning-completion-and-timer.spec.js)
   - 桌面和移动视口验证 0–9 珠子间距与数值、键盘拨数、固定随机读数、单题计分及挑战重复提交；挑战切换模式的计时、完成记录与真实设备尚未全面验收。 [abacus-learning-interaction-reliability.spec.js](../../tests/browser/abacus-learning-interaction-reliability.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
   - 桌面与移动视口验证固定随机边界、数轴答错后点击、自由练习及加法挑战重复提交、保存失败重试；其他题型和真实设备尚未全面验收。 [basic-addition-subtraction-reliability.spec.js](../../tests/browser/basic-addition-subtraction-reliability.spec.js)

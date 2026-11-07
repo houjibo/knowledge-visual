@@ -154,6 +154,7 @@
   </nav>
 
   <div class="container">
+    <p id="learningProgress" role="status" aria-live="polite" style="text-align:center;margin:12px;line-height:1.6"></p>
     <div class="mode-tabs" id="modeTabs">
       <button class="mode-tab active" data-mode="learn">🧮 认识</button>
       <button class="mode-tab" data-mode="represent">🔢 拨数</button>
@@ -315,6 +316,7 @@
               <button class="challenge-submit" id="chalSubmit">确定</button>
             </div>
             <div class="challenge-result feedback" id="chalResult"></div>
+            <p id="chalTimerStatus" role="status" aria-live="polite"></p>
           </div>
         </div>
 
@@ -331,6 +333,26 @@
 
   <script src="../../assets/js/common.js"></script>
   <script>
+    const learningActivities = new Set();
+    let progressSaved = PageProgress.isDone('abacus');
+    let completionAttempted = false;
+    function renderLearningProgress() {
+      const status = document.getElementById('learningProgress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      const names = [['represent','拨数'], ['read','读数'], ['challenge','限时挑战']];
+      status.textContent = `本次完成 ${learningActivities.size}/3：` + names.map(([id, name]) => `${learningActivities.has(id) ? '✓' : '○'} ${name}`).join('、') + '。每项答对一题；未完成的进度仅保留在当前页面。';
+    }
+    function finishLearningActivity(id) {
+      learningActivities.add(id);
+      if (learningActivities.size === 3 && !progressSaved && !completionAttempted) {
+        completionAttempted = true;
+        progressSaved = PageProgress.markDone('abacus');
+      }
+      renderLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', () => { if (completionAttempted) { progressSaved = true; renderLearningProgress(); } });
+    renderLearningProgress();
     /* ===== 算盘绘制引擎 ===== */
     const RODS = 5; // 5档算盘（个十百千万）
     const ROD_X = [60, 110, 160, 210, 260];
@@ -478,6 +500,7 @@
         modes.forEach(m => m.classList.remove('active'));
         tab.classList.add('active');
         document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        updateChallengePause();
       });
     });
 
@@ -571,6 +594,7 @@
         fb.className = 'feedback correct-fb';
         repScore += 10;
         document.getElementById('repScoreVal').textContent = repScore;
+        finishLearningActivity('represent');
         repLocked = true;
         renderRepAbacus();
         document.getElementById('repNext').hidden = false;
@@ -647,6 +671,7 @@
         fb.className = 'feedback correct-fb';
         readScore += 10;
         document.getElementById('readScoreVal').textContent = readScore;
+        finishLearningActivity('read');
       } else {
         btn.classList.add('wrong');
         fb.textContent = '❌ 不对，正确答案是 ' + readAnswer;
@@ -672,7 +697,23 @@
     let chalCorrectCount = 0;
     let chalWrongCount = 0;
     let chalAnswer = 0;
-    let chalActive = false, chalLocked = false, chalNextTimer = null;
+    let chalActive = false, chalLocked = false, chalNextTimer = null, chalPaused = false;
+
+    function updateChallengePause() {
+      if (!chalActive) return;
+      const shouldPause = document.hidden || !document.getElementById('mode-challenge').classList.contains('active');
+      if (shouldPause && !chalPaused) {
+        chalPaused = true;
+        clearInterval(chalTimer); clearTimeout(chalNextTimer);
+        document.getElementById('chalTimerStatus').textContent = '挑战已暂停，返回后继续。';
+      } else if (!shouldPause && chalPaused) {
+        chalPaused = false;
+        document.getElementById('chalTimerStatus').textContent = '挑战继续。';
+        if (chalLocked) genChalQuestion();
+        startChallengeTimer();
+      }
+    }
+    document.addEventListener('visibilitychange', updateChallengePause);
 
     function genChalQuestion() {
       chalLocked = false;
@@ -693,6 +734,8 @@
       chalCorrectCount = 0;
       chalWrongCount = 0;
       chalActive = true;
+      chalPaused = false;
+      document.getElementById('chalTimerStatus').textContent = '挑战进行中。';
       document.getElementById('chalTimeLeft').textContent = chalTimeLeft;
       document.getElementById('chalCorrect').textContent = chalCorrectCount;
       document.getElementById('chalWrong').textContent = chalWrongCount;
@@ -701,7 +744,11 @@
       document.getElementById('chalEnd').classList.remove('show');
       document.getElementById('chalRunning').style.display = 'block';
       genChalQuestion();
-
+      startChallengeTimer();
+      updateChallengePause();
+    }
+    function startChallengeTimer() {
+      clearInterval(chalTimer);
       chalTimer = setInterval(() => {
         chalTimeLeft--;
         document.getElementById('chalTimeLeft').textContent = chalTimeLeft;
@@ -714,6 +761,8 @@
       clearInterval(chalTimer);
       clearTimeout(chalNextTimer);
       chalActive = false;
+      chalPaused = false;
+      document.getElementById('chalTimerStatus').textContent = '';
       document.getElementById('challengeWrap').classList.remove('challenge-active');
       document.getElementById('chalRunning').style.display = 'none';
       document.getElementById('chalEnd').classList.add('show');
@@ -733,7 +782,7 @@
     document.getElementById('chalRestart').addEventListener('click', startChallenge);
 
     function handleChalSubmit() {
-      if (!chalActive || chalLocked) return;
+      if (!chalActive || chalPaused || chalLocked) return;
       const val = parseInt(document.getElementById('chalInput').value);
       const res = document.getElementById('chalResult');
       if (isNaN(val)) return;
@@ -742,6 +791,7 @@
       if (val === chalAnswer) {
         chalCorrectCount++;
         document.getElementById('chalCorrect').textContent = chalCorrectCount;
+        finishLearningActivity('challenge');
         res.textContent = '✅ 对！';
         res.className = 'challenge-result feedback correct-fb';
       } else {
@@ -751,7 +801,7 @@
         res.className = 'challenge-result feedback wrong-fb';
       }
       chalNextTimer = setTimeout(() => {
-        if (chalActive) genChalQuestion();
+        if (chalActive && !chalPaused) genChalQuestion();
       }, 800);
     }
 
