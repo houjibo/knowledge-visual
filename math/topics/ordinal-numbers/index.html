@@ -157,9 +157,9 @@
           <div class="concept-example">
             <div class="label">👀 举个例子</div>
             <div class="content">
-              🍎🍎🍎🍎🍎<br>
-              一共有 <b>5个</b>苹果。<br>
-              红苹果排在第 <b>3</b> 个。
+              🍎🍎🍌🍎🍎<br>
+              一共有 <b>5个</b>水果。<br>
+              香蕉从左往右排在第 <b>3</b> 个。
             </div>
           </div>
         </div>
@@ -168,10 +168,10 @@
           <div style="font-size:16px;color:#6E6E73;margin-bottom:12px;">数一数，填一填：</div>
           <div class="items-row" id="learnItems"></div>
           <div style="margin-top:20px;font-size:16px;color:#1D1D1F;">
-            一共有 <input type="number" id="learnTotal" style="width:60px;height:36px;border:2px solid #FF9800;border-radius:8px;font-size:18px;font-weight:700;text-align:center;color:#FF9800;outline:none;"> 个水果
+            一共有 <input type="number" id="learnTotal" aria-label="水果总数" style="width:60px;height:36px;border:2px solid #FF9800;border-radius:8px;font-size:18px;font-weight:700;text-align:center;color:#FF9800;outline:none;"> 个水果
           </div>
           <div style="margin-top:12px;font-size:16px;color:#1D1D1F;">
-            🍌 排在第 <input type="number" id="learnPos" style="width:60px;height:36px;border:2px solid #FF9800;border-radius:8px;font-size:18px;font-weight:700;text-align:center;color:#FF9800;outline:none;"> 个
+            🍌 从左往右排在第 <input type="number" id="learnPos" aria-label="香蕉的位置" style="width:60px;height:36px;border:2px solid #FF9800;border-radius:8px;font-size:18px;font-weight:700;text-align:center;color:#FF9800;outline:none;"> 个
           </div>
           <button class="action-btn primary" style="margin-top:20px;" onclick="checkLearn()">✓ 检查答案</button>
           <div class="feedback" id="learnFeedback"></div>
@@ -202,7 +202,7 @@
       <div class="section">
         <div class="section-title">⭕ 圈出正确答案</div>
         <div class="score-display">
-          <span>✅ 正确: <span id="circleCorrect">0</span></span>
+          <span>✅ 首次答对: <span id="circleCorrect">0</span></span>
           <span>📝 题目: <span id="circleCount">0</span></span>
         </div>
 
@@ -223,7 +223,7 @@
       <div class="section">
         <div class="section-title">✏️ 填入正确答案</div>
         <div class="score-display">
-          <span>✅ 正确: <span id="fillCorrect">0</span></span>
+          <span>✅ 首次答对: <span id="fillCorrect">0</span></span>
           <span>📝 题目: <span id="fillCount">0</span></span>
         </div>
 
@@ -243,23 +243,25 @@
     // 水果表情池
     const FRUITS = ['🍎', '🍌', '🍊', '🍇', '🍓', '🍑', '🍒', '🥝', '🍋', '🍉'];
 
+    function shuffle(values) {
+      const arr = values.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
     // 生成随机题目数据
     function generateData() {
       const count = Math.floor(Math.random() * 5) + 4; // 4-8个
-      const fruits = [];
-      const used = new Set();
-      for (let i = 0; i < count; i++) {
-        let idx;
-        do { idx = Math.floor(Math.random() * FRUITS.length); } while (used.has(idx) && used.size < FRUITS.length);
-        used.add(idx);
-        fruits.push(FRUITS[idx]);
-      }
-      return fruits;
+      return shuffle(['🍌', ...shuffle(FRUITS.filter(f => f !== '🍌')).slice(0, count - 1)]);
     }
 
     // 模式1: 认识概念
-    let learnData = [];
+    let learnData = [], learnCompleted = false;
     function initLearn() {
+      learnCompleted = false;
       learnData = generateData();
       const container = document.getElementById('learnItems');
       container.innerHTML = '';
@@ -275,23 +277,16 @@
     }
 
     function checkLearn() {
-      const total = parseInt(document.getElementById('learnTotal').value);
-      const pos = parseInt(document.getElementById('learnPos').value);
+      if (learnCompleted) return;
+      const totalText = document.getElementById('learnTotal').value.trim();
+      const posText = document.getElementById('learnPos').value.trim();
+      const total = /^\d+$/.test(totalText) ? Number(totalText) : NaN;
+      const pos = /^\d+$/.test(posText) ? Number(posText) : NaN;
       const fb = document.getElementById('learnFeedback');
       const bananaIdx = learnData.indexOf('🍌');
 
-      let correct = true;
-      if (total !== learnData.length) {
-        correct = false;
-      }
-      if (bananaIdx === -1) {
-        // 如果没有香蕉，检查位置是否合理
-        if (pos < 1 || pos > learnData.length) correct = false;
-      } else {
-        if (pos !== bananaIdx + 1) correct = false;
-      }
-
-      if (total === learnData.length && (bananaIdx === -1 || pos === bananaIdx + 1)) {
+      if (total === learnData.length && pos === bananaIdx + 1) {
+        learnCompleted = true;
         fb.textContent = '✅ 完全正确！';
         fb.className = 'feedback correct';
         setTimeout(initLearn, 1500);
@@ -306,8 +301,10 @@
     let chooseAnswer = 0;
     let chooseCorrect = 0;
     let chooseCount = 0;
+    let chooseAnswered = false;
 
     function initChoose() {
+      chooseAnswered = false;
       chooseData = generateData();
       chooseAnswer = Math.floor(Math.random() * chooseData.length);
       const container = document.getElementById('chooseItems');
@@ -326,29 +323,24 @@
 
       if (questionType === 'pos') {
         qContainer.textContent = `${chooseData[chooseAnswer]} 排在第几个？`;
-        const options = new Set([chooseAnswer + 1]);
-        while (options.size < 4) {
-          const opt = Math.floor(Math.random() * chooseData.length) + 1;
-          options.add(opt);
-        }
-        Array.from(options).sort((a, b) => a - b).forEach(opt => {
+        const answer = chooseAnswer + 1;
+        const pool = Array.from({length: chooseData.length}, (_, i) => i + 1).filter(n => n !== answer);
+        [answer, ...shuffle(pool).slice(0, 3)].sort((a, b) => a - b).forEach(opt => {
           const btn = document.createElement('button');
           btn.className = 'option-btn';
           btn.textContent = `第${opt}个`;
+          btn.dataset.correct = String(opt === answer);
           btn.onclick = () => checkChoose(btn, opt === chooseAnswer + 1);
           optContainer.appendChild(btn);
         });
       } else {
         qContainer.textContent = `一共有多少个水果？`;
-        const options = new Set([chooseData.length]);
-        while (options.size < 4) {
-          const opt = Math.floor(Math.random() * 6) + 3;
-          options.add(opt);
-        }
-        Array.from(options).sort((a, b) => a - b).forEach(opt => {
+        const pool = Array.from({length: 6}, (_, i) => i + 3).filter(n => n !== chooseData.length);
+        [chooseData.length, ...shuffle(pool).slice(0, 3)].sort((a, b) => a - b).forEach(opt => {
           const btn = document.createElement('button');
           btn.className = 'option-btn';
           btn.textContent = `${opt}个`;
+          btn.dataset.correct = String(opt === chooseData.length);
           btn.onclick = () => checkChoose(btn, opt === chooseData.length);
           optContainer.appendChild(btn);
         });
@@ -357,6 +349,8 @@
     }
 
     function checkChoose(btn, isCorrect) {
+      if (chooseAnswered) return;
+      chooseAnswered = true;
       chooseCount++;
       document.getElementById('chooseCount').textContent = chooseCount;
       const allBtns = document.querySelectorAll('#chooseOptions .option-btn');
@@ -368,12 +362,14 @@
         btn.classList.add('correct');
         document.getElementById('chooseFeedback').textContent = '✅ 答对了！';
         document.getElementById('chooseFeedback').className = 'feedback correct';
-        setTimeout(initChoose, 1500);
       } else {
         btn.classList.add('wrong');
-        document.getElementById('chooseFeedback').textContent = '❌ 答错了，再想想！';
+        const correctBtn = [...allBtns].find(b => b.dataset.correct === 'true');
+        correctBtn.classList.add('correct');
+        document.getElementById('chooseFeedback').textContent = `❌ 正确答案是 ${correctBtn.textContent}`;
         document.getElementById('chooseFeedback').className = 'feedback wrong';
       }
+      setTimeout(initChoose, isCorrect ? 1500 : 2500);
     }
 
     // 模式3: 圈一圈
@@ -382,17 +378,22 @@
     let circleSelected = new Set();
     let circleCorrect = 0;
     let circleCount = 0;
+    let circleGraded = false, circleCompleted = false;
 
     function initCircle() {
+      circleGraded = false; circleCompleted = false;
       circleData = generateData();
       circleTarget = Math.floor(Math.random() * circleData.length);
       circleSelected.clear();
       const container = document.getElementById('circleItems');
       container.innerHTML = '';
       circleData.forEach((fruit, i) => {
-        const item = document.createElement('div');
+        const item = document.createElement('button');
+        item.type = 'button';
         item.className = 'circle-item';
         item.textContent = fruit;
+        item.setAttribute('aria-label', `从左往右第${i + 1}个水果 ${fruit}`);
+        item.setAttribute('aria-pressed', 'false');
         item.onclick = () => toggleCircle(item, i);
         container.appendChild(item);
       });
@@ -409,6 +410,7 @@
     }
 
     function toggleCircle(item, idx) {
+      if (circleCompleted) return;
       if (circleSelected.has(idx)) {
         circleSelected.delete(idx);
         item.classList.remove('selected');
@@ -416,19 +418,25 @@
         circleSelected.add(idx);
         item.classList.add('selected');
       }
+      item.setAttribute('aria-pressed', String(circleSelected.has(idx)));
     }
 
     function clearCircle() {
+      if (circleCompleted) return;
       circleSelected.clear();
       document.querySelectorAll('.circle-item').forEach(item => {
         item.classList.remove('selected');
+        item.setAttribute('aria-pressed', 'false');
       });
       document.getElementById('circleFeedback').textContent = '';
     }
 
     function checkCircle() {
-      circleCount++;
-      document.getElementById('circleCount').textContent = circleCount;
+      if (circleCompleted) return;
+      if (circleSelected.size === 0) {
+        document.getElementById('circleFeedback').textContent = '请先选择水果';
+        return;
+      }
       const instr = document.getElementById('circleInstruction');
       const fb = document.getElementById('circleFeedback');
       const items = document.querySelectorAll('.circle-item');
@@ -456,9 +464,15 @@
         }
       }
 
-      if (isCorrect) {
-        circleCorrect++;
+      if (!circleGraded) {
+        circleCount++;
+        if (isCorrect) circleCorrect++;
+        document.getElementById('circleCount').textContent = circleCount;
         document.getElementById('circleCorrect').textContent = circleCorrect;
+        circleGraded = true;
+      }
+      if (isCorrect) {
+        circleCompleted = true;
         fb.textContent = '✅ 圈对了！';
         fb.className = 'feedback correct';
         setTimeout(initCircle, 1500);
@@ -473,8 +487,10 @@
     let fillAnswer = 0;
     let fillCorrect = 0;
     let fillCount = 0;
+    let fillGraded = false, fillCompleted = false;
 
     function initFill() {
+      fillGraded = false; fillCompleted = false;
       fillData = generateData();
       const container = document.getElementById('fillItems');
       container.innerHTML = '';
@@ -493,11 +509,11 @@
       if (type === 'pos') {
         fillAnswer = Math.floor(Math.random() * fillData.length) + 1;
         qContainer.textContent = `${fillData[fillAnswer - 1]} 排在第几个？`;
-        inputGroup.innerHTML = `<span class="fill-unit">第</span><input type="number" class="fill-input" id="fillInput" min="1" max="${fillData.length}"><span class="fill-unit">个</span>`;
+        inputGroup.innerHTML = `<span class="fill-unit">第</span><input type="number" class="fill-input" id="fillInput" aria-label="水果的位置" min="1" max="${fillData.length}"><span class="fill-unit">个</span>`;
       } else {
         fillAnswer = fillData.length;
         qContainer.textContent = `一共有多少个水果？`;
-        inputGroup.innerHTML = `<input type="number" class="fill-input" id="fillInput" min="1" max="10"><span class="fill-unit">个</span>`;
+        inputGroup.innerHTML = `<input type="number" class="fill-input" id="fillInput" aria-label="水果总数" min="1" max="10"><span class="fill-unit">个</span>`;
       }
 
       document.getElementById('fillInput').addEventListener('input', () => {
@@ -508,15 +524,23 @@
     }
 
     function checkFill() {
-      fillCount++;
-      document.getElementById('fillCount').textContent = fillCount;
+      if (fillCompleted) return;
       const input = document.getElementById('fillInput');
-      const value = parseInt(input.value);
+      if (!/^\d+$/.test(input.value.trim())) return;
+      const value = Number(input.value);
       const fb = document.getElementById('fillFeedback');
 
-      if (value === fillAnswer) {
-        fillCorrect++;
+      if (!fillGraded) {
+        fillCount++;
+        if (value === fillAnswer) fillCorrect++;
+        document.getElementById('fillCount').textContent = fillCount;
         document.getElementById('fillCorrect').textContent = fillCorrect;
+        fillGraded = true;
+      }
+
+      if (value === fillAnswer) {
+        fillCompleted = true;
+        input.classList.remove('wrong');
         input.classList.add('correct');
         fb.textContent = '✅ 答对了！';
         fb.className = 'feedback correct';

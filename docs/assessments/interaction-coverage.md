@@ -95,6 +95,7 @@
   - 固定随机值下填数与闯关选项、错误答案高亮、限时进度和到期重开；未覆盖所有难度与整页内容。 [oral-calculation-reliability.spec.js](../../tests/browser/oral-calculation-reliability.spec.js)
 - [几个和第几](../../math/topics/ordinal-numbers/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
+  - 固定随机值下四模式出题、目标水果、答错继续、键盘圈画及首次作答统计；未覆盖所有随机序列与整页内容。 [ordinal-numbers-learning.spec.js](../../tests/browser/ordinal-numbers-learning.spec.js)
 - [搭配中的学问](../../math/topics/pairing-combinations/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [百分数](../../math/topics/percentage/index.html)
