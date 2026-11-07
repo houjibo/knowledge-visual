@@ -118,6 +118,7 @@
   - 零档磁极与磁场、直导线环形磁场投影、电动机换向假设和动画暂停；绕向和场强为示意，题目与无障碍未全面验收。 [electromagnetism-model.spec.js](../../tests/browser/electromagnetism-model.spec.js)
 - [热机 · 初中物理互动可视化](../../physics/middle/heat-engine.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
+  - 四冲程曲柄和活塞实际绘制位置、速度零值、手动跳转及暂停；连杆为简化模型，其他内容和无障碍未全面验收。 [heat-engine-cycle.spec.js](../../tests/browser/heat-engine-cycle.spec.js)
 - [生活用电 · 初中物理互动可视化](../../physics/middle/household-circuits.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
   - 短路保护后电流与画布状态、验电提示及测验；实际接线、保护动作和全页安全内容未全面验收。 [household-circuit-safety.spec.js](../../tests/browser/household-circuit-safety.spec.js)

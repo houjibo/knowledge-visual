@@ -129,7 +129,7 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="engineCanvas" width="720" height="460"></canvas>
+          <canvas id="engineCanvas" width="720" height="460" role="img"></canvas>
           <div class="legend">
             <span>⬇ 吸气</span><span>⬆ 压缩</span><span>💥 做功</span><span>⬆ 排气</span>
             <span id="strokeLabel">当前：吸气冲程</span>
@@ -139,19 +139,20 @@
       <div class="panel">
         <h3>运转控制</h3>
         <div class="slider-row">
-          <label>转速</label>
+          <label for="sliderSpeed">动画速度</label>
           <input type="range" id="sliderSpeed" min="0" max="100" step="5" value="40">
           <span class="val" id="valSpeed">慢</span>
         </div>
         <div class="demo-btns">
-          <button class="demo-btn" id="btnStep">⏭ 手动推进一个冲程</button>
-          <button class="demo-btn" id="btnPause">⏸ 暂停</button>
+          <button class="demo-btn" id="btnStep">⏭ 跳到下一冲程起点</button>
+          <button class="demo-btn" id="btnPause" aria-pressed="false">⏸ 暂停</button>
         </div>
+        <p style="font-size:14px;color:#cbd5e1">图示为简化运动模型，连杆长度未按实际机构求解；速度滑块控制动画快慢，不表示实际转速。手动跳转会暂停动画。</p>
         <div class="info-grid">
           <div id="infoStroke">冲程<br><b>吸气</b></div>
           <div id="infoEnergy">能量转化<br><b>——</b></div>
         </div>
-        <div class="equation">热值：<b>Q<sub>放</sub> = m · q</b>　效率：<b>η = W<sub>有用</sub> / Q<sub>放</sub></b><br><span style="font-size:0.85em;color:#94a3b8">汽油热值 q ≈ 4.6×10⁷ J/kg；一般汽油机效率只有 20%~30%</span></div>
+        <div class="equation">热值：<b>Q<sub>放</sub> = m · q</b>　效率：<b>η = W<sub>有用</sub> / Q<sub>放</sub></b><br><span style="font-size:0.85em;color:#94a3b8">汽油热值 q ≈ 4.6×10⁷ J/kg；实际效率随机型和工况变化</span></div>
         <div class="concept-card">
           <div class="title">四冲程汽油机</div>
           ①<b>吸气</b>：进气门开，吸入汽油和空气的混合物；②<b>压缩</b>：两气门关闭，活塞上行，<b>机械能→内能</b>；③<b>做功</b>：火花塞点火，燃气膨胀推动活塞，<b>内能→机械能</b>（唯一提供动力的冲程）；④<b>排气</b>：排气门开，排出废气。
@@ -162,7 +163,7 @@
         </div>
         <div class="concept-card warn">
           <div class="title">⚠️ 易错点</div>
-          ① 压缩冲程是机械能→内能，做功冲程是内能→机械能，别记反；② 柴油机靠压缩空气自燃（压燃式），没有火花塞，效率更高；③ 热机效率永远小于 100%——废气带走、散热、摩擦都损失能量；④ 热值是燃料特性，与是否完全燃烧无关。
+          ① 压缩冲程是机械能→内能，做功冲程是内能→机械能，别记反；② 柴油机压缩空气后喷入燃料，燃料在高温空气中自燃（压燃式），没有火花塞；③ 热机效率永远小于 100%——废气带走、散热、摩擦都损失能量；④ 热值是燃料特性，与是否完全燃烧无关。
         </div>
       </div>
     </div>
@@ -235,6 +236,7 @@ tabs.forEach(t => t.addEventListener('click', () => {
   t.setAttribute('aria-pressed', 'true');
   mode = t.dataset.mode;
   Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+  stopAnimation(); render(); startAnimation();
 }));
 
 /* ============================================================
@@ -255,39 +257,42 @@ const STROKES = [
 let phase = 0;          // 0..1 within current stroke
 let strokeIdx = 0;
 let running = true;
-let speed = 0.4;        // strokes per second-ish
+let speed = 0.4;        // 动画速度，不表示实际转速
+let lastT = null, frameId = null;
 const slider = document.getElementById('sliderSpeed');
-function speedLabel(v) { return v <= 20 ? '极慢' : v <= 45 ? '慢' : v <= 70 ? '中' : '快'; }
+function speedLabel(v) { return v === 0 ? '停止（速度为 0）' : v <= 20 ? '极慢' : v <= 45 ? '慢' : v <= 70 ? '中' : '快'; }
 slider.addEventListener('input', () => {
   speed = slider.value / 100;
   document.getElementById('valSpeed').textContent = speedLabel(+slider.value);
+  if (speed === 0) stopAnimation(); else startAnimation();
+  render();
 });
 document.getElementById('btnStep').addEventListener('click', () => {
   running = false;
   document.getElementById('btnPause').textContent = '▶ 继续';
+  document.getElementById('btnPause').setAttribute('aria-pressed', 'true');
+  stopAnimation();
   strokeIdx = (strokeIdx + 1) % 4;
-  phase = 0;
+  phase = 0; render();
 });
 document.getElementById('btnPause').addEventListener('click', function () {
   running = !running;
   this.textContent = running ? '⏸ 暂停' : '▶ 继续';
+  this.setAttribute('aria-pressed', String(!running));
+  if (running) startAnimation(); else stopAnimation();
+  render();
 });
 
-let lastT = performance.now();
-function drawEngine(dt) {
-  if (running) {
-    phase += dt * speed * 1.5;
-    if (phase >= 1) { phase = 0; strokeIdx = (strokeIdx + 1) % 4; }
-  }
+function drawEngine() {
   const S = STROKES[strokeIdx];
-  // 活塞位置：下行冲程 phase 0→1 表示从上→下；上行反之
-  const t = S.down ? phase : 1 - phase;
-  const pistonY = 130 + t * 170;  // 130..300
-
-  // 更新面板
+  // 四个冲程对应曲轴两圈，活塞在每半圈内往复一次。
+  const theta = (strokeIdx + phase) * Math.PI;
+  const t = (1 - Math.cos(theta)) / 2;
+  const pistonY = 130 + t * 170;
   document.getElementById('strokeLabel').textContent = `当前：${S.name} — ${S.desc}`;
   document.getElementById('infoStroke').innerHTML = `冲程<br><b>${S.short}</b>`;
   document.getElementById('infoEnergy').innerHTML = `能量转化<br><b>${S.energy}</b>`;
+  canvas.setAttribute('aria-label', `${S.name}：${S.desc}；能量转化${S.energy}。动画速度${speedLabel(+slider.value)}。`);
 
   // 气缸
   const cx = 300, topY = 90, cylW = 200, cylH = 260;
@@ -295,7 +300,7 @@ function drawEngine(dt) {
   ctx.strokeRect(cx, topY, cylW, cylH);
   // 气体（活塞上方）
   const gasH = pistonY - topY;
-  const intensity = strokeIdx === 1 ? 0.25 + t * 0.55 : strokeIdx === 2 ? 0.9 - t * 0.4 : 0.3;
+  const intensity = strokeIdx === 1 ? 0.25 + (1 - t) * 0.55 : strokeIdx === 2 ? 0.9 - t * 0.4 : 0.3;
   ctx.fillStyle = strokeIdx === 2 && phase < 0.35
     ? `rgba(249,115,22,${intensity})`
     : `rgba(96,165,250,${intensity * 0.6})`;
@@ -310,17 +315,16 @@ function drawEngine(dt) {
   ctx.fillRect(cx + 4, pistonY, cylW - 8, 30);
   ctx.fillStyle = '#64748b';
   ctx.fillRect(cx + 4, pistonY, cylW - 8, 6);
-  // 连杆 + 曲轴
-  const crankCX = cx + cylW / 2, crankCY = 420;
-  const rodEndY = pistonY + 30;
-  ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 7;
-  ctx.beginPath(); ctx.moveTo(crankCX, rodEndY);
-  ctx.lineTo(crankCX + 40 * Math.cos(t * Math.PI), crankCY - 28 * Math.sin(t * Math.PI));
-  ctx.stroke();
+  // 连杆与曲轴：曲柄销绕轴心持续同向旋转。
+  const crankCX = cx + cylW / 2, crankCY = 400, crankR = 30;
+  const pinX = crankCX + crankR * Math.sin(theta), pinY = crankCY - crankR * Math.cos(theta);
   ctx.fillStyle = '#7c3aed';
-  ctx.beginPath(); ctx.arc(crankCX, crankCY, 24, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(crankCX, crankCY, crankR, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 7;
+  ctx.beginPath(); ctx.moveTo(crankCX, pistonY + 30); ctx.lineTo(pinX, pinY); ctx.stroke();
+  ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(pinX, pinY, 5, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#ede9fe'; ctx.font = '12px sans-serif';
-  ctx.fillText('飞轮', crankCX - 14, crankCY + 4);
+  ctx.fillText('飞轮', crankCX + 36, crankCY + 4);
   // 气门
   const valveY = topY - 22;
   // 进气门（左）
@@ -359,16 +363,28 @@ function drawEngine(dt) {
     ctx.fillText(s.short, 552 + i * 38, 84);
   });
 }
-function draw() {
-  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
-  const now = performance.now();
-  const dt = Math.min(0.05, (now - lastT) / 1000);
-  lastT = now;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawEngine(dt);
-  requestAnimationFrame(draw);
+function render() {
+  if (mode !== 'learn') return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height); drawEngine();
 }
-requestAnimationFrame(draw);
+function tick(now) {
+  frameId = null;
+  if (!running || speed === 0 || mode !== 'learn') return;
+  const dt = lastT === null ? 0 : Math.min(0.05, Math.max(0, (now - lastT) / 1000));
+  lastT = now;
+  const next = phase + dt * speed * 1.5;
+  const completed = Math.floor(next);
+  phase = next - completed; strokeIdx = (strokeIdx + completed) % 4;
+  render(); startAnimation();
+}
+function startAnimation() {
+  if (running && speed > 0 && mode === 'learn' && frameId === null) frameId = requestAnimationFrame(tick);
+}
+function stopAnimation() {
+  if (frameId !== null) cancelAnimationFrame(frameId);
+  frameId = null; lastT = null;
+}
+render(); startAnimation();
 
 /* ============================================================
  * 计算模式
