@@ -157,7 +157,7 @@
     /* ---------- 推导画布 ---------- */
     const canvas = document.getElementById('areaCanvas');
     const ctx = canvas.getContext('2d');
-    let shape = 'para', animT = 0, animating = false, lastT = performance.now();
+    let shape = 'para', animT = 0, animating = false, lastT = performance.now(), animationFrame = null;
     const FACTS = {
       para: '平行四边形 → 剪下一个三角形 → 平移拼成长方形（S = 底×高）',
       tri: '两个一样的三角形 → 旋转拼成平行四边形（S = 底×高÷2）',
@@ -168,18 +168,20 @@
       b.classList.add('active');
       shape = b.dataset.shape;
       animT = 0; animating = false;
+      cancelAnimationFrame(animationFrame);
       document.getElementById('factLine').textContent = FACTS[shape];
       draw();
     }));
     document.getElementById('animBtn').addEventListener('click', () => {
+      cancelAnimationFrame(animationFrame);
       animT = 0; animating = true; lastT = performance.now();
-      requestAnimationFrame(tick);
+      animationFrame = requestAnimationFrame(tick);
     });
     function tick(now) {
       const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
       animT = Math.min(1, animT + dt * 0.8);
       draw();
-      if (animT < 1 && animating) requestAnimationFrame(tick);
+      if (animT < 1 && animating) animationFrame = requestAnimationFrame(tick);
       else animating = false;
     }
     const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -188,7 +190,7 @@
       if (curMode !== 'explore') return;
       const t = ease(animT);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = '13px sans-serif';
+      ctx.font = '22px sans-serif';
       if (shape === 'para') {
         // 平行四边形 + 左侧三角切下平移到右侧
         const bx = 180, by = 90, w = 280, h = 170, slant = 60;
@@ -196,8 +198,8 @@
         // 主体（梯形部分）
         ctx.fillStyle = 'rgba(230,81,0,0.18)'; ctx.strokeStyle = '#E65100'; ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(bx + slant, by); ctx.lineTo(bx + w, by);
-        ctx.lineTo(bx + w - slant, by + h); ctx.lineTo(bx, by + h);
+        ctx.moveTo(bx + slant, by); ctx.lineTo(bx + w + slant, by);
+        ctx.lineTo(bx + w, by + h); ctx.lineTo(bx + slant, by + h);
         ctx.closePath(); ctx.fill(); ctx.stroke();
         // 被剪三角形（随 t 平移）
         ctx.fillStyle = 'rgba(76,175,80,0.3)'; ctx.strokeStyle = '#4CAF50';
@@ -211,7 +213,7 @@
         ctx.fillStyle = '#1D1D1F';
         ctx.fillText('底 a', bx + w / 2, by + h + 22);
         ctx.fillStyle = '#F44336'; ctx.fillText('高 h', bx + slant + 6, by + h / 2);
-        ctx.fillStyle = '#BF360C'; ctx.font = 'bold 14px sans-serif';
+        ctx.fillStyle = '#BF360C'; ctx.font = 'bold 22px sans-serif';
         if (t > 0.9) ctx.fillText('✅ 拼成了长方形！面积 = 底 × 高', 190, 40);
       } else if (shape === 'tri') {
         const bx = 240, by = 250, w = 180, h = 150;
@@ -220,43 +222,45 @@
         ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + w, by); ctx.lineTo(bx + w / 2, by - h); ctx.closePath(); ctx.fill(); ctx.stroke();
         // 复制三角形旋转 180° 拼上去
         const rot = t * Math.PI;
-        const cx = bx + w / 2, cy = by - h / 2;
+        const cx = bx + 3 * w / 4, cy = by - h / 2;
         ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot); ctx.translate(-cx, -cy);
         ctx.fillStyle = 'rgba(76,175,80,0.3)'; ctx.strokeStyle = '#4CAF50';
         ctx.beginPath(); ctx.moveTo(bx, by - 0); ctx.lineTo(bx + w, by); ctx.lineTo(bx + w / 2, by - h); ctx.closePath();
         ctx.fill(); ctx.stroke();
         ctx.restore();
         ctx.fillStyle = '#1D1D1F'; ctx.fillText('底 a', bx + w / 2 - 12, by + 20);
+        ctx.strokeStyle = '#F44336'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+        ctx.beginPath(); ctx.moveTo(bx + w / 2, by - h); ctx.lineTo(bx + w / 2, by); ctx.stroke(); ctx.setLineDash([]);
         ctx.fillStyle = '#F44336'; ctx.fillText('高 h', bx + w / 2 + 6, by - h / 2);
-        ctx.fillStyle = '#BF360C'; ctx.font = 'bold 14px sans-serif';
+        ctx.fillStyle = '#BF360C'; ctx.font = 'bold 22px sans-serif';
         if (t > 0.9) ctx.fillText('✅ 拼成平行四边形！三角形面积 = 它的一半', 130, 40);
       } else {
         // 梯形 + 复制旋转拼合
-        const cx = 320, cy = 190;
-        const topW = 120, botW = 260, h = 120;
-        function trapPath(flip) {
+        const cx = 280, cy = 190;
+        const topW = 100, botW = 180, h = 120;
+        function trapPath() {
           ctx.beginPath();
-          if (!flip) {
-            ctx.moveTo(cx - topW / 2, cy - h / 2); ctx.lineTo(cx + topW / 2, cy - h / 2);
-            ctx.lineTo(cx + botW / 2, cy + h / 2); ctx.lineTo(cx - botW / 2, cy + h / 2);
-          } else {
-            ctx.moveTo(cx + topW / 2, cy + h / 2); ctx.lineTo(cx - topW / 2, cy + h / 2);
-            ctx.lineTo(cx - botW / 2, cy - h / 2); ctx.lineTo(cx + botW / 2, cy - h / 2);
-          }
+          ctx.moveTo(cx - topW / 2, cy - h / 2); ctx.lineTo(cx + topW / 2, cy - h / 2);
+          ctx.lineTo(cx + botW / 2, cy + h / 2); ctx.lineTo(cx - botW / 2, cy + h / 2);
           ctx.closePath();
         }
         ctx.fillStyle = 'rgba(230,81,0,0.18)'; ctx.strokeStyle = '#E65100'; ctx.lineWidth = 3;
-        trapPath(false); ctx.fill(); ctx.stroke();
+        trapPath(); ctx.fill(); ctx.stroke();
+        // 绕右侧腰的中点旋转，使两个梯形共边且不重叠。
+        const pivotX = cx + (topW + botW) / 4;
         const rot = t * Math.PI;
-        ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot); ctx.translate(-cx, -cy);
+        ctx.save(); ctx.translate(pivotX, cy); ctx.rotate(rot); ctx.translate(-pivotX, -cy);
         ctx.fillStyle = 'rgba(76,175,80,0.3)'; ctx.strokeStyle = '#4CAF50';
-        trapPath(true); ctx.fill(); ctx.stroke();
+        trapPath(); ctx.fill(); ctx.stroke();
         ctx.restore();
+        ctx.strokeStyle = '#F44336'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+        ctx.beginPath(); ctx.moveTo(cx, cy - h / 2); ctx.lineTo(cx, cy + h / 2); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = '#F44336'; ctx.fillText('高 h', cx + 6, cy);
         ctx.fillStyle = '#1D1D1F';
         ctx.fillText('上底 b', cx - 24, cy - h / 2 - 8);
         ctx.fillText('下底 a', cx - 24, cy + h / 2 + 18);
-        ctx.fillStyle = '#BF360C'; ctx.font = 'bold 14px sans-serif';
-        if (t > 0.9) ctx.fillText('✅ 拼成平行四边形！底 = 上底+下底，面积再÷2', 110, 40);
+        ctx.fillStyle = '#BF360C'; ctx.font = 'bold 22px sans-serif';
+        if (t > 0.9) ctx.fillText('✅ 拼成平行四边形！底 = 上底+下底，面积再÷2', 60, 40);
       }
     }
 
@@ -275,12 +279,8 @@
         const h = 2 * (1 + Math.floor(Math.random() * 4));
         ans = (a + b) * h / 2; q = `梯形的上底是 ${b} cm，下底是 ${a} cm，高是 ${h} cm，面积是多少 cm²？`;
       }
-      const opts = new Set([ans]);
-      while (opts.size < 4) {
-        const d = ans + (Math.floor(Math.random() * 5) + 1) * (Math.random() < .5 ? -1 : 1);
-        if (d > 0) opts.add(d);
-      }
-      const arr = [...opts].sort(() => Math.random() - .5);
+      const candidates = Array.from({length: 10}, (_, i) => ans + i - 5).filter(n => n > 0 && n !== ans);
+      const arr = Random.shuffle([ans, ...Random.shuffle(candidates).slice(0, 3)]);
       return { q, ans, opts: arr, formula: type === 'para' ? 'S = 底×高' : type === 'tri' ? 'S = 底×高÷2' : 'S = (上底+下底)×高÷2' };
     }
     let streak = 0, totalAnswered = 0, totalCorrect = 0;
@@ -351,6 +351,7 @@
           if (chLock) return; chLock = true;
           const ok = o === chQ.ans;
           b.classList.add(ok ? 'correct' : 'wrong');
+          box.querySelectorAll('.answer-btn').forEach(button => { button.disabled = true; });
           ok ? chCorrect++ : chWrong++;
           document.getElementById('chCorrect').textContent = chCorrect;
           document.getElementById('chWrong').textContent = chWrong;
