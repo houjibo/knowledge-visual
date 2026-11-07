@@ -429,7 +429,7 @@ canvas {
   <div class="card">
     <h3>📐 几何概型</h3>
     <div class="info-box">
-      <strong>特点：</strong>基本事件无限多，用几何度量（长度、面积、体积）计算概率<br>
+      <strong>特点：</strong>在区域内均匀随机取点，可用几何度量（长度、面积、体积）计算概率<br>
       <strong>公式：</strong>P(A) = 构成事件A的区域度量 / 总区域度量
     </div>
     <div class="formula-box">P(A) = μ(A) / μ(Ω)</div>
@@ -437,7 +437,7 @@ canvas {
   <div class="card">
     <h3>🎯 蒙特卡洛求 π</h3>
     <p style="color:#8899aa;font-size:14px;margin-bottom:10px;">在正方形内随机撒点，落在圆内的比例 ≈ π/4：</p>
-    <canvas id="piCanvas" width="400" height="400"></canvas>
+    <canvas id="piCanvas" width="400" height="400" role="img" aria-label="正方形及其内切圆，尚未撒点"></canvas>
     <div class="controls">
       <button class="btn btn-primary" onclick="addPoints(100)">📍 撒100点</button>
       <button class="btn btn-primary" onclick="addPoints(1000)">⚡ 撒1000点</button>
@@ -458,7 +458,7 @@ canvas {
         <div class="value" id="piEstimate">-</div>
       </div>
       <div class="stat-item">
-        <div class="label">误差</div>
+        <div class="label">相对误差</div>
         <div class="value" id="piError">-</div>
       </div>
     </div>
@@ -467,22 +467,24 @@ canvas {
     <h3>📏 线段随机取点</h3>
     <p style="color:#8899aa;font-size:14px;margin-bottom:10px;">在 [0, L] 上随机取点，求落在子区间的概率：</p>
     <div class="slider-group">
-      <label>线段长度 L：</label>
-      <input type="range" min="4" max="10" value="8" id="lineLen" oninput="updateLine()">
+      <label for="lineLen">线段长度 L：</label>
+      <input type="range" min="4" max="10" value="8" id="lineLen" oninput="updateLine('length')">
       <span class="val" id="lineLenVal">8</span>
     </div>
     <div class="slider-group">
-      <label>子区间起点 a：</label>
-      <input type="range" min="0" max="7" value="2" id="lineA" oninput="updateLine()">
+      <label for="lineA">子区间起点 a：</label>
+      <input type="range" min="0" max="7" value="2" id="lineA" oninput="updateLine('a')">
       <span class="val" id="lineAVal">2</span>
     </div>
     <div class="slider-group">
-      <label>子区间终点 b：</label>
-      <input type="range" min="1" max="8" value="5" id="lineB" oninput="updateLine()">
+      <label for="lineB">子区间终点 b：</label>
+      <input type="range" min="1" max="8" value="5" id="lineB" oninput="updateLine('b')">
       <span class="val" id="lineBVal">5</span>
     </div>
-    <canvas id="lineCanvas" width="780" height="120"></canvas>
+    <canvas id="lineCanvas" width="780" height="120" role="img"></canvas>
     <div class="result-display" id="lineResult">P = (b-a)/L = 3/8 = 0.375</div>
+    <p id="lineStats" role="status" aria-live="polite">当前无采样点。</p>
+    <p style="color:#cbd5e1;font-size:13px">改变 L 会清除旧采样；改变区间会重新统计现有采样点。</p>
     <div class="controls">
       <button class="btn btn-primary" onclick="dropPoint()">📍 随机取点</button>
       <button class="btn btn-secondary" onclick="clearLinePoints()">🔄 清除点</button>
@@ -759,7 +761,7 @@ updateDiceStats();
 drawDiceHist();
 
 // ===== Panel 3: Geometric Probability - Pi =====
-let piState = { total: 0, inside: 0, points: [] };
+let piState = { total: 0, inside: 0 };
 const piCanvas = document.getElementById('piCanvas');
 const piCtx = piCanvas.getContext('2d');
 
@@ -795,7 +797,6 @@ function addPoints(n) {
     
     piState.total++;
     if (inside) piState.inside++;
-    piState.points.push({ x, y, inside });
     
     ctx.fillStyle = inside ? 'rgba(0,229,255,0.6)' : 'rgba(255,100,100,0.4)';
     ctx.fillRect(x - 1, y - 1, 2, 2);
@@ -805,7 +806,7 @@ function addPoints(n) {
 }
 
 function resetPi() {
-  piState = { total: 0, inside: 0, points: [] };
+  piState = { total: 0, inside: 0 };
   drawPiBase();
   updatePiStats();
 }
@@ -819,31 +820,41 @@ function updatePiStats() {
     const estimate = 4 * inside / total;
     document.getElementById('piEstimate').textContent = estimate.toFixed(4);
     document.getElementById('piError').textContent = (Math.abs(estimate - Math.PI) * 100 / Math.PI).toFixed(2) + '%';
+  } else {
+    document.getElementById('piEstimate').textContent = '-';
+    document.getElementById('piError').textContent = '-';
   }
+  piCanvas.setAttribute('aria-label', `正方形及其内切圆，采样 ${total} 点，圆内 ${inside} 点。`);
 }
 
 drawPiBase();
 
 // ===== Panel 3: Line segment =====
 let linePoints = [];
+let previousLineLength = null;
 const lineCanvas = document.getElementById('lineCanvas');
 const lineCtx = lineCanvas.getContext('2d');
 
-function updateLine() {
-  const L = parseInt(document.getElementById('lineLen').value);
-  let a = parseInt(document.getElementById('lineA').value);
-  let b = parseInt(document.getElementById('lineB').value);
-  
-  if (a >= b) { b = a + 1; document.getElementById('lineB').value = b; }
-  if (b > L) { b = L; document.getElementById('lineB').value = b; }
-  
+function updateLine(changed = '') {
+  const lenInput = document.getElementById('lineLen');
+  const aInput = document.getElementById('lineA');
+  const bInput = document.getElementById('lineB');
+  const L = +lenInput.value;
+  let a = Math.min(+aInput.value, L - 1);
+  let b = Math.min(+bInput.value, L);
+  if (a >= b) {
+    if (changed === 'b') a = b - 1;
+    else b = a + 1;
+  }
+  aInput.max = L - 1; bInput.max = L;
+  aInput.value = a; bInput.value = b;
+  if (previousLineLength !== null && previousLineLength !== L) linePoints = [];
+  previousLineLength = L;
   document.getElementById('lineLenVal').textContent = L;
   document.getElementById('lineAVal').textContent = a;
   document.getElementById('lineBVal').textContent = b;
-  
   const prob = (b - a) / L;
   document.getElementById('lineResult').innerHTML = `P = (${b}-${a})/${L} = <span style="color:#1de9b6">${prob.toFixed(4)}</span>`;
-  
   drawLine();
 }
 
@@ -888,6 +899,9 @@ function drawLine() {
   ctx.fillText('a=' + a, margin + a * scale, y - 20);
   ctx.fillText('b=' + b, margin + b * scale, y - 20);
   
+  const hits = linePoints.filter(p => p >= a && p <= b).length;
+  document.getElementById('lineStats').textContent = linePoints.length ? `已取 ${linePoints.length} 点，区间内 ${hits} 点，频率 ${(hits / linePoints.length).toFixed(3)}。` : '当前无采样点。';
+  lineCanvas.setAttribute('aria-label', `线段从0到${L}，目标区间从${a}到${b}，理论概率${((b-a)/L).toFixed(4)}；采样${linePoints.length}点，区间内${hits}点。`);
   // Draw points
   linePoints.forEach(p => {
     ctx.fillStyle = p >= a && p <= b ? '#1de9b6' : 'rgba(255,100,100,0.7)';

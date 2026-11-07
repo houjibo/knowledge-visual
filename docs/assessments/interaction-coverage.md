@@ -25,6 +25,7 @@
   - 综合练习逐题得分、重试及完成；未覆盖平衡和相图模拟。 [equilibrium-quiz.spec.js](../../tests/browser/equilibrium-quiz.spec.js)
 - [概率 - 高中数学互动可视化](../../math/high/probability.html)
   - 受控时钟和随机数验证硬币、骰子、摸球批量取消；骰子目标历史统计和柱状图、摸球换配置及一道练习；其他实验、完整题目与无障碍未全面验收。 [high-probability-experiment.spec.js](../../tests/browser/high-probability-experiment.spec.js)
+  - 线段长度与端点边界、采样重算和画布点位置、蒙特卡洛估算重置；全部题目和无障碍未全面验收。 [geometric-probability.spec.js](../../tests/browser/geometric-probability.spec.js)
 - [随机变量及其分布 · 高中数学互动可视化](../../math/high/random-variables.html)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
   - 正态曲线实际绘制位置、σ 边界、超几何 n 上限、期望标注和两道练习反馈；全部题目和无障碍未全面验收。 [random-variable-distribution.spec.js](../../tests/browser/random-variable-distribution.spec.js)
