@@ -61,7 +61,8 @@
   footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
 .tab { font-family: inherit; color: inherit; }
 .func-btn { font-family: inherit; }
-.func-btn:focus-visible, .tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
+.quiz-opt { font-family: inherit; color: inherit; text-align: left; }
+.quiz-opt:focus-visible, .quiz button:focus-visible, .func-btn:focus-visible, .tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
 </style>
 </head>
 <body>
@@ -103,7 +104,9 @@
       <div class="quiz" id="quizBox" style="display:none;">
         <div class="quiz-q" id="quizQ"></div>
         <div class="quiz-opts" id="quizOpts"></div>
-        <div class="quiz-feedback" id="quizFb"></div>
+        <div class="quiz-feedback" id="quizFb" role="status"></div>
+        <button type="button" id="quizNext" hidden>下一题</button>
+        <button type="button" id="quizRetry" hidden>重试保存</button>
       </div>
     </div>
   </div>
@@ -369,43 +372,71 @@
   ];
   let curQuiz = 0;
   let quizScore = 0;
+  let selectedAnswer = null;
+  let saveAttempted = false;
+  let progressSaved = false;
   const totalQuiz = quizzes.length;
+  const passScore = Math.ceil(totalQuiz * 0.6);
+  const quizFeedback = document.getElementById('quizFb');
+  const quizNext = document.getElementById('quizNext');
+  const quizRetry = document.getElementById('quizRetry');
+  function saveCompletion() {
+    saveAttempted = true;
+    progressSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('derivative');
+    quizRetry.hidden = !!progressSaved;
+  }
+  function resultMessage() {
+    const passed = quizScore >= passScore;
+    if (!passed) return `本轮得分 ${quizScore}/${totalQuiz}，至少答对 ${passScore} 题可记录完成。`;
+    return `本轮得分 ${quizScore}/${totalQuiz}，` + (progressSaved ? '完成记录已保存。' : '已通过，但完成记录未保存；可重试保存。');
+  }
+  document.addEventListener('math-progress-saved', () => {
+    if (saveAttempted) {
+      progressSaved = true;
+      quizRetry.hidden = true;
+      if (curQuiz === totalQuiz - 1 && selectedAnswer !== null) quizFeedback.textContent = resultMessage();
+    }
+  });
+  quizRetry.addEventListener('click', () => {
+    saveCompletion();
+    quizFeedback.textContent = progressSaved ? '完成记录已保存。' : '完成记录未保存；可重试保存。';
+  });
+  quizNext.addEventListener('click', () => {
+    if (curQuiz === totalQuiz - 1) { curQuiz = 0; quizScore = 0; }
+    else curQuiz++;
+    selectedAnswer = null;
+    loadQuiz();
+  });
   function loadQuiz() {
-    const q = quizzes[curQuiz % quizzes.length];
-    document.getElementById('quizQ').textContent = q.q + `  (${(curQuiz % totalQuiz) + 1}/${totalQuiz})`;
+    const q = quizzes[curQuiz];
+    document.getElementById('quizQ').textContent = q.q + `  (${curQuiz + 1}/${totalQuiz})`;
     const opts = document.getElementById('quizOpts');
     opts.innerHTML = '';
+    quizNext.hidden = selectedAnswer === null;
+    quizNext.textContent = curQuiz === totalQuiz - 1 ? '重新练习' : '下一题';
+    quizRetry.hidden = !saveAttempted || !!progressSaved;
     q.opts.forEach((o, i) => {
-      const d = document.createElement('div');
+      const d = document.createElement('button');
+      d.type = 'button';
       d.className = 'quiz-opt';
       d.textContent = String.fromCharCode(65+i) + '. ' + o;
+      if (selectedAnswer !== null) {
+        d.disabled = true;
+        if (i === q.ans) d.classList.add('correct');
+        else if (i === selectedAnswer) d.classList.add('wrong');
+      }
       d.onclick = () => {
-        opts.querySelectorAll('.quiz-opt').forEach(x => x.classList.remove('correct','wrong'));
-        if (i === q.ans) {
-          d.classList.add('correct');
-          quizScore++;
-          document.getElementById('quizFb').textContent = '✅ 正确！';
-        } else {
-          d.classList.add('wrong');
-          opts.children[q.ans].classList.add('correct');
-          document.getElementById('quizFb').textContent = '❌ 正确答案已标出。';
-        }
-        if ((curQuiz + 1) % totalQuiz === 0) {
-          setTimeout(() => {
-            const passed = quizScore >= Math.ceil(totalQuiz * 0.6);
-            const msg = `本轮得分 ${quizScore}/${totalQuiz}` + (passed ? '，已记录完成 ✓' : '，继续加油！');
-            document.getElementById('quizFb').textContent = msg;
-            if (passed && typeof PageProgress !== 'undefined') {
-              PageProgress.markDone('derivative');
-            }
-            quizScore = 0;
-          }, 1400);
-        }
-        setTimeout(() => { curQuiz++; loadQuiz(); }, 1600);
+        if (selectedAnswer !== null) return;
+        selectedAnswer = i;
+        if (i === q.ans) quizScore++;
+        if (curQuiz === totalQuiz - 1 && quizScore >= passScore && !progressSaved) saveCompletion();
+        loadQuiz();
       };
       opts.appendChild(d);
     });
-    document.getElementById('quizFb').textContent = '';
+    if (selectedAnswer === null) quizFeedback.textContent = `本轮已答对 ${quizScore} 题。`;
+    else if (curQuiz === totalQuiz - 1) quizFeedback.textContent = resultMessage();
+    else quizFeedback.textContent = (selectedAnswer === q.ans ? '✅ 正确！' : '❌ 正确答案已标出。') + ` 本轮已答对 ${quizScore} 题。`;
   }
 
   // ---------- events ----------
