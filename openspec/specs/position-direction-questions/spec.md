@@ -1,0 +1,24 @@
+# position-direction-questions Specification
+
+## Purpose
+TBD - created by archiving change position-direction-questions. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 方向题有限生成
+系统 SHALL 从有限候选生成非零位置偏移、路线方向和四个互异选项，避免重复随机值阻塞页面。
+
+#### Scenario: 随机值重复
+- **WHEN** 随机数持续重复
+- **THEN** 判断方向和挑战题仍可生成四个互异选项，且图示两点不重合
+
+### Requirement: 题意支持唯一答案
+系统 SHALL 使方向题答案与图示或明确给定的相对位置一致。
+
+#### Scenario: 两段路线
+- **WHEN** 题目给出从家到邮局、再从邮局到学校的方向而未给出距离
+- **THEN** 题目询问学校相对邮局的方向，并以第二段方向为正确答案
+
+#### Scenario: 两人面朝方向
+- **WHEN** 题目要求判断另一人的朝向
+- **THEN** 题目明确两人面对面，正确答案为已给朝向的相反方向

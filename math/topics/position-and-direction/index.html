@@ -354,15 +354,19 @@
       var cellSize = 60;
       var ax = randInt(1, gridW - 2);
       var ay = randInt(1, gridH - 2);
-      var dx = randInt(-2, 2);
-      var dy = randInt(-2, 2);
-      while (dx === 0 && dy === 0) { dx = randInt(-2, 2); dy = randInt(-2, 2); }
+      var offsets = [];
+      for (var ox = -2; ox <= 2; ox++) {
+        for (var oy = -2; oy <= 2; oy++) {
+          if (ox !== 0 || oy !== 0) offsets.push([ox, oy]);
+        }
+      }
+      var offset = offsets[randInt(0, offsets.length - 1)];
+      var dx = offset[0], dy = offset[1];
       var bx = ax + dx;
       var by = ay + dy;
       // Clamp
       bx = Math.max(0, Math.min(gridW - 1, bx));
       by = Math.max(0, Math.min(gridH - 1, by));
-      while (bx === ax && by === ay) { bx = Math.min(gridW - 1, bx + 1); }
 
       var correctDir = getDirFromDelta(bx - ax, by - ay);
       if (!correctDir) correctDir = '东';
@@ -615,7 +619,7 @@
         var dir = DIRS[randInt(0, 3)];
         var opposite = { '东': '西', '西': '东', '南': '北', '北': '南' };
         return {
-          q: p[0] + '面朝' + dir + '方站着，' + p[1] + '在' + p[0] + '的正对面。\n' + p[1] + '面朝哪个方向？',
+          q: p[0] + '面朝' + dir + '方站着，' + p[1] + '与' + p[0] + '面对面站着。\n' + p[1] + '面朝哪个方向？',
           opts: shuffle([dir, opposite[dir], DIRS[(DIRS.indexOf(dir) + 1) % 4], DIRS[(DIRS.indexOf(dir) + 3) % 4]]),
           answer: opposite[dir]
         };
@@ -649,11 +653,11 @@
       // 路线描述
       function() {
         var startDir1 = DIRS[randInt(0, 3)];
-        var startDir2 = DIRS[randInt(0, 3)];
-        while (startDir2 === startDir1) startDir2 = DIRS[randInt(0, 3)];
+        var remainingDirs = DIRS.filter(function(d) { return d !== startDir1; });
+        var startDir2 = remainingDirs[randInt(0, remainingDirs.length - 1)];
         return {
-          q: '从家出发，先往' + startDir1 + '走到邮局，再往' + startDir2 + '走到学校。\n学校在家的哪个方向？',
-          opts: shuffle([startDir1, startDir2, DIRS[(DIRS.indexOf(startDir1) + 2) % 4], DIRS[(DIRS.indexOf(startDir2) + 2) % 4]]),
+          q: '从家出发，先往' + startDir1 + '走到邮局，再往' + startDir2 + '走到学校。\n学校在邮局的哪个方向？',
+          opts: shuffle(DIRS),
           answer: startDir2
         };
       }
@@ -671,10 +675,9 @@
       q.opts.forEach(function(o) {
         if (!seen[o]) { uniqueOpts.push(o); seen[o] = true; }
       });
-      while (uniqueOpts.length < 4) {
-        var r = ALL_DIRS[randInt(0, ALL_DIRS.length - 1)];
-        if (!seen[r]) { uniqueOpts.push(r); seen[r] = true; }
-      }
+      shuffle(ALL_DIRS.filter(function(d) { return !seen[d]; })).forEach(function(d) {
+        if (uniqueOpts.length < 4) uniqueOpts.push(d);
+      });
       uniqueOpts = shuffle(uniqueOpts.slice(0, 4));
 
       document.getElementById('chProblem').textContent = q.q;
