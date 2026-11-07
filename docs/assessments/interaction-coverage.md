@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：92；尚未登记：224。
+主题总数：316；已登记部分交互证据：93；尚未登记：223。
 
 ## 已登记部分交互证据
 
@@ -53,6 +53,8 @@
   - 午夜、中午和晚间转换，固定随机值的唯一选项和配对、键盘配对及单次答题；时间线选择及换题；四项活动完成、知识地图、刷新和保存失败重试；整页无障碍未全面验收。 [time-conversion-reliability.spec.js](../../tests/browser/time-conversion-reliability.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
   - 从首页进入加法并获得练习正确、错误反馈；未覆盖全部学习模式。 [learning-paths.spec.js](../../tests/browser/learning-paths.spec.js)
+- [年月日的认识](../../math/topics/calendar-units/index.html)
+  - 十二个月北半球气象季节、世纪闰年与输入校验、日期计数口径、作答计数及进度保存失败恢复；历史历法和整页无障碍未全面验收。 [calendar-learning-accuracy.spec.js](../../tests/browser/calendar-learning-accuracy.spec.js)
 - [比大小与排序](../../math/topics/comparison-and-ordering/index.html)
   - 固定随机值下数轴比较、排序和找位置，三类挑战、重复计分及键盘与回调时序；未覆盖所有取值。 [comparison-ordering-reliability.spec.js](../../tests/browser/comparison-ordering-reliability.spec.js)
 - [圆柱与圆锥](../../math/topics/cylinder-and-cone/index.html)
@@ -325,7 +327,6 @@
 - [平均数](../../math/topics/average/index.html)
 - [轴对称图形](../../math/topics/axis-symmetry/index.html)
 - [条形统计图](../../math/topics/bar-charts/index.html)
-- [年月日的认识](../../math/topics/calendar-units/index.html)
 - [统计图表的选择](../../math/topics/chart-selection/index.html)
 - [鸡兔同笼](../../math/topics/chicken-rabbit/index.html)
 - [圆的认识](../../math/topics/circle/index.html)

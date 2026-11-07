@@ -79,19 +79,19 @@
   </nav>
 
   <div class="page-container">
-    <div class="mode-tabs" role="tablist">
-      <button class="mode-tab active" data-mode="calendar">📅 日历</button>
-      <button class="mode-tab" data-mode="convert">🔄 换算</button>
-      <button class="mode-tab" data-mode="leap">🔍 闰年</button>
-      <button class="mode-tab" data-mode="datecalc">🧮 日期计算</button>
+    <div class="mode-tabs" aria-label="学习模式">
+      <button class="mode-tab active" data-mode="calendar" aria-pressed="true">📅 日历</button>
+      <button class="mode-tab" data-mode="convert" aria-pressed="false">🔄 换算</button>
+      <button class="mode-tab" data-mode="leap" aria-pressed="false">🔍 闰年</button>
+      <button class="mode-tab" data-mode="datecalc" aria-pressed="false">🧮 日期计算</button>
     </div>
 
     <!-- 模式1: 日历探索 -->
     <div class="mode-content active" id="mode-calendar">
       <div class="calendar-nav">
-        <button class="calendar-nav-btn" id="prev-month">◀</button>
+        <button class="calendar-nav-btn" id="prev-month" aria-label="上个月">◀</button>
         <span class="calendar-month-title" id="month-title"></span>
-        <button class="calendar-nav-btn" id="next-month">▶</button>
+        <button class="calendar-nav-btn" id="next-month" aria-label="下个月">▶</button>
       </div>
       <div class="calendar-weekdays" id="weekday-row"></div>
       <div class="calendar-grid" id="calendar-grid"></div>
@@ -109,10 +109,10 @@
         </div>
         <div class="unit-question" id="unit-question"></div>
         <div style="text-align:center;margin:16px 0;">
-          <input type="number" class="unit-answer-input" id="unit-answer" placeholder="?">
-          <button class="unit-check-btn" id="unit-check">✓</button>
+          <input type="number" class="unit-answer-input" id="unit-answer" placeholder="?" aria-label="换算答案">
+          <button class="unit-check-btn" id="unit-check" aria-label="检查换算答案">✓</button>
         </div>
-        <div class="unit-feedback" id="unit-feedback"></div>
+        <div class="unit-feedback" id="unit-feedback" role="status" aria-live="polite"></div>
         <button class="unit-check-btn" id="unit-next" style="background:#9CA3AF;">下一题 →</button>
         <div class="unit-ref">
           💡 <b>换算口诀</b><br>
@@ -129,11 +129,11 @@
     <div class="mode-content" id="mode-leap">
       <div class="leap-area">
         <h3 style="margin:0;font-size:20px;color:#6E6E73;">🔍 闰年探测器</h3>
-        <p style="font-size:16px;color:#6E6E73;margin:8px 0;">输入一个年份，看看它是不是闰年</p>
-        <input type="number" class="leap-input" id="leap-year-input" placeholder="2024" min="1" max="9999">
+        <p style="font-size:16px;color:#6E6E73;margin:8px 0;">按格里高利历规则计算；较早年份为规则推算，不代表当地历史历法。</p>
+        <input type="number" class="leap-input" id="leap-year-input" placeholder="2024" min="1" max="9999" aria-label="年份">
         <br>
         <button class="leap-check-btn" id="leap-check-btn">🔍 检测</button>
-        <div class="leap-result" id="leap-result"></div>
+        <div class="leap-result" id="leap-result" role="status" aria-live="polite"></div>
         <div class="leap-rule">
           📏 <b>闰年判断规则</b><br>
           ① 能被 <b>4</b> 整除 → 可能是闰年<br>
@@ -157,7 +157,7 @@
           <span>🔥 连对: <span id="dc-streak">0</span></span>
         </div>
         <div class="datecalc-question" id="dc-question"></div>
-        <div class="datecalc-hint" id="dc-hint"></div>
+        <div class="datecalc-hint" id="dc-hint" role="status" aria-live="polite"></div>
         <div class="datecalc-options" id="dc-options"></div>
         <div style="text-align:center;margin-top:16px;">
           <button class="unit-check-btn" id="dc-next" style="background:#9CA3AF;">下一题 →</button>
@@ -192,9 +192,10 @@
     const modeContents = document.querySelectorAll('.mode-content');
     modeTabs.forEach(tab => {
       tab.addEventListener('click', () => {
-        modeTabs.forEach(t => t.classList.remove('active'));
+        modeTabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-pressed', 'false'); });
         modeContents.forEach(c => c.classList.remove('active'));
         tab.classList.add('active');
+        tab.setAttribute('aria-pressed', 'true');
         const mode = tab.dataset.mode;
         document.getElementById('mode-' + mode).classList.add('active');
       });
@@ -237,9 +238,9 @@
         `${MONTH_NAMES[currentMonth]} 有 <b>${days}</b> 天${currentMonth === 1 ? `（${isLeapYear(currentYear) ? '闰年' : '平年'}，2月有${febDays}天）` : ''}`;
 
       // season
-      const seasonIdx = Math.floor(((currentMonth % 12 + 12) % 12) / 3);
+      const seasonIdx = Math.floor(((currentMonth + 1) % 12) / 3);
       const seasonEl = document.getElementById('season-info');
-      seasonEl.textContent = SEASONS[seasonIdx];
+      seasonEl.textContent = '北半球气象季节：' + SEASONS[seasonIdx];
       seasonEl.className = 'season-info ' + ['season-winter','season-spring','season-summer','season-autumn'][seasonIdx];
     }
 
@@ -280,10 +281,14 @@
     let unitCurrent = null;
     let unitCorrectCount = 0;
     let unitTotalCount = 0;
+    let unitAnswered = false;
 
     function newUnitProblem() {
       const idx = Math.floor(Math.random() * unitProblems.length);
       unitCurrent = unitProblems[idx];
+      unitAnswered = false;
+      document.getElementById('unit-check').disabled = false;
+      document.getElementById('unit-answer').readOnly = false;
       document.getElementById('unit-question').textContent = unitCurrent.q;
       document.getElementById('unit-answer').value = '';
       document.getElementById('unit-feedback').textContent = '';
@@ -291,8 +296,16 @@
     }
 
     function checkUnitAnswer() {
-      if (!unitCurrent) return;
-      const val = parseInt(document.getElementById('unit-answer').value);
+      if (!unitCurrent || unitAnswered) return;
+      const input = document.getElementById('unit-answer');
+      const val = Number(input.value);
+      if (input.value.trim() === '' || !Number.isInteger(val) || val < 0) {
+        document.getElementById('unit-feedback').textContent = '请输入非负整数答案';
+        return;
+      }
+      unitAnswered = true;
+      input.readOnly = true;
+      document.getElementById('unit-check').disabled = true;
       unitTotalCount++;
       if (val === unitCurrent.a) {
         unitCorrectCount++;
@@ -313,11 +326,11 @@
 
     // ========== 闰年探索 ==========
     function checkLeapYear() {
-      const year = parseInt(document.getElementById('leap-year-input').value);
+      const year = Number(document.getElementById('leap-year-input').value);
       const resultEl = document.getElementById('leap-result');
-      if (!year || year < 1 || year > 9999) {
+      if (!Number.isInteger(year) || year < 1 || year > 9999) {
         resultEl.className = 'leap-result';
-        resultEl.textContent = '请输入 1-9999 之间的年份';
+        resultEl.textContent = '请输入 1-9999 之间的整数年份';
         return;
       }
       const leap = isLeapYear(year);
@@ -344,7 +357,7 @@
 
     // ========== 日期计算挑战 ==========
     const datecalcProblems = [
-      { q: '小明 3月5日出发旅行，3月12日回来，他旅行了几天？', options: ['6天','7天','8天','5天'], correct: 1, hint: '12 - 5 = 7 天' },
+      { q: '小明 3月5日出发，3月12日回来，两日期间间隔多少天（不计出发当日）？', options: ['6天','7天','8天','5天'], correct: 1, hint: '12 - 5 = 7 天' },
       { q: '今天是 4月10日，10天后是几月几日？', options: ['4月19日','4月20日','4月21日','5月1日'], correct: 1, hint: '10 + 10 = 20' },
       { q: '一年有几个月？', options: ['10个','11个','12个','13个'], correct: 2, hint: '一年 = 12 个月' },
       { q: '闰年全年有多少天？', options: ['364天','365天','366天','367天'], correct: 2, hint: '闰年2月多1天 → 366天' },
@@ -355,7 +368,7 @@
       { q: '6月有多少天？', options: ['28天','29天','30天','31天'], correct: 2, hint: '6月是小月 → 30天' },
       { q: '小明的生日是 5月15日，今天是 5月1日，还有几天到他生日？', options: ['13天','14天','15天','16天'], correct: 1, hint: '15 - 1 = 14 天' },
       { q: '哪个季度包含 7月、8月、9月？', options: ['第一季度','第二季度','第三季度','第四季度'], correct: 2, hint: 'Q1:1-3月, Q2:4-6月, Q3:7-9月, Q4:10-12月' },
-      { q: '从 1月1日到 1月31日，过了多少天？', options: ['29天','30天','31天','32天'], correct: 2, hint: '31 - 1 + 1 = 31 天（含首尾）' },
+      { q: '从 1月1日到 1月31日，首尾两日都算，共有多少个日期？', options: ['29天','30天','31天','32天'], correct: 2, hint: '31 - 1 + 1 = 31 天（含首尾）' },
     ];
     let dcCurrent = null;
     let dcCorrectCount = 0;
@@ -373,6 +386,7 @@
       });
       optionsEl.querySelectorAll('.datecalc-option').forEach(btn => {
         btn.addEventListener('click', () => {
+          if (btn.disabled) return;
           const chosen = parseInt(btn.dataset.idx);
           if (chosen === dcCurrent.correct) {
             btn.classList.add('correct');
@@ -394,7 +408,7 @@
           document.getElementById('dc-correct').textContent = dcCorrectCount;
           document.getElementById('dc-streak').textContent = dcStreak;
           // disable all
-          optionsEl.querySelectorAll('.datecalc-option').forEach(b => b.style.pointerEvents = 'none');
+          optionsEl.querySelectorAll('.datecalc-option').forEach(b => { b.disabled = true; });
         });
       });
     }
