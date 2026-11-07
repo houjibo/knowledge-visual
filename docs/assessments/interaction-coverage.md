@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：77；尚未登记：239。
+主题总数：316；已登记部分交互证据：78；尚未登记：238。
 
 ## 已登记部分交互证据
 
@@ -65,6 +65,8 @@
   - 固定随机边界下四类生活题、取整与选项唯一性，以及固定种子 500 轮生成；进度存储和全部教学效果未全面验收。 [estimation-bounded.spec.js](../../tests/browser/estimation-bounded.spec.js)
 - [因数与倍数](../../math/topics/factors-and-multiples/index.html)
   - 六类闯关题目固定随机边界、重复提交及十题完成与刷新；未覆盖探索、数轴和筛法。 [factor-multiple-challenge.spec.js](../../tests/browser/factor-multiple-challenge.spec.js)
+- [图形的运动（平移和旋转）](../../math/topics/figure-movement/index.html)
+  - 固定随机值下挑战选项、反向旋转和路线计数、键盘移动及重开时序；不代表整页模型已全面核验。 [figure-movement-questions.spec.js](../../tests/browser/figure-movement-questions.spec.js)
 - [分数加减法](../../math/topics/fraction-operations/index.html)
   - 探索器假分数、负数及输入边界；异分母减法判分、固定随机值下五关完成和重试；其余内容未全面验收。 [fraction-operations.spec.js](../../tests/browser/fraction-operations.spec.js)
 - [分数的初步认识](../../math/topics/fractions/index.html)
@@ -291,7 +293,6 @@
 - [数字编码](../../math/topics/digital-codes/index.html)
 - [正反比例](../../math/topics/direct-inverse-proportion/index.html)
 - [简易方程](../../math/topics/equations/index.html)
-- [图形的运动（平移和旋转）](../../math/topics/figure-movement/index.html)
 - [找次品](../../math/topics/finding-defective/index.html)
 - [分数乘除法](../../math/topics/fraction-multiplication-division/index.html)
 - [分数的基本性质](../../math/topics/fraction-properties/index.html)

@@ -1,0 +1,28 @@
+# figure-movement-questions Specification
+
+## Purpose
+TBD - created by archiving change figure-movement-questions. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 平移和旋转题目可判断
+系统 SHALL 为每个挑战题提供四个互异选项，明确移动对象和参照条件。
+
+#### Scenario: 反向旋转
+- **WHEN** 题目给出顺时针旋转 90、180 或 270 度
+- **THEN** 正确选项为绕相同中心逆时针旋转 270、180 或 90 度
+
+#### Scenario: 沿两段路线计数
+- **WHEN** 图形分别向右和向下移动相同格数
+- **THEN** 题目明确询问两段路线的总格数，正确答案为两段相加
+
+### Requirement: 交互状态与当前运动一致
+系统 SHALL 为方向操作提供可访问名称，且重开练习时取消旧题回调。
+
+#### Scenario: 离开目标
+- **WHEN** 方块到达目标后又移动到其他位置
+- **THEN** 过期的到达提示不再显示
+
+#### Scenario: 重开练习
+- **WHEN** 判断题或挑战题的反馈延时内重开模式
+- **THEN** 旧回调不影响新一轮状态

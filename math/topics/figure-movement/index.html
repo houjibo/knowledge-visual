@@ -176,7 +176,7 @@
             🔄 <strong>旋转</strong><br>
             图形绕一个点转动<br>
             形状、大小<strong>不变</strong><br>
-            <strong>方向</strong>变了
+            图形绕中心转过一定角度
           </div>
         </div>
 
@@ -190,7 +190,7 @@
         <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin:12px 0;">
           <div style="text-align:center;font-size:42px;">🛗<br><span style="font-size:13px;color:#6E6E73;">电梯=平移</span></div>
           <div style="text-align:center;font-size:42px;">🎡<br><span style="font-size:13px;color:#6E6E73;">摩天轮=旋转</span></div>
-          <div style="text-align:center;font-size:42px;">🚗<br><span style="font-size:13px;color:#6E6E73;">开车=平移</span></div>
+          <div style="text-align:center;font-size:42px;">🚗<br><span style="font-size:13px;color:#6E6E73;">直行的车身≈平移</span></div>
           <div style="text-align:center;font-size:42px;">🌀<br><span style="font-size:13px;color:#6E6E73;">风扇=旋转</span></div>
         </div>
 
@@ -214,11 +214,11 @@
         <div class="controls-row">
           <div style="display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(2,56px);gap:6px;">
             <div></div>
-            <button class="ctrl-btn" onclick="movePlayer(0,-1)">⬆️</button>
+            <button class="ctrl-btn" aria-label="向上移动一格" onclick="movePlayer(0,-1)">⬆️</button>
             <div></div>
-            <button class="ctrl-btn" onclick="movePlayer(-1,0)">⬅️</button>
-            <button class="ctrl-btn" onclick="movePlayer(0,1)">⬇️</button>
-            <button class="ctrl-btn" onclick="movePlayer(1,0)">➡️</button>
+            <button class="ctrl-btn" aria-label="向左移动一格" onclick="movePlayer(-1,0)">⬅️</button>
+            <button class="ctrl-btn" aria-label="向下移动一格" onclick="movePlayer(0,1)">⬇️</button>
+            <button class="ctrl-btn" aria-label="向右移动一格" onclick="movePlayer(1,0)">➡️</button>
           </div>
         </div>
         <div class="controls-row">
@@ -334,6 +334,7 @@
       playerPos.x = nx;
       playerPos.y = ny;
       moveCount++;
+      document.getElementById('exploreMsg').textContent = '';
       document.getElementById('moveInfo').textContent = '移动步数: ' + moveCount;
       drawExploreGrid();
       if (playerPos.x === targetPos.x && playerPos.y === targetPos.y) {
@@ -346,7 +347,7 @@
     // =============================================
     // 判一判模式
     // =============================================
-    let judgeIdx = 0, judgeCorrectCount = 0, judgeLocked = false;
+    let judgeIdx = 0, judgeCorrectCount = 0, judgeLocked = false, judgeTimer = null;
 
     function generateJudgeQuestion() {
       const isTranslate = Math.random() > 0.5;
@@ -372,7 +373,7 @@
         const angle = [90, 180, 270][Math.floor(Math.random() * 3)];
         const cx = 140, cy = 90;
         // Draw shape at two orientations around center
-        const shapes = ['arrow', 'l-shape', 'rect'];
+        const shapes = ['arrow', 'l-shape'];
         const shape = shapes[Math.floor(Math.random() * shapes.length)];
 
         svg += `<circle cx="${cx}" cy="${cy}" r="5" fill="#FF9500"/>`;
@@ -424,6 +425,7 @@
     let currentJudge = null;
 
     function initJudge() {
+      clearTimeout(judgeTimer);
       judgeIdx = 0; judgeCorrectCount = 0; judgeLocked = false;
       document.getElementById('judgeCorrect').textContent = '0';
       document.getElementById('judgeNum').textContent = '1';
@@ -458,7 +460,7 @@
 
       document.getElementById('judgeResult').textContent = ok ? '✅ 正确！' : (currentJudge.answer === 'translate' ? '❌ 这是平移哦！' : '❌ 这是旋转哦！');
 
-      setTimeout(() => {
+      judgeTimer = setTimeout(() => {
         loadJudge();
       }, 1500);
     }
@@ -467,13 +469,13 @@
     // 挑战模式
     // =============================================
     const CH_TOTAL = 8;
-    let chIdx = 0, chScore = 0, chLocked = false, chQuestions = [];
+    let chIdx = 0, chScore = 0, chLocked = false, chQuestions = [], chTimer = null;
 
     function generateChallengeQuestions() {
       const qs = [];
       const templates = [
         () => {
-          const items = ['电梯上下移动', '推拉窗户', '拉抽屉', '汽车直线行驶'];
+          const items = ['电梯上下移动', '推拉窗户', '拉抽屉', '汽车直线行驶时的车身'];
           return { q: `"${items[Math.floor(Math.random()*items.length)]}"是什么运动？`, svg: '', opts: ['平移', '旋转', '既平移又旋转', '都不是'], ans: 0 };
         },
         () => {
@@ -484,22 +486,23 @@
           return { q: '平移后，图形的什么变了？', svg: '', opts: ['形状', '大小', '位置', '颜色'], ans: 2 };
         },
         () => {
-          return { q: '旋转后，图形的什么变了？', svg: '', opts: ['形状', '大小', '方向', '颜色'], ans: 2 };
+          return { q: '带箭头的图形绕中心旋转 90° 后，箭头的什么变了？', svg: '', opts: ['形状', '大小', '方向', '颜色'], ans: 2 };
         },
         () => {
           return { q: '下面哪个说法是正确的？', svg: '', opts: ['平移会改变形状', '旋转会改变大小', '平移和旋转都不改变形状和大小', '平移会改变方向'], ans: 2 };
         },
         () => {
           const n = Math.floor(Math.random() * 3) + 1;
-          return { q: `图形向右平移 ${n} 格，再向下平移 ${n} 格，一共移动了几格？`, svg: '', opts: [`${n} 格`, `${n*2} 格`, `${n+1} 格`, `${n+n+1} 格`], ans: 1 };
+          return { q: `图形向右平移 ${n} 格，再向下平移 ${n} 格，沿这两段路线一共走了几格？`, svg: '', opts: [`${n} 格`, `${n*2} 格`, `${n*2+1} 格`, `${n*2+2} 格`], ans: 1 };
         },
         () => {
           const angles = [90, 180, 270];
           const a = angles[Math.floor(Math.random() * angles.length)];
-          return { q: `图形绕中心点顺时针旋转了 ${a}°，相当于逆时针旋转了多少度？`, svg: '', opts: [`${a}°`, `${360-a}°`, `${180}°`, `${90}°`], ans: 1 };
+          const opts = ['0°', '90°', '180°', '270°'];
+          return { q: `图形绕中心点顺时针旋转了 ${a}°，相当于逆时针旋转了多少度？`, svg: '', opts, ans: opts.indexOf(`${360-a}°`) };
         },
         () => {
-          return { q: '一个图形先平移再旋转，和先旋转再平移，最终位置一样吗？', svg: '', opts: ['一定一样', '一定不一样', '不一定一样', '无法判断'], ans: 2 };
+          return { q: '图形按同一平移方向和距离、绕同一固定点旋转。先平移再旋转，与先旋转再平移，最终结果总是一样吗？', svg: '', opts: ['每次都一样', '每次都不一样', '有时一样，有时不一样', '形状一定改变'], ans: 2 };
         },
       ];
 
@@ -520,6 +523,7 @@
     }
 
     function initChallenge() {
+      clearTimeout(chTimer);
       chIdx = 0; chScore = 0; chLocked = false;
       chQuestions = generateChallengeQuestions();
       document.getElementById('chScore').textContent = '0';
@@ -575,7 +579,7 @@
       document.getElementById('chTotal').textContent = chIdx + 1;
       document.getElementById('chResult').textContent = ok ? '✅ 回答正确！' : '❌ 不对哦，看看正确答案吧！';
 
-      setTimeout(() => {
+      chTimer = setTimeout(() => {
         chIdx++;
         loadChallenge();
       }, 1500);
