@@ -125,6 +125,8 @@
       <span>⭐ 连续答对: <strong id="streak">0</strong></span>
       <span>🏆 最高: <strong id="best">0</strong></span>
     </div>
+    <p id="learning-progress" role="status" aria-live="polite"></p>
+    <p id="best-status" role="status" aria-live="polite"></p>
 
     <div class="mode-tabs">
       <button class="mode-tab active" data-mode="learn">📖 认识时钟</button>
@@ -151,12 +153,12 @@
         <div class="learn-time-display" id="learn-time-display">12:00</div>
         <div class="slider-area">
           <div class="slider-row">
-            <label>⏰ 时</label>
+            <label for="learn-hour-slider">⏰ 时</label>
             <input type="range" id="learn-hour-slider" min="1" max="12" value="12" step="1">
             <span class="slider-val" id="learn-hour-val">12</span>
           </div>
           <div class="slider-row">
-            <label>⏰ 分</label>
+            <label for="learn-minute-slider">⏰ 分</label>
             <input type="range" id="learn-minute-slider" min="0" max="55" value="0" step="5">
             <span class="slider-val" id="learn-minute-val">0</span>
           </div>
@@ -186,12 +188,13 @@
           <circle cx="150" cy="150" r="6" class="clock-center"/>
         </svg>
         <div class="quiz-input-row">
-          <input type="number" class="quiz-input" id="read-hour-input" min="1" max="12" placeholder="时" inputmode="numeric">
+          <input type="number" class="quiz-input" id="read-hour-input" min="1" max="12" placeholder="时" inputmode="numeric" aria-label="读钟小时">
           <span class="quiz-colon">:</span>
-          <input type="number" class="quiz-input" id="read-minute-input" min="0" max="59" placeholder="分" inputmode="numeric">
+          <input type="number" class="quiz-input" id="read-minute-input" min="0" max="59" placeholder="分" inputmode="numeric" aria-label="读钟分钟">
         </div>
         <button class="quiz-submit" id="btn-read-submit">✅ 确认</button>
-        <div class="result-text" id="read-result"></div>
+        <div class="result-text" id="read-result" role="status" aria-live="polite"></div>
+        <button class="next-btn" id="btn-read-next" type="button">下一题 →</button>
       </div>
     </div>
 
@@ -211,18 +214,19 @@
         </svg>
         <div class="slider-area">
           <div class="slider-row">
-            <label>⏰ 时</label>
+            <label for="dial-hour-slider">⏰ 时</label>
             <input type="range" id="dial-hour-slider" min="1" max="12" value="12" step="1">
             <span class="slider-val" id="dial-hour-val">12</span>
           </div>
           <div class="slider-row">
-            <label>⏰ 分</label>
+            <label for="dial-minute-slider">⏰ 分</label>
             <input type="range" id="dial-minute-slider" min="0" max="55" value="0" step="5">
             <span class="slider-val" id="dial-minute-val">0</span>
           </div>
         </div>
         <button class="dial-check" id="btn-dial-check">✅ 确认</button>
-        <div class="result-text" id="dial-result"></div>
+        <div class="result-text" id="dial-result" role="status" aria-live="polite"></div>
+        <button class="next-btn" id="btn-dial-next" type="button">下一题 →</button>
       </div>
     </div>
 
@@ -240,7 +244,8 @@
           <circle cx="150" cy="150" r="6" class="clock-center"/>
         </svg>
         <div class="choice-options" id="choice-options"></div>
-        <div class="result-text" id="choice-result"></div>
+        <div class="result-text" id="choice-result" role="status" aria-live="polite"></div>
+        <button class="next-btn" id="btn-choice-next" type="button">下一题 →</button>
       </div>
     </div>
   </div>
@@ -309,17 +314,48 @@
     });
 
     // === 分数与连击 ===
-    let streak = 0, best = parseInt(localStorage.getItem('tt-best') || '0');
+    let streak = 0, best = 0;
+    try {
+      const stored = Number(localStorage.getItem('tt-best'));
+      if (Number.isSafeInteger(stored) && stored >= 0) best = stored;
+    } catch (e) {
+      document.getElementById('best-status').textContent = '最高连对记录暂不可读取，本次学习仍可继续。';
+    }
     document.getElementById('best').textContent = best;
 
     function updateStreak() {
       document.getElementById('streak').textContent = streak;
       if (streak > best) {
         best = streak;
-        localStorage.setItem('tt-best', best);
+        try { localStorage.setItem('tt-best', best); }
+        catch (e) { document.getElementById('best-status').textContent = '最高连对记录暂未保存，本次学习仍可继续。'; }
         document.getElementById('best').textContent = best;
       }
     }
+
+    const milestones = {learn: false, read: false, dial: false, choice: false};
+    const milestoneNames = {learn: '调整钟面', read: '答对读钟题', dial: '答对拨钟题', choice: '答对选择题'};
+    let progressSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('telling-time');
+    let completionAttempted = false;
+    function showLearningProgress() {
+      const status = document.getElementById('learning-progress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      const remaining = Object.keys(milestones).filter(key => !milestones[key]);
+      status.textContent = '本次学习完成条件 ' + (4 - remaining.length) + '/4：还需' + remaining.map(key => milestoneNames[key]).join('、') + '。未完成的阶段在刷新后需重新进行。';
+    }
+    function completeMilestone(key) {
+      milestones[key] = true;
+      if (!progressSaved && !completionAttempted && Object.values(milestones).every(Boolean)) {
+        completionAttempted = true;
+        progressSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('telling-time');
+      }
+      showLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', () => {
+      if (completionAttempted) { progressSaved = true; showLearningProgress(); }
+    });
+    showLearningProgress();
 
     // === 模式切换 ===
     document.querySelectorAll('.mode-tab').forEach(tab => {
@@ -347,7 +383,7 @@
         '当分针指向<strong>6</strong>，就是<strong>几点半</strong>。时针在两个数中间，刚过的那个数就是小时。',
         '分针每走一小格是<strong>1分钟</strong>，走一大格（两个数字之间）是<strong>5分钟</strong>。',
         '时针走一大格是<strong>1小时</strong>，1小时 = <strong>60分钟</strong>。',
-        '一天有<strong>24小时</strong>，时针要走<strong>两圈</strong>。上午一圈，下午一圈。'
+        '一天有<strong>24小时</strong>，时针要走<strong>两圈</strong>。0时到12时一圈，12时到24时再走一圈。'
       ];
       let tipIdx = 0;
 
@@ -360,8 +396,8 @@
         setHands('learn', h, m);
       }
 
-      hSlider.addEventListener('input', updateLearnClock);
-      mSlider.addEventListener('input', updateLearnClock);
+      hSlider.addEventListener('input', () => { updateLearnClock(); completeMilestone('learn'); });
+      mSlider.addEventListener('input', () => { updateLearnClock(); completeMilestone('learn'); });
 
       // 示例导航
       const examples = [
@@ -376,6 +412,7 @@
         hSlider.value = ex.h;
         mSlider.value = ex.m;
         updateLearnClock();
+        completeMilestone('learn');
         tip.innerHTML = '💡 ' + tips[ex.tip];
       }
 
@@ -404,27 +441,29 @@
         document.getElementById('read-hour-input').value = '';
         document.getElementById('read-minute-input').value = '';
         document.getElementById('read-result').textContent = '';
-        document.getElementById('read-hour-input').focus();
+        document.getElementById('btn-read-submit').disabled = false;
       }
 
       document.getElementById('btn-read-submit').addEventListener('click', () => {
-        const h = parseInt(document.getElementById('read-hour-input').value);
-        const m = parseInt(document.getElementById('read-minute-input').value);
-        if (isNaN(h) || isNaN(m)) {
-          document.getElementById('read-result').textContent = '⚠️ 请填写完整时间';
+        if (document.getElementById('btn-read-submit').disabled) return;
+        const hInput = document.getElementById('read-hour-input').value;
+        const mInput = document.getElementById('read-minute-input').value;
+        const h = Number(hInput), m = Number(mInput);
+        if (!hInput || !mInput || !Number.isInteger(h) || !Number.isInteger(m) || h < 1 || h > 12 || m < 0 || m > 59) {
+          document.getElementById('read-result').textContent = '⚠️ 请填写有效的小时和分钟';
           document.getElementById('read-result').style.color = '#FF9500';
           return;
         }
+        document.getElementById('btn-read-submit').disabled = true;
         if (h === ansH && m === ansM) {
+          completeMilestone('read');
           streak++; Sound.play('correct'); celebrate(); updateStreak();
           document.getElementById('read-result').textContent = '🎉 答对了！';
           document.getElementById('read-result').style.color = '#34C759';
-          setTimeout(newReadQuiz, 1500);
         } else {
           Sound.play('wrong'); streak = 0; updateStreak();
           document.getElementById('read-result').textContent = '❌ 正确答案是 ' + formatTime(ansH, ansM);
           document.getElementById('read-result').style.color = '#FF3B30';
-          setTimeout(newReadQuiz, 2500);
         }
       });
 
@@ -433,6 +472,7 @@
         if (e.key === 'Enter') document.getElementById('btn-read-submit').click();
       });
 
+      document.getElementById('btn-read-next').addEventListener('click', newReadQuiz);
       newReadQuiz();
     })();
 
@@ -460,25 +500,29 @@
         targetM = randMinute();
         document.getElementById('dial-target').textContent = formatTime(targetH, targetM);
         document.getElementById('dial-result').textContent = '';
+        document.getElementById('btn-dial-check').disabled = false;
         hSlider.value = 12; mSlider.value = 0;
         updateDialClock();
       }
 
       document.getElementById('btn-dial-check').addEventListener('click', () => {
+        if (document.getElementById('btn-dial-check').disabled) return;
         const h = parseInt(hSlider.value);
         const m = parseInt(mSlider.value);
+        document.getElementById('btn-dial-check').disabled = true;
         if (h === targetH && m === targetM) {
+          completeMilestone('dial');
           streak++; Sound.play('correct'); celebrate(); updateStreak();
           document.getElementById('dial-result').textContent = '🎉 拨对了！';
           document.getElementById('dial-result').style.color = '#34C759';
-          setTimeout(newDialQuiz, 1500);
         } else {
           Sound.play('wrong'); streak = 0; updateStreak();
-          document.getElementById('dial-result').textContent = '❌ 不对哦，再试试！';
+          document.getElementById('dial-result').textContent = '❌ 不对哦，目标是 ' + formatTime(targetH, targetM) + '，可以继续下一题。';
           document.getElementById('dial-result').style.color = '#FF3B30';
         }
       });
 
+      document.getElementById('btn-dial-next').addEventListener('click', newDialQuiz);
       updateDialClock();
       newDialQuiz();
     })();
@@ -495,14 +539,12 @@
         document.getElementById('choice-result').textContent = '';
 
         // 生成4个选项
-        let opts = new Set([correctTime]);
-        while (opts.size < 4) {
-          const fh = randHour();
-          const fm = randMinute();
-          const ft = formatTime(fh, fm);
-          if (ft !== correctTime) opts.add(ft);
+        const alternatives = [];
+        for (let hour = 1; hour <= 12; hour++) for (let minute = 0; minute < 60; minute += 5) {
+          const time = formatTime(hour, minute);
+          if (time !== correctTime) alternatives.push(time);
         }
-        let optArr = Random.shuffle([...opts]);
+        let optArr = Random.shuffle([correctTime, ...Random.shuffle(alternatives).slice(0, 3)]);
 
         const optsEl = document.getElementById('choice-options');
         optsEl.innerHTML = '';
@@ -511,26 +553,27 @@
           btn.className = 'choice-opt';
           btn.innerHTML = '<span class="choice-time">' + t + '</span>';
           btn.addEventListener('click', () => {
+            if (btn.disabled) return;
+            optsEl.querySelectorAll('button').forEach(b => { b.disabled = true; });
             if (t === correctTime) {
+              completeMilestone('choice');
               btn.classList.add('correct');
-              document.querySelectorAll('.choice-opt').forEach(b => b.style.pointerEvents = 'none');
               streak++; Sound.play('correct'); celebrate(); updateStreak();
               document.getElementById('choice-result').textContent = '🎉 答对了！';
               document.getElementById('choice-result').style.color = '#34C759';
-              setTimeout(newChoiceQuiz, 1500);
             } else {
               btn.classList.add('wrong');
               Animator.shake(btn);
               Sound.play('wrong'); streak = 0; updateStreak();
-              document.getElementById('choice-result').textContent = '❌ 不对哦！';
+              document.getElementById('choice-result').textContent = '❌ 正确答案是 ' + correctTime;
               document.getElementById('choice-result').style.color = '#FF3B30';
-              btn.style.pointerEvents = 'none';
             }
           });
           optsEl.appendChild(btn);
         });
       }
 
+      document.getElementById('btn-choice-next').addEventListener('click', newChoiceQuiz);
       newChoiceQuiz();
     })();
   </script>
