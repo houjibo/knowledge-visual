@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：76；尚未登记：240。
+主题总数：316；已登记部分交互证据：77；尚未登记：239。
 
 ## 已登记部分交互证据
 
@@ -51,6 +51,8 @@
   - 固定随机边界、凑十破十的正确反馈和重复计分、十关完成及重启；未覆盖整页视觉内容。 [carry-borrow-practice.spec.js](../../tests/browser/carry-borrow-practice.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
   - 从首页进入加法并获得练习正确、错误反馈；未覆盖全部学习模式。 [learning-paths.spec.js](../../tests/browser/learning-paths.spec.js)
+- [比大小与排序](../../math/topics/comparison-and-ordering/index.html)
+  - 固定随机值下数轴比较、排序和找位置，三类挑战、重复计分及键盘与回调时序；未覆盖所有取值。 [comparison-ordering-reliability.spec.js](../../tests/browser/comparison-ordering-reliability.spec.js)
 - [圆柱与圆锥](../../math/topics/cylinder-and-cone/index.html)
   - 圆锥展开公式、计算题随机边界及挑战数值题部分场景；未覆盖所有互动或完整教学内容。 [cylinder-cone.spec.js](../../tests/browser/cylinder-cone.spec.js)
 - [有余数的除法](../../math/topics/division-with-remainder/index.html)
@@ -277,7 +279,6 @@
 - [鸡兔同笼](../../math/topics/chicken-rabbit/index.html)
 - [圆的认识](../../math/topics/circle/index.html)
 - [分类与规律](../../math/topics/classification-and-patterns/index.html)
-- [比大小与排序](../../math/topics/comparison-and-ordering/index.html)
 - [组合图形](../../math/topics/composite-shapes/index.html)
 - [复式统计图](../../math/topics/compound-charts/index.html)
 - [复式统计表](../../math/topics/compound-statistical-tables/index.html)

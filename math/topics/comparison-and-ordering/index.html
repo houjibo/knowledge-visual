@@ -34,8 +34,8 @@
     .sort-dir-btn { padding: 10px 20px; border: 2px solid #9CA3AF; background: white; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
     .sort-dir-btn.active { border-color: #2E7D32; background: #2E7D32; color: white; }
     .sort-items { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 20px 0; min-height: 80px; padding: 16px; background: #F8F9FE; border-radius: 16px; }
-    .sort-item { padding: 16px 24px; background: white; border: 3px solid #2E7D32; border-radius: 16px; font-size: 24px; font-weight: 700; color: #2E7D32; cursor: grab; user-select: none; transition: all 0.2s ease; touch-action: none; }
-    .sort-item:active { cursor: grabbing; transform: scale(1.05); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+    .sort-item { padding: 16px 24px; background: white; border: 3px solid #2E7D32; border-radius: 16px; font-size: 24px; font-weight: 700; color: #2E7D32; cursor: pointer; user-select: none; transition: all 0.2s ease; touch-action: manipulation; }
+    .sort-item:active { transform: scale(1.05); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
     .sort-item.dragging { opacity: 0.5; }
     .sort-item.placed { background: #2E7D32; color: white; }
     .sort-slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 20px 0; min-height: 80px; padding: 16px; border: 3px dashed #9CA3AF; border-radius: 16px; }
@@ -96,9 +96,9 @@
         <div class="nl-compare">
           <div class="nl-num" id="nlNum1">?</div>
           <div style="display:flex;flex-direction:column;gap:8px;">
-            <div class="nl-circle" data-ans="gt" id="nlGt">&gt;</div>
-            <div class="nl-circle" data-ans="eq" id="nlEq">=</div>
-            <div class="nl-circle" data-ans="lt" id="nlLt">&lt;</div>
+            <button class="nl-circle" data-ans="gt" id="nlGt" aria-label="大于">&gt;</button>
+            <button class="nl-circle" data-ans="eq" id="nlEq" aria-label="等于">=</button>
+            <button class="nl-circle" data-ans="lt" id="nlLt" aria-label="小于">&lt;</button>
           </div>
           <div class="nl-num" id="nlNum2">?</div>
         </div>
@@ -146,6 +146,7 @@
         </div>
         <div class="ch-problem" id="chProblem">点击开始按钮</div>
         <div class="ch-options" id="chOptions"></div>
+        <div class="result-text" id="chFeedback" aria-live="polite"></div>
         <button class="ch-start-btn" id="chStart">开始挑战！</button>
       </div>
     </div>
@@ -172,10 +173,16 @@
       // ===== 工具函数 =====
       function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
       function shuffle(arr) { for (var i = arr.length - 1; i > 0; i--) { var j = randInt(0, i); var t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; }
+      function sampleNumbers(min, max, count) {
+        var pool = [];
+        for (var n = min; n <= max; n++) pool.push(n);
+        return shuffle(pool).slice(0, count);
+      }
 
       // ===== 模式1: 数轴比大小 =====
-      var nlA, nlB, nlMin, nlMax;
+      var nlA, nlB, nlMin, nlMax, nlSolved = false;
       function newNumberline() {
+        nlSolved = false;
         var range = randInt(1, 3);
         if (range === 1) { nlMin = randInt(0, 20); nlMax = nlMin + randInt(5, 15); }
         else if (range === 2) { nlMin = randInt(0, 100); nlMax = nlMin + randInt(20, 80); }
@@ -197,21 +204,23 @@
         var html = '<line x1="' + pad + '" y1="60" x2="' + (w - pad) + '" y2="60" stroke="#9CA3AF" stroke-width="3"/>';
         for (var i = 0; i <= 5; i++) {
           var x = pad + i / 5 * (w - 2 * pad);
-          var val = Math.round(nlMin + i / 5 * span);
+          var val = Number((nlMin + i / 5 * span).toFixed(2));
           html += '<line x1="' + x + '" y1="55" x2="' + x + '" y2="65" stroke="#9CA3AF" stroke-width="2"/>';
           html += '<text x="' + x + '" y="85" text-anchor="middle" font-size="12" fill="#6E6E73">' + val + '</text>';
         }
         html += '<circle cx="' + xA + '" cy="40" r="10" fill="#2E7D32"/>';
         html += '<text x="' + xA + '" y="25" text-anchor="middle" font-size="14" font-weight="700" fill="#2E7D32">' + nlA + '</text>';
-        html += '<circle cx="' + xB + '" cy="40" r="10" fill="#FF9500"/>';
-        html += '<text x="' + xB + '" y="25" text-anchor="middle" font-size="14" font-weight="700" fill="#FF9500">' + nlB + '</text>';
+        html += '<circle cx="' + xB + '" cy="' + (nlA === nlB ? 60 : 40) + '" r="10" fill="#FF9500"/>';
+        html += '<text x="' + xB + '" y="' + (nlA === nlB ? 110 : 25) + '" text-anchor="middle" font-size="14" font-weight="700" fill="#FF9500">' + nlB + '</text>';
         svg.innerHTML = html;
       }
       document.querySelectorAll('.nl-circle').forEach(function(c) {
         c.addEventListener('click', function() {
+          if (nlSolved) return;
           var ans = c.dataset.ans;
           var correct = nlA > nlB ? 'gt' : (nlA < nlB ? 'lt' : 'eq');
           if (ans === correct) {
+            nlSolved = true;
             c.classList.add('correct');
             document.getElementById('nlResult').textContent = '✅ 正确！';
             document.getElementById('nlResult').style.color = '#34C759';
@@ -230,15 +239,13 @@
       newNumberline();
 
       // ===== 模式2: 排序 =====
-      var sortNums = [], sortDir = 'asc', sortPlaced = [];
+      var sortNums = [], sortDir = 'asc', sortPlaced = [], sortSolved = false, sortTimer = null;
       function newSort() {
+        clearTimeout(sortTimer);
+        sortSolved = false;
         var count = randInt(4, 6);
         var max = count <= 4 ? 50 : 100;
-        sortNums = [];
-        while (sortNums.length < count) {
-          var n = randInt(1, max);
-          if (sortNums.indexOf(n) === -1) sortNums.push(n);
-        }
+        sortNums = sampleNumbers(1, max, count);
         sortPlaced = [];
         document.getElementById('sortResult').textContent = '';
         document.getElementById('sortNext').style.display = 'none';
@@ -252,7 +259,7 @@
         var shuffled = shuffle(sortNums.slice());
         shuffled.forEach(function(n) {
           if (sortPlaced.indexOf(n) === -1) {
-            var el = document.createElement('div');
+            var el = document.createElement('button');
             el.className = 'sort-item';
             el.textContent = n;
             el.dataset.num = n;
@@ -281,6 +288,7 @@
         }
       }
       function checkSort() {
+        if (sortSolved) return;
         var sorted = sortNums.slice().sort(function(a, b) { return sortDir === 'asc' ? a - b : b - a; });
         var ok = true;
         for (var i = 0; i < sorted.length; i++) {
@@ -288,6 +296,7 @@
         }
         var res = document.getElementById('sortResult');
         if (ok) {
+          sortSolved = true;
           res.textContent = '✅ 完全正确！';
           res.style.color = '#34C759';
           updateScore(2);
@@ -297,7 +306,8 @@
           res.textContent = '❌ 顺序不对，再试试！';
           res.style.color = '#FF3B30';
           if (typeof Sound !== 'undefined') Sound.play('wrong');
-          setTimeout(function() { sortPlaced = []; renderSort(); res.textContent = ''; }, 1200);
+          clearTimeout(sortTimer);
+          sortTimer = setTimeout(function() { sortPlaced = []; renderSort(); res.textContent = ''; }, 1200);
         }
       }
       document.getElementById('sortCheck').addEventListener('click', function() {
@@ -309,6 +319,8 @@
         btn.addEventListener('click', function() {
           document.querySelectorAll('.sort-dir-btn').forEach(function(b) { b.classList.remove('active'); });
           btn.classList.add('active');
+          clearTimeout(sortTimer);
+          sortSolved = false;
           sortDir = btn.dataset.dir;
           document.getElementById('sortInstruction').textContent = sortDir === 'asc' ? '把数字从小到大排列' : '把数字从大到小排列';
           sortPlaced = [];
@@ -320,18 +332,15 @@
       newSort();
 
       // ===== 模式3: 找位置 =====
-      var posSeq, posNum, posAnswer;
+      var posSeq, posNum, posAnswer, posSolved = false;
       function newPosition() {
+        posSolved = false;
         var count = randInt(4, 6);
         var max = 50;
-        posSeq = [];
-        while (posSeq.length < count) {
-          var n = randInt(1, max);
-          if (posSeq.indexOf(n) === -1) posSeq.push(n);
-        }
+        var candidates = sampleNumbers(1, max, count + 1);
+        posNum = candidates.pop();
+        posSeq = candidates;
         posSeq.sort(function(a, b) { return a - b; });
-        posNum = randInt(1, max);
-        while (posSeq.indexOf(posNum) !== -1) posNum = randInt(1, max);
         var sorted = posSeq.concat([posNum]).sort(function(a, b) { return a - b; });
         posAnswer = sorted.indexOf(posNum) + 1;
         document.getElementById('posTarget').textContent = posNum;
@@ -352,7 +361,9 @@
         });
       }
       function checkPosition(pos, btn) {
+        if (posSolved) return;
         if (pos === posAnswer) {
+          posSolved = true;
           btn.classList.add('correct');
           document.getElementById('posResult').textContent = '✅ 正确！' + posNum + '排在第' + posAnswer + '个';
           document.getElementById('posResult').style.color = '#34C759';
@@ -370,17 +381,19 @@
       newPosition();
 
       // ===== 模式4: 挑战 =====
-      var chTimer = null, chTime = 60, chCorrect = 0, chWrong = 0, chRunning = false;
+      var chTimer = null, chNextTimer = null, chTime = 60, chCorrect = 0, chWrong = 0, chRunning = false, chLocked = false;
       var chCurAns;
       function newChallenge() {
+        if (!chRunning) return;
+        chLocked = false;
+        document.getElementById('chFeedback').textContent = '';
         var type = randInt(1, 3);
         var optsEl = document.getElementById('chOptions');
         optsEl.innerHTML = '';
         if (type === 1) {
           var a = randInt(1, 100), b = randInt(1, 100);
-          while (a === b) b = randInt(1, 100);
           document.getElementById('chProblem').textContent = a + ' ○ ' + b + '，○里填什么？';
-          chCurAns = a > b ? '>' : '<';
+          chCurAns = a > b ? '>' : a < b ? '<' : '=';
           ['>', '<', '='].forEach(function(sym) {
             var btn = document.createElement('button');
             btn.className = 'ch-opt';
@@ -389,12 +402,11 @@
             optsEl.appendChild(btn);
           });
         } else if (type === 2) {
-          var nums = [];
-          while (nums.length < 4) { var n = randInt(1, 50); if (nums.indexOf(n) === -1) nums.push(n); }
+          var nums = sampleNumbers(1, 50, 4);
           var sorted = nums.slice().sort(function(a, b) { return a - b; });
           document.getElementById('chProblem').textContent = '从小到大排列：' + nums.join(', ');
           chCurAns = sorted.join(' < ');
-          var wrongOpts = [sorted.slice().reverse().join(' < '), sorted.slice().sort(function() { return Math.random() - 0.5; }).join(' < ')];
+          var wrongOpts = [sorted.slice().reverse().join(' < '), [sorted[1], sorted[0], sorted[2], sorted[3]].join(' < ')];
           var allOpts = [chCurAns].concat(wrongOpts);
           shuffle(allOpts);
           allOpts.forEach(function(opt) {
@@ -414,10 +426,7 @@
           seq[missing] = '?';
           document.getElementById('chProblem').textContent = '找规律填数：' + seq.join(', ');
           chCurAns = ans;
-          var wrongs = [ans - step, ans + step, ans + randInt(1, 3)];
-          wrongs = wrongs.filter(function(w) { return w !== ans && w > 0; });
-          while (wrongs.length < 3) wrongs.push(ans + wrongs.length + 1);
-          wrongs = wrongs.slice(0, 3);
+          var wrongs = [ans - step, ans + step, ans + step + 1];
           var allOpts2 = [ans].concat(wrongs);
           shuffle(allOpts2);
           allOpts2.forEach(function(opt) {
@@ -430,22 +439,26 @@
         }
       }
       function checkChallenge(ans, btn) {
-        if (!chRunning) return;
+        if (!chRunning || chLocked) return;
+        chLocked = true;
         if (ans === chCurAns || ans == chCurAns) {
           btn.classList.add('correct');
           chCorrect++;
           document.getElementById('chCorrect').textContent = chCorrect;
           if (typeof Sound !== 'undefined') Sound.play('correct');
-          setTimeout(newChallenge, 800);
+          document.getElementById('chFeedback').textContent = '✅ 正确！';
+          chNextTimer = setTimeout(newChallenge, 800);
         } else {
           btn.classList.add('wrong');
           chWrong++;
           document.getElementById('chWrong').textContent = chWrong;
           if (typeof Sound !== 'undefined') Sound.play('wrong');
-          setTimeout(function() { btn.classList.remove('wrong'); }, 600);
+          document.getElementById('chFeedback').textContent = '❌ 正确答案：' + chCurAns;
+          chNextTimer = setTimeout(newChallenge, 1500);
         }
       }
       function startChallenge() {
+        clearTimeout(chNextTimer);
         chTime = 60; chCorrect = 0; chWrong = 0; chRunning = true;
         document.getElementById('chCorrect').textContent = 0;
         document.getElementById('chWrong').textContent = 0;
@@ -458,9 +471,11 @@
           document.getElementById('chTime').textContent = chTime;
           if (chTime <= 0) {
             clearInterval(chTimer);
+            clearTimeout(chNextTimer);
             chRunning = false;
             document.getElementById('chProblem').textContent = '⏰ 时间到！答对 ' + chCorrect + ' 题';
             document.getElementById('chOptions').innerHTML = '';
+            document.getElementById('chFeedback').textContent = '';
             document.getElementById('chStart').style.display = 'block';
             document.getElementById('chStart').textContent = '再来一次！';
             updateScore(chCorrect);
