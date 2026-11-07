@@ -39,13 +39,15 @@ function homepage(store) {
   const match = read('index.html').match(/<script>[\s\S]*?<\/script>/);
   assert.ok(match, 'homepage script missing');
   const code = match[0].replace(/^<script>/, '').replace(/<\/script>$/, '');
-  vm.runInNewContext(code, {document: {querySelectorAll: () => cards},
+  const catalogContext = {window: {}};
+  vm.runInNewContext(read('assets/topic-catalog.js'), catalogContext);
+  vm.runInNewContext(code, {window: catalogContext.window, document: {querySelectorAll: () => cards},
     localStorage: {getItem: key => store[key] || null}, requestAnimationFrame: fn => fn()});
   return cards.map(card => card.children['.sp-label'].textContent);
 }
 assert.deepEqual(homepage({}), Array(4).fill('尚未开始'));
 assert.deepEqual(homepage({'kv-physics-middle-progress': '{"motion":1}',
-  'kv-physics-high-progress': '{"motion":1}'}),
+  'kv-physics-high-progress': '{"optics":1}'}),
 ['尚未开始', '已学 2/55', '尚未开始', '尚未开始']);
 
 const math = read('math/index.html');
