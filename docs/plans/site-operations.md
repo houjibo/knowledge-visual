@@ -11,7 +11,7 @@
 
 ## 当前基线
 
-仓库 `houjibo/knowledge-visual` 为公开仓库、默认分支为 `main`；2026-11-07 公共 GitHub API 返回 `has_pages: false`，2026-11-08 项目站返回 404。已有静态 HTML 站点、根目录预览方式、GitHub Actions 检查及分主题浏览器测试；新增按受控目录和类型生成的发布包，并在子路径运行四学科代表性交互，提交 `79c03db` 的 [远端工作流](https://github.com/houjibo/knowledge-visual/actions/runs/42390754959) 完整检查通过，但 Configure GitHub Pages 步骤失败，部署被跳过；Pages 尚未启用，详细日志需要认证后核实。公网尚未发布。部分学习进度存于浏览器本地，跨设备或更换域名不会自动同步。独立域名、域名所有权、托管及反馈渠道尚未确定。
+仓库 `houjibo/knowledge-visual` 为公开仓库、默认分支为 `main`；2026-11-07 公共 GitHub API 返回 `has_pages: false`，2026-11-08 项目站返回 404。已有静态 HTML 站点、根目录预览方式、GitHub Actions 检查及分主题浏览器测试；新增按受控目录和类型生成的发布包，并在子路径运行四学科代表性交互，提交 `e07d564` 的 [远端工作流](https://github.com/houjibo/knowledge-visual/actions/runs/42403624733) 完整检查通过，但 Configure GitHub Pages 步骤失败，部署和公网验证被跳过；公共 API 显示 Pages 尚未启用，详细失败日志需要认证后核实。公网尚未发布。部分学习进度存于浏览器本地，跨设备或更换域名不会自动同步。独立域名、域名所有权、托管及反馈渠道尚未确定。
 
 ## 分阶段执行
 

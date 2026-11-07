@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：103；尚未登记：213。
+主题总数：316；已登记部分交互证据：104；尚未登记：212。
 
 ## 已登记部分交互证据
 
@@ -134,6 +134,8 @@
   - 扇形图滑块、估算提示及部分随机题目；未覆盖整页。 [pie-chart.spec.js](../../tests/browser/pie-chart.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
 - [立体图形的认识](../../math/topics/solid-shapes/index.html)
   - 五类题目及各图形代表性参数的唯一计分、边界说明、键盘分类、题池与完成记录；不代表所有几何内容已评审。 [solid-shapes-learning.spec.js](../../tests/browser/solid-shapes-learning.spec.js)
+- [长方体和正方体表面积](../../math/topics/surface-area/index.html)
+  - 立体图公共棱、展开图尺寸及五个生活题答案；计算练习、完成记录及完整无障碍尚未验收。 [surface-area-geometry-and-answers.spec.js](../../tests/browser/surface-area-geometry-and-answers.spec.js)
 - [认识钟表](../../math/topics/telling-time/index.html)
   - 随机极值下的钟表选择题、三点半指针、主动换题及重复提交、四项活动完成和进度存储失败恢复；真实设备及完整无障碍未全面验收。 [telling-time-learning-reliability.spec.js](../../tests/browser/telling-time-learning-reliability.spec.js)
 - [认识时间与日期](../../math/topics/time-and-date/index.html)
@@ -406,7 +408,6 @@
 - [简便计算](../../math/topics/simplified-calculation/index.html)
 - [统计与数据整理](../../math/topics/statistics/index.html)
 - [10以内减法](../../math/topics/subtraction/index.html)
-- [长方体和正方体表面积](../../math/topics/surface-area/index.html)
 - [时间计算](../../math/topics/time-calculation/index.html)
 - [植树问题](../../math/topics/tree-planting/index.html)
 - [三角形的高与分类](../../math/topics/triangle-properties/index.html)
