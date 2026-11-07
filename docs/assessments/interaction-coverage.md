@@ -46,7 +46,7 @@
 - [认识数字 0-100](../../math/topics/numbers/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [一一对应](../../math/topics/one-to-one-correspondence/index.html)
-  - 练习图形数量、配对游戏及挑战的固定随机边界与部分反馈；学习完成记录尚未实现。 [correspondence-learning.spec.js](../../tests/browser/correspondence-learning.spec.js)
+  - 练习图形数量、配对及挑战边界，以及跨模式完成条件、刷新和存储失败；其余内容尚未全面验收。 [correspondence-learning.spec.js](../../tests/browser/correspondence-learning.spec.js)、[correspondence-progress.spec.js](../../tests/browser/correspondence-progress.spec.js)
 - [几个和第几](../../math/topics/ordinal-numbers/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [搭配中的学问](../../math/topics/pairing-combinations/index.html)

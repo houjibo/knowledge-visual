@@ -141,6 +141,7 @@
       <span class="nav-badge">G1</span>
     </nav>
 
+    <p id="learning-progress" role="status" aria-live="polite" style="margin:8px 0 16px;color:#2E7D32;line-height:1.5;"></p>
     <div class="mode-tabs">
       <button class="mode-tab active" data-mode="learn">📖 学一学</button>
       <button class="mode-tab" data-mode="practice">✏️ 练一练</button>
@@ -331,6 +332,35 @@
       learnSteps.forEach(function(s, i) { s.style.display = i === 0 ? 'block' : 'none'; });
     });
 
+    /* ===== 本次学习进度 ===== */
+    var learningAnswered = 0, learningCorrect = 0;
+    var learningSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('one-to-one-correspondence');
+    function updateLearningProgress() {
+      var status = document.getElementById('learning-progress');
+      if (learningSaved) {
+        status.textContent = '✅ 已完成';
+      } else {
+        status.textContent = '本次已答 ' + learningAnswered + ' 题，答对 ' + learningCorrect + ' 题；累计答满 10 题且正确率至少 80% 可完成。';
+      }
+    }
+    function recordLearningAnswer(correct) {
+      learningAnswered++;
+      if (correct) learningCorrect++;
+      if (!learningSaved && learningAnswered >= 10 && learningCorrect / learningAnswered >= 0.8) {
+        if (typeof PageProgress !== 'undefined') PageProgress.markDone('one-to-one-correspondence');
+        try {
+          var stored = JSON.parse(localStorage.getItem('kv-math-progress-v2') || '{}');
+          learningSaved = !!stored['primary:one-to-one-correspondence'];
+        } catch (e) { learningSaved = false; }
+        if (!learningSaved) {
+          document.getElementById('learning-progress').textContent = '✅ 本次已达标，但进度未保存；本次已答 ' + learningAnswered + ' 题，答对 ' + learningCorrect + ' 题。';
+          return;
+        }
+      }
+      updateLearningProgress();
+    }
+    updateLearningProgress();
+
     /* ===== 练一练 Mode ===== */
     var pCorrect = 0, pWrong = 0;
     var EMOJIS = ['🐰','🐱','🐶','🐻','🐸','🦊','🐷','🐮','🐵','🐔','🍎','🍊','🍋','🍇','🍓','🌸','🌻','⭐','🎈','🎁'];
@@ -404,6 +434,7 @@
             });
           }
           area.querySelectorAll('.opt-btn').forEach(function(b) { b.disabled = true; });
+          recordLearningAnswer(val === q.answer);
           setTimeout(nextPractice, 1500);
         });
       });
@@ -512,6 +543,7 @@
             document.getElementById('g-wrong').textContent = gWrong;
           }
           area.querySelectorAll('.game-opt').forEach(function(b) { b.disabled = true; });
+          recordLearningAnswer(isCorrect);
           gRound++;
           setTimeout(nextGame, 1500);
         });
@@ -626,6 +658,7 @@
             });
           }
           content.querySelectorAll('.game-opt').forEach(function(b) { b.disabled = true; });
+          recordLearningAnswer(isCorrect);
           setTimeout(function() { if (chRunning) nextChallenge(); }, 1500);
         });
       });
