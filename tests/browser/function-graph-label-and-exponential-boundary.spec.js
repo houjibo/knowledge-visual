@@ -1,0 +1,30 @@
+const {test, expect} = require('@playwright/test');
+
+test('函数类型、参数及指数常数边界与图像一致', async ({page}) => {
+  await page.goto('/math/high/function.html');
+  await page.getByRole('button',{name:'图像探索'}).click();
+  const type = page.getByLabel('函数：');
+  await expect(type.locator('option:checked')).toHaveText('二次式 ax²');
+  const param = page.getByRole('slider',{name:'参数 a'});
+  await param.fill('0');
+  await expect(page.locator('#graphEquation')).toHaveText('y = 0x²（零函数）');
+  await expect(page.locator('#infoRange')).toHaveText('{0}');
+  await type.selectOption('exponential');
+  await page.getByRole('slider',{name:'参数 a'}).fill('1');
+  await expect(page.locator('#graphEquation')).toContainText('常数函数');
+  await expect(page.locator('#graphEquation')).toContainText('非通常定义的指数函数');
+  await expect(page.locator('#infoRange')).toHaveText('{1}');
+  await expect(page.locator('#infoParity')).toHaveText('偶函数');
+  await expect(page.locator('#infoMono')).toHaveText('常数1');
+  await page.getByRole('slider',{name:'参数 a'}).fill('0.5');
+  await expect(page.locator('#infoRange')).toHaveText('(0, +∞)');
+  await expect(page.locator('#infoMono')).toHaveText('R上递减↓');
+  await page.getByRole('slider',{name:'参数 a'}).fill('2');
+  await expect(page.locator('#infoMono')).toHaveText('R上递增↑');
+  await type.selectOption('power');
+  await expect(page.getByRole('slider',{name:'参数 n'})).toBeVisible();
+  await expect(page.locator('#graphEquation')).toHaveText('y = x^(2)');
+  await type.selectOption('inverse');
+  await expect(page.getByRole('slider',{name:'参数 k'})).toBeVisible();
+  await expect(page.locator('#graphEquation')).toHaveText('y = 1/x（x ≠ 0）');
+});
