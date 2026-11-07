@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：110；尚未登记：206。
+主题总数：316；已登记部分交互证据：111；尚未登记：205。
 
 ## 已登记部分交互证据
 
@@ -225,6 +225,8 @@
   - 理想电路的串并联路径、滑块边界、工作点、记录上限及清空；未全面验收实物电表模型和无障碍。 [ohms-law-lab.spec.js](../../tests/browser/ohms-law-lab.spec.js)
 - [压强 · 初中物理互动可视化](../../physics/middle/pressure.html)
   - 固体压力箭头、液体深度换算与各向压强、密度选择、理想液压比例、首次作答和保存失败重试；大气模型与全页无障碍未全面验收。 [pressure-exploration.spec.js](../../tests/browser/pressure-exploration.spec.js)
+- [声现象 · 初中物理互动可视化](../../physics/middle/sound.html)
+  - 音调模式波长、三种波形振幅、键盘、暂停与真空切换；回声动画、测验及真实设备未全面验收。 [sound-wave-visual-consistency.spec.js](../../tests/browser/sound-wave-visual-consistency.spec.js)
 - [电压与电阻 · 初中物理互动可视化](../../physics/middle/voltage-resistance.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
   - 电源、灯泡和电表的画布路径，导体长度边界、电阻电流读数、单动画循环及暂停；实际灯丝和完整无障碍未全面验收。 [resistance-experiment.spec.js](../../tests/browser/resistance-experiment.spec.js)
@@ -490,7 +492,6 @@
 - [质量与密度 · 初中物理互动可视化](../../physics/middle/mass-density.html)
 - [运动和力 · 初中物理互动可视化](../../physics/middle/motion-force.html)
 - [简单机械 · 初中物理互动可视化](../../physics/middle/simple-machines.html)
-- [声现象 · 初中物理互动可视化](../../physics/middle/sound.html)
 - [物态变化 · 初中物理互动可视化](../../physics/middle/state-change.html)
 - [功和机械能 · 初中物理互动可视化](../../physics/middle/work-energy.html)
 - [刚体力学 - 大学物理互动可视化](../../physics/uni/02-rigid-body.html)
