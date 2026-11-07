@@ -17,6 +17,6 @@
 
 在仓库根目录运行 `python3 scripts/check_site.py`：检查 HTML 中静态声明的相对链接/资源、AGENTS.md 中本地 Markdown 链接，数学学段进度清单与导航主题的一致性，以及物理和化学学段进度分母与主题卡片数量的一致性。它不执行 JavaScript、不检查外链、片段或 CSS 内引用，也不验证教学准确性和视觉效果。用 `node tests/progress.test.js` 运行进度回归场景；它在模拟 DOM 和存储中执行实际入口脚本，不代替浏览器测试。可用 `openspec validate --all --strict` 检查 OpenSpec 工件。
 
-真实浏览器试点需要 Node.js 20 或更高版本，使用 `npm ci`、`npx playwright install chromium` 安装开发依赖与浏览器，然后运行 `npm run test:browser`；它启动独立本地服务器并覆盖四条代表路径的桌面与窄屏场景。可用 `KV_CHROMIUM_PATH` 指定兼容的本机 Chromium 可执行文件；浏览器安装只用于开发验证，不是静态站点运行要求。
+真实浏览器试点需要 Node.js 20 或更高版本，使用 `npm ci`、`npx playwright install chromium` 安装开发依赖与浏览器，然后运行 `npm run test:browser`；它启动独立本地服务器并覆盖四条代表路径的桌面与窄屏场景。可用 `KV_CHROMIUM_PATH` 指定兼容的本机 Chromium 可执行文件；运行 `npm run test:browser:smoke` 对清单中全部 HTML 做桌面浏览器加载冒烟，范围及局限见 [加载检查记录](assessments/browser-load-2026-11-07.md)。浏览器安装只用于开发验证，不是静态站点运行要求。
 
 涉及页面交互或布局时，使用静态服务器在浏览器检查受影响页面、主要操作和窄屏，并记录浏览器、结果及未测范围；内容修改还需核验知识依据。检查失败要记录原因，不能用删减标准掩盖失败。
