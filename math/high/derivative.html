@@ -60,7 +60,8 @@
   .legend .l-extrema::before { background: var(--extrema); }
   footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
 .tab { font-family: inherit; color: inherit; }
-.tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
+.func-btn { font-family: inherit; }
+.func-btn:focus-visible, .tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
 </style>
 </head>
 <body>
@@ -272,6 +273,7 @@
   }
 
   // ---------- UI ----------
+  let renderedMode = null;
   function updatePanel() {
     const title = document.getElementById('panelTitle');
     const eq = document.getElementById('equation');
@@ -279,12 +281,19 @@
     const info = document.getElementById('infoGrid');
     const quiz = document.getElementById('quizBox');
     const funcSel = document.getElementById('funcSelect');
+    const rebuildControls = renderedMode !== mode;
     quiz.style.display = 'none';
 
     // function selector
-    funcSel.innerHTML = funcs.map((f, i) => `<div class="func-btn ${i===funcIdx?'active':''}" data-idx="${i}">${f.name}</div>`).join('');
-    funcSel.querySelectorAll('.func-btn').forEach(b => {
-      b.onclick = () => { funcIdx = parseInt(b.dataset.idx); updatePanel(); };
+    if (!funcSel.hasChildNodes()) {
+      funcSel.innerHTML = funcs.map((f, i) => `<button type="button" class="func-btn" data-idx="${i}">${f.name}</button>`).join('');
+      funcSel.querySelectorAll('.func-btn').forEach(b => {
+        b.onclick = () => { funcIdx = Number(b.dataset.idx); updatePanel(); };
+      });
+    }
+    funcSel.querySelectorAll('.func-btn').forEach((b, i) => {
+      b.classList.toggle('active', i === funcIdx);
+      b.setAttribute('aria-pressed', String(i === funcIdx));
     });
 
     const fn = funcs[funcIdx];
@@ -292,9 +301,9 @@
     if (mode === 'geometric') {
       title.textContent = '📐 导数的几何意义 — 切线斜率';
       eq.innerHTML = `f'(x₀) = lim<sub>Δx→0</sub> (f(x₀+Δx)−f(x₀))/Δx = ${fn.df(x0).toFixed(3)}`;
-      ctrl.innerHTML = `
-        <div class="slider-row"><label>切点 x₀</label><input type="range" min="-4" max="4" step="0.1" value="${x0}"><span class="val">${x0.toFixed(1)}</span></div>
-        <div class="slider-row"><label>Δx (逼近)</label><input type="range" min="0.01" max="3" step="0.01" value="${deltaX}"><span class="val">${deltaX.toFixed(2)}</span></div>`;
+      if (rebuildControls) ctrl.innerHTML = `
+        <div class="slider-row"><label for="derivative-x">切点 x₀</label><input id="derivative-x" type="range" min="-4" max="4" step="0.1" value="${x0}"><span class="val">${x0.toFixed(1)}</span></div>
+        <div class="slider-row"><label for="derivative-delta">Δx (逼近)</label><input id="derivative-delta" type="range" min="0.01" max="3" step="0.01" value="${deltaX}"><span class="val">${deltaX.toFixed(2)}</span></div>`;
       const slope = fn.df(x0);
       info.innerHTML = `
         <div>f(${x0.toFixed(1)}) = <b>${fn.f(x0).toFixed(3)}</b></div>
@@ -304,8 +313,8 @@
     } else if (mode === 'rules') {
       title.textContent = '🔢 求导法则 — 原函数与导函数';
       eq.innerHTML = `${fn.label} → ${fn.dlabel}`;
-      ctrl.innerHTML = `
-        <div class="slider-row"><label>观察点 x</label><input type="range" min="-4" max="4" step="0.1" value="${x0}"><span class="val">${x0.toFixed(1)}</span></div>`;
+      if (rebuildControls) ctrl.innerHTML = `
+        <div class="slider-row"><label for="derivative-x">观察点 x</label><input id="derivative-x" type="range" min="-4" max="4" step="0.1" value="${x0}"><span class="val">${x0.toFixed(1)}</span></div>`;
       info.innerHTML = `
         <div>f(${x0.toFixed(1)}) = <b>${fn.f(x0).toFixed(3)}</b></div>
         <div>f'(${x0.toFixed(1)}) = <b>${fn.df(x0).toFixed(3)}</b></div>
@@ -314,7 +323,7 @@
     } else if (mode === 'analysis') {
       title.textContent = '📊 函数分析 — 单调性与极值';
       eq.innerHTML = `${fn.label}，${fn.dlabel}`;
-      ctrl.innerHTML = ``;
+      if (rebuildControls) ctrl.innerHTML = ``;
       // find extrema
       const extrema = [];
       for (let x = -5; x <= 5; x += 0.01) {
@@ -336,14 +345,16 @@
       title.textContent = '🎯 互动练习';
       eq.innerHTML = '测试你对导数的理解';
       ctrl.innerHTML = '';
+      renderedMode = mode;
       info.innerHTML = '';
       quiz.style.display = 'block';
       loadQuiz();
       return;
     }
 
-    // bind sliders
-    ctrl.querySelectorAll('input[type=range]').forEach((sl, i) => {
+    // Keep the controls while values change so continuous input retains focus.
+    renderedMode = mode;
+    if (rebuildControls) ctrl.querySelectorAll('input[type=range]').forEach((sl, i) => {
       sl.addEventListener('input', () => {
         const v = parseFloat(sl.value);
         sl.nextElementSibling.textContent = v.toFixed(i === 1 && mode === 'geometric' ? 2 : 1);
