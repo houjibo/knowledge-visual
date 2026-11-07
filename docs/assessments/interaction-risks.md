@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：87；含内联 while 的页面：57。同一页面可能出现在两类中。
+含候选 div 控件的页面：87；含内联 while 的页面：56。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -128,7 +128,6 @@
 - [math/topics/money/index.html](../../math/topics/money/index.html)：537 行、552 行、562 行
 - [math/topics/multi-digit-multiplication/index.html](../../math/topics/multi-digit-multiplication/index.html)：736 行
 - [math/topics/multiplication/index.html](../../math/topics/multiplication/index.html)：540 行
-- [math/topics/multiplication-intro/index.html](../../math/topics/multiplication-intro/index.html)：337 行、420 行、503 行
 - [math/topics/multiplication-tables/index.html](../../math/topics/multiplication-tables/index.html)：342 行、401 行
 - [math/topics/negative-numbers/index.html](../../math/topics/negative-numbers/index.html)：336 行、373 行
 - [math/topics/numbers-within-100/index.html](../../math/topics/numbers-within-100/index.html)：490 行

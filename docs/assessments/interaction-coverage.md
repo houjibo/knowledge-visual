@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：119；尚未登记：197。
+主题总数：316；已登记部分交互证据：120；尚未登记：196。
 
 ## 已登记部分交互证据
 
@@ -118,6 +118,8 @@
   - 固定随机数下两种换算、重复计分、换题时序、代表性估算与尺子显示；未覆盖全部生活长度或整页内容。 [measurement-estimation-reliability.spec.js](../../tests/browser/measurement-estimation-reliability.spec.js)
 - [中位数和众数](../../math/topics/median-and-mode/index.html)
   - 中位数、唯一众数及挑战的固定随机边界和部分答题；概念内容及所有题型尚未全面验收。 [median-mode.spec.js](../../tests/browser/median-mode.spec.js)
+- [乘法的初步认识](../../math/topics/multiplication-intro/index.html)
+  - 桌面及移动视口检查常量随机加载、三类练习键盘作答，枚举全部整数参数并验证四个不同选项与唯一正确答案；真实设备、进度记录和整页无障碍尚未全面验收。 [multiplication-intro-question-correctness.spec.js](../../tests/browser/multiplication-intro-question-correctness.spec.js)
 - [负数的初步认识](../../math/topics/negative-numbers/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [数的组成](../../math/topics/number-composition/index.html)
@@ -427,7 +429,6 @@
 - [混合运算](../../math/topics/mixed-operations/index.html)
 - [认识人民币](../../math/topics/money/index.html)
 - [多位数乘法](../../math/topics/multi-digit-multiplication/index.html)
-- [乘法的初步认识](../../math/topics/multiplication-intro/index.html)
 - [乘法口诀表](../../math/topics/multiplication-tables/index.html)
 - [表内乘法](../../math/topics/multiplication/index.html)
 - [数与形](../../math/topics/number-and-shape/index.html)
