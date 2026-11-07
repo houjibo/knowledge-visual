@@ -113,6 +113,7 @@
 - [分数的初步认识](../../math/topics/fractions/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [公顷和平方千米](../../math/topics/hectares-and-square-kilometers/index.html)
+  - 桌面与移动视口验证虚构长宽与十个参考面积一致、两位小数、单题计分、三项完成及保存失败恢复；实际地理面积及真实设备尚未全面验收。 [hectare-learning-completion-and-estimation.spec.js](../../tests/browser/hectare-learning-completion-and-estimation.spec.js)
   - 桌面与移动视口覆盖六种面积换算方向的随机边界、正确选项、提示、键盘和重复提交；实际应用、估测、完成记录和真实设备尚未全面验收。 [hectare-square-kilometer-conversion-correctness.spec.js](../../tests/browser/hectare-square-kilometer-conversion-correctness.spec.js)
 - [时分秒](../../math/topics/hours-minutes-seconds/index.html)
   - 固定随机值生成、换算题切换与单次计分、四类挑战、午夜进位、排序和保存失败恢复；其他教学内容和完整无障碍未全面验收。 [time-units-practice-reliability.spec.js](../../tests/browser/time-units-practice-reliability.spec.js)

@@ -203,6 +203,7 @@
       <span class="breadcrumb-sep">›</span>
       <span class="breadcrumb-current">公顷和平方千米</span>
     </nav>
+    <p id="learningProgress" role="status" aria-live="polite" style="text-align:center;margin:12px;line-height:1.6"></p>
 
     <div class="mode-tabs">
       <button class="mode-tab active" data-mode="learn-hectare">🌾 认识公顷</button>
@@ -364,7 +365,7 @@
     <div class="mode-content" data-mode="estimate">
       <div class="estimate-area">
         <div class="section-title">🎯 估测挑战</div>
-        <div class="section-desc">猜猜这些地方的面积大约是多少？</div>
+        <div class="section-desc">以下是虚构场地的参考面积，仅用于练习数量级；实际场地面积各不相同。估计值在参考值的半倍到两倍之间视为本练习达标。</div>
 
         <div class="score-display">
           <span class="score-stars" id="estimateStars"></span>
@@ -376,13 +377,13 @@
         <div class="estimate-slider-area">
           <div id="estimateValue" class="estimate-value">50</div>
           <div id="estimateUnit" class="estimate-unit">公顷</div>
-          <input type="range" id="estimateSlider" class="estimate-slider" min="1" max="100" value="50">
+          <input type="range" id="estimateSlider" class="estimate-slider" aria-label="估计面积" min="1" max="100" value="50">
           <div style="display:flex;justify-content:space-between;max-width:320px;margin:0 auto;font-size:12px;color:#6E6E73;">
             <span id="estimateMin">1</span>
             <span id="estimateMax">100</span>
           </div>
         </div>
-        <button class="estimate-submit" onclick="submitEstimate()">提交答案</button>
+        <button class="estimate-submit" id="estimateSubmit" onclick="submitEstimate()">提交答案</button>
         <div id="estimateResult" class="estimate-result"></div>
         <button id="estimateNext" class="next-btn" style="display:none;" onclick="nextEstimate()">下一题 →</button>
       </div>
@@ -391,6 +392,26 @@
 
   <script src="../../assets/js/common.js"></script>
   <script>
+    const learningActivities = new Set();
+    let progressSaved = PageProgress.isDone('hectares-and-square-kilometers');
+    let completionAttempted = false;
+    function renderLearningProgress() {
+      const status = document.getElementById('learningProgress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      const names = [['convert','单位换算'], ['apply','实际应用'], ['estimate','估测挑战']];
+      status.textContent = `本次完成 ${learningActivities.size}/3：` + names.map(([id, name]) => `${learningActivities.has(id) ? '✓' : '○'} ${name}`).join('、') + '。换算、应用各答对一题，估测达到一次参考范围；未完成进度仅保留在当前页面。';
+    }
+    function finishLearningActivity(id) {
+      learningActivities.add(id);
+      if (learningActivities.size === 3 && !progressSaved && !completionAttempted) {
+        completionAttempted = true;
+        progressSaved = PageProgress.markDone('hectares-and-square-kilometers');
+      }
+      renderLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', () => { if (completionAttempted) { progressSaved = true; renderLearningProgress(); } });
+    renderLearningProgress();
     // === Tab 切换 ===
     document.querySelectorAll('.mode-tab').forEach(tab => {
       tab.addEventListener('click', function() {
@@ -485,6 +506,7 @@
       if (selected === answer) {
         btn.classList.add('correct');
         convertScore++;
+        finishLearningActivity('convert');
         document.getElementById('convertResult').innerHTML = '<span style="color:#34C759;">✅ 答对了！</span>';
       } else {
         btn.classList.add('wrong');
@@ -535,7 +557,7 @@
       },
       {
         icon: '🏗️', title: '小区规划',
-        desc: '一个住宅小区占地面积约2公顷，如果每个楼栋占地约2000平方米，这个小区最多能建多少栋楼？',
+        desc: '一个住宅小区占地2公顷，每个楼栋占地2000平方米。假设全部土地都可用于建楼且能够布置，不考虑道路、绿化和楼间距，最多能建多少栋？',
         question: '最多能建多少栋？',
         options: ['10栋', '100栋', '1栋', '50栋'],
         answer: 0,
@@ -559,7 +581,7 @@
       },
       {
         icon: '🗺️', title: '城市比较',
-        desc: '甲市面积约2000平方千米，乙市面积约200000公顷，哪个城市面积更大？',
+        desc: '甲市面积按2000平方千米计算，乙市面积按200000公顷计算，按这些给定数值哪个更大？',
         question: '哪个城市面积更大？',
         options: ['一样大', '甲市大', '乙市大', '无法比较'],
         answer: 0,
@@ -618,11 +640,12 @@
       applyTotal++;
 
       var allOpts = document.querySelectorAll('#applyOptions .apply-opt');
-      allOpts.forEach(function(opt) { opt.style.pointerEvents = 'none'; });
+      allOpts.forEach(function(opt) { opt.disabled = true; });
 
       if (selected === correct) {
         btn.classList.add('correct');
         applyScore++;
+        finishLearningActivity('apply');
         document.getElementById('applyResult').innerHTML = '<span style="color:#34C759;">✅ 答对了！</span>';
       } else {
         btn.classList.add('wrong');
@@ -650,39 +673,45 @@
     // === 模式5: 估测挑战 ===
     var estimateScore = 0;
     var estimateTotal = 0;
+    var estimateAnswered = false;
 
     var estimateScenes = [
-      { icon: '⚽', name: '一个足球场', answer: 0.7, unit: '公顷', min: 0.1, max: 5, step: 0.1 },
-      { icon: '🏫', name: '一所小学', answer: 1.5, unit: '公顷', min: 0.1, max: 10, step: 0.1 },
-      { icon: '🌳', name: '一个城市公园', answer: 10, unit: '公顷', min: 1, max: 100, step: 1 },
-      { icon: '🏛️', name: '故宫', answer: 0.72, unit: '平方千米', min: 0.1, max: 5, step: 0.01 },
-      { icon: '🌊', name: '西湖', answer: 6.4, unit: '平方千米', min: 1, max: 20, step: 0.1 },
-      { icon: '🏝️', name: '鼓浪屿', answer: 1.9, unit: '平方千米', min: 0.5, max: 10, step: 0.1 },
-      { icon: '🏘️', name: '一个住宅小区', answer: 5, unit: '公顷', min: 1, max: 30, step: 0.5 },
-      { icon: '🌾', name: '一片农田', answer: 20, unit: '公顷', min: 1, max: 100, step: 1 },
-      { icon: '🏞️', name: '一个自然保护区', answer: 50, unit: '平方千米', min: 5, max: 200, step: 5 },
-      { icon: '🏗️', name: '一个工业园区', answer: 3, unit: '平方千米', min: 0.5, max: 20, step: 0.5 }
+      { icon: '⚽', name: '示例足球场', answer: 0.7, unit: '公顷', min: 0.1, max: 5, step: 0.1 },
+      { icon: '🏫', name: '示例小学', answer: 1.5, unit: '公顷', min: 0.1, max: 10, step: 0.1 },
+      { icon: '🌳', name: '示例城市公园', answer: 10, unit: '公顷', min: 1, max: 100, step: 1 },
+      { icon: '🏛️', name: '示例博物馆园区', answer: 0.72, unit: '平方千米', min: 0.1, max: 5, step: 0.01 },
+      { icon: '🌊', name: '示例湖泊', answer: 6.4, unit: '平方千米', min: 1, max: 20, step: 0.1 },
+      { icon: '🏝️', name: '示例岛屿', answer: 1.9, unit: '平方千米', min: 0.5, max: 10, step: 0.1 },
+      { icon: '🏘️', name: '示例住宅小区', answer: 5, unit: '公顷', min: 1, max: 30, step: 0.5 },
+      { icon: '🌾', name: '示例农田', answer: 20, unit: '公顷', min: 1, max: 100, step: 1 },
+      { icon: '🏞️', name: '示例自然保护区', answer: 50, unit: '平方千米', min: 5, max: 200, step: 5 },
+      { icon: '🏗️', name: '示例工业园区', answer: 3, unit: '平方千米', min: 0.5, max: 20, step: 0.5 }
     ];
 
     var currentEstimate = null;
+    var estimateDimensions = ['100米×70米', '150米×100米', '500米×200米', '1200米×600米', '3.2千米×2千米', '1.9千米×1千米', '250米×200米', '500米×400米', '10千米×5千米', '3千米×1千米'];
 
     function genEstimateProblem() {
+      estimateAnswered = false;
+      document.getElementById('estimateSubmit').disabled = false;
+      document.getElementById('estimateSlider').disabled = false;
       document.getElementById('estimateResult').textContent = '';
       document.getElementById('estimateResult').className = 'estimate-result';
       document.getElementById('estimateNext').style.display = 'none';
 
-      var scene = estimateScenes[randInt(0, estimateScenes.length - 1)];
+      var sceneIndex = randInt(0, estimateScenes.length - 1);
+      var scene = estimateScenes[sceneIndex];
       currentEstimate = scene;
 
       document.getElementById('estimateScene').textContent = scene.icon;
-      document.getElementById('estimateQuestion').textContent = '"' + scene.name + '"的面积大约是多少？';
+      document.getElementById('estimateQuestion').textContent = '假设“' + scene.name + '”是长方形，长宽约为 ' + estimateDimensions[sceneIndex] + '，面积大约是多少？';
       document.getElementById('estimateUnit').textContent = scene.unit;
 
       var slider = document.getElementById('estimateSlider');
       slider.min = scene.min;
       slider.max = scene.max;
       slider.step = scene.step;
-      slider.value = ((scene.min + scene.max) / 2).toFixed(1);
+      slider.value = ((scene.min + scene.max) / 2).toFixed(2);
       document.getElementById('estimateMin').textContent = scene.min + scene.unit;
       document.getElementById('estimateMax').textContent = scene.max + scene.unit;
       updateEstimateValue();
@@ -690,13 +719,16 @@
 
     function updateEstimateValue() {
       var slider = document.getElementById('estimateSlider');
-      document.getElementById('estimateValue').textContent = parseFloat(slider.value).toFixed(1);
+      document.getElementById('estimateValue').textContent = String(parseFloat(slider.value));
     }
 
     document.getElementById('estimateSlider').addEventListener('input', updateEstimateValue);
 
     function submitEstimate() {
-      if (!currentEstimate) return;
+      if (!currentEstimate || estimateAnswered) return;
+      estimateAnswered = true;
+      document.getElementById('estimateSubmit').disabled = true;
+      document.getElementById('estimateSlider').disabled = true;
       estimateTotal++;
 
       var userVal = parseFloat(document.getElementById('estimateSlider').value);
@@ -707,14 +739,15 @@
 
       if (ratio >= 0.5 && ratio <= 2) {
         estimateScore++;
+        finishLearningActivity('estimate');
         resultDiv.className = 'estimate-result good';
-        resultDiv.innerHTML = '🎯 估得很准！实际约 ' + answer + ' ' + currentEstimate.unit + '<br>你的估计：' + userVal.toFixed(1) + ' ' + currentEstimate.unit;
+        resultDiv.innerHTML = '🎯 在本练习参考范围内！参考值 ' + answer + ' ' + currentEstimate.unit + '<br>你的估计：' + userVal + ' ' + currentEstimate.unit;
       } else if (ratio >= 0.2 && ratio <= 5) {
         resultDiv.className = 'estimate-result ok';
-        resultDiv.innerHTML = '🤔 差一点！实际约 ' + answer + ' ' + currentEstimate.unit + '<br>你的估计：' + userVal.toFixed(1) + ' ' + currentEstimate.unit;
+        resultDiv.innerHTML = '🤔 再比较一下！参考值 ' + answer + ' ' + currentEstimate.unit + '<br>你的估计：' + userVal + ' ' + currentEstimate.unit;
       } else {
         resultDiv.className = 'estimate-result ok';
-        resultDiv.innerHTML = '😅 差距较大！实际约 ' + answer + ' ' + currentEstimate.unit + '<br>你的估计：' + userVal.toFixed(1) + ' ' + currentEstimate.unit;
+        resultDiv.innerHTML = '😅 差距较大！参考值 ' + answer + ' ' + currentEstimate.unit + '<br>你的估计：' + userVal + ' ' + currentEstimate.unit;
       }
 
       var stars = '';
