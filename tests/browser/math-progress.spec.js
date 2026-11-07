@@ -179,3 +179,36 @@ test('损坏记录恢复后合并本页待保存变更', async ({page}) => {
   expect(saved['high:conic-sections']).toBeTruthy();
   expect(saved['uni:derivative']).toBe(123);
 });
+
+test('四个共享脚本在写入失败时显示提示，键盘重试后保存', async ({page}) => {
+  const scripts = ['/math/assets/js/common.js', '/math/middle/assets/common.js', '/math/high/assets/common.js', '/math/uni/assets/common.js'];
+  for (const script of scripts) {
+    await page.goto('/');
+    await page.evaluate(() => {
+      localStorage.setItem('kv-math-progress-v2', JSON.stringify({'uni:existing': 123}));
+      window.originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = () => { throw new Error('denied'); };
+    });
+    await page.addScriptTag({url: script});
+    expect(await page.evaluate(() => PageProgress.markDone('retry-test'))).toBe(false);
+    const notice = page.locator('#math-progress-save-notice');
+    await expect(notice).toContainText('暂未保存');
+    await page.evaluate(() => { Storage.prototype.setItem = window.originalSetItem; });
+    await notice.getByRole('button', {name: '重试保存'}).focus();
+    await page.keyboard.press('Enter');
+    await expect(notice).toContainText('已保存');
+    const saved = JSON.parse(await page.evaluate(() => localStorage.getItem('kv-math-progress-v2')));
+    expect(saved['uni:existing']).toBe(123);
+    expect(Object.keys(saved).some(k => k.endsWith(':retry-test'))).toBe(true);
+  }
+});
+
+test('损坏的记录重试不会覆盖原始数据', async ({page}) => {
+  await page.goto('/math/high/derivative.html');
+  await page.evaluate(() => localStorage.setItem('kv-math-progress-v2', '{broken'));
+  await page.evaluate(() => PageProgress.markDone('derivative'));
+  const notice = page.locator('#math-progress-save-notice');
+  await notice.getByRole('button', {name: '重试保存'}).click();
+  await expect(notice).toContainText('暂未保存');
+  expect(await page.evaluate(() => localStorage.getItem('kv-math-progress-v2'))).toBe('{broken');
+});

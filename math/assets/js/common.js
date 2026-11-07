@@ -36,18 +36,55 @@ const PageProgress = (() => {
     if (stored !== null) cache = stored;
     return { ...cache, ...pending };
   }
-  function update(key, value) {
-    pending[key] = value;
+  let saveFailed = false;
+  function showSaveNotice(saved) {
+    if (!document.body) {
+      document.addEventListener('DOMContentLoaded', () => showSaveNotice(saved), { once: true });
+      return;
+    }
+    let notice = document.getElementById('math-progress-save-notice');
+    if (!notice) {
+      notice = document.createElement('div');
+      notice.id = 'math-progress-save-notice';
+      notice.setAttribute('role', 'status');
+      notice.setAttribute('aria-live', 'polite');
+      notice.style.cssText = 'margin:12px;padding:12px;border:2px solid #9a5400;border-radius:8px;background:#fff7e6;color:#542d00;line-height:1.5;';
+      document.body.prepend(notice);
+    }
+    notice.textContent = saved ? '✅ 本页学习进度已保存。' : '学习进度暂未保存。请检查浏览器存储或恢复原有记录，离开页面前可重试。';
+    if (!saved) {
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.textContent = '重试保存';
+      retry.style.cssText = 'margin-left:8px;padding:6px 12px;cursor:pointer;';
+      retry.addEventListener('click', savePending);
+      notice.appendChild(retry);
+    }
+  }
+  function savePending() {
     const stored = readStored();
     // 原始数据损坏或读取受限时无法安全合并，保留待写入的本页状态。
-    if (stored === null) return false;
-    const merged = { ...stored, ...pending };
-    try {
-      localStorage.setItem(KEY, JSON.stringify(merged));
-      cache = merged;
-      pending = {};
-      return true;
-    } catch (e) { return false; }
+    if (stored !== null) {
+      const merged = { ...stored, ...pending };
+      try {
+        localStorage.setItem(KEY, JSON.stringify(merged));
+        cache = merged;
+        pending = {};
+        if (saveFailed) {
+          saveFailed = false;
+          showSaveNotice(true);
+          document.dispatchEvent(new Event('math-progress-saved'));
+        }
+        return true;
+      } catch (e) { /* 保留待保存变更 */ }
+    }
+    saveFailed = true;
+    showSaveNotice(false);
+    return false;
+  }
+  function update(key, value) {
+    pending[key] = value;
+    return savePending();
   }
   function isDone(slug) {
     const data = read();

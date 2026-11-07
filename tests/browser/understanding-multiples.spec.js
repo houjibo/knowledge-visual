@@ -81,3 +81,24 @@ test('保留旧格式完成记录', async ({page}) => {
   await page.reload();
   await expect(page.locator('#learning-progress')).toContainText('已完成');
 });
+
+test('进度重试保存后同步页面状态', async ({page}) => {
+  await page.addInitScript(() => {
+    Math.random = () => 0;
+    window.originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => { throw new Error('denied'); };
+  });
+  await page.goto(url);
+  await page.locator('[data-mode="word"]').click();
+  for (let i = 0; i < 8; i++) {
+    await page.getByLabel('应用题答案').fill('4');
+    await page.locator('#btn-word-submit').click();
+    if (i < 7) await page.locator('#btn-word-next').click();
+  }
+  await expect(page.locator('#learning-progress')).toContainText('进度未保存');
+  await page.evaluate(() => { Storage.prototype.setItem = window.originalSetItem; });
+  await page.locator('#math-progress-save-notice').getByRole('button', {name: '重试保存'}).click();
+  await expect(page.locator('#learning-progress')).toContainText('已完成');
+  await page.reload();
+  await expect(page.locator('#learning-progress')).toContainText('已完成');
+});

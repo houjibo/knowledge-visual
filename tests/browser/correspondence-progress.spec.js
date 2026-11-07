@@ -74,3 +74,25 @@ test('练习、配对游戏和挑战的作答共同累计', async ({page}) => {
   await page.locator('#ch-content .game-opt[data-val="一样多"]').click();
   await expect(page.locator('#learning-progress')).toContainText('本次已答 3 题，答对 3 题');
 });
+
+test('共享进度重试成功后同步完成状态', async ({page}) => {
+  await page.addInitScript(() => {
+    Math.random = () => 0;
+    const timer = window.setTimeout;
+    window.setTimeout = (callback, ms, ...args) => timer(callback, ms === 1500 ? 10 : ms, ...args);
+    window.originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => { throw new Error('denied'); };
+  });
+  await page.goto('/math/topics/one-to-one-correspondence/index.html');
+  await page.locator('.mode-tab[data-mode="practice"]').click();
+  for (let i = 0; i < 10; i++) {
+    await answerPractice(page, true);
+    if (i < 9) await expect(page.locator('#practice-area .opt-btn[data-val="="]')).toBeEnabled();
+  }
+  await expect(page.locator('#learning-progress')).toContainText('进度未保存');
+  await page.evaluate(() => { Storage.prototype.setItem = window.originalSetItem; });
+  await page.locator('#math-progress-save-notice').getByRole('button', {name: '重试保存'}).click();
+  await expect(page.locator('#learning-progress')).toContainText('已完成');
+  await page.reload();
+  await expect(page.locator('#learning-progress')).toContainText('已完成');
+});
