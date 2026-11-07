@@ -18,3 +18,14 @@ TBD - created by archiving change number-line-learning. Update Purpose after arc
 #### Scenario: 时间结束时存在待切题任务
 - **WHEN** 最后一秒答题且倒计时结束
 - **THEN** 显示最终成绩，后续不会出现新题，且可重新开始
+
+### Requirement: 通过操作探索数字的位置
+认识数轴模式 SHALL 提供支持键盘和触摸的整数选择控件，同步更新图中的点、数字和文字解释。
+
+#### Scenario: 通过键盘选择边界和相邻数字
+- **WHEN** 学习者使用键盘选择 0、1 和 10
+- **THEN** 点分别位于对应刻度，文字说明从原点向右数的格数
+
+#### Scenario: 切换示例和学习模式
+- **WHEN** 学习者切换已有示例或离开并返回认识模式
+- **THEN** 探索控件及其选择状态仍然可用

@@ -48,7 +48,7 @@
 - [数的组成](../../math/topics/number-composition/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [数轴](../../math/topics/number-line/index.html)
-  - 固定随机值初始化、找数与比较的部分图形判分、挑战计分和到时重启；尚未覆盖所有题型与无障碍。 [number-line.spec.js](../../tests/browser/number-line.spec.js)
+  - 数轴滑块键盘边界与位置反馈、固定随机值找数和比较、挑战计分及到时重启；尚未覆盖所有题型与完整无障碍。 [number-line.spec.js](../../tests/browser/number-line.spec.js)
 - [认识数字 0-100](../../math/topics/numbers/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [一一对应](../../math/topics/one-to-one-correspondence/index.html)

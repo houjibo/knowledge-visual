@@ -63,3 +63,29 @@ test('挑战比较题显示的两个点决定正确答案', async ({page}) => {
   await expect(page.locator('#challenge-correct')).toHaveText('1');
   await expect(page.locator('#challenge-options button').first()).toBeDisabled();
 });
+
+test('键盘探索数轴，点位和解释随数字变化并保留状态', async ({page}) => {
+  await page.goto(url);
+  const slider = page.getByRole('slider', {name: '选择 0 到 10 的整数'});
+  const point = page.locator('#explore-svg circle.nl-point');
+  await expect(slider).toHaveValue('2');
+  await expect(point).toHaveAttribute('cx', '96');
+  await slider.focus();
+  await page.keyboard.press('Home');
+  await expect(slider).toHaveValue('0');
+  await expect(point).toHaveAttribute('cx', '40');
+  await expect(page.locator('#explore-description')).toContainText('原点 0');
+  await page.keyboard.press('ArrowRight');
+  await expect(slider).toHaveValue('1');
+  await expect(point).toHaveAttribute('cx', '68');
+  await expect(page.locator('#explore-description')).toContainText('向右数 1 格');
+  await page.keyboard.press('End');
+  await expect(slider).toHaveValue('10');
+  await expect(point).toHaveAttribute('cx', '320');
+  await expect(page.locator('#explore-value')).toHaveText('数字：10');
+  await page.locator('#learn-next').click();
+  await page.locator('[data-mode="find"]').click();
+  await page.locator('[data-mode="learn"]').click();
+  await expect(slider).toHaveValue('10');
+  await expect(point).toHaveAttribute('cx', '320');
+});
