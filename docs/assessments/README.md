@@ -20,3 +20,5 @@
 [数学进度学段隔离](math-progress-2026-11-07.md)说明旧数据处理、验证与回退限制。
 
 [首页主题查找试点](site-search-2026-11-07.md)记录目录生成、验证及范围。
+
+[主题交互证据索引](interaction-coverage.md)将已登记的部分浏览器测试关联到主题，并列出尚未登记的主题；证据分组在 `interaction-evidence.json` 中维护。修改后运行 `python3 scripts/interaction_coverage.py --output docs/assessments/interaction-coverage.md`；静态检查验证引用的主题、测试文件、测试入口及生成结果。测试存在或本索引被更新均不代表本次测试通过或主题已验收。
