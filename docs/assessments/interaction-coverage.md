@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：84；尚未登记：232。
+主题总数：316；已登记部分交互证据：85；尚未登记：231。
 
 ## 已登记部分交互证据
 
@@ -163,6 +163,8 @@
   - 电压主题测验中触电危险的正确和错误反馈、欧姆导体条件及正文一致性；其他安全主题未全面审核。 [electrical-safety-quiz.spec.js](../../tests/browser/electrical-safety-quiz.spec.js)
 - [动物分类 · 小学科学互动可视化](../../science/animals.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
+- [神奇的化学 · 小学科学互动可视化](../../science/chemistry.html)
+  - 石蕊颜色插值、糖盐消失与沙子、有限气泡、键盘暂停和不同题目进度保存；不模拟实际溶解度或反应动力学。 [science-chemistry-model.spec.js](../../tests/browser/science-chemistry-model.spec.js)
 - [地球与宇宙 · 小学科学互动可视化](../../science/earth-space.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
   - 四个主要月相的位置与亮面像素、暂停、行星键盘选择及相关测验进度；不模拟日月食、真实尺度或完整天文现象。 [earth-moon-phases.spec.js](../../tests/browser/earth-moon-phases.spec.js)、[science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
@@ -432,4 +434,3 @@
 - [稳恒磁场 · 互动可视化](../../physics/uni/steady-magnetic.html)
 - [热学基础 · 互动可视化](../../physics/uni/thermodynamics.html)
 - [振动与波 · 互动可视化](../../physics/uni/vibration-wave.html)
-- [神奇的化学 · 小学科学互动可视化](../../science/chemistry.html)

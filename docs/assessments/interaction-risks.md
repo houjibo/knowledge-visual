@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：101；含内联 while 的页面：64。同一页面可能出现在两类中。
+含候选 div 控件的页面：100；含内联 while 的页面：64。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -109,7 +109,6 @@
 - [physics/uni/steady-magnetic.html](../../physics/uni/steady-magnetic.html)：89 行（tab）、90 行（tab）、91 行（tab）、92 行（tab）、109 行（mode-btn）、110 行（mode-btn）、111 行（mode-btn）、112 行（mode-btn）、181 行（mode-btn）、182 行（mode-btn）、183 行（mode-btn）、227 行（mode-btn）、228 行（mode-btn）、229 行（mode-btn）、230 行（mode-btn）
 - [physics/uni/thermodynamics.html](../../physics/uni/thermodynamics.html)：89 行（tab）、90 行（tab）、91 行（tab）、92 行（tab）、93 行（tab）
 - [physics/uni/vibration-wave.html](../../physics/uni/vibration-wave.html)：238 行（tab）、239 行（tab）、240 行（tab）、241 行（tab）、242 行（tab）
-- [science/chemistry.html](../../science/chemistry.html)：90 行（tab）、91 行（tab）、92 行（tab）
 - [science/magnets.html](../../science/magnets.html)：284 行（quiz-opt）、285 行（quiz-opt）、286 行（quiz-opt）、287 行（quiz-opt）
 
 ## 内联 while 循环
