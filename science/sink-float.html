@@ -53,6 +53,7 @@
   .concept-card.warn .title { color: #f59e0b; }
   .demo-btns { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
   .demo-btn { padding: 8px 14px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); cursor: pointer; font-size: 13px; color: #e2e8f0; transition: all .2s; min-height: 44px; min-width: 44px; }
+  .demo-btn:focus-visible { outline: 3px solid white; outline-offset: 3px; }
   .demo-btn.active { background: var(--primary); border-color: var(--primary); color: #082f49; font-weight: 700; }
   .quiz { margin-top: 14px; padding: 14px; background: rgba(56,189,248,0.08); border-radius: 12px; border: 1px solid rgba(56,189,248,0.3); }
   .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
@@ -130,29 +131,31 @@
           <canvas id="floatCanvas" width="720" height="460"></canvas>
           <div class="legend">
             <span>⬇ 重力</span><span>⬆ 浮力</span>
-            <span id="legendLabel">物体比同体积的水轻 → 浮；重 → 沉</span>
+            <span id="legendLabel">物体比同体积液体轻 → 浮；重 → 沉</span>
           </div>
         </div>
       </div>
       <div class="panel">
         <h3>选择物体</h3>
         <div class="demo-btns" id="objBtns">
-          <button class="demo-btn" data-rho="0.5" data-name="木块">🪵 木块</button>
-          <button class="demo-btn" data-rho="0.9" data-name="冰块">🧊 冰块</button>
-          <button class="demo-btn active" data-rho="1.0" data-name="悬浮球">⚽ 悬浮球</button>
-          <button class="demo-btn" data-rho="2.7" data-name="铝块">🧱 铝块</button>
-          <button class="demo-btn" data-rho="7.8" data-name="铁块">🔩 铁块</button>
+          <button class="demo-btn" data-rho="0.5" data-name="木块" aria-pressed="false">🪵 木块</button>
+          <button class="demo-btn" data-rho="0.9" data-name="冰块" aria-pressed="false">🧊 冰块</button>
+          <button class="demo-btn active" data-rho="1.0" data-name="悬浮块" aria-pressed="true">🟨 悬浮块</button>
+          <button class="demo-btn" data-rho="2.7" data-name="铝块" aria-pressed="false">🧱 铝块</button>
+          <button class="demo-btn" data-rho="7.8" data-name="铁块" aria-pressed="false">🔩 铁块</button>
         </div>
         <div class="slider-row">
-          <label>液体密度</label>
+          <label for="sliderRho">液体密度（g/cm³）</label>
           <input type="range" id="sliderRho" min="0.8" max="1.3" step="0.05" value="1">
           <span class="val" id="valRho">1.00（水）</span>
         </div>
         <div class="info-grid">
           <div id="infoState">状态<br><b>悬浮</b></div>
           <div id="infoForce">浮力 vs 重力<br><b>相等</b></div>
+          <div id="infoSubmerged">浸入体积<br><b>100%</b></div>
         </div>
         <div class="equation">比较<b>物体密度</b>与<b>液体密度</b>：<br>ρ物 &lt; ρ液 → <b>上浮（漂浮）</b>　ρ物 = ρ液 → <b>悬浮</b>　ρ物 &gt; ρ液 → <b>下沉</b></div>
+        <div class="concept-card">示意物体为横截面积不变的直棱柱，图中浸入高度所占比例等于浸入体积所占比例；沉底时还受到容器向上的支持力。</div>
         <div class="concept-card">
           <div class="title">浮力从哪里来</div>
           浸在液体里的物体，下表面受到的水的向上压力比上表面的向下压力大，这个<b>压力差就是浮力</b>。物体排开的水越多，浮力越大。
@@ -243,12 +246,13 @@ tabs.forEach(t => t.addEventListener('click', () => {
  * ============================================================ */
 const canvas = document.getElementById('floatCanvas');
 const ctx = canvas.getContext('2d');
-let objRho = 1.0, objName = '悬浮球', objColor = '#fbbf24';
+let objRho = 1.0, objName = '悬浮块', objColor = '#fbbf24';
 const sRho = document.getElementById('sliderRho');
-const OBJ_COLORS = { '木块': '#b45309', '冰块': '#bae6fd', '悬浮球': '#fbbf24', '铝块': '#cbd5e1', '铁块': '#64748b' };
+const OBJ_COLORS = { '木块': '#b45309', '冰块': '#bae6fd', '悬浮块': '#fbbf24', '铝块': '#cbd5e1', '铁块': '#64748b' };
 document.querySelectorAll('#objBtns .demo-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('#objBtns .demo-btn').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('#objBtns .demo-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
   b.classList.add('active');
+  b.setAttribute('aria-pressed', 'true');
   objRho = +b.dataset.rho;
   objName = b.dataset.name;
   draw();
@@ -260,8 +264,9 @@ function draw() {
   const liquid = +sRho.value;
   document.getElementById('valRho').textContent = liquid.toFixed(2) + (Math.abs(liquid - 1) < 0.01 ? '（水）' : liquid < 1 ? '（酒精类）' : '（盐水）');
   const state = objRho < liquid ? '漂浮' : objRho > liquid ? '下沉' : '悬浮';
-  const fRatio = Math.min(1, liquid / objRho);  // 漂浮时浸入体积比
+  const fRatio = Math.min(1, objRho / liquid);  // 漂浮平衡时浸入体积比
   document.getElementById('infoState').innerHTML = `状态<br><b>${state}</b>`;
+  document.getElementById('infoSubmerged').innerHTML = `浸入体积<br><b>${Math.round(fRatio * 100)}%</b>`;
   document.getElementById('infoForce').innerHTML = `浮力 vs 重力<br><b>${state === '下沉' ? '浮力 < 重力' : '浮力 = 重力'}</b>`;
   objColor = OBJ_COLORS[objName];
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -285,7 +290,7 @@ function draw() {
   let objY;
   if (state === '下沉') objY = ty + th - R - 6;
   else if (state === '悬浮') objY = waterY + (ty + th - waterY) / 2;
-  else objY = waterY + R * (1 - 2 * fRatio);  // 漂浮：部分露出
+  else objY = waterY + R * (2 * fRatio - 1);  // 漂浮：部分露出
   const objX = tx + tw / 2;
   // 重力箭头
   ctx.strokeStyle = '#f87171'; ctx.lineWidth = 4;
@@ -304,7 +309,7 @@ function draw() {
   ctx.fillText('浮力', objX + R + 14, objY - fLen / 2 - 10);
   // 物体（被水遮罩：分水上/水下两段画）
   ctx.save();
-  ctx.beginPath(); ctx.arc(objX, objY, R, 0, Math.PI * 2); ctx.clip();
+  ctx.beginPath(); ctx.rect(objX - R, objY - R, 2 * R, 2 * R); ctx.clip();
   ctx.fillStyle = objColor;
   ctx.fillRect(objX - R, objY - R, 2 * R, 2 * R);
   // 水下部分加深
@@ -312,7 +317,7 @@ function draw() {
   ctx.fillRect(objX - R, Math.max(waterY, objY - R), 2 * R, 2 * R);
   ctx.restore();
   ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(objX, objY, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeRect(objX - R, objY - R, 2 * R, 2 * R);
   ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 14px sans-serif';
   ctx.fillText(objName, objX - 20, objY + 5);
   // 标注
@@ -320,7 +325,7 @@ function draw() {
   ctx.fillText(`${objName} ρ=${objRho}  vs  液体 ρ=${liquid.toFixed(2)}`, 60, 44);
   ctx.fillStyle = state === '下沉' ? '#f87171' : state === '悬浮' ? '#fbbf24' : '#34d399';
   ctx.font = 'bold 15px sans-serif';
-  const msg = state === '漂浮' ? `ρ物 < ρ液 → 漂浮（约 ${Math.round(fRatio * 100)}% 浸入水中）` :
+  const msg = state === '漂浮' ? `ρ物 < ρ液 → 漂浮（约 ${Math.round(fRatio * 100)}% 浸入液体）` :
               state === '悬浮' ? 'ρ物 = ρ液 → 悬浮（可以停在水中任何位置）' :
               'ρ物 > ρ液 → 下沉（浮力托不住重力）';
   ctx.fillText(msg, 60, 72);
