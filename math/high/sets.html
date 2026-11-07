@@ -239,7 +239,8 @@ canvas { display: block; margin: 0 auto; max-width: 100%; height: auto; }
 }
 .tab { font-family: inherit; color: inherit; }
 .set-element { font: inherit; color: inherit; }
-.set-element:focus-visible, .tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
+.quiz-option { font: inherit; color: inherit; width: 100%; text-align: left; }
+.quiz-option:focus-visible, .set-element:focus-visible, .tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
 </style>
 </head>
 <body>
@@ -427,9 +428,10 @@ canvas { display: block; margin: 0 auto; max-width: 100%; height: auto; }
     </div>
     <p class="info-text" id="progressText">第 1 题 / 共 5 题</p>
     <div id="quizContainer"></div>
-    <div id="quizFeedback" class="quiz-feedback"></div>
+    <div id="quizFeedback" class="quiz-feedback" role="status"></div>
     <div style="text-align:center; margin-top:16px;">
       <button class="btn green" id="nextBtn" onclick="nextQuiz()" style="display:none;">下一题 →</button>
+      <button class="btn cyan" id="saveRetryBtn" type="button" style="display:none;">重试保存</button>
       <button class="btn cyan" id="retryBtn" onclick="startQuiz()" style="display:none;">重新开始</button>
     </div>
   </div>
@@ -791,11 +793,30 @@ const quizzes = [
 let currentQuiz = 0;
 let quizAnswered = false;
 let quizScore = 0;
+let quizSaveAttempted = false, quizSaved = false, quizResultBase = '';
+const saveRetryBtn = document.getElementById('saveRetryBtn');
+function showQuizSaveResult() {
+  const feedback = document.getElementById('quizFeedback');
+  const prefix = currentQuiz === quizzes.length - 1 && quizAnswered ? quizResultBase : '';
+  feedback.classList.add('show');
+  feedback.textContent = prefix + (quizSaved ? ' 完成记录已保存。' : ' 已通过，但完成记录未保存；可重试保存。');
+  saveRetryBtn.style.display = quizSaved ? 'none' : 'inline-block';
+}
+function saveQuizCompletion() {
+  quizSaveAttempted = true;
+  quizSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('sets');
+  showQuizSaveResult();
+}
+saveRetryBtn.addEventListener('click', saveQuizCompletion);
+document.addEventListener('math-progress-saved', () => {
+  if (quizSaveAttempted) { quizSaved = true; showQuizSaveResult(); }
+});
 
 function startQuiz() {
   currentQuiz = 0;
   quizScore = 0;
   document.getElementById('retryBtn').style.display = 'none';
+  saveRetryBtn.style.display = quizSaveAttempted && !quizSaved ? 'inline-block' : 'none';
   renderQuiz();
 }
 
@@ -809,7 +830,8 @@ function renderQuiz() {
   container.innerHTML = `<div class="quiz-question">${q.q}</div>`;
   
   q.options.forEach((opt, i) => {
-    const div = document.createElement('div');
+    const div = document.createElement('button');
+    div.type = 'button';
     div.className = 'quiz-option';
     div.textContent = opt;
     div.onclick = () => answerQuiz(i, div);
@@ -829,6 +851,7 @@ function answerQuiz(idx, el) {
   const feedback = document.getElementById('quizFeedback');
   
   document.querySelectorAll('.quiz-option').forEach((opt, i) => {
+    opt.disabled = true;
     if (i === q.answer) opt.classList.add('correct');
     else if (i === idx) opt.classList.add('wrong');
   });
@@ -847,9 +870,12 @@ function answerQuiz(idx, el) {
   } else {
     document.getElementById('progressFill').style.width = '100%';
     document.getElementById('retryBtn').style.display = 'inline-block';
-    if (quizScore >= 3 && typeof PageProgress !== 'undefined') {
-      PageProgress.markDone('sets');
-      feedback.textContent += ` 🎉 总得分 ${quizScore}/${quizzes.length}，本知识点已标记完成！`;
+    quizResultBase = feedback.textContent + ` 总得分 ${quizScore}/${quizzes.length}。`;
+    if (quizScore >= 3) {
+      if (quizSaved) showQuizSaveResult();
+      else saveQuizCompletion();
+    } else {
+      feedback.textContent = quizResultBase + ' 至少答对 3 题才能记录完成。';
     }
   }
 }
