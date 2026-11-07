@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：122；尚未登记：194。
+主题总数：316；已登记部分交互证据：123；尚未登记：193。
 
 ## 已登记部分交互证据
 
@@ -155,6 +155,8 @@
   - 固定重复随机值下的图示方向、四类挑战题及正确反馈；未覆盖迷宫与整页内容。 [position-direction-questions.spec.js](../../tests/browser/position-direction-questions.spec.js)
 - [位置与顺序](../../math/topics/position-basic/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
+- [质数与合数](../../math/topics/prime-composite/index.html)
+  - 桌面及移动视口验证 1–50 质数判断、6–36 因数选项、键盘筛选与三类活动完成、刷新目录及保存失败恢复；真实设备及整页无障碍尚未全面验收。 [prime-composite-learning-reliability.spec.js](../../tests/browser/prime-composite-learning-reliability.spec.js)
 - [比和比例](../../math/topics/ratio-and-proportion/index.html)
   - 桌面与移动视口使用六个固定随机值验证图示计数、五类挑战答案、四个唯一选项及单题重复提交；其他模式、存储异常与整页无障碍未全面验收。 [ratio-proportion-learning-correctness.spec.js](../../tests/browser/ratio-proportion-learning-correctness.spec.js)
 - [扇形统计图](../../math/topics/sector-statistics/index.html)
@@ -451,7 +453,6 @@
 - [鸽巢问题](../../math/topics/pigeonhole-problem/index.html)
 - [认识平面图形](../../math/topics/plane-shapes/index.html)
 - [可能性](../../math/topics/possibility/index.html)
-- [质数与合数](../../math/topics/prime-composite/index.html)
 - [认识四边形](../../math/topics/quadrilaterals/index.html)
 - [比的应用](../../math/topics/ratio-applications/index.html)
 - [近似数](../../math/topics/rounding-numbers/index.html)

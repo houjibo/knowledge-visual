@@ -112,6 +112,7 @@
     .factor-chip.selected { border-color: #7B1FA2; background: #F3E5F5; color: #7B1FA2; }
     .factor-chip.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
     .factor-chip.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .sieve-cell:focus-visible, .factor-chip:focus-visible { outline: 3px solid #4c1d95; outline-offset: 2px; }
 
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
@@ -126,6 +127,7 @@
 
     <h1 class="page-title">🔢 质数与合数</h1>
     <p class="page-subtitle">认识数字的两种不同类型</p>
+    <p id="learningProgress" role="status" aria-live="polite" style="text-align:center;margin:12px;line-height:1.6"></p>
 
     <div class="mode-tabs">
       <button class="mode-tab active" data-mode="learn">📖 概念学习</button>
@@ -194,7 +196,7 @@
         </div>
         <div class="tip-box">
           💡 <strong>4是最小的合数</strong>。<br>
-          所有偶数（除了2）都是合数，因为它们都有因数2。
+          大于2的偶数都是合数，因为它们都有因数2。
         </div>
       </div>
 
@@ -233,6 +235,7 @@
           <button class="judge-btn composite-btn" id="btn-composite">🏗️ 合数</button>
         </div>
         <div class="feedback" id="judge-feedback"></div>
+        <button type="button" class="check-btn" id="btn-next-judge" hidden>下一题 →</button>
       </div>
     </div>
 
@@ -267,6 +270,7 @@
         <p style="font-size:14px;color:#6E6E73;margin:8px 0;">点击所有正确的因数</p>
         <div class="factor-input-row" id="factor-options"></div>
         <button class="check-btn" id="btn-check-factor">✓ 检查答案</button>
+        <button type="button" class="check-btn" id="btn-next-factor">下一题 →</button>
         <div class="feedback" id="factor-feedback"></div>
       </div>
     </div>
@@ -274,6 +278,26 @@
 
   <script src="../../assets/js/common.js"></script>
   <script>
+    const learningActivities = new Set();
+    let progressSaved = PageProgress.isDone('prime-composite');
+    let completionAttempted = false;
+    function renderLearningProgress() {
+      const status = document.getElementById('learningProgress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      const names = [['judge','判断'], ['sieve','筛选质数'], ['factor','找因数']];
+      status.textContent = `本次完成 ${learningActivities.size}/3：` + names.map(([id, name]) => `${learningActivities.has(id) ? '✓' : '○'} ${name}`).join('、') + '。每项答对一题；未完成的进度仅保留在当前页面。';
+    }
+    function finishLearningActivity(id) {
+      learningActivities.add(id);
+      if (learningActivities.size === 3 && !progressSaved && !completionAttempted) {
+        completionAttempted = true;
+        progressSaved = PageProgress.markDone('prime-composite');
+      }
+      renderLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', () => { if (completionAttempted) { progressSaved = true; renderLearningProgress(); } });
+    renderLearningProgress();
     // ===== 模式切换 =====
     document.querySelectorAll('.mode-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -315,6 +339,7 @@
 
     function newJudgeQuestion() {
       judgeState.locked = false;
+      document.getElementById('btn-next-judge').hidden = true;
       document.getElementById('judge-feedback').textContent = '';
       document.getElementById('judge-feedback').className = 'feedback';
       document.getElementById('btn-prime').className = 'judge-btn prime-btn';
@@ -327,6 +352,7 @@
 
     document.getElementById('btn-prime').addEventListener('click', () => handleJudgeAnswer('prime'));
     document.getElementById('btn-composite').addEventListener('click', () => handleJudgeAnswer('composite'));
+    document.getElementById('btn-next-judge').addEventListener('click', newJudgeQuestion);
 
     function handleJudgeAnswer(choice) {
       if (judgeState.locked) return;
@@ -347,7 +373,7 @@
         fb.className = 'feedback correct-fb';
         judgeState.correct++;
         document.getElementById('judge-correct').textContent = judgeState.correct;
-        setTimeout(newJudgeQuestion, 1500);
+        finishLearningActivity('judge');
       } else {
         if (choice === 'prime') btnPrime.classList.add('wrong');
         else btnComposite.classList.add('wrong');
@@ -355,8 +381,8 @@
         fb.className = 'feedback wrong-fb';
         judgeState.wrong++;
         document.getElementById('judge-wrong').textContent = judgeState.wrong;
-        setTimeout(newJudgeQuestion, 2500);
       }
+      document.getElementById('btn-next-judge').hidden = false;
     }
 
     // ===== 模式3: 筛选挑战 =====
@@ -377,7 +403,9 @@
       grid.innerHTML = '';
 
       for (let i = start; i <= end; i++) {
-        const cell = document.createElement('div');
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.setAttribute('aria-pressed', 'false');
         cell.className = 'sieve-cell';
         cell.textContent = i;
         cell.dataset.num = i;
@@ -392,6 +420,7 @@
             sieveState.selected.add(i);
             cell.classList.add('selected');
           }
+          cell.setAttribute('aria-pressed', String(sieveState.selected.has(i)));
         });
         grid.appendChild(cell);
       }
@@ -426,6 +455,7 @@
         fb.className = 'feedback correct-fb';
         sieveState.correct++;
         document.getElementById('sieve-correct').textContent = sieveState.correct;
+        finishLearningActivity('sieve');
       } else {
         fb.textContent = `❌ 找到${correctCount}个，漏掉${sieveState.primes.size - correctCount}个，多选${wrongCount}个`;
         fb.className = 'feedback wrong-fb';
@@ -454,14 +484,14 @@
 
       // 生成选项：包含所有正确因数和一些干扰项
       const allOptions = new Set(factorState.correctFactors);
-      while (allOptions.size < Math.min(12, num)) {
-        const fake = randInt(1, num);
-        allOptions.add(fake);
-      }
+      const candidates = shuffle(Array.from({length: num}, (_, i) => i + 1).filter(n => !allOptions.has(n)));
+      candidates.slice(0, Math.max(0, Math.min(12, num) - allOptions.size)).forEach(n => allOptions.add(n));
 
       const shuffled = shuffle(Array.from(allOptions));
       shuffled.forEach(n => {
-        const chip = document.createElement('div');
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.setAttribute('aria-pressed', 'false');
         chip.className = 'factor-chip';
         chip.textContent = n;
         chip.dataset.num = n;
@@ -474,6 +504,7 @@
             factorState.selected.add(n);
             chip.classList.add('selected');
           }
+          chip.setAttribute('aria-pressed', String(factorState.selected.has(n)));
         });
         options.appendChild(chip);
       });
@@ -508,7 +539,7 @@
         fb.className = 'feedback correct-fb';
         factorState.correct++;
         document.getElementById('factor-correct').textContent = factorState.correct;
-        setTimeout(newFactorQuestion, 1500);
+        finishLearningActivity('factor');
       } else {
         fb.textContent = `❌ 找到${correctCount}个，漏掉${factorState.correctFactors.length - correctCount}个，多选${wrongCount}个`;
         fb.className = 'feedback wrong-fb';
@@ -516,6 +547,7 @@
         document.getElementById('factor-wrong').textContent = factorState.wrong;
       }
     });
+    document.getElementById('btn-next-factor').addEventListener('click', newFactorQuestion);
 
     // 初始化
     newJudgeQuestion();
