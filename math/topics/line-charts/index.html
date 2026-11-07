@@ -492,7 +492,7 @@
       if (qType === 'max') {
         var maxIdx = 0;
         for (var i = 1; i < data.length; i++) { if (data[i] > data[maxIdx]) maxIdx = i; }
-        question = '哪一天的数值最大？';
+        question = '哪个时间点的数值最大？';
         answer = theme.xLabels[maxIdx];
         options = [answer];
         for (var i = 0; i < theme.xLabels.length && options.length < 4; i++) {
@@ -501,7 +501,7 @@
       } else if (qType === 'min') {
         var minIdx = 0;
         for (var i = 1; i < data.length; i++) { if (data[i] < data[minIdx]) minIdx = i; }
-        question = '哪一天的数值最小？';
+        question = '哪个时间点的数值最小？';
         answer = theme.xLabels[minIdx];
         options = [answer];
         for (var i = 0; i < theme.xLabels.length && options.length < 4; i++) {
@@ -532,6 +532,7 @@
         options = options.concat(shuffle(countCandidates).slice(0, 3));
       }
 
+      var correctAnswers = qType === 'max' || qType === 'min' ? theme.xLabels.filter(function(label, i) { return data[i] === data[qType === 'max' ? maxIdx : minIdx]; }) : [answer];
       shuffle(options);
       $('#read-question').textContent = question;
 
@@ -544,7 +545,7 @@
         btn.addEventListener('click', function() {
           if (readState.locked) return;
           readState.locked = true;
-          if (opt === answer) {
+          if (correctAnswers.indexOf(opt) !== -1) {
             btn.classList.add('correct');
             readState.correct++;
             $('#read-feedback').textContent = '✅ 答对了！';
@@ -554,8 +555,8 @@
             btn.classList.add('wrong');
             // 高亮正确答案
             var allOpts = optsEl.querySelectorAll('.read-opt');
-            allOpts.forEach(function(b) { if (b.textContent === answer) b.classList.add('correct'); });
-            $('#read-feedback').textContent = '❌ 正确答案是 ' + answer;
+            allOpts.forEach(function(b) { if (correctAnswers.indexOf(b.textContent) !== -1) b.classList.add('correct'); });
+            $('#read-feedback').textContent = '❌ 正确答案是 ' + options.filter(function(value) { return correctAnswers.indexOf(value) !== -1; }).join('、');
             $('#read-feedback').style.color = '#FF3B30';
             setTimeout(nextReadQuestion, 2500);
           }
@@ -629,72 +630,33 @@
           answer = '整体下降';
           options = ['整体上升', '整体下降', '基本平稳'];
         }
-      } else if (qType === 'fastest') {
-        // 哪段上升最快
-        var maxDiff = -Infinity;
-        var maxIdx = 0;
-        for (var i = 1; i < data.length; i++) {
-          var d = data[i] - data[i-1];
-          if (d > maxDiff) { maxDiff = d; maxIdx = i; }
+      } else if (qType === 'fastest' || qType === 'slowest' || qType === 'flat') {
+        var changes = [];
+        for (var i = 1; i < data.length; i++) changes.push(data[i] - data[i - 1]);
+        var target = qType === 'fastest' ? Math.max.apply(null, changes)
+          : qType === 'slowest' ? Math.min.apply(null, changes)
+          : Math.min.apply(null, changes.map(Math.abs));
+        var noDirection = (qType === 'fastest' && target <= 0) || (qType === 'slowest' && target >= 0);
+        question = qType === 'fastest' ? '哪一段上升最快？' : qType === 'slowest' ? '哪一段下降最多？' : '哪一段数据变化最小？';
+        var trendAnswers = [];
+        if (noDirection) {
+          trendAnswers.push(qType === 'fastest' ? '没有上升的区间' : '没有下降的区间');
+        } else {
+          changes.forEach(function(change, i) {
+            if ((qType === 'flat' ? Math.abs(change) : change) === target) {
+              trendAnswers.push(theme.xLabels[i] + '→' + theme.xLabels[i + 1]);
+            }
+          });
         }
-        if (maxDiff <= 0) {
-          // 没有上升段，重新生成
-          data = generateData(theme);
-          points = drawLineChart(svgEl, theme, data, { width: 340, height: 200, padB: 36 });
-          maxDiff = -Infinity; maxIdx = 0;
-          for (var i = 1; i < data.length; i++) {
-            var d = data[i] - data[i-1];
-            if (d > maxDiff) { maxDiff = d; maxIdx = i; }
-          }
-        }
-        question = '哪一段上升最快？';
-        answer = theme.xLabels[maxIdx - 1] + '→' + theme.xLabels[maxIdx];
+        answer = trendAnswers[0];
         options = [answer];
         for (var i = 1; i < data.length && options.length < 4; i++) {
-          var seg = theme.xLabels[i-1] + '→' + theme.xLabels[i];
-          if (seg !== answer) options.push(seg);
-        }
-      } else if (qType === 'slowest') {
-        // 哪段下降最多
-        var minDiff = Infinity;
-        var minIdx = 0;
-        for (var i = 1; i < data.length; i++) {
-          var d = data[i] - data[i-1];
-          if (d < minDiff) { minDiff = d; minIdx = i; }
-        }
-        if (minDiff >= 0) {
-          data = generateData(theme);
-          points = drawLineChart(svgEl, theme, data, { width: 340, height: 200, padB: 36 });
-          minDiff = Infinity; minIdx = 0;
-          for (var i = 1; i < data.length; i++) {
-            var d = data[i] - data[i-1];
-            if (d < minDiff) { minDiff = d; minIdx = i; }
-          }
-        }
-        question = '哪一段下降最多？';
-        answer = theme.xLabels[minIdx - 1] + '→' + theme.xLabels[minIdx];
-        options = [answer];
-        for (var i = 1; i < data.length && options.length < 4; i++) {
-          var seg = theme.xLabels[i-1] + '→' + theme.xLabels[i];
-          if (seg !== answer) options.push(seg);
-        }
-      } else if (qType === 'flat') {
-        // 哪段变化最小
-        var minChange = Infinity;
-        var flatIdx = 0;
-        for (var i = 1; i < data.length; i++) {
-          var d = Math.abs(data[i] - data[i-1]);
-          if (d < minChange) { minChange = d; flatIdx = i; }
-        }
-        question = '哪一段数据变化最小？';
-        answer = theme.xLabels[flatIdx - 1] + '→' + theme.xLabels[flatIdx];
-        options = [answer];
-        for (var i = 1; i < data.length && options.length < 4; i++) {
-          var seg = theme.xLabels[i-1] + '→' + theme.xLabels[i];
+          var seg = theme.xLabels[i - 1] + '→' + theme.xLabels[i];
           if (seg !== answer) options.push(seg);
         }
       }
 
+      var correctAnswers = qType === 'fastest' || qType === 'slowest' || qType === 'flat' ? trendAnswers : [answer];
       shuffle(options);
       $('#trend-question').textContent = question;
 
@@ -707,7 +669,7 @@
         btn.addEventListener('click', function() {
           if (trendState.locked) return;
           trendState.locked = true;
-          if (opt === answer) {
+          if (correctAnswers.indexOf(opt) !== -1) {
             btn.classList.add('correct');
             trendState.correct++;
             $('#trend-feedback').textContent = '✅ 答对了！';
@@ -716,8 +678,8 @@
           } else {
             btn.classList.add('wrong');
             var allOpts = optsEl.querySelectorAll('.trend-opt');
-            allOpts.forEach(function(b) { if (b.textContent === answer) b.classList.add('correct'); });
-            $('#trend-feedback').textContent = '❌ 正确答案是 ' + answer;
+            allOpts.forEach(function(b) { if (correctAnswers.indexOf(b.textContent) !== -1) b.classList.add('correct'); });
+            $('#trend-feedback').textContent = '❌ 正确答案是 ' + options.filter(function(value) { return correctAnswers.indexOf(value) !== -1; }).join('、');
             $('#trend-feedback').style.color = '#FF3B30';
             setTimeout(nextTrendQuestion, 2500);
           }
@@ -826,6 +788,7 @@
         options = ['整体上升', '整体下降', '基本平稳'];
       }
 
+      var correctAnswers = qType === 'max' || qType === 'min' ? theme.xLabels.filter(function(label, i) { return data[i] === data[qType === 'max' ? maxIdx : minIdx]; }) : [answer];
       shuffle(options);
       $('#ch-problem').textContent = question;
 
@@ -838,7 +801,7 @@
         btn.addEventListener('click', function() {
           if (chState.locked) return;
           chState.locked = true;
-          if (opt === answer) {
+          if (correctAnswers.indexOf(opt) !== -1) {
             btn.classList.add('correct');
             chState.correct++;
             chState.streak++;
@@ -857,8 +820,8 @@
             $('#ch-w').textContent = chState.wrong;
             $('#ch-streak').textContent = '';
             var allOpts = optsEl.querySelectorAll('.ch-opt');
-            allOpts.forEach(function(b) { if (b.textContent === answer) b.classList.add('correct'); });
-            $('#ch-feedback').textContent = '❌ 正确答案：' + answer;
+            allOpts.forEach(function(b) { if (correctAnswers.indexOf(b.textContent) !== -1) b.classList.add('correct'); });
+            $('#ch-feedback').textContent = '❌ 正确答案：' + options.filter(function(value) { return correctAnswers.indexOf(value) !== -1; }).join('、');
             $('#ch-feedback').style.color = '#FF3B30';
           }
           $('#ch-next-btn').style.display = 'block';
