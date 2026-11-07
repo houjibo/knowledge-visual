@@ -54,7 +54,7 @@
   .quiz { margin-top: 14px; padding: 14px; background: rgba(251,191,36,0.08); border-radius: 12px; border: 1px solid rgba(251,191,36,0.3); }
   .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
   .quiz-opts { display: grid; gap: 6px; }
-  .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
+  .quiz-opt { color: #e2e8f0; text-align: left; width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 44px; display: flex; align-items: center; }
   .quiz-opt:hover { background: rgba(255,255,255,0.1); }
   .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
   .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
@@ -108,9 +108,9 @@
   </header>
 
   <div class="tabs">
-    <div class="tab active" data-mode="learn">📖 探究</div>
-    <div class="tab" data-mode="practice">🧪 计算</div>
-    <div class="tab" data-mode="quiz">🎯 测验</div>
+    <button type="button" class="tab active" data-mode="learn" aria-pressed="true">📖 探究</button>
+    <button type="button" class="tab" data-mode="practice" aria-pressed="false">🧪 计算</button>
+    <button type="button" class="tab" data-mode="quiz" aria-pressed="false">🎯 测验</button>
   </div>
 
   <!-- ==================== 探究模式 ==================== -->
@@ -215,6 +215,7 @@
 </div>
 
 <script src="assets/common.js"></script>
+<script src="../../assets/math-quiz.js"></script>
 <script>
 /* ============================================================
  * 模式切换
@@ -227,8 +228,9 @@ const sections = {
   quiz: document.getElementById('sec-quiz')
 };
 tabs.forEach(t => t.addEventListener('click', () => {
-  tabs.forEach(x => x.classList.remove('active'));
+  tabs.forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
   t.classList.add('active');
+  t.setAttribute('aria-pressed', 'true');
   mode = t.dataset.mode;
   Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
   draw();
@@ -408,7 +410,7 @@ document.querySelectorAll('.practice-item').forEach(item => {
   item.querySelectorAll('.quiz-opt').forEach(opt => {
     opt.addEventListener('click', () => {
       const ok = opt.dataset.ok === '1';
-      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.disabled = true; });
       opt.classList.add(ok ? 'correct' : 'wrong');
       fb.style.color = ok ? '#10b981' : '#ef4444';
       fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
@@ -436,68 +438,8 @@ const QUIZ = [
     opts: ['7', '6', '9', '5'],
     ans: 0, ex: '极差 = 最大值 − 最小值 = 9 − 2 = 7。' }
 ];
-let qi = 0, qScore = 0, qAnswered = false;
-const quizQ = document.getElementById('quizQ');
-const quizOpts = document.getElementById('quizOpts');
-const quizFb = document.getElementById('quizFb');
-const quizResult = document.getElementById('quizResult');
-const btnStart = document.getElementById('quizStart');
-const btnPrev = document.getElementById('quizPrev');
-const btnNext = document.getElementById('quizNext');
+initMathQuiz({questions: QUIZ, slug: 'data-statistics', progress: typeof PageProgress === 'undefined' ? null : PageProgress});
 
-function renderQ() {
-  const q = QUIZ[qi];
-  qAnswered = false;
-  quizQ.textContent = `第${qi + 1}题 / 共${QUIZ.length}题：${q.q}`;
-  quizFb.textContent = '';
-  quizOpts.innerHTML = '';
-  q.opts.forEach((o, i) => {
-    const d = document.createElement('div');
-    d.className = 'quiz-opt';
-    d.textContent = o;
-    d.addEventListener('click', () => {
-      if (qAnswered) return;
-      qAnswered = true;
-      const ok = i === q.ans;
-      if (ok) qScore++;
-      quizOpts.children[q.ans].classList.add('correct');
-      if (!ok) d.classList.add('wrong');
-      quizFb.textContent = (ok ? '✅ ' : '❌ ') + q.ex;
-    });
-    quizOpts.appendChild(d);
-  });
-  btnPrev.disabled = qi === 0;
-  btnNext.disabled = false;
-  btnNext.textContent = qi === QUIZ.length - 1 ? '查看成绩' : '下一题';
-}
-function finishQuiz() {
-  const pass = qScore >= Math.ceil(QUIZ.length * 0.8);
-  quizQ.textContent = '测验完成！';
-  quizOpts.innerHTML = '';
-  quizFb.textContent = '';
-  quizResult.classList.remove('hidden');
-  quizResult.innerHTML = `得分：<b>${qScore} / ${QUIZ.length}</b>　${pass ? '🎉 通关！' : '继续加油，再试一次！'}`;
-  btnNext.disabled = true;
-  if (pass && typeof PageProgress !== 'undefined') {
-    PageProgress.markDone('data-statistics');
-    document.getElementById('done-mark').textContent = '✓ 已完成';
-  }
-}
-btnStart.addEventListener('click', () => {
-  qi = 0; qScore = 0;
-  quizResult.classList.add('hidden');
-  btnStart.textContent = '重新答题';
-  renderQ();
-});
-btnPrev.addEventListener('click', () => { if (qi > 0) { qi--; renderQ(); } });
-btnNext.addEventListener('click', () => {
-  if (qi < QUIZ.length - 1) { qi++; renderQ(); }
-  else finishQuiz();
-});
-
-if (typeof PageProgress !== 'undefined' && PageProgress.isDone('data-statistics')) {
-  document.getElementById('done-mark').textContent = '✓ 已完成';
-}
 </script>
 </body>
 </html>

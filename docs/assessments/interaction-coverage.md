@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：59；尚未登记：257。
+主题总数：316；已登记部分交互证据：66；尚未登记：250。
 
 ## 已登记部分交互证据
 
@@ -23,8 +23,23 @@
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [化学平衡 · 大学化学互动可视化](../../chemistry/uni/equilibrium.html)
   - 综合练习逐题得分、重试及完成；未覆盖平衡和相图模拟。 [equilibrium-quiz.spec.js](../../tests/browser/equilibrium-quiz.spec.js)
+- [随机变量及其分布 · 高中数学互动可视化](../../math/high/random-variables.html)
+  - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
 - [平面直角坐标系 · 初中数学互动可视化](../../math/middle/coordinate-plane.html)
   - 滑块、鼠标和触摸的坐标同步，原点及第二象限、原点对称画布位置，测验回看计分、刷新和存储失败；其他对称方式与完整无障碍未全面验收。 [coordinate-plane.spec.js](../../tests/browser/coordinate-plane.spec.js)
+  - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
+- [数据的分析 · 初中数学互动可视化](../../math/middle/data-analysis.html)
+  - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
+- [数据的收集整理与分析 · 初中数学互动可视化](../../math/middle/data-statistics.html)
+  - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
+- [不等式与不等式组 · 初中数学互动可视化](../../math/middle/inequalities.html)
+  - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
+- [相交线与平行线 · 初中数学互动可视化](../../math/middle/intersecting-parallel-lines.html)
+  - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
+- [二元一次方程组 · 初中数学互动可视化](../../math/middle/linear-equations-2var.html)
+  - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
+- [概率初步 · 初中数学互动可视化](../../math/middle/probability-intro.html)
+  - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
   - 从首页进入加法并获得练习正确、错误反馈；未覆盖全部学习模式。 [learning-paths.spec.js](../../tests/browser/learning-paths.spec.js)
 - [圆柱与圆锥](../../math/topics/cylinder-and-cone/index.html)
@@ -183,7 +198,6 @@
 - [不等式 · 性质、解集与均值不等式互动可视化](../../math/high/inequality.html)
 - [直线与圆 - 高中数学](../../math/high/line-circle.html)
 - [概率 - 高中数学互动可视化](../../math/high/probability.html)
-- [随机变量及其分布 · 高中数学互动可视化](../../math/high/random-variables.html)
 - [数列 - 高中数学](../../math/high/sequence.html)
 - [集合 - 互动可视化](../../math/high/sets.html)
 - [立体几何初步 · 空间几何体互动可视化](../../math/high/solid-geometry.html)
@@ -195,20 +209,14 @@
 - [平面向量 - 高中数学](../../math/high/vectors.html)
 - [轴对称 - 初中数学八年级](../../math/middle/axial-symmetry.html)
 - [圆的进阶 - 互动可视化](../../math/middle/circle.html)
-- [数据的分析 · 初中数学互动可视化](../../math/middle/data-analysis.html)
-- [数据的收集整理与分析 · 初中数学互动可视化](../../math/middle/data-statistics.html)
 - [分式 - 初中数学可视化](../../math/middle/fractions.html)
 - [几何初步 - 初中数学七年级](../../math/middle/geometry-basics.html)
-- [不等式与不等式组 · 初中数学互动可视化](../../math/middle/inequalities.html)
 - [整式的加减 - 初中数学七年级](../../math/middle/integral-expressions.html)
-- [相交线与平行线 · 初中数学互动可视化](../../math/middle/intersecting-parallel-lines.html)
 - [反比例函数 - 初中数学九年级](../../math/middle/inverse-function.html)
 - [一元一次方程 - 初中数学七年级](../../math/middle/linear-equation.html)
-- [二元一次方程组 · 初中数学互动可视化](../../math/middle/linear-equations-2var.html)
 - [一次函数 - 初中数学八年级](../../math/middle/linear-function.html)
 - [平行四边形 - 初中数学八年级](../../math/middle/parallelogram.html)
 - [整式乘除与因式分解 - 初中数学八年级](../../math/middle/polynomial-operations.html)
-- [概率初步 · 初中数学互动可视化](../../math/middle/probability-intro.html)
 - [投影与视图 - 初中数学九年级](../../math/middle/projection.html)
 - [勾股定理 - 互动可视化](../../math/middle/pythagorean-theorem.html)
 - [一元二次方程 - 初中数学九年级](../../math/middle/quadratic-equation.html)

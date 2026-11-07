@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：113；含内联 while 的页面：75。同一页面可能出现在两类中。
+含候选 div 控件的页面：106；含内联 while 的页面：75。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -45,17 +45,10 @@
 - [math/high/function.html](../../math/high/function.html)：281 行（tab）、282 行（tab）、283 行（tab）、284 行（tab）
 - [math/high/inequality.html](../../math/high/inequality.html)：74 行（tab）、75 行（tab）、76 行（tab）、77 行（tab）
 - [math/high/probability.html](../../math/high/probability.html)：325 行（tab）、326 行（tab）、327 行（tab）、328 行（tab）、329 行（tab）
-- [math/high/random-variables.html](../../math/high/random-variables.html)：119 行（tab）、120 行（tab）、121 行（tab）
 - [math/high/sets.html](../../math/high/sets.html)：250 行（tab）、251 行（tab）、252 行（tab）、253 行（tab）
 - [math/high/solid-geometry.html](../../math/high/solid-geometry.html)：129 行（tab）、130 行（tab）、131 行（tab）、132 行（tab）
 - [math/high/statistics.html](../../math/high/statistics.html)：309 行（tab）、310 行（tab）、311 行（tab）、312 行（tab）
 - [math/middle/circle.html](../../math/middle/circle.html)：95 行（tab）、96 行（tab）、97 行（tab）、98 行（tab）
-- [math/middle/data-analysis.html](../../math/middle/data-analysis.html)：119 行（tab）、120 行（tab）、121 行（tab）
-- [math/middle/data-statistics.html](../../math/middle/data-statistics.html)：111 行（tab）、112 行（tab）、113 行（tab）
-- [math/middle/inequalities.html](../../math/middle/inequalities.html)：120 行（tab）、121 行（tab）、122 行（tab）
-- [math/middle/intersecting-parallel-lines.html](../../math/middle/intersecting-parallel-lines.html)：117 行（tab）、118 行（tab）、119 行（tab）
-- [math/middle/linear-equations-2var.html](../../math/middle/linear-equations-2var.html)：112 行（tab）、113 行（tab）、114 行（tab）
-- [math/middle/probability-intro.html](../../math/middle/probability-intro.html)：118 行（tab）、119 行（tab）、120 行（tab）
 - [math/middle/pythagorean-theorem.html](../../math/middle/pythagorean-theorem.html)：197 行（tab）、198 行（tab）、199 行（tab）、200 行（tab）
 - [math/uni/combinatorics.html](../../math/uni/combinatorics.html)：79 行（tab）、80 行（tab）、81 行（tab）、82 行（tab）、83 行（tab）
 - [math/uni/complex-analysis.html](../../math/uni/complex-analysis.html)：107 行（tab）、108 行（tab）、109 行（tab）
