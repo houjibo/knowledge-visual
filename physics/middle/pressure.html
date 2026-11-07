@@ -47,7 +47,7 @@
   .quiz { margin-top: 10px; padding: 12px; background: rgba(8,145,178,0.08); border-radius: 12px; border: 1px solid rgba(8,145,178,0.3); }
   .quiz-q { font-size: 13px; margin-bottom: 8px; }
   .quiz-opts { display: grid; gap: 5px; }
-  .quiz-opt { padding: 7px 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 12px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt { color:#e2e8f0; text-align:left; width:100%; min-height:44px; padding: 7px 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 12px; transition: all .2s; border: 1px solid transparent; }
   .quiz-opt:hover { background: rgba(255,255,255,0.1); }
   .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
   .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
@@ -69,16 +69,17 @@
   </header>
 
   <div class="tabs">
-    <div class="tab active" data-mode="solid">🧱 固体压强</div>
-    <div class="tab" data-mode="liquid">🌊 液体压强</div>
-    <div class="tab" data-mode="atmos">🎈 大气压强</div>
-    <div class="tab" data-mode="pascal">⚙️ 帕斯卡原理</div>
-    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+    <button type="button" class="tab active" data-mode="solid" aria-pressed="true">🧱 固体压强</button>
+    <button type="button" class="tab" data-mode="liquid" aria-pressed="false">🌊 液体压强</button>
+    <button type="button" class="tab" data-mode="atmos" aria-pressed="false">🎈 大气压强</button>
+    <button type="button" class="tab" data-mode="pascal" aria-pressed="false">⚙️ 帕斯卡原理</button>
+    <button type="button" class="tab" data-mode="quiz" aria-pressed="false">🎯 互动练习</button>
   </div>
 
   <div class="stage">
     <div class="canvas-wrap">
-      <canvas id="cv" width="720" height="560"></canvas>
+      <canvas id="cv" width="720" height="560" role="img"></canvas>
+      <button type="button" class="mode-btn" id="toggleAnimation" aria-pressed="false">暂停动画</button>
       <div class="legend" id="legend"></div>
     </div>
     <div class="panel">
@@ -94,13 +95,15 @@
 <script>
 // r111: 进度追踪接入
 let totalCorrect = 0;
-const quizSolved = new Set();
+let progressMessage = '', progressNeedsRetry = false;
+function saveQuizProgress() {
+  const saved = typeof PageProgress !== 'undefined' && PageProgress.markDone('pressure');
+  progressNeedsRetry = !saved;
+  progressMessage = saved ? '✓ 已记录完成' : '已达到完成条件，进度未保存，请重试。';
+}
 function bumpTotalCorrect() {
   totalCorrect++;
-  if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('pressure')) {
-    PageProgress.markDone('pressure');
-    if (typeof showToast === 'function') showToast('🎉 本页知识点已点亮！');
-  }
+  if (totalCorrect === 3) saveQuizProgress();
 }
 
 const cv = document.getElementById('cv');
@@ -108,6 +111,7 @@ const ctx = cv.getContext('2d');
 const W = cv.width, H = cv.height;
 let mode = 'solid';
 let animId = null;
+let playing = true;
 let t = 0;
 
 // Params
@@ -118,8 +122,8 @@ let atmMode = 'magdeburg'; // magdeburg, cup, tube
 
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(tb => tb.classList.remove('active'));
-    tab.classList.add('active');
+    document.querySelectorAll('.tab').forEach(tb => { tb.classList.remove('active'); tb.setAttribute('aria-pressed', 'false'); });
+    tab.classList.add('active'); tab.setAttribute('aria-pressed', 'true');
     mode = tab.dataset.mode;
     t = 0;
     updatePanel();
@@ -161,12 +165,12 @@ function updatePanel() {
       <div class="eq">P = F / S</div>
       P: 压强 (Pa) F: 压力 (N) S: 受力面积 (m²)</div>
       <div class="slider-row">
-        <label>压力 F:</label>
+        <label for="fSlider">压力 F:</label>
         <input type="range" id="fSlider" min="10" max="200" step="5" value="${force}">
         <span class="val" id="fVal">${force}N</span>
       </div>
       <div class="slider-row">
-        <label>面积 S:</label>
+        <label for="sSlider">面积 S:</label>
         <input type="range" id="sSlider" min="10" max="100" step="5" value="${area}">
         <span class="val" id="sVal">${area}cm²</span>
       </div>
@@ -198,14 +202,14 @@ function updatePanel() {
       <div class="eq">P = ρgh</div>
       ρ: 液体密度 g: 9.8 N/kg h: 深度(m)</div>
       <div class="slider-row">
-        <label>深度 h:</label>
+        <label for="hSlider">深度 h:</label>
         <input type="range" id="hSlider" min="20" max="400" step="10" value="${liquidDepth}">
         <span class="val" id="hVal">${liquidDepth}mm</span>
       </div>
       <div class="mode-switch">
-        <div class="mode-btn active" data-ld="0.8">油 (0.8)</div>
-        <div class="mode-btn" data-ld="1.0">水 (1.0)</div>
-        <div class="mode-btn" data-ld="1.03">盐水 (1.03)</div>
+        <button type="button" class="mode-btn ${liquidDensity === 0.8 ? 'active' : ''}" data-ld="0.8" aria-pressed="${liquidDensity === 0.8}">油 (0.8 g/cm³)</button>
+        <button type="button" class="mode-btn ${liquidDensity === 1 ? 'active' : ''}" data-ld="1.0" aria-pressed="${liquidDensity === 1}">水 (1.0 g/cm³)</button>
+        <button type="button" class="mode-btn ${liquidDensity === 1.03 ? 'active' : ''}" data-ld="1.03" aria-pressed="${liquidDensity === 1.03}">盐水 (1.03 g/cm³)</button>
       </div>
       <div class="info-grid">
         <div>液体压强: <b id="lpVal">--</b></div>
@@ -215,7 +219,7 @@ function updatePanel() {
       • 液体内部<b>向各个方向</b>都有压强<br>
       • 同深度各方向压强<b>相等</b><br>
       • 深度越大，压强<b>越大</b><br>
-      • 与液体<b>密度</b>有关</div>
+      • 与液体<b>密度</b>有关<br>ρgh 表示静止液体相对于液面的压强增量，绝对压强还包括液面压强。</div>
     `;
     document.getElementById('hSlider').addEventListener('input', e => {
       liquidDepth = +e.target.value;
@@ -224,8 +228,8 @@ function updatePanel() {
     });
     content.querySelectorAll('.mode-btn[data-ld]').forEach(btn => {
       btn.addEventListener('click', () => {
-        content.querySelectorAll('.mode-btn[data-ld]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        content.querySelectorAll('.mode-btn[data-ld]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
+        btn.classList.add('active'); btn.setAttribute('aria-pressed', 'true');
         liquidDensity = +btn.dataset.ld;
         draw();
       });
@@ -239,16 +243,16 @@ function updatePanel() {
       <div class="eq">P₀ = 1.013 × 10⁵ Pa (标准大气压)</div>
       相当于 760mm 水银柱产生的压强。</div>
       <div class="mode-switch">
-        <div class="mode-btn active" data-am="magdeburg">马德堡半球</div>
-        <div class="mode-btn" data-am="cup">覆杯实验</div>
-        <div class="mode-btn" data-am="tube">托里拆利</div>
+        <button type="button" class="mode-btn ${atmMode === 'magdeburg' ? 'active' : ''}" data-am="magdeburg" aria-pressed="${atmMode === 'magdeburg'}">马德堡半球</button>
+        <button type="button" class="mode-btn ${atmMode === 'cup' ? 'active' : ''}" data-am="cup" aria-pressed="${atmMode === 'cup'}">覆杯实验</button>
+        <button type="button" class="mode-btn ${atmMode === 'tube' ? 'active' : ''}" data-am="tube" aria-pressed="${atmMode === 'tube'}">托里拆利</button>
       </div>
       <div class="card" id="atmInfo"></div>
     `;
     content.querySelectorAll('.mode-btn[data-am]').forEach(btn => {
       btn.addEventListener('click', () => {
-        content.querySelectorAll('.mode-btn[data-am]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        content.querySelectorAll('.mode-btn[data-am]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
+        btn.classList.add('active'); btn.setAttribute('aria-pressed', 'true');
         atmMode = btn.dataset.am;
         t = 0;
         updateAtmInfo();
@@ -263,12 +267,12 @@ function updatePanel() {
       <div class="card"><div class="ct">⚙️ 帕斯卡原理</div>
       加在密闭液体上的压强，能够<b>大小不变</b>地向各个方向传递。</div>
       <div class="slider-row">
-        <label>小活塞力 F₁:</label>
+        <label for="pf1">小活塞力 F₁:</label>
         <input type="range" id="pf1" min="10" max="100" step="5" value="30">
         <span class="val" id="pf1Val">30N</span>
       </div>
       <div class="slider-row">
-        <label>面积比 S₂/S₁:</label>
+        <label for="pRatio">面积比 S₂/S₁:</label>
         <input type="range" id="pRatio" min="2" max="10" step="1" value="5">
         <span class="val" id="pRatioVal">5倍</span>
       </div>
@@ -278,7 +282,7 @@ function updatePanel() {
       </div>
       <div class="card" style="margin-top:10px"><div class="ct">💡 液压机原理</div>
       <div class="eq">F₁/S₁ = F₂/S₂ → F₂ = F₁ × S₂/S₁</div>
-      小力通过大面积传递 → 得到大力<br>
+      理想条件下忽略摩擦、液柱高度差和活塞重量；活塞图形尺寸仅为示意。<br>
       应用：液压千斤顶、液压制动</div>
     `;
     document.getElementById('pf1').addEventListener('input', e => {
@@ -315,7 +319,7 @@ function updateAtmInfo() {
 function drawSolid() {
   ctx.clearRect(0, 0, W, H);
   const cx = W / 2, groundY = 420;
-  const progress = Math.min(t / 40, 1);
+
 
   // Ground
   ctx.strokeStyle = '#64748b';
@@ -338,7 +342,7 @@ function drawSolid() {
   const by = groundY - blockH;
 
   // Deformation (sink effect)
-  const sink = Math.min(force / 200 * 15, 15) * progress;
+  const sink = 0; // 不推断材料变形；接触色仅表示相对压强。
 
   ctx.fillStyle = 'rgba(239,68,68,0.2)';
   ctx.strokeStyle = 'rgba(239,68,68,0.5)';
@@ -349,10 +353,10 @@ function drawSolid() {
   ctx.stroke();
 
   // Force arrow
-  const arrowLen = force * 1.5 * progress;
-  drawArrow(cx, by + sink - 20, cx, by + sink - 20 - arrowLen, '#f59e0b', 4);
+  const arrowLen = 20 + force * 0.5;
+  drawArrow(cx, by - arrowLen, cx, by, '#f59e0b', 4);
   ctx.save();
-  ctx.translate(cx, by + sink - 20 - arrowLen);
+  ctx.translate(cx, by - arrowLen);
   ctx.fillStyle = '#f59e0b';
   ctx.font = 'bold 15px sans-serif';
   ctx.fillText('F=' + force + 'N', 10, 0);
@@ -375,9 +379,9 @@ function drawSolid() {
   const effectEl = document.getElementById('pEffect');
   if (pEl) pEl.textContent = pKPa + ' kPa';
   if (effectEl) {
-    if (intensity > 0.7) effectEl.textContent = '⚠️ 压强大！';
-    else if (intensity > 0.3) effectEl.textContent = '中等压强';
-    else effectEl.textContent = '压强较小';
+    if (intensity > 0.7) effectEl.textContent = '相对色标：较高';
+    else if (intensity > 0.3) effectEl.textContent = '相对色标：中';
+    else effectEl.textContent = '相对色标：较低';
   }
 
   // Formula
@@ -392,7 +396,7 @@ function drawSolid() {
   // Comparison blocks
   ctx.fillStyle = '#94a3b8';
   ctx.font = '12px sans-serif';
-  ctx.fillText('面积小 → 压强大', 500, 50);
+  ctx.fillText('同压力：面积小 → 压强大', 480, 50);
   ctx.fillText('面积大 → 压强小', 500, 70);
 
   // Small vs big comparison
@@ -454,18 +458,16 @@ function drawLiquid() {
   }
   ctx.stroke();
 
-  // Pressure arrows at different depths
-  const depths = [0.25, 0.5, 0.75, 0.95];
+  // 同一深度处各方向的压强相等；等长箭头表示该点的方向示意。
+  const depths = [0.25, 0.5, 0.75];
   const cx = containerX + containerW / 2;
   depths.forEach(d => {
     const y = liquidTop + liquidDepth * d;
-    const pLen = d * 80;
-    // Left arrow (inward)
-    drawArrow(containerX + 10, y, containerX + 10 + pLen, y, 'rgba(59,130,246,0.7)', 2);
-    // Right arrow (inward)
-    drawArrow(containerX + containerW - 10, y, containerX + containerW - 10 - pLen, y, 'rgba(59,130,246,0.7)', 2);
-    // Down arrow
-    drawArrow(cx, y - 5, cx, y + pLen * 0.6, 'rgba(239,68,68,0.7)', 2);
+    const len = Math.max(0, Math.min(d * 60, liquidDepth * d - 5, liquidDepth * (1 - d) - 5));
+    drawArrow(cx, y, cx - len, y, 'rgba(59,130,246,0.7)', 2);
+    drawArrow(cx, y, cx + len, y, 'rgba(59,130,246,0.7)', 2);
+    drawArrow(cx, y, cx, y - len, 'rgba(59,130,246,0.7)', 2);
+    drawArrow(cx, y, cx, y + len, 'rgba(59,130,246,0.7)', 2);
   });
 
   // Depth marker
@@ -496,7 +498,7 @@ function drawLiquid() {
   const lpEl = document.getElementById('lpVal');
   const lhEl = document.getElementById('lhVal');
   if (lpEl) lpEl.textContent = pKPa + ' kPa';
-  if (lhEl) lhEl.textContent = (liquidDepth / 100).toFixed(1) + ' cm';
+  if (lhEl) lhEl.textContent = (liquidDepth / 10).toFixed(1) + ' cm';
 
   // Formula display
   ctx.fillStyle = '#e2e8f0';
@@ -832,57 +834,51 @@ function drawPascal() {
 
 const quizzes = [
   { q: '一块砖平放和竖放在水平地面上，哪种情况压强大？', opts: ['平放', '竖放', '一样大', '无法判断'], ans: 1, explain: '竖放时受力面积小，压力不变，由 P=F/S 知压强更大。' },
-  { q: '液体压强与哪个因素无关？', opts: ['液体密度', '深度', '液体体积', 'g值'], ans: 2, explain: 'P=ρgh，液体压强只与密度和深度有关，与液体总体积无关。' },
+  { q: '液体压强与哪个因素无关？', opts: ['液体密度', '深度', '液体体积', 'g值'], ans: 2, explain: 'P=ρgh，静止液体的压强增量 P=ρgh，与密度、重力常数和深度有关，与液体总体积无关。' },
   { q: '托里拆利实验中，如果将玻璃管倾斜，水银柱的竖直高度将？', opts: ['变大', '变小', '不变', '无法确定'], ans: 2, explain: '大气压不变，支持的水银柱竖直高度不变（但长度会变长）。' },
   { q: '下列哪个不是利用大气压的实例？', opts: ['吸管吸饮料', '注射器吸药液', '高压锅煮饭', '吸盘挂钩'], ans: 2, explain: '高压锅是利用增大压强提高沸点，不是利用大气压。' },
   { q: '液压机小活塞面积 2cm²，大活塞面积 20cm²，在小活塞上加 50N 的力，大活塞能产生多大的力？', opts: ['50N', '100N', '500N', '5000N'], ans: 2, explain: 'F₂ = F₁ × S₂/S₁ = 50 × 20/2 = 500N' },
   { q: '深海鱼被捕捞到水面后往往会死亡，主要原因是？', opts: ['温度太高', '压强突然减小', '没有食物', '氧气太多'], ans: 1, explain: '深海中压强大，鱼体内器官适应了高压环境，到水面后压强骤降导致内脏损伤。' }
 ];
 let quizIdx = 0;
-
+let quizAnswers = Array(quizzes.length).fill(null);
 function showQuiz() {
   const content = document.getElementById('panelContent');
-  const q = quizzes[quizIdx % quizzes.length];
+  const q = quizzes[quizIdx], selected = quizAnswers[quizIdx];
+  const feedback = selected === null ? '' : (selected === q.ans ? '✅ 正确！' : '❌ 错误。') + q.explain;
   content.innerHTML = `
     <div class="quiz">
-      <div class="quiz-q"><b>第 ${quizIdx + 1} 题</b>：${q.q}</div>
+      <div class="quiz-q"><b>第 ${quizIdx + 1} / ${quizzes.length} 题</b>：${q.q}</div>
       <div class="quiz-opts">
-        ${q.opts.map((o, i) => `<div class="quiz-opt" data-idx="${i}">${String.fromCharCode(65 + i)}. ${o}</div>`).join('')}
+        ${q.opts.map((o, i) => `<button type="button" class="quiz-opt ${selected !== null && i === q.ans ? 'correct' : ''} ${selected === i && i !== q.ans ? 'wrong' : ''}" data-idx="${i}" ${selected !== null ? 'disabled' : ''}>${String.fromCharCode(65 + i)}. ${o}</button>`).join('')}
       </div>
-      <div class="quiz-fb" id="quizFb"></div>
+      <div class="quiz-fb" id="quizFb" role="status">${feedback}</div>
     </div>
     <div class="mode-switch" style="margin-top:10px">
-      <div class="mode-btn" id="prevQ">← 上一题</div>
-      <div class="mode-btn" id="nextQ">下一题 →</div>
+      <button type="button" class="mode-btn" id="prevQ" ${quizIdx === 0 ? 'disabled' : ''}>← 上一题</button>
+      <button type="button" class="mode-btn" id="nextQ" ${quizIdx === quizzes.length - 1 ? 'disabled' : ''}>下一题 →</button>
+      <button type="button" class="mode-btn" id="resetQuiz">重新练习</button>
+      ${progressNeedsRetry ? '<button type="button" class="mode-btn" id="retryProgress">重新保存进度</button>' : ''}
     </div>
+    <p id="quizProgress" role="status">本轮答对 ${totalCorrect} 题。${progressMessage}</p>
   `;
-  content.querySelectorAll('.quiz-opt').forEach(opt => {
-    opt.addEventListener('click', () => {
-      const idx = +opt.dataset.idx;
-      content.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct', 'wrong'));
-      if (idx === q.ans) {
-        opt.classList.add('correct');
-        document.getElementById('quizFb').innerHTML = '✅ 正确！' + q.explain;
-        document.getElementById('quizFb').style.color = '#10b981';
-        const qKey = quizIdx % quizzes.length;
-        if (!quizSolved.has(qKey)) {
-          quizSolved.add(qKey);
-          bumpTotalCorrect();
-        }
-      } else {
-        opt.classList.add('wrong');
-        content.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
-        document.getElementById('quizFb').innerHTML = '❌ 错误。' + q.explain;
-        document.getElementById('quizFb').style.color = '#ef4444';
-      }
-    });
+  content.querySelectorAll('.quiz-opt').forEach(opt => opt.addEventListener('click', () => {
+    if (quizAnswers[quizIdx] !== null) return;
+    const idx = +opt.dataset.idx; quizAnswers[quizIdx] = idx;
+    if (idx === q.ans) bumpTotalCorrect();
+    showQuiz();
+  }));
+  document.getElementById('prevQ').addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; showQuiz(); } });
+  document.getElementById('nextQ').addEventListener('click', () => { if (quizIdx < quizzes.length - 1) { quizIdx++; showQuiz(); } });
+  document.getElementById('resetQuiz').addEventListener('click', () => {
+    quizIdx = 0; quizAnswers = Array(quizzes.length).fill(null); totalCorrect = 0; showQuiz();
   });
-  document.getElementById('prevQ').addEventListener('click', () => { quizIdx = Math.max(0, quizIdx - 1); showQuiz(); });
-  document.getElementById('nextQ').addEventListener('click', () => { quizIdx++; showQuiz(); });
+  document.getElementById('retryProgress')?.addEventListener('click', () => { saveQuizProgress(); showQuiz(); });
 }
 
 function draw() {
-  if (animId) cancelAnimationFrame(animId);
+  if (animId !== null) cancelAnimationFrame(animId);
+  animId = null;
 
   if (mode === 'solid') drawSolid();
   else if (mode === 'liquid') drawLiquid();
@@ -904,9 +900,16 @@ function draw() {
     ctx.fillText('P = F/S', cx - 40, cy + 7);
   }
 
-  t++;
-  animId = requestAnimationFrame(draw);
+  const modeNames = {solid:'固体压强',liquid:'液体压强',atmos:'大气压强',pascal:'帕斯卡原理',quiz:'互动练习'};
+  cv.setAttribute('aria-label', `${modeNames[mode]}示意图。${mode === 'solid' ? `压力${force}牛、面积${area}平方厘米。` : mode === 'liquid' ? `深度${liquidDepth}毫米、密度${liquidDensity}克每立方厘米。` : ''}`);
+  if (playing) { t++; animId = requestAnimationFrame(draw); }
 }
+document.getElementById('toggleAnimation').addEventListener('click', e => {
+  playing = !playing;
+  e.currentTarget.textContent = playing ? '暂停动画' : '继续动画';
+  e.currentTarget.setAttribute('aria-pressed', String(!playing));
+  draw();
+});
 
 updatePanel();
 draw();
