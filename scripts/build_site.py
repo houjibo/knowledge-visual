@@ -2,6 +2,7 @@
 """Build a static release from tracked, explicitly allowed site files."""
 import argparse
 from html.parser import HTMLParser
+import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -25,6 +26,12 @@ class References(HTMLParser):
                 self.items.append((self.getpos()[0], value))
 
 
+def is_site_file(name):
+    path = Path(name)
+    return (not any(part.startswith('.') for part in path.parts) and
+            (name in ROOT_FILES or (path.parts[0] in SITE_DIRS and path.suffix.lower() in EXTENSIONS)))
+
+
 def build(output):
     output = Path(output).absolute()
     if output.exists():
@@ -33,9 +40,7 @@ def build(output):
     selected = []
     for name in filter(None, tracked):
         path = Path(name)
-        if any(part.startswith('.') for part in path.parts):
-            continue
-        if name not in ROOT_FILES and (path.parts[0] not in SITE_DIRS or path.suffix.lower() not in EXTENSIONS):
+        if not is_site_file(name):
             continue
         source = ROOT / path
         if source.is_symlink() or not source.is_file():
@@ -43,6 +48,8 @@ def build(output):
         selected.append(path)
     if not ROOT_FILES.issubset({p.as_posix() for p in selected}):
         raise ValueError('site entry or favicon is missing')
+    revision = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'], cwd=ROOT, text=True).strip()
+    changed = subprocess.check_output(['git', 'diff', '--name-only', '--no-renames', '-z', 'HEAD', '--'], cwd=ROOT).decode('utf-8').split('\0')
     output.mkdir(parents=True)
     for path in selected:
         dest = output / path
@@ -64,6 +71,9 @@ def build(output):
                 errors.append(f'{page.relative_to(output)}:{line}: missing or outside release: {value}')
     if errors:
         raise ValueError('\n'.join(errors))
+    manifest = {'schema_version': 1, 'revision': revision,
+                'site_files_modified': any(is_site_file(name) for name in filter(None, changed))}
+    (output / 'release-version.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
     return len(selected)
 
 

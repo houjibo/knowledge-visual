@@ -20,7 +20,7 @@ async function startReleaseServer() {
       try {
         if (fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
         const ext = path.extname(file);
-        res.setHeader('Content-Type', {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.ico': 'image/x-icon'}[ext] || 'application/octet-stream');
+        res.setHeader('Content-Type', {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.ico': 'image/x-icon'}[ext] || 'application/octet-stream');
         res.end(fs.readFileSync(file));
       } catch { res.writeHead(404).end(); }
     });

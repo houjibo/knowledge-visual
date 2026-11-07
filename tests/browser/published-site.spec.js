@@ -1,5 +1,6 @@
 const {test, expect} = require('@playwright/test');
 const {startReleaseServer} = require('./release-server');
+const {execFileSync} = require('node:child_process');
 
 let release, base;
 test.beforeAll(async () => { release = await startReleaseServer(); base = release.base; });
@@ -10,6 +11,14 @@ test('发布包子路径的首页搜索和四学科学习交互', async ({page})
   page.on('pageerror', e => errors.push(e.message));
   page.on('response', response => { if (response.url().startsWith(base) && response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
   await page.goto(base);
+  const versionResponse = await page.request.get(base + 'release-version.json');
+  expect(versionResponse.status()).toBe(200);
+  const version = await versionResponse.json();
+  expect(version).toEqual({
+    schema_version: 1,
+    revision: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(),
+    site_files_modified: expect.any(Boolean),
+  });
   await page.getByRole('searchbox', {name: '关键词'}).fill('加法');
   await page.locator('#site-results a[href="math/topics/addition/index.html"]').click();
   await expect(page).toHaveURL(/knowledge-visual\/math\/topics\/addition\/index\.html$/);

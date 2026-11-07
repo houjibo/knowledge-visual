@@ -1,7 +1,10 @@
 import importlib.util
+import json
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location('build_site', ROOT / 'scripts/build_site.py')
@@ -31,6 +34,36 @@ class ReleaseArtifactTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 builder.build(tmp)
             self.assertEqual(marker.read_text(), 'keep')
+
+    def test_manifest_reports_revision_and_tracked_site_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / 'repo'
+            repo.mkdir()
+            def git(*args):
+                return subprocess.check_output(['git', *args], cwd=repo, text=True).strip()
+            git('init', '-q')
+            (repo / 'index.html').write_text('<title>site</title>', encoding='utf-8')
+            (repo / 'favicon.ico').write_bytes(b'icon')
+            (repo / 'science').mkdir()
+            (repo / 'science' / 'extra.html').write_text('<title>extra</title>', encoding='utf-8')
+            git('add', 'index.html', 'favicon.ico', 'science/extra.html')
+            git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'initial')
+            revision = git('rev-parse', 'HEAD')
+            with patch.object(builder, 'ROOT', repo):
+                clean = Path(tmp) / 'clean'
+                builder.build(clean)
+                self.assertEqual(json.loads((clean / 'release-version.json').read_text()), {
+                    'schema_version': 1, 'revision': revision, 'site_files_modified': False})
+                (repo / 'index.html').write_text('<title>changed</title>', encoding='utf-8')
+                dirty = Path(tmp) / 'dirty'
+                builder.build(dirty)
+                self.assertEqual(json.loads((dirty / 'release-version.json').read_text()), {
+                    'schema_version': 1, 'revision': revision, 'site_files_modified': True})
+                git('checkout', '--', 'index.html')
+                git('rm', '-q', 'science/extra.html')
+                deleted = Path(tmp) / 'deleted'
+                builder.build(deleted)
+                self.assertTrue(json.loads((deleted / 'release-version.json').read_text())['site_files_modified'])
 
 
 if __name__ == '__main__':
