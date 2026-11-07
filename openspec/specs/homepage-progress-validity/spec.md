@@ -15,3 +15,10 @@ TBD - created by archiving change homepage-progress-validity. Update Purpose aft
 #### Scenario: 存储或目录不可用
 - **WHEN** 学科相关进度无法读取或主题目录无法加载
 - **THEN** 首页提示进度暂不可用，而不是声称尚未开始
+
+### Requirement: 首页学科数量与主题目录一致
+项目 SHALL 在静态检查中验证首页学科进度总数及数量徽标与主题目录一致。
+
+#### Scenario: 主题数量变化但首页未更新
+- **WHEN** 首页某学科进度总数或徽标与主题目录数量不同
+- **THEN** 静态检查失败并指出不一致的学科
