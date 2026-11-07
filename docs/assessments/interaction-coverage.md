@@ -131,6 +131,7 @@
 - [电压与电阻 · 初中物理互动可视化](../../physics/middle/voltage-resistance.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
   - 电源、灯泡和电表的画布路径，导体长度边界、电阻电流读数、单动画循环及暂停；实际灯丝和完整无障碍未全面验收。 [resistance-experiment.spec.js](../../tests/browser/resistance-experiment.spec.js)
+  - 电压主题测验中触电危险的正确和错误反馈、欧姆导体条件及正文一致性；其他安全主题未全面审核。 [electrical-safety-quiz.spec.js](../../tests/browser/electrical-safety-quiz.spec.js)
 - [动物分类 · 小学科学互动可视化](../../science/animals.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [地球与宇宙 · 小学科学互动可视化](../../science/earth-space.html)
