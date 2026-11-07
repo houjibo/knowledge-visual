@@ -73,6 +73,9 @@
   .quiz-opts { display: grid; gap: 6px; }
   .quiz-opt { padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; min-height: 40px; display: flex; align-items: center; }
   .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt { width: 100%; color: inherit; font-family: inherit; text-align: left; }
+  .quiz-opt:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+  .quiz-opt.selected { border-color: #67e8f9; background: rgba(103,232,249,0.15); }
   .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
   .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
   .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
@@ -220,14 +223,15 @@
         <div class="quiz">
           <div class="quiz-q" id="quiz-q">题目加载中…</div>
           <div class="quiz-opts" id="quiz-opts"></div>
-          <div class="quiz-feedback" id="quiz-fb"></div>
+          <div class="quiz-feedback" id="quiz-fb" aria-live="polite"></div>
           <div class="quiz-nav">
             <button id="quiz-prev">⬅ 上一题</button>
             <button id="quiz-next">下一题 ➡</button>
             <button id="quiz-submit" class="hidden">📊 提交评分</button>
             <button id="quiz-retry" class="hidden">🔄 重新测验</button>
+            <button id="quiz-save" class="hidden">重试保存进度</button>
           </div>
-          <div class="quiz-result hidden" id="quiz-result"></div>
+          <div class="quiz-result hidden" id="quiz-result" aria-live="polite"></div>
         </div>
       </div>
     </div>
@@ -472,31 +476,30 @@ const qSubmit = document.getElementById('quiz-submit');
 const qRetry = document.getElementById('quiz-retry');
 const qResult = document.getElementById('quiz-result');
 
+const qSave = document.getElementById('quiz-save');
 function renderQuiz() {
   const q = quizData[quizIdx];
   qEl.textContent = q.q;
   qOpts.innerHTML = '';
   q.opts.forEach((opt, i) => {
-    const div = document.createElement('div');
-    div.className = 'quiz-opt';
-    div.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
-    if (quizAnswers[quizIdx] === i) div.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
-    if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) div.classList.add('correct');
-    div.addEventListener('click', () => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'quiz-opt';
+    button.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+    button.setAttribute('aria-pressed', String(quizAnswers[quizIdx] === i));
+    if (quizSubmitted) {
+      if (i === q.ans) button.classList.add('correct');
+      else if (quizAnswers[quizIdx] === i) button.classList.add('wrong');
+      button.disabled = true;
+    } else if (quizAnswers[quizIdx] === i) button.classList.add('selected');
+    button.addEventListener('click', () => {
       if (quizSubmitted) return;
       quizAnswers[quizIdx] = i;
-      qFb.textContent = i === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb;
-      renderQuizOpts();
+      renderQuiz();
+      qOpts.children[i].focus();
     });
-    qOpts.appendChild(div);
+    qOpts.appendChild(button);
   });
-  function renderQuizOpts() {
-    [...qOpts.children].forEach((c, i) => {
-      c.classList.remove('correct', 'wrong');
-      if (quizAnswers[quizIdx] === i) c.classList.add(quizSubmitted ? (i === q.ans ? 'correct' : 'wrong') : 'correct');
-      if (quizSubmitted && i === q.ans && quizAnswers[quizIdx] !== i) c.classList.add('correct');
-    });
-  }
   qFb.textContent = quizAnswers[quizIdx] === -1 ? '' : (quizAnswers[quizIdx] === q.ans ? '✅ ' + q.fb : '❌ ' + q.fb);
   qPrev.disabled = quizIdx === 0;
   qNext.classList.toggle('hidden', quizIdx === quizData.length - 1);
@@ -505,6 +508,13 @@ function renderQuiz() {
 }
 qPrev.addEventListener('click', () => { if (quizIdx > 0) { quizIdx--; renderQuiz(); } });
 qNext.addEventListener('click', () => { if (quizIdx < quizData.length - 1) { quizIdx++; renderQuiz(); } });
+let passedScore = 0;
+function saveQuizProgress() {
+  const saved = typeof PageProgress !== 'undefined' && PageProgress.markDone('photoelectric');
+  document.getElementById('done-mark').textContent = saved ? '✓ 已完成' : '✓ 本次已完成（进度未保存）';
+  qResult.textContent = `🎉 得分 ${passedScore}/4，合格！` + (saved ? '进度已保存。' : '进度未保存，可重试保存。');
+  qSave.classList.toggle('hidden', saved);
+}
 qSubmit.addEventListener('click', () => {
   quizSubmitted = true;
   const score = quizData.reduce((s, q, i) => s + (quizAnswers[i] === q.ans ? 1 : 0), 0);
@@ -512,16 +522,15 @@ qSubmit.addEventListener('click', () => {
   qResult.classList.remove('hidden');
   qResult.style.borderColor = pass ? '#10b981' : '#ef4444';
   qResult.style.background = pass ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
-  qResult.textContent = pass ? `🎉 得分 ${score}/4，合格！本知识点已标记完成` : `😅 得分 ${score}/4，未达到 3/4，请复习后重试`;
-  if (pass && typeof PageProgress !== 'undefined') {
-    PageProgress.markDone('photoelectric');
-    document.getElementById('done-mark').textContent = '✓ 已完成';
-  }
+  if (pass) { passedScore = score; saveQuizProgress(); }
+  else qResult.textContent = `😅 得分 ${score}/4，未达到 3/4，请复习后重试`;
   renderQuiz();
 });
+qSave.addEventListener('click', saveQuizProgress);
 qRetry.addEventListener('click', () => {
   quizAnswers.fill(-1); quizSubmitted = false; quizIdx = 0;
   qResult.classList.add('hidden');
+  qSave.classList.add('hidden');
   renderQuiz();
 });
 
