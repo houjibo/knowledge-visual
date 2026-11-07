@@ -75,3 +75,52 @@ test('生活题答错后显示完整公式和单位', async ({page}) => {
   await expect(page.locator('#lifeFeedback')).toContainText('正确');
   await expect(page.locator('#lifeAnswer')).toBeHidden();
 });
+
+async function finishTriangleArea(page) {
+  await page.locator('[data-mode="explore"]').click();
+  await page.locator('#btnShowDouble').click();
+  await page.locator('[data-mode="quiz"]').click();
+  for (let i = 0; i < 3; i++) {
+    await page.locator('#quizOptions button').getByText('2 cm²', {exact: true}).click();
+    if (i < 2) await page.locator('#quizNext').click();
+  }
+  await page.locator('[data-mode="life"]').click();
+  await page.getByLabel('生活题面积答案').fill('3');
+  await page.locator('#lifeCheckBtn').click();
+}
+
+test('探索、三道练习与生活题完成后写入知识地图', async ({page}) => {
+  await page.addInitScript(() => { Math.random = () => 0; });
+  await page.goto(url);
+  await expect(page.locator('#learningProgress')).toContainText('0/3');
+  await page.locator('[data-mode="explore"]').click();
+  await page.locator('#btnShowDouble').click();
+  await expect(page.locator('#learningProgress')).toContainText('1/3');
+  await expect(page.locator('#learningProgress')).toContainText('刷新会清空本次阶段进度');
+  expect(await page.evaluate(() => PageProgress.isDone('triangle-area'))).toBe(false);
+  await page.reload();
+  await expect(page.locator('#learningProgress')).toContainText('0/3');
+  await finishTriangleArea(page);
+  await expect(page.locator('#learningProgress')).toHaveText('✓ 本主题已完成');
+  await page.reload();
+  await expect(page.locator('#learningProgress')).toHaveText('✓ 本主题已完成');
+  await page.goto('/math/index.html');
+  await expect(page.locator('a.topic-node[href="topics/triangle-area/index.html"] .progress-badge')).toHaveText('✓');
+});
+
+test('学习达标但保存失败时可恢复重试', async ({page}) => {
+  await page.addInitScript(() => {
+    Math.random = () => 0;
+    window.originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => { throw new Error('denied'); };
+  });
+  await page.goto(url);
+  await finishTriangleArea(page);
+  await expect(page.locator('#learningProgress')).toContainText('尚未保存');
+  await expect(page.locator('#math-progress-save-notice')).toContainText('暂未保存');
+  await page.evaluate(() => { Storage.prototype.setItem = window.originalSetItem; });
+  await page.locator('#math-progress-save-notice button').click();
+  await expect(page.locator('#learningProgress')).toHaveText('✓ 本主题已完成');
+  await page.reload();
+  await expect(page.locator('#learningProgress')).toHaveText('✓ 本主题已完成');
+});

@@ -99,6 +99,7 @@
 </head>
 <body>
   <div class="page-container">
+    <p id="learningProgress" role="status" aria-live="polite"></p>
     <div class="nav-bar">
       <a href="../../index.html" class="nav-back">← 返回</a>
       <span class="nav-title">△ 三角形面积</span>
@@ -272,6 +273,30 @@
 
   <script src="../../assets/js/common.js"></script>
   <script>
+    var learningMilestones = {explore: false, quiz: false, life: false};
+    var milestoneNames = {explore: '调整图形或查看拼图', quiz: '答对三道练习题', life: '答对一道生活题'};
+    var progressSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('triangle-area');
+    var completionAttempted = false;
+    function showLearningProgress() {
+      var status = document.getElementById('learningProgress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      var remaining = Object.keys(learningMilestones).filter(function(key) { return !learningMilestones[key]; });
+      status.textContent = '本次学习完成条件 ' + (3 - remaining.length) + '/3：还需' + remaining.map(function(key) { return milestoneNames[key]; }).join('、') + '。未全部达标时，刷新会清空本次阶段进度。';
+    }
+    function completeMilestone(key) {
+      learningMilestones[key] = true;
+      if (!progressSaved && !completionAttempted && Object.keys(learningMilestones).every(function(name) { return learningMilestones[name]; })) {
+        completionAttempted = true;
+        progressSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('triangle-area');
+      }
+      showLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', function() {
+      if (completionAttempted) { progressSaved = true; showLearningProgress(); }
+    });
+    showLearningProgress();
+
     // === Mode tabs ===
     document.querySelectorAll('.mode-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -350,9 +375,9 @@
       }
     }
 
-    baseSlider.addEventListener('input', updateExplore);
-    heightSlider.addEventListener('input', updateExplore);
-    apexSlider.addEventListener('input', updateExplore);
+    [baseSlider, heightSlider, apexSlider].forEach(function(slider) {
+      slider.addEventListener('input', function() { updateExplore(); completeMilestone('explore'); });
+    });
 
     document.getElementById('btnShowTri').addEventListener('click', function() {
       showDouble = false;
@@ -364,6 +389,7 @@
     });
     document.getElementById('btnShowDouble').addEventListener('click', function() {
       showDouble = true;
+      completeMilestone('explore');
       this.classList.add('active');
       this.setAttribute('aria-pressed', 'true');
       document.getElementById('btnShowTri').classList.remove('active');
@@ -466,6 +492,7 @@
           if (opt === ans) {
             btn.classList.add('correct');
             quizCorrect++;
+            if (quizCorrect >= 3) completeMilestone('quiz');
             document.getElementById('quizFeedback').textContent = '🎉 答对了！';
             document.getElementById('quizFeedback').className = 'quiz-feedback correct';
           } else {
@@ -518,6 +545,7 @@
       var val = parseFloat(document.getElementById('lifeInput').value);
       if (isNaN(val)) { document.getElementById('lifeFeedback').textContent = '请输入数字'; return; }
       if (val === lifeData.ans) {
+        completeMilestone('life');
         document.getElementById('lifeAnswer').className = 'life-answer';
         document.getElementById('lifeFeedback').textContent = '🎉 完全正确！';
         document.getElementById('lifeFeedback').className = 'life-feedback correct';
