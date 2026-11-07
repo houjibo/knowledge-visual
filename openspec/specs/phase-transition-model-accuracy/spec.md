@@ -10,7 +10,11 @@ TBD - created by archiving change phase-transition-model-accuracy. Update Purpos
 
 #### Scenario: 低于临界温度
 - **WHEN** 用户调节低于临界温度的模型参数
-- **THEN** 页面说明相态需结合共存条件判断，并说明图中未计算共存平台
+- **THEN** 页面说明相态需结合共存条件判断，展示由等面积条件计算的共存压力与两端体积，并区分原始模型读数
+
+#### Scenario: 达到或高于临界温度
+- **WHEN** 用户调节温度达到或高于临界温度
+- **THEN** 页面不显示气液共存平台，并说明其不存在
 
 ### Requirement: 区分临界温度与超临界区域
 页面 SHALL 区分温度高于临界温度与温度、压力均高于临界值的状态。

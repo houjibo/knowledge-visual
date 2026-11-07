@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：95；含内联 while 的页面：64。同一页面可能出现在两类中。
+含候选 div 控件的页面：95；含内联 while 的页面：65。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -171,4 +171,5 @@
 - [math/uni/statistics.html](../../math/uni/statistics.html)：379 行、380 行
 - [math/uni/stochastic-process.html](../../math/uni/stochastic-process.html)：533 行、652 行、653 行
 - [physics/high/constant-current.html](../../physics/high/constant-current.html)：545 行
+- [physics/uni/phase-transitions.html](../../physics/uni/phase-transitions.html)：295 行、302 行
 - [physics/uni/thermodynamics.html](../../physics/uni/thermodynamics.html)：323 行

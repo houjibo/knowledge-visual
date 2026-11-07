@@ -12,7 +12,7 @@ test('相变模型状态不把温度单独当作超临界条件', async ({page})
   await temp.fill('290');
   await expect(page.locator('#calc-phase')).toContainText('需结合共存条件判断');
   await expect(page.locator('#calc-P')).toContainText('模型值');
-  await expect(page.locator('.panel').first()).toContainText('未计算共存压力和两端体积');
+  await expect(page.locator('.panel').first()).toContainText('等面积条件数值求出');
   await page.getByRole('button', {name: 'P-T 相图'}).click();
   await expect(page.getByRole('button', {name: 'P-T 相图'})).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', {name: 'P-V 等温线'}).click();

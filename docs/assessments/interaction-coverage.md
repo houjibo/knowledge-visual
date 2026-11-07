@@ -174,6 +174,7 @@
   - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
   - 五个大学物理同构测验键盘答题、修改答案、计分及保存异常重试；不代表教学内容或其他交互已全面核验。 [university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)
   - 临界温压区分、等温线模型局限与部分练习、测验；未全面核验相图和普适性。 [phase-transition-model-accuracy.spec.js](../../tests/browser/phase-transition-model-accuracy.spec.js)、[university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)
+  - 范德瓦尔斯等面积数值计算、平台显示及温度边界；不是实际 CO₂ 精确数据。 [maxwell-coexistence-visualization.spec.js](../../tests/browser/maxwell-coexistence-visualization.spec.js)
 - [光电效应 · 爱因斯坦方程 · 互动可视化](../../physics/uni/photoelectric.html)
   - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
   - 五个大学物理同构测验键盘答题、修改答案、计分及保存异常重试；不代表教学内容或其他交互已全面核验。 [university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)

@@ -127,7 +127,7 @@
         <div class="equation">
           范德瓦尔斯方程：<b>(P + a/V²)(V - b) = RT</b><br/>
           即 <b>P = RT/(V - b) - a/V²</b><br/>
-          临界点（CO₂ 近似）：T<sub>c</sub> = 304 K · P<sub>c</sub> = 73 atm<br/>曲线直接来自模型，未计算共存平台；P-T 相图是示意，不是精确相界。
+          临界点（CO₂ 近似）：T<sub>c</sub> = 304 K · P<sub>c</sub> = 73 atm<br/>彩线是原始模型；橙色虚线由等面积条件数值计算。P-T 相图是示意，不是精确相界。
         </div>
         <div class="slider-row">
           <label for="T">温度 T (K)</label>
@@ -150,13 +150,14 @@
           <div>T - T<sub>c</sub>：<b id="calc-dT">—</b></div>
           <div>状态：<b id="calc-state">—</b></div>
         </div>
+        <div class="concept-card liquid"><div class="title">麦克斯韦共存平台</div><div id="coexistence" aria-live="polite"></div></div>
         <div class="concept-card gas">
           <div class="title">🔵 气相与等温线</div>
           高温时等温线单调下降，接近理想气体双曲线。T > T<sub>c</sub> 时无论怎样加压都无法液化，这就是"永久气体"称呼的由来。
         </div>
         <div class="concept-card liquid">
           <div class="title">🟢 气液共存</div>
-          T &lt; T<sub>c</sub> 时范德瓦尔斯等温线出现 S 形环。平衡气液共存可用麦克斯韦等面积法确定平台；图中只画未经平衡修正的模型曲线，未计算共存压力和两端体积。
+          T &lt; T<sub>c</sub> 时范德瓦尔斯等温线出现 S 形环。平衡气液共存平台由麦克斯韦等面积条件数值求出，端点分别表示模型中的饱和液体和气体。彩线保留未经平衡修正的范德瓦尔斯环；白点和上方压力仍是原始公式值。
         </div>
         <div class="concept-card critical">
           <div class="title">🔴 临界点</div>
@@ -199,6 +200,7 @@
           <div>曲线形态：<b id="p-shape">—</b></div>
           <div>状态：<b id="p-status">未达成</b></div>
         </div>
+        <div class="concept-card liquid"><div class="title">麦克斯韦共存平台</div><div id="p-coexistence" aria-live="polite"></div></div>
         <div class="concept-card critical">
           <div class="title">💡 提示</div>
           <span id="p-hint">把温度调到 304 K 以下，观察等温线出现 S 形弯曲。</span>
@@ -273,6 +275,47 @@ function vdwP(T, V) {
   if (V <= B) return NaN;
   return R * T / (V - B) - A / (V * V);
 }
+// 对压力和两侧体积做有界二分，满足 ∫(P(V)-P共存)dV = 0。
+const coexistenceCache = new Map();
+function bisect(fn, low, high) {
+  let leftValue = fn(low);
+  for (let i = 0; i < 80; i++) {
+    const mid = (low + high) / 2, midValue = fn(mid);
+    if ((midValue > 0) === (leftValue > 0)) { low = mid; leftValue = midValue; }
+    else high = mid;
+  }
+  return (low + high) / 2;
+}
+function coexistence(T) {
+  if (T >= TC) return null;
+  if (coexistenceCache.has(T)) return coexistenceCache.get(T);
+  const slope = V => -R * T / (V - B) ** 2 + 2 * A / V ** 3;
+  const vMin = bisect(slope, B * (1 + 1e-9), VC);
+  let right = VC * 2;
+  while (slope(right) > 0 && right < 1000) right *= 2;
+  const vMax = bisect(slope, VC, right);
+  const pLow = Math.max(1e-8, vdwP(T, vMin));
+  const pHigh = vdwP(T, vMax);
+  function roots(P) {
+    const f = V => vdwP(T, V) - P;
+    let upper = Math.max(vMax * 2, 1);
+    while (f(upper) > 0 && upper < 1e9) upper *= 2;
+    return [bisect(f, B * (1 + 1e-9), vMin), bisect(f, vMax, upper)];
+  }
+  function area(P) {
+    const [vl, vg] = roots(P);
+    return R * T * Math.log((vg - B) / (vl - B)) + A * (1 / vg - 1 / vl) - P * (vg - vl);
+  }
+  const pressure = bisect(area, pLow, pHigh);
+  const [liquid, gas] = roots(pressure);
+  const result = { pressure, liquid, gas };
+  coexistenceCache.set(T, result);
+  return result;
+}
+function coexistenceText(T) {
+  const c = coexistence(T);
+  return c ? `模型共存压力 ${c.pressure.toFixed(2)} atm；液端 ${c.liquid.toFixed(3)}、气端 ${c.gas.toFixed(3)} L/mol。` : '温度达到或高于临界值，无气液共存平台。';
+}
 function phaseOf(T, V) {
   const P = vdwP(T, V);
   if (T > TC && P > PC) return '温度、压力均高于临界值（超临界区）';
@@ -317,6 +360,7 @@ function updLearn() {
   document.getElementById('calc-phase').textContent = phaseOf(T, V);
   document.getElementById('calc-dT').textContent = (T - TC >= 0 ? '+' : '') + (T - TC).toFixed(1) + ' K';
   document.getElementById('calc-state').textContent = curveShape(T);
+  document.getElementById('coexistence').textContent = coexistenceText(T);
 }
 [TEl, VEl].forEach(el => el.addEventListener('input', () => { updLearn(); draw(); }));
 updLearn();
@@ -349,6 +393,7 @@ function updPractice() {
   document.getElementById('p-P').textContent = isNaN(P) ? '—' : P.toFixed(1) + ' atm（模型值）';
   document.getElementById('p-phase').textContent = phaseOf(T, V);
   document.getElementById('p-shape').textContent = curveShape(T);
+  document.getElementById('p-coexistence').textContent = coexistenceText(T);
   const ok = targetDesc[practiceTarget].check(T);
   document.getElementById('p-status').textContent = ok ? '✅ 达成！' : '未达成';
   document.getElementById('p-status').style.color = ok ? '#10b981' : '#f59e0b';
@@ -422,6 +467,24 @@ function drawPV(ctx, W, H, T, Vcur, showMarker) {
     else ctx.lineTo(x(V), y(P));
   }
   ctx.stroke();
+
+  // 由等面积条件求出的气液共存平台，与原始曲线同时显示。
+  const plateau = coexistence(T);
+  if (plateau && plateau.pressure >= Pmin && plateau.pressure <= Pmax) {
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(x(Math.max(Vmin, plateau.liquid)), y(plateau.pressure));
+    ctx.lineTo(x(Math.min(Vmax, plateau.gas)), y(plateau.pressure));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#f59e0b';
+    ctx.textAlign = 'left';
+    ctx.font = '11px sans-serif';
+    ctx.fillText('等面积共存平台', x(Math.max(Vmin, plateau.liquid)) + 5, y(plateau.pressure) - 7);
+    ctx.textAlign = 'center';
+  }
 
   // 临界点标记
   ctx.fillStyle = '#ef4444';
