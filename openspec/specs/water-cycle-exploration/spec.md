@@ -1,0 +1,20 @@
+# water-cycle-exploration Specification
+
+## Purpose
+TBD - created by archiving change water-cycle-model-clarity. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 解释水循环模型的边界
+探索模式 SHALL 将滑块标为简化环境温度，说明蒸发还受风和湿度影响，雨雪图示不等同于天气预测。
+
+#### Scenario: 选择温度边界
+- **WHEN** 学习者选择 0°C 和 40°C
+- **THEN** 温度、示意蒸发快慢和雨雪状态同步，且页面保留模型假设
+
+### Requirement: 控制动画与练习反馈
+学习者 SHALL 能暂停和恢复动画；练习选项作答后 SHALL 通过原生禁用防止重复提交。
+
+#### Scenario: 暂停后调整温度
+- **WHEN** 学习者暂停并改变温度
+- **THEN** 动画时间保持不变，数值和示意状态仍更新

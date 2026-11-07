@@ -120,6 +120,7 @@
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [天气与水循环 · 小学科学互动可视化](../../science/weather-water-cycle.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
+  - 温度边界与简化假设、动画暂停恢复及单道练习反馈；云雨生成非定量模型，未覆盖全部科学内容。 [water-cycle.spec.js](../../tests/browser/water-cycle.spec.js)
 
 ## 尚未登记交互证据
 

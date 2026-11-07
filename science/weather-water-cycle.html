@@ -40,6 +40,7 @@
   .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
   .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
   .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
+  .animation-toggle { padding: 10px 16px; border: 1px solid #7dd3fc; border-radius: 8px; background: #0c4a6e; color: #fff; cursor: pointer; min-height: 44px; }
   .slider-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--primary); min-height: 44px; }
   .slider-row .val { flex: 0 0 90px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
@@ -119,35 +120,37 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="cycleCanvas" width="720" height="460"></canvas>
+          <canvas id="cycleCanvas" width="720" height="460" role="img" aria-label="水循环示意：蒸发、凝结、降水和径流；粒子仅表示运动方向。"></canvas>
           <div class="legend">
             <span>☀️ 蒸发 → ☁️ 凝结 → 🌧️ 降水 → 🏞️ 径流</span>
-            <span>拖动温度滑块看变化</span>
+            <span>线条和粒子表示过程，并非可见的水蒸气</span>
           </div>
         </div>
       </div>
       <div class="panel">
         <h3>水循环模拟器</h3>
         <div class="slider-row">
-          <label>太阳温度</label>
+          <label for="sliderTemp">环境温度（简化）</label>
           <input type="range" id="sliderTemp" min="0" max="40" step="1" value="25">
           <span class="val" id="valTemp">25°C</span>
         </div>
         <div class="info-grid">
-          <div>蒸发速度<br><b id="infoEvap">较快</b></div>
-          <div>高空温度<br><b id="infoHigh">很低（约 −20°C）</b></div>
+          <div>蒸发快慢（示意）<br><b id="infoEvap">较快</b></div>
+          <div>降水图示<br><b id="infoPrecip">雨（简化）</b></div>
         </div>
+        <button type="button" class="animation-toggle" id="toggleAnimation" aria-pressed="true">⏸️ 暂停动画</button>
+        <div class="concept-card" id="modelNote">这是简化示意：模型假定水面温度与近地面气温相近；不改变湿度和风。图中环境温度 ≤2°C 时画雪，&gt;2°C 时画雨，这不是天气预测。真实雨雪类型还取决于降水经过的各层气温。</div>
         <div class="concept-card">
           <div class="title">水循环四部曲</div>
-          ① <b>蒸发</b>：太阳照射，江河湖海的水变成<b>水蒸气</b>升到空中；② <b>凝结</b>：高空很冷，水蒸气变成小水滴或小冰晶，聚成<b>云</b>；③ <b>降水</b>：小水滴越来越大，太重了就落下来——<b>雨、雪、冰雹</b>；④ <b>径流</b>：雨水汇入河流，流回大海，循环不息。
+          ① <b>蒸发</b>：太阳照射，江河湖海的水变成<b>水蒸气</b>升到空中；② <b>凝结</b>：高空很冷，水蒸气遇冷可凝结成小水滴，水滴或冰晶聚成<b>云</b>；③ <b>降水</b>：小水滴越来越大，太重了就落下来——<b>雨、雪、冰雹</b>；④ <b>径流</b>：雨水汇入河流，流回大海，循环不息。
         </div>
         <div class="concept-card">
           <div class="title">云和雨是怎么来的</div>
-          云 = 无数悬浮的小水滴/小冰晶。它们碰撞合并变大，空气托不住时就降落：温度高于 0°C 落下是<b>雨</b>，低于 0°C 是<b>雪</b>。
+          云由许多悬浮的小水滴或小冰晶组成。它们长大后可能形成降水；落到地面的是雨、雪还是其他形式，取决于下落路径上不同高度的气温等条件。
         </div>
         <div class="concept-card warn">
           <div class="title">⚠️ 趣味知识</div>
-          ① 水循环让地球上的水<b>总量基本不变</b>——你喝的水可能曾经是恐龙喝过的！② 蒸发只发生在水面吗？不，湿衣服晾干、出汗都是蒸发，<b>任何温度下都能蒸发</b>，温度越高越快。③ 烧开水的"白气"不是水蒸气（水蒸气看不见），是遇冷凝结的小水滴。
+          ① 水循环让地球上的水<b>总量基本不变</b>——你喝的水可能曾经是恐龙喝过的！② 蒸发只在大海发生吗？不，湿衣服晾干、出汗也涉及蒸发，<b>液态水不沸腾也能蒸发</b>；其他条件相同时温度升高通常会加快蒸发，风和空气湿度也有影响。③ 烧开水的"白气"不是水蒸气（水蒸气看不见），是遇冷凝结的小水滴。
         </div>
       </div>
     </div>
@@ -235,6 +238,8 @@ const canvas = document.getElementById('cycleCanvas');
 const ctx = canvas.getContext('2d');
 const sliderTemp = document.getElementById('sliderTemp');
 let lastT = performance.now();
+let visualTime = 0;
+let animationPlaying = true;
 let vapor = [];   // 上升的水蒸气粒子
 let drops = [];   // 降水粒子
 
@@ -248,6 +253,14 @@ sliderTemp.addEventListener('input', () => {
   const s = tempState();
   document.getElementById('valTemp').textContent = s.T + '°C';
   document.getElementById('infoEvap').textContent = s.label;
+  document.getElementById('infoPrecip').textContent = (s.T <= 2 ? '雪' : '雨') + '（简化）';
+  drops = [];
+});
+document.getElementById('toggleAnimation').addEventListener('click', function() {
+  animationPlaying = !animationPlaying;
+  this.setAttribute('aria-pressed', String(animationPlaying));
+  this.textContent = animationPlaying ? '⏸️ 暂停动画' : '▶️ 播放动画';
+  lastT = performance.now();
 });
 
 function drawCloud(cx, cy, scale, alpha) {
@@ -258,10 +271,11 @@ function drawCloud(cx, cy, scale, alpha) {
 }
 
 function draw() {
-  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
   const now = performance.now();
-  const dt = Math.min(0.05, (now - lastT) / 1000);
+  const dt = animationPlaying && mode === 'learn' ? Math.min(0.05, (now - lastT) / 1000) : 0;
   lastT = now;
+  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
+  visualTime += dt * 1000;
   const s = tempState();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -272,7 +286,7 @@ function draw() {
   ctx.fillStyle = 'rgba(255,255,255,0.25)';
   for (let i = 0; i < 4; i++) {
     const wy = 352 + i * 24;
-    const off = Math.sin(now / 800 + i) * 12;
+    const off = Math.sin(visualTime / 800 + i) * 12;
     ctx.beginPath(); ctx.ellipse(100 + off + i * 60, wy, 40, 3, 0, 0, Math.PI * 2); ctx.fill();
   }
   // 山
@@ -295,8 +309,8 @@ function draw() {
   ctx.beginPath(); ctx.arc(90, 70, 70, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#fde047';
   ctx.beginPath(); ctx.arc(90, 70, 26, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#92400e'; ctx.font = 'bold 13px sans-serif';
-  ctx.fillText(`${s.T}°C`, 76, 75);
+  ctx.fillStyle = '#fde68a'; ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`环境 ${s.T}°C`, 32, 120);
 
   /* ---- ① 蒸发：海面上升粒子 ---- */
   if (Math.random() < s.rate * dt * 6) {
@@ -315,7 +329,7 @@ function draw() {
     ctx.stroke();
   });
   ctx.fillStyle = '#7dd3fc'; ctx.font = 'bold 13px sans-serif';
-  ctx.fillText('① 蒸发（水 → 水蒸气）', 60, 320);
+  ctx.fillText('① 蒸发（水汽运动示意）', 60, 320);
 
   /* ---- ② 凝结：云 ---- */
   const cloudA = Math.min(0.95, 0.35 + vapor.length * 0.05);
@@ -342,7 +356,7 @@ function draw() {
     }
   });
   ctx.fillStyle = '#93c5fd'; ctx.font = 'bold 13px sans-serif';
-  ctx.fillText(s.T <= 2 ? '③ 降水：雪 ❄' : '③ 降水：雨 🌧', 420, 165);
+  ctx.fillText(s.T <= 2 ? '③ 雪（示意）' : '③ 雨（示意）', 420, 165);
 
   /* ---- 循环箭头 ---- */
   ctx.strokeStyle = 'rgba(125,211,252,0.5)'; ctx.lineWidth = 2.5;
@@ -363,14 +377,14 @@ requestAnimationFrame(draw);
 const PRACTICE_TIPS = {
   p1: '✅ 正确！蒸发 → 凝结 → 降水 → 径流，再回到大海，循环不息。',
   p2: '✅ 正确！云是无数小水滴或小冰晶聚在一起形成的（水蒸气本身看不见）。',
-  p3: '✅ 正确！温度高蒸发快——水变成水蒸气进入空气，衣服就干了。'
+  p3: '✅ 正确！在其他条件相同时，温度较高通常会加快蒸发——水变成水蒸气进入空气，衣服就干了。'
 };
 document.querySelectorAll('.practice-item').forEach(item => {
   const fb = item.querySelector('.practice-fb');
   item.querySelectorAll('.quiz-opt').forEach(opt => {
     opt.addEventListener('click', () => {
       const ok = opt.dataset.ok === '1';
-      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.disabled = true; });
       opt.classList.add(ok ? 'correct' : 'wrong');
       fb.style.color = ok ? '#10b981' : '#ef4444';
       fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
@@ -384,16 +398,16 @@ document.querySelectorAll('.practice-item').forEach(item => {
 const QUIZ = [
   { q: '水循环中，使海水变成水蒸气升上天空的是（　　）',
     opts: ['风吹', '太阳的热量', '月亮引力', '地球自转'],
-    ans: 1, ex: '太阳照射提供热量 → 蒸发。温度越高，蒸发越快。' },
+    ans: 1, ex: '太阳照射提供热量 → 蒸发。其他条件相同时，温度较高通常加快蒸发。' },
   { q: '水蒸气在高空中变成小水滴的过程叫（　　）',
     opts: ['蒸发', '凝结', '降水', '沸腾'],
-    ans: 1, ex: '高空温度低，水蒸气遇冷凝结成小水滴或小冰晶，聚成云。' },
+    ans: 1, ex: '高空空气冷却时水蒸气可凝结成小水滴；冰晶也可能通过凝华等过程形成。' },
   { q: '下列属于降水的是（　　）',
     opts: ['云的形成', '江河流动', '雨、雪、冰雹落下', '湖面蒸发'],
     ans: 2, ex: '降水包括雨、雪、冰雹等从云中落下的水。' },
   { q: '关于蒸发，下列说法正确的是（　　）',
     opts: ['只有沸腾时才蒸发', '任何温度下都能蒸发', '只有海水会蒸发', '蒸发需要太阳直射'],
-    ans: 1, ex: '蒸发在任何温度下都进行（湿衣服阴天也会干），温度越高越快。' },
+    ans: 1, ex: '液态水不必沸腾也能蒸发（湿衣服阴天也会干）；在其他条件相同时，温度较高通常加快蒸发。' },
   { q: '水循环让地球上的水（　　）',
     opts: ['越来越多', '总量基本保持不变', '越来越少', '全部变成淡水'],
     ans: 1, ex: '水在海洋、天空、陆地间循环转移，总量基本不变——所以要珍惜每一滴水。' }
