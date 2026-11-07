@@ -138,6 +138,7 @@
     }
     .btn-primary { background: #4CAF50; color: white; }
     .btn-primary:active { transform: scale(0.95); }
+    .btn[hidden] { display: none; }
     .btn-secondary { background: #E5E5EA; color: #1D1D1F; }
 
     .toast {
@@ -163,6 +164,7 @@
 </head>
 <body>
   <div class="page-container">
+    <p id="learningProgress" role="status" aria-live="polite"></p>
     <nav class="nav-bar" style="display:flex;align-items:center;gap:12px;padding:12px 0;margin-bottom:8px;">
       <a href="../../index.html" style="display:flex;align-items:center;gap:6px;color:#4CAF50;text-decoration:none;font-weight:600;font-size:15px;">
         <span style="font-size:20px;">←</span> 返回
@@ -280,6 +282,7 @@
           <button class="compare-opt" data-answer="right">＞</button>
         </div>
         <div style="font-size:13px;color:#6E6E73;margin-top:4px;">💡 提示：数一数每个图形占了多少个小格</div>
+        <button class="btn btn-secondary" id="btn-next-compare" hidden>下一题</button>
       </div>
     </div>
 
@@ -327,7 +330,8 @@
             <button class="judge-btn" data-answer="true">✅ 对</button>
             <button class="judge-btn" data-answer="false">❌ 错</button>
           </div>
-          <div class="judge-explain" id="judge-explain"></div>
+          <div class="judge-explain" id="judge-explain" role="status" aria-live="polite"></div>
+          <button class="btn btn-secondary" id="btn-next-judge" hidden>下一题</button>
         </div>
       </div>
     </div>
@@ -337,6 +341,27 @@
 
   <script src="../../assets/js/common.js"></script>
   <script>
+    const learningMilestones = {compare: false, tile: false, judge: false};
+    const milestoneNames = {compare: '答对三道面积比较', tile: '答对一道铺方块', judge: '答对三道判断题'};
+    let progressSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('understanding-area');
+    let completionAttempted = false;
+    function showLearningProgress() {
+      const status = document.getElementById('learningProgress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      const remaining = Object.keys(learningMilestones).filter(key => !learningMilestones[key]);
+      status.textContent = '本次学习完成条件 ' + (3 - remaining.length) + '/3：还需' + remaining.map(key => milestoneNames[key]).join('、') + '。未全部达标时，刷新会清空本次阶段进度。';
+    }
+    function completeMilestone(key) {
+      learningMilestones[key] = true;
+      if (!progressSaved && !completionAttempted && Object.values(learningMilestones).every(Boolean)) {
+        completionAttempted = true;
+        progressSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('understanding-area');
+      }
+      showLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', () => { if (completionAttempted) { progressSaved = true; showLearningProgress(); } });
+    showLearningProgress();
     const $ = sel => document.querySelector(sel);
     const $$ = sel => document.querySelectorAll(sel);
     function showToast(msg, duration = 1200) {
@@ -436,6 +461,7 @@
     }
     function newCompare() {
       cmpRound++;
+      $('#btn-next-compare').hidden = true;
       const container = $('#compare-container');
       container.innerHTML = '';
 
@@ -470,12 +496,12 @@
         const answer = btn.dataset.answer;
         if (answer === cmpAnswer) {
           btn.classList.add('correct');
-          cmpScore++; playSound('correct'); celebrate();
+          cmpScore++; if (cmpScore >= 3) completeMilestone('compare'); playSound('correct'); celebrate();
           $('#cmp-score').textContent = `✅${cmpScore}`;
           const labels = { left: '＜', equal: '＝', right: '＞' };
           showToast(`🎉 答对了！面积 ${labels[cmpAnswer]} `);
           $$('.compare-opt').forEach(b => { b.disabled = true; });
-          setTimeout(newCompare, 1500);
+          $('#btn-next-compare').hidden = false;
         } else {
           btn.classList.add('wrong');
           playSound('wrong');
@@ -484,12 +510,12 @@
         }
       });
     });
+    $('#btn-next-compare').addEventListener('click', newCompare);
     newCompare();
 
     // === 模式3: 铺一铺 ===
-    let tileAnswer = 0, tileScore = 0, tileRound = 0, tileLocked = false, tileTimer = null;
+    let tileAnswer = 0, tileScore = 0, tileRound = 0, tileLocked = false;
     function newTile() {
-      clearTimeout(tileTimer);
       tileLocked = false;
       tileRound++;
       const rows = 3 + Math.floor(Math.random() * 3); // 3-5
@@ -554,11 +580,11 @@
       if (!raw || !Number.isSafeInteger(val) || val <= 0) { showToast('请输入大于零的整数'); return; }
       if (val === tileAnswer) {
         $('#tile-answer').className = 'tile-input correct';
-        tileScore++; playSound('correct'); celebrate();
+        tileScore++; completeMilestone('tile'); playSound('correct'); celebrate();
         $('#tile-score').textContent = `✅${tileScore}`;
         showToast(`🎉 答对了！面积是 ${tileAnswer} 个小方块`);
         tileLocked = true;
-        tileTimer = setTimeout(newTile, 1500);
+
       } else {
         $('#tile-answer').className = 'tile-input wrong';
         playSound('wrong');
@@ -592,6 +618,7 @@
     judgeQuestions.sort(() => Math.random() - 0.5);
     function newJudge() {
       jdgRound++;
+      $('#btn-next-judge').hidden = true;
       const q = judgeQuestions[jdgIdx % judgeQuestions.length];
       jdgIdx++;
       $('#judge-statement').textContent = q.stmt;
@@ -611,13 +638,13 @@
         const answer = btn.dataset.answer === 'true';
         if (answer === q.answer) {
           btn.classList.add('correct');
-          jdgScore++; playSound('correct'); celebrate();
+          jdgScore++; if (jdgScore >= 3) completeMilestone('judge'); playSound('correct'); celebrate();
           $('#jdg-score').textContent = `✅${jdgScore}`;
           $('#judge-explain').textContent = q.explain;
           $('#judge-explain').className = 'judge-explain show';
           showToast('🎉 答对了！');
           $$('.judge-btn').forEach(b => { b.disabled = true; });
-          setTimeout(newJudge, 1500);
+          $('#btn-next-judge').hidden = false;
         } else {
           btn.classList.add('wrong');
           playSound('wrong');
@@ -628,6 +655,7 @@
         }
       });
     });
+    $('#btn-next-judge').addEventListener('click', newJudge);
     newJudge();
   </script>
 </body>

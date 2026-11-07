@@ -147,6 +147,7 @@
   - 六类三角形坐标及边角性质、整数第三边范围、随机极值和四类挑战、进度保存失败恢复；其他图示及完整无障碍未全面验收。 [triangle-classification-practice-accuracy.spec.js](../../tests/browser/triangle-classification-practice-accuracy.spec.js)
 - [认识面积](../../math/topics/understanding-area/index.html)
   - 点线示例、比较图形随机边界、键盘铺格及重复提交部分场景；判断挑战和全部内容尚未验收。 [area-learning.spec.js](../../tests/browser/area-learning.spec.js)
+  - 三类活动完成条件、主动换题、地图进度及存储失败恢复；全部内容及完整无障碍未全面验收。 [understanding-area-learning-completion.spec.js](../../tests/browser/understanding-area-learning-completion.spec.js)、[area-learning.spec.js](../../tests/browser/area-learning.spec.js)
 - [认识倍](../../math/topics/understanding-multiples/index.html)
   - 固定随机边界、摆放图示与输入、挑战解释，以及八次作答进度、旧记录和写入失败；其他题型与无障碍未全面验收。 [understanding-multiples.spec.js](../../tests/browser/understanding-multiples.spec.js)
 - [认识比](../../math/topics/understanding-ratio/index.html)
