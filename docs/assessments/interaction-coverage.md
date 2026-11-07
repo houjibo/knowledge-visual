@@ -44,6 +44,7 @@
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
   - 初中、高中、大学目录的跨标签徽章、存储异常及同名主题隔离；不代表全部主题的完成条件已核验。 [math-stage-directory-progress.spec.js](../../tests/browser/math-stage-directory-progress.spec.js)、[math-progress.spec.js](../../tests/browser/math-progress.spec.js)
 - [函数 - 互动可视化](../../math/high/function.html)
+  - 桌面与移动视口验证绝对值解析、性质题键盘锁定、2/6 未通过、4/6 通过及保存失败重试；实机及其他习题内容尚未全面验收。 [high-function-practice-reliability.spec.js](../../tests/browser/high-function-practice-reliability.spec.js)
   - 桌面与移动视口验证五种定义域示例代表坐标、倒数断点、键盘选中状态及窄屏画布；其他图示和真实设备尚未全面验收。 [function-domain-visual-consistency.spec.js](../../tests/browser/function-domain-visual-consistency.spec.js)
   - 桌面与移动视口核对负偶次幂左右分支、零次幂、反比例函数正负零系数及代表画布坐标；概念演示与其他模型尚未全面核验。 [high-function-power-reciprocal-accuracy.spec.js](../../tests/browser/high-function-power-reciprocal-accuracy.spec.js)
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)

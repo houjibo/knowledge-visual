@@ -270,7 +270,8 @@ canvas { display: block; margin: 0 auto; border-radius: 12px; max-width: 100%; h
 }
 .tab { font-family: inherit; color: inherit; }
 .domain-item { font: inherit; color: inherit; text-align: left; }
-.domain-item:focus-visible, .tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
+.quiz-opt { font: inherit; text-align: left; width: 100%; }
+.quiz-opt:focus-visible, .domain-item:focus-visible, .tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
 </style>
 </head>
 <body>
@@ -397,9 +398,10 @@ canvas { display: block; margin: 0 auto; border-radius: 12px; max-width: 100%; h
     </div>
     <div class="quiz-progress"><div class="quiz-progress-fill" id="quizProgressFill" style="width:0%"></div></div>
     <div id="quizArea"></div>
-    <div class="quiz-feedback" id="quizFeedback"></div>
+    <div class="quiz-feedback" id="quizFeedback" role="status"></div>
     <div style="text-align:center;margin-top:12px;">
       <button class="btn orange" id="quizNextBtn" style="display:none;" onclick="nextQuiz()">下一题 →</button>
+      <button class="btn orange" id="quizSaveRetry" type="button" style="display:none;">重试保存</button>
       <button class="btn green" id="quizRetryBtn" style="display:none;" onclick="startQuiz()">重新测验</button>
     </div>
   </div>
@@ -703,7 +705,7 @@ function renderPropertyCards() {
       buttons.forEach(b => {
         if (b.dataset.val === problem.answer) b.classList.add('correct');
         else if (b === btn && val !== problem.answer) b.classList.add('wrong');
-        b.style.pointerEvents = 'none';
+        b.disabled = true;
       });
 
       if (val === problem.answer) {
@@ -730,7 +732,7 @@ const quizzes = [
     q: '下列函数中，既是奇函数又在 R 上单调递增的是：',
     options: ['A. f(x) = x²', 'B. f(x) = x³', 'C. f(x) = |x|', 'D. f(x) = 1/x'],
     answer: 1,
-    explain: 'x³ 是奇函数（(-x)³=-x³），且导数 3x²≥0，在 R 上单调递增。x²是偶函数，|x|非奇非偶，1/x在x=0不连续。'
+    explain: 'x³ 是奇函数（(-x)³=-x³），且导数 3x²≥0，在 R 上单调递增。x²是偶函数，|x|是偶函数，1/x在x=0无定义，因此不是定义在 R 上的函数。'
   },
   {
     q: '若 f(x) = x² - 2x + 3，则 f(x) 的最小值为：',
@@ -759,10 +761,29 @@ const quizzes = [
 ];
 
 let quizIdx = 0, quizAnswered = false, quizScore = 0;
+let quizSaveAttempted = false, quizSaved = false, quizResultBase = '';
+const quizSaveRetry = document.getElementById('quizSaveRetry');
+function showQuizSaveResult() {
+  const fb = document.getElementById('quizFeedback');
+  const prefix = quizIdx === quizzes.length - 1 && quizAnswered ? quizResultBase : '';
+  fb.classList.add('show');
+  fb.textContent = prefix + (quizSaved ? ' 完成记录已保存。' : ' 已通过，但完成记录未保存；可重试保存。');
+  quizSaveRetry.style.display = quizSaved ? 'none' : 'inline-block';
+}
+function saveQuizCompletion() {
+  quizSaveAttempted = true;
+  quizSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('function');
+  showQuizSaveResult();
+}
+quizSaveRetry.addEventListener('click', saveQuizCompletion);
+document.addEventListener('math-progress-saved', () => {
+  if (quizSaveAttempted) { quizSaved = true; showQuizSaveResult(); }
+});
 
 function startQuiz() {
   quizIdx = 0; quizAnswered = false; quizScore = 0;
   document.getElementById('quizRetryBtn').style.display = 'none';
+  quizSaveRetry.style.display = quizSaveAttempted && !quizSaved ? 'inline-block' : 'none';
   document.getElementById('quizScore').textContent = '得分：0';
   renderQuiz();
 }
@@ -776,7 +797,8 @@ function renderQuiz() {
   const area = document.getElementById('quizArea');
   area.innerHTML = `<div class="quiz-q">${q.q}</div>`;
   q.options.forEach((opt, i) => {
-    const div = document.createElement('div');
+    const div = document.createElement('button');
+    div.type = 'button';
     div.className = 'quiz-opt';
     div.textContent = opt;
     div.onclick = () => answerQuiz(i, div);
@@ -795,6 +817,7 @@ function answerQuiz(idx, el) {
   const fb = document.getElementById('quizFeedback');
 
   document.querySelectorAll('.quiz-opt').forEach((opt, i) => {
+    opt.disabled = true;
     if (i === q.answer) opt.classList.add('correct');
     else if (i === idx) opt.classList.add('wrong');
   });
@@ -815,10 +838,13 @@ function answerQuiz(idx, el) {
     document.getElementById('quizProgressFill').style.width = '100%';
     document.getElementById('quizRetryBtn').style.display = 'inline-block';
     // 全部答完：得分 ≥ 4/6 视为通过，标记本知识点完成
-    if (quizScore >= 4 && typeof PageProgress !== 'undefined') {
-      PageProgress.markDone('function');
+    quizResultBase = fb.textContent + ` 总得分 ${quizScore}/${quizzes.length}。`;
+    if (quizScore >= 4) {
       fb.className = 'quiz-feedback show ok';
-      fb.textContent += ` 🎉 总得分 ${quizScore}/${quizzes.length}，本知识点已标记完成！`;
+      if (quizSaved) showQuizSaveResult();
+      else saveQuizCompletion();
+    } else {
+      fb.textContent = quizResultBase + ' 至少答对 4 题才能记录完成。';
     }
   }
 }

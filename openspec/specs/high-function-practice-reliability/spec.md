@@ -1,0 +1,20 @@
+# high-function-practice-reliability Specification
+
+## Purpose
+TBD - created by archiving change high-function-practice-reliability. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 函数练习内容和反馈可靠
+
+函数性质题和测验 SHALL 提供可键盘操作且作答后禁用的选项，解释 SHALL 正确描述绝对值函数；完成记录 SHALL 以实际存储结果反馈。
+
+#### Scenario: 绝对值解析
+
+- **WHEN** 学习者查看绝对值函数的奇偶性解析
+- **THEN** 解析说明它是偶函数
+
+#### Scenario: 未通过与存储失败
+
+- **WHEN** 一轮少于四题答对，或达到四题但存储失败
+- **THEN** 前者不记录完成，后者显示未保存且提供重试，成功后才提示已保存
