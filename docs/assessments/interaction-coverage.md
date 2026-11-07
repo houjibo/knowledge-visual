@@ -112,6 +112,7 @@
   - 串并联画布路径、开关断开闭合、电流读数、支路路径与动画暂停；粒子速度仅为示意，全部题目与无障碍未全面验收。 [current-circuit-topology.spec.js](../../tests/browser/current-circuit-topology.spec.js)
 - [电功率 · 初中物理互动可视化](../../physics/middle/electric-power.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
+  - 电压边界、额定状态、功率表比例、光晕渐变和计算输入；真实灯丝温度、其他题目和无障碍未全面验收。 [electric-power-model.spec.js](../../tests/browser/electric-power-model.spec.js)
 - [电与磁 · 初中物理互动可视化](../../physics/middle/electromagnetism.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [热机 · 初中物理互动可视化](../../physics/middle/heat-engine.html)
