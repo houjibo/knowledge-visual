@@ -32,6 +32,7 @@
 - [复数 · 高中数学互动可视化](../../math/high/complex-numbers.html)
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
 - [圆锥曲线 · 椭圆/双曲线/抛物线互动可视化](../../math/high/conic-sections.html)
+  - 桌面与移动视口验证滑块名称、连续键盘、模拟鼠标拖动、焦点和公式更新；真实触屏拖动尚未实机验收。 [conic-continuous-parameter-control.spec.js](../../tests/browser/conic-continuous-parameter-control.spec.js)
   - 桌面与移动视口验证轨迹随参数与曲线切换、键盘模式、逐题锁定和存储失败重试；真实设备与整页无障碍尚未全面验收。 [conic-learning-interaction-reliability.spec.js](../../tests/browser/conic-learning-interaction-reliability.spec.js)
   - 桌面与移动视口验证纵向椭圆、圆与双曲线的文字和画布焦点坐标；其他曲线互动、轨迹模式与实机尚未全面验收。 [conic-section-focus-accuracy.spec.js](../../tests/browser/conic-section-focus-accuracy.spec.js)
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
