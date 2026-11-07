@@ -165,6 +165,7 @@
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [地球与宇宙 · 小学科学互动可视化](../../science/earth-space.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
+  - 四个主要月相的位置与亮面像素、暂停、行星键盘选择及相关测验进度；不模拟日月食、真实尺度或完整天文现象。 [earth-moon-phases.spec.js](../../tests/browser/earth-moon-phases.spec.js)、[science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [电与电路 · 小学科学互动可视化](../../science/electricity.html)
   - 简单、串联、并联导线连通性与粒子路径，动画暂停、键盘测验和进度刷新；不模拟实际电池或全部电气安全内容。 [science-electricity-topology.spec.js](../../tests/browser/science-electricity-topology.spec.js)
 - [环境与保护 · 小学科学互动可视化](../../science/environment.html)

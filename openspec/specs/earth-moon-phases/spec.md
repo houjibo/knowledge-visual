@@ -1,0 +1,24 @@
+# earth-moon-phases Specification
+
+## Purpose
+TBD - created by archiving change earth-moon-phases. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 月相与位置一致
+系统 SHALL 在理想示意中按日地月相对位置显示月相和地球可见亮面。
+
+#### Scenario: 四个主要月相
+- **WHEN** 月球从太阳方向依次移动四分之一、二分之一、四分之三和一周
+- **THEN** 页面依次显示新月、上弦月、满月、下弦月及新月，亮面比例分别约为 0%、50%、100%、50%、0%
+
+### Requirement: 演示可暂停及键盘操作
+系统 SHALL 允许学习者暂停演示、指定月球位置，并通过键盘选择行星。
+
+#### Scenario: 手动指定月相
+- **WHEN** 学习者调整月球位置滑杆
+- **THEN** 演示暂停并更新月球位置、月相名称及亮面示意
+
+#### Scenario: 选择行星
+- **WHEN** 学习者用键盘选择行星按钮
+- **THEN** 页面展示该行星的介绍和距太阳顺序

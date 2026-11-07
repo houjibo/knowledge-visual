@@ -122,9 +122,9 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="spaceCanvas" width="720" height="460"></canvas>
+          <canvas id="spaceCanvas" width="720" height="460" role="img" aria-label="太阳系示意图"></canvas>
           <div class="legend">
-            <span>点击行星查看介绍</span>
+            <span>行星也可通过右侧按钮选择</span>
             <span>昼夜 = 地球自转的结果</span>
           </div>
         </div>
@@ -137,10 +137,19 @@
           <button class="demo-btn" data-demo="moon">月相</button>
         </div>
         <div class="slider-row" id="rowSpeed">
-          <label>公转速度</label>
+          <label for="sliderSpeed">动画速度</label>
           <input type="range" id="sliderSpeed" min="0" max="5" step="0.5" value="1.5">
           <span class="val" id="valSpeed">1.5×</span>
         </div>
+        <div class="slider-row" id="rowMoon" style="display:none">
+          <label for="sliderMoon">月球轨道位置</label>
+          <input type="range" id="sliderMoon" min="0" max="360" step="1" value="0">
+          <span class="val" id="valMoon">0°</span>
+        </div>
+        <button class="demo-btn" id="pauseDemo" aria-pressed="false">暂停演示</button>
+        <div id="planetButtons" class="demo-btns" aria-label="选择行星"></div>
+        <p id="moonInfo" aria-live="off" style="display:none"></p>
+        <p style="font-size:13px;color:#cbd5e1;line-height:1.6">图形、距离和动画时间均为示意，未按真实比例绘制；月相示意不模拟日食和月食。</p>
         <div class="info-grid">
           <div id="infoA">选中行星<br><b>（点击行星）</b></div>
           <div id="infoB">距太阳顺序<br><b>—</b></div>
@@ -234,6 +243,7 @@ tabs.forEach(t => t.addEventListener('click', () => {
   t.setAttribute('aria-pressed', 'true');
   mode = t.dataset.mode;
   Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+  if (mode === 'learn' && paused) draw();
 }));
 
 /* ============================================================
@@ -245,6 +255,7 @@ const sliderSpeed = document.getElementById('sliderSpeed');
 let demo = 'solar';
 let lastT = performance.now();
 let simT = 0;
+let moonAngle = 0, paused = false, animationId = null;
 let selectedPlanet = null;
 let stars = [];
 for (let i = 0; i < 90; i++) {
@@ -262,12 +273,50 @@ const PLANETS = [
   { name: '海王星', dist: 284, size: 11, color: '#818cf8', speed: 0.006, fact: '最远的行星，有太阳系最强的风' }
 ];
 let planetAngles = PLANETS.map((p, i) => i * 0.8);
+const sliderMoon = document.getElementById('sliderMoon');
+const moonInfo = document.getElementById('moonInfo');
 
-document.querySelectorAll('.demo-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.demo-btn').forEach(x => x.classList.remove('active'));
+function selectPlanet(i) {
+  const p = PLANETS[i];
+  selectedPlanet = i;
+  document.getElementById('infoA').innerHTML = `${p.name}<br><b style="font-size:11px">${p.fact}</b>`;
+  document.getElementById('infoB').innerHTML = `距太阳顺序<br><b>第 ${i + 1} 位</b>`;
+  document.querySelectorAll('#planetButtons button').forEach((button, index) => button.setAttribute('aria-pressed', String(index === i)));
+  if (paused && mode === 'learn') draw();
+}
+PLANETS.forEach((p, i) => {
+  const button = document.createElement('button');
+  button.type = 'button'; button.className = 'demo-btn'; button.textContent = p.name;
+  button.setAttribute('aria-pressed', 'false');
+  button.addEventListener('click', () => selectPlanet(i));
+  document.getElementById('planetButtons').appendChild(button);
+});
+
+function setPaused(value) {
+  paused = value;
+  const button = document.getElementById('pauseDemo');
+  button.textContent = paused ? '继续演示' : '暂停演示';
+  button.setAttribute('aria-pressed', String(paused));
+  moonInfo.setAttribute('aria-live', paused ? 'polite' : 'off');
+  if (paused) cancelAnimationFrame(animationId);
+  else { lastT = performance.now(); draw(); }
+}
+document.getElementById('pauseDemo').addEventListener('click', () => setPaused(!paused));
+sliderMoon.addEventListener('input', () => {
+  moonAngle = +sliderMoon.value * Math.PI / 180;
+  if (!paused) setPaused(true);
+  draw();
+});
+
+document.querySelectorAll('#demoBtns .demo-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#demoBtns .demo-btn').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
   demo = b.dataset.demo;
   document.getElementById('rowSpeed').style.display = demo === 'solar' ? 'flex' : 'none';
+  document.getElementById('rowMoon').style.display = demo === 'moon' ? 'flex' : 'none';
+  document.getElementById('planetButtons').style.display = demo === 'solar' ? 'flex' : 'none';
+  moonInfo.style.display = demo === 'moon' ? '' : 'none';
+  canvas.setAttribute('aria-label', {solar:'太阳系轨道示意',daynight:'地球昼夜交替示意',moon:'日地月位置和地球所见月相示意'}[demo]);
   if (demo === 'daynight') {
     document.getElementById('infoA').innerHTML = '自转周期<br><b>约 24 小时</b>';
     document.getElementById('infoB').innerHTML = '结果<br><b>昼夜交替</b>';
@@ -278,7 +327,9 @@ document.querySelectorAll('.demo-btn').forEach(b => b.addEventListener('click', 
     document.getElementById('infoA').innerHTML = '选中行星<br><b>（点击行星）</b>';
     document.getElementById('infoB').innerHTML = '距太阳顺序<br><b>—</b>';
     selectedPlanet = null;
+    document.querySelectorAll('#planetButtons button').forEach(button => button.setAttribute('aria-pressed', 'false'));
   }
+  if (paused) draw();
 }));
 sliderSpeed.addEventListener('input', () => {
   document.getElementById('valSpeed').textContent = (+sliderSpeed.value).toFixed(1) + '×';
@@ -294,9 +345,7 @@ canvas.addEventListener('click', (e) => {
     const px = cx + Math.cos(planetAngles[i]) * p.dist;
     const py = cy + Math.sin(planetAngles[i]) * p.dist * 0.62;
     if (Math.hypot(mx - px, my - py) < p.size + 12) {
-      selectedPlanet = i;
-      document.getElementById('infoA').innerHTML = `${p.name}<br><b style="font-size:11px">${p.fact}</b>`;
-      document.getElementById('infoB').innerHTML = `距太阳顺序<br><b>第 ${i + 1} 位</b>`;
+      selectPlanet(i);
     }
   });
 });
@@ -392,13 +441,13 @@ function drawDayNight(dt) {
 }
 
 function drawMoon(dt) {
-  simT += dt;
+  moonAngle = (moonAngle + dt * 0.5) % (Math.PI * 2);
   const cx = 360, cy = 230;
   // 太阳光（从右来）
   ctx.fillStyle = 'rgba(253,224,71,0.15)';
   ctx.fillRect(520, 0, 200, 460);
   ctx.fillStyle = '#fde047'; ctx.font = 'bold 14px sans-serif';
-  ctx.fillText('☀️ 太阳光 →', 560, 40);
+  ctx.fillText('← 太阳光 ☀️', 550, 40);
   // 地球
   ctx.fillStyle = '#38bdf8';
   ctx.beginPath(); ctx.arc(cx, cy, 34, 0, Math.PI * 2); ctx.fill();
@@ -409,8 +458,8 @@ function drawMoon(dt) {
   // 月球轨道 + 月球（旋转）
   ctx.strokeStyle = 'rgba(255,255,255,0.15)';
   ctx.beginPath(); ctx.arc(cx, cy, 150, 0, Math.PI * 2); ctx.stroke();
-  const ma = simT * 0.5;
-  const mx = cx + Math.cos(ma) * 150, my = cy + Math.sin(ma) * 150;
+  const ma = moonAngle;
+  const mx = cx + Math.cos(ma) * 150, my = cy - Math.sin(ma) * 150;
   // 月球：右半总被太阳照亮（光从右来），从地球看可见比例随位置变化
   ctx.fillStyle = '#e7e5e4';
   ctx.beginPath(); ctx.arc(mx, my, 16, 0, Math.PI * 2); ctx.fill();
@@ -421,26 +470,49 @@ function drawMoon(dt) {
   // 月相小图标（8 相位）
   const phaseNames = ['新月', '娥眉月', '上弦月', '盈凸月', '满月', '亏凸月', '下弦月', '残月'];
   const phase = ((ma / (Math.PI * 2)) % 1 + 1) % 1;
-  const idx = Math.floor(phase * 8) % 8;
+  const idx = Math.floor(phase * 8 + 0.5) % 8;
+  const fraction = (1 - Math.cos(ma)) / 2;
+  const percent = Math.round(fraction * 100);
+  const phaseText = `当前月相：${phaseNames[idx]}；从地球看到的月面约 ${percent}% 被照亮。`;
+  if (moonInfo.textContent !== phaseText) moonInfo.textContent = phaseText;
+  if (!paused) sliderMoon.value = Math.round(phase * 360);
+  document.getElementById('valMoon').textContent = sliderMoon.value + '°';
+  // 地球视角的月面示意：盈月右侧亮，亏月左侧亮。
+  const iconX = 90, iconY = 220, radius = 54;
+  ctx.fillStyle = '#263041';
+  ctx.beginPath(); ctx.arc(iconX, iconY, radius, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fef3c7';
+  for (let y = -radius; y <= radius; y++) {
+    const extent = Math.sqrt(Math.max(0, radius * radius - y * y));
+    const boundary = Math.cos(ma) * extent;
+    const left = phase <= 0.5 ? boundary : -extent;
+    ctx.fillRect(iconX + left, iconY + y, extent - boundary, 1.2);
+  }
+  ctx.fillStyle = '#cbd5e1'; ctx.font = '12px sans-serif';
+  ctx.fillText('地球视角示意', 48, 300);
   ctx.fillStyle = '#a5b4fc'; ctx.font = 'bold 15px sans-serif';
-  ctx.fillText(`当前月相：${phaseNames[(idx + 4) % 8]}`, 290, 430);
+  ctx.fillText(`当前月相：${phaseNames[idx]}（亮面约 ${percent}%）`, 245, 430);
   ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
   ctx.fillText('（从地球看，月亮被照亮的部分随位置变化）', 215, 452);
 }
 
 function draw() {
-  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
+  if (mode !== 'learn') {
+    lastT = performance.now();
+    if (!paused) animationId = requestAnimationFrame(draw);
+    return;
+  }
   const now = performance.now();
-  const dt = Math.min(0.05, (now - lastT) / 1000);
+  const dt = paused ? 0 : Math.min(0.05, (now - lastT) / 1000);
   lastT = now;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawStars(now);
   if (demo === 'solar') drawSolar(dt);
   else if (demo === 'daynight') drawDayNight(dt);
   else drawMoon(dt);
-  requestAnimationFrame(draw);
+  if (!paused) animationId = requestAnimationFrame(draw);
 }
-requestAnimationFrame(draw);
+animationId = requestAnimationFrame(draw);
 
 /* ============================================================
  * 练习模式
