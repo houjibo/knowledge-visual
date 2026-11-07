@@ -129,13 +129,18 @@
   let showDerivCurve = true;
 
   const funcs = [
-    { name: 'x²', f: x => x*x, df: x => 2*x, label: 'f(x) = x²', dlabel: "f'(x) = 2x" },
-    { name: 'x³', f: x => x*x*x, df: x => 3*x*x, label: 'f(x) = x³', dlabel: "f'(x) = 3x²" },
-    { name: 'sin(x)', f: x => Math.sin(x), df: x => Math.cos(x), label: 'f(x) = sin x', dlabel: "f'(x) = cos x" },
-    { name: 'eˣ', f: x => Math.exp(x), df: x => Math.exp(x), label: 'f(x) = eˣ', dlabel: "f'(x) = eˣ" },
-    { name: 'ln(x)', f: x => x > 0 ? Math.log(x) : NaN, df: x => x > 0 ? 1/x : NaN, label: 'f(x) = ln x', dlabel: "f'(x) = 1/x" },
-    { name: 'x³−3x', f: x => x*x*x - 3*x, df: x => 3*x*x - 3, label: 'f(x) = x³−3x', dlabel: "f'(x) = 3x²−3" },
+    { extrema: [[0, 'min']], name: 'x²', f: x => x*x, df: x => 2*x, label: 'f(x) = x²', dlabel: "f'(x) = 2x" },
+    { extrema: [], name: 'x³', f: x => x*x*x, df: x => 3*x*x, label: 'f(x) = x³', dlabel: "f'(x) = 3x²" },
+    { extrema: [[-3*Math.PI/2, 'max'], [-Math.PI/2, 'min'], [Math.PI/2, 'max'], [3*Math.PI/2, 'min']], name: 'sin(x)', f: x => Math.sin(x), df: x => Math.cos(x), label: 'f(x) = sin x', dlabel: "f'(x) = cos x" },
+    { extrema: [], name: 'eˣ', f: x => Math.exp(x), df: x => Math.exp(x), label: 'f(x) = eˣ', dlabel: "f'(x) = eˣ" },
+    { extrema: [], name: 'ln(x)', f: x => x > 0 ? Math.log(x) : NaN, df: x => x > 0 ? 1/x : NaN, label: 'f(x) = ln x', dlabel: "f'(x) = 1/x" },
+    { extrema: [[-1, 'max'], [1, 'min']], name: 'x³−3x', f: x => x*x*x - 3*x, df: x => 3*x*x - 3, label: 'f(x) = x³−3x', dlabel: "f'(x) = 3x²−3" },
   ];
+
+  // Exact local extrema for the six built-in examples; this is not a general solver.
+  function displayedExtrema(fn) {
+    return fn.extrema.filter(([x]) => x >= -5 && x <= 5).map(([x, type]) => [x, fn.f(x), type]);
+  }
 
   const colors = { curve: '#3b82f6', tangent: '#ef4444', deriv: '#10b981', extrema: '#fbbf24', secant: '#f97316', axis: '#475569', grid: '#1e293b' };
 
@@ -239,18 +244,7 @@
       // show function, derivative, and extrema
       drawFunc(fn.f, colors.curve);
       if (showDerivCurve) drawFunc(fn.df, colors.deriv);
-      // find extrema where df(x) = 0
-      const extrema = [];
-      for (let x = -5; x <= 5; x += 0.01) {
-        const d1 = fn.df(x);
-        const d2 = fn.df(x + 0.01);
-        if (d1 * d2 < 0) {
-          // sign change
-          const ex = x + 0.005;
-          const ey = fn.f(ex);
-          if (!isNaN(ey)) extrema.push([ex, ey, d1 > 0 ? 'max' : 'min']);
-        }
-      }
+      const extrema = displayedExtrema(fn);
       extrema.forEach(([ex, ey, type]) => {
         drawPoint(ex, ey, colors.extrema, type === 'max' ? '极大' : '极小', 7);
       });
@@ -258,14 +252,14 @@
       ctx.fillStyle = 'rgba(16,185,129,0.1)';
       for (let x = -6; x < 6; x += 0.1) {
         if (fn.df(x) > 0) {
-          const [sx, sy] = toScreen(x, -6);
+          const [sx, sy] = toScreen(x, 6);
           ctx.fillRect(sx, sy, scale*0.1, scale*12);
         }
       }
       ctx.fillStyle = 'rgba(239,68,68,0.1)';
       for (let x = -6; x < 6; x += 0.1) {
         if (fn.df(x) < 0) {
-          const [sx, sy] = toScreen(x, -6);
+          const [sx, sy] = toScreen(x, 6);
           ctx.fillRect(sx, sy, scale*0.1, scale*12);
         }
       }
@@ -330,23 +324,13 @@
       title.textContent = '📊 函数分析 — 单调性与极值';
       eq.innerHTML = `${fn.label}，${fn.dlabel}`;
       if (rebuildControls) ctrl.innerHTML = ``;
-      // find extrema
-      const extrema = [];
-      for (let x = -5; x <= 5; x += 0.01) {
-        const d1 = fn.df(x);
-        const d2 = fn.df(x + 0.01);
-        if (d1 * d2 < 0) {
-          const ex = x + 0.005;
-          const ey = fn.f(ex);
-          if (!isNaN(ey)) extrema.push([ex, ey, d1 > 0 ? '极大' : '极小']);
-        }
-      }
-      let extStr = extrema.map(([x, y, t]) => `${t}(${x.toFixed(2)}, ${y.toFixed(2)})`).join('；') || '无';
+      const extrema = displayedExtrema(fn);
+      const extStr = extrema.map(([x, y, t]) => `${t === 'max' ? '极大' : '极小'}(${x.toFixed(2)}, ${y.toFixed(2)})`).join('；') || '无';
       info.innerHTML = `
-        <div>极值点: <b>${extStr}</b></div>
+        <div>局部极值点（−5≤x≤5）: <b>${extStr}</b></div>
         <div>递增区间: <b>f'(x)>0</b></div>
         <div>递减区间: <b>f'(x)<0</b></div>
-        <div>绿色区域: <b>递增</b>，红色: <b>递减</b></div>`;
+        <div>色带按导数符号采样：绿色递增，红色递减</div>`;
     } else if (mode === 'quiz') {
       title.textContent = '🎯 互动练习';
       eq.innerHTML = '测试你对导数的理解';

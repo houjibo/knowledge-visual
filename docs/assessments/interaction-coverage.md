@@ -37,6 +37,7 @@
   - 桌面与移动视口验证纵向椭圆、圆与双曲线的文字和画布焦点坐标；其他曲线互动、轨迹模式与实机尚未全面验收。 [conic-section-focus-accuracy.spec.js](../../tests/browser/conic-section-focus-accuracy.spec.js)
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
 - [导数 · 概念、运算与应用互动可视化](../../math/high/derivative.html)
+  - 桌面与移动视口核对二次、三次、正弦和对数函数局部极值，以及画布增减色带；其他教学内容与整页无障碍尚未全面验收。 [derivative-extrema-and-monotonicity.spec.js](../../tests/browser/derivative-extrema-and-monotonicity.spec.js)
   - 桌面与移动视口验证自然对数的零、负数、正数、图示无效标注及函数切换；极值算法和整页无障碍未全面验收。 [derivative-log-domain-accuracy.spec.js](../../tests/browser/derivative-log-domain-accuracy.spec.js)
   - 桌面与移动视口验证连续键盘、模拟鼠标拖动、函数按钮与模式切换；对数定义域、极值算法、真实触屏与整页无障碍尚未全面验收。 [derivative-continuous-exploration.spec.js](../../tests/browser/derivative-continuous-exploration.spec.js)
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
