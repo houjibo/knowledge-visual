@@ -142,6 +142,7 @@
   .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
   .quiz-opts { display: grid; gap: 10px; }
   .quiz-opt { 
+    color: #f1f5f9; text-align: left; width: 100%;
     padding: 12px 16px; 
     background: rgba(255,255,255,0.06); 
     border-radius: 10px; 
@@ -154,8 +155,9 @@
   .quiz-opt.correct { background: rgba(52,211,153,0.3); border-color: #34d399; }
   .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
   .quiz-feedback { margin-top: 12px; font-size: 14px; color: var(--primary); min-height: 22px; line-height: 1.6; }
-  .quiz-nav { display: flex; gap: 10px; margin-top: 14px; }
+  .quiz-nav { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
   .quiz-nav button { 
+    flex: 1 1 auto; white-space: nowrap;
     padding: 8px 18px; 
     border-radius: 10px; 
     border: none; 
@@ -178,6 +180,8 @@
     <p>探索光的传播、反射与折射奥秘 <span id="done-mark" style="display:none;margin-left:6px;color:#34d399;font-weight:700;">✓ 已完成</span></p>
   </header>
 
+  <p id="light-progress" role="status" aria-live="polite" style="margin:8px 0 16px;line-height:1.5;color:#e2e8f0;"></p>
+  <button type="button" class="control-btn" id="retrySave" hidden>重试保存进度</button>
   <div class="tabs">
     <button type="button" class="tab active" data-mode="straight" aria-pressed="true">📏 直线传播</button>
     <button type="button" class="tab" data-mode="reflect" aria-pressed="false">🪞 光的反射</button>
@@ -221,10 +225,11 @@
         <div class="quiz">
           <div class="quiz-q" id="quiz-q-straight"></div>
           <div class="quiz-opts" id="quiz-opts-straight"></div>
-          <div class="quiz-feedback" id="quiz-fb-straight"></div>
+          <div class="quiz-feedback" id="quiz-fb-straight" role="status" aria-live="polite"></div>
           <div class="quiz-nav">
             <button id="quiz-prev-straight" disabled>上一题</button>
             <button id="quiz-next-straight">下一题</button>
+            <button type="button" data-quiz-restart>重新开始本次测验</button>
           </div>
         </div>
       </div>
@@ -245,10 +250,11 @@
         <div class="quiz">
           <div class="quiz-q" id="quiz-q-reflect"></div>
           <div class="quiz-opts" id="quiz-opts-reflect"></div>
-          <div class="quiz-feedback" id="quiz-fb-reflect"></div>
+          <div class="quiz-feedback" id="quiz-fb-reflect" role="status" aria-live="polite"></div>
           <div class="quiz-nav">
             <button id="quiz-prev-reflect" disabled>上一题</button>
             <button id="quiz-next-reflect">下一题</button>
+            <button type="button" data-quiz-restart>重新开始本次测验</button>
           </div>
         </div>
       </div>
@@ -269,10 +275,11 @@
         <div class="quiz">
           <div class="quiz-q" id="quiz-q-refract"></div>
           <div class="quiz-opts" id="quiz-opts-refract"></div>
-          <div class="quiz-feedback" id="quiz-fb-refract"></div>
+          <div class="quiz-feedback" id="quiz-fb-refract" role="status" aria-live="polite"></div>
           <div class="quiz-nav">
             <button id="quiz-prev-refract" disabled>上一题</button>
             <button id="quiz-next-refract">下一题</button>
+            <button type="button" data-quiz-restart>重新开始本次测验</button>
           </div>
         </div>
       </div>
@@ -319,19 +326,34 @@ const ALL_TABS = ['straight', 'reflect', 'refract'];
 const visitedTabs = new Set(['straight']);
 const quizAttempted = new Set();
 const quizFirstTryCorrect = new Set();
+const quizAnswers = {};
+let completionSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone(SLUG);
 const TOTAL_QUIZZES = Object.values(quizzes).reduce((s, arr) => s + arr.length, 0);
 
-function maybeMarkDone() {
-  if (typeof PageProgress === 'undefined') return;
-  if (PageProgress.isDone(SLUG)) return;
-  const allVisited = ALL_TABS.every(t => visitedTabs.has(t));
-  const allCorrect = quizFirstTryCorrect.size === TOTAL_QUIZZES;
-  if (allVisited && allCorrect) {
-    PageProgress.markDone(SLUG);
-    showLightToast('🎉 「光的世界」知识地图已点亮！');
-    updateDoneMark();
+function renderLightProgress() {
+  const status = document.getElementById('light-progress');
+  if (completionSaved) status.textContent = '✅ 已完成「光的世界」。';
+  else if (!document.getElementById('retrySave').hidden) {
+    status.textContent = '本次已达标，但进度未保存。';
+  } else {
+    status.textContent = `本次首次答对 ${quizFirstTryCorrect.size}/${TOTAL_QUIZZES} 题；体验三个模式并首次答对全部九题可完成，答错可重新开始。`;
   }
 }
+function saveLightProgress() {
+  if (typeof PageProgress === 'undefined') return;
+  completionSaved = PageProgress.markDone(SLUG);
+  document.getElementById('retrySave').hidden = completionSaved;
+  if (completionSaved) {
+    updateDoneMark();
+    showLightToast('🎉 「光的世界」知识地图已点亮！');
+  }
+  renderLightProgress();
+}
+function maybeMarkDone() {
+  if (!completionSaved && ALL_TABS.every(t => visitedTabs.has(t)) && quizFirstTryCorrect.size === TOTAL_QUIZZES) saveLightProgress();
+  else renderLightProgress();
+}
+document.getElementById('retrySave').addEventListener('click', saveLightProgress);
 
 function showLightToast(msg) {
   const t = document.createElement('div');
@@ -785,42 +807,48 @@ document.getElementById('btnHint').addEventListener('click', () => {
 function loadQuiz(mode) {
   const idx = quizIndex[mode];
   const quiz = quizzes[mode][idx];
+  const key = `${mode}-${idx}`;
+  const selected = Object.prototype.hasOwnProperty.call(quizAnswers, key) ? quizAnswers[key] : null;
   document.getElementById(`quiz-q-${mode}`).textContent = `${idx + 1}. ${quiz.q}`;
   const optsDiv = document.getElementById(`quiz-opts-${mode}`);
   optsDiv.innerHTML = '';
   quiz.opts.forEach((opt, i) => {
-    const div = document.createElement('div');
-    div.className = 'quiz-opt';
-    div.textContent = opt;
-    div.addEventListener('click', () => checkAnswer(mode, i));
-    optsDiv.appendChild(div);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'quiz-opt';
+    button.textContent = opt;
+    if (selected !== null) {
+      button.disabled = true;
+      if (i === quiz.ans) button.classList.add('correct');
+      else if (i === selected) button.classList.add('wrong');
+    }
+    button.addEventListener('click', () => checkAnswer(mode, i));
+    optsDiv.appendChild(button);
   });
-  document.getElementById(`quiz-fb-${mode}`).textContent = '';
+  const feedback = document.getElementById(`quiz-fb-${mode}`);
+  feedback.textContent = selected === null ? '' : selected === quiz.ans ? '✅ 正确！' : `❌ 不对哦，正确答案是：${quiz.opts[quiz.ans]}`;
   document.getElementById(`quiz-prev-${mode}`).disabled = idx === 0;
+  document.getElementById(`quiz-next-${mode}`).disabled = idx === quizzes[mode].length - 1;
 }
 
 function checkAnswer(mode, selected) {
-  const qIdx = quizIndex[mode];
-  const quiz = quizzes[mode][qIdx];
-  const qKey = `${mode}-${qIdx}`;
-  const opts = document.querySelectorAll(`#quiz-opts-${mode} .quiz-opt`);
-  opts.forEach((opt, i) => {
-    opt.classList.remove('correct', 'wrong');
-    if (i === quiz.ans) opt.classList.add('correct');
-    else if (i === selected) opt.classList.add('wrong');
-  });
-  const fb = document.getElementById(`quiz-fb-${mode}`);
-  if (!quizAttempted.has(qKey)) {
-    quizAttempted.add(qKey);
-    if (selected === quiz.ans) quizFirstTryCorrect.add(qKey);
-  }
-  if (selected === quiz.ans) {
-    fb.textContent = '✅ 正确！';
-  } else {
-    fb.textContent = `❌ 不对哦，正确答案是：${quiz.opts[quiz.ans]}`;
-  }
+  const qKey = `${mode}-${quizIndex[mode]}`;
+  if (quizAttempted.has(qKey)) return;
+  quizAttempted.add(qKey);
+  quizAnswers[qKey] = selected;
+  if (selected === quizzes[mode][quizIndex[mode]].ans) quizFirstTryCorrect.add(qKey);
+  loadQuiz(mode);
   maybeMarkDone();
 }
+
+document.querySelectorAll('[data-quiz-restart]').forEach(button => button.addEventListener('click', () => {
+  quizAttempted.clear();
+  quizFirstTryCorrect.clear();
+  Object.keys(quizAnswers).forEach(key => delete quizAnswers[key]);
+  quizIndex = { straight: 0, reflect: 0, refract: 0 };
+  ALL_TABS.forEach(loadQuiz);
+  renderLightProgress();
+}));
 
 document.getElementById('quiz-next-straight').addEventListener('click', () => {
   if (quizIndex.straight < quizzes.straight.length - 1) {
@@ -866,6 +894,7 @@ loadQuiz('straight');
 loadQuiz('reflect');
 loadQuiz('refract');
 updateDoneMark();
+renderLightProgress();
 animating = true;
 animate();
 </script>

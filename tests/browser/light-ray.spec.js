@@ -95,3 +95,53 @@ test('点光源被遮挡，影子随位置改变并可键盘重置', async ({pag
   await expect(slider).toHaveValue('350');
   await expect(page.locator('#panel-straight .concept-box')).toContainText('简化为一个点');
 });
+
+async function answerAllLight(page) {
+  for (const mode of ['straight', 'reflect', 'refract']) {
+    await page.locator(`[data-mode="${mode}"]`).click();
+    for (let i = 0; i < 3; i++) {
+      const options = page.locator(`#quiz-opts-${mode} button`);
+      await options.nth(1).focus();
+      await page.keyboard.press('Enter');
+      await expect(page.locator(`#quiz-fb-${mode}`)).toContainText('正确');
+      if (i < 2) await page.locator(`#quiz-next-${mode}`).click();
+    }
+    await expect(page.locator(`#quiz-next-${mode}`)).toBeDisabled();
+  }
+}
+
+test('键盘答题保留错误反馈，重新开始九题后完成', async ({page}) => {
+  await page.goto(url);
+  await expect(page.locator('#light-progress')).toContainText('全部九题');
+  const first = page.locator('#quiz-opts-straight button').first();
+  await first.focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('#quiz-fb-straight')).toContainText('不对');
+  await page.locator('#quiz-next-straight').click();
+  await page.locator('#quiz-prev-straight').click();
+  await expect(page.locator('#quiz-fb-straight')).toContainText('不对');
+  await expect(page.locator('#quiz-opts-straight button').first()).toBeDisabled();
+  await page.locator('#panel-straight [data-quiz-restart]').click();
+  await answerAllLight(page);
+  await expect(page.locator('#light-progress')).toContainText('已完成');
+  await page.reload();
+  await expect(page.locator('#light-progress')).toContainText('已完成');
+});
+
+test('九题达标时写入失败可重试保存', async ({page}) => {
+  await page.addInitScript(() => {
+    window.originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => { throw new Error('denied'); };
+  });
+  await page.goto(url);
+  await answerAllLight(page);
+  await expect(page.locator('#light-progress')).toContainText('进度未保存');
+  await expect(page.locator('#done-mark')).toBeHidden();
+  await page.locator('#panel-refract [data-quiz-restart]').click();
+  await expect(page.locator('#light-progress')).toContainText('进度未保存');
+  await page.evaluate(() => { Storage.prototype.setItem = window.originalSetItem; });
+  await page.locator('#retrySave').click();
+  await expect(page.locator('#light-progress')).toContainText('已完成');
+  await expect(page.locator('#done-mark')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('#light-progress')).toContainText('已完成');
+});

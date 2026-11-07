@@ -39,3 +39,17 @@ TBD - created by archiving change light-ray-geometry. Update Purpose after archi
 #### Scenario: 使用键盘到达两端并重置
 - **WHEN** 学习者用 Home、End 调整障碍物后选择重置
 - **THEN** 状态反映远近变化，重置后恢复中间位置
+
+### Requirement: 光主题测验可访问且可重试
+三个模式的测验 SHALL 支持键盘作答并保留本次答案，提供重新开始入口和清晰完成规则。
+
+#### Scenario: 首次答错并重试
+- **WHEN** 学习者答错一题后翻页返回，然后重新开始并首次答对九题
+- **THEN** 返回时可见原答案反馈，重试后可记录完成
+
+### Requirement: 保存失败如实反馈
+九题达标但存储失败时 SHALL 提示未保存并允许恢复后重试。
+
+#### Scenario: 写入恢复
+- **WHEN** 九题达标时浏览器拒绝写入，随后恢复并重试
+- **THEN** 页面先显示未保存，再显示已完成，刷新后仍可见
