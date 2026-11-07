@@ -297,9 +297,16 @@ const canvas = document.getElementById('mainCanvas');
 const ctx = canvas.getContext('2d');
 let currentTab = 'concept';
 let animFrame = null;
+let lastFrameTime = null;
+function elapsedSeconds(timestamp) {
+  const dt = lastFrameTime === null ? 0 : Math.max(0, (timestamp - lastFrameTime) / 1000);
+  lastFrameTime = timestamp;
+  return dt;
+}
 function cancelPendingAnimation() {
   if (animFrame !== null) cancelAnimationFrame(animFrame);
   animFrame = null;
+  lastFrameTime = null;
 }
 
 // ========== Tab 切换 ==========
@@ -338,7 +345,8 @@ document.getElementById('btnStart').addEventListener('click', () => {
   } else {
     conceptState.running = true;
     document.getElementById('btnStart').textContent = '⏸ 暂停';
-    animateConcept();
+    lastFrameTime = null;
+    animFrame = requestAnimationFrame(animateConcept);
   }
 });
 
@@ -353,17 +361,12 @@ document.getElementById('btnReset').addEventListener('click', () => {
   drawScene();
 });
 
-function animateConcept() {
+function animateConcept(timestamp) {
   if (!conceptState.running) return;
-  const dt = 0.05;
+  const dt = elapsedSeconds(timestamp);
   conceptState.time += dt;
   conceptState.dist += conceptState.speed * dt;
-  conceptState.carX += conceptState.speed * 8 * dt;
-  if (conceptState.carX > 750) {
-    conceptState.carX = 80;
-    conceptState.dist = 0;
-    conceptState.time = 0;
-  }
+  conceptState.carX = 80 + (conceptState.carX - 80 + conceptState.speed * 8 * dt) % 670;
   updateConceptDisplay();
   drawScene();
   animFrame = requestAnimationFrame(animateConcept);
@@ -401,7 +404,8 @@ document.getElementById('btnUniStart').addEventListener('click', () => {
   } else {
     uniState.running = true;
     document.getElementById('btnUniStart').textContent = '⏸ 暂停';
-    animateUni();
+    lastFrameTime = null;
+    animFrame = requestAnimationFrame(animateUni);
   }
 });
 
@@ -416,17 +420,12 @@ document.getElementById('btnUniReset').addEventListener('click', () => {
   drawScene();
 });
 
-function animateUni() {
+function animateUni(timestamp) {
   if (!uniState.running) return;
-  const dt = 0.05 * uniState.scale;
+  const dt = elapsedSeconds(timestamp) * uniState.scale;
   uniState.time += dt;
   uniState.dist += uniState.speed * dt;
-  uniState.carX += uniState.speed * 6 * dt;
-  if (uniState.carX > 750) {
-    uniState.carX = 80;
-    uniState.dist = 0;
-    uniState.time = 0;
-  }
+  uniState.carX = 80 + (uniState.carX - 80 + uniState.speed * 6 * dt) % 670;
   updateUniDisplay();
   drawScene();
   animFrame = requestAnimationFrame(animateUni);
@@ -470,7 +469,8 @@ document.getElementById('btnGraphStart').addEventListener('click', () => {
     if (graphState.t >= 10) { graphState.points = []; graphState.t = 0; }
     graphState.running = true;
     document.getElementById('btnGraphStart').textContent = '⏸ 暂停';
-    animateGraph();
+    lastFrameTime = null;
+    animFrame = requestAnimationFrame(animateGraph);
   }
 });
 
@@ -483,9 +483,9 @@ document.getElementById('btnGraphReset').addEventListener('click', () => {
   drawScene();
 });
 
-function animateGraph() {
+function animateGraph(timestamp) {
   if (!graphState.running) return;
-  graphState.t = Math.min(10, graphState.t + 0.1);
+  graphState.t = Math.min(10, graphState.t + elapsedSeconds(timestamp));
   const s = graphState.speed * graphState.t;
   graphState.points.push({ t: graphState.t, s: s, v: graphState.speed });
   if (graphState.t >= 10 - 1e-9) {
@@ -496,6 +496,15 @@ function animateGraph() {
   drawScene();
   if (graphState.running) animFrame = requestAnimationFrame(animateGraph);
 }
+
+// 离开页面时暂停，避免后台节流造成的时间跳跃。
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) return;
+  cancelPendingAnimation();
+  if (conceptState.running) { conceptState.running = false; document.getElementById('btnStart').textContent = '▶ 继续'; }
+  if (uniState.running) { uniState.running = false; document.getElementById('btnUniStart').textContent = '▶ 继续'; }
+  if (graphState.running) { graphState.running = false; document.getElementById('btnGraphStart').textContent = '▶ 继续'; }
+});
 
 // ========== 绘制场景 ==========
 function drawScene() {
