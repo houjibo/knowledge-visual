@@ -69,6 +69,7 @@
   - 固定随机值下数轴比较、排序和找位置，三类挑战、重复计分及键盘与回调时序；未覆盖所有取值。 [comparison-ordering-reliability.spec.js](../../tests/browser/comparison-ordering-reliability.spec.js)
 - [圆柱与圆锥](../../math/topics/cylinder-and-cone/index.html)
   - 圆锥展开公式、计算题随机边界及挑战数值题部分场景；未覆盖所有互动或完整教学内容。 [cylinder-cone.spec.js](../../tests/browser/cylinder-cone.spec.js)
+  - 圆柱侧面长方形及圆锥扇形的比例、形状选择和计算练习回归；真实设备及整页无障碍尚未全面验收。 [cylinder-cone-net-proportions.spec.js](../../tests/browser/cylinder-cone-net-proportions.spec.js)、[cylinder-cone.spec.js](../../tests/browser/cylinder-cone.spec.js)
 - [圆柱和圆锥](../../math/topics/cylinder-cone/index.html)
   - 探索模式半径高度边界、圆锥母线和面积、比较练习与重复提交；挑战、真实设备及整页无障碍未全面验收。 [cylinder-cone-exploration-correctness.spec.js](../../tests/browser/cylinder-cone-exploration-correctness.spec.js)
   - 圆柱圆锥随机边界、闯关反馈、五关保存、十关重玩及失败恢复；真实设备和整页无障碍未全面验收。 [cylinder-cone-challenge-reliability.spec.js](../../tests/browser/cylinder-cone-challenge-reliability.spec.js)
