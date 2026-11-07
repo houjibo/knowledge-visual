@@ -110,7 +110,7 @@
 - [physics/uni/thermodynamics.html](../../physics/uni/thermodynamics.html)：89 行（tab）、90 行（tab）、91 行（tab）、92 行（tab）、93 行（tab）
 - [physics/uni/vibration-wave.html](../../physics/uni/vibration-wave.html)：238 行（tab）、239 行（tab）、240 行（tab）、241 行（tab）、242 行（tab）
 - [science/chemistry.html](../../science/chemistry.html)：90 行（tab）、91 行（tab）、92 行（tab）
-- [science/magnets.html](../../science/magnets.html)：105 行（tab）、106 行（tab）、107 行（tab）、108 行（tab）、109 行（tab）、180 行（mode-btn）、181 行（mode-btn）、182 行（mode-btn）、219 行（mode-btn）、220 行（mode-btn）、221 行（mode-btn）、253 行（mode-btn）、254 行（mode-btn）、255 行（mode-btn）、284 行（quiz-opt）、285 行（quiz-opt）、286 行（quiz-opt）、287 行（quiz-opt）
+- [science/magnets.html](../../science/magnets.html)：284 行（quiz-opt）、285 行（quiz-opt）、286 行（quiz-opt）、287 行（quiz-opt）
 - [science/matter-changes.html](../../science/matter-changes.html)：106 行（tab）、107 行（tab）、108 行（tab）、109 行（tab）、133 行（mode-btn）、134 行（mode-btn）、135 行（mode-btn）、247 行（mode-btn）、248 行（mode-btn）
 - [science/sound.html](../../science/sound.html)：191 行（tab）、192 行（tab）、193 行（tab）、194 行（tab）
 

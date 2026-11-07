@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：81；尚未登记：235。
+主题总数：316；已登记部分交互证据：82；尚未登记：234。
 
 ## 已登记部分交互证据
 
@@ -177,6 +177,8 @@
   - 点光源遮挡、反射与折射画布路径、键盘滑块、九题重试和保存失败；扩展光源及完整无障碍未验收。 [light-ray.spec.js](../../tests/browser/light-ray.spec.js)
 - [生物世界 · 小学科学互动可视化](../../science/living-things.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
+- [磁铁的秘密 · 小学科学互动可视化](../../science/magnets.html)
+  - 水平条形磁铁的预设磁极、距离和拖动同步、翻转、键盘物品测试及铁粉零距离边界；不代表真实磁场计算或整页科学内容已验收。 [science-magnet-poles.spec.js](../../tests/browser/science-magnet-poles.spec.js)
 - [材料的世界 · 小学科学互动可视化](../../science/materials.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [简单机械 · 小学科学互动可视化](../../science/simple-machines.html)
@@ -426,6 +428,5 @@
 - [热学基础 · 互动可视化](../../physics/uni/thermodynamics.html)
 - [振动与波 · 互动可视化](../../physics/uni/vibration-wave.html)
 - [神奇的化学 · 小学科学互动可视化](../../science/chemistry.html)
-- [磁铁的秘密 · 小学科学互动可视化](../../science/magnets.html)
 - [物质的变化 · 小学科学互动可视化](../../science/matter-changes.html)
 - [声音的奥秘 · 小学科学互动可视化](../../science/sound.html)
