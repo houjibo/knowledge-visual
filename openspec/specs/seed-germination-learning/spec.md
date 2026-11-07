@@ -1,0 +1,24 @@
+# seed-germination-learning Specification
+
+## Purpose
+TBD - created by archiving change seed-germination-learning. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 种子萌发示意条件清晰且可控制
+页面 SHALL 将一种不需光萌发的种子与后续示意生长区分，并提供暂停、逐步推进和重置。
+
+#### Scenario: 无光但有水
+- **WHEN** 学习者在假定温度和空气适宜时仅打开水分
+- **THEN** 示意可推进至萌发阶段，并说明本例后续生长需要光
+
+#### Scenario: 暂停并逐步探索
+- **WHEN** 学习者暂停后调整条件或使用逐步推进
+- **THEN** 状态按示意规则更新，重置恢复初始条件
+
+### Requirement: 练习答错后可重试
+页面 SHALL 允许学习者在练习中答错后重新选择并获得反馈。
+
+#### Scenario: 更正答案
+- **WHEN** 学习者先选错再选对
+- **THEN** 页面先提示重试，再显示正确解释

@@ -116,26 +116,32 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="bioCanvas" width="720" height="460"></canvas>
+          <canvas id="bioCanvas" width="720" height="460" role="img" aria-label="种子萌发与植物生长示意；进度和条件见旁边文字"></canvas>
           <div class="legend">
-            <span>植物生长需要：☀️ 阳光 💧 水 🌡️ 适宜温度</span>
+            <span>种子萌发与生长：分阶段示意</span>
           </div>
         </div>
       </div>
       <div class="panel">
         <h3>选择演示</h3>
         <div class="demo-btns" id="demoBtns">
-          <button class="demo-btn active" data-demo="grow">种子发芽</button>
-          <button class="demo-btn" data-demo="chain">食物链</button>
+          <button class="demo-btn active" data-demo="grow" aria-pressed="true">种子发芽</button>
+          <button class="demo-btn" data-demo="chain" aria-pressed="false">食物链</button>
         </div>
         <div id="ctl-grow">
           <div class="toggle-row">
-            <button class="toggle-btn" id="tglSun">☀️ 阳光：关</button>
-            <button class="toggle-btn" id="tglWater">💧 浇水：关</button>
+            <button class="toggle-btn" id="tglSun" aria-pressed="false">☀️ 阳光：关</button>
+            <button class="toggle-btn" id="tglWater" aria-pressed="false">💧 浇水：关</button>
+          </div>
+          <p>示意一种萌发不需光的种子，假设温度和空气适宜。先打开水分观察萌发，后续生长在本示意中需要光和水；进度与时间不代表真实生长速度。</p>
+          <div class="toggle-row">
+            <button type="button" class="toggle-btn" id="growPause">暂停动画</button>
+            <button type="button" class="toggle-btn" id="growStep">推进一步</button>
+            <button type="button" class="toggle-btn" id="growReset">重新开始</button>
           </div>
           <div class="info-grid">
-            <div>生长状态<br><b id="infoGrow">种子休眠中…</b></div>
-            <div>生长进度<br><b id="infoPct">0%</b></div>
+            <div>生长状态<br><b id="infoGrow" aria-live="polite">等待水分</b></div>
+            <div>示意进度<br><b id="infoPct">0%</b></div>
           </div>
         </div>
         <div id="ctl-chain" style="display:none">
@@ -146,11 +152,11 @@
         </div>
         <div class="concept-card">
           <div class="title">植物的一生</div>
-          种子在<b>适宜的温度、水分和空气</b>条件下萌发：先长<b>根</b>（吸收水分和养料、固定植物），再长<b>茎和叶</b>。叶通过<b>光合作用</b>制造养料——需要阳光、水和二氧化碳，同时释放氧气。
+          许多种子在<b>适宜的温度、水分和空气</b>条件下萌发；不同种子对光的需求不同，有些还需要光。萌发时通常先长<b>根</b>（吸收水分和养料、固定植物），再长<b>茎和叶</b>。叶通过<b>光合作用</b>制造养料——需要阳光、水和二氧化碳，同时释放氧气。
         </div>
         <div class="concept-card">
           <div class="title">食物链：吃与被吃</div>
-          草 → 兔 → 鹰：<b>能量</b>沿食物链单向流动，从植物（生产者）到动物（消费者）。箭头指向"吃的一方"。食物链交错形成<b>食物网</b>，一种生物消失会影响整个网。
+          草 → 兔 → 鹰：<b>能量</b>沿食物链单向流动，从植物（生产者）到动物（消费者）。箭头指向"吃的一方"。食物链交错形成<b>食物网</b>，一种生物变化可能影响其他生物。
         </div>
         <div class="concept-card warn">
           <div class="title">⚠️ 动物分类小知识</div>
@@ -242,12 +248,15 @@ const canvas = document.getElementById('bioCanvas');
 const ctx = canvas.getContext('2d');
 let demo = 'grow';
 let sunOn = false, waterOn = false;
-let growth = 0;           // 0..100
+let growth = 0;           // 无单位示意进度 0..100
 let lastT = performance.now();
+let animationSeconds = 0;
+let growPlaying = !matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 document.querySelectorAll('.demo-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.demo-btn').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.demo-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
   b.classList.add('active');
+  b.setAttribute('aria-pressed', 'true');
   demo = b.dataset.demo;
   document.getElementById('ctl-grow').style.display = demo === 'grow' ? 'block' : 'none';
   document.getElementById('ctl-chain').style.display = demo === 'chain' ? 'block' : 'none';
@@ -258,31 +267,54 @@ const tglWater = document.getElementById('tglWater');
 tglSun.addEventListener('click', () => {
   sunOn = !sunOn;
   tglSun.classList.toggle('on', sunOn);
+  tglSun.setAttribute('aria-pressed', String(sunOn));
   tglSun.textContent = `☀️ 阳光：${sunOn ? '开' : '关'}`;
 });
 tglWater.addEventListener('click', () => {
   waterOn = !waterOn;
   tglWater.classList.toggle('on', waterOn);
+  tglWater.setAttribute('aria-pressed', String(waterOn));
   tglWater.textContent = `💧 浇水：${waterOn ? '开' : '关'}`;
 });
+
+
+const growPause = document.getElementById('growPause');
+function updatePauseButton() { growPause.textContent = growPlaying ? '暂停动画' : '继续动画'; }
+growPause.addEventListener('click', () => { growPlaying = !growPlaying; updatePauseButton(); });
+function advanceGrowth(dt) {
+  if (!waterOn) return;
+  const limit = sunOn ? 100 : 30;
+  if (growth < limit) growth = Math.min(limit, growth + dt * 8);
+}
+document.getElementById('growStep').addEventListener('click', () => { advanceGrowth(1.875); updGrowInfo(); });
+document.getElementById('growReset').addEventListener('click', () => {
+  growth = 0; sunOn = false; waterOn = false;
+  tglSun.classList.remove('on'); tglWater.classList.remove('on');
+  tglSun.setAttribute('aria-pressed', 'false'); tglWater.setAttribute('aria-pressed', 'false');
+  tglSun.textContent = '☀️ 阳光：关'; tglWater.textContent = '💧 浇水：关';
+  updGrowInfo();
+});
+updatePauseButton();
 
 function updGrowInfo() {
   const pct = Math.round(growth);
   document.getElementById('infoPct').textContent = pct + '%';
   let label;
-  if (pct >= 100) label = '🌻 长成了！开花结果';
-  else if (pct >= 60) label = '🌿 长出茎叶，茁壮成长';
-  else if (pct >= 30) label = '🌱 发芽了！先长根';
-  else if (pct > 0) label = '🫘 种子吸水膨胀…';
-  else label = (sunOn || waterOn) ? '还缺条件，种子等待中…' : '种子休眠中…';
-  document.getElementById('infoGrow').textContent = label;
+  if (pct >= 100) label = '🌻 示意完成，长出花';
+  else if (!waterOn) label = '💧 打开水分，观察变化';
+  else if (growth >= 30 && !sunOn) label = '🌱 已萌发；后续示意生长需要光';
+  else if (pct >= 30) label = '🌱 萌发后继续生长';
+  else if (pct > 0) label = '🫘 种子吸水，根开始萌发';
+  else label = '💧 准备观察萌发';
+  const info = document.getElementById('infoGrow');
+  if (info.textContent !== label) info.textContent = label;
+  canvas.setAttribute('aria-label', `种子生长示意，${pct}%，${label}`);
 }
 
 /* ---------- 种子发芽 ---------- */
 function drawGrow(dt) {
-  // 生长逻辑：阳光+水齐备才生长
-  if (sunOn && waterOn && growth < 100) growth = Math.min(100, growth + dt * 8);
-  else if (!sunOn && !waterOn && growth < 5) growth = Math.max(0, growth - dt * 2);
+  // 本例在有水时萌发，后续示意生长同时需要光。
+  advanceGrowth(dt);
   updGrowInfo();
   const g = growth / 100;
   // 天空与太阳
@@ -298,7 +330,7 @@ function drawGrow(dt) {
   // 雨滴
   if (waterOn) {
     ctx.strokeStyle = 'rgba(96,165,250,0.8)'; ctx.lineWidth = 2;
-    const tt = performance.now() / 1000;
+    const tt = animationSeconds;
     for (let i = 0; i < 12; i++) {
       const rx = 120 + ((i * 47 + tt * 130) % 460);
       const ry = 40 + ((i * 83 + tt * 260) % 300);
@@ -358,7 +390,7 @@ function drawGrow(dt) {
   // 条件提示
   ctx.fillStyle = sunOn && waterOn ? '#4ade80' : '#f59e0b';
   ctx.font = 'bold 14px sans-serif';
-  const msg = sunOn && waterOn ? '☀️💧 条件齐备，正在生长！' : '打开阳光和浇水，帮助种子发芽吧';
+  const msg = !waterOn ? '打开水分，观察萌发' : growth >= 30 && !sunOn ? '萌发后打开光，观察后续生长' : '观察示意变化';
   ctx.fillText(msg, 190, 40);
   ctx.lineCap = 'butt';
 }
@@ -410,13 +442,15 @@ function drawChain() {
 }
 
 function draw() {
-  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
+  if (mode !== 'learn') { lastT = performance.now(); requestAnimationFrame(draw); return; }
   const now = performance.now();
   const dt = Math.min(0.05, (now - lastT) / 1000);
   lastT = now;
+  const elapsed = growPlaying ? dt : 0;
+  animationSeconds += elapsed;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (demo === 'grow') drawGrow(dt);
-  else drawChain();
+  if (demo === 'grow') drawGrow(elapsed);
+  else { drawChain(); canvas.setAttribute('aria-label', '食物链示例：草到兔再到鹰，箭头表示能量流向'); }
   requestAnimationFrame(draw);
 }
 updGrowInfo();
@@ -435,10 +469,10 @@ document.querySelectorAll('.practice-item').forEach(item => {
   item.querySelectorAll('.quiz-opt').forEach(opt => {
     opt.addEventListener('click', () => {
       const ok = opt.dataset.ok === '1';
-      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      item.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('correct','wrong'));
       opt.classList.add(ok ? 'correct' : 'wrong');
       fb.style.color = ok ? '#10b981' : '#ef4444';
-      fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
+      fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想，换一个选项试试。';
     });
   });
 });
@@ -450,9 +484,9 @@ const QUIZ = [
   { q: '植物进行光合作用需要（　　）',
     opts: ['阳光、水和二氧化碳', '只需要水', '只需要阳光', '土壤和肥料'],
     ans: 0, ex: '光合作用：二氧化碳 + 水 →（阳光、叶绿体）→ 养料 + 氧气。' },
-  { q: '种子萌发不需要的条件是（　　）',
+  { q: '许多常见农作物的种子萌发时，可以不需要（　　）',
     opts: ['适宜的温度', '水分', '空气', '阳光直射'],
-    ans: 3, ex: '多数种子萌发不需要阳光（在土里就能发芽），生长阶段才需要光。' },
+    ans: 3, ex: '许多农作物种子萌发不需要光，但有些种子对光有特定需求；萌发后绿色植物生长通常需要光。' },
   { q: '食物链中箭头"草 → 兔"表示（　　）',
     opts: ['草吃兔', '兔吃草，能量流向兔', '兔变成草', '没有关系'],
     ans: 1, ex: '箭头指向捕食者，表示能量从被捕食者流向捕食者。' },
@@ -461,7 +495,7 @@ const QUIZ = [
     ans: 1, ex: '蚯蚓体内没有脊柱；青蛙（两栖）、麻雀（鸟）、兔（哺乳）都是脊椎动物。' },
   { q: '一个食物网中某种生物大量减少，会（　　）',
     opts: ['只影响它自己', '影响与之相关的其他生物', '没有任何影响', '让其他生物都变多'],
-    ans: 1, ex: '生物相互依存：一种生物变化会通过食物网影响其他生物（如鹰少了兔会先增多）。' }
+    ans: 1, ex: '生物相互依存：一种生物变化会通过食物网影响其他生物（实际变化还受其他因素影响）。' }
 ];
 let qi = 0, qAnswers = Array(QUIZ.length).fill(null);
 const quizQ = document.getElementById('quizQ');
