@@ -1,30 +1,27 @@
 # knowledge-visual
 
-知识可视化学习站：按 **学科 × 等级** 分类的互动可视化知识点合集。
+知识可视化学习站：按学科和学段组织互动可视化内容，帮助学习者通过观察和操作理解知识。
 
-## 目录结构
+## 开始学习
 
-```
-index.html                 学科总入口
-├── math/                  📐 数学（198 个知识点）
-│   ├── index.html         小学数学知识地图（124 个主题，topics/）
-│   ├── topics/            小学各主题（每个主题一个目录）
-│   ├── middle/            初中数学（27 页）
-│   ├── high/              高中数学（18 页）
-│   └── uni/               大学数学（27 页）
-├── physics/               🔭 物理（55 个知识点）
-│   ├── middle/            初中物理（18 页）
-│   ├── high/              高中物理（16 页）
-│   └── uni/               大学物理（19 页）
-├── chemistry/             🧪 化学（46 个知识点）
-│   ├── middle/            初中化学（13 页）
-│   ├── high/              高中化学（14 页）
-│   └── uni/               大学化学（17 页）
-└── science/               🔬 小学科学（10 页）
+用浏览器直接打开 [首页](index.html)，或在仓库根目录启动静态服务器：
+
+```sh
+python3 -m http.server 8000
 ```
 
-- 每个等级目录含 `index.html` 导航页、若干 `<topic>.html` 内容页与 `assets/` 共享资源（common.css / common.js / animation.js / touch.js）。
-- 初高中及大学内容页为深色自包含页面；小学内容为浅色儿童友好风格。
-- 直接用浏览器打开 `index.html`，或用任意静态服务器托管即可。
+然后访问 <http://localhost:8000/>。页面包含数学、物理、化学和小学科学；选择学科与学段后可进入具体主题。
 
-> 内容合并自 `primary-math-visual` 项目（128 个内容页，按学科和等级重新分类）。
+## 目录
+
+- `index.html`：学科入口。
+- `math/`：小学数学知识地图（`topics/` 中每个主题一个目录），以及 `middle/`、`high/`、`uni/` 学段页面。
+- `physics/`、`chemistry/`：初中、高中、大学学段导航和主题页面。
+- `science/`：小学科学导航和主题页面。
+- 各目录中的 `assets/` 保存相关共享资源；部分主题页面也自包含样式或脚本。
+
+## 参与维护
+
+从 [项目架构](docs/architecture.md)、[工程约束](docs/constraints.md) 和 [工作流](docs/workflows/README.md) 开始。运行 `python3 scripts/check_site.py` 检查静态引用、索引和部分学段进度总数；检查范围和浏览器验证要求见工程约束。[OpenSpec](openspec/README.md) 记录能力契约与变更。
+
+部分小学内容合并自 `primary-math-visual` 项目。

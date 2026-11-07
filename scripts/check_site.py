@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""Check declared local HTML references and repository guidance links."""
+
+from html.parser import HTMLParser
+from pathlib import Path
+import re
+import sys
+from urllib.parse import unquote, urlsplit
+
+ROOT = Path(__file__).resolve().parent.parent
+SKIP = {'.git', 'node_modules'}
+
+
+class References(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.items = []
+        self.topic_cards = 0
+        self.topic_hrefs = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'a' and 'topic-card' in dict(attrs).get('class', '').split():
+            self.topic_cards += 1
+            self.topic_hrefs.append(dict(attrs).get('href', ''))
+        for key, value in attrs:
+            if value and ((tag in {'a', 'link'} and key == 'href') or
+                          (tag in {'script', 'img'} and key == 'src')):
+                self.items.append((self.getpos()[0], value))
+
+
+def check(source, line, value, errors):
+    parsed = urlsplit(value)
+    if parsed.scheme or parsed.netloc or not parsed.path or parsed.path.startswith('/'):
+        return
+    target = source.parent / unquote(parsed.path)
+    if not target.exists():
+        errors.append(f'{source.relative_to(ROOT)}:{line}: missing {value}')
+
+
+def main():
+    errors = []
+    pages = 0
+    topic_counts = {}
+    topic_hrefs = {}
+    for source in sorted(ROOT.rglob('*.html')):
+        if any(part in SKIP for part in source.relative_to(ROOT).parts):
+            continue
+        pages += 1
+        parser = References()
+        try:
+            parser.feed(source.read_text(encoding='utf-8'))
+        except (UnicodeError, OSError) as exc:
+            errors.append(f'{source.relative_to(ROOT)}: cannot read: {exc}')
+            continue
+        for line, value in parser.items:
+            check(source, line, value, errors)
+        topic_counts[source.relative_to(ROOT).as_posix()] = parser.topic_cards
+        topic_hrefs[source.relative_to(ROOT).as_posix()] = parser.topic_hrefs
+    math_index = ROOT / 'math/index.html'
+    try:
+        math_content = math_index.read_text(encoding='utf-8')
+    except (UnicodeError, OSError) as exc:
+        errors.append(f'math/index.html: cannot read: {exc}')
+        math_content = ''
+    for stage in ('middle', 'high', 'uni'):
+        matches = re.findall(r'const\s+' + stage.upper() + r'\s*=\s*\[([^\]]*)\]', math_content)
+        hrefs = topic_hrefs.get(f'math/{stage}/index.html', [])
+        if len(matches) != 1 or not hrefs or any(not h.endswith('.html') or '/' in h for h in hrefs):
+            errors.append(f'math/{stage}: cannot identify progress list or topic cards')
+            continue
+        entries = re.findall(r"['\"]([^'\"]+)['\"]", matches[0])
+        expected = {h[:-5] for h in hrefs}
+        actual = set(entries)
+        if len(entries) != len(actual) or actual != expected:
+            errors.append(f'math/{stage}: progress list differs; missing {sorted(expected - actual)}, '
+                          f'extra {sorted(actual - expected)}, duplicates {len(entries) - len(actual)}')
+    for subject in ('physics', 'chemistry'):
+        source = ROOT / subject / 'index.html'
+        try:
+            content = source.read_text(encoding='utf-8')
+        except (UnicodeError, OSError) as exc:
+            errors.append(f'{source.relative_to(ROOT)}: cannot read: {exc}')
+            continue
+        for stage in ('middle', 'high', 'uni'):
+            key = f'kv-{subject}-{stage}-progress'
+            matches = re.findall(r"key:\s*['\"]" + re.escape(key) +
+                                 r"['\"]\s*,\s*total:\s*(\d+)", content)
+            count = topic_counts.get(f'{subject}/{stage}/index.html', 0)
+            if len(matches) != 1 or not count:
+                errors.append(f'{subject}/{stage}: cannot identify progress total or topic cards')
+            elif int(matches[0]) != count:
+                errors.append(f'{subject}/{stage}: progress total {matches[0]}, topic cards {count}')
+    index = ROOT / 'AGENTS.md'
+    try:
+        for line, text in enumerate(index.read_text(encoding='utf-8').splitlines(), 1):
+            for match in re.finditer(r'(?<!!)\[[^\]]+\]\(([^\s)]+)(?:\s+[^)]*)?\)', text):
+                check(index, line, match.group(1), errors)
+    except (UnicodeError, OSError) as exc:
+        errors.append(f'AGENTS.md: cannot read: {exc}')
+    if not pages:
+        errors.append('No HTML pages found')
+    if errors:
+        print('\n'.join(errors), file=sys.stderr)
+        print(f'FAILED: {len(errors)} issue(s)', file=sys.stderr)
+        return 1
+    print(f'OK: {pages} HTML pages, AGENTS.md links, math/physics/chemistry progress lists checked')
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
