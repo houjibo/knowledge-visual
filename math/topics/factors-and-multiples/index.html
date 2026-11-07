@@ -237,7 +237,7 @@
         <div class="multiple-formula" id="multipleFormula"></div>
         <div class="multiple-explain" id="multipleExplain"></div>
         <div class="section-intro" style="margin-top:20px;">
-          💡 <b>小知识</b>：一个数的倍数有<b>无限多个</b>，最小的倍数是它<b>本身</b>。
+          💡 <b>小知识</b>：一个数的倍数有<b>无限多个</b>，最小的正倍数是它<b>本身</b>。
         </div>
       </div>
     </div>
@@ -562,6 +562,7 @@
 
     // ========== 模式四：闯关挑战 ==========
     let challengeHistory = [];
+    let challengeLocked = false;
     let challengeTimer = null;
     let challengeTimeLeft = 15;
     const TIME_PER_Q = 15;
@@ -589,7 +590,8 @@
           if (isFactor) {
             testNum = Random.pick(factors);
           } else {
-            do { testNum = Random.int(2, n - 1); } while (factors.includes(testNum));
+            const nonFactors = Array.from({length: n - 2}, (_, i) => i + 2).filter(value => !factors.includes(value));
+            testNum = Random.pick(nonFactors);
           }
           question = `${testNum} 是 ${n} 的因数吗？`;
           answer = isFactor ? '是' : '否';
@@ -613,11 +615,9 @@
           const correctMultiple = Random.pick(multiples);
           question = `以下哪个数是 ${n} 的倍数？`;
           answer = correctMultiple;
-          const wrongOptions = [];
-          while (wrongOptions.length < 3) {
-            const w = Random.int(n + 1, n * 12);
-            if (w % n !== 0 && !wrongOptions.includes(w)) wrongOptions.push(w);
-          }
+          const candidates = Array.from({length: n * 11}, (_, i) => n + 1 + i)
+            .filter(value => value % n !== 0);
+          const wrongOptions = Random.shuffle(candidates).slice(0, 3);
           options = shuffleOptions([correctMultiple, ...wrongOptions]);
           break;
         }
@@ -646,7 +646,7 @@
             answer = n;
             options = generateNumberOptions(n, 4, Math.max(1, n - 20), n + 10);
           } else {
-            question = `${n} 的最小倍数是几？`;
+            question = `${n} 的最小正倍数是几？`;
             answer = n;
             options = generateNumberOptions(n, 4, Math.max(1, n - 20), n + 10);
           }
@@ -658,12 +658,9 @@
     }
 
     function generateNumberOptions(correct, count, min, max) {
-      const opts = [correct];
-      while (opts.length < count) {
-        let w = Random.int(Math.max(1, correct - 5), correct + 5);
-        if (!opts.includes(w) && w !== correct) opts.push(w);
-      }
-      return shuffleOptions(opts);
+      const candidates = Array.from({length: max - min + 1}, (_, i) => min + i)
+        .filter(value => value !== correct);
+      return shuffleOptions([correct, ...Random.shuffle(candidates).slice(0, count - 1)]);
     }
 
     function shuffleOptions(arr) {
@@ -672,6 +669,7 @@
 
     function startChallenge() {
       challengeHistory = [];
+      document.getElementById('qCorrect').textContent = '0';
       document.getElementById('challengeStart').style.display = 'none';
       document.getElementById('challengeResult').style.display = 'none';
       document.getElementById('challengePlaying').style.display = 'block';
@@ -684,6 +682,7 @@
         return;
       }
 
+      challengeLocked = false;
       const { question, answer, options } = generateChallengeProblem();
       document.getElementById('qNum').textContent = challengeHistory.length + 1;
       document.getElementById('qProblem').textContent = question;
@@ -718,12 +717,14 @@
     }
 
     function handleAnswer(selected, correct, btn) {
+      if (challengeLocked) return;
+      challengeLocked = true;
       clearInterval(challengeTimer);
       const isCorrect = String(selected) === String(correct);
 
       // 禁用所有按钮
       document.querySelectorAll('.challenge-opt').forEach(b => {
-        b.style.pointerEvents = 'none';
+        b.disabled = true;
         if (String(b.textContent) === String(correct)) b.classList.add('correct');
       });
 
@@ -754,8 +755,11 @@
     }
 
     function handleTimeout(question, answer) {
+      if (challengeLocked) return;
+      challengeLocked = true;
+      clearInterval(challengeTimer);
       document.querySelectorAll('.challenge-opt').forEach(b => {
-        b.style.pointerEvents = 'none';
+        b.disabled = true;
         if (String(b.textContent) === String(answer)) b.classList.add('correct');
       });
 
