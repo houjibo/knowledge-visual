@@ -89,6 +89,8 @@
     .calc-problem .given { color: #5C6BC0; font-weight: 600; }
     .calc-problem .ask { color: #FF5722; font-weight: 600; }
     .calc-svg-area { margin: 12px 0; }
+    .next-btn { padding: 12px 24px; border: 0; border-radius: 14px; background: #5c6bc0; color: white; font-size: 16px; font-weight: 700; cursor: pointer; }
+    .next-btn[hidden] { display: none; }
     .calc-options { display: flex; flex-direction: column; gap: 10px; max-width: 340px; margin: 16px auto; }
     .calc-opt {
       padding: 16px; border: 3px solid #E5E5EA; background: white; border-radius: 16px;
@@ -128,6 +130,7 @@
 </head>
 <body>
   <div class="page-container">
+    <p id="learningProgress" role="status" aria-live="polite"></p>
     <nav class="nav-bar">
       <a href="../../index.html" class="nav-back">← 返回</a>
       <span class="nav-title">圆柱与圆锥</span>
@@ -264,7 +267,8 @@
           <div class="calc-options" id="calc-options"></div>
         </div>
 
-        <div class="result-text" id="calc-result"></div>
+        <div class="result-text" id="calc-result" role="status" aria-live="polite"></div>
+        <button class="next-btn" id="calc-next" hidden>下一题 →</button>
       </div>
     </div>
 
@@ -285,7 +289,8 @@
           </div>
           <div class="challenge-q" id="ch-question"></div>
           <div class="challenge-opts" id="ch-options"></div>
-          <div class="result-text" id="ch-result"></div>
+          <div class="result-text" id="ch-result" role="status" aria-live="polite"></div>
+          <button class="next-btn" id="ch-next" hidden>下一题 →</button>
         </div>
 
         <div id="challenge-end" style="display:none;">
@@ -298,6 +303,27 @@
 
   <script src="../../assets/js/common.js"></script>
   <script>
+    const learningMilestones = {unfold: false, calc: false, challenge: false};
+    const milestoneNames = {unfold: '查看两种展开图', calc: '答对三道计算题', challenge: '挑战十题中答对至少七题'};
+    let progressSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('cylinder-and-cone');
+    let completionAttempted = false;
+    function showLearningProgress() {
+      const status = document.getElementById('learningProgress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      const remaining = Object.keys(learningMilestones).filter(key => !learningMilestones[key]);
+      status.textContent = '本次学习完成条件 ' + (3 - remaining.length) + '/3：还需' + remaining.map(key => milestoneNames[key]).join('、') + '。未全部达标时，刷新会清空本次阶段进度。';
+    }
+    function completeMilestone(key) {
+      learningMilestones[key] = true;
+      if (!progressSaved && !completionAttempted && Object.values(learningMilestones).every(Boolean)) {
+        completionAttempted = true;
+        progressSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('cylinder-and-cone');
+      }
+      showLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', () => { if (completionAttempted) { progressSaved = true; showLearningProgress(); } });
+    showLearningProgress();
     /* ========== 模式切换 ========== */
     function switchMode(idx) {
       document.querySelectorAll('.mode-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
@@ -315,8 +341,11 @@
 
     /* ========== 模式1: 展开图 ========== */
     let currentUnfold = null;
+    const viewedUnfolds = new Set();
     function showUnfold(type) {
       currentUnfold = type;
+      viewedUnfolds.add(type);
+      if (viewedUnfolds.size === 2) completeMilestone('unfold');
       document.getElementById('btn-cylinder-unfold').setAttribute('aria-pressed', String(type === 'cylinder'));
       document.getElementById('btn-cone-unfold').setAttribute('aria-pressed', String(type === 'cone'));
       document.getElementById('unfoldCanvas').setAttribute('aria-label', type === 'cylinder' ? '圆柱展开示意：两个圆形底面和一个侧面长方形，长方形的长等于底面周长' : '圆锥展开示意：一个圆形底面和一个侧面扇形，扇形弧长等于底面周长');
@@ -444,6 +473,7 @@
 
     function nextCalc() {
       calcLocked = false;
+      document.getElementById('calc-next').hidden = true;
       document.getElementById('calc-result').textContent = '';
       const type = randInt(0, 3);
       const r = randInt(1, 8);
@@ -522,12 +552,14 @@
       calcLocked = true;
       const allBtns = document.querySelectorAll('.calc-opt');
       allBtns.forEach(b => {
+        b.disabled = true;
         const val = parseFloat(b.textContent);
         if (Math.abs(val - answer) < 0.01) b.classList.add('correct');
         if (b === btn && Math.abs(selected - answer) >= 0.01) b.classList.add('wrong');
       });
       if (Math.abs(selected - answer) < 0.01) {
         calcCorrect++;
+        if (calcCorrect >= 3) completeMilestone('calc');
         document.getElementById('calc-result').textContent = '✅ 答对了！';
         document.getElementById('calc-result').style.color = '#34C759';
       } else {
@@ -537,8 +569,10 @@
       }
       document.getElementById('calc-correct').textContent = calcCorrect;
       document.getElementById('calc-wrong').textContent = calcWrong;
-      setTimeout(nextCalc, 1500);
+      document.getElementById('calc-next').hidden = false;
     }
+
+    document.getElementById('calc-next').addEventListener('click', nextCalc);
 
     /* ========== 模式3: 挑战 ========== */
     let chQuestions = [], chIdx = 0, chScore = 0, chLocked = false;
@@ -612,6 +646,7 @@
 
     function showChQ() {
       chLocked = false;
+      document.getElementById('ch-next').hidden = true;
       document.getElementById('ch-result').textContent = '';
       const q = chQuestions[chIdx];
       document.getElementById('ch-q-num').textContent = chIdx + 1;
@@ -634,6 +669,7 @@
       chLocked = true;
       const allBtns = document.querySelectorAll('.challenge-opt');
       allBtns.forEach(b => {
+        b.disabled = true;
         if (isText) {
           if (b.textContent === answer) b.classList.add('correct');
           if (b === btn && b.textContent !== answer) b.classList.add('wrong');
@@ -654,7 +690,9 @@
         document.getElementById('ch-result').style.color = '#FF3B30';
       }
       document.getElementById('ch-score').textContent = chScore;
-      setTimeout(() => {
+      document.getElementById('ch-next').hidden = false;
+    }
+    document.getElementById('ch-next').addEventListener('click', () => {
         chIdx++;
         if (chIdx >= 10) {
           document.getElementById('challenge-running').style.display = 'none';
@@ -665,11 +703,12 @@
           else if (chScore >= 5) msg = `💪 继续加油！${chScore}/10`;
           else msg = `📖 再复习一下吧！${chScore}/10`;
           document.getElementById('ch-final').textContent = msg;
+          if (chScore >= 7) completeMilestone('challenge');
         } else {
           showChQ();
         }
-      }, 1500);
-    }
+
+    });
   </script>
 </body>
 </html>
