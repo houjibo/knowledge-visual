@@ -53,3 +53,37 @@ test('固定随机值可进入异分母并完成五关、重新开始', async ({
   await expect(page.locator('#level-info')).toContainText('第 1 关');
   await expect(page.locator('#ch-options button')).toHaveCount(4);
 });
+
+test('探索器表示假分数、负数并拒绝无效输入', async ({page}) => {
+  await page.goto(url);
+  const n1 = page.getByLabel('第一个分数的分子');
+  const d1 = page.getByLabel('第一个分数的分母');
+  const n2 = page.getByLabel('第二个分数的分子');
+  const d2 = page.getByLabel('第二个分数的分母');
+  const calc = page.locator('#exp-calc');
+  await n1.fill('5'); await d1.fill('3'); await n2.fill('1'); await d2.fill('3');
+  await calc.click();
+  const rows = page.locator('#exp-visual .bar-row');
+  await expect(rows).toHaveCount(3);
+  await expect(rows.nth(0)).toContainText('完整整体 × 1');
+  await expect(rows.nth(0).locator('.bar-track')).toHaveCount(2);
+  await expect(rows.nth(0).locator('.bar-track').nth(1).locator('.bar-seg.a')).toHaveCount(2);
+  await expect(rows.nth(2)).toContainText('完整整体 × 2');
+  await n1.fill('1'); await n2.fill('2');
+  await page.getByLabel('运算符').selectOption('-');
+  await calc.click();
+  await expect(rows.nth(2)).toContainText('=-1/3（绝对值示意）');
+  await expect(rows.nth(2).locator('.bar-seg.result')).toHaveCount(1);
+  for (const value of ['', '0', '1.5', '21']) {
+    await d1.fill(value);
+    await calc.click();
+    await expect(page.locator('#exp-error')).toContainText('请输入整数');
+    await expect(page.locator('#exp-result')).toBeEmpty();
+    await expect(rows).toHaveCount(0);
+  }
+  await d1.fill('7'); await d2.fill('11');
+  await page.getByLabel('运算符').selectOption('+');
+  await calc.click();
+  await expect(page.locator('#exp-error')).toBeEmpty();
+  await expect(page.locator('#exp-visual')).toContainText('结果分母大于 30');
+});

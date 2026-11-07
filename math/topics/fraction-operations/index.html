@@ -53,6 +53,8 @@
     .bar-row {
       display: flex; align-items: center; gap: 8px; width: 100%;
     }
+    .bar-tracks { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+    .bar-whole-count { font-size: 13px; color: #555; }
     .bar-label { font-size: 14px; font-weight: 600; color: #6E6E73; min-width: 60px; text-align: right; }
     .bar-track {
       flex: 1; display: flex; height: 40px; border: 2px solid #E5E5EA;
@@ -240,23 +242,24 @@
         <div class="explore-controls">
           <div class="explore-row">
             <div class="frac big">
-              <span class="num"><input type="number" class="num-input" id="exp-n1" value="1" min="0" max="20"></span>
+              <span class="num"><input type="number" class="num-input" id="exp-n1" aria-label="第一个分数的分子" value="1" min="0" max="20"></span>
               <span class="bar"></span>
-              <span class="den"><input type="number" class="num-input" id="exp-d1" value="3" min="1" max="20"></span>
+              <span class="den"><input type="number" class="num-input" id="exp-d1" aria-label="第一个分数的分母" value="3" min="1" max="20"></span>
             </div>
-            <select id="exp-op" style="width:56px;height:56px;border:3px solid #E5E5EA;border-radius:12px;font-size:28px;text-align:center;font-weight:700;color:#4A90D9;background:white;outline:none;">
+            <select id="exp-op" aria-label="运算符" style="width:56px;height:56px;border:3px solid #E5E5EA;border-radius:12px;font-size:28px;text-align:center;font-weight:700;color:#4A90D9;background:white;outline:none;">
               <option value="+">+</option>
               <option value="-">−</option>
             </select>
             <div class="frac big">
-              <span class="num"><input type="number" class="num-input" id="exp-n2" value="1" min="0" max="20"></span>
+              <span class="num"><input type="number" class="num-input" id="exp-n2" aria-label="第二个分数的分子" value="1" min="0" max="20"></span>
               <span class="bar"></span>
-              <span class="den"><input type="number" class="num-input" id="exp-d2" value="3" min="1" max="20"></span>
+              <span class="den"><input type="number" class="num-input" id="exp-d2" aria-label="第二个分数的分母" value="3" min="1" max="20"></span>
             </div>
           </div>
           <button class="calc-btn" id="exp-calc">✨ 计算</button>
         </div>
 
+        <div id="exp-error" role="alert"></div>
         <div class="bar-visual" id="exp-visual"></div>
         <div id="exp-result"></div>
         <div id="exp-steps"></div>
@@ -400,16 +403,31 @@
       const lbl = document.createElement('span');
       lbl.className = 'bar-label';
       lbl.textContent = label || `${n}/${d}`;
-      const track = document.createElement('div');
-      track.className = 'bar-track';
-      for (let i = 0; i < d; i++) {
-        const seg = document.createElement('div');
-        seg.className = 'bar-seg' + (i < n ? ` ${colorClass}` : '');
-        seg.style.width = (100 / d) + '%';
-        track.appendChild(seg);
-      }
+      const tracks = document.createElement('div');
+      tracks.className = 'bar-tracks';
+      const whole = Math.floor(n / d);
+      const remainder = n % d;
+      const addTrack = (filled, countLabel) => {
+        const track = document.createElement('div');
+        track.className = 'bar-track';
+        for (let i = 0; i < d; i++) {
+          const seg = document.createElement('div');
+          seg.className = 'bar-seg' + (i < filled ? ` ${colorClass}` : '');
+          seg.style.width = (100 / d) + '%';
+          track.appendChild(seg);
+        }
+        tracks.appendChild(track);
+        if (countLabel) {
+          const count = document.createElement('span');
+          count.className = 'bar-whole-count';
+          count.textContent = countLabel;
+          tracks.appendChild(count);
+        }
+      };
+      if (whole > 0) addTrack(d, `完整整体 × ${whole}`);
+      if (remainder > 0 || whole === 0) addTrack(remainder);
       row.appendChild(lbl);
-      row.appendChild(track);
+      row.appendChild(tracks);
       container.appendChild(row);
     }
 
@@ -417,16 +435,17 @@
     // 探索模式
     // ==========================================
     document.getElementById('exp-calc').addEventListener('click', function() {
-      const n1 = parseInt(document.getElementById('exp-n1').value) || 0;
-      const d1 = parseInt(document.getElementById('exp-d1').value) || 1;
-      const n2 = parseInt(document.getElementById('exp-n2').value) || 0;
-      const d2 = parseInt(document.getElementById('exp-d2').value) || 1;
+      const fields = ['exp-n1', 'exp-d1', 'exp-n2', 'exp-d2'].map(id => document.getElementById(id));
+      const values = fields.map(field => field.value === '' ? NaN : Number(field.value));
+      const [n1, d1, n2, d2] = values;
       const op = document.getElementById('exp-op').value;
-
-      if (d1 < 1 || d2 < 1 || n1 < 0 || n2 < 0 || d1 > 20 || d2 > 20) {
-        showToast('请输入 1~20 的正整数作为分母', 'warning');
+      const error = document.getElementById('exp-error');
+      if (!values.every(Number.isInteger) || n1 < 0 || n1 > 20 || n2 < 0 || n2 > 20 || d1 < 1 || d1 > 20 || d2 < 1 || d2 > 20) {
+        error.textContent = '请输入整数：分子为 0～20，分母为 1～20。';
+        ['exp-visual', 'exp-result', 'exp-steps'].forEach(id => { document.getElementById(id).innerHTML = ''; });
         return;
       }
+      error.textContent = '';
 
       // 计算
       const commonD = lcm(d1, d2);
@@ -442,7 +461,11 @@
       drawBar(vis, n1, d1, 'a', `${n1}/${d1}`);
       drawBar(vis, n2, d2, 'b', `${n2}/${d2}`);
       if (sd <= 30) {
-        drawBar(vis, Math.abs(sn), sd, 'result', `=${sn}/${sd}`);
+        drawBar(vis, Math.abs(sn), sd, 'result', `=${sn}/${sd}${sn < 0 ? '（绝对值示意）' : ''}`);
+      } else {
+        const note = document.createElement('div');
+        note.textContent = '结果分母大于 30，暂不绘制结果条。';
+        vis.appendChild(note);
       }
 
       // 结果

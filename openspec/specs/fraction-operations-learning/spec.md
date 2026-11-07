@@ -18,3 +18,21 @@ TBD - created by archiving change fraction-operations-reliability. Update Purpos
 #### Scenario: 固定随机值完成闯关
 - **WHEN** 随机值固定且学习者答对五关并选择再来一次
 - **THEN** 每关正常生成且重新显示第一关
+
+### Requirement: 探索器的图示与结果一致
+探索器 SHALL 显示假分数的完整整体数量与剩余部分，并明确负结果的条形图是绝对值示意。
+
+#### Scenario: 假分数相加
+- **WHEN** 输入 5/3 加 1/3
+- **THEN** 5/3 显示一个完整整体和三分之二，结果 2 显示两个完整整体
+
+#### Scenario: 负结果
+- **WHEN** 输入 1/3 减 2/3
+- **THEN** 结果为负三分之一，并标注条形图表示绝对值
+
+### Requirement: 输入须为有效范围内整数
+探索器 SHALL 拒绝空值、小数和超出显示范围的分子分母，给出可访问错误并清除旧结果。
+
+#### Scenario: 分母为空或为零
+- **WHEN** 用户清空分母或输入零并计算
+- **THEN** 显示范围提示且不显示上一次结果

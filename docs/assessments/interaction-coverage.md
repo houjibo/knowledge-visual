@@ -34,7 +34,7 @@
 - [因数与倍数](../../math/topics/factors-and-multiples/index.html)
   - 六类闯关题目固定随机边界、重复提交及十题完成与刷新；未覆盖探索、数轴和筛法。 [factor-multiple-challenge.spec.js](../../tests/browser/factor-multiple-challenge.spec.js)
 - [分数加减法](../../math/topics/fraction-operations/index.html)
-  - 异分母减法题面和判分、固定随机值下五关完成及重新开始；其他探索及全部题型尚未全面验收。 [fraction-operations.spec.js](../../tests/browser/fraction-operations.spec.js)
+  - 探索器假分数、负数及输入边界；异分母减法判分、固定随机值下五关完成和重试；其余内容未全面验收。 [fraction-operations.spec.js](../../tests/browser/fraction-operations.spec.js)
 - [分数的初步认识](../../math/topics/fractions/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [折线统计图](../../math/topics/line-charts/index.html)
