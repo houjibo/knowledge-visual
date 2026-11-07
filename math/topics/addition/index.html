@@ -342,16 +342,15 @@
         // 选项
         const opts = document.getElementById('make10-options');
         opts.innerHTML = '';
-        const choices = [need];
-        while (choices.length < 4) {
-          const c = Random.int(1, 9);
-          if (!choices.includes(c)) choices.push(c);
-        }
+        const choices = [need, ...Random.shuffle(Array.from({length: 9}, (_, i) => i + 1).filter(n => n !== need)).slice(0, 3)];
+        let answered = false;
         Random.shuffle(choices).forEach(c => {
           const btn = document.createElement('button');
           btn.className = 'make10-opt'; btn.textContent = c;
           btn.addEventListener('click', () => {
+            if (answered) return;
             if (c === need) {
+              answered = true;
               btn.classList.add('correct');
               streak++; Sound.play('correct'); celebrate();
               updateStreak();
@@ -437,8 +436,9 @@
 
     // === 模式4: 自由练习 ===
     (() => {
-      let a, b, op, answer;
+      let a, b, op, answer, answered = false, nextTimer = null;
       function newPractice() {
+        clearTimeout(nextTimer); answered = false;
         op = Math.random() < 0.5 ? '+' : '-';
         if (op === '+') {
           a = Random.int(1, 5); b = Random.int(1, 10 - a);
@@ -481,14 +481,16 @@
         inp.value = ''; inp.className = 'practice-answer'; inp.focus();
       }
       function checkAnswer() {
+        if (answered) return;
         const inp = document.getElementById('practice-answer');
         const val = parseInt(inp.value);
         if (val === answer) {
+          answered = true;
           inp.className = 'practice-answer correct';
           streak++; Sound.play('correct'); celebrate();
           updateStreak();
           showToast('🎉 答对了！');
-          setTimeout(newPractice, 1200);
+          nextTimer = setTimeout(newPractice, 1200);
         } else {
           inp.className = 'practice-answer wrong';
           Animator.shake(inp);
@@ -507,10 +509,11 @@
 
     // === 模式5: 挑战（综合） ===
     (() => {
-      let answer, qType, cStreak = 0, cBest = 0;
+      let answer, qType, cStreak = 0, cBest = 0, answered = false, nextTimer = null;
       const challengeTypes = ['add-10', 'make10', 'carry', 'reverse', 'compare'];
 
       function newChallenge() {
+        clearTimeout(nextTimer); answered = false;
         qType = Random.pick(challengeTypes);
         const qEl = document.getElementById('challenge-question');
         const pEl = document.getElementById('challenge-problem');
@@ -567,6 +570,8 @@
       }
 
       function onCorrect() {
+        if (answered) return;
+        answered = true;
         cStreak++;
         if (cStreak > cBest) { cBest = cStreak; document.getElementById('challenge-best').textContent = cBest; }
         document.getElementById('challenge-streak').textContent = cStreak;
@@ -576,25 +581,28 @@
         Sound.play('correct'); celebrate();
         // P1 进度追踪：挑战模式连对 5 题 → 标记本知识点完成
         if (cStreak >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('addition')) {
-          PageProgress.markDone('addition');
-          showToast('🏆 连对 5 题，本知识点已标记完成！');
+          if (PageProgress.markDone('addition')) showToast('🏆 连对 5 题，本知识点已标记完成！');
         }
-        setTimeout(newChallenge, 1200);
+        nextTimer = setTimeout(newChallenge, 1200);
       }
       function onWrong() {
+        if (answered) return;
+        answered = true;
         cStreak = 0;
         document.getElementById('challenge-streak').textContent = 0;
         document.getElementById('challenge-hint').innerHTML = `❌ 不对，正确答案是 <b>${answer}</b>`;
         document.getElementById('challenge-hint').style.color = '#FF3B30';
         document.getElementById('btn-check-challenge').disabled = true;
         Sound.play('wrong');
-        setTimeout(newChallenge, 1600);
+        nextTimer = setTimeout(newChallenge, 1600);
       }
 
       function checkCompare(sym) {
+        if (answered) return;
         if (sym === answer) onCorrect(); else onWrong();
       }
       function checkChallenge() {
+        if (answered) return;
         if (qType === 'compare') return;
         const inp = document.getElementById('challenge-answer');
         const val = parseInt(inp.value);

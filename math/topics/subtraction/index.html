@@ -243,8 +243,7 @@
     function bumpTotalCorrect() {
       totalCorrect++;
       if (totalCorrect >= 8 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('subtraction')) {
-        PageProgress.markDone('subtraction');
-        showToast('🎉 太棒了！「减法」已完成，知识地图已点亮！');
+        if (PageProgress.markDone('subtraction')) showToast('🎉 太棒了！「减法」已完成，知识地图已点亮！');
       }
     }
     function updateStreak() {
@@ -397,16 +396,15 @@
         // 选项
         const opts = document.getElementById('nl-options');
         opts.innerHTML = '';
-        const choices = [answer];
-        while (choices.length < 4) {
-          const c = Random.int(0, 10);
-          if (!choices.includes(c)) choices.push(c);
-        }
+        const choices = [answer, ...Random.shuffle(Array.from({length: 11}, (_, i) => i).filter(n => n !== answer)).slice(0, 3)];
+        let answered = false;
         Random.shuffle(choices).forEach(c => {
           const btn = document.createElement('button');
           btn.className = 'nl-opt'; btn.textContent = c;
           btn.addEventListener('click', () => {
+            if (answered) return;
             if (c === answer) {
+              answered = true;
               btn.classList.add('correct');
               streak++; Sound.play('correct'); celebrate();
               updateStreak();
@@ -494,8 +492,9 @@
 
     // === 模式4: 自由练习 ===
     (() => {
-      let a, b, answer;
+      let a, b, answer, answered = false, nextTimer = null;
       function newPractice() {
+        clearTimeout(nextTimer); answered = false;
         a = Random.int(2, 10);
         b = Random.int(1, a);
         answer = a - b;
@@ -516,15 +515,17 @@
         inp.value = ''; inp.className = 'practice-answer'; inp.focus();
       }
       function checkAnswer() {
+        if (answered) return;
         const inp = document.getElementById('practice-answer');
         const val = parseInt(inp.value);
         if (val === answer) {
+          answered = true;
           inp.className = 'practice-answer correct';
           streak++; Sound.play('correct'); celebrate();
           updateStreak();
           bumpTotalCorrect();
           showToast('🎉 答对了！');
-          setTimeout(newPractice, 1200);
+          nextTimer = setTimeout(newPractice, 1200);
         } else {
           inp.className = 'practice-answer wrong';
           Animator.shake(inp);

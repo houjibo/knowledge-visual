@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：120；尚未登记：196。
+主题总数：316；已登记部分交互证据：121；尚未登记：195。
 
 ## 已登记部分交互证据
 
@@ -62,6 +62,7 @@
 - [24时计时法](../../math/topics/24h-time/index.html)
   - 午夜、中午和晚间转换，固定随机值的唯一选项和配对、键盘配对及单次答题；时间线选择及换题；四项活动完成、知识地图、刷新和保存失败重试；整页无障碍未全面验收。 [time-conversion-reliability.spec.js](../../tests/browser/time-conversion-reliability.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
+  - 桌面与移动视口验证固定随机边界、数轴答错后点击、自由练习及加法挑战重复提交、保存失败重试；其他题型和真实设备尚未全面验收。 [basic-addition-subtraction-reliability.spec.js](../../tests/browser/basic-addition-subtraction-reliability.spec.js)
   - 从首页进入加法并获得练习正确、错误反馈；未覆盖全部学习模式。 [learning-paths.spec.js](../../tests/browser/learning-paths.spec.js)
 - [角的度量](../../math/topics/angle-measurement/index.html)
   - 零到平角的代表射线坐标、读角刻度、固定随机值及八类计算选项、按题计数、主动换题、三项练习完成及存储恢复；真实设备和完整无障碍未全面验收。 [angle-measurement-model-correctness.spec.js](../../tests/browser/angle-measurement-model-correctness.spec.js)
@@ -163,6 +164,8 @@
   - 首页至五主题的代表操作、路径返回、键盘折叠、窄屏及无脚本入口；不代表五主题全部行为或真实学习者研究已完成。 [area-to-volume-learning-path.spec.js](../../tests/browser/area-to-volume-learning-path.spec.js)、[primary-search.spec.js](../../tests/browser/primary-search.spec.js)
   - 五主题前后导航、返回路线、键盘、窄屏、无脚本及本地文件链接；真实学习者体验及全部主题交互未全面验收。 [area-to-volume-topic-navigation.spec.js](../../tests/browser/area-to-volume-topic-navigation.spec.js)、[area-to-volume-learning-path.spec.js](../../tests/browser/area-to-volume-learning-path.spec.js)
   - 路线完成计数、跨标签变化、首个未完成建议和存储不可读；真实学习者体验未全面验收。 [area-to-volume-resume-learning.spec.js](../../tests/browser/area-to-volume-resume-learning.spec.js)
+- [10以内减法](../../math/topics/subtraction/index.html)
+  - 桌面与移动视口验证固定随机边界、数轴答错后点击、自由练习及加法挑战重复提交、保存失败重试；其他题型和真实设备尚未全面验收。 [basic-addition-subtraction-reliability.spec.js](../../tests/browser/basic-addition-subtraction-reliability.spec.js)
 - [长方体和正方体表面积](../../math/topics/surface-area/index.html)
   - 立体图公共棱、展开图尺寸及五个生活题答案；计算练习、完成记录及完整无障碍尚未验收。 [surface-area-geometry-and-answers.spec.js](../../tests/browser/surface-area-geometry-and-answers.spec.js)
   - 计算题单次计分、不同应用题完成条件、地图记录和保存失败恢复；真机及完整无障碍尚未全面验收。 [surface-area-learning-completion.spec.js](../../tests/browser/surface-area-learning-completion.spec.js)
@@ -457,7 +460,6 @@
 - [简单推理](../../math/topics/simple-reasoning/index.html)
 - [简便计算](../../math/topics/simplified-calculation/index.html)
 - [统计与数据整理](../../math/topics/statistics/index.html)
-- [10以内减法](../../math/topics/subtraction/index.html)
 - [时间计算](../../math/topics/time-calculation/index.html)
 - [植树问题](../../math/topics/tree-planting/index.html)
 - [三角形的高与分类](../../math/topics/triangle-properties/index.html)
