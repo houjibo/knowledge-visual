@@ -106,14 +106,14 @@
     <!-- 探索 -->
     <div class="mode-content" id="mode-explore">
       <div class="card">
-        <p class="page-subtitle">六（1）班最喜欢的运动项目调查</p>
+        <p class="page-subtitle">示例：最喜欢的运动项目比例</p>
         <div class="explore-canvas-wrap"><canvas id="pieCanvas" width="640" height="380"></canvas></div>
         <div class="slider-group">
-          <div class="slider-label"><span>⚽ 足球</span><span id="valA">30%</span></div>
+          <label class="slider-label" for="sliderA"><span>⚽ 足球</span><span id="valA">30%</span></label>
           <input type="range" id="sliderA" min="5" max="60" value="30">
         </div>
         <div class="slider-group">
-          <div class="slider-label"><span>🏀 篮球</span><span id="valB">25%</span></div>
+          <label class="slider-label" for="sliderB"><span>🏀 篮球</span><span id="valB">25%</span></label>
           <input type="range" id="sliderB" min="5" max="60" value="25">
         </div>
         <div class="legend-list" id="legendList"></div>
@@ -173,12 +173,16 @@
     function parts() {
       const a = +sA.value, b = +sB.value;
       const rest = 100 - a - b;
-      const c = Math.max(5, Math.round(rest * 0.6));
-      const d = Math.max(0, rest - c);
+      const c = Math.round(rest * 0.6);
+      const d = rest - c;
       return [a, b, c, d];
     }
-    sA.addEventListener('input', draw);
-    sB.addEventListener('input', draw);
+    function updateSliders(changed, other) {
+      if (+changed.value + +other.value > 100) other.value = 100 - +changed.value;
+      draw();
+    }
+    sA.addEventListener('input', () => updateSliders(sA, sB));
+    sB.addEventListener('input', () => updateSliders(sB, sA));
     function draw() {
       if (curMode !== 'explore') return;
       const p = parts();
@@ -208,9 +212,9 @@
       // 图例
       const box = document.getElementById('legendList');
       box.innerHTML = p.map((v, i) =>
-        `<div class="legend-item"><span class="legend-dot" style="background:${COLORS[i]}"></span>${NAMES[i]}：${v}%（40 人班 → ${Math.round(40 * v / 100)} 人）</div>`).join('');
+        `<div class="legend-item"><span class="legend-dot" style="background:${COLORS[i]}"></span>${NAMES[i]}：${v}%（按 40 人估算约 ${Math.round(40 * v / 100)} 人）</div>`).join('');
       document.getElementById('factLine').textContent =
-        `全班 40 人 → 喜欢${NAMES[0].slice(2)}的有 ${Math.round(40 * p[0] / 100)} 人；所有部分合计 ${p.reduce((s, x) => s + x, 0)}%`;
+        `按 40 人估算，喜欢${NAMES[0].slice(2)}的约 ${Math.round(40 * p[0] / 100)} 人；比例合计 ${p.reduce((s, x) => s + x, 0)}%。各组人数取整后合计可能有偏差。`;
     }
 
     /* ---------- 出题器 ---------- */
@@ -222,7 +226,8 @@
       ];
       const sc = scenarios[Math.floor(Math.random() * scenarios.length)];
       const total = sc.whole[Math.floor(Math.random() * sc.whole.length)];
-      const pct = [10, 20, 25, 30, 40, 50, 60, 15, 35][Math.floor(Math.random() * 9)];
+      const validPercentages = [10, 20, 25, 30, 40, 50, 60, 15, 35].filter(value => Number.isInteger(total * value / 100));
+      const pct = Random.pick(validPercentages);
       const kind = Math.random();
       let q, ans, tip;
       if (kind < 0.5) {
@@ -235,14 +240,12 @@
         q = `${sc.item}共 ${total} ${sc.unit}，其中一类有 ${part} ${sc.unit}，在扇形统计图中它占百分之几？`;
         tip = `百分比 = 部分 ÷ 总数 = ${part} ÷ ${total} = ${pct}%。`;
       }
-      if (!Number.isInteger(ans)) return genQ();
       const unit = kind < 0.5 ? sc.unit : '%';
-      const opts = new Set([ans]);
-      while (opts.size < 4) {
-        const d = ans + (Math.floor(Math.random() * 4) + 1) * (Math.random() < .5 ? -1 : 1) * (kind < 0.5 ? 2 : 5);
-        if (d > 0) opts.add(d);
-      }
-      return { q, ans, opts: [...opts].sort((a, b) => a - b), tip, unit };
+      const max = kind < 0.5 ? total : 100;
+      const alternatives = [1, -1, 2, -2, 5, -5, 10, -10]
+        .map(offset => ans + offset).filter(value => value > 0 && value <= max);
+      const opts = [ans, ...Random.shuffle(alternatives).slice(0, 3)];
+      return { q, ans, opts: opts.sort((a, b) => a - b), tip, unit };
     }
     let streak = 0, totalAnswered = 0, totalCorrect = 0;
     function recordAnswer(ok) {
