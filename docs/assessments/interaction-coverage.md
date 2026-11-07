@@ -227,6 +227,7 @@
   - 固体压力箭头、液体深度换算与各向压强、密度选择、理想液压比例、首次作答和保存失败重试；大气模型与全页无障碍未全面验收。 [pressure-exploration.spec.js](../../tests/browser/pressure-exploration.spec.js)
 - [声现象 · 初中物理互动可视化](../../physics/middle/sound.html)
   - 音调模式波长、三种波形振幅、键盘、暂停与真空切换；回声动画、测验及真实设备未全面验收。 [sound-wave-visual-consistency.spec.js](../../tests/browser/sound-wave-visual-consistency.spec.js)
+  - 回声理想往返时间、温距边界、暂停分步及减少动态效果；真实声场、测验和实机未全面验收。 [sound-echo-time-consistency.spec.js](../../tests/browser/sound-echo-time-consistency.spec.js)、[sound-wave-visual-consistency.spec.js](../../tests/browser/sound-wave-visual-consistency.spec.js)
 - [电压与电阻 · 初中物理互动可视化](../../physics/middle/voltage-resistance.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
   - 电源、灯泡和电表的画布路径，导体长度边界、电阻电流读数、单动画循环及暂停；实际灯丝和完整无障碍未全面验收。 [resistance-experiment.spec.js](../../tests/browser/resistance-experiment.spec.js)

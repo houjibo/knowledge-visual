@@ -128,18 +128,25 @@
           <span class="var">s</span> <span class="eq">=</span> <span class="var">v</span> <span class="eq">×</span> <span class="var">t</span> <span class="eq">÷ 2</span>
         </div>
         <div class="slider-row">
-          <label>🏔️ 障碍物距离</label>
+          <label for="distSlider">🏔️ 障碍物距离</label>
           <input type="range" id="distSlider" min="50" max="500" value="170" />
           <span class="val" id="distVal">170 m</span>
         </div>
         <div class="slider-row">
-          <label>🌡️ 气温</label>
+          <label for="tempSlider">🌡️ 气温</label>
           <input type="range" id="tempSlider" min="-10" max="40" value="15" />
           <span class="val" id="tempVal">15°C</span>
         </div>
+        <div class="mode-switch">
+          <button type="button" class="mode-btn" id="echoStart">发出声波</button>
+          <button type="button" class="mode-btn" id="echoPause" disabled>暂停</button>
+          <button type="button" class="mode-btn" id="echoStep" disabled>下一阶段</button>
+          <button type="button" class="mode-btn" id="echoReset">重置</button>
+        </div>
+        <p id="echoStatus" role="status" aria-live="polite" style="margin:12px 0;color:#cbd5e1;line-height:1.6"></p>
         <div class="info-grid">
-          <div><b>声速公式：</b>v = 331 + 0.6t (m/s)</div>
-          <div><b>回声条件：</b>障碍物距人 ≥ 17m</div>
+          <div><b>声速近似：</b>v ≈ 331 + 0.6T (m/s)，T 为摄氏温度</div>
+          <div><b>辨别回声：</b>若以 0.1 秒为示例间隔、声速取 340 m/s，距离约为 17 m；实际听觉和环境各不相同。</div>
           <div><b>应用：</b>声呐、B超、测距仪</div>
           <div><b>点击画布：</b>发出声波，观察回声！</div>
         </div>
@@ -207,8 +214,7 @@ let particles = [];
 // Speed state
 let distance = 170;
 let temperature = 15;
-let soundPulse = null;
-let echoPulse = null;
+let echoRun = null;
 
 // Tone state
 let frequency = 300;
@@ -220,7 +226,16 @@ let tonePlaying = !reducedMotion.matches;
 const toneMotion = document.getElementById('toneMotion');
 function updateToneMotion() { toneMotion.textContent = tonePlaying ? '暂停波形' : '播放波形'; toneMotion.setAttribute('aria-pressed', String(!tonePlaying)); }
 toneMotion.addEventListener('click', () => { tonePlaying = !tonePlaying; updateToneMotion(); });
-reducedMotion.addEventListener('change', event => { if (event.matches) { tonePlaying = false; updateToneMotion(); } });
+reducedMotion.addEventListener('change', event => {
+  if (event.matches) {
+    tonePlaying = false; updateToneMotion();
+    if (echoRun && echoRun.playing) {
+      echoRun.elapsed = (performance.now() - echoRun.startedAt) / 1000;
+      echoRun.playing = false;
+      updateEchoControls(echoStateAt(echoRun.elapsed, echoRun.distance, echoRun.speed));
+    }
+  }
+});
 updateToneMotion();
 
 // ─── Tabs ───
@@ -240,7 +255,7 @@ document.querySelectorAll('.tab').forEach(t => {
 function updateHint() {
   const hints = {
     vibration: '点击画布敲击鼓面，观察振动产生声波',
-    speed: '调整距离和温度，点击画布发出声波测量回声',
+    speed: '调整距离和温度，点击画布或按钮发出声波，也可分步观察回声',
     tone: '调整频率和振幅，观察波形变化'
   };
   document.getElementById('hint').textContent = hints[currentTab];
@@ -248,8 +263,7 @@ function updateHint() {
 
 function resetScene() {
   waveRings = [];
-  soundPulse = null;
-  echoPulse = null;
+  resetEcho();
   drumHit = 0;
   particles = [];
 }
@@ -280,10 +294,12 @@ document.querySelectorAll('.mode-btn[data-wave]').forEach(b => {
 document.getElementById('distSlider')?.addEventListener('input', e => {
   distance = +e.target.value;
   document.getElementById('distVal').textContent = distance + ' m';
+  resetEcho();
 });
 document.getElementById('tempSlider')?.addEventListener('input', e => {
   temperature = +e.target.value;
   document.getElementById('tempVal').textContent = temperature + '°C';
+  resetEcho();
 });
 document.getElementById('freqSlider')?.addEventListener('input', e => {
   frequency = +e.target.value;
@@ -321,7 +337,7 @@ cv.addEventListener('click', e => {
       });
     }
   } else if (currentTab === 'speed') {
-    soundPulse = { x: 100, alpha: 1 };
+    startEcho();
   }
 });
 
@@ -409,6 +425,50 @@ function drawVibration() {
   ctx.fillText(`声速: ${speeds[medium]}`, 300, 80);
 }
 
+// 空气声速采用摄氏温度附近的线性近似；位置按路程比例表示。
+function echoStateAt(elapsed, dist, speed) {
+  const half = dist / speed, total = 2 * half;
+  if (elapsed >= total) return {phase: 'returned', position: 0, total};
+  if (elapsed >= half) return {phase: 'returning', position: 2 - elapsed / half, total};
+  return {phase: 'outgoing', position: Math.max(0, elapsed / half), total};
+}
+function updateEchoControls(state) {
+  const v = 331 + 0.6 * temperature;
+  const total = 2 * distance / v;
+  const labels = {outgoing: '去程', returning: '反射返回', returned: '声波已返回'};
+  const phase = state ? labels[state.phase] : '等待发出';
+  const status = document.getElementById('echoStatus');
+  const text = `${phase}；空气声速约 ${v.toFixed(1)} m/s，理想往返时间约 ${total.toFixed(2)} 秒。图形不按实景距离绘制，不播放声音。`;
+  if (status.textContent !== text) status.textContent = text;
+  const pause = document.getElementById('echoPause'), step = document.getElementById('echoStep');
+  const active = !!echoRun && (!state || state.phase !== 'returned');
+  pause.disabled = !active; step.disabled = !active;
+  pause.textContent = echoRun && echoRun.playing ? '暂停' : '继续';
+}
+function resetEcho() { echoRun = null; updateEchoControls(null); }
+function startEcho() {
+  const speed = 331 + 0.6 * temperature;
+  echoRun = {distance, speed, elapsed: 0, startedAt: performance.now(), playing: !reducedMotion.matches};
+  updateEchoControls(echoStateAt(0, distance, speed));
+}
+document.getElementById('echoStart').addEventListener('click', startEcho);
+document.getElementById('echoPause').addEventListener('click', () => {
+  if (!echoRun) return;
+  if (echoRun.playing) echoRun.elapsed = (performance.now() - echoRun.startedAt) / 1000;
+  else echoRun.startedAt = performance.now() - echoRun.elapsed * 1000;
+  echoRun.playing = !echoRun.playing;
+  updateEchoControls(echoStateAt(echoRun.elapsed, echoRun.distance, echoRun.speed));
+});
+document.getElementById('echoStep').addEventListener('click', () => {
+  if (!echoRun) return;
+  const half = echoRun.distance / echoRun.speed;
+  echoRun.elapsed = echoRun.elapsed < half ? half : 2 * half;
+  echoRun.playing = false;
+  updateEchoControls(echoStateAt(echoRun.elapsed, echoRun.distance, echoRun.speed));
+});
+document.getElementById('echoReset').addEventListener('click', resetEcho);
+resetEcho();
+
 // ─── Draw Speed ───
 function drawSpeed() {
   const speed = 331 + 0.6 * temperature;
@@ -446,61 +506,22 @@ function drawSpeed() {
   ctx.fillText(`${distance} m`, (personX + wallX) / 2, 370);
   ctx.textAlign = 'start';
 
-  // Sound pulse
-  if (soundPulse) {
-    // Outgoing wave
-    ctx.strokeStyle = '#3b82f6';
-    ctx.lineWidth = 3;
-    ctx.globalAlpha = soundPulse.alpha;
-    ctx.beginPath();
-    ctx.arc(personX + 30, 260, soundPulse.x - personX, -0.3, 0.3);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(personX + 30, 260, soundPulse.x - personX + 15, -0.3, 0.3);
-    ctx.stroke();
-
-    soundPulse.x += speed / 50;
-    if (soundPulse.x >= wallX && !echoPulse) {
-      echoPulse = { x: wallX, alpha: 0.8 };
-      soundPulse.alpha = 0;
-    }
-    soundPulse.alpha -= 0.003;
+  // 按往返时间将距离映射到人物和障碍物之间，非实景比例。
+  if (echoRun) {
+    if (echoRun.playing) echoRun.elapsed = Math.max(0, (performance.now() - echoRun.startedAt) / 1000);
+    const state = echoStateAt(echoRun.elapsed, echoRun.distance, echoRun.speed);
+    if (state.phase === 'returned') { echoRun.elapsed = state.total; echoRun.playing = false; }
+    const x = personX + 30 + state.position * (wallX - personX - 30);
+    ctx.fillStyle = state.phase === 'outgoing' ? '#3b82f6' : '#a855f7';
+    ctx.beginPath(); ctx.arc(x, 260, 10, 0, Math.PI * 2); ctx.fill();
+    updateEchoControls(state);
   }
-
-  // Echo pulse
-  if (echoPulse) {
-    ctx.strokeStyle = '#a855f7';
-    ctx.lineWidth = 3;
-    ctx.globalAlpha = echoPulse.alpha;
-    ctx.beginPath();
-    ctx.arc(wallX, 260, wallX - echoPulse.x, Math.PI - 0.3, Math.PI + 0.3);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(wallX, 260, wallX - echoPulse.x + 15, Math.PI - 0.3, Math.PI + 0.3);
-    ctx.stroke();
-
-    echoPulse.x -= speed / 50;
-    echoPulse.alpha -= 0.004;
-
-    if (echoPulse.x <= personX + 30) {
-      // Echo received
-      ctx.fillStyle = '#22c55e';
-      ctx.font = 'bold 18px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('✅ 听到回声！', 350, 130);
-      const echoTime = (2 * distance / speed).toFixed(2);
-      ctx.fillText(`t = ${echoTime} s`, 350, 155);
-      ctx.textAlign = 'start';
-      echoPulse.alpha = 0;
-    }
-  }
-  ctx.globalAlpha = 1;
 
   // Info display
   ctx.fillStyle = '#94a3b8';
   ctx.font = '14px monospace';
   ctx.fillText(`声速 v = ${speed.toFixed(1)} m/s`, 250, 450);
-  ctx.fillText(`回声时间 t = 2s/v = ${(2 * distance / speed).toFixed(2)} s`, 250, 475);
+  ctx.fillText(`理想往返时间 t = 2d/v = ${(2 * distance / speed).toFixed(2)} s`, 210, 475);
 }
 
 // 声速固定 340 m/s，横轴展示两米空间；振幅与动画仅作示意。
