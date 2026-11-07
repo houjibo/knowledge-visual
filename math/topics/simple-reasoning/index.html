@@ -63,7 +63,8 @@
     }
     .eliminate-cell.header { background: #F5F5F5; color: #6E6E73; font-size: 13px; }
     .eliminate-cell.row-label { background: #F5F5F5; color: #1D1D1F; font-size: 13px; }
-    .eliminate-cell.clickable { cursor: pointer; transition: all 0.2s; min-height: 44px; }
+    .eliminate-cell.clickable { border: 0; font-family: inherit; cursor: pointer; transition: all 0.2s; min-height: 44px; }
+    .pattern-opt:focus-visible, .eliminate-cell.clickable:focus-visible, .substitute-opt:focus-visible, .logic-opt:focus-visible { outline: 3px solid #005c53; outline-offset: -3px; }
     .eliminate-cell.clickable:active { transform: scale(0.95); }
     .eliminate-cell.marked-x { color: #FF3B30; font-size: 20px; font-weight: 700; background: #FFF0F0; }
     .eliminate-cell.marked-o { color: #34C759; font-size: 20px; font-weight: 700; background: #F0FFF0; }
@@ -256,7 +257,8 @@
       const optsEl = document.getElementById('patternOptions');
       optsEl.innerHTML = '';
       shuffleArray(template.options).forEach(opt => {
-        const btn = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.type = 'button';
         btn.className = 'pattern-opt';
         btn.textContent = opt;
         btn.onclick = function() { checkPattern(this, opt); };
@@ -314,8 +316,7 @@
       const allItems = [...items];
       names.forEach(name => {
         const notItems = allItems.filter(it => it !== assignment[name]);
-        const pick = notItems[Math.floor(Math.random() * notItems.length)];
-        clues.push({ name, not: pick });
+        notItems.forEach(item => clues.push({ name, not: item }));
       });
 
       // 额外线索
@@ -333,6 +334,7 @@
 
       document.getElementById('eliminateQuestion').innerHTML =
         `<strong>🧩 ${data.catName}分配问题</strong><br><br>` +
+        `<span>每人各选一种，三人选择互不相同。</span><br>` +
         data.clues.map(c => `<span class="clue">• ${c.name} 不喜欢 ${c.not}</span>`).join('<br>') +
         `<br><span class="clue">• ${data.names[0]} 和 ${data.names[1]} 选的不一样</span>` +
         `<br><br>请用排除法确定每人选了哪个！`;
@@ -352,7 +354,7 @@
         grid.innerHTML += `<div class="eliminate-cell row-label">${name}</div>`;
         data.items.forEach(item => {
           const cellId = `ec-${name}-${item}`;
-          grid.innerHTML += `<div class="eliminate-cell clickable" id="${cellId}" onclick="toggleEliminateCell('${name}','${item}')"></div>`;
+          grid.innerHTML += `<button type="button" class="eliminate-cell clickable" id="${cellId}" aria-label="${name}，${item}：未标记" onclick="toggleEliminateCell('${name}','${item}')"></button>`;
         });
       });
 
@@ -377,6 +379,7 @@
       cell.textContent = '';
       if (next === 'X') { cell.classList.add('marked-x'); cell.textContent = '✗'; }
       else if (next === 'O') { cell.classList.add('marked-o'); cell.textContent = '✓'; }
+      cell.setAttribute('aria-label', `${name}，${item}：${next === 'X' ? '排除' : next === 'O' ? '确定' : '未标记'}`);
     }
 
     function checkEliminate() {
@@ -399,7 +402,7 @@
         fb.textContent = '✅ 完全正确！你真是个推理小能手！';
         fb.className = 'eliminate-feedback correct';
         addScore();
-        setTimeout(() => { document.getElementById('eliminateNext').classList.add('show'); }, 1500);
+        document.getElementById('eliminateNext').classList.add('show');
       } else {
         fb.textContent = '❌ 还不太对，再试试用排除法推理～';
         fb.className = 'eliminate-feedback wrong';
@@ -427,25 +430,16 @@
 
     function loadSubstitute() {
       const s = generateSubstitute();
-      const wrongAnswers = new Set();
-      while (wrongAnswers.size < 3) {
-        const offset = (Math.floor(Math.random() * 5) + 1) * (Math.random() > 0.5 ? 1 : -1);
-        const w = s.answer + offset;
-        if (w > 0 && w !== s.answer) wrongAnswers.add(w);
-      }
+      const wrongAnswers = [s.answer + 1, s.answer + 2, s.answer + 3];
       const options = shuffleArray([s.answer, ...wrongAnswers]);
 
-      document.getElementById('substituteVisual').innerHTML =
-        `<span>${s.f2}</span><span style="font-size:24px;color:#6E6E73">=</span>` +
-        `<span>${s.f1}</span>`.repeat(s.ratio).split('').join('') ;
-      // rebuild visual properly
       let visualHtml = `<span>${s.f2}</span><span style="font-size:24px;color:#6E6E73;font-weight:700"> = </span>`;
       for (let i = 0; i < s.ratio; i++) visualHtml += `<span>${s.f1}</span>`;
       document.getElementById('substituteVisual').innerHTML = visualHtml;
 
       let eqHtml = '';
       if (s.val1 > 0) {
-        eqHtml += `<span class="known">${s.val1}个${s.f1} = ${s.val2}</span><br>`;
+        eqHtml += `<span class="known">1个${s.f1} = ${s.val1}</span><br>`;
       }
       eqHtml += `<span class="unknown">${s.questionCount}个${s.f2} = ？</span>`;
       document.getElementById('substituteEq').innerHTML = eqHtml;
@@ -453,7 +447,8 @@
       const optsEl = document.getElementById('substituteOptions');
       optsEl.innerHTML = '';
       options.forEach(opt => {
-        const btn = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.type = 'button';
         btn.className = 'substitute-opt';
         btn.textContent = opt;
         btn.onclick = function() { checkSubstitute(this, opt); };
@@ -470,7 +465,7 @@
       const s = substituteState;
       if (chosen === s.answer) {
         el.classList.add('correct');
-        document.getElementById('substituteFeedback').textContent = `✅ 正确！1个${s.f2}=${s.ratio}个${s.f1}，所以${s.questionCount}个${s.f2}=${s.answer}`;
+        document.getElementById('substituteFeedback').textContent = `✅ 正确！1个${s.f2}=${s.ratio}个${s.f1}=${s.val2}，所以${s.questionCount}个${s.f2}=${s.answer}`;
         document.getElementById('substituteFeedback').className = 'eliminate-feedback correct';
         addScore();
         setTimeout(() => { document.getElementById('substituteNext').classList.add('show'); }, 1500);
@@ -502,24 +497,24 @@
       },
       {
         scene: '🐶🐱🐰',
-        problem: '小花、小白、小黑三只宠物。<br><span class="highlight">小花不是白色的</span>，<span class="highlight">小白既不是白色也不是黑色</span>。<br>小花是什么颜色？',
+        problem: '小花、小白、小黑三只宠物分别是白色、黑色和花色。<br><span class="highlight">小花不是白色的</span>，<span class="highlight">小白既不是白色也不是黑色</span>。<br>小花是什么颜色？',
         options: ['白色','黑色','花色'],
         answer: '黑色',
         explain: '小白不是白色也不是黑色→小白是花色。小花不是白色→小花是黑色'
       },
       {
         scene: '📚📖📕',
-        problem: '语文、数学、英语三本书。<br><span class="highlight">小红拿的不是语文</span>，<span class="highlight">小明拿的是数学</span>。<br>小红拿的是什么？',
+        problem: '语文、数学、英语三本不同的书，小红和小明各拿一本。<br><span class="highlight">小红拿的不是语文</span>，<span class="highlight">小明拿的是数学</span>。<br>小红拿的是什么？',
         options: ['语文','数学','英语'],
         answer: '英语',
         explain: '小明拿数学，小红不拿语文→小红拿英语'
       },
       {
         scene: '🔴🟡🔵',
-        problem: '三个盒子分别装着红、黄、蓝球。<br><span class="highlight">1号盒不是红球</span>，<span class="highlight">2号盒是黄球</span>，<span class="highlight">1号盒不是蓝球</span>。<br>1号盒是什么球？',
+        problem: '三个盒子分别装着红、黄、蓝球。<br><span class="highlight">2号盒是黄球</span>，<span class="highlight">1号盒不是蓝球</span>。<br>1号盒是什么球？',
         options: ['红球','黄球','蓝球'],
         answer: '红球',
-        explain: '2号是黄球，1号不是红也不是蓝→等等，1号不是蓝也不是红→矛盾？不，1号不是红球且不是蓝球→1号只能是... 重新看：2号是黄球，1号不是红也不是蓝→这不可能。让我修正：1号不是蓝球→1号是红球，3号是蓝球'
+        explain: '2号是黄球，1号既不是黄球也不是蓝球，因此1号是红球。'
       },
       {
         scene: '👦👧👦',
@@ -530,10 +525,10 @@
       },
       {
         scene: '🍕🍔🌮',
-        problem: '早餐吃了包子、油条、豆浆中的一种。<br><span class="highlight">甲吃的不是包子</span>，<span class="highlight">乙既不吃包子也不吃油条</span>。<br>甲吃了什么？',
+        problem: '甲、乙、丙早餐分别选择包子、油条、豆浆中的一种，三人的选择各不相同。<br><span class="highlight">甲选的不是包子</span>，<span class="highlight">乙既不选包子也不选油条</span>。<br>甲选了什么？',
         options: ['包子','油条','豆浆'],
-        answer: '豆浆',
-        explain: '乙不吃包子也不吃油条→乙吃豆浆。甲不吃包子→甲吃油条... 等等，乙吃豆浆了，甲不吃包子→甲只能吃油条'
+        answer: '油条',
+        explain: '乙选豆浆，甲既不选包子也不能与乙相同，因此甲选油条。'
       }
     ];
 
@@ -548,7 +543,8 @@
       const optsEl = document.getElementById('logicOptions');
       optsEl.innerHTML = '';
       shuffleArray(currentLogic.options).forEach(opt => {
-        const btn = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.type = 'button';
         btn.className = 'logic-opt';
         btn.textContent = opt;
         btn.onclick = function() { checkLogic(this, opt); };

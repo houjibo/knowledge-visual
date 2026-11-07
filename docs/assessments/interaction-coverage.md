@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：121；尚未登记：195。
+主题总数：316；已登记部分交互证据：122；尚未登记：194。
 
 ## 已登记部分交互证据
 
@@ -159,6 +159,8 @@
   - 桌面与移动视口使用六个固定随机值验证图示计数、五类挑战答案、四个唯一选项及单题重复提交；其他模式、存储异常与整页无障碍未全面验收。 [ratio-proportion-learning-correctness.spec.js](../../tests/browser/ratio-proportion-learning-correctness.spec.js)
 - [扇形统计图](../../math/topics/sector-statistics/index.html)
   - 扇形图滑块、估算提示及部分随机题目；未覆盖整页。 [pie-chart.spec.js](../../tests/browser/pie-chart.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
+- [简单推理](../../math/topics/simple-reasoning/index.html)
+  - 桌面及移动视口验证固定随机值、排除法线索唯一性和键盘、代换全部数值组合及两道修正逻辑题；其他题目、进度和真实设备尚未全面验收。 [simple-reasoning-question-correctness.spec.js](../../tests/browser/simple-reasoning-question-correctness.spec.js)
 - [立体图形的认识](../../math/topics/solid-shapes/index.html)
   - 五类题目及各图形代表性参数的唯一计分、边界说明、键盘分类、题池与完成记录；不代表所有几何内容已评审。 [solid-shapes-learning.spec.js](../../tests/browser/solid-shapes-learning.spec.js)
   - 首页至五主题的代表操作、路径返回、键盘折叠、窄屏及无脚本入口；不代表五主题全部行为或真实学习者研究已完成。 [area-to-volume-learning-path.spec.js](../../tests/browser/area-to-volume-learning-path.spec.js)、[primary-search.spec.js](../../tests/browser/primary-search.spec.js)
@@ -457,7 +459,6 @@
 - [集合与韦恩图](../../math/topics/sets/index.html)
 - [图形的运动](../../math/topics/shape-motions/index.html)
 - [认识图形与位置](../../math/topics/shapes-and-position/index.html)
-- [简单推理](../../math/topics/simple-reasoning/index.html)
 - [简便计算](../../math/topics/simplified-calculation/index.html)
 - [统计与数据整理](../../math/topics/statistics/index.html)
 - [时间计算](../../math/topics/time-calculation/index.html)
