@@ -138,7 +138,7 @@
     <!-- 模式1: 认识钟表 -->
     <div class="mode-content active" id="mode-clock">
       <div class="card">
-        <p class="page-subtitle">拖动指针，认识钟表上的时间</p>
+        <p class="page-subtitle">使用按钮调整时间，观察时针和分针</p>
         <div class="clock-area">
           <svg class="clock-svg" id="clock-svg" viewBox="0 0 280 280">
             <circle cx="140" cy="140" r="130" class="clock-face"/>
@@ -179,7 +179,7 @@
             <line id="quiz-minute" class="clock-minute-hand" x1="140" y1="140" x2="140" y2="40"/>
             <circle cx="140" cy="140" r="6" class="clock-center"/>
           </svg>
-          <div class="quiz-feedback" id="quiz-feedback"></div>
+          <div class="quiz-feedback" id="quiz-feedback" role="status" aria-live="polite"></div>
           <div class="quiz-options" id="quiz-options"></div>
           <div class="action-bar">
             <button class="btn btn-warning" id="btn-new-quiz">🎲 换一个</button>
@@ -194,12 +194,12 @@
         <p class="page-subtitle">点一点，看看日历里的秘密</p>
         <div class="calendar-area">
           <div class="cal-nav">
-            <button class="cal-nav-btn" id="cal-prev">◀</button>
+            <button class="cal-nav-btn" id="cal-prev" aria-label="上个月">◀</button>
             <span class="cal-month-label" id="cal-month-label">2026年6月</span>
-            <button class="cal-nav-btn" id="cal-next">▶</button>
+            <button class="cal-nav-btn" id="cal-next" aria-label="下个月">▶</button>
           </div>
           <div class="calendar-grid" id="cal-grid"></div>
-          <div class="date-info" id="date-info">点击日期查看详细信息</div>
+          <div class="date-info" id="date-info" role="status" aria-live="polite">选择日期查看详细信息</div>
           <div class="action-bar">
             <button class="btn btn-primary" id="btn-today">📍 回到今天</button>
             <button class="btn btn-warning" id="btn-cal-quiz">🎯 今天是星期几？</button>
@@ -222,7 +222,7 @@
             <line id="calc-minute" class="clock-minute-hand" x1="140" y1="140" x2="140" y2="40"/>
             <circle cx="140" cy="140" r="6" class="clock-center"/>
           </svg>
-          <div class="calc-explain" id="calc-explain" style="display:none"></div>
+          <div class="calc-explain" id="calc-explain" role="status" aria-live="polite" style="display:none"></div>
           <div class="calc-options" id="calc-options"></div>
           <div class="action-bar">
             <button class="btn btn-warning" id="btn-new-calc">🎲 换一个</button>
@@ -244,8 +244,8 @@
     function bumpTotalCorrect() {
       totalCorrect++;
       if (totalCorrect >= 8 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('time-and-date')) {
-        PageProgress.markDone('time-and-date');
-        showToast('🎉 太棒了！「年月日」已完成，知识地图已点亮！');
+        const saved = PageProgress.markDone('time-and-date');
+        if (saved) showToast('🎉 太棒了！「时间与日期」已完成，知识地图已点亮！');
       }
     }
     function updateStreak() {
@@ -353,11 +353,13 @@
         hours = (hours - 1 + 24) % 24; updateClock(); Sound.play('click');
       });
       document.getElementById('btn-min-up').addEventListener('click', () => {
-        minutes = (minutes + 5) % 60; if (minutes === 0) hours = (hours + 1) % 24;
+        if (minutes + 5 >= 60) hours = (hours + 1) % 24;
+        minutes = (minutes + 5) % 60;
         updateClock(); Sound.play('click');
       });
       document.getElementById('btn-min-down').addEventListener('click', () => {
-        minutes = (minutes - 5 + 60) % 60; if (minutes === 55) hours = (hours - 1 + 24) % 24;
+        if (minutes < 5) hours = (hours - 1 + 24) % 24;
+        minutes = (minutes - 5 + 60) % 60;
         updateClock(); Sound.play('click');
       });
       document.getElementById('btn-now').addEventListener('click', () => {
@@ -390,13 +392,12 @@
         const opts = document.getElementById('quiz-options');
         opts.innerHTML = '';
         const correct = `${String(qHour).padStart(2, '0')}:${String(qMin).padStart(2, '0')}`;
-        const choices = new Set([correct]);
-        while (choices.size < 4) {
-          const fh = Random.int(1, 12);
-          const fm = Random.pick([0, 15, 30, 45, 5, 10, 20, 25, 35, 40, 50, 55]);
-          choices.add(`${String(fh).padStart(2, '0')}:${String(fm).padStart(2, '0')}`);
+        const candidates = [];
+        for (let h = 1; h <= 12; h++) for (let m = 0; m < 60; m += 5) {
+          const value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+          if (value !== correct) candidates.push(value);
         }
-        const arr = [...choices];
+        const arr = [correct, ...Random.shuffle(candidates).slice(0, 3)];
         Random.shuffle(arr).forEach(t => {
           const btn = document.createElement('button');
           btn.className = 'quiz-opt'; btn.textContent = t;
@@ -421,7 +422,6 @@
               streak = 0; Sound.play('wrong'); updateStreak();
               Animator.shake(btn);
             }
-            setTimeout(newQuiz, 2000);
           });
           opts.appendChild(btn);
         });
@@ -447,6 +447,7 @@
           `${viewYear}年${viewMonth + 1}月`;
         const grid = document.getElementById('cal-grid');
         grid.innerHTML = '';
+        document.getElementById('date-info').textContent = '选择日期查看详细信息';
         // 星期标题
         dayNames.forEach(d => {
           const h = document.createElement('div');
@@ -463,16 +464,20 @@
         }
         // 日期
         for (let d = 1; d <= daysInMonth; d++) {
-          const e = document.createElement('div');
+          const e = document.createElement('button');
+          e.type = 'button';
           e.className = 'cal-day'; e.textContent = d;
           const dow = new Date(viewYear, viewMonth, d).getDay();
           if (dow === 0 || dow === 6) e.classList.add('weekend');
           if (d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear()) {
             e.classList.add('today');
           }
+          e.setAttribute('aria-label', `${viewYear}年${viewMonth + 1}月${d}日`);
+          e.setAttribute('aria-pressed', 'false');
           e.addEventListener('click', () => {
-            grid.querySelectorAll('.cal-day').forEach(x => x.classList.remove('selected'));
+            grid.querySelectorAll('button.cal-day').forEach(x => { x.classList.remove('selected'); x.setAttribute('aria-pressed', 'false'); });
             e.classList.add('selected');
+            e.setAttribute('aria-pressed', 'true');
             const wNames = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
             const isToday = (d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear());
             document.getElementById('date-info').innerHTML =
@@ -530,7 +535,7 @@
         if (qType === 'add') {
           qAnswer = (qStartH + qDelta) % 12 || 12;
           document.getElementById('calc-question').textContent =
-            `现在是 ${qStartH}:00，过了 ${qDelta} 小时后是几点？`;
+            `现在是 ${qStartH}:${String(qStartM).padStart(2, '0')}，过了 ${qDelta} 小时后是几点？`;
         } else if (qType === 'sub') {
           qAnswer = (qStartH - qDelta + 12 - 1) % 12 + 1;
           document.getElementById('calc-question').textContent =
@@ -540,7 +545,7 @@
           const answerM = qStartM + qDelta;
           document.getElementById('calc-question').textContent =
             `现在是 ${qStartH}:${String(qStartM).padStart(2, '0')}，过了 ${qDelta} 分钟后是几点几分？`;
-          qAnswer = `${qStartH}:${String(answerM).padStart(2, '0')}`;
+          qAnswer = `${String(qStartH).padStart(2, '0')}:${String(answerM).padStart(2, '0')}`;
         }
 
         setHands('calc-hour', 'calc-minute', qStartH, qStartM);
@@ -550,27 +555,24 @@
         opts.innerHTML = '';
         let choices;
         if (typeof qAnswer === 'string') {
-          choices = new Set([qAnswer]);
-          while (choices.size < 4) {
-            const fh = Random.int(1, 12);
-            const fm = Random.pick([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
-            choices.add(`${String(fh).padStart(2, '0')}:${String(fm).padStart(2, '0')}`);
+          const candidates = [];
+          for (let h = 1; h <= 12; h++) for (let m = 0; m < 60; m += 5) {
+            const value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            if (value !== qAnswer) candidates.push(value);
           }
+          choices = [qAnswer, ...Random.shuffle(candidates).slice(0, 3)];
         } else {
-          choices = new Set([qAnswer]);
-          while (choices.size < 4) {
-            const c = Random.int(1, 12);
-            if (c !== qAnswer) choices.add(c);
-          }
+          const candidates = Array.from({length: 12}, (_, i) => i + 1).filter(h => h !== qAnswer);
+          choices = [qAnswer, ...Random.shuffle(candidates).slice(0, 3)];
         }
         Random.shuffle([...choices]).forEach(val => {
           const btn = document.createElement('button');
           btn.className = 'calc-opt';
-          btn.textContent = typeof val === 'string' ? val : `${val}:00`;
+          btn.textContent = typeof val === 'string' ? val : `${String(val).padStart(2, '0')}:${String(qStartM).padStart(2, '0')}`;
           btn.addEventListener('click', () => {
             if (btn.disabled) return;
             opts.querySelectorAll('.calc-opt').forEach(b => b.disabled = true);
-            const correctStr = typeof qAnswer === 'string' ? qAnswer : `${String(qAnswer).padStart(2, '0')}:00`;
+            const correctStr = typeof qAnswer === 'string' ? qAnswer : `${String(qAnswer).padStart(2, '0')}:${String(qStartM).padStart(2, '0')}`;
             const userStr = btn.textContent;
             if (userStr === correctStr) {
               btn.classList.add('correct');
@@ -587,7 +589,6 @@
               Animator.shake(btn);
               showExplain(false);
             }
-            setTimeout(newCalc, 2500);
           });
           opts.appendChild(btn);
         });
@@ -597,7 +598,7 @@
         const el = document.getElementById('calc-explain');
         let text;
         if (qType === 'add') {
-          text = `${qStartH}:00 + ${qDelta}小时 = ${String(qAnswer).padStart(2, '0')}:00`;
+          text = `${qStartH}:${String(qStartM).padStart(2, '0')} + ${qDelta}小时 = ${String(qAnswer).padStart(2, '0')}:${String(qStartM).padStart(2, '0')}`;
         } else if (qType === 'sub') {
           text = `${qStartH}:00 - ${qDelta}小时 = ${String(qAnswer).padStart(2, '0')}:00`;
         } else {
