@@ -131,3 +131,36 @@ test('二分之一与二分之一可加载并通过等号得分', async ({page})
   await expect(page.locator('#ch-correct')).toHaveText('1');
   expect(errors).toEqual([]);
 });
+
+test('两个物品平均分时生成四个选项且可答对', async ({page}) => {
+  const errors = await observeErrors(page);
+  await page.addInitScript(() => { Math.random = () => 0; });
+  await page.goto('/math/topics/division/index.html');
+  await expect(page.locator('#share-problem')).toContainText('2 个');
+  const choices = page.locator('#share-options .share-opt');
+  await expect(choices).toHaveCount(4);
+  expect(new Set(await choices.allTextContents()).size).toBe(4);
+  await choices.filter({hasText: /^1$/}).click();
+  await expect(page.locator('#share-result')).toContainText('2 ÷ 2 = 1');
+  expect(errors).toEqual([]);
+});
+
+test('凑成三与拆分三的题目生成四个选项且可答对', async ({page}) => {
+  const errors = await observeErrors(page);
+  await page.addInitScript(() => { Math.random = () => 0; });
+  await page.goto('/math/topics/number-composition/index.html');
+  await page.locator('.mode-tab[data-mode="make"]').click();
+  await expect(page.locator('#makeProblem')).toContainText('3');
+  const make = page.locator('#makeOptions .make-opt');
+  await expect(make).toHaveCount(4);
+  expect(new Set(await make.allTextContents()).size).toBe(4);
+  await make.filter({hasText: /^2$/}).click();
+  await expect(page.locator('#makeResult')).toContainText('正确');
+  await page.locator('.mode-tab[data-mode="quiz"]').click();
+  const quiz = page.locator('#quizOptions .quiz-opt');
+  await expect(quiz).toHaveCount(4);
+  expect(new Set(await quiz.allTextContents()).size).toBe(4);
+  await quiz.filter({hasText: /^2$/}).click();
+  await expect(page.locator('#quizResult')).toContainText('答对');
+  expect(errors).toEqual([]);
+});
