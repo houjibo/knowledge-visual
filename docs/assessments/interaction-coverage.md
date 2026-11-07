@@ -50,7 +50,7 @@
 - [20以内进位加法与退位减法](../../math/topics/20-within-addition-subtraction/index.html)
   - 固定随机边界、凑十破十的正确反馈和重复计分、十关完成及重启；未覆盖整页视觉内容。 [carry-borrow-practice.spec.js](../../tests/browser/carry-borrow-practice.spec.js)
 - [24时计时法](../../math/topics/24h-time/index.html)
-  - 午夜、中午和晚间转换，固定随机值的唯一选项和配对、键盘配对及单次答题；时间线键盘选择、关联题目与换题时序；整页无障碍未全面验收。 [time-conversion-reliability.spec.js](../../tests/browser/time-conversion-reliability.spec.js)
+  - 午夜、中午和晚间转换，固定随机值的唯一选项和配对、键盘配对及单次答题；时间线选择及换题；四项活动完成、知识地图、刷新和保存失败重试；整页无障碍未全面验收。 [time-conversion-reliability.spec.js](../../tests/browser/time-conversion-reliability.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
   - 从首页进入加法并获得练习正确、错误反馈；未覆盖全部学习模式。 [learning-paths.spec.js](../../tests/browser/learning-paths.spec.js)
 - [比大小与排序](../../math/topics/comparison-and-ordering/index.html)

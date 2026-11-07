@@ -121,6 +121,8 @@
       <span class="breadcrumb-current">24时计时法</span>
     </nav>
 
+    <p id="learning-progress" role="status" aria-live="polite"></p>
+
     <div class="mode-tabs">
       <button class="mode-tab active" data-mode="explore">🕐 认识</button>
       <button class="mode-tab" data-mode="quiz">🎯 转换</button>
@@ -247,6 +249,31 @@
   (function() {
     'use strict';
 
+    var milestones = {explore: false, quiz: false, timeline: false, match: false};
+    var milestoneNames = {explore: '调整时间', quiz: '答对转换题', timeline: '答对时间线题', match: '完成五组配对'};
+    var progressSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('24h-time');
+    var completionAttempted = false;
+    function showLearningProgress() {
+      var status = document.getElementById('learning-progress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      var done = Object.keys(milestones).filter(function(key) { return milestones[key]; });
+      var remaining = Object.keys(milestones).filter(function(key) { return !milestones[key]; }).map(function(key) { return milestoneNames[key]; });
+      status.textContent = '本次学习完成条件 ' + done.length + '/4：还需' + remaining.join('、') + '。未完成的阶段在刷新后需重新进行。';
+    }
+    function completeMilestone(key) {
+      milestones[key] = true;
+      if (!progressSaved && !completionAttempted && Object.keys(milestones).every(function(name) { return milestones[name]; })) {
+        completionAttempted = true;
+        progressSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('24h-time');
+      }
+      showLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', function() {
+      if (completionAttempted) { progressSaved = true; showLearningProgress(); }
+    });
+    showLearningProgress();
+
     // ===== Tab 切换 =====
     var tabs = document.querySelectorAll('.mode-tab');
     var contents = document.querySelectorAll('.mode-content');
@@ -349,6 +376,7 @@
     slider.addEventListener('input', function() {
       var totalMin = parseInt(slider.value);
       updateClocks(Math.floor(totalMin / 60), totalMin % 60);
+      completeMilestone('explore');
     });
     updateClocks(15, 0);
     slider.value = 900;
@@ -370,6 +398,7 @@
       var ex = examples[idx];
       slider.value = ex.h * 60 + ex.m;
       updateClocks(ex.h, ex.m);
+      completeMilestone('explore');
     }
 
     document.getElementById('prev-example').addEventListener('click', function() {
@@ -449,6 +478,7 @@
       allBtns.forEach(function(b) { b.disabled = true; });
 
       if (chosen === correct) {
+        completeMilestone('quiz');
         btn.classList.add('correct');
         quizScore++;
         quizStreak++;
@@ -548,6 +578,7 @@
           if (btn.disabled) return;
           allBtns.forEach(function(b) { b.disabled = true; });
           if (opt === correct) {
+            completeMilestone('timeline');
             btn.classList.add('correct');
             fbEl.textContent = '✅ 答对了！';
             fbEl.className = 'quiz-feedback correct';
@@ -656,6 +687,7 @@
         selectedRight = null;
 
         if (matchedCount === matchPairs.length) {
+          completeMilestone('match');
           document.getElementById('match-complete').textContent = '🎉 全部配对成功！';
           document.getElementById('match-complete').style.display = 'block';
           document.getElementById('match-restart').style.display = 'inline-block';

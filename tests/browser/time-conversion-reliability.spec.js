@@ -85,3 +85,50 @@ test('时间线键盘选择的事件决定题目，反馈保持到主动换题',
   await expect(dinner).toHaveAttribute('aria-pressed', 'false');
   await expect(page.locator('#tl-question')).toContainText('午夜');
 });
+
+async function completeTimeActivities(page) {
+  await page.getByLabel('选择一天中的时间').fill('720');
+  await page.locator('[data-mode="quiz"]').click();
+  await page.locator('#quiz-options button').getByText('00:00', {exact: true}).click();
+  await page.locator('[data-mode="timeline"]').click();
+  await page.locator('#tl-options button').getByText('00:00', {exact: true}).click();
+  await page.locator('[data-mode="match"]').click();
+  for (const card of await page.locator('#match-left button').all()) {
+    const id = await card.getAttribute('data-id');
+    await card.click();
+    await page.locator(`#match-right button[data-id="${id}"]`).click();
+  }
+}
+
+test('四项活动达标后保存并在知识地图显示完成', async ({page}) => {
+  await page.addInitScript(() => { Math.random = () => 0; });
+  await page.goto(url);
+  await expect(page.locator('#learning-progress')).toContainText('0/4');
+  await page.getByLabel('选择一天中的时间').fill('720');
+  await expect(page.locator('#learning-progress')).toContainText('1/4');
+  expect(await page.evaluate(() => PageProgress.isDone('24h-time'))).toBe(false);
+  await completeTimeActivities(page);
+  await expect(page.locator('#learning-progress')).toHaveText('✓ 本主题已完成');
+  expect(JSON.parse(await page.evaluate(() => localStorage.getItem('kv-math-progress-v2')))['primary:24h-time']).toBeTruthy();
+  await page.reload();
+  await expect(page.locator('#learning-progress')).toHaveText('✓ 本主题已完成');
+  await page.goto('/math/index.html');
+  await expect(page.locator('a.topic-card[href="topics/24h-time/index.html"] .progress-badge')).toHaveText('✓');
+});
+
+test('进度保存失败时可重试且不误报已保存', async ({page}) => {
+  await page.addInitScript(() => {
+    Math.random = () => 0;
+    window.originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => { throw new Error('denied'); };
+  });
+  await page.goto(url);
+  await completeTimeActivities(page);
+  await expect(page.locator('#learning-progress')).toContainText('尚未保存');
+  await expect(page.locator('#math-progress-save-notice')).toContainText('暂未保存');
+  await page.evaluate(() => { Storage.prototype.setItem = window.originalSetItem; });
+  await page.locator('#math-progress-save-notice button').click();
+  await expect(page.locator('#learning-progress')).toHaveText('✓ 本主题已完成');
+  await page.reload();
+  await expect(page.locator('#learning-progress')).toHaveText('✓ 本主题已完成');
+});
