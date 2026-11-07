@@ -69,3 +69,32 @@ test('读图并列最大值答错时标出全部显示的正确选项', async ({
   await expect(page.locator('#read-feedback')).toContainText('周二');
   await expect(page.locator('#read-feedback')).toContainText('周三');
 });
+
+for (const [mode, type] of [['read', .41], ['read', .61], ['challenge', 0], ['challenge', .51]]) {
+  test(`${mode} 步数图题型 ${type} 与坐标轴均使用千步`, async ({page}) => {
+    await page.goto('/math/topics/line-charts/index.html');
+    await page.evaluate(type => {
+      const values = [.99, ...Array(7).fill(0), type];
+      Math.random = () => values.length ? values.shift() : 0;
+    }, type);
+    await page.locator(`.mode-tab[data-mode="${mode}"]`).click();
+    if (mode === 'challenge') await page.locator('#ch-start-btn').click();
+    const prefix = mode === 'read' ? 'read' : 'ch';
+    await expect(page.locator(`#${prefix}-title`)).toHaveText('一周每日步数统计');
+    await expect(page.locator(`#${prefix}-svg`)).toContainText('步数(千步)');
+    await expect(page.locator(`#${prefix}-${mode === 'read' ? 'question' : 'problem'}`)).toContainText('千步');
+  });
+}
+
+test('挑战模式换题同步更新图表标题', async ({page}) => {
+  await page.goto('/math/topics/line-charts/index.html');
+  await page.evaluate(() => { Math.random = () => 0; });
+  await page.locator('.mode-tab[data-mode="challenge"]').click();
+  await page.locator('#ch-start-btn').click();
+  await expect(page.locator('#ch-title')).toHaveText('某地一周平均气温');
+  await page.locator('#ch-opts button').filter({hasText: /^5$/}).click();
+  await page.evaluate(() => { Math.random = () => .99; });
+  await page.locator('#ch-next-btn').click();
+  await expect(page.locator('#ch-title')).toHaveText('一周每日步数统计');
+  await expect(page.locator('#ch-svg')).toContainText('步数(千步)');
+});
