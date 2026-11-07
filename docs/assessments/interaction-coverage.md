@@ -4,10 +4,12 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：57；尚未登记：259。
+主题总数：316；已登记部分交互证据：58；尚未登记：258。
 
 ## 已登记部分交互证据
 
+- [化学键与分子结构 · 互动可视化](../../chemistry/high/chemical-bond.html)
+  - 模式和分子键盘选择、六题进度及存储失败；二维图示和完整化学内容未全面验收。 [chemical-bond-learning.spec.js](../../tests/browser/chemical-bond-learning.spec.js)
 - [晶体结构 · 高中化学互动可视化](../../chemistry/high/crystal-structure.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [离子反应 · 高中化学互动可视化](../../chemistry/high/ionic-reactions.html)
@@ -135,7 +137,6 @@
 - [烃的衍生物 - 醇酚醛羧酸酯](../../chemistry/high/10-derivatives.html)
 - [生命中的基础有机物 - 糖类·油脂·蛋白质](../../chemistry/high/11-biomolecules.html)
 - [化学实验 · 互动可视化](../../chemistry/high/12-experiment.html)
-- [化学键与分子结构 · 互动可视化](../../chemistry/high/chemical-bond.html)
 - [电化学 · 互动可视化](../../chemistry/high/electrochemistry.html)
 - [水溶液中的离子平衡 - 高中化学可视化](../../chemistry/high/ion-equilibrium.html)
 - [非金属及其化合物 · 互动可视化](../../chemistry/high/nonmetals.html)
