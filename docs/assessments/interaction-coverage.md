@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：95；尚未登记：221。
+主题总数：316；已登记部分交互证据：96；尚未登记：220。
 
 ## 已登记部分交互证据
 
@@ -53,6 +53,8 @@
   - 午夜、中午和晚间转换，固定随机值的唯一选项和配对、键盘配对及单次答题；时间线选择及换题；四项活动完成、知识地图、刷新和保存失败重试；整页无障碍未全面验收。 [time-conversion-reliability.spec.js](../../tests/browser/time-conversion-reliability.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
   - 从首页进入加法并获得练习正确、错误反馈；未覆盖全部学习模式。 [learning-paths.spec.js](../../tests/browser/learning-paths.spec.js)
+- [角的度量](../../math/topics/angle-measurement/index.html)
+  - 零到平角的代表射线坐标、读角刻度、固定随机值及八类计算选项、按题计数和主动换题；完成进度、真实设备和完整无障碍未验收。 [angle-measurement-model-correctness.spec.js](../../tests/browser/angle-measurement-model-correctness.spec.js)
 - [年月日的认识](../../math/topics/calendar-units/index.html)
   - 十二个月北半球气象季节、世纪闰年与输入校验、日期计数口径、作答计数及进度保存失败恢复；历史历法和整页无障碍未全面验收。 [calendar-learning-accuracy.spec.js](../../tests/browser/calendar-learning-accuracy.spec.js)
 - [比大小与排序](../../math/topics/comparison-and-ordering/index.html)
@@ -323,7 +325,6 @@
 - [认识算盘](../../math/topics/abacus/index.html)
 - [100以内加减法](../../math/topics/addition-subtraction-within-100/index.html)
 - [万以内加减法](../../math/topics/addition-subtraction-within-10000/index.html)
-- [角的度量](../../math/topics/angle-measurement/index.html)
 - [角的初步认识](../../math/topics/angles/index.html)
 - [面积与周长](../../math/topics/area-and-perimeter/index.html)
 - [认识面积单位](../../math/topics/area-units/index.html)
