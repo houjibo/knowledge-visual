@@ -1,34 +1,9 @@
 const {test, expect} = require('@playwright/test');
-const fs = require('node:fs');
-const http = require('node:http');
-const os = require('node:os');
-const path = require('node:path');
-const {execFileSync} = require('node:child_process');
+const {startReleaseServer} = require('./release-server');
 
-let temporary, server, base;
-test.beforeAll(async () => {
-  temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'kv-publish-'));
-  const root = path.join(temporary, 'knowledge-visual');
-  execFileSync('python3', ['scripts/build_site.py', '--output', root], {cwd: path.resolve(__dirname, '../..')});
-  server = http.createServer((req, res) => {
-    const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
-    if (!pathname.startsWith('/knowledge-visual/')) { res.writeHead(404).end(); return; }
-    let file = path.resolve(root, '.' + pathname.slice('/knowledge-visual'.length));
-    if (file !== root && !file.startsWith(root + path.sep)) { res.writeHead(404).end(); return; }
-    try {
-      if (fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
-      const ext = path.extname(file);
-      res.setHeader('Content-Type', {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.ico': 'image/x-icon'}[ext] || 'application/octet-stream');
-      res.end(fs.readFileSync(file));
-    } catch { res.writeHead(404).end(); }
-  });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  base = `http://127.0.0.1:${server.address().port}/knowledge-visual/`;
-});
-test.afterAll(async () => {
-  if (server) await new Promise(resolve => server.close(resolve));
-  if (temporary) fs.rmSync(temporary, {recursive: true, force: true});
-});
+let release, base;
+test.beforeAll(async () => { release = await startReleaseServer(); base = release.base; });
+test.afterAll(async () => { if (release) await release.close(); });
 
 test('发布包子路径的首页搜索和四学科学习交互', async ({page}) => {
   const errors = [];

@@ -22,3 +22,10 @@ TBD - created by archiving change static-release-artifact. Update Purpose after 
 #### Scenario: 从首页进入主题
 - **WHEN** 学习者在子路径部署的站点从首页查找或进入四学科代表主题
 - **THEN** 页面及资源加载，所选学习交互可用
+
+### Requirement: 发布包页面有子路径加载检查
+发布验证 SHALL 在实际生成的发布包下，通过项目子路径逐页检查清单中的 HTML 页面及其加载时本地资源。
+
+#### Scenario: 验证发布包所有页面
+- **WHEN** 维护者运行发布包检查
+- **THEN** 清单中的每个页面在桌面浏览器加载并检查标题、HTTP 错误与未捕获异常，同时保留代表性桌面及窄屏交互检查
