@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：100；含内联 while 的页面：64。同一页面可能出现在两类中。
+含候选 div 控件的页面：95；含内联 while 的页面：64。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -93,16 +93,11 @@
 - [physics/middle/state-change.html](../../physics/middle/state-change.html)：119 行（tab）、120 行（tab）、121 行（tab）、122 行（tab）
 - [physics/middle/work-energy.html](../../physics/middle/work-energy.html)：73 行（tab）、74 行（tab）、75 行（tab）、76 行（tab）、77 行（tab）、78 行（tab）
 - [physics/uni/08-wave-optics.html](../../physics/uni/08-wave-optics.html)：88 行（tab）、89 行（tab）、90 行（tab）、91 行（tab）、92 行（tab）
-- [physics/uni/doppler.html](../../physics/uni/doppler.html)：103 行（tab）、104 行（tab）、105 行（tab）
 - [physics/uni/electrostatic-field.html](../../physics/uni/electrostatic-field.html)：234 行（tab）、235 行（tab）、236 行（tab）、237 行（tab）、238 行（tab）
 - [physics/uni/em-induction.html](../../physics/uni/em-induction.html)：151 行（tab）、152 行（tab）、153 行（tab）、154 行（tab）
 - [physics/uni/entropy.html](../../physics/uni/entropy.html)：88 行（tab）、89 行（tab）、90 行（tab）、91 行（tab）、92 行（tab）
-- [physics/uni/fluid-mechanics.html](../../physics/uni/fluid-mechanics.html)：104 行（tab）、105 行（tab）、106 行（tab）
-- [physics/uni/laser-physics.html](../../physics/uni/laser-physics.html)：97 行（tab）、98 行（tab）、99 行（tab）
 - [physics/uni/mechanics.html](../../physics/uni/mechanics.html)：84 行（tab）、85 行（tab）、86 行（tab）、87 行（tab）、88 行（tab）
 - [physics/uni/nuclear.html](../../physics/uni/nuclear.html)：134 行（tab）、135 行（tab）、136 行（tab）
-- [physics/uni/phase-transitions.html](../../physics/uni/phase-transitions.html)：104 行（tab）、105 行（tab）、106 行（tab）
-- [physics/uni/photoelectric.html](../../physics/uni/photoelectric.html)：104 行（tab）、105 行（tab）、106 行（tab）
 - [physics/uni/quantum.html](../../physics/uni/quantum.html)：212 行（tab）、213 行（tab）、214 行（tab）、215 行（tab）、216 行（tab）、217 行（tab）
 - [physics/uni/relativity.html](../../physics/uni/relativity.html)：163 行（tab）、164 行（tab）、165 行（tab）、166 行（tab）、167 行（tab）、168 行（tab）
 - [physics/uni/rlc-circuit.html](../../physics/uni/rlc-circuit.html)：97 行（tab）、98 行（tab）、99 行（tab）

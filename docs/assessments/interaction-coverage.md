@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：85；尚未登记：231。
+主题总数：316；已登记部分交互证据：90；尚未登记：226。
 
 ## 已登记部分交互证据
 
@@ -161,6 +161,16 @@
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
   - 电源、灯泡和电表的画布路径，导体长度边界、电阻电流读数、单动画循环及暂停；实际灯丝和完整无障碍未全面验收。 [resistance-experiment.spec.js](../../tests/browser/resistance-experiment.spec.js)
   - 电压主题测验中触电危险的正确和错误反馈、欧姆导体条件及正文一致性；其他安全主题未全面审核。 [electrical-safety-quiz.spec.js](../../tests/browser/electrical-safety-quiz.spec.js)
+- [多普勒效应 · 大学物理互动可视化](../../physics/uni/doppler.html)
+  - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
+- [流体力学 · 伯努利方程 · 互动可视化](../../physics/uni/fluid-mechanics.html)
+  - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
+- [激光原理 · 受激辐射与粒子数反转 · 互动可视化](../../physics/uni/laser-physics.html)
+  - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
+- [相变与临界现象 · 大学物理互动可视化](../../physics/uni/phase-transitions.html)
+  - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
+- [光电效应 · 爱因斯坦方程 · 互动可视化](../../physics/uni/photoelectric.html)
+  - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
 - [动物分类 · 小学科学互动可视化](../../science/animals.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [神奇的化学 · 小学科学互动可视化](../../science/chemistry.html)
@@ -419,16 +429,11 @@
 - [刚体力学 - 大学物理互动可视化](../../physics/uni/02-rigid-body.html)
 - [波动光学 · 互动可视化](../../physics/uni/08-wave-optics.html)
 - [玻尔原子模型 - 大学物理互动可视化](../../physics/uni/atom-physics.html)
-- [多普勒效应 · 大学物理互动可视化](../../physics/uni/doppler.html)
 - [静电场 · 互动可视化](../../physics/uni/electrostatic-field.html)
 - [电磁感应 · 互动可视化](../../physics/uni/em-induction.html)
 - [热力学第二定律与熵 · 互动可视化](../../physics/uni/entropy.html)
-- [流体力学 · 伯努利方程 · 互动可视化](../../physics/uni/fluid-mechanics.html)
-- [激光原理 · 受激辐射与粒子数反转 · 互动可视化](../../physics/uni/laser-physics.html)
 - [力学基础 · 互动可视化](../../physics/uni/mechanics.html)
 - [原子核物理 · 大学物理互动可视化](../../physics/uni/nuclear.html)
-- [相变与临界现象 · 大学物理互动可视化](../../physics/uni/phase-transitions.html)
-- [光电效应 · 爱因斯坦方程 · 互动可视化](../../physics/uni/photoelectric.html)
 - [量子力学基础 - 大学物理互动可视化](../../physics/uni/quantum.html)
 - [相对论 · 互动可视化](../../physics/uni/relativity.html)
 - [RLC 交流电路 · 阻抗与谐振 · 互动可视化](../../physics/uni/rlc-circuit.html)
