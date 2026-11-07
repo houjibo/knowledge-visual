@@ -1,0 +1,17 @@
+# remainder-choice-generation Specification
+
+## Purpose
+TBD - created by archiving change fix-remainder-choice-generation. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 有余数除法选择题有限生成
+有余数除法页面的四种选择题 SHALL 在每次生成时终止，提供四个不同的整数选项，其中恰有一个与题目正确答案一致。
+
+#### Scenario: 除数为二
+- **WHEN** 求余数题的除数为 2
+- **THEN** 页面完成初始化并提供四个不同选项，正确余数可被选中并得到正确反馈
+
+#### Scenario: 其他题型
+- **WHEN** 生成求被除数、除数或商的题目
+- **THEN** 每题提供四个不同选项，所选正确答案得到正确反馈

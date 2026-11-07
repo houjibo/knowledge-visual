@@ -164,3 +164,24 @@ test('凑成三与拆分三的题目生成四个选项且可答对', async ({pag
   await expect(page.locator('#quizResult')).toContainText('答对');
   expect(errors).toEqual([]);
 });
+
+for (const [value, problem, answer] of [
+  [0, '5 ÷ 2 = 2 …… ?', '1'],
+  [0.25, '? ÷ 3 = 3 …… 1', '10'],
+  [0.5, '27 ÷ ? = 4 …… 3', '6'],
+  [0.75, '46 ÷ 6 = ? …… 4', '7'],
+]) {
+  test(`有余数除法选择题 ${problem} 能生成且答对`, async ({page}) => {
+    const errors = await observeErrors(page);
+    await page.addInitScript(random => { Math.random = () => random; }, value);
+    await page.goto('/math/topics/division-with-remainder/index.html');
+    await page.locator('.mode-tab[data-mode="choice"]').click();
+    await expect(page.locator('#choiceProblem')).toHaveText(problem);
+    const options = page.locator('#choiceOptions .choice-opt');
+    await expect(options).toHaveCount(4);
+    expect(new Set(await options.allTextContents()).size).toBe(4);
+    await options.filter({hasText: new RegExp(`^${answer}$`)}).click();
+    await expect(page.locator('#choiceFeedback')).toContainText('答对');
+    expect(errors).toEqual([]);
+  });
+}
