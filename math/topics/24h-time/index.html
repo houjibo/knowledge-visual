@@ -72,7 +72,9 @@
     .timeline-item.left { flex-direction: row; padding-right: 55%; }
     .timeline-item.right { flex-direction: row-reverse; padding-left: 55%; }
     .timeline-dot { position: absolute; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: #1565C0; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.15); z-index: 2; }
-    .timeline-card { background: white; border-radius: 14px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 2px solid #E5E5EA; transition: all 0.2s; }
+    .timeline-card { background: white; border-radius: 14px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 2px solid #E5E5EA; transition: all 0.2s; cursor: pointer; font-family: inherit; }
+    .timeline-card:focus-visible { outline: 3px solid #1565C0; outline-offset: 3px; }
+    .timeline-card span { display: block; }
     .timeline-card.active { border-color: #1565C0; background: #E3F2FD; }
     .timeline-card .tc-emoji { font-size: 28px; }
     .timeline-card .tc-event { font-size: 14px; font-weight: 600; color: #1D1D1F; margin-top: 4px; }
@@ -202,16 +204,17 @@
     <div class="mode-content" id="mode-timeline">
       <div class="timeline-area">
         <div class="section-title">📅 我的一天</div>
-        <div class="section-desc">点击每个事件，看看它的24时计时法怎么写</div>
+        <div class="section-desc">选择一个事件，观察两种计时法并回答对应的问题；也可以换一道随机题。</div>
 
         <div class="timeline-wrap">
           <div class="timeline-line"></div>
           <div id="timeline-items"></div>
         </div>
 
-        <div class="timeline-quiz-q" id="tl-question">⏰ 随机挑战</div>
+        <div class="timeline-quiz-q" id="tl-question" role="status" aria-live="polite">⏰ 随机挑战</div>
         <div class="timeline-quiz-options" id="tl-options"></div>
-        <div class="quiz-feedback" id="tl-feedback"></div>
+        <div class="quiz-feedback" id="tl-feedback" role="status" aria-live="polite"></div>
+        <button type="button" class="match-next-btn" id="tl-next">🎲 再来一题</button>
       </div>
     </div>
 
@@ -492,25 +495,29 @@
         var side = idx % 2 === 0 ? 'left' : 'right';
         var item = document.createElement('div');
         item.className = 'timeline-item ' + side;
-        item.innerHTML = '<div class="timeline-dot"></div>' +
-          '<div class="timeline-card" data-idx="' + idx + '">' +
-          '<div class="tc-emoji">' + ev.emoji + '</div>' +
-          '<div class="tc-event">' + ev.event + '</div>' +
-          '<div class="tc-12h">' + to12hStr(ev.hour, ev.minute) + '</div>' +
-          '<div class="tc-24h">' + to24h(ev.hour, ev.minute) + '</div>' +
-          '</div>';
-        item.addEventListener('click', function() {
+        item.innerHTML = '<div class="timeline-dot" aria-hidden="true"></div>' +
+          '<button type="button" class="timeline-card" data-idx="' + idx + '" aria-pressed="false">' +
+          '<span class="tc-emoji">' + ev.emoji + '</span>' +
+          '<span class="tc-event">' + ev.event + '</span>' +
+          '<span class="tc-12h">' + to12hStr(ev.hour, ev.minute) + '</span>' +
+          '<span class="tc-24h">' + to24h(ev.hour, ev.minute) + '</span>' +
+          '</button>';
+        item.querySelector('button').addEventListener('click', function() {
           var cards = document.querySelectorAll('.timeline-card');
-          cards.forEach(function(c) { c.classList.remove('active'); });
-          item.querySelector('.timeline-card').classList.add('active');
-          genTimelineQuiz();
+          cards.forEach(function(c) { c.classList.remove('active'); c.setAttribute('aria-pressed', 'false'); });
+          this.classList.add('active');
+          this.setAttribute('aria-pressed', 'true');
+          genTimelineQuiz(ev);
         });
         container.appendChild(item);
       });
     }
 
-    function genTimelineQuiz() {
-      var ev = timelineEvents[randInt(0, timelineEvents.length - 1)];
+    function genTimelineQuiz(ev) {
+      if (!ev) {
+        ev = timelineEvents[randInt(0, timelineEvents.length - 1)];
+        document.querySelectorAll('.timeline-card').forEach(function(c) { c.classList.remove('active'); c.setAttribute('aria-pressed', 'false'); });
+      }
       var dir = Math.random() < 0.5 ? 0 : 1;
       var qEl = document.getElementById('tl-question');
       var optsEl = document.getElementById('tl-options');
@@ -550,7 +557,6 @@
             fbEl.textContent = '❌ 正确答案是 ' + correct;
             fbEl.className = 'quiz-feedback wrong';
           }
-          setTimeout(genTimelineQuiz, 1500);
         });
         optsEl.appendChild(btn);
       });
@@ -558,6 +564,7 @@
 
     renderTimeline();
     genTimelineQuiz();
+    document.getElementById('tl-next').addEventListener('click', function() { genTimelineQuiz(); });
 
     // ===== 模式4: 配对游戏 =====
     var matchPairs = [], matchedCount = 0, selectedLeft = null, selectedRight = null, matchLocked = false;

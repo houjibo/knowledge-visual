@@ -59,3 +59,29 @@ test('午夜、中午与晚上转换和动态钟面说明一致', async ({page})
   await expect(page.locator('.convert-rule-box')).toContainText('午夜12时');
   await expect(page.locator('.convert-rule-box')).toContainText('中午12时');
 });
+
+test('时间线键盘选择的事件决定题目，反馈保持到主动换题', async ({page}) => {
+  await page.addInitScript(() => { Math.random = () => 0; });
+  await page.clock.install();
+  await page.goto(url);
+  await page.locator('[data-mode="timeline"]').click();
+  const noon = page.locator('.timeline-card[data-idx="6"]');
+  await noon.focus(); await page.keyboard.press('Enter');
+  await expect(noon).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#tl-question')).toContainText('午餐是中午 12:00');
+  await page.locator('#tl-options button').getByText('12:00', {exact: true}).click();
+  await expect(page.locator('#tl-feedback')).toContainText('答对');
+  await page.clock.fastForward(2000);
+  await expect(page.locator('#tl-feedback')).toContainText('答对');
+  const dinner = page.locator('.timeline-card[data-idx="11"]');
+  await dinner.focus(); await page.keyboard.press('Space');
+  await expect(noon).toHaveAttribute('aria-pressed', 'false');
+  await expect(dinner).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#tl-question')).toContainText('晚餐是晚上 07:00');
+  await expect(page.locator('#tl-feedback')).toBeEmpty();
+  await page.clock.fastForward(2000);
+  await expect(page.locator('#tl-question')).toContainText('晚餐');
+  await page.locator('#tl-next').click();
+  await expect(dinner).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('#tl-question')).toContainText('午夜');
+});
