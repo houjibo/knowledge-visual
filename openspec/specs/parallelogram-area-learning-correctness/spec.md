@@ -1,0 +1,35 @@
+# parallelogram-area-learning-correctness Specification
+
+## Purpose
+TBD - created by archiving change parallelogram-area-learning-correctness. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 割补图保持几何对应
+页面 SHALL 按同一比例展示原平行四边形、对应的切割三角形和拼成的长方形。
+
+#### Scenario: 调整底、高及错位
+- **WHEN** 学习者调整参数并展示长方形
+- **THEN** 三角形平移到对应位置，重组图保持面积并位于视窗内
+
+### Requirement: 练习使用正确单位和判分
+页面 SHALL 为长度和面积使用对应单位，生成唯一选项并只对每题计分一次。
+
+#### Scenario: 求底或高
+- **WHEN** 学习者回答求底或高的练习
+- **THEN** 选项使用长度单位，答案与题目一致
+
+#### Scenario: 回答生活题
+- **WHEN** 学习者输入答案
+- **THEN** 页面按数值精确判分，并显示该场景的面积单位
+
+### Requirement: 学习完成可见并可恢复保存
+页面 SHALL 跟踪探索、答对三道练习及一道生活题，在全部达标后保存完成记录。
+
+#### Scenario: 部分完成
+- **WHEN** 仅部分达标
+- **THEN** 页面显示剩余条件并说明刷新清空本次阶段进度
+
+#### Scenario: 保存失败和重试
+- **WHEN** 全部达标后保存失败，随后存储恢复并重试
+- **THEN** 页面提示保存状态，成功后刷新及知识地图保留完成记录
