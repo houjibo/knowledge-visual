@@ -167,6 +167,7 @@
 - [流体力学 · 伯努利方程 · 互动可视化](../../physics/uni/fluid-mechanics.html)
   - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
   - 五个大学物理同构测验键盘答题、修改答案、计分及保存异常重试；不代表教学内容或其他交互已全面核验。 [university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)
+  - 管径单位、连续性、水平理想伯努利压差、部分练习及测验；不覆盖真实流体损耗。 [fluid-pipe-units-and-pressure.spec.js](../../tests/browser/fluid-pipe-units-and-pressure.spec.js)、[university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)
 - [激光原理 · 受激辐射与粒子数反转 · 互动可视化](../../physics/uni/laser-physics.html)
   - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
   - 五个大学物理同构测验键盘答题、修改答案、计分及保存异常重试；不代表教学内容或其他交互已全面核验。 [university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)
