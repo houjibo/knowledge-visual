@@ -187,6 +187,7 @@
   - 三页动画暂停、继续、减少动态效果偏好及暂停时参数更新；不代表其余页面动画已核验。 [university-physics-animation-controls.spec.js](../../tests/browser/university-physics-animation-controls.spec.js)
 - [动物分类 · 小学科学互动可视化](../../science/animals.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
+  - 六个类群选择、分类示例例外、练习和测验导航；不代表动物分类学内容已全面核验。 [animal-classification-exceptions.spec.js](../../tests/browser/animal-classification-exceptions.spec.js)、[science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [神奇的化学 · 小学科学互动可视化](../../science/chemistry.html)
   - 石蕊颜色插值、糖盐消失与沙子、有限气泡、键盘暂停和不同题目进度保存；不模拟实际溶解度或反应动力学。 [science-chemistry-model.spec.js](../../tests/browser/science-chemistry-model.spec.js)
 - [地球与宇宙 · 小学科学互动可视化](../../science/earth-space.html)
