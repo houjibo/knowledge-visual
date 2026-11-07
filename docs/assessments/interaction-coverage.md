@@ -223,6 +223,7 @@
   - 波形相对频率与振幅、介质状态、动画暂停、测验回看及完成记录；不模拟真实声压或播放声音。 [science-sound-learning.spec.js](../../tests/browser/science-sound-learning.spec.js)
 - [时间的测量 · 小学科学互动可视化](../../science/time-measurement.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
+  - 限定地点的日影示意、小幅单摆周期和恒流受水壶边界；不代表真实日晷或水钟校准。 [time-measurement-model-conditions.spec.js](../../tests/browser/time-measurement-model-conditions.spec.js)、[science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [天气与水循环 · 小学科学互动可视化](../../science/weather-water-cycle.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
   - 温度边界与简化假设、动画暂停恢复及单道练习反馈；云雨生成非定量模型，未覆盖全部科学内容。 [water-cycle.spec.js](../../tests/browser/water-cycle.spec.js)

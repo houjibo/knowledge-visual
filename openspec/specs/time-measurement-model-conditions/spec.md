@@ -1,0 +1,20 @@
+# time-measurement-model-conditions Specification
+
+## Purpose
+TBD - created by archiving change time-measurement-model-conditions. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 日晷与单摆示意条件明确
+页面 SHALL 将日影方向限定于示意地点和太阳时，并说明单摆周期的小幅、长度和重力条件。
+
+#### Scenario: 调整单摆长度
+- **WHEN** 学习者选择摆长档位
+- **THEN** 页面显示对应的米数和小幅近似周期，且摆长越长周期越长
+
+### Requirement: 水钟可控且不会无提示归零
+页面 SHALL 将水钟计时标为恒流模拟，受水壶到满后停止并允许重置。
+
+#### Scenario: 水壶满后推进
+- **WHEN** 受水壶达到模拟终点且学习者继续推进
+- **THEN** 页面仍显示已满和 60 分钟，直到学习者重置
