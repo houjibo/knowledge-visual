@@ -111,6 +111,7 @@
     .quiz-opt.correct { border-color: #4CAF50; background: #E8F5E9; color: #2E7D32; }
     .quiz-opt.wrong { border-color: #F44336; background: #FFEBEE; color: #C62828; }
     .quiz-opt.disabled { pointer-events: none; opacity: 0.6; }
+    .quiz-next { padding: 10px 18px; border: 0; border-radius: 12px; background: #E65100; color: white; font-size: 16px; cursor: pointer; }
     .quiz-feedback {
       font-size: 20px; font-weight: 700; margin: 16px 0; min-height: 32px;
     }
@@ -313,6 +314,7 @@
           <div class="quiz-options" id="quizOptions"></div>
           <div class="quiz-feedback" id="quizFeedback"></div>
           <div class="quiz-hint" id="quizHint"></div>
+          <button type="button" class="quiz-next" id="quizNext" hidden>下一题 →</button>
         </div>
       </div>
     </div>
@@ -323,12 +325,12 @@
         <div class="explore-input-group">
           <div class="explore-label">🎛️ 拖动滑块，自己出题！</div>
           <div class="explore-row">
-            <label>总头数：</label>
+            <label for="expHeads">总头数：</label>
             <input type="range" class="explore-slider" id="expHeads" min="2" max="30" value="10">
             <span class="explore-val" id="expHeadsVal">10</span>
           </div>
           <div class="explore-row">
-            <label>总脚数：</label>
+            <label for="expLegs">总脚数：</label>
             <input type="range" class="explore-slider" id="expLegs" min="4" max="120" value="32">
             <span class="explore-val" id="expLegsVal">32</span>
           </div>
@@ -444,6 +446,7 @@
     let quizCorrectCount = 0, quizTotalCount = 0;
 
     function generateQuiz() {
+      document.getElementById('quizNext').hidden = true;
       // 随机生成题目
       const chickens = randInt(2, 15);
       const rabbits = randInt(1, 12);
@@ -458,19 +461,14 @@
       const otherAnswer = askChicken ? rabbits : chickens;
 
       // 生成选项
-      const opts = new Set([answer]);
-      while (opts.size < 4) {
-        let wrong = answer + randInt(-3, 3);
-        if (wrong < 0) wrong = Math.abs(wrong);
-        if (wrong !== answer) opts.add(wrong);
-      }
-      const shuffled = shuffleArray([...opts]);
+      const candidates = Array.from({length: heads + 1}, (_, i) => i).filter(n => n !== answer);
+      const shuffled = shuffleArray([answer, ...shuffleArray(candidates).slice(0, 3)]);
 
       // 题目类型随机化
       const templates = [
         {
           q: `笼子里有鸡和兔共 <b>${heads}</b> 只，脚共 <b>${legs}</b> 只。<br>请问${animalName}有几只？`,
-          hint: `💡 提示：假设全是${otherName}，${heads}只${otherName}有${heads * (askChicken ? 4 : 2)}只脚，多了${Math.abs(legs - heads * (askChicken ? 4 : 2))}只脚，每换一只差${askChicken ? 2 : 2}只脚。`
+          hint: `💡 提示：假设全是${otherName}，${heads}只${otherName}有${heads * (askChicken ? 4 : 2)}只脚，比实际${askChicken ? '多' : '少'}${Math.abs(legs - heads * (askChicken ? 4 : 2))}只脚，每换一只差2只脚。`
         },
         {
           q: `鸡兔同笼，数头有 <b>${heads}</b> 个，数脚有 <b>${legs}</b> 只。<br>${animalName}有多少只？`,
@@ -487,15 +485,18 @@
 
       const optsDiv = document.getElementById('quizOptions');
       optsDiv.innerHTML = '';
+      let answered = false;
       shuffled.forEach(opt => {
         const btn = document.createElement('button');
         btn.className = 'quiz-opt';
         btn.textContent = `${animalName} ${opt} 只`;
         btn.addEventListener('click', function() {
+          if (answered) return;
+          answered = true;
           quizTotalCount++;
           document.getElementById('quizTotal').textContent = quizTotalCount;
           const allBtns = optsDiv.querySelectorAll('.quiz-opt');
-          allBtns.forEach(b => b.classList.add('disabled'));
+          allBtns.forEach(b => { b.classList.add('disabled'); b.disabled = true; });
 
           if (opt === answer) {
             quizCorrectCount++;
@@ -504,8 +505,7 @@
             document.getElementById('quizFeedback').textContent = '🎉 答对了！太棒了！';
             document.getElementById('quizFeedback').className = 'quiz-feedback correct';
             if (quizCorrectCount >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('chicken-rabbit')) {
-              PageProgress.markDone('chicken-rabbit');
-              setTimeout(() => showToast('✓ 本知识点已标记完成'), 900);
+              if (PageProgress.markDone('chicken-rabbit')) showToast('✓ 本知识点已标记完成');
             }
           } else {
             this.classList.add('wrong');
@@ -517,11 +517,12 @@
               if (b.textContent.includes(`${answer} 只`)) b.classList.add('correct');
             });
           }
-          setTimeout(generateQuiz, 1500);
+          document.getElementById('quizNext').hidden = false;
         });
         optsDiv.appendChild(btn);
       });
     }
+    document.getElementById('quizNext').addEventListener('click', generateQuiz);
 
     function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
     function shuffleArray(arr) {
@@ -564,7 +565,7 @@
       const visual = document.getElementById('expVisual');
       visual.innerHTML = '';
       const showMax = Math.min(heads, 30);
-      for (let i = 0; i < showMax; i++) {
+      for (let i = 0; isInteger && i < showMax; i++) {
         const d = document.createElement('div');
         d.className = 'explore-animal ' + (i < chickens ? 'ch' : 'rb');
         d.textContent = i < chickens ? '🐔' : '🐰';
