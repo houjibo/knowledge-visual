@@ -63,7 +63,8 @@
   .quiz { margin-top: 16px; padding: 18px; background: rgba(6,182,212,0.1); border-radius: 14px; border: 2px solid rgba(6,182,212,0.3); }
   .quiz-q { font-size: 15px; margin-bottom: 14px; line-height: 1.7; font-weight: 500; }
   .quiz-opts { display: grid; gap: 10px; }
-  .quiz-opt { padding: 12px 16px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt { color: inherit; font-family: inherit; text-align: left; padding: 12px 16px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt:focus-visible, .quiz button:focus-visible { outline: 3px solid #fbbf24; outline-offset: 2px; }
   .quiz-opt:hover { background: rgba(255,255,255,0.12); }
   .quiz-opt.correct { background: rgba(34,197,94,.2); border-color: #22c55e; }
   .quiz-opt.wrong { background: rgba(239,68,68,.15); border-color: #ef4444; }
@@ -188,9 +189,13 @@
 
       <!-- 测验 -->
       <div class="quiz">
+        <h3>声音知识练习</h3>
+        <p id="quizProgress" role="status" aria-live="polite"></p>
         <div class="quiz-q" id="quizQ">🤔 声音在下列哪种介质中传播最快？</div>
         <div class="quiz-opts" id="quizOpts"></div>
-        <div class="quiz-result" id="quizResult"></div>
+        <div class="quiz-result" id="quizResult" role="status" aria-live="polite"></div>
+        <button type="button" class="mode-btn" id="quizNext">下一题</button>
+        <button type="button" class="mode-btn" id="quizSave" hidden>重试保存完成记录</button>
       </div>
     </div>
   </div>
@@ -633,62 +638,60 @@ function drawTone() {
 
 // ─── Quiz ───
 const quizzes = [
-  { q: '🤔 声音在下列哪种介质中传播最快？', opts: ['空气', '水', '钢铁', '真空'], ans: 2 },
+  { q: '🤔 页面给出的声速示例中，声音在哪种介质中传播最快？', opts: ['空气', '水', '钢铁', '真空'], ans: 2 },
   { q: '🤔 声音是由什么产生的？', opts: ['光线', '振动', '电流', '磁场'], ans: 1 },
   { q: '🤔 音调的高低由什么决定？', opts: ['振幅', '频率', '距离', '介质'], ans: 1 },
   { q: '🤔 人对着山崖喊话，经过2秒听到回声，山崖距人多远？（声速340m/s）', opts: ['680m', '340m', '170m', '100m'], ans: 1 },
   { q: '🤔 下列哪个说法正确？', opts: ['声音在真空中传播最快', '响度由频率决定', '声音在示例钢铁中的传播速度比空气中快', '音调由振幅决定'], ans: 2 },
 ];
 let quizIdx = 0;
-let quizAnswered = false;
-
-// ─── PageProgress 接线（r100）───
-let totalCorrect = 0, soundDone = false;
-function bumpSoundCorrect() {
-  totalCorrect++;
-  if (!soundDone && totalCorrect >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('sound')) {
-    soundDone = true;
-    PageProgress.markDone('sound');
-    showSoundToast('🎉 「声现象」知识地图已点亮！');
-  }
+const correctQuestions = new Set();
+let saveFailed = false;
+let soundSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('sound');
+function updateQuizProgress() {
+  document.getElementById('quizProgress').textContent = `第 ${quizIdx + 1} / ${quizzes.length} 题；本次已答对 ${correctQuestions.size} / ${quizzes.length} 题（未完成的练习仅保留在当前页面）` +
+    (saveFailed ? '；完成记录未保存，请重试。' : soundSaved ? '；完成记录已保存。' : '');
+  document.getElementById('quizSave').hidden = !saveFailed;
 }
-function showSoundToast(msg) {
-  const t = document.createElement('div');
-  t.textContent = msg;
-  t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(52,199,89,.95);color:#fff;padding:12px 24px;border-radius:12px;font-size:15px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:opacity .3s';
-  document.body.appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2600);
+function saveSoundProgress() {
+  soundSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('sound');
+  saveFailed = !soundSaved;
+  updateQuizProgress();
 }
+document.getElementById('quizSave').addEventListener('click', saveSoundProgress);
+document.getElementById('quizNext').addEventListener('click', () => {
+  quizIdx = (quizIdx + 1) % quizzes.length;
+  loadQuiz();
+});
 
 function loadQuiz() {
   const q = quizzes[quizIdx];
   document.getElementById('quizQ').textContent = q.q;
   const optsEl = document.getElementById('quizOpts');
   optsEl.innerHTML = '';
-  quizAnswered = false;
   document.getElementById('quizResult').textContent = '';
   q.opts.forEach((opt, i) => {
-    const div = document.createElement('div');
+    const div = document.createElement('button');
+    div.type = 'button';
     div.className = 'quiz-opt';
     div.textContent = opt;
     div.addEventListener('click', () => {
-      if (quizAnswered) return;
-      quizAnswered = true;
       if (i === q.ans) {
         div.classList.add('correct');
         document.getElementById('quizResult').textContent = '✅ 答对了！';
-        bumpSoundCorrect();
+        correctQuestions.add(quizIdx);
+        if (correctQuestions.size === quizzes.length && !soundSaved && !saveFailed) saveSoundProgress();
+        updateQuizProgress();
         document.getElementById('quizResult').style.color = '#22c55e';
       } else {
         div.classList.add('wrong');
-        document.getElementById('quizResult').textContent = '❌ 再想想～正确答案已标出';
+        document.getElementById('quizResult').textContent = '❌ 再想想，可以重新选择。';
         document.getElementById('quizResult').style.color = '#ef4444';
-        optsEl.children[q.ans].classList.add('correct');
       }
-      setTimeout(() => { quizIdx = (quizIdx + 1) % quizzes.length; loadQuiz(); }, 2500);
     });
     optsEl.appendChild(div);
   });
+  updateQuizProgress();
 }
 loadQuiz();
 

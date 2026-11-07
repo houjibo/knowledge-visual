@@ -226,6 +226,7 @@
 - [压强 · 初中物理互动可视化](../../physics/middle/pressure.html)
   - 固体压力箭头、液体深度换算与各向压强、密度选择、理想液压比例、首次作答和保存失败重试；大气模型与全页无障碍未全面验收。 [pressure-exploration.spec.js](../../tests/browser/pressure-exploration.spec.js)
 - [声现象 · 初中物理互动可视化](../../physics/middle/sound.html)
+  - 桌面与窄屏验证键盘作答、错题重试、重复计数、保存及失败恢复；真实设备及整页无障碍尚未全面验收。 [sound-quiz-learning-completion.spec.js](../../tests/browser/sound-quiz-learning-completion.spec.js)
   - 音调模式波长、三种波形振幅、键盘、暂停与真空切换；回声动画、测验及真实设备未全面验收。 [sound-wave-visual-consistency.spec.js](../../tests/browser/sound-wave-visual-consistency.spec.js)
   - 回声理想往返时间、温距边界、暂停分步及减少动态效果；真实声场、测验和实机未全面验收。 [sound-echo-time-consistency.spec.js](../../tests/browser/sound-echo-time-consistency.spec.js)、[sound-wave-visual-consistency.spec.js](../../tests/browser/sound-wave-visual-consistency.spec.js)
 - [电压与电阻 · 初中物理互动可视化](../../physics/middle/voltage-resistance.html)
