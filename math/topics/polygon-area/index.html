@@ -24,6 +24,9 @@
     .shape-btn { padding: 10px 16px; border: 2px solid #E5E5EA; border-radius: 12px; background: white; font-size: 15px; font-weight: 600; cursor: pointer; min-height: 44px; }
     .shape-btn.active { border-color: #E65100; background: #FFF3E0; color: #E65100; }
     .anim-btn { width: 100%; padding: 14px; border: none; border-radius: 14px; background: #E65100; color: white; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 12px; min-height: 44px; }
+    .step-control { margin: 14px 0; line-height: 1.6; }
+    .step-control input { display: block; width: 100%; accent-color: #E65100; }
+    .step-description { font-size: 15px; color: #424242; margin: 8px 0; }
     .fact-line { text-align: center; font-size: 15px; color: #BF360C; background: #FFF3E0; border-radius: 12px; padding: 10px; margin-top: 10px; font-weight: 600; }
 
     .problem-card { background: white; border-radius: 16px; padding: 24px; margin: 16px 0; box-shadow: 0 2px 12px rgba(0,0,0,0.06); text-align: center; }
@@ -101,12 +104,17 @@
       <div class="card">
         <p class="page-subtitle">动手推导：剪一剪、拼一拼</p>
         <div class="shape-btns" id="shapeBtns">
-          <button class="shape-btn active" data-shape="para">▱ 平行四边形</button>
-          <button class="shape-btn" data-shape="tri">△ 三角形</button>
-          <button class="shape-btn" data-shape="trap">⏢ 梯形</button>
+          <button class="shape-btn active" data-shape="para" aria-pressed="true">▱ 平行四边形</button>
+          <button class="shape-btn" data-shape="tri" aria-pressed="false">△ 三角形</button>
+          <button class="shape-btn" data-shape="trap" aria-pressed="false">⏢ 梯形</button>
         </div>
-        <div class="explore-canvas-wrap"><canvas id="areaCanvas" width="640" height="360"></canvas></div>
-        <button class="anim-btn" id="animBtn">✂️ 开始剪拼</button>
+        <div class="explore-canvas-wrap"><canvas id="areaCanvas" width="640" height="360" role="img" aria-describedby="stepDescription"></canvas></div>
+        <div class="step-control">
+          <label for="stepRange">手动观察剪拼步骤</label>
+          <input id="stepRange" type="range" min="0" max="100" value="0" step="1" aria-describedby="stepDescription">
+          <p class="step-description" id="stepDescription"></p>
+        </div>
+        <button class="anim-btn" id="animBtn">▶️ 播放剪拼</button>
         <div class="fact-line" id="factLine">平行四边形 → 剪下一个三角形 → 平移拼成长方形</div>
       </div>
     </div>
@@ -150,6 +158,7 @@
       document.querySelectorAll('.mode-content').forEach(x => x.classList.remove('active'));
       t.classList.add('active');
       curMode = t.dataset.mode;
+      if (curMode !== 'explore') pauseAnimation();
       document.getElementById('mode-' + curMode).classList.add('active');
       draw();
     }));
@@ -163,27 +172,60 @@
       tri: '两个一样的三角形 → 旋转拼成平行四边形（S = 底×高÷2）',
       trap: '两个一样的梯形 → 旋转拼成平行四边形（S = (上底+下底)×高÷2）'
     };
-    document.querySelectorAll('.shape-btn').forEach(b => b.addEventListener('click', () => {
-      document.querySelectorAll('.shape-btn').forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
-      shape = b.dataset.shape;
-      animT = 0; animating = false;
+    const stepRange = document.getElementById('stepRange');
+    const animButton = document.getElementById('animBtn');
+    const DESCRIPTIONS = {
+      para: ['初始：平行四边形沿高分成主体和一个三角形。', '移动中：三角形沿底边向右平移。', '完成：三角形与主体拼成长方形，面积为底乘高。'],
+      tri: ['初始：两个完全相同的三角形重叠。', '旋转中：副本绕一条边的中点转动。', '完成：两个三角形共边拼成平行四边形，一个三角形面积为其一半。'],
+      trap: ['初始：两个完全相同的梯形重叠。', '旋转中：副本绕右侧腰的中点转动。', '完成：两个梯形共边拼成平行四边形，底为上底加下底。']
+    };
+    function syncAnimationControls() {
+      const percent = Math.floor(animT * 100);
+      stepRange.value = percent;
+      const stage = percent === 0 ? 0 : percent === 100 ? 2 : 1;
+      document.getElementById('stepDescription').textContent = DESCRIPTIONS[shape][stage];
+      stepRange.setAttribute('aria-valuetext', percent + '%：' + DESCRIPTIONS[shape][stage]);
+      canvas.setAttribute('aria-label', DESCRIPTIONS[shape][stage]);
+      animButton.textContent = animating ? '⏸️ 暂停剪拼' : percent === 100 ? '🔄 重新播放' : '▶️ 播放剪拼';
+    }
+    function pauseAnimation() {
+      animating = false;
       cancelAnimationFrame(animationFrame);
+      syncAnimationControls();
+    }
+    document.querySelectorAll('.shape-btn').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('.shape-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
+      b.classList.add('active');
+      b.setAttribute('aria-pressed', 'true');
+      shape = b.dataset.shape;
+      animT = 0;
+      pauseAnimation();
       document.getElementById('factLine').textContent = FACTS[shape];
       draw();
     }));
-    document.getElementById('animBtn').addEventListener('click', () => {
-      cancelAnimationFrame(animationFrame);
-      animT = 0; animating = true; lastT = performance.now();
+    stepRange.addEventListener('input', () => {
+      animT = Number(stepRange.value) / 100;
+      pauseAnimation();
+      draw();
+    });
+    animButton.addEventListener('click', () => {
+      if (animating) { pauseAnimation(); return; }
+      if (animT >= 1) animT = 0;
+      animating = true;
+      lastT = performance.now();
+      syncAnimationControls();
       animationFrame = requestAnimationFrame(tick);
     });
     function tick(now) {
+      if (!animating) return;
       const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
       animT = Math.min(1, animT + dt * 0.8);
       draw();
-      if (animT < 1 && animating) animationFrame = requestAnimationFrame(tick);
+      if (animT < 1) animationFrame = requestAnimationFrame(tick);
       else animating = false;
+      syncAnimationControls();
     }
+    syncAnimationControls();
     const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
     function draw() {

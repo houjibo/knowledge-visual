@@ -48,3 +48,47 @@ test('固定随机值生成不同选项，练习及挑战反馈与图形公式�
   await expect(challenge.first()).toBeDisabled();
   await expect(page.locator('#chCorrect')).toHaveText('1');
 });
+
+test('键盘控制剪拼步骤，切换形状及模式时停止动画', async ({page}) => {
+  await page.goto(url);
+  await page.locator('[data-mode="explore"]').click();
+  const range = page.getByRole('slider', {name: '手动观察剪拼步骤'});
+  const desc = page.locator('#stepDescription');
+  await expect(desc).toContainText('初始');
+  await range.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(range).toHaveValue('1');
+  await expect(desc).toContainText('移动中');
+  expect(await page.evaluate(() => animT)).toBe(.01);
+  await page.keyboard.press('End');
+  await expect(desc).toContainText('拼成长方形');
+  await expect(page.locator('#areaCanvas')).toHaveAttribute('aria-label', /拼成长方形/);
+  await expect(page.locator('#animBtn')).toContainText('重新播放');
+  await page.locator('[data-shape="tri"]').click();
+  await expect(range).toHaveValue('0');
+  await expect(page.locator('[data-shape="tri"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(desc).toContainText('三角形重叠');
+  await page.locator('#animBtn').click();
+  await expect(page.locator('#animBtn')).toContainText('暂停');
+  await page.locator('#animBtn').click();
+  await expect(page.locator('#animBtn')).toContainText('播放');
+  expect(await page.evaluate(() => animating)).toBe(false);
+  await page.locator('#animBtn').click();
+  await page.locator('[data-mode="practice"]').click();
+  expect(await page.evaluate(() => animating)).toBe(false);
+});
+
+
+test('播放完成后可以重新播放', async ({page}) => {
+  await page.goto(url);
+  await page.locator('[data-mode="explore"]').click();
+  const button = page.locator('#animBtn');
+  const range = page.locator('#stepRange');
+  await button.click();
+  await expect(range).toHaveValue('100', {timeout: 5000});
+  await expect(button).toContainText('重新播放');
+  await expect(page.locator('#stepDescription')).toContainText('完成');
+  await button.click();
+  await expect(button).toContainText('暂停');
+  expect(Number(await range.inputValue())).toBeLessThan(100);
+});
