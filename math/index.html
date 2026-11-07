@@ -28,7 +28,7 @@
     .learning-path p { margin: 10px 0; color: #315b42; line-height: 1.6; }
     .learning-path ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; padding: 0; margin: 14px 0; list-style: none; counter-reset: journey; }
     .learning-path li { counter-increment: journey; min-width: 0; }
-    .learning-path a { display: block; height: 100%; padding: 12px 14px; background: white; border: 1px solid #c8ded0; border-radius: 12px; color: #164e31; text-decoration: none; }
+    .learning-path a { display: block; height: 100%; padding: 12px 42px 12px 14px; background: white; border: 1px solid #c8ded0; border-radius: 12px; color: #164e31; text-decoration: none; }
     .learning-path a::before { content: counter(journey) ". "; font-weight: 700; }
     .learning-path a strong { font-size: 16px; }
     .learning-path a span { display: block; margin-top: 5px; color: #42584b; font-size: 13px; line-height: 1.5; }
@@ -190,6 +190,7 @@
 
     <!-- 学段进度汇总（新旧 localStorage 记录） -->
     <div class="stage-progress" id="stageProgress" aria-label="各学段学习进度"></div>
+    <p id="mathProgressNotice" hidden role="status" style="margin:0 0 16px;color:#805000;text-align:center;">数学学习进度暂不可读取，请检查浏览器存储；原记录未修改。</p>
     <p id="mathLegacyWarning" hidden role="status" style="margin:0 0 16px;color:#805000;text-align:center;">部分旧记录的主题在多个学段同名，无法确定原学段；旧记录已保留，未计入学段进度，可重新完成对应主题。</p>
 
     <section id="topic-search" class="topic-search" hidden aria-label="查找小学数学主题">
@@ -212,7 +213,7 @@
         <li><a href="topics/surface-area/index.html"><strong>长方体和正方体表面积</strong><span>查看展开图，数一数各个面的面积。</span></a></li>
         <li><a href="topics/volume/index.html"><strong>体积与容积</strong><span>逐层计入小方块，观察长、宽、高与体积的关系。</span></a></li>
       </ol>
-      <p>各主题有自己的完成条件；完成记录保存在当前浏览器。</p>
+      <p>各主题有自己的完成条件；✓ 表示已保存完成，记录保存在当前浏览器。</p>
     </details>
     <!-- ===== 横向知识地图 ===== -->
     <h2 style="font-size:18px;color:#6E6E73;padding:0 0 8px;">🗺️ 知识依赖图</h2>
@@ -1771,12 +1772,38 @@
 
   <script src="assets/js/common.js"></script>
   <script>
-    // 为已完成的主题卡片加 ✓ 角标（knowledge map 节点 + 卡片列表 两处都渲染）
+    function readMathProgressStores() {
+      try {
+        function read(key) {
+          const raw = localStorage.getItem(key);
+          if (raw === null) return {};
+          const data = JSON.parse(raw);
+          if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('invalid progress');
+          return data;
+        }
+        return {legacy: read('kv-math-progress'), scoped: read('kv-math-progress-v2')};
+      } catch (_) { return null; }
+    }
+    function refreshMathProgress() {
+      const stores = readMathProgressStores();
+      document.querySelectorAll('.topic-card .progress-badge, .topic-node .progress-badge, .learning-path a .progress-badge').forEach(badge => badge.remove());
+      document.getElementById('mathProgressNotice').hidden = !!stores;
+      if (stores) {
+        PageProgress.renderBadges('.topic-card');
+        PageProgress.renderBadges('.topic-node');
+        PageProgress.renderBadges('.learning-path a');
+      }
+      renderStageProgress(stores);
+      const query = document.getElementById('topic-query');
+      if (query.value.trim()) query.dispatchEvent(new Event('input'));
+    }
     document.addEventListener('DOMContentLoaded', () => {
-      PageProgress.renderBadges('.topic-card');
-      PageProgress.renderBadges('.topic-node');
-      renderStageProgress();
+      refreshMathProgress();
       initTopicSearch();
+    });
+    window.addEventListener('pageshow', refreshMathProgress);
+    window.addEventListener('storage', event => {
+      if (event.key === null || event.key === 'kv-math-progress' || event.key === 'kv-math-progress-v2') refreshMathProgress();
     });
 
     // 两种视图可能指向同一主题；合并检索文字并保留一个结果。
@@ -1814,7 +1841,7 @@
     }
 
     // 新记录按学段隔离；无歧义旧记录保持可见，同名旧记录不推断学段。
-    function renderStageProgress() {
+    function renderStageProgress(stores) {
       const PRIMARY = [...new Set(Array.from(document.querySelectorAll('.topic-card[href^="topics/"], .topic-node[href^="topics/"]'))
         .map(a => (a.getAttribute('href').match(/topics\/([^/]+)\//) || [])[1])
         .filter(Boolean))];
@@ -1822,14 +1849,15 @@
       const HIGH = ['sets','function','exponential-log','trigfunc','trig-identities','solve-triangle','vectors','sequence','inequality','line-circle','conic-sections','solid-geometry','space-vectors','derivative','complex-numbers','counting','probability','statistics','random-variables'];
       const UNI = ['limit','derivative','integral','multivariable','vector-calculus','multiple-integrals','series','ode','matrix','linear-systems','eigenvalues','integral-transform','probability','random-variable','statistics','discrete-math','complex-analysis','numerical-methods','pde','fourier-analysis','group-theory','topology','stochastic-process','number-theory','combinatorics','game-theory','logic-set'];
       const AMBIGUOUS_MATH_SLUGS = ['circle', 'derivative', 'fractions', 'probability', 'sets', 'statistics'];
-      function readStore(key) {
-        try {
-          const data = JSON.parse(localStorage.getItem(key) || '{}');
-          return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
-        } catch (e) { return {}; }
+      const host = document.getElementById('stageProgress');
+      if (!host) return;
+      host.replaceChildren();
+      if (!stores) {
+        document.getElementById('mathLegacyWarning').hidden = true;
+        host.textContent = '学习进度暂不可用';
+        return;
       }
-      const legacy = readStore('kv-math-progress');
-      const scoped = readStore('kv-math-progress-v2');
+      const {legacy, scoped} = stores;
       const warning = document.getElementById('mathLegacyWarning');
       const labels = {circle: '圆', derivative: '导数', fractions: '分数', probability: '概率', sets: '集合', statistics: '统计'};
       const uncertain = AMBIGUOUS_MATH_SLUGS.filter(slug => !!legacy[slug]);
@@ -1843,8 +1871,6 @@
         { key: 'high', name: '高中', slugs: HIGH },
         { key: 'uni', name: '大学', slugs: UNI }
       ];
-      const host = document.getElementById('stageProgress');
-      if (!host) return;
       stages.forEach(st => {
         const total = st.slugs.length;
         const done = st.slugs.filter(slug => {

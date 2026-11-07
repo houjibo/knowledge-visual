@@ -71,7 +71,8 @@ test('存储不可用时数学目录仍可使用', async ({page}) => {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/math/index.html');
   await expect(page.locator('#topic-query')).toBeVisible();
-  await expect(page.locator('#stageProgress')).toContainText('小学 尚未开始');
+  await expect(page.locator('#stageProgress')).toContainText('学习进度暂不可用');
+  await expect(page.locator('#mathProgressNotice')).toBeVisible();
   expect(errors).toEqual([]);
 });
 

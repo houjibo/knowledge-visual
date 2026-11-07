@@ -51,15 +51,15 @@ assert.deepEqual(homepage({'kv-physics-middle-progress': '{"motion":1}',
 ['尚未开始', '已学 2/55', '尚未开始', '尚未开始']);
 
 const math = read('math/index.html');
-const start = math.indexOf('    function renderStageProgress()');
+const start = math.indexOf('    function renderStageProgress(stores)');
 const end = math.lastIndexOf('  </script>');
 assert.ok(start >= 0 && end > start, 'math progress function missing');
 const chips = [];
 const links = ['topics/one/index.html', 'topics/one/index.html', 'topics/two/index.html']
   .map(href => ({getAttribute: () => href}));
-const document = {querySelectorAll: () => links, getElementById: () => ({appendChild: chip => chips.push(chip)}),
+const document = {querySelectorAll: () => links, getElementById: () => ({replaceChildren: () => { chips.length = 0; }, appendChild: chip => chips.push(chip)}),
   createElement: () => ({style: {}, setAttribute() {}})};
-vm.runInNewContext(math.slice(start, end) + '\nrenderStageProgress();', {document,
+vm.runInNewContext(math.slice(start, end) + '\nrenderStageProgress({legacy: {one: 1, "random-variables": 1}, scoped: {}});', {document,
   localStorage: {getItem: () => '{"one":1,"random-variables":1}'}});
 assert.equal(chips[0].textContent, '小学 ✓ 1/2 · 50%');
 assert.equal(chips[2].textContent, '高中 ✓ 1/19 · 5%');
