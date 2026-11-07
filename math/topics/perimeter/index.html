@@ -210,9 +210,10 @@
     <!-- 模式2: 测量周长 -->
     <div class="mode-content" id="mode-measure">
       <div class="card">
-        <p class="page-subtitle">点击每条边，量一量再加起来</p>
+        <p class="page-subtitle">点击图形或下方按钮查看每条边的示例长度，再加起来；图形未按比例绘制。</p>
         <div class="measure-area">
           <svg id="measure-svg" class="measure-svg" width="300" height="240" viewBox="0 0 300 240"></svg>
+          <div class="measure-controls" id="measure-side-buttons" aria-label="查看各边长度"></div>
           <div class="measure-hint" id="measure-hint">👆 点击图形的每条边来测量长度</div>
           <div class="measure-info">
             <div style="font-size:14px;color:#6E6E73;">已测量的边</div>
@@ -232,7 +233,7 @@
     <!-- 模式3: 计算周长 -->
     <div class="mode-content" id="mode-calc">
       <div class="card">
-        <p class="page-subtitle">根据给出的边长，算出周长</p>
+        <p class="page-subtitle">根据给出的边长，算出周长；图形未按比例绘制。</p>
         <div class="calc-area">
           <svg id="calc-svg" class="calc-svg" width="280" height="200" viewBox="0 0 280 200"></svg>
           <div class="calc-question" id="calc-question">这个图形的周长是多少？</div>
@@ -247,7 +248,7 @@
     <!-- 模式4: 闯关练习 -->
     <div class="mode-content" id="mode-quiz">
       <div class="card">
-        <p class="page-subtitle">看图形算周长，连闯5关！</p>
+        <p class="page-subtitle">根据标出的边长算周长，连闯5关！图形未按比例绘制。</p>
         <div class="quiz-area">
           <div class="quiz-progress" id="quiz-progress"></div>
           <div id="quiz-level-badge"></div>
@@ -346,6 +347,8 @@
       shapeBtns[i].addEventListener('click', function() {
         for (var j = 0; j < shapeBtns.length; j++) shapeBtns[j].classList.remove('active');
         this.classList.add('active');
+        if (walkAnimId !== null) { cancelAnimationFrame(walkAnimId); walkAnimId = null; }
+        document.getElementById('ant-demo').textContent = '🐜 小蚂蚁沿着图形的边走一圈';
         currentConceptShape = this.getAttribute('data-shape');
         drawConceptShape(currentConceptShape);
       });
@@ -473,12 +476,21 @@
         var dx = p2[0]-p1[0], dy = p2[1]-p1[1];
         var len = Math.sqrt(dx*dx+dy*dy);
         var nx = -dy/len*18, ny = dx/len*18;
-        html += '<text id="mlbl-'+i+'" x="'+(mx+nx)+'" y="'+(my+ny+5)+'" class="measure-label-text" text-anchor="middle" style="pointer-events:none;">? cm</text>';
+        html += '<text id="mlbl-'+i+'" x="'+(mx+nx)+'" y="'+(my+ny+5)+'" class="measure-label-text" text-anchor="middle" style="pointer-events:none;">'+(i+1)+': ? cm</text>';
       }
       // 最后一个顶点
       var lp = f.points[f.points.length-1];
       html += '<circle cx="'+lp[0]+'" cy="'+lp[1]+'" r="5" fill="#FF9500"/>';
       svg.innerHTML = html;
+      var sideButtons = document.getElementById('measure-side-buttons');
+      sideButtons.innerHTML = '';
+      f.points.forEach(function(_, idx) {
+        var button = document.createElement('button');
+        button.className = 'measure-ctrl-btn';
+        button.textContent = '查看第' + (idx + 1) + '条边';
+        button.addEventListener('click', function() { measureSide(idx); });
+        sideButtons.appendChild(button);
+      });
 
       // 绑定点击
       for (var j = 0; j < f.points.length; j++) {
@@ -499,7 +511,10 @@
       var vis = document.getElementById('mseg-vis-' + idx);
       if (vis) { vis.classList.add('measured'); vis.style.stroke = '#34C759'; vis.style.strokeWidth = '4'; }
       var lbl = document.getElementById('mlbl-' + idx);
-      if (lbl) { lbl.textContent = f.sideLengths[idx] + ' cm'; lbl.style.fill = '#34C759'; lbl.style.fontSize = '16px'; lbl.style.fontWeight = '700'; }
+      if (lbl) { lbl.textContent = (idx + 1) + ': ' + f.sideLengths[idx] + ' cm'; lbl.style.fill = '#34C759'; lbl.style.fontSize = '16px'; lbl.style.fontWeight = '700'; }
+      var sideButton = document.getElementById('measure-side-buttons').children[idx];
+      sideButton.disabled = true;
+      sideButton.textContent = '第' + (idx + 1) + '条边：' + f.sideLengths[idx] + ' cm';
       updateMeasureDisplay();
     }
 
@@ -544,15 +559,30 @@
     // ===== 模式3: 计算周长 =====
     function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
 
+    function triangleSide(a, b, max) {
+      return randInt(Math.max(2, Math.abs(a - b) + 1), Math.min(max, a + b - 1));
+    }
+
+    function perimeterOptions(answer) {
+      var pool = [];
+      for (var n = Math.max(1, answer - 5); n <= answer + 5; n++) if (n !== answer) pool.push(n);
+      for (var i = pool.length - 1; i > 0; i--) {
+        var j = randInt(0, i), tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+      }
+      var options = [answer].concat(pool.slice(0, 3));
+      for (var k = options.length - 1; k > 0; k--) {
+        var index = randInt(0, k), value = options[k]; options[k] = options[index]; options[index] = value;
+      }
+      return options;
+    }
+
     function generateCalcQuestion() {
       var type = randInt(0, 4);
       var shape, question, answer, options, explain, svgHtml, hints;
 
       if (type === 0) {
         // 三角形
-        var a = randInt(2, 9), b = randInt(2, 9), c = randInt(2, 9);
-        // 确保能构成三角形
-        while (a + b <= c || a + c <= b || b + c <= a) { c = randInt(2, 9); }
+        var a = randInt(2, 9), b = randInt(2, 9), c = triangleSide(a, b, 9);
         answer = a + b + c;
         question = '三角形三条边分别是 ' + a + 'cm、' + b + 'cm、' + c + 'cm，周长是多少？';
         explain = '三角形周长 = 三条边之和 = ' + a + ' + ' + b + ' + ' + c + ' = ' + answer + ' cm';
@@ -566,7 +596,7 @@
         var l = randInt(3, 12), w = randInt(2, 8);
         answer = 2 * (l + w);
         question = '长方形长 ' + l + 'cm，宽 ' + w + 'cm，周长是多少？';
-        explain = '长方形周长 = (长+宽)×2 = (' + l + '+' + w + ')×2 = ' + l*2+w*2 + ' cm';
+        explain = '长方形周长 = (长+宽)×2 = (' + l + '+' + w + ')×2 = ' + answer + ' cm';
         hints = ['长方形周长 = (长+宽)×2'];
         svgHtml = '<rect x="40" y="50" width="200" height="100" class="calc-shape"/>';
         svgHtml += '<text x="140" y="42" class="calc-dim" font-size="15">'+l+'cm</text>';
@@ -604,14 +634,7 @@
       }
 
       // 生成选项
-      var opts = [answer];
-      while (opts.length < 4) {
-        var wrong = answer + randInt(-5, 5);
-        if (wrong <= 0) wrong = answer + randInt(1, 5);
-        if (opts.indexOf(wrong) < 0 && wrong !== answer) opts.push(wrong);
-      }
-      // 打乱
-      opts.sort(function() { return Math.random() - 0.5; });
+      var opts = perimeterOptions(answer);
 
       return {
         svgHtml: svgHtml,
@@ -725,8 +748,7 @@
         // 简单：三角形或正方形
         var type = randInt(0, 1);
         if (type === 0) {
-          var a = randInt(2, 6+diff*2), b = randInt(2, 6+diff*2), c = randInt(2, 6+diff*2);
-          while (a+b<=c||a+c<=b||b+c<=a) c = randInt(2, 6+diff*2);
+          var a = randInt(2, 6+diff*2), b = randInt(2, 6+diff*2), c = triangleSide(a, b, 6+diff*2);
           var answer = a+b+c;
           q = {
             svgHtml: '<polygon points="130,25 30,155 230,155" class="calc-shape"/>' +
@@ -802,7 +824,8 @@
               '<text x="245" y="95" class="calc-dim" font-size="14">'+w+'m</text>',
             question: '长方形花坛长'+l+'m宽'+w+'m，\n围一圈栅栏，栅栏多长？',
             answer: answer,
-            explain: '('+l+' + '+w+') × 2 = '+answer+' m'
+            explain: '('+l+' + '+w+') × 2 = '+answer+' m',
+            unit: 'm'
           };
         }
       }
@@ -813,17 +836,11 @@
       document.getElementById('quiz-feedback').textContent = '';
 
       // 生成选项
-      var opts = [q.answer];
-      while (opts.length < 4) {
-        var wrong = q.answer + randInt(-4, 5);
-        if (wrong <= 0) wrong = q.answer + randInt(1, 4);
-        if (opts.indexOf(wrong) < 0) opts.push(wrong);
-      }
-      opts.sort(function(){return Math.random()-0.5;});
+      var opts = perimeterOptions(q.answer);
 
       var optsHtml = '';
       for (var i = 0; i < opts.length; i++) {
-        optsHtml += '<button class="quiz-opt" data-val="'+opts[i]+'" data-answer="'+q.answer+'">'+opts[i]+' cm</button>';
+        optsHtml += '<button class="quiz-opt" data-val="'+opts[i]+'" data-answer="'+q.answer+'">'+opts[i]+' '+(q.unit || 'cm')+'</button>';
       }
       var container = document.getElementById('quiz-options');
       container.innerHTML = optsHtml;
