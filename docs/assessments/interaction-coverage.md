@@ -59,6 +59,7 @@
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
   - 正态曲线实际绘制位置、σ 边界、超几何 n 上限、期望标注和两道练习反馈；全部题目和无障碍未全面验收。 [random-variable-distribution.spec.js](../../tests/browser/random-variable-distribution.spec.js)
 - [集合 - 互动可视化](../../math/high/sets.html)
+  - 桌面与移动模拟视口验证 320、390、1280 像素无横向溢出、圆形及包含相交关系；真实设备和整页无障碍尚未全面验收。 [sets-venn-responsive-relations.spec.js](../../tests/browser/sets-venn-responsive-relations.spec.js)
   - 桌面与移动视口验证键盘作答、切换保留、2/5 未通过、3/5 通过及保存失败重试；实机及其他题目内容尚未全面验收。 [sets-quiz-completion-reliability.spec.js](../../tests/browser/sets-quiz-completion-reliability.spec.js)
   - 桌面与移动视口验证子集动画全部离散阶段的元素归属和键盘归属判断；真实设备、其他集合图及练习尚未全面验收。 [sets-subset-example-consistency.spec.js](../../tests/browser/sets-subset-example-consistency.spec.js)
   - 桌面与移动视口检查交集画布像素、四种运算、键盘元素状态及 Venn 切换；其他集合图、练习和真实设备尚未全面验收。 [sets-visual-operations-reliability.spec.js](../../tests/browser/sets-visual-operations-reliability.spec.js)
