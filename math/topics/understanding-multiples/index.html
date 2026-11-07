@@ -178,12 +178,12 @@
           <div class="build-hint" id="build-hint"></div>
           <div class="build-display" id="build-display"></div>
           <div class="build-controls">
-            <button class="build-btn remove" id="btn-build-remove">➖</button>
-            <button class="build-btn add" id="btn-build-add">➕</button>
+            <button class="build-btn remove" id="btn-build-remove" aria-label="减少一个">➖</button>
+            <button class="build-btn add" id="btn-build-add" aria-label="增加一个">➕</button>
           </div>
           <div class="build-answer-row">
             <span class="build-answer-label">是</span>
-            <input type="number" class="build-answer-input" id="build-input" min="1" max="9" placeholder="?">
+            <input type="number" class="build-answer-input" id="build-input" aria-label="摆放倍数" min="1" max="9" placeholder="?">
             <span class="build-answer-label">倍</span>
           </div>
           <button class="build-submit" id="btn-build-submit">✅ 确认</button>
@@ -215,7 +215,7 @@
           <div class="word-scene" id="word-scene"></div>
           <div class="word-problem" id="word-problem"></div>
           <div class="word-input-row">
-            <input type="number" class="word-input" id="word-input" min="1" max="99" placeholder="?">
+            <input type="number" class="word-input" id="word-input" aria-label="应用题答案" min="1" max="99" placeholder="?">
             <span class="word-unit" id="word-unit">倍</span>
           </div>
           <button class="word-submit" id="btn-word-submit">✅ 提交答案</button>
@@ -319,13 +319,18 @@
       let targetEmoji = '';
       let targetCount = 0;
       let buildAnswer = 0;
+      let buildLocked = false;
+      let buildInputValid = true;
 
       function genBuildQuestion() {
+        buildLocked = false;
+        buildInputValid = true;
+        ['btn-build-submit', 'btn-build-add', 'btn-build-remove', 'build-input'].forEach(id => { document.getElementById(id).disabled = false; });
         baseCount = Random.int(1, 4);
         buildAnswer = Random.int(2, 5);
         targetCount = baseCount * buildAnswer;
         baseEmoji = Random.pick(EMOJIS_POOL);
-        do { targetEmoji = Random.pick(EMOJIS_POOL); } while (targetEmoji === baseEmoji);
+        targetEmoji = Random.pick(EMOJIS_POOL.filter(emoji => emoji !== baseEmoji));
         buildCount = baseCount;
 
         document.getElementById('build-question').innerHTML =
@@ -333,6 +338,7 @@
           '，下面要摆 ' + targetEmoji + '，使 ' + targetEmoji + ' 的个数是 ' + baseEmoji + ' 的 <span style="color:#E91E63">' + buildAnswer + ' 倍</span>';
         document.getElementById('build-hint').textContent = '点击 ➕ 或 ➖ 摆出正确数量的 ' + targetEmoji;
         document.getElementById('build-input').value = '';
+        document.getElementById('build-input').max = Math.min(9, Math.floor(20 / baseCount));
         document.getElementById('build-feedback').textContent = '';
         document.getElementById('build-feedback').className = 'build-feedback';
         renderBuild();
@@ -350,26 +356,38 @@
         display.innerHTML = html;
       }
 
+      function syncBuildInput() {
+        const input = document.getElementById('build-input');
+        input.value = buildCount > 0 && buildCount % baseCount === 0 && buildCount / baseCount <= Number(input.max) ? buildCount / baseCount : '';
+        buildInputValid = true;
+        document.getElementById('build-feedback').textContent = '';
+      }
       document.getElementById('btn-build-add').addEventListener('click', () => {
-        if (buildCount < 20) { buildCount++; renderBuild(); Sound.play('click'); }
+        if (buildCount < 20) { buildCount++; syncBuildInput(); renderBuild(); Sound.play('click'); }
       });
       document.getElementById('btn-build-remove').addEventListener('click', () => {
-        if (buildCount > 0) { buildCount--; renderBuild(); Sound.play('click'); }
+        if (buildCount > 0) { buildCount--; syncBuildInput(); renderBuild(); Sound.play('click'); }
       });
 
       document.getElementById('build-input').addEventListener('input', () => {
-        const val = parseInt(document.getElementById('build-input').value);
-        if (!isNaN(val) && val >= 1 && val <= 9) {
+        const input = document.getElementById('build-input');
+        const val = Number(input.value);
+        buildInputValid = input.value === '' || (Number.isInteger(val) && val >= 1 && val <= Number(input.max));
+        const feedback = document.getElementById('build-feedback');
+        feedback.textContent = buildInputValid ? '' : `请输入 1～${input.max} 的整数倍。`;
+        if (input.value !== '' && buildInputValid) {
           buildCount = baseCount * val;
-          if (buildCount > 20) buildCount = 20;
           renderBuild();
         }
       });
 
       document.getElementById('btn-build-submit').addEventListener('click', () => {
+        if (buildLocked || !buildInputValid) return;
         const correct = buildCount === targetCount;
         const fb = document.getElementById('build-feedback');
         if (correct) {
+          buildLocked = true;
+          ['btn-build-submit', 'btn-build-add', 'btn-build-remove', 'build-input'].forEach(id => { document.getElementById(id).disabled = true; });
           fb.textContent = '✅ 太棒了！' + targetEmoji + ' 是 ' + baseEmoji + ' 的 ' + buildAnswer + ' 倍！';
           fb.className = 'build-feedback correct';
           streak++; updateStreak(); bumpTotalCorrect(); Sound.play('correct'); celebrate();
@@ -421,23 +439,21 @@
         document.getElementById('quiz-question').textContent = qType.q;
 
         // 生成选项
-        let options = [qType.answer];
-        while (options.length < 4) {
-          let opt = qType.answer + Random.int(-2, 2);
-          if (opt < 1) opt = Random.int(1, 9);
-          if (!options.includes(opt)) options.push(opt);
-        }
-        options = Random.shuffle(options);
+        const candidates = Array.from({length: 30}, (_, i) => i + 1).filter(n => n !== qType.answer);
+        const options = Random.shuffle([qType.answer, ...Random.shuffle(candidates).slice(0, 3)]);
 
         const optsEl = document.getElementById('quiz-options');
         optsEl.innerHTML = '';
         document.getElementById('quiz-explain').textContent = '';
 
+        let answered = false;
         options.forEach(opt => {
           const btn = document.createElement('button');
           btn.className = 'quiz-opt';
           btn.textContent = opt + (qType.unit || '');
           btn.addEventListener('click', () => {
+            if (answered) return;
+            answered = true;
             const ok = opt === qType.answer;
             if (ok) {
               btn.classList.add('correct');
@@ -446,7 +462,7 @@
               bumpTotalCorrect();
               Sound.play('correct');
               celebrate();
-              document.getElementById('quiz-explain').innerHTML = '✅ 对！' + target + ' ÷ ' + base + ' = ' + mult;
+              document.getElementById('quiz-explain').innerHTML = '✅ 对！' + base + ' × ' + mult + ' = ' + target + '；' + target + ' ÷ ' + base + ' = ' + mult;
               updateStreak();
               setTimeout(genQuiz, 1500);
             } else {
@@ -454,7 +470,7 @@
               wrong++;
               streak = 0;
               Sound.play('wrong');
-              document.getElementById('quiz-explain').innerHTML = '❌ 答案是 ' + qType.answer + (qType.unit || '') + '。' + target + ' ÷ ' + base + ' = ' + mult;
+              document.getElementById('quiz-explain').innerHTML = '❌ 答案是 ' + qType.answer + (qType.unit || '') + '。' + base + ' × ' + mult + ' = ' + target + '；' + target + ' ÷ ' + base + ' = ' + mult;
               updateStreak();
               // 高亮正确选项
               optsEl.querySelectorAll('.quiz-opt').forEach(b => {
@@ -465,7 +481,7 @@
             document.getElementById('quiz-correct').textContent = correct;
             document.getElementById('quiz-wrong').textContent = wrong;
             // 禁用所有按钮
-            optsEl.querySelectorAll('.quiz-opt').forEach(b => b.style.pointerEvents = 'none');
+            optsEl.querySelectorAll('.quiz-opt').forEach(b => { b.disabled = true; });
           });
           optsEl.appendChild(btn);
         });
@@ -488,8 +504,11 @@
       ];
 
       let currentScenario = null;
+      let wordLocked = false;
 
       function genWord() {
+        wordLocked = false;
+        document.getElementById('btn-word-submit').disabled = false;
         const sc = Random.pick(scenarios);
         currentScenario = sc.gen();
         document.getElementById('word-scene').textContent = sc.scene;
@@ -499,14 +518,17 @@
         document.getElementById('word-feedback').textContent = '';
         document.getElementById('word-feedback').className = 'word-feedback';
         document.getElementById('btn-word-next').classList.remove('show');
-        document.getElementById('word-input').focus();
       }
 
       document.getElementById('btn-word-submit').addEventListener('click', () => {
-        const val = parseInt(document.getElementById('word-input').value);
-        if (isNaN(val)) { showToast('请输入答案！'); return; }
+        if (wordLocked) return;
+        const input = document.getElementById('word-input');
+        const val = Number(input.value);
+        if (input.value === '' || !Number.isInteger(val) || val < 1 || val > 99) { showToast('请输入 1～99 的整数！'); return; }
         const fb = document.getElementById('word-feedback');
         if (val === currentScenario.answer) {
+          wordLocked = true;
+          document.getElementById('btn-word-submit').disabled = true;
           fb.textContent = '✅ 完全正确！';
           fb.className = 'word-feedback correct';
           streak++; updateStreak(); bumpTotalCorrect(); Sound.play('correct'); celebrate();
