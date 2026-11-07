@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：111；尚未登记：205。
+主题总数：316；已登记部分交互证据：114；尚未登记：202。
 
 ## 已登记部分交互证据
 
@@ -200,6 +200,8 @@
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [机械振动与机械波 · 高中物理互动可视化](../../physics/high/vibration-waves.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
+- [浮力 · 初中物理互动可视化](../../physics/middle/buoyancy.html)
+  - 桌面及移动视口逐个验证三个主题模式入口的键盘切换、状态和面板变化，并验证移动触摸返回；真实设备及模式内控件未全面验收。 [middle-physics-mode-keyboard-access.spec.js](../../tests/browser/middle-physics-mode-keyboard-access.spec.js)
 - [电流和电路 · 初中物理互动可视化](../../physics/middle/current-circuits.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
   - 串并联画布路径、开关断开闭合、电流读数、支路路径与动画暂停；粒子速度仅为示意，全部题目与无障碍未全面验收。 [current-circuit-topology.spec.js](../../tests/browser/current-circuit-topology.spec.js)
@@ -225,6 +227,8 @@
   - 理想电路的串并联路径、滑块边界、工作点、记录上限及清空；未全面验收实物电表模型和无障碍。 [ohms-law-lab.spec.js](../../tests/browser/ohms-law-lab.spec.js)
 - [压强 · 初中物理互动可视化](../../physics/middle/pressure.html)
   - 固体压力箭头、液体深度换算与各向压强、密度选择、理想液压比例、首次作答和保存失败重试；大气模型与全页无障碍未全面验收。 [pressure-exploration.spec.js](../../tests/browser/pressure-exploration.spec.js)
+- [简单机械 · 初中物理互动可视化](../../physics/middle/simple-machines.html)
+  - 桌面及移动视口逐个验证三个主题模式入口的键盘切换、状态和面板变化，并验证移动触摸返回；真实设备及模式内控件未全面验收。 [middle-physics-mode-keyboard-access.spec.js](../../tests/browser/middle-physics-mode-keyboard-access.spec.js)
 - [声现象 · 初中物理互动可视化](../../physics/middle/sound.html)
   - 桌面与窄屏验证键盘作答、错题重试、重复计数、保存及失败恢复；真实设备及整页无障碍尚未全面验收。 [sound-quiz-learning-completion.spec.js](../../tests/browser/sound-quiz-learning-completion.spec.js)
   - 音调模式波长、三种波形振幅、键盘、暂停与真空切换；回声动画、测验及真实设备未全面验收。 [sound-wave-visual-consistency.spec.js](../../tests/browser/sound-wave-visual-consistency.spec.js)
@@ -233,6 +237,8 @@
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
   - 电源、灯泡和电表的画布路径，导体长度边界、电阻电流读数、单动画循环及暂停；实际灯丝和完整无障碍未全面验收。 [resistance-experiment.spec.js](../../tests/browser/resistance-experiment.spec.js)
   - 电压主题测验中触电危险的正确和错误反馈、欧姆导体条件及正文一致性；其他安全主题未全面审核。 [electrical-safety-quiz.spec.js](../../tests/browser/electrical-safety-quiz.spec.js)
+- [功和机械能 · 初中物理互动可视化](../../physics/middle/work-energy.html)
+  - 桌面及移动视口逐个验证三个主题模式入口的键盘切换、状态和面板变化，并验证移动触摸返回；真实设备及模式内控件未全面验收。 [middle-physics-mode-keyboard-access.spec.js](../../tests/browser/middle-physics-mode-keyboard-access.spec.js)
 - [多普勒效应 · 大学物理互动可视化](../../physics/uni/doppler.html)
   - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
   - 五个大学物理同构测验键盘答题、修改答案、计分及保存异常重试；不代表教学内容或其他交互已全面核验。 [university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)
@@ -487,15 +493,12 @@
 - [动量 - 高中物理互动可视化](../../physics/high/momentum.html)
 - [运动的描述 · 高中物理互动可视化](../../physics/high/motion.html)
 - [牛顿运动定律 - 高中物理互动可视化](../../physics/high/newton-laws.html)
-- [浮力 · 初中物理互动可视化](../../physics/middle/buoyancy.html)
 - [力 · 初中物理互动可视化](../../physics/middle/force.html)
 - [透镜及其应用 · 初中物理互动可视化](../../physics/middle/lens.html)
 - [光现象 - 初中物理互动可视化](../../physics/middle/light.html)
 - [质量与密度 · 初中物理互动可视化](../../physics/middle/mass-density.html)
 - [运动和力 · 初中物理互动可视化](../../physics/middle/motion-force.html)
-- [简单机械 · 初中物理互动可视化](../../physics/middle/simple-machines.html)
 - [物态变化 · 初中物理互动可视化](../../physics/middle/state-change.html)
-- [功和机械能 · 初中物理互动可视化](../../physics/middle/work-energy.html)
 - [刚体力学 - 大学物理互动可视化](../../physics/uni/02-rigid-body.html)
 - [波动光学 · 互动可视化](../../physics/uni/08-wave-optics.html)
 - [玻尔原子模型 - 大学物理互动可视化](../../physics/uni/atom-physics.html)
