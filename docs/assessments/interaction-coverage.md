@@ -115,6 +115,7 @@
   - 电压边界、额定状态、功率表比例、光晕渐变和计算输入；真实灯丝温度、其他题目和无障碍未全面验收。 [electric-power-model.spec.js](../../tests/browser/electric-power-model.spec.js)
 - [电与磁 · 初中物理互动可视化](../../physics/middle/electromagnetism.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
+  - 零档磁极与磁场、直导线环形磁场投影、电动机换向假设和动画暂停；绕向和场强为示意，题目与无障碍未全面验收。 [electromagnetism-model.spec.js](../../tests/browser/electromagnetism-model.spec.js)
 - [热机 · 初中物理互动可视化](../../physics/middle/heat-engine.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [生活用电 · 初中物理互动可视化](../../physics/middle/household-circuits.html)

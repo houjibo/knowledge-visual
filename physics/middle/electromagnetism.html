@@ -129,27 +129,29 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="emCanvas" width="720" height="460"></canvas>
+          <canvas id="emCanvas" width="720" height="460" role="img"></canvas>
           <div class="legend">
             <span style="color:#f472b6">N 极（红）</span>
             <span style="color:#60a5fa">S 极（蓝）</span>
             <span>⚡ 电流产生磁场</span>
           </div>
         </div>
-        <button class="switch-btn" id="powerBtn">🔌 接通电流</button>
+        <button class="switch-btn" id="powerBtn" aria-pressed="false">🔌 接通电流</button>
+        <button class="switch-btn" id="toggleAnimation" aria-pressed="false">暂停动画</button>
       </div>
       <div class="panel">
         <h3>选择实验</h3>
         <div class="demo-btns" id="demoBtns">
-          <button class="demo-btn active" data-demo="oersted">奥斯特实验</button>
-          <button class="demo-btn" data-demo="electromagnet">电磁铁</button>
-          <button class="demo-btn" data-demo="motor">电动机</button>
+          <button class="demo-btn active" data-demo="oersted" aria-pressed="true">奥斯特实验</button>
+          <button class="demo-btn" data-demo="electromagnet" aria-pressed="false">电磁铁</button>
+          <button class="demo-btn" data-demo="motor" aria-pressed="false">电动机</button>
         </div>
         <div class="slider-row" id="rowCurrent" style="display:none">
-          <label>电流大小</label>
+          <label for="sliderI">电流示意档位</label>
           <input type="range" id="sliderI" min="0" max="10" step="1" value="5">
-          <span class="val" id="valI">5 A</span>
+          <span class="val" id="valI">5 / 10</span>
         </div>
+        <p style="font-size:14px;color:#cbd5e1">示意模型：电磁铁忽略剩磁，吸针数是随档位变化的示意，不代表真实测量；电动机假设有换向装置，图中未画出。</p>
         <div class="info-grid" id="infoGrid">
           <div>实验现象<br><b id="infoA">小磁针静止（指向南北）</b></div>
           <div>结论<br><b id="infoB">接通电流观察变化</b></div>
@@ -243,6 +245,7 @@ tabs.forEach(t => t.addEventListener('click', () => {
   t.setAttribute('aria-pressed', 'true');
   mode = t.dataset.mode;
   Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+  stopAnimation(); render(0); startAnimation();
 }));
 
 /* ============================================================
@@ -254,47 +257,52 @@ let demo = 'oersted';   // oersted | electromagnet | motor
 let powered = false;    // 电流是否接通
 let needleAngle = 0;    // 小磁针角度（动画过渡）
 let coilAngle = 0;      // 电动机线圈角度
-let lastT = performance.now();
+let lastT = null, frameId = null, playing = true;
 
 const powerBtn = document.getElementById('powerBtn');
 powerBtn.addEventListener('click', () => {
   powered = !powered;
   powerBtn.textContent = powered ? '🔓 断开电流' : '🔌 接通电流';
   powerBtn.classList.toggle('off', powered);
-  updInfo();
+  powerBtn.setAttribute('aria-pressed', String(powered));
+  if (!playing) needleAngle = powered ? Math.PI * 0.42 : 0;
+  updInfo(); render(0);
 });
 
 const sliderI = document.getElementById('sliderI');
-sliderI.addEventListener('input', updInfo);
+sliderI.addEventListener('input', () => { updInfo(); render(0); });
 
 document.querySelectorAll('.demo-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.demo-btn').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
+  document.querySelectorAll('#demoBtns .demo-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
+  b.classList.add('active'); b.setAttribute('aria-pressed', 'true');
   demo = b.dataset.demo;
   document.getElementById('rowCurrent').style.display = demo === 'electromagnet' ? 'flex' : 'none';
-  updInfo();
+  if (!playing) needleAngle = powered ? Math.PI * 0.42 : 0;
+  updInfo(); render(0);
 }));
 
 function updInfo() {
-  document.getElementById('valI').textContent = sliderI.value + ' A';
+  document.getElementById('valI').textContent = sliderI.value + ' / 10';
   const A = document.getElementById('infoA');
   const B = document.getElementById('infoB');
   if (demo === 'oersted') {
     A.innerHTML = powered ? '小磁针<b>偏转</b>！' : '小磁针静止（指向南北）';
     B.textContent = powered ? '通电导线周围存在磁场' : '接通电流观察变化';
   } else if (demo === 'electromagnet') {
-    const pins = powered ? Math.round(+sliderI.value * 1.6) : 0;
-    A.innerHTML = powered ? `吸起大头针 <b>${pins}</b> 枚` : '无磁性，吸不起大头针';
-    B.textContent = powered ? '电流越大、磁性越强' : '接通电流产生磁性';
+    const fieldOn = powered && +sliderI.value > 0;
+    const pins = fieldOn ? Math.round(+sliderI.value * 1.6) : 0;
+    A.innerHTML = fieldOn ? `示意吸起大头针 <b>${pins}</b> 枚` : '示意未吸起大头针';
+    B.textContent = fieldOn ? '相同条件下电流增大，磁场增强（示意）' : '无电流，本模型忽略剩磁';
   } else {
-    A.innerHTML = powered ? '线圈<b>持续转动</b>' : '线圈静止';
-    B.textContent = powered ? '电能 → 机械能' : '接通电流观察转动';
+    A.innerHTML = powered ? (playing ? '线圈<b>持续转动</b>' : '线圈转动示意已暂停') : '线圈静止';
+    B.textContent = powered ? '电能 → 机械能（假设换向）' : '接通电流观察转动';
   }
+  canvas.setAttribute('aria-label', `${demo === 'oersted' ? '奥斯特实验' : demo === 'electromagnet' ? '电磁铁' : '电动机'}，${powered ? '电源接通' : '电源断开'}。${A.textContent}。${B.textContent}。`);
 }
 
 /* ---------- 奥斯特实验 ---------- */
 function drawOersted(dt) {
-  // 导线（水平，沿东西向架在磁针上方）
+  // 导线沿南北方向架在小磁针上方（画面水平为示意）。
   ctx.strokeStyle = powered ? '#fbbf24' : '#94a3b8';
   ctx.lineWidth = 5;
   ctx.beginPath(); ctx.moveTo(80, 150); ctx.lineTo(640, 150); ctx.stroke();
@@ -309,11 +317,11 @@ function drawOersted(dt) {
     ctx.setLineDash([4, 4]);
     for (const r of [30, 55, 80]) {
       ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(360, 150, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(360, 150, r * 0.3, r, 0, 0, Math.PI * 2); ctx.stroke();
     }
     ctx.setLineDash([]);
     ctx.fillStyle = 'rgba(251,191,36,0.8)'; ctx.font = '12px sans-serif';
-    ctx.fillText('环形磁场', 428, 110);
+    ctx.fillText('环形磁场（侧视投影）', 390, 100);
   }
   // 支架
   ctx.fillStyle = '#64748b';
@@ -339,34 +347,35 @@ function drawOersted(dt) {
   ctx.fillText('电源', 96, 420);
   ctx.strokeStyle = powered ? '#fbbf24' : '#64748b'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(112, 330); ctx.lineTo(112, 250); ctx.lineTo(80, 250); ctx.lineTo(80, 150); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(134, 330); ctx.lineTo(134, 250); ctx.lineTo(660, 250); ctx.lineTo(660, 150); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(134, 330); ctx.lineTo(134, 250); ctx.lineTo(640, 250); ctx.lineTo(640, 150); ctx.stroke();
 }
 
 /* ---------- 电磁铁 ---------- */
 function drawElectromagnet() {
+  const fieldOn = powered && +sliderI.value > 0;
   // 铁芯
   ctx.fillStyle = '#94a3b8';
   ctx.fillRect(200, 180, 240, 36);
   ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
   ctx.fillText('铁芯', 300, 170);
   // 线圈
-  ctx.strokeStyle = powered ? '#fbbf24' : '#64748b';
+  ctx.strokeStyle = fieldOn ? '#fbbf24' : '#64748b';
   ctx.lineWidth = 4;
   for (let i = 0; i < 10; i++) {
     const x = 210 + i * 23;
     ctx.beginPath(); ctx.ellipse(x, 198, 10, 30, 0, -Math.PI / 2, Math.PI / 2); ctx.stroke();
   }
   ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
-  ctx.fillText('螺线管（线圈）', 460, 190);
+  ctx.fillText('螺线管示意（未标绕向）', 460, 190);
   // N/S 极
-  if (powered) {
+  if (fieldOn) {
     ctx.fillStyle = '#f472b6'; ctx.font = 'bold 16px sans-serif';
     ctx.fillText('N', 446, 204);
     ctx.fillStyle = '#60a5fa';
     ctx.fillText('S', 180, 204);
   }
   // 电源与导线
-  ctx.strokeStyle = powered ? '#fbbf24' : '#64748b'; ctx.lineWidth = 2.5;
+  ctx.strokeStyle = fieldOn ? '#fbbf24' : '#64748b'; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.moveTo(210, 228); ctx.lineTo(210, 300); ctx.lineTo(300, 300); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(430, 228); ctx.lineTo(430, 300); ctx.lineTo(380, 300); ctx.stroke();
   ctx.strokeStyle = '#e2e8f0';
@@ -374,14 +383,14 @@ function drawElectromagnet() {
   ctx.fillStyle = '#5eead4'; ctx.font = '12px sans-serif';
   ctx.fillText('电源', 326, 342);
   // 大头针
-  const pins = powered ? Math.round(+sliderI.value * 1.6) : 0;
+  const pins = fieldOn ? Math.round(+sliderI.value * 1.6) : 0;
   ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
   ctx.fillText('大头针盘', 460, 260);
   ctx.strokeStyle = '#64748b';
   ctx.strokeRect(440, 262, 110, 16);
   for (let i = 0; i < 16; i++) {
     const px = 448 + i * 6, py = 270;
-    if (powered && i < pins) {
+    if (fieldOn && i < pins) {
       // 被吸起到 N 极端
       ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 2;
       const ax = 450 + (i % 4) * 8, ay = 216 + Math.floor(i / 4) * 12;
@@ -394,7 +403,7 @@ function drawElectromagnet() {
     }
   }
   // 磁感线
-  if (powered) {
+  if (fieldOn) {
     ctx.strokeStyle = 'rgba(244,114,182,0.45)';
     ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5;
     for (const k of [-1, 0, 1]) {
@@ -405,7 +414,7 @@ function drawElectromagnet() {
     ctx.setLineDash([]);
   }
   ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
-  ctx.fillText(powered ? `电流 ${sliderI.value}A：吸起 ${pins} 枚大头针 → 电流越大磁性越强` : '断开状态：铁芯无磁性', 170, 400);
+  ctx.fillText(fieldOn ? `示意档位 ${sliderI.value}/10：吸起 ${pins} 枚（非实测）` : '无电流：本模型忽略铁芯剩磁', 170, 400);
 }
 
 /* ---------- 电动机 ---------- */
@@ -442,18 +451,8 @@ function drawMotor(dt) {
   // 轴
   ctx.fillStyle = '#94a3b8';
   ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.fill();
-  // 受力箭头（通电时）
-  if (powered) {
-    ctx.fillStyle = '#10b981'; ctx.font = 'bold 13px sans-serif';
-    ctx.fillText('F ↑', cx - rw - 40, cy - 40);
-    ctx.fillText('F ↓', cx + rw + 16, cy + 50);
-    ctx.fillStyle = 'rgba(16,185,129,0.85)';
-    ctx.font = '14px sans-serif';
-    ctx.fillText('通电线圈在磁场中受力 → 持续转动（电能 → 机械能）', 150, 420);
-  } else {
-    ctx.fillStyle = '#cbd5e1'; ctx.font = '14px sans-serif';
-    ctx.fillText('断开状态：线圈不受力，静止', 240, 420);
-  }
+  ctx.fillStyle = powered ? '#10b981' : '#cbd5e1'; ctx.font = '14px sans-serif';
+  ctx.fillText(powered ? '假设换向装置使线圈持续转动（未画出）' : '断开状态：示意线圈静止', 190, 420);
   // 电源
   if (true) {
     ctx.strokeStyle = powered ? '#fbbf24' : '#64748b'; ctx.lineWidth = 2.5;
@@ -467,26 +466,41 @@ function drawMotor(dt) {
   }
 }
 
-function draw() {
-  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
-  const now = performance.now();
-  const dt = Math.min(0.05, (now - lastT) / 1000);
-  lastT = now;
+function render(dt) {
+  if (mode !== 'learn') return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (demo === 'oersted') drawOersted(dt);
   else if (demo === 'electromagnet') drawElectromagnet();
   else drawMotor(dt);
-  requestAnimationFrame(draw);
 }
-updInfo();
-requestAnimationFrame(draw);
+function tick(now) {
+  frameId = null;
+  if (!playing || mode !== 'learn') return;
+  const dt = lastT === null ? 0 : Math.min(0.05, Math.max(0, (now - lastT) / 1000));
+  lastT = now; render(dt); startAnimation();
+}
+function startAnimation() {
+  if (playing && mode === 'learn' && frameId === null) frameId = requestAnimationFrame(tick);
+}
+function stopAnimation() {
+  if (frameId !== null) cancelAnimationFrame(frameId);
+  frameId = null; lastT = null;
+}
+document.getElementById('toggleAnimation').addEventListener('click', e => {
+  playing = !playing;
+  e.currentTarget.textContent = playing ? '暂停动画' : '继续动画';
+  e.currentTarget.setAttribute('aria-pressed', String(!playing));
+  updInfo();
+  if (playing) startAnimation(); else stopAnimation();
+});
+updInfo(); render(0); startAnimation();
 
 /* ============================================================
  * 练习模式
  * ============================================================ */
 const PRACTICE_TIPS = {
   p1: '✅ 正确！奥斯特实验首次证明电流周围存在磁场（电流的磁效应）。',
-  p2: '✅ 正确！铜不能被磁化，换铜芯会大大减弱磁性；其余三项都能增强磁性。',
+  p2: '✅ 正确！铜不是铁磁性材料，换铜芯会显著减弱铁芯的增强效应；其余三项在相应条件下可以增强磁性。',
   p3: '✅ 正确！电动机消耗电能获得转动——电能转化为机械能。'
 };
 document.querySelectorAll('.practice-item').forEach(item => {
@@ -494,7 +508,7 @@ document.querySelectorAll('.practice-item').forEach(item => {
   item.querySelectorAll('.quiz-opt').forEach(opt => {
     opt.addEventListener('click', () => {
       const ok = opt.dataset.ok === '1';
-      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.disabled = true; });
       opt.classList.add(ok ? 'correct' : 'wrong');
       fb.style.color = ok ? '#10b981' : '#ef4444';
       fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
@@ -514,7 +528,7 @@ const QUIZ = [
     ans: 1, ex: '右手握住螺线管，四指指向电流方向，大拇指指向 N 极。' },
   { q: '电磁铁与永久磁体相比，优点是（　　）',
     opts: ['磁性有无可以控制', '永远有磁性', '不需要线圈', '体积一定更小'],
-    ans: 0, ex: '电磁铁通电有磁、断电无磁，磁性强弱和极性也可控，应用广泛（电磁继电器、起重机等）。' },
+    ans: 0, ex: '电磁铁通电时磁场可控，断电后铁芯可能仍有剩磁，磁性强弱和极性也可调，应用广泛（电磁继电器、起重机等）。' },
   { q: '发电机的原理是（　　）',
     opts: ['电流的磁效应', '电磁感应', '通电导体受力', '电荷间相互作用'],
     ans: 1, ex: '发电机利用电磁感应：外力使线圈在磁场中转动，产生感应电流（机械能 → 电能）。' },
