@@ -38,8 +38,12 @@
 
     /* 小方块搭建模式 */
     .build-area { text-align: center; padding: 16px; }
-    .build-scene { position: relative; display: inline-block; margin: 16px auto; }
-    .build-canvas { border: 3px solid #E5E5EA; border-radius: 16px; background: white; touch-action: none; }
+    .build-scene { width: min(100%, 308px); margin: 16px auto; }
+    .build-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; padding: 6px; border: 3px solid #E5E5EA; border-radius: 12px; background: white; }
+    .build-cell { aspect-ratio: 1; min-width: 0; padding: 0; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; cursor: pointer; }
+    .build-cell.target { background: #fff0dc; border-color: #c66b00; }
+    .build-cell.placed { background: #ff9800; border: 2px solid #a54400; }
+    .build-cell:focus-visible { outline: 3px solid #145dcc; outline-offset: -3px; z-index: 1; }
     .build-controls { display: flex; justify-content: center; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
     .build-btn {
       padding: 10px 20px; border: none; border-radius: 12px; font-size: 15px;
@@ -223,21 +227,21 @@
     <!-- ===== 搭一搭 ===== -->
     <div class="mode-content" id="mode-build">
       <div class="build-area">
-        <div class="build-target" id="buildTarget">用方块搭出指定的形状，数数用了几个小方块！</div>
+        <div class="build-target" id="buildTarget">用单层 1 cm³ 小方块搭出浅橙色目标形状，数数用了几个小方块！</div>
         <div class="build-info">
           已放: <span id="blockCount">0</span> 个 &nbsp;|&nbsp;
           目标: <span id="targetCount">?</span> 个
         </div>
         <div class="build-scene">
-          <canvas id="buildCanvas" class="build-canvas" width="320" height="280"></canvas>
+          <div id="buildGrid" class="build-grid" role="group" aria-label="搭建方格，方向键移动，空格或回车操作"></div>
         </div>
         <div class="build-controls">
-          <button class="build-btn primary" id="btnAddBlock">➕ 放方块</button>
-          <button class="build-btn secondary" id="btnRemoveBlock">➖ 拿走</button>
+          <button class="build-btn primary" id="btnAddBlock" aria-pressed="true">➕ 放方块</button>
+          <button class="build-btn secondary" id="btnRemoveBlock" aria-pressed="false">➖ 拿走</button>
           <button class="build-btn secondary" id="btnClearBuild">🗑️ 清空</button>
           <button class="build-btn primary" id="btnNewShape">🎲 换一个</button>
         </div>
-        <div id="buildResult" style="font-size:20px;font-weight:700;min-height:36px;margin:12px 0;"></div>
+        <div id="buildResult" role="status" aria-live="polite" style="font-size:20px;font-weight:700;min-height:36px;margin:12px 0;"></div>
       </div>
     </div>
 
@@ -338,8 +342,7 @@
     });
 
     // ===== 搭一搭 =====
-    const canvas = document.getElementById('buildCanvas');
-    const ctx = canvas.getContext('2d');
+    const buildGrid = document.getElementById('buildGrid');
     let blocks = [];
     let targetShape = null;
 
@@ -354,83 +357,52 @@
       { name: '大 L 形', blocks: [[0,0],[0,1],[0,2],[0,3],[1,0],[2,0]], count: 6 },
     ];
 
-    const CELL = 40;
-    const OFFSET_X = 40;
-    const OFFSET_Y = 40;
-
+    let buildMode = 'add';
+    const buildCells = [];
     function drawBuild() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Grid
-      ctx.strokeStyle = '#E5E5EA';
-      ctx.lineWidth = 1;
-      for (let x = 0; x <= 7; x++) {
-        ctx.beginPath();
-        ctx.moveTo(OFFSET_X + x * CELL, OFFSET_Y);
-        ctx.lineTo(OFFSET_X + x * CELL, OFFSET_Y + 6 * CELL);
-        ctx.stroke();
-      }
-      for (let y = 0; y <= 6; y++) {
-        ctx.beginPath();
-        ctx.moveTo(OFFSET_X, OFFSET_Y + y * CELL);
-        ctx.lineTo(OFFSET_X + 7 * CELL, OFFSET_Y + y * CELL);
-        ctx.stroke();
-      }
-      // Target ghost
-      if (targetShape) {
-        targetShape.blocks.forEach(([bx, by]) => {
-          ctx.fillStyle = 'rgba(255,152,0,0.12)';
-          ctx.fillRect(OFFSET_X + bx * CELL + 1, OFFSET_Y + by * CELL + 1, CELL - 2, CELL - 2);
-          ctx.strokeStyle = 'rgba(255,152,0,0.3)';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(OFFSET_X + bx * CELL + 1, OFFSET_Y + by * CELL + 1, CELL - 2, CELL - 2);
-        });
-      }
-      // Placed blocks
-      blocks.forEach(([bx, by]) => {
-        const grd = ctx.createLinearGradient(OFFSET_X + bx * CELL, OFFSET_Y + by * CELL, OFFSET_X + (bx+1) * CELL, OFFSET_Y + (by+1) * CELL);
-        grd.addColorStop(0, '#FFB74D');
-        grd.addColorStop(1, '#FF9800');
-        ctx.fillStyle = grd;
-        ctx.beginPath();
-        ctx.roundRect(OFFSET_X + bx * CELL + 2, OFFSET_Y + by * CELL + 2, CELL - 4, CELL - 4, 6);
-        ctx.fill();
-        ctx.strokeStyle = '#E65100';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        // 3D effect
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.fillRect(OFFSET_X + bx * CELL + 4, OFFSET_Y + by * CELL + 4, CELL - 12, 6);
+      const targets = new Set(targetShape.blocks.map(([x,y]) => `${x},${y}`));
+      const placed = new Set(blocks.map(([x,y]) => `${x},${y}`));
+      buildCells.forEach((cell, index) => {
+        const x = index % 7, y = Math.floor(index / 7), key = `${x},${y}`;
+        const isTarget = targets.has(key), isPlaced = placed.has(key);
+        cell.classList.toggle('target', isTarget);
+        cell.classList.toggle('placed', isPlaced);
+        cell.setAttribute('aria-pressed', String(isPlaced));
+        cell.setAttribute('aria-label', `第 ${y+1} 行第 ${x+1} 列，${isTarget ? '目标位置，' : ''}${isPlaced ? '已有方块' : '空格'}`);
       });
       document.getElementById('blockCount').textContent = blocks.length;
     }
-
     function newShape() {
       targetShape = shapes[Math.floor(Math.random() * shapes.length)];
       blocks = [];
+      document.getElementById('buildTarget').textContent = `用单层 1 cm³ 小方块搭出 ${targetShape.name}，填满浅橙色目标位置。`;
       document.getElementById('targetCount').textContent = targetShape.count;
       document.getElementById('buildResult').textContent = '';
       drawBuild();
     }
-
-    let buildMode = 'add';
-    canvas.addEventListener('click', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = Math.floor((e.clientX - rect.left - OFFSET_X * (canvas.width / rect.width)) / (CELL * (canvas.width / rect.width)));
-      const y = Math.floor((e.clientY - rect.top - OFFSET_Y * (canvas.height / rect.height)) / (CELL * (canvas.height / rect.height)));
-      if (x < 0 || x > 6 || y < 0 || y > 5) return;
-
-      const idx = blocks.findIndex(b => b[0] === x && b[1] === y);
-      if (buildMode === 'add') {
-        if (idx === -1) blocks.push([x, y]);
-      } else {
-        if (idx !== -1) blocks.splice(idx, 1);
-      }
-      drawBuild();
-      checkBuildResult();
-    });
+    for (let y=0; y<6; y++) for (let x=0; x<7; x++) {
+      const cell = document.createElement('button');
+      cell.type = 'button'; cell.className = 'build-cell'; cell.tabIndex = x === 0 && y === 0 ? 0 : -1;
+      cell.addEventListener('click', () => {
+        const idx = blocks.findIndex(b => b[0] === x && b[1] === y);
+        if (buildMode === 'add' && idx === -1) blocks.push([x,y]);
+        if (buildMode === 'remove' && idx !== -1) blocks.splice(idx,1);
+        drawBuild(); checkBuildResult();
+      });
+      cell.addEventListener('keydown', event => {
+        const moves = {ArrowLeft: [-1,0], ArrowRight: [1,0], ArrowUp: [0,-1], ArrowDown: [0,1]};
+        if (!moves[event.key]) return;
+        event.preventDefault();
+        const [dx,dy] = moves[event.key], nx = x + dx, ny = y + dy;
+        if (nx < 0 || nx >= 7 || ny < 0 || ny >= 6) return;
+        cell.tabIndex = -1; const next = buildCells[ny*7+nx]; next.tabIndex = 0; next.focus();
+      });
+      buildCells.push(cell); buildGrid.appendChild(cell);
+    }
 
     function checkBuildResult() {
       if (!targetShape) return;
+      document.getElementById('buildResult').textContent = '';
       if (blocks.length === targetShape.count) {
         // Check if positions match
         const targetSet = new Set(targetShape.blocks.map(b => b[0] + ',' + b[1]));
@@ -449,8 +421,13 @@
       }
     }
 
-    document.getElementById('btnAddBlock').addEventListener('click', () => { buildMode = 'add'; });
-    document.getElementById('btnRemoveBlock').addEventListener('click', () => { buildMode = 'remove'; });
+    function setBuildMode(mode) {
+      buildMode = mode;
+      document.getElementById('btnAddBlock').setAttribute('aria-pressed', String(mode === 'add'));
+      document.getElementById('btnRemoveBlock').setAttribute('aria-pressed', String(mode === 'remove'));
+    }
+    document.getElementById('btnAddBlock').addEventListener('click', () => setBuildMode('add'));
+    document.getElementById('btnRemoveBlock').addEventListener('click', () => setBuildMode('remove'));
     document.getElementById('btnClearBuild').addEventListener('click', () => { blocks = []; document.getElementById('buildResult').textContent = ''; drawBuild(); });
     document.getElementById('btnNewShape').addEventListener('click', newShape);
     newShape();

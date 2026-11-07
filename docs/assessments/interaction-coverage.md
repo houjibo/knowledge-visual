@@ -157,6 +157,7 @@
   - 固定随机值、读写比、等价比、重复提交和挑战题部分场景；未覆盖全部主题内容。 [ratio-learning.spec.js](../../tests/browser/ratio-learning.spec.js)
 - [体积与容积单位](../../math/topics/volume-units/index.html)
   - 换算精确判分、限时挑战重复提交、估测题数和保存失败恢复；搭方块画布与完整无障碍未全面验收。 [volume-units-practice-reliability.spec.js](../../tests/browser/volume-units-practice-reliability.spec.js)
+  - 八种目标、桌面键盘、移动触摸模拟、缩放布局和反馈更新；真实设备及整页无障碍尚未全面验收。 [volume-units-accessible-building.spec.js](../../tests/browser/volume-units-accessible-building.spec.js)
 - [体积与容积](../../math/topics/volume/index.html)
   - 12 道换算、15 道挑战、重复提交与完成记录恢复；摆方块、真机及完整无障碍未全面验收。 [volume-practice-and-concept-reliability.spec.js](../../tests/browser/volume-practice-and-concept-reliability.spec.js)
   - 预设与自由参数极值、逐层累计、重置及桌面与移动视口边界；真实设备和完整无障碍尚未全面验收。 [volume-layer-exploration.spec.js](../../tests/browser/volume-layer-exploration.spec.js)

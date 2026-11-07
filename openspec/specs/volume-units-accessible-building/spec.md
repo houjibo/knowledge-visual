@@ -1,0 +1,21 @@
+# volume-units-accessible-building Specification
+
+## Purpose
+TBD - created by archiving change volume-units-accessible-building. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 搭方块支持键盘和响应式指针操作
+页面 SHALL 提供可缩放的方格、可辨识的目标位置和已放置状态，并支持键盘及指针操作。
+
+#### Scenario: 使用键盘搭建
+- **WHEN** 学习者通过方向键移动并用空格或回车操作
+- **THEN** 所选方格按放置或移除模式更新，名称和已放数量同步变化
+
+#### Scenario: 窄屏点击目标
+- **WHEN** 学习者在窄屏触摸目标方格
+- **THEN** 对应方格更新，完成全部目标时显示成功
+
+#### Scenario: 更正位置
+- **WHEN** 方块数量正确但位置错误，学习者移除或重新放置
+- **THEN** 旧反馈被清除并按当前形状重新判断
