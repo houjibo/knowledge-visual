@@ -131,6 +131,7 @@
     .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
     .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
 
+    .next-btn[hidden] { display: none; }
     .next-btn {
       padding: 12px 28px; border: none; border-radius: 14px; font-size: 16px;
       font-weight: 700; cursor: pointer; transition: all 0.2s ease;
@@ -147,6 +148,7 @@
 </head>
 <body>
   <div class="page-container">
+    <p id="learningProgress" role="status" aria-live="polite"></p>
     <nav class="breadcrumb">
       <a href="../../../index.html" class="breadcrumb-item">🏠 首页</a>
       <span class="breadcrumb-sep">›</span>
@@ -347,11 +349,12 @@
           <div class="practice-question" id="practiceQuestion">加载中...</div>
           <div class="practice-input" id="practiceInput">
             <span class="input-label">表面积 =</span>
-            <input type="number" class="input-field" id="answerInput" placeholder="?">
+            <input type="number" class="input-field" id="answerInput" aria-label="表面积答案" placeholder="?">
             <span class="input-unit">cm²</span>
           </div>
           <button class="submit-btn" id="submitBtn">提交答案</button>
-          <div class="feedback" id="feedback"></div>
+          <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+          <button class="next-btn" id="practiceNext" hidden>下一题 →</button>
         </div>
       </div>
     </div>
@@ -377,7 +380,7 @@
           <div class="challenge-title" id="challengeTitle">加载中...</div>
           <div class="challenge-desc" id="challengeDesc"></div>
           <div class="challenge-options" id="challengeOptions"></div>
-          <div class="feedback" id="challengeFeedback"></div>
+          <div class="feedback" id="challengeFeedback" role="status" aria-live="polite"></div>
           <button class="next-btn" id="nextBtn" disabled>下一题 →</button>
         </div>
       </div>
@@ -386,6 +389,27 @@
 
   <script src="../../assets/js/common.js"></script>
   <script>
+    const learningMilestones = {unfold: false, practice: false, challenge: false};
+    const milestoneNames = {unfold: '切换查看展开图', practice: '答对三道计算题', challenge: '答对三道不同应用题'};
+    let progressSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('surface-area');
+    let completionAttempted = false;
+    function showLearningProgress() {
+      const status = document.getElementById('learningProgress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      const remaining = Object.keys(learningMilestones).filter(key => !learningMilestones[key]);
+      status.textContent = '本次学习完成条件 ' + (3 - remaining.length) + '/3：还需' + remaining.map(key => milestoneNames[key]).join('、') + '。未全部达标时，刷新会清空本次阶段进度。';
+    }
+    function completeMilestone(key) {
+      learningMilestones[key] = true;
+      if (!progressSaved && !completionAttempted && Object.values(learningMilestones).every(Boolean)) {
+        completionAttempted = true;
+        progressSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('surface-area');
+      }
+      showLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', () => { if (completionAttempted) { progressSaved = true; showLearningProgress(); } });
+    showLearningProgress();
     // 模式切换
     document.querySelectorAll('.mode-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -412,6 +436,7 @@
     let showCube = false;
     document.getElementById('unfoldBtn').addEventListener('click', () => {
       showCube = !showCube;
+      completeMilestone('unfold');
       document.getElementById('unfold-cuboid').style.display = showCube ? 'none' : 'block';
       document.getElementById('unfold-cube').style.display = showCube ? 'block' : 'none';
     });
@@ -431,7 +456,7 @@
         answer = side * side * 6;
       } else {
         const length = Math.floor(Math.random() * 8) + 3;
-        const width = Math.floor(Math.random() * 6) + 2;
+        const width = Math.floor(Math.random() * (Math.min(7, length) - 1)) + 2;
         const height = Math.floor(Math.random() * 5) + 2;
         question = `长方体的长是 <strong>${length} cm</strong>，宽是 <strong>${width} cm</strong>，高是 <strong>${height} cm</strong>，求表面积。`;
         answer = (length * width + length * height + width * height) * 2;
@@ -440,30 +465,36 @@
       document.getElementById('practiceQuestion').innerHTML = question;
       currentAnswer = answer;
       document.getElementById('answerInput').value = '';
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('practiceNext').hidden = true;
       document.getElementById('feedback').textContent = '';
       document.getElementById('feedback').className = 'feedback';
     }
 
     document.getElementById('submitBtn').addEventListener('click', () => {
-      const userAnswer = parseInt(document.getElementById('answerInput').value);
-      if (isNaN(userAnswer)) {
-        document.getElementById('feedback').textContent = '请输入数字！';
+      const submit = document.getElementById('submitBtn');
+      if (submit.disabled) return;
+      const raw = document.getElementById('answerInput').value;
+      const userAnswer = Number(raw);
+      if (raw.trim() === '' || !Number.isSafeInteger(userAnswer) || userAnswer <= 0) {
+        document.getElementById('feedback').textContent = '请输入大于零的整数！';
         document.getElementById('feedback').className = 'feedback wrong';
         return;
       }
 
+      submit.disabled = true;
+      document.getElementById('practiceNext').hidden = false;
       if (userAnswer === currentAnswer) {
         document.getElementById('feedback').textContent = '✅ 答对了！太棒了！';
         document.getElementById('feedback').className = 'feedback correct';
         correctCount++;
+        if (correctCount >= 3) completeMilestone('practice');
         document.getElementById('correctCount').textContent = correctCount;
-        setTimeout(generatePractice, 1500);
       } else {
         document.getElementById('feedback').textContent = `❌ 答错了，正确答案是 ${currentAnswer} cm²`;
         document.getElementById('feedback').className = 'feedback wrong';
         wrongCount++;
         document.getElementById('wrongCount').textContent = wrongCount;
-        setTimeout(generatePractice, 1500);
       }
     });
 
@@ -473,12 +504,14 @@
       }
     });
 
+    document.getElementById('practiceNext').addEventListener('click', generatePractice);
     generatePractice();
 
     // 应用挑战
     let challengeCorrect = 0;
     let challengeWrong = 0;
     let challengeAnswered = false;
+    const solvedChallenges = new Set();
 
     const challenges = [
       {
@@ -554,6 +587,8 @@
         document.getElementById('challengeFeedback').textContent = '✅ 答对了！';
         document.getElementById('challengeFeedback').className = 'feedback correct';
         challengeCorrect++;
+        solvedChallenges.add(currentChallenge);
+        if (solvedChallenges.size >= 3) completeMilestone('challenge');
         document.getElementById('challengeCorrect').textContent = challengeCorrect;
       } else {
         btn.classList.add('wrong');
@@ -564,7 +599,7 @@
         document.getElementById('challengeWrong').textContent = challengeWrong;
       }
 
-      allBtns.forEach(b => b.style.pointerEvents = 'none');
+      allBtns.forEach(b => { b.disabled = true; });
       document.getElementById('nextBtn').disabled = false;
     }
 
