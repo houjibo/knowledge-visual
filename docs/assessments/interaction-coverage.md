@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：104；尚未登记：212。
+主题总数：316；已登记部分交互证据：105；尚未登记：211。
 
 ## 已登记部分交互证据
 
@@ -155,6 +155,8 @@
   - 固定随机边界、摆放图示与输入、挑战解释，以及八次作答进度、旧记录和写入失败；其他题型与无障碍未全面验收。 [understanding-multiples.spec.js](../../tests/browser/understanding-multiples.spec.js)
 - [认识比](../../math/topics/understanding-ratio/index.html)
   - 固定随机值、读写比、等价比、重复提交和挑战题部分场景；未覆盖全部主题内容。 [ratio-learning.spec.js](../../tests/browser/ratio-learning.spec.js)
+- [体积与容积](../../math/topics/volume/index.html)
+  - 12 道换算、15 道挑战、重复提交与完成记录恢复；摆方块、真机及完整无障碍未全面验收。 [volume-practice-and-concept-reliability.spec.js](../../tests/browser/volume-practice-and-concept-reliability.spec.js)
 - [认识质量单位](../../math/topics/weight-units/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [交变电流 · 高中物理互动可视化](../../physics/high/alternating-current.html)
@@ -414,7 +416,6 @@
 - [三角形的高与分类](../../math/topics/triangle-properties/index.html)
 - [认识零](../../math/topics/understanding-zero/index.html)
 - [体积与容积单位](../../math/topics/volume-units/index.html)
-- [体积与容积](../../math/topics/volume/index.html)
 - [组合数学 · 互动可视化](../../math/uni/combinatorics.html)
 - [复变函数 · 大学数学互动可视化](../../math/uni/complex-analysis.html)
 - [导数与微分 · 大学数学互动可视化](../../math/uni/derivative.html)
