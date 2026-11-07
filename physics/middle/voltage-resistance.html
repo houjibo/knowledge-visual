@@ -127,38 +127,40 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="explCanvas" width="720" height="480"></canvas>
+          <canvas id="explCanvas" width="720" height="480" role="img"></canvas>
           <div class="legend">
             <span>导体电阻 R = ρ·L/S</span>
-            <span>💡 亮度 ∝ 电流</span>
+            <span>💡 灯光强弱仅为示意</span>
           </div>
         </div>
       </div>
       <div class="panel">
         <h3>🧪 探究：电阻的影响因素</h3>
         <div class="mat-btns" id="matBtns">
-          <button class="mat-btn active" data-mat="copper">铜丝</button>
-          <button class="mat-btn" data-mat="iron">铁丝</button>
-          <button class="mat-btn" data-mat="nichrome">镍铬丝</button>
+          <button class="mat-btn active" data-mat="copper" aria-pressed="true">铜丝</button>
+          <button class="mat-btn" data-mat="iron" aria-pressed="false">铁丝</button>
+          <button class="mat-btn" data-mat="nichrome" aria-pressed="false">镍铬丝</button>
         </div>
         <div class="slider-row">
-          <label>长度 L</label>
+          <label for="sliderL">长度 L</label>
           <input type="range" id="sliderL" min="1" max="4" step="1" value="1">
           <span class="val" id="valL">1 m</span>
         </div>
         <div class="slider-row">
-          <label>横截面积 S</label>
+          <label for="sliderS">横截面积 S</label>
           <input type="range" id="sliderS" min="1" max="4" step="1" value="1">
           <span class="val" id="valS">1 mm²</span>
         </div>
+        <button class="mat-btn" id="toggleAnimation" type="button" aria-pressed="false">暂停动画</button>
+        <p style="font-size:14px;color:#cbd5e1">理想模型：3 V 电源、5 Ω 定值灯泡与导体串联，电表为理想电表；忽略温度变化。亮度与粒子运动速度只作定性示意。</p>
         <div class="info-grid">
           <div>导体电阻 R<br><b id="infoR">0.017 Ω</b></div>
           <div>电路电流 I<br><b id="infoI">—</b></div>
         </div>
-        <div class="equation">电阻规律：<b>R = ρ · L / S</b><br><span style="font-size:0.85em;color:#94a3b8">L 越长电阻越大；S 越大电阻越小；ρ 由材料决定</span></div>
+        <div class="equation">电阻规律：<b>R = ρ · L / S</b><br><span style="font-size:0.85em;color:#94a3b8">L 越长电阻越大；S 越大电阻越小；ρ 与材料及温度有关（此处温度不变）</span></div>
         <div class="concept-card">
           <div class="title">电压：形成电流的原因</div>
-          电压使电荷定向移动形成电流（类比水压使水流动）。电源是提供电压的装置。单位：伏特（V）。一节干电池 1.5V，家庭电路 220V，对人体安全电压 ≤36V。
+          电压使电荷定向移动形成电流（类比水压使水流动）。电源是提供电压的装置。单位：伏特（V）。一节干电池 1.5V，家庭电路 220V，触电危险与人体电阻、接触环境及电流等因素有关，不能仅凭电压判断安全。
         </div>
         <div class="concept-card">
           <div class="title">电阻：导体对电流的阻碍作用</div>
@@ -245,7 +247,7 @@ tabs.forEach(t => t.addEventListener('click', () => {
   t.setAttribute('aria-pressed', 'true');
   mode = t.dataset.mode;
   Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
-  draw();
+  stopAnimation(); render(); startAnimation();
 }));
 
 /* ============================================================
@@ -263,7 +265,7 @@ const MATS = {
 let mat = 'copper';
 const U = 3; // 电源 3V
 let electrons = [];
-let lastT = performance.now();
+let lastT = null, frameId = null, playing = true;
 
 function state() {
   const L = +sliderL.value, S = +sliderS.value;
@@ -278,14 +280,15 @@ function updPanel() {
   document.getElementById('valS').textContent = s.S + ' mm²';
   document.getElementById('infoR').textContent = s.R.toFixed(3) + ' Ω';
   document.getElementById('infoI').textContent = s.I.toFixed(2) + ' A';
+  canvas.setAttribute('aria-label', `理想3伏电源、导体、5欧灯泡和电流表串联，电压表并联在导体两端。${MATS[mat].name}导体长${s.L}米，横截面积${s.S}平方毫米，电阻${s.R.toFixed(3)}欧，电流${s.I.toFixed(2)}安。`);
 }
-sliderL.addEventListener('input', () => { updPanel(); buildElectrons(); draw(performance.now()); });
-sliderS.addEventListener('input', () => { updPanel(); buildElectrons(); draw(performance.now()); });
-document.querySelectorAll('.mat-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.mat-btn').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
+sliderL.addEventListener('input', () => { updPanel(); buildElectrons(); render(); });
+sliderS.addEventListener('input', () => { updPanel(); buildElectrons(); render(); });
+document.querySelectorAll('#matBtns .mat-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#matBtns .mat-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
+  b.classList.add('active'); b.setAttribute('aria-pressed', 'true');
   mat = b.dataset.mat;
-  updPanel(); buildElectrons(); draw(performance.now());
+  updPanel(); buildElectrons(); render();
 }));
 
 /* 电路路径：左电池 → 上 → 右导体段 → 灯泡 → 回 */
@@ -316,16 +319,15 @@ function buildElectrons() {
 }
 
 function drawWire() {
+  // 在电源、灯泡和电流表位置断开导线。
   ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(PATH[0][0], PATH[0][1]);
-  for (let i = 1; i < PATH.length; i++) ctx.lineTo(PATH[i][0], PATH[i][1]);
-  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(100, 210); ctx.lineTo(100, 100); ctx.lineTo(620, 100); ctx.lineTo(620, 204); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(620, 236); ctx.lineTo(620, 340); ctx.lineTo(376, 340); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(344, 340); ctx.lineTo(100, 340); ctx.lineTo(100, 230); ctx.stroke();
 }
 function drawBattery() {
   ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(100, 200); ctx.lineTo(100, 214); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(90, 226); ctx.lineTo(110, 226); ctx.lineWidth = 6; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(88, 210); ctx.lineTo(112, 210); ctx.moveTo(93, 230); ctx.lineTo(107, 230); ctx.stroke();
   ctx.fillStyle = '#5eead4'; ctx.font = '13px sans-serif';
   ctx.fillText('+', 116, 210); ctx.fillText('−', 116, 238);
   ctx.fillText('3V', 72, 222);
@@ -333,8 +335,8 @@ function drawBattery() {
 function drawResistor(s) {
   // 顶部导体段（长度/粗细/颜色随参数变化）
   const m = MATS[mat];
-  const x0 = 260, x1 = 460, y = 100;
-  const thickness = 2 + s.S * 2.5;
+  const x0 = 260, x1 = 260 + 50 * s.L, y = 100;
+  const thickness = 3 + 3 * Math.sqrt(s.S);
   ctx.strokeStyle = m.color; ctx.lineWidth = thickness;
   ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
@@ -362,16 +364,18 @@ function drawBulb(s) {
   ctx.fillText('灯泡 5Ω', x - 26, y + 36);
 }
 function drawVoltmeter(s) {
-  // 电压表并联在导体两端
+  // 表头跟随导体中点，短导体时支路也不会相交。
+  const left = 260, right = left + 50 * s.L, center = (left + right) / 2;
   ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(300, 100); ctx.lineTo(300, 60); ctx.lineTo(340, 60); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(420, 100); ctx.lineTo(420, 60); ctx.lineTo(380, 60); ctx.stroke();
-  ctx.beginPath(); ctx.arc(360, 60, 16, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(left, 100); ctx.lineTo(left, 50); ctx.lineTo(center - 16, 50); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(right, 100); ctx.lineTo(right, 50); ctx.lineTo(center + 16, 50); ctx.stroke();
+  ctx.beginPath(); ctx.arc(center, 50, 16, 0, Math.PI * 2); ctx.stroke();
   ctx.fillStyle = '#fcd34d'; ctx.font = 'bold 14px sans-serif';
-  ctx.fillText('V', 355, 65);
+  ctx.fillText('V', center - 5, 55);
   ctx.fillStyle = '#e2e8f0'; ctx.font = '12px sans-serif';
-  ctx.fillText(`${(s.I * s.R).toFixed(2)} V`, 390, 50);
+  ctx.fillText(`${(s.I * s.R).toFixed(2)} V`, center + 20, 30);
 }
+
 function drawAmmeter(s) {
   ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(360, 340, 16, 0, Math.PI * 2); ctx.stroke();
@@ -380,33 +384,41 @@ function drawAmmeter(s) {
   ctx.fillStyle = '#e2e8f0'; ctx.font = '13px sans-serif';
   ctx.fillText(`${s.I.toFixed(2)} A`, 386, 345);
 }
-function draw(now) {
-  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
-  const dt = Math.min(0.05, (now - lastT) / 1000);
-  lastT = now;
+function render() {
+  if (mode !== 'learn') return;
   const s = state();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawWire();
-  drawBattery();
-  drawResistor(s);
-  drawBulb(s);
-  drawVoltmeter(s);
-  drawAmmeter(s);
+  drawWire(); drawBattery(); drawResistor(s); drawBulb(s); drawVoltmeter(s); drawAmmeter(s);
   electrons.forEach(e => {
-    e.dist += e.speed * dt;
     const [x, y] = pointAt(e.dist);
     ctx.fillStyle = '#2dd4bf';
     ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill();
   });
-  // 底部总结
   ctx.fillStyle = '#94a3b8'; ctx.font = '13px sans-serif';
   ctx.fillText('试试：只改一个变量（控制变量法），观察 R 与 I 的变化', 120, 440);
-  requestAnimationFrame(draw);
 }
-
-updPanel();
-buildElectrons();
-requestAnimationFrame(draw);
+function tick(now) {
+  frameId = null;
+  if (!playing || mode !== 'learn') return;
+  const dt = lastT === null ? 0 : Math.min(0.05, Math.max(0, (now - lastT) / 1000));
+  lastT = now;
+  electrons.forEach(e => { e.dist -= e.speed * dt; });
+  render(); startAnimation();
+}
+function startAnimation() {
+  if (playing && mode === 'learn' && frameId === null) frameId = requestAnimationFrame(tick);
+}
+function stopAnimation() {
+  if (frameId !== null) cancelAnimationFrame(frameId);
+  frameId = null; lastT = null;
+}
+document.getElementById('toggleAnimation').addEventListener('click', e => {
+  playing = !playing;
+  e.currentTarget.textContent = playing ? '暂停动画' : '继续动画';
+  e.currentTarget.setAttribute('aria-pressed', String(!playing));
+  if (playing) startAnimation(); else stopAnimation();
+});
+updPanel(); buildElectrons(); render(); startAnimation();
 
 /* ============================================================
  * 练习模式
@@ -421,7 +433,7 @@ document.querySelectorAll('.practice-item').forEach(item => {
   item.querySelectorAll('.quiz-opt').forEach(opt => {
     opt.addEventListener('click', () => {
       const ok = opt.dataset.ok === '1';
-      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.disabled = true; });
       opt.classList.add(ok ? 'correct' : 'wrong');
       fb.style.color = ok ? '#10b981' : '#ef4444';
       fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
