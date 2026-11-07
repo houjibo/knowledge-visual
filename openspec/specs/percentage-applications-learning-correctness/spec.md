@@ -1,0 +1,20 @@
+# percentage-applications-learning-correctness Specification
+
+## Purpose
+确保百分数应用中的折扣、税率和单利示例具有明确的适用条件与正确的金额精度，让学习者可靠地出题、获取逐题反馈并保存自己的学习进度。
+
+## Requirements
+
+### Requirement: 场景计算与条件一致
+计算器 SHALL 保留至分的金额精度，税款示例 SHALL 明确使用给定应税金额及固定税率，利息示例 SHALL 明确按固定年利率单利计算。
+
+#### Scenario: 半元折扣
+- **WHEN** 原价为 50 元、折扣为 75%
+- **THEN** 页面显示应付 37.5 元、节省 12.5 元
+
+### Requirement: 题目可靠并按题反馈
+出题 SHALL 在重复随机值下终止并生成四个不同选项；练习与挑战 SHALL 对每题最多计分一次，挑战反馈保留到主动换题。
+
+#### Scenario: 完成与保存失败
+- **WHEN** 学习者达到既有完成条件但存储不可写
+- **THEN** 页面显示未保存并可在恢复后重试

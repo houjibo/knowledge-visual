@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：87；含内联 while 的页面：50。同一页面可能出现在两类中。
+含候选 div 控件的页面：87；含内联 while 的页面：49。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -130,7 +130,6 @@
 - [math/topics/numbers-within-100/index.html](../../math/topics/numbers-within-100/index.html)：490 行
 - [math/topics/ordered-pairs/index.html](../../math/topics/ordered-pairs/index.html)：504 行、516 行
 - [math/topics/pattern-sequences/index.html](../../math/topics/pattern-sequences/index.html)：332 行、445 行、523 行、655 行、681 行
-- [math/topics/percentage-applications/index.html](../../math/topics/percentage-applications/index.html)：256 行
 - [math/topics/pie-charts/index.html](../../math/topics/pie-charts/index.html)：363 行
 - [math/topics/plane-shapes/index.html](../../math/topics/plane-shapes/index.html)：387 行、393 行、644 行
 - [math/topics/position-and-direction/index.html](../../math/topics/position-and-direction/index.html)：409 行、487 行、513 行

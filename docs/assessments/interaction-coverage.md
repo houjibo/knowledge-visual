@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：125；尚未登记：191。
+主题总数：316；已登记部分交互证据：126；尚未登记：190。
 
 ## 已登记部分交互证据
 
@@ -150,6 +150,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [平行四边形面积](../../math/topics/parallelogram-area/index.html)
   - 割补几何、练习和生活题单位、学习完成及保存恢复；真机和完整无障碍尚未全面验收。 [parallelogram-area-learning-correctness.spec.js](../../tests/browser/parallelogram-area-learning-correctness.spec.js)
+- [百分数的应用](../../math/topics/percentage-applications/index.html)
+  - 桌面及移动视口验证固定随机出题、三类简化场景、折扣小数金额、逐题计分及存储失败重试；实际税务和存款规则、真实设备及整页无障碍不在验证范围。 [percentage-applications-learning-correctness.spec.js](../../tests/browser/percentage-applications-learning-correctness.spec.js)
 - [百分数](../../math/topics/percentage/index.html)
   - 挑战题的分数转百分数、增长率、答题反馈与键盘部分场景；其余探索和应用未全面验证。 [percentage-challenge.spec.js](../../tests/browser/percentage-challenge.spec.js)
 - [认识周长](../../math/topics/perimeter/index.html)
@@ -450,7 +452,6 @@
 - [数对与位置](../../math/topics/ordered-pairs/index.html)
 - [平行与垂直](../../math/topics/parallel-perpendicular/index.html)
 - [规律与序列](../../math/topics/pattern-sequences/index.html)
-- [百分数的应用](../../math/topics/percentage-applications/index.html)
 - [扇形统计图](../../math/topics/pie-charts/index.html)
 - [鸽巢原理](../../math/topics/pigeonhole-principle/index.html)
 - [鸽巢问题](../../math/topics/pigeonhole-problem/index.html)
