@@ -60,7 +60,7 @@
 - [百分数](../../math/topics/percentage/index.html)
   - 挑战题的分数转百分数、增长率、答题反馈与键盘部分场景；其余探索和应用未全面验证。 [percentage-challenge.spec.js](../../tests/browser/percentage-challenge.spec.js)
 - [多边形的面积](../../math/topics/polygon-area/index.html)
-  - 三种剪拼结束时的画布顶点、步骤滑块与播放暂停、固定随机值练习和挑战部分反馈；完整无障碍未验收。 [polygon-area.spec.js](../../tests/browser/polygon-area.spec.js)
+  - 剪拼画布顶点、步骤滑块与播放暂停、部分练习和挑战反馈、完成门槛与保存失败重试；完整无障碍未验收。 [polygon-area.spec.js](../../tests/browser/polygon-area.spec.js)
 - [位置与顺序](../../math/topics/position-basic/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [扇形统计图](../../math/topics/sector-statistics/index.html)

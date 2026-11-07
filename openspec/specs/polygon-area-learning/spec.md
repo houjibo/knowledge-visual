@@ -29,3 +29,21 @@ TBD - created by archiving change polygon-area-geometry. Update Purpose after ar
 #### Scenario: 切换图形或离开推导
 - **WHEN** 学习者切换图形或离开推导模式
 - **THEN** 进行中的动画停止，图形切换时步骤重置并更新选中状态
+
+### Requirement: 按实际正确率记录完成
+练习和挑战 SHALL 汇总本次作答，并仅在至少十题且实际正确率不低于 60% 时记录完成；保存失败时如实显示。
+
+#### Scenario: 正确率不足六成但四舍五入为六成
+- **WHEN** 学习者答对 42 题中的 25 题
+- **THEN** 页面不标记完成
+
+#### Scenario: 达标但无法保存
+- **WHEN** 十题答对六题且存储写入失败
+- **THEN** 页面显示达标但未保存，重试成功后显示完成
+
+### Requirement: 挑战提供答案解释
+挑战 SHALL 在每次作答后显示正确或错误反馈，并在错误时显示正确答案和面积公式。
+
+#### Scenario: 面积计算错误
+- **WHEN** 学习者选择错误面积
+- **THEN** 页面显示正确面积及对应公式并锁定选项

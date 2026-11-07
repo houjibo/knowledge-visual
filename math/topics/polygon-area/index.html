@@ -66,6 +66,8 @@
       <span class="score-stars" id="stars-display"></span>
     </div>
 
+    <p id="learning-progress" role="status" aria-live="polite" style="margin:8px 0 16px;color:#275c2a;line-height:1.5;"></p>
+
     <div class="mode-tabs">
       <button class="mode-tab active" data-mode="concept">📚 认识</button>
       <button class="mode-tab" data-mode="explore">🔍 推导</button>
@@ -143,6 +145,7 @@
           <div class="problem-card">
             <div class="problem-text" id="chText"></div>
             <div class="answer-grid" id="chOpts"></div>
+            <div class="feedback" id="chFeedback" role="status" aria-live="polite"></div>
           </div>
         </div>
       </div>
@@ -326,18 +329,31 @@
       return { q, ans, opts: arr, formula: type === 'para' ? 'S = 底×高' : type === 'tri' ? 'S = 底×高÷2' : 'S = (上底+下底)×高÷2' };
     }
     let streak = 0, totalAnswered = 0, totalCorrect = 0;
+    let learningSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('polygon-area');
+    function renderLearningProgress() {
+      const status = document.getElementById('learning-progress');
+      if (learningSaved) status.textContent = '✅ 已完成「多边形的面积」。';
+      else if (totalAnswered >= 10 && totalCorrect * 5 >= totalAnswered * 3) {
+        status.textContent = `本次已达标，但进度未保存；答对 ${totalCorrect}/${totalAnswered} 题。`;
+      } else {
+        status.textContent = `本次已答 ${totalAnswered} 题，答对 ${totalCorrect} 题；答满 10 题且正确率至少 60% 可完成。`;
+      }
+    }
     function recordAnswer(ok) {
       totalAnswered++;
       if (ok) { totalCorrect++; streak++; } else streak = 0;
       document.getElementById('streak').textContent = streak;
       if (streak > 0 && streak % 3 === 0) celebrate();
-      if (totalAnswered >= 10 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('polygon-area')) {
-        if (Math.round(totalCorrect / totalAnswered * 100) >= 60) {
-          PageProgress.markDone('polygon-area');
-          showToast(`🎉 知识点已掌握（${totalCorrect}/${totalAnswered}）`);
-        }
+      if (!learningSaved && totalAnswered >= 10 && totalCorrect * 5 >= totalAnswered * 3 && typeof PageProgress !== 'undefined') {
+        learningSaved = PageProgress.markDone('polygon-area');
       }
+      renderLearningProgress();
     }
+    document.addEventListener('math-progress-saved', () => {
+      learningSaved = PageProgress.isDone('polygon-area');
+      renderLearningProgress();
+    });
+    renderLearningProgress();
 
     /* ---------- 练习 ---------- */
     let pQ = null;
@@ -384,6 +400,9 @@
       chQ = genQ();
       chLock = false;
       document.getElementById('chText').textContent = `第 ${chIdx + 1} 题：${chQ.q}`;
+      const feedback = document.getElementById('chFeedback');
+      feedback.className = 'feedback';
+      feedback.textContent = '';
       const box = document.getElementById('chOpts');
       box.innerHTML = '';
       chQ.opts.forEach(o => {
@@ -393,6 +412,8 @@
           if (chLock) return; chLock = true;
           const ok = o === chQ.ans;
           b.classList.add(ok ? 'correct' : 'wrong');
+          feedback.className = 'feedback ' + (ok ? 'correct' : 'wrong');
+          feedback.textContent = (ok ? '✅ 答对啦！' : `❌ 正确答案 ${chQ.ans} cm²。`) + chQ.formula;
           box.querySelectorAll('.answer-btn').forEach(button => { button.disabled = true; });
           ok ? chCorrect++ : chWrong++;
           document.getElementById('chCorrect').textContent = chCorrect;

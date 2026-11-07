@@ -92,3 +92,52 @@ test('播放完成后可以重新播放', async ({page}) => {
   await expect(button).toContainText('暂停');
   expect(Number(await range.inputValue())).toBeLessThan(100);
 });
+
+test('实际正确率不足六成不完成，超过六成后记录并恢复', async ({page}) => {
+  await page.addInitScript(() => { Math.random = () => 0; });
+  await page.goto(url);
+  await expect(page.locator('#learning-progress')).toContainText('至少 60%');
+  await page.locator('[data-mode="practice"]').click();
+  for (let i = 0; i < 43; i++) {
+    await page.locator('#practiceNext').click();
+    const options = page.locator('#practiceOpts button');
+    if (i < 17) await options.filter({hasNotText: /^6 cm²$/}).first().click();
+    else await options.getByText('6 cm²', {exact: true}).click();
+    if (i === 41) {
+      await expect(page.locator('#learning-progress')).toContainText('答对 25 题');
+      expect(await page.evaluate(() => PageProgress.isDone('polygon-area'))).toBe(false);
+    }
+  }
+  await expect(page.locator('#learning-progress')).toContainText('已完成');
+  await page.reload();
+  await expect(page.locator('#learning-progress')).toContainText('已完成');
+});
+
+test('六成达标但未保存可重试，挑战错误显示答案与公式', async ({page}) => {
+  await page.addInitScript(() => {
+    Math.random = () => 0;
+    window.originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => { throw new Error('denied'); };
+    const original = window.setTimeout;
+    window.setTimeout = (fn, ms, ...args) => original(fn, ms === 800 ? 30 : ms === 1600 ? 250 : ms, ...args);
+  });
+  await page.goto(url);
+  await page.locator('[data-mode="challenge"]').click();
+  await page.locator('#challengeStart').click();
+  for (let i = 0; i < 10; i++) {
+    await expect(page.locator('#chText')).toContainText(`第 ${i + 1} 题`);
+    const options = page.locator('#chOpts button');
+    if (i < 4) {
+      await options.filter({hasNotText: /^6 cm²$/}).first().click();
+      await expect(page.locator('#chFeedback')).toContainText('正确答案 6 cm²');
+      await expect(page.locator('#chFeedback')).toContainText('底×高');
+    } else await options.getByText('6 cm²', {exact: true}).click();
+  }
+  await expect(page.locator('#learning-progress')).toContainText('已达标，但进度未保存');
+  await page.evaluate(() => { Storage.prototype.setItem = window.originalSetItem; });
+  await page.locator('#math-progress-save-notice').getByRole('button', {name: '重试保存'}).click();
+  await expect(page.locator('#learning-progress')).toContainText('已完成');
+  await expect(page.locator('#challengeStart')).toContainText('得分 6/10');
+  await page.reload();
+  await expect(page.locator('#learning-progress')).toContainText('已完成');
+});
