@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：87；含内联 while 的页面：58。同一页面可能出现在两类中。
+含候选 div 控件的页面：87；含内联 while 的页面：57。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -108,7 +108,6 @@
 - [math/topics/addition-subtraction-within-100/index.html](../../math/topics/addition-subtraction-within-100/index.html)：800 行
 - [math/topics/addition-subtraction-within-10000/index.html](../../math/topics/addition-subtraction-within-10000/index.html)：485 行、578 行
 - [math/topics/area-units/index.html](../../math/topics/area-units/index.html)：632 行
-- [math/topics/arithmetic-laws/index.html](../../math/topics/arithmetic-laws/index.html)：376 行
 - [math/topics/bar-charts/index.html](../../math/topics/bar-charts/index.html)：406 行、417 行
 - [math/topics/chicken-rabbit/index.html](../../math/topics/chicken-rabbit/index.html)：462 行
 - [math/topics/circle/index.html](../../math/topics/circle/index.html)：393 行

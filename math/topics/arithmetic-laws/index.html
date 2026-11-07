@@ -35,6 +35,7 @@
     .challenge-problem { font-size: 28px; font-weight: 700; color: #4A90D9; margin: 24px 0; }
     .challenge-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 400px; margin: 24px auto; padding: 0 16px; }
     .challenge-opt { padding: 20px; border: 3px solid #E5E5EA; background: white; border-radius: 16px; font-size: 20px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .challenge-opt:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 3px; }
     .challenge-opt:active { transform: scale(0.9); }
     .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
     .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
@@ -184,8 +185,7 @@
       document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
       if (streak >= 5) showToast(`🔥 连续 ${streak} 次！运算律大师！`);
       if (streak >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('arithmetic-laws')) {
-        PageProgress.markDone('arithmetic-laws');
-        showToast('✅ 本知识点已标记完成');
+        if (PageProgress.markDone('arithmetic-laws')) showToast('✅ 本知识点已标记完成');
       }
     }
     document.querySelectorAll('.mode-tab').forEach(tab => {
@@ -302,14 +302,14 @@
 
     // === 模式4: 挑战（与二年级保持一致） ===
     (() => {
-      let correct = 0, wrong = 0, timeoutCount = 0, answer = 0, timer = null, timeLeft = 100, running = false;
+      let correct = 0, wrong = 0, timeoutCount = 0, answer = 0, timer = null, nextTimer = null, timeLeft = 100, running = false, started = false, answered = false;
       let history = [];
 
       function saveHistory() {
         try { localStorage.setItem('arith-challenge-history', JSON.stringify(history)); } catch(e) {}
       }
       function loadHistory() {
-        try { const d = localStorage.getItem('arith-challenge-history'); return d ? JSON.parse(d) : []; } catch(e) { return []; }
+        try { const d = JSON.parse(localStorage.getItem('arith-challenge-history') || '[]'); return Array.isArray(d) ? d : []; } catch(e) { return []; }
       }
       history = loadHistory();
 
@@ -355,7 +355,8 @@
 
       function newChallenge() {
         const type = Random.int(1, 3);
-        let question, answer, options;
+        let question, options;
+        answered = false;
         if (type === 1) {
           const a = Random.int(1, 9), b = Random.int(1, 9);
           question = `${a} + ${b} = ${b} + ?`;
@@ -373,7 +374,7 @@
           options = [c, a, b, b + c];
         }
         options = [...new Set(options)];
-        while (options.length < 4) { const f = Random.int(1, 20); if (!options.includes(f)) options.push(f); }
+        for (let f = 1; options.length < 4; f++) if (!options.includes(f)) options.push(f);
         options = Random.shuffle(options).slice(0, 4);
         if (!options.includes(answer)) options[0] = answer;
 
@@ -382,9 +383,12 @@
         const container = document.getElementById('challenge-options');
         container.innerHTML = '';
         Random.shuffle(options).forEach(val => {
-          const btn = document.createElement('div');
+          const btn = document.createElement('button');
+          btn.type = 'button';
           btn.className = 'challenge-opt'; btn.textContent = val;
           btn.addEventListener('click', () => {
+            if (!running || answered) return;
+            answered = true;
             clearInterval(timer); timer = null;
             const isCorrect = val === answer;
             const record = { problem: question, answer, userAnswer: val, correct: isCorrect, timedOut: false, time: Date.now() };
@@ -393,19 +397,20 @@
               btn.classList.add('correct'); correct++; streak++;
               Sound.play('correct'); celebrate(); updateStreak();
               document.getElementById('ch-correct').textContent = correct;
-              setTimeout(newChallenge, 800);
+              nextTimer = setTimeout(newChallenge, 800);
             } else {
               btn.classList.add('wrong'); Animator.shake(btn);
               wrong++; streak = 0; Sound.play('wrong'); updateStreak();
               document.getElementById('ch-wrong').textContent = wrong;
               showToast(`答案是 ${answer}`);
-              setTimeout(newChallenge, 1500);
+              nextTimer = setTimeout(newChallenge, 1500);
             }
           });
           container.appendChild(btn);
         });
         timeLeft = 100;
         document.getElementById('timer-fill').style.width = '100%';
+        if (running) startTimer();
       }
 
       function startTimer() {
@@ -415,13 +420,14 @@
           document.getElementById('timer-fill').style.width = timeLeft + '%';
           if (timeLeft <= 0) {
             clearInterval(timer); timer = null;
+            answered = true;
             timeoutCount++; streak = 0;
             const record = { problem: document.getElementById('challenge-problem').textContent.replace(' = ?', ''), answer, userAnswer: '超时', correct: false, timedOut: true, time: Date.now() };
             history.push(record); saveHistory();
             Sound.play('wrong'); updateStreak();
             document.getElementById('ch-timeout').textContent = timeoutCount;
             showToast(`⏰ 时间到！答案是 ${answer}`);
-            setTimeout(newChallenge, 1500);
+            nextTimer = setTimeout(newChallenge, 1500);
           }
         }, 100);
       }
@@ -429,14 +435,14 @@
       function stopTimer() { clearInterval(timer); timer = null; }
 
       document.getElementById('btn-start-challenge').addEventListener('click', () => {
-        stopTimer(); correct = 0; wrong = 0; timeoutCount = 0;
+        stopTimer(); clearTimeout(nextTimer); correct = 0; wrong = 0; timeoutCount = 0; streak = 0; updateStreak();
         document.getElementById('ch-correct').textContent = 0;
         document.getElementById('ch-wrong').textContent = 0;
         document.getElementById('ch-timeout').textContent = 0;
         document.querySelector('.challenge-area').classList.add('challenge-active');
         document.getElementById('challenge-toolbar').style.display = 'flex';
         document.getElementById('history-panel').classList.remove('show');
-        running = true; newChallenge(); startTimer(); Sound.play('click');
+        running = true; started = true; newChallenge(); Sound.play('click');
       });
 
       document.getElementById('btn-history').addEventListener('click', () => {
@@ -470,13 +476,13 @@
         tab.addEventListener('click', () => {
           const isChallenge = tab.dataset.mode === 'challenge';
           if (!isChallenge && running) {
-            stopTimer(); running = false;
+            stopTimer(); clearTimeout(nextTimer); running = false;
             document.querySelector('.challenge-area').classList.remove('challenge-active');
-          } else if (isChallenge && !running && correct + wrong + timeoutCount > 0) {
+          } else if (isChallenge && !running && started) {
             running = true;
             document.querySelector('.challenge-area').classList.add('challenge-active');
             document.getElementById('challenge-toolbar').style.display = 'flex';
-            startTimer();
+            if (answered) newChallenge(); else startTimer();
             showToast('⏱️ 计时恢复！继续挑战');
           }
         });
