@@ -209,7 +209,7 @@
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
   - 单一种子示意的萌发条件、逐步操作、重置和练习；不同物种和其他生物内容未全面核验。 [seed-germination-learning.spec.js](../../tests/browser/seed-germination-learning.spec.js)、[science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [磁铁的秘密 · 小学科学互动可视化](../../science/magnets.html)
-  - 水平条形磁铁的预设磁极、距离和拖动同步、翻转、键盘物品测试及铁粉零距离边界；不代表真实磁场计算或整页科学内容已验收。 [science-magnet-poles.spec.js](../../tests/browser/science-magnet-poles.spec.js)
+  - 水平条形磁铁的预设磁极、距离和拖动同步、翻转、键盘物品测试、铁粉零距离边界，以及测验跳题、重测和保存失败恢复；不代表真实磁场计算或整页科学内容已验收。 [science-magnet-poles.spec.js](../../tests/browser/science-magnet-poles.spec.js)
 - [材料的世界 · 小学科学互动可视化](../../science/materials.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
   - 具体材料示例、安全表述、密度题及键盘切换；不代表所有材料性质已全面核验。 [material-properties-and-safety.spec.js](../../tests/browser/material-properties-and-safety.spec.js)、[science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)

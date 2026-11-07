@@ -80,7 +80,7 @@
   .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
   .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
   .quiz-feedback { margin-top: 12px; font-size: 14px; color: #fbbf24; min-height: 22px; line-height: 1.6; }
-  .quiz-nav { display: flex; gap: 10px; margin-top: 14px; }
+  .quiz-nav { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
   .quiz-nav button { padding: 8px 18px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; background: var(--primary); color: white; transition: all .2s; font-weight: 500; }
   .quiz-nav button:hover { background: #dc2626; }
   .quiz-nav button:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -99,7 +99,7 @@
 <div class="container">
   <header>
     <h1>🧲 磁铁的秘密</h1>
-    <p>小学科学 · 电磁启蒙互动可视化 <span id="done-mark" style="display:none;margin-left:6px;color:#34d399;font-weight:700;">✓ 已完成</span></p>
+    <p>小学科学 · 电磁启蒙互动可视化 <span id="done-mark" role="status" style="display:none;margin-left:6px;color:#34d399;font-weight:700;">✓ 已完成</span> <button type="button" id="retrySave" hidden>重试保存进度</button></p>
   </header>
 
   <div class="tabs">
@@ -278,18 +278,15 @@
       <!-- Section 5: Quiz -->
       <div class="section" id="section-quiz">
         <h3>📝 磁铁小测验</h3>
+        <p>访问全部学习板块并在一轮测验中首次答对全部题目，即可完成本主题。答错后可以重新开始一轮。</p>
         <div class="quiz">
           <div class="quiz-q" id="quizQ">磁铁的两个磁极分别是？</div>
-          <div class="quiz-opts" id="quizOpts">
-            <div class="quiz-opt" data-answer="0">A. 东极和西极</div>
-            <div class="quiz-opt" data-answer="1">B. 北极(N)和南极(S)</div>
-            <div class="quiz-opt" data-answer="2">C. 正极和负极</div>
-            <div class="quiz-opt" data-answer="3">D. 上级和下级</div>
-          </div>
-          <div class="quiz-feedback" id="quizFeedback"></div>
+          <div class="quiz-opts" id="quizOpts"></div>
+          <div class="quiz-feedback" id="quizFeedback" role="status" aria-live="polite"></div>
           <div class="quiz-nav">
             <button id="prevBtn" disabled>← 上一题</button>
             <button id="nextBtn">下一题 →</button>
+            <button type="button" id="retryQuiz">重新开始测验</button>
           </div>
         </div>
       </div>
@@ -306,6 +303,7 @@ const visitedTabs = new Set(['concept']);
 const quizAttempted = new Set();
 const quizFirstTryCorrect = new Set();
 const TOTAL_QUIZZES = 5; // quizData.length
+let magnetUnsaved = false;
 
 // Canvas setup
 const canvas = document.getElementById('canvas');
@@ -975,6 +973,7 @@ function checkAnswer(selected) {
   }
   const opts = document.querySelectorAll('.quiz-opt');
   opts.forEach((opt, i) => {
+    opt.classList.remove('correct', 'wrong');
     if (i === q.answer) opt.classList.add('correct');
     else if (i === selected) opt.classList.add('wrong');
   });
@@ -986,18 +985,23 @@ function checkAnswer(selected) {
     feedback.textContent = '❌ 错误，正确答案是 ' + q.opts[q.answer].charAt(0);
     feedback.style.color = '#ef4444';
   }
+  if (!quizFirstTryCorrect.has(qKey) && !isFirstAttempt) feedback.textContent += ' 本题首次未答对，可重新开始一轮。';
   maybeMarkDone();
 }
 
 function maybeMarkDone() {
   if (typeof PageProgress === 'undefined') return;
-  if (PageProgress.isDone(SLUG)) return;
+  if (PageProgress.isDone(SLUG) && !magnetUnsaved) return;
   const allVisited = ALL_TABS.every(t => visitedTabs.has(t));
   const allCorrect = quizFirstTryCorrect.size === TOTAL_QUIZZES;
-  if (allVisited && allCorrect) {
-    PageProgress.markDone(SLUG);
-    showMagnetToast('🎉 「磁铁的秘密」知识地图已点亮！');
-    updateDoneMark();
+  if ((allVisited && allCorrect) || magnetUnsaved) {
+    const saved = PageProgress.markDone(SLUG);
+    magnetUnsaved = !saved;
+    const mark = document.getElementById('done-mark');
+    mark.style.display = 'inline';
+    mark.textContent = saved ? '✓ 已完成' : '本次已达标，进度未保存';
+    document.getElementById('retrySave').hidden = saved;
+    if (saved) showMagnetToast('🎉 「磁铁的秘密」知识地图已点亮！');
   }
 }
 
@@ -1029,9 +1033,20 @@ document.getElementById('nextBtn').addEventListener('click', () => {
     currentQuiz++;
     loadQuiz();
   } else {
-    alert('🎉 测验完成！你对磁铁的了解很棒！');
+    const feedback = document.getElementById('quizFeedback');
+    feedback.style.color = '#fbbf24';
+    feedback.textContent = `本轮已作答 ${quizAttempted.size}/${TOTAL_QUIZZES} 题，首次答对 ${quizFirstTryCorrect.size}/${TOTAL_QUIZZES} 题。` +
+      (quizAttempted.size < TOTAL_QUIZZES ? ' 请返回未作答的题目。' : quizFirstTryCorrect.size < TOTAL_QUIZZES ? ' 可以重新开始一轮。' : magnetUnsaved ? ' 本次已达标，请重试保存进度。' : ALL_TABS.every(t => visitedTabs.has(t)) ? ' 已达到本轮测验要求。' : ' 请访问全部学习板块。');
   }
 });
+
+document.getElementById('retryQuiz').addEventListener('click', () => {
+  quizAttempted.clear();
+  quizFirstTryCorrect.clear();
+  currentQuiz = 0;
+  loadQuiz();
+});
+document.getElementById('retrySave').addEventListener('click', maybeMarkDone);
 
 // Initialize
 initMagnets();

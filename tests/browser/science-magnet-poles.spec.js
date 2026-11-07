@@ -64,3 +64,54 @@ test('不同物品可用键盘测试并如实反馈', async ({ page }) => {
   });
   expect(finite).toBe(true);
 });
+
+async function keyboardClick(page, locator) {
+  await locator.focus();
+  await page.keyboard.press('Enter');
+}
+
+async function visitAllAndAnswer(page) {
+  for (const section of ['poles', 'field', 'experiment', 'quiz'])
+    await keyboardClick(page, page.locator(`[data-section="${section}"]`));
+  for (const [index, answer] of [1, 2, 1, 1, 1].entries()) {
+    await keyboardClick(page, page.locator('#quizOpts button').nth(answer));
+    if (index < 4) await keyboardClick(page, page.locator('#nextBtn'));
+  }
+}
+
+test('跳题不误报完成，答错可重新开始并用键盘完成', async ({page}) => {
+  await page.goto(url);
+  await keyboardClick(page, page.locator('[data-section="quiz"]'));
+  for (let i = 0; i < 4; i++) await keyboardClick(page, page.locator('#nextBtn'));
+  await keyboardClick(page, page.locator('#nextBtn'));
+  await expect(page.locator('#quizFeedback')).toContainText('已作答 0/5');
+  await expect(page.locator('#quizFeedback')).toContainText('返回未作答');
+  await keyboardClick(page, page.locator('#retryQuiz'));
+  await keyboardClick(page, page.locator('#quizOpts button').first());
+  await keyboardClick(page, page.locator('#quizOpts button').nth(1));
+  await expect(page.locator('#quizFeedback')).toContainText('首次未答对');
+  expect(await page.evaluate(() => PageProgress.isDone('magnets'))).toBe(false);
+  await keyboardClick(page, page.locator('#retryQuiz'));
+  await visitAllAndAnswer(page);
+  await expect(page.locator('#done-mark')).toHaveText('✓ 已完成');
+  await page.reload();
+  await expect(page.locator('#done-mark')).toBeVisible();
+});
+
+test('保存失败不误报，重新开始后仍可重试保存', async ({page}) => {
+  await page.addInitScript(() => {
+    window.originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => { throw new Error('denied'); };
+  });
+  await page.goto(url);
+  await visitAllAndAnswer(page);
+  await expect(page.locator('#done-mark')).toContainText('进度未保存');
+  await expect(page.locator('#retrySave')).toBeVisible();
+  await keyboardClick(page, page.locator('#retryQuiz'));
+  await page.evaluate(() => { Storage.prototype.setItem = window.originalSetItem; });
+  await keyboardClick(page, page.locator('#retrySave'));
+  await expect(page.locator('#done-mark')).toHaveText('✓ 已完成');
+  await expect(page.locator('#retrySave')).toBeHidden();
+  await page.reload();
+  await expect(page.locator('#done-mark')).toBeVisible();
+});
