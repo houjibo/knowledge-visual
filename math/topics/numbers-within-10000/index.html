@@ -290,10 +290,10 @@
             <div class="abacus-place-label">个位</div>
           </div>
           <div class="abacus-row" id="abSlots">
-            <div class="abacus-bead-slot" data-place="th" onclick="abTap('th')">0</div>
-            <div class="abacus-bead-slot" data-place="hu" onclick="abTap('hu')">0</div>
-            <div class="abacus-bead-slot" data-place="te" onclick="abTap('te')">0</div>
-            <div class="abacus-bead-slot" data-place="on" onclick="abTap('on')">0</div>
+            <button type="button" class="abacus-bead-slot" data-place="th" aria-label="千位：0，点击加一" onclick="abTap('th')">0</button>
+            <button type="button" class="abacus-bead-slot" data-place="hu" aria-label="百位：0，点击加一" onclick="abTap('hu')">0</button>
+            <button type="button" class="abacus-bead-slot" data-place="te" aria-label="十位：0，点击加一" onclick="abTap('te')">0</button>
+            <button type="button" class="abacus-bead-slot" data-place="on" aria-label="个位：0，点击加一" onclick="abTap('on')">0</button>
           </div>
         </div>
 
@@ -384,7 +384,7 @@
       if (th > 0) s += CN[th] + '千';
       if (hu > 0) { s += CN[hu] + '百'; }
       else if (th > 0 && (te > 0 || on > 0)) s += '零';
-      if (te > 0) { s += CN[te] + '十'; }
+      if (te > 0) { s += (te === 1 && th === 0 && hu === 0 ? '' : CN[te]) + '十'; }
       else if (hu > 0 && on > 0) s += '零';
       if (on > 0) s += CN[on];
       return s;
@@ -464,6 +464,8 @@
     let abCorrectCount = 0;
     let abTotalCount = 0;
     let abLocked = false;
+    let abTimer = null;
+    const placeNames = { th: '千位', hu: '百位', te: '十位', on: '个位' };
 
     function abNewTarget() {
       abTarget = Random.int(1, 9999);
@@ -476,6 +478,7 @@
       abState[place] = (abState[place] + 1) % 10;
       const slot = document.querySelector(`.abacus-bead-slot[data-place="${place}"]`);
       slot.textContent = abState[place];
+      slot.setAttribute('aria-label', placeNames[place] + '：' + abState[place] + '，点击加一');
       const cls = { th: 'filled-th', hu: 'filled-hu', te: 'filled-te', on: 'filled-on' };
       slot.className = 'abacus-bead-slot' + (abState[place] > 0 ? ' ' + cls[place] : '');
       const val = abState.th * 1000 + abState.hu * 100 + abState.te * 10 + abState.on;
@@ -493,22 +496,25 @@
         document.getElementById('abResult').textContent = '✅ 正确！' + val.toLocaleString() + ' = ' + abTarget.toLocaleString();
         document.getElementById('abResult').style.color = '#34C759';
         celebrate();
-        setTimeout(() => { abNewTarget(); }, 1500);
+        abTimer = setTimeout(() => { abNewTarget(); }, 1500);
       } else {
         document.getElementById('abResult').textContent = '❌ 不对哦，你拨的是 ' + val.toLocaleString() + '，目标是 ' + abTarget.toLocaleString();
         document.getElementById('abResult').style.color = '#FF3B30';
-        setTimeout(() => { abLocked = false; }, 1500);
+        abTimer = setTimeout(() => { abLocked = false; }, 1500);
       }
       document.getElementById('abCorrect').textContent = abCorrectCount;
       document.getElementById('abTotal').textContent = abTotalCount;
     }
 
     function abReset() {
+      clearTimeout(abTimer);
+      abTimer = null;
       abState = { th: 0, hu: 0, te: 0, on: 0 };
       abLocked = false;
       ['th','hu','te','on'].forEach(p => {
         const slot = document.querySelector(`.abacus-bead-slot[data-place="${p}"]`);
         slot.textContent = '0';
+        slot.setAttribute('aria-label', placeNames[p] + '：0，点击加一');
         slot.className = 'abacus-bead-slot';
       });
       document.getElementById('abResult').textContent = '';
@@ -579,8 +585,14 @@
     }
 
     // === 挑战模式 ===
-    let chIdx = 0, chScore = 0, chLocked = false;
+    let chIdx = 0, chScore = 0, chLocked = false, chTimer = null;
     let chQuestions = [];
+
+    function nearbyChoices(n, min, max) {
+      const pool = [];
+      for (let v = Math.max(min, n - 5); v <= Math.min(max, n + 5); v++) if (v !== n) pool.push(v);
+      return Random.shuffle([n, ...Random.shuffle(pool).slice(0, 3)]);
+    }
 
     function generateChallenge() {
       const qs = [];
@@ -590,14 +602,11 @@
           const n = Random.int(100, 9999);
           const places = ['个位','十位','百位','千位'];
           const digits = [n%10, Math.floor(n/10)%10, Math.floor(n/100)%10, Math.floor(n/1000)%10];
-          const askPlace = Random.int(0, 3);
-          const realDigits = digits.slice(0, askPlace + 1);
-          if (digits[askPlace] === 0 && askPlace === 3) return generators[0](); // skip leading zero
-          const opts = new Set([digits[askPlace]]);
-          while (opts.size < 4) opts.add(Random.int(0, 9));
+          const askPlace = Random.int(0, n >= 1000 ? 3 : 2);
+          const opts = nearbyChoices(digits[askPlace], 0, 9);
           return {
             q: `<span class="ch-highlight">${n.toLocaleString()}</span>${places[askPlace]}上的数字是？`,
-            opts: Random.shuffle([...opts]),
+            opts,
             ans: digits[askPlace]
           };
         },
@@ -606,14 +615,13 @@
           const th = Random.int(1, 9), hu = Random.int(0, 9), te = Random.int(0, 9), on = Random.int(0, 9);
           const n = th * 1000 + hu * 100 + te * 10 + on;
           const correct = `${th}个千 + ${hu}个百 + ${te}个十 + ${on}个一`;
-          const opts = new Set([correct]);
-          while (opts.size < 4) {
-            const a = Random.int(0,9), b = Random.int(0,9), c = Random.int(0,9), d = Random.int(0,9);
-            opts.add(`${a}个千 + ${b}个百 + ${c}个十 + ${d}个一`);
-          }
+          const opts = [correct,
+            `${th}个千 + ${(hu + 1) % 10}个百 + ${te}个十 + ${on}个一`,
+            `${th}个千 + ${hu}个百 + ${(te + 1) % 10}个十 + ${on}个一`,
+            `${th}个千 + ${hu}个百 + ${te}个十 + ${(on + 1) % 10}个一`];
           return {
             q: `<span class="ch-highlight">${n.toLocaleString()}</span>是由什么组成的？`,
-            opts: Random.shuffle([...opts]),
+            opts: Random.shuffle(opts),
             ans: correct
           };
         },
@@ -621,14 +629,10 @@
         () => {
           const n = Random.int(100, 9999);
           const correct = toChinese(n);
-          const opts = new Set([correct]);
-          while (opts.size < 4) {
-            const m = Random.int(100, 9999);
-            opts.add(toChinese(m));
-          }
+          const opts = nearbyChoices(n, 100, 9999).map(toChinese);
           return {
             q: `<span class="ch-highlight">${n.toLocaleString()}</span>读作什么？`,
-            opts: Random.shuffle([...opts]),
+            opts,
             ans: correct
           };
         },
@@ -636,14 +640,10 @@
         () => {
           const n = Random.int(100, 9999);
           const cn = toChinese(n);
-          const opts = new Set([n.toLocaleString()]);
-          while (opts.size < 4) {
-            const m = Random.int(100, 9999);
-            opts.add(m.toLocaleString());
-          }
+          const opts = nearbyChoices(n, 100, 9999).map(m => m.toLocaleString());
           return {
             q: `<span class="ch-highlight">${cn}</span>写作什么？`,
-            opts: Random.shuffle([...opts]),
+            opts,
             ans: n.toLocaleString()
           };
         },
@@ -652,11 +652,10 @@
           const n = Random.int(100, 9998);
           const type = Random.pick(['前', '后']);
           const ans = type === '前' ? n - 1 : n + 1;
-          const opts = new Set([ans]);
-          while (opts.size < 4) opts.add(Random.int(Math.max(1, n - 5), n + 5));
+          const opts = nearbyChoices(ans, 1, 9999);
           return {
             q: `<span class="ch-highlight">${n.toLocaleString()}</span>${type}面的一个数是多少？`,
-            opts: Random.shuffle([...opts]),
+            opts,
             ans: ans
           };
         },
@@ -685,6 +684,8 @@
     }
 
     function initChallenge() {
+      clearTimeout(chTimer);
+      chTimer = null;
       chQuestions = generateChallenge();
       chIdx = 0; chScore = 0; chLocked = false;
       document.getElementById('chScore').textContent = '0';
@@ -699,7 +700,7 @@
         document.getElementById('chQuestion').textContent = '🎉 挑战完成！';
         document.getElementById('chOptions').innerHTML = '';
         document.getElementById('chFeedback').textContent = `得分 ${chScore} / ${chQuestions.length}`;
-        document.getElementById('chStars').textContent = '⭐'.repeat(Math.max(1, Math.ceil(chScore / 2)));
+        document.getElementById('chStars').textContent = '⭐'.repeat(Math.ceil(chScore / 2));
         if (chScore >= 8) {
           celebrate();
           if (typeof PageProgress !== 'undefined' && !PageProgress.isDone('numbers-within-10000')) {
@@ -745,7 +746,7 @@
       document.getElementById('chScore').textContent = chScore;
       document.getElementById('chTotal').textContent = chIdx + 1;
       chIdx++;
-      setTimeout(() => loadChallenge(), 1500);
+      chTimer = setTimeout(() => loadChallenge(), 1500);
     }
 
     // 初始化

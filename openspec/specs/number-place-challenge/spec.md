@@ -1,0 +1,24 @@
+# number-place-challenge Specification
+
+## Purpose
+TBD - created by archiving change number-place-challenge. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 数位挑战有限生成
+系统 SHALL 有限生成挑战题及互异选项，并保证数位题询问该数已有的数位。
+
+#### Scenario: 随机值重复
+- **WHEN** 随机值持续重复
+- **THEN** 十道挑战题均可生成，选项互异并包含正确答案
+
+### Requirement: 拨珠支持键盘操作及重置
+系统 SHALL 提供带数位及当前数值名称的键盘按钮，并在重置时取消旧题延时。
+
+#### Scenario: 键盘拨珠
+- **WHEN** 学习者聚焦数位按钮并按回车
+- **THEN** 对应数位与可访问名称更新，确认可得到反馈
+
+#### Scenario: 延时期间重置
+- **WHEN** 学习者在答题反馈期间重置拨珠或重开挑战
+- **THEN** 旧题回调不改变当前题的状态
