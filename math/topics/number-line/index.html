@@ -162,7 +162,7 @@
           <div class="learn-title">什么是数轴？</div>
           <div class="learn-desc">
             <p>数轴是一条有方向的直线，上面标满了数字。</p>
-            <p>🔹 <strong>原点</strong>：数轴的起点是 0</p>
+            <p>🔹 <strong>原点</strong>：数轴上表示 0 的点叫原点</p>
             <p>🔹 <strong>正方向</strong>：向右数字越来越大</p>
             <p>🔹 <strong>刻度</strong>：每个数字之间的距离相等</p>
             <p>🔹 <strong>箭头</strong>：表示数轴可以一直延伸</p>
@@ -206,6 +206,7 @@
     <div class="mode-content" id="mode-challenge">
       <div class="challenge-area">
         <button class="challenge-start-btn" id="challenge-start">开始挑战 (60秒)</button>
+        <div id="challenge-result" role="status"></div>
         <div class="challenge-running">
           <div class="challenge-score">
             <span>⏱️ <span id="challenge-time">60</span>秒</span>
@@ -284,11 +285,23 @@
       `;
     });
 
+    function differentNumber(number, min, max) {
+      const candidates = Array.from({length: max - min + 1}, (_, i) => min + i).filter(n => n !== number);
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    function numberOptions(answer, min, max) {
+      const candidates = Array.from({length: max - min + 1}, (_, i) => min + i).filter(n => n !== answer);
+      return Random.shuffle([answer, ...Random.shuffle(candidates).slice(0, 3)]);
+    }
+
     // 模式2: 找数字
     let findCorrect = 0, findWrong = 0;
     let currentFindAnswer = 0;
+    let findLocked = false;
 
     function generateFindQuestion() {
+      findLocked = false;
       const min = 0;
       const max = Math.random() > 0.5 ? 10 : 20;
       const point = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -296,13 +309,7 @@
       
       document.getElementById('find-svg-container').innerHTML = generateNumberLineSVG(point, min, max, false);
       
-      const options = new Set([point]);
-      while (options.size < 4) {
-        const opt = Math.floor(Math.random() * (max - min + 1)) + min;
-        options.add(opt);
-      }
-      
-      const shuffled = Array.from(options).sort(() => Math.random() - 0.5);
+      const shuffled = numberOptions(point, min, max);
       document.getElementById('find-options').innerHTML = shuffled.map(n => 
         `<button class="find-opt" data-value="${n}">${n}</button>`
       ).join('');
@@ -311,8 +318,11 @@
       
       document.querySelectorAll('.find-opt').forEach(btn => {
         btn.addEventListener('click', () => {
+          if (findLocked) return;
           const value = parseInt(btn.dataset.value);
           if (value === currentFindAnswer) {
+            findLocked = true;
+            document.querySelectorAll('.find-opt').forEach(option => { option.disabled = true; });
             btn.classList.add('correct');
             document.getElementById('find-feedback').textContent = '✅ 正确！';
             document.getElementById('find-feedback').style.color = '#34C759';
@@ -335,15 +345,14 @@
     // 模式3: 比大小
     let compareCorrect = 0, compareWrong = 0;
     let currentCompareAnswer = '';
+    let compareLocked = false;
 
     function generateCompareQuestion() {
+      compareLocked = false;
       const min = 0;
       const max = Math.random() > 0.5 ? 10 : 20;
       const num1 = Math.floor(Math.random() * (max - min)) + min;
-      let num2 = Math.floor(Math.random() * (max - min)) + min;
-      while (num2 === num1) {
-        num2 = Math.floor(Math.random() * (max - min)) + min;
-      }
+      const num2 = differentNumber(num1, min, max);
       
       const questionType = Math.random() > 0.5 ? 'bigger' : 'smaller';
       const questionText = questionType === 'bigger' ? '哪个数更大？' : '哪个数更小？';
@@ -386,8 +395,11 @@
       
       document.querySelectorAll('.compare-opt').forEach(btn => {
         btn.addEventListener('click', () => {
+          if (compareLocked) return;
           const value = parseInt(btn.dataset.value);
           if (value === currentCompareAnswer) {
+            compareLocked = true;
+            document.querySelectorAll('.compare-opt').forEach(option => { option.disabled = true; });
             btn.classList.add('correct');
             document.getElementById('compare-feedback').textContent = '✅ 正确！';
             document.getElementById('compare-feedback').style.color = '#34C759';
@@ -413,8 +425,12 @@
     let challengeTimer = null;
     let challengeActive = false;
     let currentChallengeAnswer = 0;
+    let challengeLocked = false;
+    let challengeNextTimer = null;
 
     function generateChallengeQuestion() {
+      if (!challengeActive) return;
+      challengeLocked = false;
       const min = 0;
       const max = 10;
       const point = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -427,22 +443,13 @@
         document.getElementById('challenge-question').textContent = '红点表示几？';
         document.getElementById('challenge-svg-container').innerHTML = generateNumberLineSVG(point, min, max, false);
         
-        const options = new Set([point]);
-        while (options.size < 4) {
-          const opt = Math.floor(Math.random() * (max - min + 1)) + min;
-          options.add(opt);
-        }
-        
-        const shuffled = Array.from(options).sort(() => Math.random() - 0.5);
+        const shuffled = numberOptions(point, min, max);
         document.getElementById('challenge-options').innerHTML = shuffled.map(n => 
           `<button class="challenge-opt" data-value="${n}">${n}</button>`
         ).join('');
       } else {
         const num1 = Math.floor(Math.random() * (max - min)) + min;
-        let num2 = Math.floor(Math.random() * (max - min)) + min;
-        while (num2 === num1) {
-          num2 = Math.floor(Math.random() * (max - min)) + min;
-        }
+        const num2 = differentNumber(num1, min, max);
         
         const isBigger = Math.random() > 0.5;
         currentChallengeAnswer = isBigger ? Math.max(num1, num2) : Math.min(num1, num2);
@@ -482,7 +489,9 @@
       
       document.querySelectorAll('.challenge-opt').forEach(btn => {
         btn.addEventListener('click', () => {
-          if (!challengeActive) return;
+          if (!challengeActive || challengeLocked) return;
+          challengeLocked = true;
+          document.querySelectorAll('.challenge-opt').forEach(option => { option.disabled = true; });
           
           const value = parseInt(btn.dataset.value);
           const historyDiv = document.getElementById('challenge-history');
@@ -492,18 +501,22 @@
             challengeCorrect++;
             document.getElementById('challenge-correct').textContent = challengeCorrect;
             historyDiv.innerHTML = `<div class="history-item history-correct">✅ ${currentChallengeAnswer}</div>` + historyDiv.innerHTML;
-            setTimeout(generateChallengeQuestion, 1500);
+            challengeNextTimer = setTimeout(generateChallengeQuestion, 1500);
           } else {
             btn.classList.add('wrong');
             challengeWrong++;
             document.getElementById('challenge-wrong').textContent = challengeWrong;
             historyDiv.innerHTML = `<div class="history-item history-wrong">❌ 正确答案: ${currentChallengeAnswer}</div>` + historyDiv.innerHTML;
+            challengeNextTimer = setTimeout(generateChallengeQuestion, 1500);
           }
         });
       });
     }
 
     document.getElementById('challenge-start').addEventListener('click', () => {
+      clearInterval(challengeTimer);
+      clearTimeout(challengeNextTimer);
+      document.getElementById('challenge-result').textContent = '';
       challengeActive = true;
       challengeCorrect = 0;
       challengeWrong = 0;
@@ -525,8 +538,10 @@
         if (challengeTime <= 0) {
           clearInterval(challengeTimer);
           challengeActive = false;
+          clearTimeout(challengeNextTimer);
           document.querySelector('.challenge-area').classList.remove('challenge-active');
-          document.getElementById('challenge-question').textContent = `挑战结束！正确 ${challengeCorrect} 题，错误 ${challengeWrong} 题`;
+          document.getElementById('challenge-result').textContent = `挑战结束！正确 ${challengeCorrect} 题，错误 ${challengeWrong} 题`;
+          document.getElementById('challenge-question').textContent = '';
           document.getElementById('challenge-svg-container').innerHTML = '';
           document.getElementById('challenge-options').innerHTML = '';
         }

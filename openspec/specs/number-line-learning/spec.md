@@ -1,0 +1,20 @@
+# number-line-learning Specification
+
+## Purpose
+TBD - created by archiving change number-line-learning. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 找数和比较可稳定出题
+数轴页面 SHALL 在固定随机值下初始化并给出不同选项，图中点的位置与正确答案一致。
+
+#### Scenario: 固定随机数加载
+- **WHEN** 随机值固定为零并加载页面
+- **THEN** 找数和比较均生成有效题目，找数正确选项对应红点刻度
+
+### Requirement: 限时挑战每题只计一次
+挑战 SHALL 在回答后锁定选项，结束时显示成绩并阻止待处理题目覆盖结果。
+
+#### Scenario: 时间结束时存在待切题任务
+- **WHEN** 最后一秒答题且倒计时结束
+- **THEN** 显示最终成绩，后续不会出现新题，且可重新开始

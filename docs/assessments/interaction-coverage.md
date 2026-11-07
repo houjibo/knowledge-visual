@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：52；尚未登记：264。
+主题总数：316；已登记部分交互证据：53；尚未登记：263。
 
 ## 已登记部分交互证据
 
@@ -47,6 +47,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [数的组成](../../math/topics/number-composition/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
+- [数轴](../../math/topics/number-line/index.html)
+  - 固定随机值初始化、找数与比较的部分图形判分、挑战计分和到时重启；尚未覆盖所有题型与无障碍。 [number-line.spec.js](../../tests/browser/number-line.spec.js)
 - [认识数字 0-100](../../math/topics/numbers/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [一一对应](../../math/topics/one-to-one-correspondence/index.html)
@@ -258,7 +260,6 @@
 - [乘法口诀表](../../math/topics/multiplication-tables/index.html)
 - [表内乘法](../../math/topics/multiplication/index.html)
 - [数与形](../../math/topics/number-and-shape/index.html)
-- [数轴](../../math/topics/number-line/index.html)
 - [数与形](../../math/topics/numbers-and-shapes/index.html)
 - [100以内数的认识](../../math/topics/numbers-within-100/index.html)
 - [万以内数的认识](../../math/topics/numbers-within-10000/index.html)
