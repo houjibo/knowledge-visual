@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：79；尚未登记：237。
+主题总数：316；已登记部分交互证据：80；尚未登记：236。
 
 ## 已登记部分交互证据
 
@@ -114,6 +114,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [扇形统计图](../../math/topics/sector-statistics/index.html)
   - 扇形图滑块、估算提示及部分随机题目；未覆盖整页。 [pie-chart.spec.js](../../tests/browser/pie-chart.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
+- [立体图形的认识](../../math/topics/solid-shapes/index.html)
+  - 五类题目及各图形代表性参数的唯一计分、边界说明、键盘分类、题池与完成记录；不代表所有几何内容已评审。 [solid-shapes-learning.spec.js](../../tests/browser/solid-shapes-learning.spec.js)
 - [认识面积](../../math/topics/understanding-area/index.html)
   - 点线示例、比较图形随机边界、键盘铺格及重复提交部分场景；判断挑战和全部内容尚未验收。 [area-learning.spec.js](../../tests/browser/area-learning.spec.js)
 - [认识倍](../../math/topics/understanding-multiples/index.html)
@@ -339,7 +341,6 @@
 - [认识图形与位置](../../math/topics/shapes-and-position/index.html)
 - [简单推理](../../math/topics/simple-reasoning/index.html)
 - [简便计算](../../math/topics/simplified-calculation/index.html)
-- [立体图形的认识](../../math/topics/solid-shapes/index.html)
 - [统计与数据整理](../../math/topics/statistics/index.html)
 - [10以内减法](../../math/topics/subtraction/index.html)
 - [长方体和正方体表面积](../../math/topics/surface-area/index.html)

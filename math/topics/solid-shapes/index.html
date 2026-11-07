@@ -176,7 +176,7 @@
     <div class="mode-content" id="mode-sort">
       <div class="sort-area">
         <div class="card">
-          <p class="page-subtitle">看看这个物品像什么立体图形？把它分到正确的筐里！</p>
+          <p class="page-subtitle">物品近似哪种立体图形？正方体单独归类；实物可能与理想图形不同。</p>
           <div class="sort-score">
             <span>✅ <span id="sort-correct">0</span></span>
             <span>❌ <span id="sort-wrong">0</span></span>
@@ -322,6 +322,13 @@
 
     function showToast(msg) { if (typeof Toast !== 'undefined') Toast.show(msg); }
     function playSound(type) { if (typeof Sound !== 'undefined') Sound.play(type); }
+    function shuffleArray(items) {
+      for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+      return items;
+    }
 
     // === 模式切换 ===
     document.querySelectorAll('.mode-tab').forEach(tab => {
@@ -340,7 +347,8 @@
       const detail = document.getElementById('shape-detail');
 
       SHAPES.forEach((shape, i) => {
-        const card = document.createElement('div');
+        const card = document.createElement('button');
+        card.type = 'button';
         card.className = 'shape-card';
         card.innerHTML = `
           ${shape.svg.replace(/width="[^"]*"/, 'width="100"').replace(/height="[^"]*"/, 'height="90"').replace(/viewBox/, 'style="display:block;margin:0 auto 8px" viewBox')}
@@ -360,8 +368,8 @@
         let realHtml = shape.realLife.map(r => `<div class="real-item"><span class="ri-icon">${r.icon}</span><span class="ri-name">${r.name}</span></div>`).join('');
         detail.innerHTML = `
           <h3>${shape.emoji} ${shape.name}</h3>
-          <div class="detail-row"><div class="detail-icon">📐</div><div class="detail-text"><strong>面数：</strong>${shape.faces} 个面</div></div>
-          <div class="detail-row"><div class="detail-icon">📏</div><div class="detail-text"><strong>棱数：</strong>${shape.edges} 条棱</div></div>
+          <div class="detail-row"><div class="detail-icon">📐</div><div class="detail-text"><strong>表面：</strong>${shape.id === 'cylinder' ? '2个圆形平面和1个曲面' : shape.id === 'sphere' ? '1个曲面' : shape.faces + '个平面'}</div></div>
+          <div class="detail-row"><div class="detail-icon">📏</div><div class="detail-text"><strong>直棱：</strong>${shape.edges} 条${shape.id === 'cylinder' ? '；底面与侧面相交形成圆形边界' : ''}</div></div>
           <div class="detail-row"><div class="detail-icon">📍</div><div class="detail-text"><strong>顶点：</strong>${shape.vertices} 个顶点</div></div>
           <div class="detail-row"><div class="detail-icon">🔷</div><div class="detail-text"><strong>面的形状：</strong>${shape.faceShape}</div></div>
           <div class="detail-row"><div class="detail-icon">💡</div><div class="detail-text">${shape.features.map(f => '• ' + f).join('<br>')}</div></div>
@@ -387,8 +395,8 @@
 
         const propsEl = document.getElementById('explore-props');
         propsEl.innerHTML = `
-          <div class="prop-chip">📐 ${shape.faces}个面</div>
-          <div class="prop-chip">📏 ${shape.edges}条棱</div>
+          <div class="prop-chip">📐 ${shape.id === 'cylinder' ? '2个平面和1个曲面' : shape.id === 'sphere' ? '1个曲面' : shape.faces + '个平面'}</div>
+          <div class="prop-chip">📏 ${shape.edges}条直棱</div>
           <div class="prop-chip">📍 ${shape.vertices}个顶点</div>
         `;
 
@@ -403,10 +411,10 @@
           comparisons.push({ title: '长方体 vs 正方体', text: '长方体的面是长方形，正方体全是正方形' });
           comparisons.push({ title: '长方体 vs 圆柱', text: '长方体有尖尖的角，圆柱圆圆的没有角' });
         } else if (shape.id === 'cylinder') {
-          comparisons.push({ title: '圆柱 vs 长方体', text: '圆柱能滚动，长方体只能滑动' });
+          comparisons.push({ title: '圆柱 vs 长方体', text: '圆柱有曲面，长方体的面都是平面' });
           comparisons.push({ title: '圆柱 vs 球', text: '圆柱有平平的面，球没有平面' });
         } else if (shape.id === 'sphere') {
-          comparisons.push({ title: '球 vs 圆柱', text: '球能向任何方向滚，圆柱只能朝一个方向滚' });
+          comparisons.push({ title: '球 vs 圆柱', text: '球没有平面，圆柱有两个圆形平面' });
           comparisons.push({ title: '球 vs 正方体', text: '球没有平面，正方体有6个平平的面' });
         }
         compareEl.innerHTML = comparisons.map(c => `<div class="compare-item"><strong>${c.title}</strong>${c.text}</div>`).join('');
@@ -429,7 +437,7 @@
     (() => {
       let correct = 0, wrong = 0;
       let currentItem = null;
-      let usedIndices = [];
+      let itemPool = [], sortLocked = false;
 
       const bins = [
         { id: 'cube', icon: '🧊', label: '正方体' },
@@ -440,7 +448,8 @@
 
       const binsEl = document.getElementById('sort-bins');
       bins.forEach(bin => {
-        const el = document.createElement('div');
+        const el = document.createElement('button');
+        el.type = 'button';
         el.className = 'sort-bin';
         el.dataset.bin = bin.id;
         el.innerHTML = `<span class="bin-icon">${bin.icon}</span><span class="bin-label">${bin.label}</span>`;
@@ -449,11 +458,9 @@
       });
 
       function nextSortItem() {
-        if (usedIndices.length >= SORT_ITEMS.length) usedIndices = [];
-        let idx;
-        do { idx = Math.floor(Math.random() * SORT_ITEMS.length); } while (usedIndices.includes(idx));
-        usedIndices.push(idx);
-        currentItem = SORT_ITEMS[idx];
+        if (!itemPool.length) itemPool = shuffleArray(SORT_ITEMS.slice());
+        currentItem = itemPool.pop();
+        sortLocked = false;
         document.getElementById('sort-emoji').textContent = currentItem.emoji;
         document.getElementById('sort-name').textContent = currentItem.name;
         document.getElementById('sort-hint').textContent = '💡 ' + currentItem.hint;
@@ -463,7 +470,8 @@
       }
 
       function handleSort(binId, binEl) {
-        if (!currentItem) return;
+        if (!currentItem || sortLocked) return;
+        sortLocked = true;
         const isCorrect = binId === currentItem.answer;
         const feedbackEl = document.getElementById('sort-feedback');
 
@@ -503,136 +511,66 @@
       let answered = false;
 
       function generateQuestion() {
-        const types = ['identify', 'property', 'realLife', 'compare', 'countFace'];
-        const type = types[Math.floor(Math.random() * types.length)];
-        let q = {};
+        const type = Math.floor(Math.random() * 5);
+        const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+        const visual = shape.svg.replace(/width="[^"]*"/, 'width="120"').replace(/height="[^"]*"/, 'height="100"');
+        const makeOptions = (answer, wrongs) => shuffleOptions([
+          { text: answer, correct: true }, ...wrongs.map(text => ({ text, correct: false }))
+        ]);
 
-        if (type === 'identify') {
-          const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-          const item = SORT_ITEMS.filter(s => s.answer === shape.id);
-          const example = item[Math.floor(Math.random() * item.length)];
-          q = {
-            question: `${example.emoji} ${example.name}是什么立体图形？`,
-            visual: `<div style="font-size:80px">${example.emoji}</div>`,
-            options: SHAPES.map(s => ({ text: s.emoji + ' ' + s.name, correct: s.id === shape.id })),
-            explain: `${example.name}的形状是${shape.name}，因为${shape.desc}`
+        if (type === 0) {
+          return {
+            question: '图中是哪一种立体图形？', visual,
+            options: shuffleOptions(SHAPES.map(s => ({ text: s.name, correct: s.id === shape.id }))),
+            explain: `${shape.name}：${shape.desc}`
           };
-        } else if (type === 'property') {
-          const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-          const props = [
-            { text: `${shape.faces}个面`, correct: true },
-            { text: `${(shape.faces + 2) % 7 || 3}个面`, correct: false },
-            { text: `${shape.edges}条棱`, correct: true },
-            { text: `${shape.vertices}个顶点`, correct: true }
-          ];
-          const askFor = Math.floor(Math.random() * 3);
-          if (askFor === 0) {
-            const wrongFaces = [shape.faces + 2, shape.faces - 1 || 1, shape.faces + 3].filter(n => n > 0 && n !== shape.faces);
-            const wf = wrongFaces[Math.floor(Math.random() * wrongFaces.length)] || (shape.faces + 2);
-            q = {
-              question: `${shape.emoji} ${shape.name}有几个面？`,
-              visual: shape.svg.replace(/width="[^"]*"/, 'width="120"').replace(/height="[^"]*"/, 'height="100"'),
-              options: shuffleOptions([
-                { text: `${shape.faces}个面`, correct: true },
-                { text: `${wf}个面`, correct: false },
-                { text: `${shape.faces + 1}个面`, correct: false },
-                { text: `${Math.max(1, shape.faces - 2)}个面`, correct: false }
-              ]),
-              explain: `${shape.name}有${shape.faces}个面`
-            };
-          } else if (askFor === 1) {
-            const wrongEdges = [shape.edges + 3, shape.edges - 2 || 1, shape.edges + 4].filter(n => n > 0 && n !== shape.edges);
-            const we = wrongEdges[Math.floor(Math.random() * wrongEdges.length)] || (shape.edges + 3);
-            q = {
-              question: `${shape.emoji} ${shape.name}有几条棱？`,
-              visual: shape.svg.replace(/width="[^"]*"/, 'width="120"').replace(/height="[^"]*"/, 'height="100"'),
-              options: shuffleOptions([
-                { text: `${shape.edges}条棱`, correct: true },
-                { text: `${we}条棱`, correct: false },
-                { text: `${shape.edges + 2}条棱`, correct: false },
-                { text: `${Math.max(0, shape.edges - 3)}条棱`, correct: false }
-              ]),
-              explain: `${shape.name}有${shape.edges}条棱`
-            };
-          } else {
-            const wrongVerts = [shape.vertices + 2, shape.vertices - 1 || 0, shape.vertices + 3].filter(n => n >= 0 && n !== shape.vertices);
-            const wv = wrongVerts[Math.floor(Math.random() * wrongVerts.length)] || (shape.vertices + 2);
-            q = {
-              question: `${shape.emoji} ${shape.name}有几个顶点？`,
-              visual: shape.svg.replace(/width="[^"]*"/, 'width="120"').replace(/height="[^"]*"/, 'height="100"'),
-              options: shuffleOptions([
-                { text: `${shape.vertices}个顶点`, correct: true },
-                { text: `${wv}个顶点`, correct: false },
-                { text: `${shape.vertices + 3}个顶点`, correct: false },
-                { text: `${Math.max(0, shape.vertices - 2)}个顶点`, correct: false }
-              ]),
-              explain: `${shape.name}有${shape.vertices}个顶点`
-            };
-          }
-        } else if (type === 'realLife') {
-          const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-          const allReal = [];
-          SHAPES.forEach(s => s.realLife.forEach(r => allReal.push({ ...r, shapeId: s.id })));
-          const correctItems = allReal.filter(r => r.shapeId === shape.id);
-          const wrongItems = allReal.filter(r => r.shapeId !== shape.id);
-          const ci = correctItems[Math.floor(Math.random() * correctItems.length)];
-          const wi = wrongItems[Math.floor(Math.random() * wrongItems.length)];
-          const otherWrong = SHAPES.filter(s => s.id !== shape.id);
-          q = {
-            question: `下面哪个物品是${shape.name}？`,
-            visual: '',
-            options: shuffleOptions([
-              { text: `${ci.icon} ${ci.name}`, correct: true },
-              { text: `${wi.icon} ${wi.name}`, correct: false },
-              { text: `${otherWrong[1].realLife[0].icon} ${otherWrong[1].realLife[0].name}`, correct: false },
-              { text: `${otherWrong[2].realLife[0].icon} ${otherWrong[2].realLife[0].name}`, correct: false }
-            ]),
-            explain: `${ci.icon} ${ci.name}是${shape.name}，${shape.desc}`
-          };
-        } else if (type === 'compare') {
-          const pairs = [
-            { a: 'cube', b: 'cuboid', q: '正方体和长方体有什么相同？', answer: '都有6个面、12条棱、8个顶点', wrongs: ['正方体没有棱', '长方体没有顶点', '它们完全一样'] },
-            { a: 'sphere', b: 'cylinder', q: '球和圆柱最大的区别是什么？', answer: '球没有平面，圆柱有2个平面', wrongs: ['球有棱', '圆柱能滚，球不能', '没有区别'] },
-            { a: 'cube', b: 'sphere', q: '正方体和球有什么不同？', answer: '正方体有平平的面，球全是曲面', wrongs: ['正方体不能滚动', '球有棱', '没有不同'] },
-            { a: 'cylinder', b: 'cuboid', q: '圆柱和长方体有什么不同？', answer: '圆柱有曲面能滚动，长方体不能', wrongs: ['它们没有区别', '长方体有曲面', '圆柱有8个顶点'] }
-          ];
-          const pair = pairs[Math.floor(Math.random() * pairs.length)];
-          const sa = SHAPES.find(s => s.id === pair.a);
-          const sb = SHAPES.find(s => s.id === pair.b);
-          q = {
-            question: pair.q,
-            visual: `<div style="display:flex;justify-content:center;gap:16px;align-items:center">${sa.svg.replace(/width="[^"]*"/, 'width="80"').replace(/height="[^"]*"/, 'height="70"')}<span style="font-size:24px;color:#6E6E73">vs</span>${sb.svg.replace(/width="[^"]*"/, 'width="80"').replace(/height="[^"]*"/, 'height="70"')}</div>`,
-            options: shuffleOptions([
-              { text: pair.answer, correct: true },
-              { text: pair.wrongs[0], correct: false },
-              { text: pair.wrongs[1], correct: false },
-              { text: pair.wrongs[2], correct: false }
-            ]),
-            explain: `正确答案：${pair.answer}`
-          };
-        } else if (type === 'countFace') {
-          const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-          const canRoll = shape.id === 'sphere' || shape.id === 'cylinder';
-          const hasFlat = shape.id !== 'sphere';
-          q = {
-            question: `下面关于${shape.name}的说法，哪个是正确的？`,
-            visual: shape.svg.replace(/width="[^"]*"/, 'width="120"').replace(/height="[^"]*"/, 'height="100"'),
-            options: shuffleOptions([
-              { text: hasFlat ? `有${shape.faces}个面` : '没有平平的面', correct: true },
-              { text: canRoll ? '不能滚动' : '只能朝一个方向滚', correct: false },
-              { text: `${shape.edges + 3}条棱`, correct: false },
-              { text: `每个面都一样`, correct: shape.id === 'cube' || shape.id === 'sphere', wrong: shape.id !== 'cube' && shape.id !== 'sphere' }
-            ]),
-            explain: `${shape.name}：${shape.features.join('；')}`
-          };
-          // Fix the "wrong" field for the last option
-          q.options.forEach(opt => {
-            if (opt.wrong !== undefined) opt.correct = opt.wrong;
-            delete opt.wrong;
-          });
         }
-
-        return q;
+        if (type === 1) {
+          // 只对多面体询问平面、直棱和顶点数；曲面与圆形边界另作说明。
+          const poly = SHAPES[Math.floor(Math.random() * 2)];
+          const props = [
+            { label: '平面', value: poly.faces },
+            { label: '直棱', value: poly.edges },
+            { label: '顶点', value: poly.vertices }
+          ];
+          const prop = props[Math.floor(Math.random() * props.length)];
+          const wrongs = [prop.value - 2, prop.value - 1, prop.value + 1];
+          return {
+            question: `${poly.name}有几个${prop.label}？`,
+            visual: poly.svg.replace(/width="[^"]*"/, 'width="120"').replace(/height="[^"]*"/, 'height="100"'),
+            options: makeOptions(`${prop.value}个`, wrongs.map(n => `${n}个`)),
+            explain: `${poly.name}有${prop.value}个${prop.label}。`
+          };
+        }
+        if (type === 2) {
+          const choices = SHAPES.map(s => {
+            const item = SORT_ITEMS.find(item => item.answer === s.id);
+            return { text: `${item.emoji} ${item.name}`, correct: s.id === shape.id };
+          });
+          return {
+            question: `下面哪个物品通常近似${shape.name}？（正方体单独归类）`, visual: '',
+            options: shuffleOptions(choices), explain: `${choices.find(o => o.correct).text}通常近似${shape.name}。`
+          };
+        }
+        if (type === 3) {
+          const comparisons = [
+            { q: '正方体和长方体有什么相同？', yes: '都有6个平面、12条直棱、8个顶点', no: ['正方体没有直棱', '长方体没有顶点', '长方体的棱一定全部等长'] },
+            { q: '球和圆柱的平面有什么不同？', yes: '球没有平面，圆柱有2个圆形平面', no: ['球有2个平面', '圆柱没有平面', '两者都有6个平面'] },
+            { q: '正方体和球的表面有什么不同？', yes: '正方体的面是平面，球的表面是曲面', no: ['球有6个平面', '正方体只有曲面', '两者表面完全一样'] },
+            { q: '圆柱和长方体的表面有什么不同？', yes: '圆柱有曲面，长方体的面都是平面', no: ['长方体只有曲面', '圆柱没有平面', '长方体没有顶点'] }
+          ];
+          const item = comparisons[Math.floor(Math.random() * comparisons.length)];
+          return { question: item.q, visual: '', options: makeOptions(item.yes, item.no), explain: item.yes };
+        }
+        const statements = {
+          cube: ['6个面都是正方形', '只有曲面', '没有顶点', '只有2个平面'],
+          cuboid: ['相对的面完全相同', '只有曲面', '没有直棱', '只有2个顶点'],
+          cylinder: ['有2个圆形平面和1个曲面', '只有平面', '有8个顶点', '有6个正方形面'],
+          sphere: ['表面是曲面，没有平面', '有2个圆形平面', '有8个顶点', '有6个正方形面']
+        };
+        const items = statements[shape.id];
+        return { question: `关于${shape.name}，哪个说法正确？`, visual,
+          options: makeOptions(items[0], items.slice(1)), explain: items[0] };
       }
 
       function shuffleOptions(opts) {
