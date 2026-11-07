@@ -172,6 +172,7 @@
   - 简单、串联、并联导线连通性与粒子路径，动画暂停、键盘测验和进度刷新；不模拟实际电池或全部电气安全内容。 [science-electricity-topology.spec.js](../../tests/browser/science-electricity-topology.spec.js)
 - [环境与保护 · 小学科学互动可视化](../../science/environment.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
+  - 草原示意指数边界、键盘、重置和部分测验；不代表其他环境内容已全面核验。 [ecology-model-interpretation.spec.js](../../tests/browser/ecology-model-interpretation.spec.js)、[science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [奇妙的力 · 小学科学互动可视化](../../science/forces.html)
   - 模式、推拉和实验按钮键盘操作，五题重测及进度保存失败；画布拖拽物理模型和完整无障碍未验收。 [forces-learning.spec.js](../../tests/browser/forces-learning.spec.js)
 - [我们的身体 · 小学科学互动可视化](../../science/human-body.html)

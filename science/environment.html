@@ -127,41 +127,46 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="ecoCanvas" width="720" height="460"></canvas>
+          <canvas id="ecoCanvas" width="720" height="460" role="img"></canvas>
           <div class="legend">
             <span>🌿 草</span><span>🐰 兔</span><span>🦊 狐</span>
-            <span id="legendLabel">生态系统里谁也离不开谁</span>
+            <span>图标数量表示示意指数</span>
           </div>
         </div>
       </div>
       <div class="panel">
-        <h3>草原生态模拟</h3>
+        <h3>草原关系示意</h3>
+        <p>拖动滑杆，观察人为设定的示意指数如何变化。它不预测真实生态，也不模拟时间变化。</p>
         <div class="slider-row">
-          <label>狐狸数量</label>
+          <label for="sliderFox">狐狸档位（示意）</label>
           <input type="range" id="sliderFox" min="0" max="10" step="1" value="3">
-          <span class="val" id="valFox">3 只</span>
+          <span class="val" id="valFox">3 / 10</span>
         </div>
         <div class="slider-row">
-          <label>污染程度</label>
+          <label for="sliderPoll">污染档位（示意）</label>
           <input type="range" id="sliderPoll" min="0" max="10" step="1" value="0">
-          <span class="val" id="valPoll">无</span>
+          <span class="val" id="valPoll">0 / 10</span>
         </div>
+        <button type="button" id="resetEco">重置示意</button>
         <div class="info-grid">
-          <div id="infoEco">生态状态<br><b>平衡 🟢</b></div>
-          <div id="infoChain">食物链<br><b>草→兔→狐</b></div>
+          <div id="modelSummary" aria-live="polite"></div>
+          <div>食物链示例<br><b>草 → 兔 → 狐</b></div>
         </div>
-        <div class="equation">食物链：<b>草 → 兔 → 狐</b><br><span style="font-size:0.85em;color:#94a3b8">狐狸灭绝 → 兔子泛滥 → 草被吃光 → 生态崩溃</span></div>
+        <details class="concept-card"><summary>示意规则与局限</summary>
+          草指数 = 10 − 污染档位；兔指数 = 草指数 ×（1.2 − 0.08 × 狐狸档位），四舍五入并限制在 0～12。数值是无单位的示意指数，不代表实际数量。模型未计算兔子对草的影响，也没有时间和真实生态数据。
+        </details>
+        <div class="equation">食物链示例：<b>草 → 兔 → 狐</b><br><span style="font-size:0.85em;color:#94a3b8">箭头从被吃者指向取食者，表示能量传递的方向。</span></div>
         <div class="concept-card">
           <div class="title">生态平衡</div>
-          生态系统里生物<b>互相依赖</b>：草养活兔，兔养活狐。任何一种生物数量剧变，都会连锁影响整个系统——保护生物多样性就是保护食物链的每一环。
+          生物通过食物关系等方式相互影响。狐狸减少可能降低兔子受到的捕食压力，但兔和草的实际变化还受天气、疾病、其他食物和天敌等因素影响。
         </div>
         <div class="concept-card">
           <div class="title">垃圾分类四色桶</div>
-          <b>可回收物</b>（蓝：纸、塑料、金属、玻璃）、<b>厨余垃圾</b>（绿：剩菜、果皮）、<b>有害垃圾</b>（红：电池、灯管、药品）、<b>其他垃圾</b>（灰：污染纸、尘土）。正确分类 = 资源再生 + 减少污染。
+          常见分类包括<b>可回收物</b>、<b>厨余垃圾</b>、<b>有害垃圾</b>和<b>其他垃圾</b>。具体分类、桶的名称和颜色请以当地规定为准；废电池应区分种类，按当地要求或指定回收渠道投放。
         </div>
         <div class="concept-card warn">
           <div class="title">⚠️ 易错点</div>
-          ① 灭光狐狸"保护兔子"反而会害了草原；② 废旧电池<b>不能</b>丢普通垃圾桶（重金属污染土壤和水）；③ 一张纸双面用 = 少砍树；随手关灯 = 省煤减排；④ 保护环境和每个人都有关，从小事做起。
+          ① 不能只根据一种生物推断整个生态系统的变化；② 不同废电池的处理方式可能不同；③ 纸张双面使用、随手关灯有助于节约资源。
         </div>
       </div>
     </div>
@@ -244,21 +249,23 @@ const ctx = canvas.getContext('2d');
 const sFox = document.getElementById('sliderFox');
 const sPoll = document.getElementById('sliderPoll');
 [sFox, sPoll].forEach(s => s.addEventListener('input', draw));
+document.getElementById('resetEco').addEventListener('click', () => {
+  sFox.value = 3;
+  sPoll.value = 0;
+  draw();
+});
 
 function draw() {
   if (mode !== 'learn') return;
   const fox = +sFox.value, poll = +sPoll.value;
-  document.getElementById('valFox').textContent = fox + ' 只';
-  document.getElementById('valPoll').textContent = poll === 0 ? '无' : poll <= 3 ? '轻度' : poll <= 6 ? '中度' : '严重';
-  // 生态推演：草受污染影响；兔受草和狐狸影响
+  document.getElementById('valFox').textContent = fox + ' / 10';
+  document.getElementById('valPoll').textContent = poll + ' / 10';
+  // 人为设定的示意规则，不代表真实种群。
   const grass = Math.max(0, 10 - poll);
-  const rabbit = Math.max(0, Math.min(12, grass + 4 - fox));
-  const balance = grass >= 6 && rabbit >= 4 && fox >= 1;
-  const state = poll >= 8 ? '崩溃 🔴（草枯死）' : fox === 0 ? '失衡 🟠（兔患成灾）' : grass < 4 ? '失衡 🟠（草不足）' : balance ? '平衡 🟢' : '脆弱 🟡';
-  document.getElementById('infoEco').innerHTML = `生态状态<br><b>${state}</b>`;
-  document.getElementById('infoChain').innerHTML = `草 ${grass}/10 · 兔 ${rabbit}/12<br><b>狐 ${fox}/10</b>`;
-  document.getElementById('legendLabel').textContent =
-    poll >= 8 ? '污染太重，草枯死了！' : fox === 0 ? '没有狐狸，兔子吃光草原！' : '生态系统里谁也离不开谁';
+  const rabbit = Math.max(0, Math.min(12, Math.round(grass * (1.2 - 0.08 * fox))));
+  const summary = `示意指数：草 ${grass}/10，兔 ${rabbit}/12，狐 ${fox}/10`;
+  document.getElementById('modelSummary').textContent = summary;
+  canvas.setAttribute('aria-label', summary + '。图示规则不预测真实生态。');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   // 天空（污染变灰）
   const skyGray = poll / 10;
@@ -290,14 +297,9 @@ function draw() {
   ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 16px sans-serif';
   ctx.fillText('🌿 草  →  🐰 兔  →  🦊 狐', 260, 44);
   // 状态横幅
-  ctx.fillStyle = poll >= 8 ? '#f87171' : fox === 0 || grass < 4 ? '#fbbf24' : balance ? '#34d399' : '#fbbf24';
+  ctx.fillStyle = '#e2e8f0';
   ctx.font = 'bold 15px sans-serif';
-  const msg = poll >= 8 ? '污染严重：植物死亡 → 食草动物饿死 → 生态崩溃！'
-    : fox === 0 ? '狐狸为 0：兔子疯狂繁殖 → 草快被吃光了！'
-    : grass < 4 ? '草太少：兔子吃不饱，狐狸也要挨饿！'
-    : balance ? '生态平衡：草茂、兔足、狐有食 🎉'
-    : '生态脆弱：某一环偏弱，需要恢复';
-  ctx.fillText(msg, 60, 420);
+  ctx.fillText('规则示意，不预测真实生态', 60, 420);
 }
 draw();
 
@@ -332,18 +334,18 @@ document.querySelectorAll('[data-check]').forEach(btn => {
  * 测验模式
  * ============================================================ */
 const QUIZ = [
-  { q: '如果把草原上的狐狸全部捕杀，最可能发生的是（　　）',
-    opts: ['兔子更幸福，草原更茂盛', '兔子泛滥吃光草，生态失衡', '草会越长越多', '没有变化'],
-    ans: 1, ex: '狐狸是兔子的天敌；狐狸没了 → 兔子暴增 → 草被吃光 → 兔子和草原一起遭殃。' },
-  { q: '废旧电池应该投入（　　）',
-    opts: ['可回收物桶', '厨余垃圾桶', '有害垃圾桶', '其他垃圾桶'],
-    ans: 2, ex: '电池含重金属，会污染土壤和水源 → 有害垃圾（红色桶）。' },
+  { q: '其他条件相近时，狐狸减少可能使兔子受到的捕食压力怎样变化？',
+    opts: ['一定增加', '可能降低', '一定不变', '无法受到狐狸影响'],
+    ans: 1, ex: '狐狸是兔子的天敌之一；实际兔群变化还受其他因素影响。' },
+  { q: '处理废旧电池时，更合适的做法是（　　）',
+    opts: ['随意拆开', '混入厨余垃圾', '区分种类，按当地要求或指定渠道投放', '扔进河里'],
+    ans: 2, ex: '电池类型和投放要求可能因地区不同而异，应遵守当地规定。' },
   { q: '下列垃圾中，属于可回收物的是（　　）',
     opts: ['剩饭剩菜', '旧报纸和易拉罐', '用过的纸巾', '破碎温度计'],
     ans: 1, ex: '纸类和金属都能回收再生；剩饭是厨余，污染纸巾是其他垃圾，温度计是有害垃圾。' },
   { q: '保护生物多样性最重要的意义是（　　）',
     opts: ['让动物更好看', '维持生态系统的平衡和稳定', '供人们捕猎', '没有实际意义'],
-    ans: 1, ex: '每种生物都是食物链的一环，缺一不可——多样才能稳定。' },
+    ans: 1, ex: '生物多样性有助于生态系统的功能和恢复能力，实际稳定性还受环境等因素影响。' },
   { q: '下列做法中，不利于保护环境的是（　　）',
     opts: ['随手关灯关水龙头', '纸张双面使用', '经常使用一次性餐具', '垃圾分类投放'],
     ans: 2, ex: '一次性餐具消耗资源又产生大量垃圾，应尽量减少使用。' }
