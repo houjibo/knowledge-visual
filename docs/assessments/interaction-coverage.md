@@ -59,6 +59,7 @@
   - 五道比较题射线夹角与判分、键盘找角及重玩、挑战完成与存储失败恢复；全部角的概念与完整无障碍未全面验收。 [angle-comparison-learning-correctness.spec.js](../../tests/browser/angle-comparison-learning-correctness.spec.js)
 - [面积与周长](../../math/topics/area-and-perimeter/index.html)
   - 六类挑战、重复提交、相等面积、独立连对及保存恢复；其他模式和完整无障碍尚未全面验收。 [area-perimeter-practice-reliability.spec.js](../../tests/browser/area-perimeter-practice-reliability.spec.js)
+  - 概念切换、矩形与正方形网格边界、长宽约束及控件名称；真机和完整无障碍未全面验收。 [area-perimeter-visual-consistency.spec.js](../../tests/browser/area-perimeter-visual-consistency.spec.js)
 - [年月日的认识](../../math/topics/calendar-units/index.html)
   - 十二个月北半球气象季节、世纪闰年与输入校验、日期计数口径、作答计数及进度保存失败恢复；历史历法和整页无障碍未全面验收。 [calendar-learning-accuracy.spec.js](../../tests/browser/calendar-learning-accuracy.spec.js)
 - [比大小与排序](../../math/topics/comparison-and-ordering/index.html)
