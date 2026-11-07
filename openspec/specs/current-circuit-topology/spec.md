@@ -1,0 +1,20 @@
+# current-circuit-topology Specification
+
+## Purpose
+TBD - created by archiving change current-circuit-topology. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 电路连接与开关状态一致
+图示 SHALL 在开关断开时断开导线，串联两灯经过同一回路，并联两灯分别位于两条支路。
+
+#### Scenario: 切换电路并闭合开关
+- **WHEN** 学习者闭合开关并切换串联与并联
+- **THEN** 图示接线、各灯电流及干路电流符合当前理想电路
+
+### Requirement: 粒子运动反映电流方向且可暂停
+示意粒子 SHALL 在闭合开关后使用当前电流对应的非零速度，沿支路与规定电流相反的方向运动；学习者 SHALL 能暂停动画。
+
+#### Scenario: 暂停后切换模式
+- **WHEN** 学习者暂停动画、离开并返回探究模式
+- **THEN** 动画仍暂停且电路状态可见

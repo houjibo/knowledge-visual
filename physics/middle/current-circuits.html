@@ -120,20 +120,22 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="circuitCanvas" width="720" height="460"></canvas>
+          <canvas id="circuitCanvas" width="720" height="460" role="img"></canvas>
           <div class="legend">
             <span>🟡 电子（移动方向与电流相反）</span>
-            <span>💡 灯泡亮度 ∝ 电流</span>
+            <span>💡 灯光与粒子速度仅作定性示意</span>
           </div>
         </div>
-        <button class="switch-btn" id="switchBtn">🔌 闭合开关</button>
+        <button class="switch-btn" id="switchBtn" aria-pressed="false">🔌 闭合开关</button>
+        <button class="switch-btn" id="toggleAnimation" aria-pressed="false">暂停动画</button>
       </div>
       <div class="panel">
         <h3>电路连接方式</h3>
         <div class="mode-switch">
-          <button class="mode-btn active" data-conn="series">串联电路</button>
-          <button class="mode-btn" data-conn="parallel">并联电路</button>
+          <button class="mode-btn active" data-conn="series" aria-pressed="true">串联电路</button>
+          <button class="mode-btn" data-conn="parallel" aria-pressed="false">并联电路</button>
         </div>
+        <p style="font-size:14px;color:#cbd5e1">理想模型：电源保持 6 V，两灯均为 10 Ω 定值电阻，忽略导线和电源内阻。粒子运动表示方向，不是实际速度或数量。</p>
         <div class="info-grid">
           <div>电源电压<br><b>6 V</b></div>
           <div>每个灯泡电阻<br><b>10 Ω</b></div>
@@ -161,7 +163,7 @@
   <!-- ==================== 练习模式 ==================== -->
   <div class="mode-section hidden" id="sec-practice">
     <div class="practice-item" id="p1">
-      <h4>1️⃣ 教室里各盏灯能独立开关、互不影响，它们是________连接的；节日小彩灯一闪全闪、一灭全灭，是________连接的。</h4>
+      <h4>1️⃣ 教室里各盏灯能独立开关、互不影响，它们是________连接的；单一回路中两灯依次连接，是________连接的。</h4>
       <div class="practice-opts">
         <button class="quiz-opt" data-ok="1">并联；串联</button>
         <button class="quiz-opt" data-ok="0">串联；并联</button>
@@ -229,6 +231,7 @@ tabs.forEach(t => t.addEventListener('click', () => {
   t.setAttribute('aria-pressed', 'true');
   mode = t.dataset.mode;
   Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+  stopAnimation(); render(); startAnimation();
 }));
 
 /* ============================================================
@@ -240,22 +243,23 @@ const U = 6, R_BULB = 10;
 let conn = 'series';      // series | parallel
 let closed = false;       // 开关状态
 let electrons = [];       // {path, dist, speed}
-let lastT = performance.now();
+let lastT = null, frameId = null, playing = true;
 
 const switchBtn = document.getElementById('switchBtn');
 switchBtn.addEventListener('click', () => {
   closed = !closed;
   switchBtn.textContent = closed ? '🔓 断开开关' : '🔌 闭合开关';
   switchBtn.classList.toggle('off', closed);
-  updInfo();
+  switchBtn.setAttribute('aria-pressed', String(closed));
+  buildElectrons(); updInfo(); render();
 });
 
 document.querySelectorAll('.mode-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
+  document.querySelectorAll('.mode-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
+  b.classList.add('active'); b.setAttribute('aria-pressed', 'true');
   conn = b.dataset.conn;
   buildElectrons();
-  updInfo();
+  updInfo(); render();
 }));
 
 function currents() {
@@ -270,6 +274,7 @@ function updInfo() {
   document.getElementById('info-i1').innerHTML = `灯 L₁ 电流<br><b>${fmt(c.i1)}</b>`;
   document.getElementById('info-i2').innerHTML = `灯 L₂ 电流<br><b>${fmt(c.i2)}</b>`;
   document.getElementById('info-itotal').innerHTML = `干路总电流<br><b>${fmt(c.it)}</b>`;
+  canvas.setAttribute('aria-label', `${conn === 'series' ? '串联' : '并联'}电路，开关${closed ? '闭合' : '断开'}；灯一电流${fmt(c.i1)}，灯二电流${fmt(c.i2)}，干路电流${fmt(c.it)}。`);
 }
 
 /* 路径定义：返回各支路的折线路径（电子沿路径移动） */
@@ -281,11 +286,10 @@ function paths() {
       [120, 330], [120, 110], [600, 110], [600, 330], [120, 330]
     ]];
   }
-  // 并联：干路 + 两条支路
+  // 两个支路分别经过电源、对应灯泡和干路；粒子方向取路径反向。
   return [
-    [[120, 330], [120, 110], [300, 110], [300, 330], [120, 330]],   // 支路1（经过 L1）
-    [[120, 330], [120, 110], [600, 110], [600, 330], [120, 330]],   // 干路外圈
-    [[300, 110], [600, 110], [600, 330], [300, 330], [300, 110]]    // 支路2（经过 L2）
+    [[120, 330], [120, 110], [300, 110], [300, 330], [120, 330]],
+    [[120, 330], [120, 110], [600, 110], [600, 330], [120, 330]]
   ];
 }
 
@@ -293,7 +297,7 @@ function buildElectrons() {
   electrons = [];
   const ps = paths();
   const c = currents();
-  const speeds = conn === 'series' ? [c.it] : [c.i1, c.it, c.i2];
+  const speeds = conn === 'series' ? [c.it] : [c.i1, c.i2];
   ps.forEach((path, pi) => {
     let total = 0;
     for (let i = 1; i < path.length; i++) total += Math.hypot(path[i][0]-path[i-1][0], path[i][1]-path[i-1][1]);
@@ -317,22 +321,32 @@ function pointAt(path, total, d) {
   return path[0];
 }
 
-function drawWire(path) {
-  ctx.strokeStyle = '#94a3b8';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(path[0][0], path[0][1]);
-  for (let i = 1; i < path.length; i++) ctx.lineTo(path[i][0], path[i][1]);
-  ctx.stroke();
+function drawWires() {
+  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
+  const wire = points => {
+    ctx.beginPath(); ctx.moveTo(...points[0]);
+    points.slice(1).forEach(point => ctx.lineTo(...point)); ctx.stroke();
+  };
+  // 电源、开关和灯泡处均留出间隙。
+  if (conn === 'series') {
+    wire([[120,210],[120,110],[340,110]]);
+    wire([[380,110],[600,110],[600,149]]);
+    wire([[600,181],[600,259]]);
+    wire([[600,291],[600,330],[120,330],[120,230]]);
+  } else {
+    wire([[120,210],[120,110],[190,110]]);
+    wire([[230,110],[600,110],[600,204]]);
+    wire([[600,236],[600,330],[120,330],[120,230]]);
+    wire([[300,110],[300,204]]);
+    wire([[300,236],[300,330]]);
+  }
 }
-
 function drawBattery(x, y) {
   ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(x, y - 22); ctx.lineTo(x, y - 8); ctx.stroke(); // 长极
-  ctx.beginPath(); ctx.moveTo(x - 10, y + 8); ctx.lineTo(x + 10, y + 8); ctx.lineWidth = 6; ctx.stroke(); // 短极
+  ctx.beginPath(); ctx.moveTo(x - 12, y - 10); ctx.lineTo(x + 12, y - 10);
+  ctx.moveTo(x - 7, y + 10); ctx.lineTo(x + 7, y + 10); ctx.stroke();
   ctx.fillStyle = '#fcd34d'; ctx.font = '13px sans-serif';
-  ctx.fillText('+', x + 14, y - 10);
-  ctx.fillText('−', x + 14, y + 20);
+  ctx.fillText('+', x + 14, y - 10); ctx.fillText('−', x + 14, y + 20);
   ctx.fillText('6V', x - 32, y + 4);
 }
 
@@ -366,13 +380,11 @@ function drawSwitch(x, y, isClosed) {
   ctx.fillText(isClosed ? '开关（闭合）' : '开关（断开）', x - 34, y - 32);
 }
 
-function draw(now) {
-  const dt = Math.min(0.05, (now - lastT) / 1000);
-  lastT = now;
+function render() {
+  if (mode !== 'learn') return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const ps = paths();
-  ps.forEach(drawWire);
+  drawWires();
 
   const c = currents();
   if (conn === 'series') {
@@ -393,7 +405,6 @@ function draw(now) {
 
   // 电子（移动方向与规定电流方向相反）
   electrons.forEach(e => {
-    if (closed) e.dist -= e.speed * dt; // 负号：与电流方向相反
     const [x, y] = pointAt(e.path, e.total, e.dist);
     ctx.fillStyle = '#fbbf24';
     ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill();
@@ -402,26 +413,43 @@ function draw(now) {
   // 电流方向箭头（电源外部：+ → −）
   ctx.fillStyle = 'rgba(96,165,250,0.9)';
   ctx.font = '16px sans-serif';
-  if (conn === 'series') {
+  if (closed && conn === 'series') {
     ctx.fillText('→ I', 480, 102);
     ctx.fillText('I ↓', 610, 225);
-  } else {
-    ctx.fillText('→ I', 400, 102);
+  } else if (closed) {
+    ctx.fillText('→ I', 238, 102);
     ctx.fillText('I₁ ↓', 310, 205);
     ctx.fillText('I₂ ↓', 610, 205);
   }
-  requestAnimationFrame(draw);
 }
-
-buildElectrons();
-updInfo();
-requestAnimationFrame(draw);
+function tick(now) {
+  frameId = null;
+  if (!playing || mode !== 'learn') return;
+  const dt = lastT === null ? 0 : Math.min(0.05, Math.max(0, (now - lastT) / 1000));
+  lastT = now;
+  if (closed) electrons.forEach(e => { e.dist -= e.speed * dt; });
+  render(); startAnimation();
+}
+function startAnimation() {
+  if (playing && mode === 'learn' && frameId === null) frameId = requestAnimationFrame(tick);
+}
+function stopAnimation() {
+  if (frameId !== null) cancelAnimationFrame(frameId);
+  frameId = null; lastT = null;
+}
+document.getElementById('toggleAnimation').addEventListener('click', e => {
+  playing = !playing;
+  e.currentTarget.textContent = playing ? '暂停动画' : '继续动画';
+  e.currentTarget.setAttribute('aria-pressed', String(!playing));
+  if (playing) startAnimation(); else stopAnimation();
+});
+buildElectrons(); updInfo(); render(); startAnimation();
 
 /* ============================================================
  * 练习模式
  * ============================================================ */
 const PRACTICE_TIPS = {
-  p1: '✅ 正确！并联用电器互不影响（教室灯），串联互相影响（小彩灯）。',
+  p1: '✅ 正确！并联的支路可独立工作；串联只有一条通路，一处断开整个回路断开。',
   p2: '✅ 正确！串联只有一条电流路径，一处断开，处处无电流。',
   p3: '✅ 正确！导线直连电源两极是短路，电流极大，非常危险。'
 };
@@ -430,7 +458,7 @@ document.querySelectorAll('.practice-item').forEach(item => {
   item.querySelectorAll('.quiz-opt').forEach(opt => {
     opt.addEventListener('click', () => {
       const ok = opt.dataset.ok === '1';
-      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents = 'none'; });
+      item.querySelectorAll('.quiz-opt').forEach(o => { o.classList.remove('correct','wrong'); o.disabled = true; });
       opt.classList.add(ok ? 'correct' : 'wrong');
       fb.style.color = ok ? '#10b981' : '#ef4444';
       fb.textContent = ok ? PRACTICE_TIPS[item.id] : '❌ 再想想：' + PRACTICE_TIPS[item.id].slice(4);
