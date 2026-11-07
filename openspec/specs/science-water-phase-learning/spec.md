@@ -1,0 +1,27 @@
+# science-water-phase-learning Specification
+
+## Purpose
+TBD - created by archiving change science-water-phase-learning. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 纯水相变边界有明确条件
+系统 SHALL 将标准大气压下 0°C 与 100°C 标为相应两相可能共存的边界，并说明仅凭温度不能确定相态比例。
+
+#### Scenario: 选择相变温度
+- **WHEN** 学习者将温度设为 0°C 或 100°C
+- **THEN** 页面分别说明冰水或水和水蒸气可能共存
+
+### Requirement: 加热示意包含恒温吸热阶段
+系统 SHALL 在熔化与沸腾示意期间分别保持 0°C 和 100°C，且说明时间及粒子比例是示意。
+
+#### Scenario: 暂停和重置
+- **WHEN** 学习者在相变平台暂停或重置
+- **THEN** 暂停不推进阶段，重置恢复初始温度与控件
+
+### Requirement: 测验结果可回看且保存状态如实显示
+系统 SHALL 保留本轮逐题首次选择，并在进度保存失败时提供重试。
+
+#### Scenario: 完成时存储不可用
+- **WHEN** 学习者达标但本地存储写入失败
+- **THEN** 页面说明未保存并允许重试，恢复后可保存并在刷新后显示完成
