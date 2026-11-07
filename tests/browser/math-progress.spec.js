@@ -98,14 +98,37 @@ test('直接打开文件时学段进度可区分', async ({page}) => {
   expect(await page.evaluate(() => PageProgress.isDone('derivative'))).toBe(false);
 });
 
-test('两个学习标签页依次记录完成时不会被旧缓存覆盖', async ({context, page}) => {
+test('首条进度传播后另一标签页写入不会被旧缓存覆盖', async ({context, page}) => {
   const other = await context.newPage();
   await page.goto('/math/high/derivative.html');
   await other.goto('/math/uni/derivative.html');
   expect(await page.evaluate(() => PageProgress.isDone('derivative'))).toBe(false);
   expect(await other.evaluate(() => PageProgress.isDone('derivative'))).toBe(false);
-  await page.evaluate(() => PageProgress.markDone('derivative'));
-  await other.evaluate(() => PageProgress.markDone('derivative'));
+  await other.evaluate(() => {
+    window.progressObserved = new Promise(resolve => {
+      function onStorage(event) {
+        if (event.key !== 'kv-math-progress-v2' || !JSON.parse(event.newValue || '{}')['high:derivative']) return;
+        window.removeEventListener('storage', onStorage);
+        resolve();
+      }
+      window.addEventListener('storage', onStorage);
+    });
+  });
+  expect(await page.evaluate(() => PageProgress.markDone('derivative'))).toBe(true);
+  await other.evaluate(() => window.progressObserved);
+  expect(await other.evaluate(() => JSON.parse(localStorage.getItem('kv-math-progress-v2'))['high:derivative'])).toBeTruthy();
+  await page.evaluate(() => {
+    window.otherProgressObserved = new Promise(resolve => {
+      function onStorage(event) {
+        if (event.key !== 'kv-math-progress-v2' || !JSON.parse(event.newValue || '{}')['uni:derivative']) return;
+        window.removeEventListener('storage', onStorage);
+        resolve();
+      }
+      window.addEventListener('storage', onStorage);
+    });
+  });
+  expect(await other.evaluate(() => PageProgress.markDone('derivative'))).toBe(true);
+  await page.evaluate(() => window.otherProgressObserved);
   const stored = JSON.parse(await page.evaluate(() => localStorage.getItem('kv-math-progress-v2')));
   expect(stored['high:derivative']).toBeTruthy();
   expect(stored['uni:derivative']).toBeTruthy();
