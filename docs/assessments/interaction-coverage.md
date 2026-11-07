@@ -124,6 +124,7 @@
   - 短路保护后电流与画布状态、验电提示及测验；实际接线、保护动作和全页安全内容未全面验收。 [household-circuit-safety.spec.js](../../tests/browser/household-circuit-safety.spec.js)
 - [内能 · 初中物理互动可视化](../../physics/middle/internal-energy.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
+  - 温升与温度计绘制、零时火焰、理想气体速度比例、暂停与测验回归；真实扩散及全部内容未全面验收。 [internal-energy-model.spec.js](../../tests/browser/internal-energy-model.spec.js)
 - [机械运动 · 初中物理互动可视化](../../physics/middle/motion.html)
   - 模式、时钟、调速、三车对比与平均速度的部分场景；测验及教学内容尚未全面核验。 [motion-controls.spec.js](../../tests/browser/motion-controls.spec.js)、[motion-simulation.spec.js](../../tests/browser/motion-simulation.spec.js)、[motion-real-clock.spec.js](../../tests/browser/motion-real-clock.spec.js)、[uniform-comparison.spec.js](../../tests/browser/uniform-comparison.spec.js)、[motion-average-speed.spec.js](../../tests/browser/motion-average-speed.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
 - [欧姆定律 · 初中物理互动可视化](../../physics/middle/ohms-law.html)

@@ -129,7 +129,7 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="heatCanvas" width="720" height="460"></canvas>
+          <canvas id="heatCanvas" width="720" height="460" role="img"></canvas>
           <div class="legend">
             <span>温度越高，分子运动越剧烈</span>
             <span>🟦 水 🟨 沙子</span>
@@ -139,16 +139,18 @@
       <div class="panel">
         <h3>选择演示</h3>
         <div class="demo-btns" id="demoBtns">
-          <button class="demo-btn active" data-demo="molecular">分子热运动</button>
-          <button class="demo-btn" data-demo="heat-capacity">比热容对比</button>
+          <button class="demo-btn active" data-demo="molecular" aria-pressed="true">分子热运动</button>
+          <button class="demo-btn" data-demo="heat-capacity" aria-pressed="false">比热容对比</button>
         </div>
+        <button class="demo-btn" id="toggleAnimation" type="button" aria-pressed="false">暂停动画</button>
+        <p style="font-size:14px;color:#cbd5e1">粒子为同种理想气体的运动示意，未模拟粒子间碰撞或扩散；比热对比假设各 1 kg、相同恒定吸热功率、比热容不变且无热损失或相变。</p>
         <div class="slider-row" id="rowTemp">
-          <label>温度</label>
+          <label for="sliderT">温度</label>
           <input type="range" id="sliderT" min="0" max="100" step="5" value="20">
           <span class="val" id="valT">20 °C</span>
         </div>
         <div class="slider-row" id="rowTime" style="display:none">
-          <label>加热时间</label>
+          <label for="sliderHeat">累计加热时间</label>
           <input type="range" id="sliderHeat" min="0" max="10" step="0.5" value="0">
           <span class="val" id="valHeat">0 min</span>
         </div>
@@ -159,11 +161,11 @@
         <div class="equation">比热容：<b>Q = c · m · Δt</b><br><span style="font-size:0.85em;color:#94a3b8">水的比热容 c = 4.2 × 10³ J/(kg·°C)，是沙子的约 5 倍</span></div>
         <div class="concept-card">
           <div class="title">分子热运动与扩散</div>
-          一切物质的分子都在<b>不停地做无规则运动</b>。温度越高，分子运动越剧烈，扩散越快——所以叫「热运动」。墨水在热水中扩散更快就是这个道理。
+          在通常条件下，物质中的微观粒子做<b>无规则热运动</b>。对相同介质，温度升高通常会使分子运动加快、扩散更快——所以叫「热运动」。墨水在热水中扩散更快就是这个道理。
         </div>
         <div class="concept-card">
           <div class="title">内能及其改变</div>
-          物体内部<b>所有</b>分子热运动的动能与分子势能的总和叫内能。<b>任何温度下物体都有内能</b>。改变内能的两种方式：<b>做功</b>（如摩擦生热、压缩气体）和<b>热传递</b>（条件：存在温度差）。
+          内能与物体内部微观粒子的运动及相互作用有关。0°C 的冰也有内能。改变内能的两种方式：<b>做功</b>（如摩擦生热、压缩气体）和<b>热传递</b>（条件：存在温度差）。
         </div>
         <div class="concept-card warn">
           <div class="title">⚠️ 易错点</div>
@@ -192,7 +194,7 @@
       <div class="practice-fb" id="fb-a2"></div>
     </div>
     <div class="practice-item">
-      <h4>3️⃣ 把 2 kg、20°C 的水烧开（100°C）需要吸收 6.72×10⁵ J 热量。若用这些热量加热 2 kg 沙子（c = 0.92×10³ J/(kg·°C)），沙子温度约升高多少 °C？</h4>
+      <h4>3️⃣ 把 2 kg、20°C 的水烧开（100°C）需要吸收 6.72×10⁵ J 热量。若用这些热量加热 2 kg 沙子，假设无热损失、无相变且 c = 0.92×10³ J/(kg·°C) 保持不变，沙子温度约升高多少 °C？</h4>
       <div class="calc-row">
         <input type="number" id="a3" placeholder="Δt = ? °C" step="any">
         <button data-check="a3">提交</button>
@@ -240,6 +242,7 @@ tabs.forEach(t => t.addEventListener('click', () => {
   t.setAttribute('aria-pressed', 'true');
   mode = t.dataset.mode;
   Object.entries(sections).forEach(([k, el]) => el.classList.toggle('hidden', k !== mode));
+  stopAnimation(); render(0); startAnimation();
 }));
 
 /* ============================================================
@@ -250,7 +253,7 @@ const ctx = canvas.getContext('2d');
 const sliderT = document.getElementById('sliderT');
 const sliderHeat = document.getElementById('sliderHeat');
 let demo = 'molecular';
-let lastT = performance.now();
+let lastT = null, frameId = null, playing = true;
 
 /* 分子模拟 */
 const BOX = { x: 120, y: 50, w: 480, h: 330 };
@@ -265,20 +268,20 @@ for (let i = 0; i < N_P; i++) {
   });
 }
 
-document.querySelectorAll('.demo-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.demo-btn').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
+document.querySelectorAll('#demoBtns .demo-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#demoBtns .demo-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
+  b.classList.add('active'); b.setAttribute('aria-pressed', 'true');
   demo = b.dataset.demo;
   document.getElementById('rowTemp').style.display = demo === 'molecular' ? 'flex' : 'none';
   document.getElementById('rowTime').style.display = demo === 'heat-capacity' ? 'flex' : 'none';
-  updInfo();
+  updInfo(); stopAnimation(); render(0); startAnimation();
 }));
-sliderT.addEventListener('input', updInfo);
-sliderHeat.addEventListener('input', updInfo);
+sliderT.addEventListener('input', () => { updInfo(); render(0); });
+sliderHeat.addEventListener('input', () => { updInfo(); render(0); });
 
 function tempState() {
   const T = +sliderT.value;
-  const speedFactor = 0.5 + T / 40;   // 0°C→0.5, 100°C→3
+  const speedFactor = Math.sqrt((T + 273.15) / 293.15); // 相同气体，相对 20°C 的理想气体速度比例
   return { T, speedFactor };
 }
 function heatState() {
@@ -297,13 +300,14 @@ function updInfo() {
   if (demo === 'molecular') {
     const s = tempState();
     const level = s.T < 30 ? '较慢' : s.T < 70 ? '较快' : '剧烈';
-    A.innerHTML = `分子平均速率<br><b>${level}</b>`;
-    B.innerHTML = `扩散快慢<br><b>${s.T < 30 ? '慢' : s.T < 70 ? '较快' : '快'}</b>`;
+    A.innerHTML = `分子运动示意<br><b>${level}</b>`;
+    B.innerHTML = `动态范围<br><b>未模拟扩散</b>`;
   } else {
     const h = heatState();
     A.innerHTML = `水温升高<br><b>${h.dWater.toFixed(1)} °C</b>`;
     B.innerHTML = `沙温升高<br><b>${h.dSand.toFixed(1)} °C</b>`;
   }
+  canvas.setAttribute('aria-label', demo === 'molecular' ? `同种理想气体运动示意，温度${sliderT.value}摄氏度；未模拟粒子间碰撞或扩散。` : `同质量、同吸热功率的简化模型，加热${sliderHeat.value}分钟，水升温${heatState().dWater.toFixed(1)}摄氏度，沙子升温${heatState().dSand.toFixed(1)}摄氏度。`);
 }
 
 function drawMolecular(dt) {
@@ -370,14 +374,14 @@ function drawHeatCapacity() {
     ctx.fillStyle = cup.c + '55';
     ctx.fillRect(cup.x + 4, 180, 132, 116);
     // 温度计
-    const tFill = Math.min(1, cup.dT / 50);
+    const tFill = Math.min(1, cup.dT / 200);
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.fillRect(cup.x + 62, 130, 12, 130);
     ctx.fillStyle = '#ef4444';
     ctx.fillRect(cup.x + 62, 260 - 130 * tFill, 12, 130 * tFill);
     // 火焰
-    if (h.t < 10) {
-      const flick = Math.sin(performance.now() / 90) * 4;
+    if (h.t > 0) {
+      const flick = 0;
       ctx.fillStyle = '#f97316';
       ctx.beginPath();
       ctx.moveTo(cup.x + 70, 348 + flick);
@@ -395,24 +399,37 @@ function drawHeatCapacity() {
   });
   // 对比结论
   ctx.fillStyle = '#cbd5e1'; ctx.font = '14px sans-serif';
-  ctx.fillText('同样加热：沙子升温 ≈ 水的 4.6 倍 → 水的比热容大，吸热本领强', 96, 420);
+  ctx.fillText('相同吸热量：沙子升温约为水的 4.6 倍；温度计刻度为温升 0～200°C', 60, 420);
   // 进度提示
   ctx.fillStyle = '#64748b'; ctx.font = '12px sans-serif';
-  ctx.fillText(`加热 ${h.t.toFixed(1)} min（相同火力、相同质量）`, 250, 50);
+  ctx.fillText(`累计加热 ${h.t.toFixed(1)} min（同吸热功率、同质量）`, 220, 50);
 }
 
-function draw() {
-  if (mode !== 'learn') { requestAnimationFrame(draw); return; }
-  const now = performance.now();
-  const dt = Math.min(0.05, (now - lastT) / 1000);
-  lastT = now;
+function render(dt) {
+  if (mode !== 'learn') return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (demo === 'molecular') drawMolecular(dt);
-  else drawHeatCapacity();
-  requestAnimationFrame(draw);
+  if (demo === 'molecular') drawMolecular(dt); else drawHeatCapacity();
 }
-updInfo();
-requestAnimationFrame(draw);
+function tick(now) {
+  frameId = null;
+  if (!playing || mode !== 'learn' || demo !== 'molecular') return;
+  const dt = lastT === null ? 0 : Math.min(0.05, Math.max(0, (now - lastT) / 1000));
+  lastT = now; render(dt); startAnimation();
+}
+function startAnimation() {
+  if (playing && mode === 'learn' && demo === 'molecular' && frameId === null) frameId = requestAnimationFrame(tick);
+}
+function stopAnimation() {
+  if (frameId !== null) cancelAnimationFrame(frameId);
+  frameId = null; lastT = null;
+}
+document.getElementById('toggleAnimation').addEventListener('click', e => {
+  playing = !playing;
+  e.currentTarget.textContent = playing ? '暂停动画' : '继续动画';
+  e.currentTarget.setAttribute('aria-pressed', String(!playing));
+  if (playing) startAnimation(); else stopAnimation();
+});
+updInfo(); render(0); startAnimation();
 
 /* ============================================================
  * 计算模式
@@ -446,8 +463,8 @@ document.querySelectorAll('[data-check]').forEach(btn => {
  * ============================================================ */
 const QUIZ = [
   { q: '关于内能，下列说法正确的是（　　）',
-    opts: ['0°C 的物体没有内能', '一切物体在任何温度下都有内能', '温度高的物体内能一定大', '静止的物体没有内能'],
-    ans: 1, ex: '分子永不停息地做无规则运动，所以任何物体在任何温度下都有内能。' },
+    opts: ['0°C 的物体没有内能', '常温下静止的物体也有内能', '温度高的物体内能一定大', '静止的物体没有内能'],
+    ans: 1, ex: '物体整体静止并不意味着内部微观粒子停止运动；0°C 的冰也有内能。' },
   { q: '改变物体内能的两种方式是（　　）',
     opts: ['做功和热传递', '加热和冷却', '摩擦和碰撞', '升温和降温'],
     ans: 0, ex: '做功（摩擦生热、压缩气体）与热传递（温度差引起），二者在改变内能上等效。' },
