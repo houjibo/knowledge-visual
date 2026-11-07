@@ -34,6 +34,7 @@
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
 - [数据的分析 · 初中数学互动可视化](../../math/middle/data-analysis.html)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
+  - 数据集滑块、动态方差比较及均值提示、相等分支、画布文字和模式切换；题目及完整无障碍未全面验收。 [data-analysis-comparison.spec.js](../../tests/browser/data-analysis-comparison.spec.js)
 - [数据的收集整理与分析 · 初中数学互动可视化](../../math/middle/data-statistics.html)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
 - [不等式与不等式组 · 初中数学互动可视化](../../math/middle/inequalities.html)

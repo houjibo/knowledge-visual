@@ -126,22 +126,22 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="dataCanvas" width="720" height="460"></canvas>
+          <canvas id="dataCanvas" width="720" height="460" role="img"></canvas>
           <div class="legend">
-            <span>🟡 平均数</span><span>🟢 中位数</span><span>🔵 众数</span>
-            <span id="legendLabel">拖动数据点，看统计量怎么变</span>
+            <span>🟡 平均数</span><span>🟢 中位数</span>
+            <span id="legendLabel">使用滑块调整第 5 个数据，观察统计量变化</span>
           </div>
         </div>
       </div>
       <div class="panel">
         <h3>数据集</h3>
         <div class="demo-btns" id="setBtns">
-          <button class="demo-btn active" data-set="0">射击成绩 A</button>
-          <button class="demo-btn" data-set="1">射击成绩 B</button>
-          <button class="demo-btn" data-set="2">混合对比</button>
+          <button class="demo-btn active" data-set="0" aria-pressed="true">数据集 A</button>
+          <button class="demo-btn" data-set="1" aria-pressed="false">数据集 B</button>
+          <button class="demo-btn" data-set="2" aria-pressed="false">混合对比</button>
         </div>
         <div class="slider-row">
-          <label>调整第 5 个数据</label>
+          <label for="sliderX">调整第 5 个数据</label>
           <input type="range" id="sliderX" min="0" max="20" step="1" value="8">
           <span class="val" id="valX">8</span>
         </div>
@@ -151,10 +151,11 @@
           <div id="infoMode">众数<br><b>8</b></div>
           <div id="infoVar">方差 s²<br><b>0</b></div>
         </div>
+        <p id="comparisonSummary" role="status" aria-live="polite" hidden></p>
         <div class="equation">方差：<b>s² = 1/n · Σ(xᵢ − x̄)²</b><br><span style="font-size:0.85em;color:#94a3b8">方差越大，数据波动越大；方差越小，数据越稳定</span></div>
         <div class="concept-card">
           <div class="title">三个"代表"怎么选</div>
-          <b>平均数</b>：用了所有数据，但怕极端值；<b>中位数</b>：排队站中间，不受极端值影响；<b>众数</b>：出现次数最多，适合"最受欢迎"类问题。
+          <b>平均数</b>：用了所有数据，但怕极端值；<b>中位数</b>：排队站中间，通常比平均数更少受极端值影响；<b>众数</b>：出现次数最多，适合"最受欢迎"类问题。
         </div>
         <div class="concept-card">
           <div class="title">方差：衡量波动的尺子</div>
@@ -244,19 +245,20 @@ tabs.forEach(t => t.addEventListener('click', () => {
 const canvas = document.getElementById('dataCanvas');
 const ctx = canvas.getContext('2d');
 const SETS = [
-  { name: '射击成绩 A（稳定）', data: [7, 8, 8, 9, 8] },
-  { name: '射击成绩 B（波动）', data: [5, 10, 6, 9, 10] },
+  { name: '数据集 A', data: [7, 8, 8, 9, 8] },
+  { name: '数据集 B', data: [5, 10, 6, 9, 10] },
   { name: '混合对比（A 绿 B 蓝）', data: null }
 ];
 let setIdx = 0;
 const sX = document.getElementById('sliderX');
 let dataA = [...SETS[0].data], dataB = [...SETS[1].data];
 document.querySelectorAll('#setBtns .demo-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('#setBtns .demo-btn').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
+  document.querySelectorAll('#setBtns .demo-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
+  b.classList.add('active'); b.setAttribute('aria-pressed', 'true');
   setIdx = +b.dataset.set;
   const cur = currentData();
-  sX.value = cur ? cur[4] : 8;
+  sX.disabled = !cur;
+  if (cur) sX.value = cur[4];
   draw();
 }));
 sX.addEventListener('input', () => {
@@ -333,7 +335,9 @@ function draw() {
     document.getElementById('infoMed').innerHTML = `中位数<br><b>${s.median}</b>`;
     document.getElementById('infoMode').innerHTML = `众数<br><b>${s.mode}</b>`;
     document.getElementById('infoVar').innerHTML = `方差 s²<br><b>${s.variance.toFixed(2)}</b>`;
-    drawSet(d, '#fbbf24', 300, SETS[setIdx].name);
+    drawSet(d, '#60a5fa', 300, SETS[setIdx].name);
+    document.getElementById('comparisonSummary').hidden = true;
+    canvas.setAttribute('aria-label', `${SETS[setIdx].name}：${d.join('、')}；平均数${s.mean.toFixed(1)}，中位数${s.median}，众数${s.mode}，方差${s.variance.toFixed(2)}。`);
     ctx.fillStyle = '#94a3b8'; ctx.font = '13px sans-serif';
     ctx.fillText('数据：' + d.join('、'), 90, 60);
   } else {
@@ -343,10 +347,18 @@ function draw() {
     document.getElementById('infoMed').innerHTML = `A 中位 / B 中位<br><b>${sA.median} / ${sB.median}</b>`;
     document.getElementById('infoMode').innerHTML = `A 众数 / B 众数<br><b>${sA.mode} / ${sB.mode}</b>`;
     document.getElementById('infoVar').innerHTML = `A 方差 / B 方差<br><b>${sA.variance.toFixed(2)} / ${sB.variance.toFixed(2)}</b>`;
-    drawSet(dataA, '#34d399', 200, 'A 组（稳定）');
-    drawSet(dataB, '#60a5fa', 420, 'B 组（波动）');
+    drawSet(dataA, '#34d399', 200, 'A 组');
+    drawSet(dataB, '#60a5fa', 420, 'B 组');
+    const diff = sA.variance - sB.variance;
+    const comparison = Math.abs(diff) < 1e-9 ? '两组方差相同，波动程度相同。' : `${diff < 0 ? 'A' : 'B'} 组方差较小，数据波动较小。`;
+    const meanNote = Math.abs(sA.mean - sB.mean) < 1e-9 ? '两组平均数相同。' : '两组平均数不同，比较时也要考虑平均水平。';
+    const summary = `${comparison}${meanNote}`;
+    const summaryEl = document.getElementById('comparisonSummary');
+    summaryEl.hidden = false; summaryEl.textContent = summary;
+    canvas.setAttribute('aria-label', `A 组：${dataA.join('、')}，平均数${sA.mean.toFixed(1)}，方差${sA.variance.toFixed(2)}；B 组：${dataB.join('、')}，平均数${sB.mean.toFixed(1)}，方差${sB.variance.toFixed(2)}。${summary}`);
     ctx.fillStyle = '#fcd34d'; ctx.font = 'bold 14px sans-serif';
-    ctx.fillText('平均数接近，但 B 的方差大得多 → A 更稳定！', 170, 46);
+    ctx.fillText(comparison, 100, 40);
+    ctx.fillText(meanNote, 100, 60);
   }
 }
 draw();
@@ -396,7 +408,7 @@ const QUIZ = [
     ans: 2, ex: '所有数据都等于平均数，没有波动 → 方差为 0。' },
   { q: '要反映一组数据的一般水平，且不受极端值影响，应选用（　　）',
     opts: ['平均数', '中位数', '方差', '最大值'],
-    ans: 1, ex: '中位数只与排序位置有关，不受特别大或特别小的极端值影响。' }
+    ans: 1, ex: '中位数取决于排序后的中间位置，通常比平均数更少受极端值影响。' }
 ];
 initMathQuiz({questions: QUIZ, slug: 'data-analysis', progress: typeof PageProgress === 'undefined' ? null : PageProgress});
 
