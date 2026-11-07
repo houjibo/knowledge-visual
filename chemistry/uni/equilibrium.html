@@ -27,6 +27,8 @@
 
   .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
   .tab { padding: 11px 22px; border-radius: 999px; background: rgba(255,255,255,0.08); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-size: 14px; user-select: none; font-weight: 500; }
+  .tab { font-family: inherit; color: inherit; }
+  .tab:focus-visible, .quiz-opt:focus-visible { outline: 3px solid white; outline-offset: 3px; }
   .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(99,102,241,.4); }
   .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
 
@@ -68,7 +70,7 @@
   .quiz { margin-top: 14px; padding: 16px; background: rgba(99,102,241,0.1); border-radius: 14px; border: 2px solid rgba(99,102,241,0.3); }
   .quiz-q { font-size: 14px; margin-bottom: 12px; line-height: 1.6; font-weight: 500; }
   .quiz-opts { display: grid; gap: 8px; }
-  .quiz-opt { padding: 10px 14px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 13px; transition: all .2s; border: 2px solid transparent; }
+  .quiz-opt { color: inherit; font-family: inherit; text-align: left; padding: 10px 14px; background: rgba(255,255,255,0.06); border-radius: 10px; cursor: pointer; font-size: 13px; transition: all .2s; border: 2px solid transparent; }
   .quiz-opt:hover { background: rgba(255,255,255,0.12); }
   .quiz-opt.correct { background: rgba(16,185,129,0.3); border-color: #10b981; }
   .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
@@ -89,10 +91,10 @@
   </header>
 
   <div class="tabs">
-    <div class="tab active" data-tab="0">① 化学平衡常数</div>
-    <div class="tab" data-tab="1">② 相图可视化</div>
-    <div class="tab" data-tab="2">③ 杠杆规则</div>
-    <div class="tab" data-tab="3">④ 综合练习</div>
+    <button type="button" class="tab active" data-tab="0" aria-pressed="true">① 化学平衡常数</button>
+    <button type="button" class="tab" data-tab="1" aria-pressed="false">② 相图可视化</button>
+    <button type="button" class="tab" data-tab="2" aria-pressed="false">③ 杠杆规则</button>
+    <button type="button" class="tab" data-tab="3" aria-pressed="false">④ 综合练习</button>
   </div>
 
   <div class="stage">
@@ -258,8 +260,9 @@ const secs = [document.getElementById('sec0'),document.getElementById('sec1'),do
 const pnls = [document.getElementById('pnl0'),document.getElementById('pnl1'),document.getElementById('pnl2'),document.getElementById('pnl3')];
 let curTab = 0;
 tabs.forEach(t => t.addEventListener('click', () => {
-  tabs.forEach(x => x.classList.remove('active'));
+  tabs.forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
   t.classList.add('active');
+  t.setAttribute('aria-pressed', 'true');
   curTab = +t.dataset.tab;
   secs.forEach((s,i) => s.classList.toggle('active', i===curTab));
   pnls.forEach((p,i) => p.classList.toggle('active', i===curTab));
@@ -711,7 +714,9 @@ const quizData = [
   { q: '临界点的特征是什么？', opts: ['固液共存', '液气不可区分', '三相共存', '蒸气压为零'], ans: 1, exp: '临界点以上，液相和气相无法区分，为超临界流体。' },
   { q: 'ΔG° = 0 时，K 等于？', opts: ['0', '1', '∞', '无法确定'], ans: 1, exp: 'ΔG° = -RTlnK = 0 → lnK = 0 → K = 1' },
 ];
-let qIdx = 0, qScore = 0, qAnswered = false;
+let qIdx = 0;
+const quizSelections = new Array(quizData.length).fill(null);
+const quizCorrect = new Array(quizData.length).fill(false);
 
 function drawQuiz() {
   const W = cv3.width, H = cv3.height;
@@ -727,24 +732,33 @@ function drawQuiz() {
 
 function renderQuiz() {
   const q = quizData[qIdx];
+  const selected = quizSelections[qIdx];
   document.getElementById('q3q').textContent = `Q${qIdx+1}. ${q.q}`;
   const optsEl = document.getElementById('q3opts');
+  const feedback = document.getElementById('q3fb');
   optsEl.innerHTML = '';
-  qAnswered = false;
+  feedback.textContent = selected === null ? '' : (selected === q.ans ? '✅ 正确！' : '❌ 错误。') + q.exp;
   q.opts.forEach((opt, i) => {
-    const div = document.createElement('div');
-    div.className = 'quiz-opt';
-    div.textContent = `${'ABCD'[i]}. ${opt}`;
-    div.addEventListener('click', () => {
-      if (qAnswered) return;
-      qAnswered = true;
-      if (i === q.ans) { div.classList.add('correct'); qScore++; document.getElementById('q3fb').textContent = '✅ 正确！' + q.exp; }
-      else { div.classList.add('wrong'); document.getElementById('q3fb').textContent = '❌ 错误。' + q.exp; }
-      document.getElementById('q3score').textContent = `得分：${qScore}/${quizData.length}`;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'quiz-opt';
+    button.textContent = `${'ABCD'[i]}. ${opt}`;
+    button.setAttribute('aria-pressed', String(selected === i));
+    if (selected === i) button.classList.add(i === q.ans ? 'correct' : 'wrong');
+    button.addEventListener('click', () => {
+      if (quizCorrect[qIdx]) return;
+      quizSelections[qIdx] = i;
+      if (i === q.ans) quizCorrect[qIdx] = true;
+      if (quizCorrect.every(Boolean) && typeof PageProgress !== 'undefined') {
+        PageProgress.markDone('equilibrium');
+        document.getElementById('done-mark').textContent = '✓ 已完成';
+      }
+      renderQuiz();
+      optsEl.children[i].focus();
     });
-    optsEl.appendChild(div);
+    optsEl.appendChild(button);
   });
-  document.getElementById('q3fb').textContent = '';
+  document.getElementById('q3score').textContent = `得分：${quizCorrect.filter(Boolean).length}/${quizData.length}`;
   document.getElementById('q3prev').disabled = qIdx === 0;
   document.getElementById('q3next').disabled = qIdx === quizData.length - 1;
   drawQuiz();
@@ -752,37 +766,6 @@ function renderQuiz() {
 
 document.getElementById('q3prev').addEventListener('click', () => { if (qIdx > 0) { qIdx--; renderQuiz(); } });
 document.getElementById('q3next').addEventListener('click', () => { if (qIdx < quizData.length - 1) { qIdx++; renderQuiz(); } });
-
-/* ===== Progress tracking: first-try correct per question, all → markDone ===== */
-const quizFirstTryCorrect = new Array(quizData.length).fill(false);
-const quizTried = new Array(quizData.length).fill(false);
-
-function checkAllDone() {
-  if (quizFirstTryCorrect.every(v => v) && typeof PageProgress !== 'undefined') {
-    PageProgress.markDone('equilibrium');
-    document.getElementById('done-mark').textContent = '✓ 已完成';
-  }
-}
-
-document.addEventListener('click', (e) => {
-  const opt = e.target.closest('.quiz-opt');
-  if (!opt) return;
-  const container = opt.closest('.quiz');
-  if (!container) return;
-  if (quizTried[qIdx]) return; // 本题已答过
-  quizTried[qIdx] = true;
-  const opts = Array.from(container.querySelectorAll('.quiz-opt'));
-  const chosenIdx = opts.indexOf(opt);
-  if (chosenIdx === quizData[qIdx].ans) {
-    quizFirstTryCorrect[qIdx] = true;
-  }
-  setTimeout(() => {
-    if (!quizFirstTryCorrect[qIdx]) {
-      quizTried[qIdx] = false; // 答错可再试
-    }
-    checkAllDone();
-  }, 50);
-});
 
 /* ===== Init ===== */
 draw0();
