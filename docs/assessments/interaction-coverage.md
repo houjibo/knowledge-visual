@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：75；尚未登记：241。
+主题总数：316；已登记部分交互证据：76；尚未登记：240。
 
 ## 已登记部分交互证据
 
@@ -81,6 +81,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [数轴](../../math/topics/number-line/index.html)
   - 数轴滑块键盘边界与位置反馈、固定随机值找数和比较、挑战计分及到时重启；尚未覆盖所有题型与完整无障碍。 [number-line.spec.js](../../tests/browser/number-line.spec.js)
+- [数与形](../../math/topics/numbers-and-shapes/index.html)
+  - 有限取半边界、固定随机数下练习与挑战出题及错误反馈；未覆盖整页教学内容。 [numbers-shapes-learning.spec.js](../../tests/browser/numbers-shapes-learning.spec.js)
 - [万以内数的认识](../../math/topics/numbers-within-10000/index.html)
   - 六类挑战固定随机值、部分数位与读数边界、拨珠键盘及重置时序；未覆盖所有数字和完整页面。 [number-place-challenge.spec.js](../../tests/browser/number-place-challenge.spec.js)
 - [认识数字 0-100](../../math/topics/numbers/index.html)
@@ -308,7 +310,6 @@
 - [乘法口诀表](../../math/topics/multiplication-tables/index.html)
 - [表内乘法](../../math/topics/multiplication/index.html)
 - [数与形](../../math/topics/number-and-shape/index.html)
-- [数与形](../../math/topics/numbers-and-shapes/index.html)
 - [100以内数的认识](../../math/topics/numbers-within-100/index.html)
 - [观察物体](../../math/topics/observing-objects/index.html)
 - [数学广角——优化](../../math/topics/optimization/index.html)
