@@ -120,6 +120,7 @@
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [生活用电 · 初中物理互动可视化](../../physics/middle/household-circuits.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
+  - 短路保护后电流与画布状态、验电提示及测验；实际接线、保护动作和全页安全内容未全面验收。 [household-circuit-safety.spec.js](../../tests/browser/household-circuit-safety.spec.js)
 - [内能 · 初中物理互动可视化](../../physics/middle/internal-energy.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [机械运动 · 初中物理互动可视化](../../physics/middle/motion.html)
