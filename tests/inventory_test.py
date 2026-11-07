@@ -10,9 +10,31 @@ sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('inventory_pages', Path(__file__).resolve().parents[1] / 'scripts/inventory_pages.py')
 inventory = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(inventory)
+check_spec = importlib.util.spec_from_file_location('check_site', Path(__file__).resolve().parents[1] / 'scripts/check_site.py')
+check_site = importlib.util.module_from_spec(check_spec)
+check_spec.loader.exec_module(check_site)
 
 
 class InventoryTest(unittest.TestCase):
+    def test_math_conflict_list_detects_new_collision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            files = ['math/topics/shared/index.html', 'math/topics/solo/index.html',
+                     'math/middle/a.html', 'math/high/shared.html', 'math/uni/b.html']
+            sources = ['index.html', 'math/index.html', 'math/assets/js/common.js'] + [
+                f'math/{stage}/assets/common.js' for stage in ('middle', 'high', 'uni')]
+            for name in files + sources:
+                file = root / name
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.write_text("const AMBIGUOUS_MATH_SLUGS = ['shared'];" if name in sources else '')
+            errors = []
+            check_site.check_math_conflicts(root, errors)
+            self.assertEqual(errors, [])
+            (root / 'math/middle/solo.html').write_text('')
+            check_site.check_math_conflicts(root, errors)
+            self.assertEqual(len(errors), len(sources))
+            self.assertTrue(all('solo' in error for error in errors))
+
     def test_cli_detects_stale_inventory(self):
         script = Path(__file__).resolve().parents[1] / 'scripts/inventory_pages.py'
         with tempfile.TemporaryDirectory() as tmp:

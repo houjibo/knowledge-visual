@@ -37,6 +37,34 @@ def check(source, line, value, errors):
         errors.append(f'{source.relative_to(ROOT)}:{line}: missing {value}')
 
 
+def check_math_conflicts(root, errors):
+    stages = {'primary': {p.parent.name for p in (root / 'math/topics').glob('*/index.html')}}
+    for stage in ('middle', 'high', 'uni'):
+        stages[stage] = {p.stem for p in (root / 'math' / stage).glob('*.html') if p.name != 'index.html'}
+    if any(not slugs for slugs in stages.values()):
+        errors.append('math: cannot identify all stage topic files')
+        return
+    slugs = set().union(*stages.values())
+    expected = {slug for slug in slugs if sum(slug in values for values in stages.values()) > 1}
+    sources = ['index.html', 'math/index.html', 'math/assets/js/common.js'] + [
+        f'math/{stage}/assets/common.js' for stage in ('middle', 'high', 'uni')]
+    for name in sources:
+        try:
+            content = (root / name).read_text(encoding='utf-8')
+        except (OSError, UnicodeError) as exc:
+            errors.append(f'{name}: cannot read conflict list: {exc}')
+            continue
+        matches = re.findall(r'const\s+AMBIGUOUS_MATH_SLUGS\s*=\s*\[([^\]]*)\]', content)
+        if len(matches) != 1:
+            errors.append(f'{name}: cannot identify math conflict list')
+            continue
+        items = re.findall(r"['\"]([^'\"]+)['\"]", matches[0])
+        actual = set(items)
+        if actual != expected or len(items) != len(actual):
+            errors.append(f'{name}: math conflict list differs; missing {sorted(expected - actual)}, '
+                          f'extra {sorted(actual - expected)}, duplicates {len(items) - len(actual)}')
+
+
 def main():
     errors = []
     pages = 0
@@ -74,6 +102,7 @@ def main():
         if len(entries) != len(actual) or actual != expected:
             errors.append(f'math/{stage}: progress list differs; missing {sorted(expected - actual)}, '
                           f'extra {sorted(actual - expected)}, duplicates {len(entries) - len(actual)}')
+    check_math_conflicts(ROOT, errors)
     for subject in ('physics', 'chemistry'):
         source = ROOT / subject / 'index.html'
         try:

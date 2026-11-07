@@ -7,35 +7,60 @@
 //   PageProgress.markDone('addition')           → 子页面完成时调用
 //   PageProgress.isDone('addition')             → 判断某知识点是否完成
 //   PageProgress.renderBadges('.topic-card')    → 索引页：给已完成卡片加 ✓ 角标
-// 存储 key：kv-math-progress  →  { "addition": 1, "multiplication": 1, ... }
+// 旧进度保留在 kv-math-progress；新进度按学段写入 kv-math-progress-v2。
 const PageProgress = (() => {
-  const KEY = 'kv-math-progress';
+  // 旧记录没有学段，不删除；同名主题不能可靠分配给任一学段。
+  const LEGACY_KEY = 'kv-math-progress';
+  const KEY = 'kv-math-progress-v2';
+  const AMBIGUOUS_MATH_SLUGS = ['circle', 'derivative', 'fractions', 'probability', 'sets', 'statistics'];
+  const stage = (location.pathname.match(/\/math\/(middle|high|uni)\//) || [])[1] || 'primary';
   let cache = null;
+  let pendingLocal = false;
+  function load(key) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || '{}');
+      return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+    } catch (e) { return {}; }
+  }
   function read() {
-    if (cache) return cache;
-    try { cache = JSON.parse(localStorage.getItem(KEY) || '{}'); }
-    catch (e) { cache = {}; }
+    // 正常时读取最新值；写入受限时保留本页尚未持久化的记录。
+    if (pendingLocal) return cache;
+    try {
+      const raw = localStorage.getItem(KEY) || '{}';
+      try {
+        const value = JSON.parse(raw);
+        cache = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+      } catch (e) { cache = {}; }
+    } catch (e) { if (!cache) cache = {}; }
     return cache;
   }
   function write(data) {
     cache = data;
-    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { /* 隐私模式容错 */ }
+    try { localStorage.setItem(KEY, JSON.stringify(data)); pendingLocal = false; }
+    catch (e) { pendingLocal = true; }
+  }
+  function isDone(slug) {
+    const data = read();
+    const key = stage + ':' + slug;
+    if (Object.prototype.hasOwnProperty.call(data, key)) return !!data[key];
+    return !AMBIGUOUS_MATH_SLUGS.includes(slug) && !!load(LEGACY_KEY)[slug];
   }
   return {
-    // 标记某知识点完成（在子页面调用，例如 quiz/practice 通过时）
     markDone(slug) {
-      const d = read(); d[slug] = Date.now(); write(d);
+      const data = read(); data[stage + ':' + slug] = Date.now(); write(data);
     },
-    // 取消完成标记
     clear(slug) {
-      const d = read(); delete d[slug]; write(d);
+      const data = read(); data[stage + ':' + slug] = false; write(data);
     },
-    // 是否已完成
-    isDone(slug) { return !!read()[slug]; },
-    // 已完成数量
-    count() { return Object.keys(read()).length; },
-    // 在索引页给卡片加 ✓ 角标：从卡片 href 提取 slug
-    // 兼容两种链接：topics/<slug>/... （小学目录式） 和 <slug>.html（初/高/大平铺式）
+    isDone,
+    // 保持跨学段总数语义；旧同名记录只能作为一条保守计数。
+    count() {
+      const entries = Object.entries(read()).filter(([key]) => /^(primary|middle|high|uni):.+/.test(key));
+      const represented = new Set(entries.map(([key]) => key.slice(key.indexOf(':') + 1)));
+      const legacy = load(LEGACY_KEY);
+      return entries.filter(([, value]) => !!value).length +
+        Object.keys(legacy).filter(slug => !!legacy[slug] && !represented.has(slug)).length;
+    },
     renderBadges(cardSelector = '.topic-card') {
       document.querySelectorAll(cardSelector).forEach(card => {
         const href = card.getAttribute('href') || '';

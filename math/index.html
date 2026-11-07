@@ -177,8 +177,9 @@
       <a href="uni/index.html" class="level-tab">大学</a>
     </div>
 
-    <!-- 学段进度汇总（localStorage kv-math-progress） -->
+    <!-- 学段进度汇总（新旧 localStorage 记录） -->
     <div class="stage-progress" id="stageProgress" aria-label="各学段学习进度"></div>
+    <p id="mathLegacyWarning" hidden role="status" style="margin:0 0 16px;color:#805000;text-align:center;">部分旧记录的主题在多个学段同名，无法确定原学段；旧记录已保留，未计入学段进度，可重新完成对应主题。</p>
 
     <section id="topic-search" class="topic-search" hidden aria-label="查找小学数学主题">
       <label for="topic-query">查找小学数学主题</label>
@@ -1789,10 +1790,7 @@
       search.hidden = false;
     }
 
-    // 学段进度汇总 chip：小学 slug 从 DOM 提取（topics/<slug>/），
-    // 初/高/大为平铺 <slug>.html，hardcode 与各自目录保持一致。
-    // 注意：四个学段共享 kv-math-progress，跨学段同名 slug（如 derivative）
-    // 在任一学段完成后会同时计入两边（与 renderBadges 行为一致）。
+    // 新记录按学段隔离；无歧义旧记录保持可见，同名旧记录不推断学段。
     function renderStageProgress() {
       const PRIMARY = [...new Set(Array.from(document.querySelectorAll('.topic-card[href^="topics/"], .topic-node[href^="topics/"]'))
         .map(a => (a.getAttribute('href').match(/topics\/([^/]+)\//) || [])[1])
@@ -1800,19 +1798,37 @@
       const MIDDLE = ['rational-numbers','real-numbers','integral-expressions','linear-equation','geometry-basics','intersecting-parallel-lines','coordinate-plane','linear-equations-2var','inequalities','data-statistics','data-analysis','fractions','polynomial-operations','linear-function','triangle-congruence','axial-symmetry','parallelogram','pythagorean-theorem','quadratic-radicals','quadratic-equation','quadratic-function','inverse-function','rotation','similarity','trigonometric-functions','projection','circle','probability-intro'];
       const HIGH = ['sets','function','exponential-log','trigfunc','trig-identities','solve-triangle','vectors','sequence','inequality','line-circle','conic-sections','solid-geometry','space-vectors','derivative','complex-numbers','counting','probability','statistics','random-variables'];
       const UNI = ['limit','derivative','integral','multivariable','vector-calculus','multiple-integrals','series','ode','matrix','linear-systems','eigenvalues','integral-transform','probability','random-variable','statistics','discrete-math','complex-analysis','numerical-methods','pde','fourier-analysis','group-theory','topology','stochastic-process','number-theory','combinatorics','game-theory','logic-set'];
-      let store = {};
-      try { store = JSON.parse(localStorage.getItem('kv-math-progress') || '{}'); } catch (e) {}
+      const AMBIGUOUS_MATH_SLUGS = ['circle', 'derivative', 'fractions', 'probability', 'sets', 'statistics'];
+      function readStore(key) {
+        try {
+          const data = JSON.parse(localStorage.getItem(key) || '{}');
+          return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+        } catch (e) { return {}; }
+      }
+      const legacy = readStore('kv-math-progress');
+      const scoped = readStore('kv-math-progress-v2');
+      const warning = document.getElementById('mathLegacyWarning');
+      const labels = {circle: '圆', derivative: '导数', fractions: '分数', probability: '概率', sets: '集合', statistics: '统计'};
+      const uncertain = AMBIGUOUS_MATH_SLUGS.filter(slug => !!legacy[slug]);
+      if (warning) {
+        warning.hidden = uncertain.length === 0;
+        if (uncertain.length) warning.textContent = `学段不明的旧记录：${uncertain.map(slug => labels[slug] || slug).join('、')}。旧数据已保留，这些旧记录未计入学段进度；可重新完成对应学段的主题。`;
+      }
       const stages = [
-        { name: '小学', slugs: PRIMARY },
-        { name: '初中', slugs: MIDDLE },
-        { name: '高中', slugs: HIGH },
-        { name: '大学', slugs: UNI }
+        { key: 'primary', name: '小学', slugs: PRIMARY },
+        { key: 'middle', name: '初中', slugs: MIDDLE },
+        { key: 'high', name: '高中', slugs: HIGH },
+        { key: 'uni', name: '大学', slugs: UNI }
       ];
       const host = document.getElementById('stageProgress');
       if (!host) return;
       stages.forEach(st => {
         const total = st.slugs.length;
-        const done = st.slugs.filter(s => store[s]).length;
+        const done = st.slugs.filter(slug => {
+          const key = st.key + ':' + slug;
+          if (Object.prototype.hasOwnProperty.call(scoped, key)) return !!scoped[key];
+          return !AMBIGUOUS_MATH_SLUGS.includes(slug) && !!legacy[slug];
+        }).length;
         const pct = total ? Math.round(done / total * 100) : 0;
         const chip = document.createElement('span');
         chip.className = 'stage-chip';

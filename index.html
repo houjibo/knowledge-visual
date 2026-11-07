@@ -140,7 +140,7 @@
   /* ============================================
      跨学科学习进度总览（iter-r126）
      数据源：各学段 common.js 的 PageProgress localStorage
-       数学（四学段共享）: kv-math-progress
+       数学: kv-math-progress（旧）与 kv-math-progress-v2（分学段）
        物理: kv-physics-middle/high/uni-progress
        化学: kv-chemistry-middle/high/uni-progress
        科学: kv-science-progress
@@ -154,11 +154,22 @@
       chemistry: ['kv-chemistry-middle-progress', 'kv-chemistry-high-progress', 'kv-chemistry-uni-progress'],
       science: ['kv-science-progress']
     };
+    const AMBIGUOUS_MATH_SLUGS = ['circle', 'derivative', 'fractions', 'probability', 'sets', 'statistics'];
     function readStore(key) {
-      try { return JSON.parse(localStorage.getItem(key) || '{}') || {}; }
-      catch (e) { return {}; }
+      try {
+        const value = JSON.parse(localStorage.getItem(key) || '{}');
+        return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+      } catch (e) { return {}; }
     }
     function countDone(subject) {
+      if (subject === 'math') {
+        const legacy = readStore('kv-math-progress');
+        const scoped = readStore('kv-math-progress-v2');
+        const entries = Object.entries(scoped).filter(([key]) => /^(primary|middle|high|uni):.+/.test(key));
+        const represented = new Set(entries.map(([key]) => key.slice(key.indexOf(':') + 1)));
+        const newCount = entries.filter(([, value]) => !!value).length;
+        return newCount + Object.keys(legacy).filter(slug => !!legacy[slug] && !represented.has(slug)).length;
+      }
       return (SUBJECT_KEYS[subject] || []).reduce((count, key) => {
         return count + Object.keys(readStore(key)).length;
       }, 0);
@@ -168,6 +179,7 @@
       const total = parseInt(el.getAttribute('data-total'), 10) || 0;
       const done = countDone(subject);
       const pct = total > 0 ? Math.min(100, Math.round(done / total * 100)) : 0;
+      const hasUncertainMath = subject === 'math' && AMBIGUOUS_MATH_SLUGS.some(slug => !!readStore('kv-math-progress')[slug]);
       const label = el.querySelector('.sp-label');
       const pctEl = el.querySelector('.sp-pct');
       const fill = el.querySelector('.sp-fill');
@@ -178,9 +190,13 @@
         label.textContent = '已学 ' + done + '/' + total;
         pctEl.textContent = pct + '%';
       }
+      if (hasUncertainMath) {
+        if (done === 0) label.textContent = '无已确认记录';
+        label.textContent += '（含学段不明旧记录，保守估计）';
+      }
       // 下一帧再设置宽度，触发 CSS transition
       requestAnimationFrame(() => { fill.style.width = pct + '%'; });
-      el.setAttribute('aria-label', subject + ' 学习进度 ' + done + '/' + total);
+      el.setAttribute('aria-label', subject + ' 学习进度 ' + done + '/' + total + (hasUncertainMath ? '；存在学段不明的旧记录，进度为保守估计' : ''));
     });
   })();
   </script>
