@@ -32,3 +32,13 @@ test('禁用脚本时主题间导航仍可使用',async({browser})=>{
   await page.getByRole('navigation',{name:'从面积到体积学习路线'}).getByRole('link',{name:/上一步/}).click();
   await expect(page).toHaveURL(/topics\/surface-area\/index\.html$/); await context.close();
 });
+
+test('直接打开本地 HTML 时相邻主题和路线链接可用',async({page})=>{
+  const {pathToFileURL}=require('node:url'); const path=require('node:path');
+  const start=pathToFileURL(path.resolve('math/topics/understanding-area/index.html')).href;
+  await page.goto(start); await page.getByRole('navigation',{name:'从面积到体积学习路线'}).getByRole('link',{name:/下一步/}).click();
+  await expect(page).toHaveURL(/file:.*topics\/area-and-perimeter\/index\.html$/);
+  await page.getByRole('navigation',{name:'从面积到体积学习路线'}).getByRole('link',{name:'返回学习路线'}).click();
+  await expect(page).toHaveURL(/file:.*math\/index\.html#area-volume-path$/);
+  await expect(page.locator('#area-volume-path')).toBeVisible();
+});

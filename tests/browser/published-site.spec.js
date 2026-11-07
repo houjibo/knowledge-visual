@@ -55,3 +55,23 @@ test('发布包子路径的首页搜索和四学科学习交互', async ({page})
   expect((await page.request.get(base + 'README.md')).status()).toBe(404);
   expect(errors).toEqual([]);
 });
+
+test('发布站子路径的面积到体积路线可连续学习', async ({page}) => {
+  const errors=[];
+  page.on('pageerror', e => errors.push(e.message));
+  page.on('response', response => { if (response.url().startsWith(base) && response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
+  await page.goto(base);
+  await page.getByRole('link',{name:/数学 小学/}).click();
+  await page.locator('#area-volume-path').getByRole('link',{name:/认识面积/}).click();
+  for (const slug of ['understanding-area','area-and-perimeter','solid-shapes','surface-area','volume']) {
+    await expect(page).toHaveURL(new URL(`math/topics/${slug}/index.html`,base).href);
+    const nav=page.getByRole('navigation',{name:'从面积到体积学习路线'});
+    if(slug !== 'volume') await nav.getByRole('link',{name:/下一步/}).click();
+  }
+  await page.locator('button[data-mode="explore"]').click();
+  await page.locator('#layer-next').click(); await expect(page.locator('#layer-status')).toContainText('1 / 2 层');
+  await page.getByRole('navigation',{name:'从面积到体积学习路线'}).getByRole('link',{name:'返回学习路线'}).click();
+  await expect(page).toHaveURL(new URL('math/index.html#area-volume-path',base).href);
+  await expect(page.locator('#area-volume-path')).toBeVisible();
+  expect(errors).toEqual([]);
+});
