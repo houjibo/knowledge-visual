@@ -108,6 +108,8 @@
       background: #4A90D9; color: white; border: none; border-radius: 14px;
       font-size: 18px; font-weight: 700; cursor: pointer;
     }
+    .write-submit[hidden] { display: none; }
+    .place-learn-num span:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
     .write-submit:active { transform: scale(0.95); }
     .write-answer {
       font-size: 16px; color: #6E6E73; margin-top: 12px; text-align: center;
@@ -213,6 +215,7 @@
         <div class="q-label">请读出下面这个数</div>
         <div class="q-number" id="read-num"></div>
         <div class="q-options" id="read-options"></div>
+        <button type="button" class="write-submit" id="read-next" hidden>下一题</button>
       </div>
     </div>
 
@@ -226,6 +229,7 @@
         </div>
         <button class="write-submit" id="write-submit">确认 ✓</button>
         <div class="write-answer" id="write-answer"></div>
+        <button type="button" class="write-submit" id="write-next" hidden>下一题</button>
       </div>
     </div>
 
@@ -243,6 +247,7 @@
           <button class="cmp-btn" data-val="<">&lt;</button>
           <button class="cmp-btn" data-val="=">=</button>
         </div>
+        <button type="button" class="write-submit" id="compare-next" hidden>下一题</button>
       </div>
     </div>
 
@@ -253,6 +258,7 @@
         <div class="q-number" id="approx-num"></div>
         <div class="approx-badge" id="approx-hint"></div>
         <div class="q-options" id="approx-options"></div>
+        <button type="button" class="write-submit" id="approx-next" hidden>下一题</button>
       </div>
     </div>
   </div>
@@ -279,8 +285,7 @@
       const pct = Math.round(challengeCorrect / total * 100);
       if (pct < 60) return;
       if (typeof PageProgress !== 'undefined' && !PageProgress.isDone('large-numbers')) {
-        PageProgress.markDone('large-numbers');
-        if (typeof showToast === 'function') showToast('🎉 本页标记为已完成');
+        if (PageProgress.markDone('large-numbers') && typeof showToast === 'function') showToast('🎉 本页标记为已完成');
       }
     }
 
@@ -310,34 +315,23 @@
 
     // 读出一个数
     function readNumber(numStr) {
-      const n = numStr.length;
-      if (n <= 4) return readBelow10k(numStr);
-      // 分级
-      const yi = n > 8 ? numStr.slice(0, n - 8) : '';
-      const wan = n > 4 ? numStr.slice(Math.max(0, n - 8), n - 4) : '';
-      const ge = numStr.slice(n - 4);
+      const normalized = numStr.replace(/^0+/, '') || '0';
+      if (normalized === '0') return '零';
+      const chunks = [];
+      for (let end = normalized.length; end > 0; end -= 4) chunks.unshift(normalized.slice(Math.max(0, end - 4), end));
+      const units = ['', '万', '亿'];
       let result = '';
-      if (yi) result += readBelow10k(yi) + '亿';
-      if (wan) {
-        const wanRead = readBelow10k(wan);
-        if (yi && wan === '0000') {
-          // 万级全零不读
-        } else {
-          result += wanRead + '万';
-        }
-      }
-      if (ge) {
-        const geRead = readBelow10k(ge);
-        // 处理中间有零的情况
-        if ((yi || wan) && ge.length === 4 && ge[0] === '0') {
-          result += '零' + readBelow10k(ge.replace(/^0+/, '') || '0');
-        } else if ((yi || wan) && ge.length < 4 && parseInt(ge) < 1000) {
-          result += '零' + readBelow10k(ge);
-        } else {
-          result += geRead;
-        }
-      }
-      return result.replace(/零+$/, '').replace(/零亿/, '亿').replace(/零万/, '万') || '零';
+      let skipped = false;
+      chunks.forEach((chunk, index) => {
+        const value = Number(chunk);
+        if (!value) { if (result) skipped = true; return; }
+        if (result && (skipped || value < 1000)) result += '零';
+        let reading = readBelow10k(String(value));
+        if (result && reading.startsWith('十')) reading = '一' + reading;
+        result += reading + units[chunks.length - 1 - index];
+        skipped = false;
+      });
+      return result;
     }
 
     function readBelow10k(s) {
@@ -399,9 +393,13 @@
           el.appendChild(document.createTextNode(' '));
         } else {
           const span = document.createElement('span');
+          const index = digitIdx;
           span.textContent = formatted[i];
           span.dataset.idx = digitIdx;
-          span.addEventListener('click', () => showPlaceInfo(digitIdx));
+          span.setAttribute('role', 'button'); span.tabIndex = 0;
+          span.setAttribute('aria-label', `第${index + 1}位数字${formatted[i]}`);
+          span.addEventListener('click', () => showPlaceInfo(index));
+          span.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showPlaceInfo(index); } });
           el.appendChild(span);
           digitIdx++;
         }
@@ -494,38 +492,16 @@
     function initRead() { generateReadQ(); }
 
     function generateReadQ() {
+      document.getElementById('read-next').hidden = true;
       const numStr = randLarge(4, 10);
       const correctRead = readNumber(numStr);
       document.getElementById('read-num').textContent = addSeparators(numStr);
 
       // 生成干扰项
       const options = [correctRead];
-      const wrongReads = new Set();
-      // 生成错误读法
-      while (wrongReads.size < 3) {
-        const wrongType = Math.floor(Math.random() * 3);
-        let wrong;
-        if (wrongType === 0) {
-          // 少读一个零
-          wrong = correctRead.replace(/零/, '');
-        } else if (wrongType === 1) {
-          // 多读一个零
-          const idx = correctRead.indexOf('万');
-          if (idx > 0) {
-            wrong = correctRead.slice(0, idx) + '零' + correctRead.slice(idx);
-          } else {
-            wrong = correctRead + '零';
-          }
-        } else {
-          // 替换某个数字的读法
-          const digitReads = ['一','二','三','四','五','六','七','八','九'];
-          const r = digitReads[Math.floor(Math.random() * digitReads.length)];
-          wrong = correctRead.replace(/[一二三四五六七八九]/, r);
-        }
-        if (wrong && wrong !== correctRead && !wrongReads.has(wrong) && !options.includes(wrong)) {
-          wrongReads.add(wrong);
-          options.push(wrong);
-        }
+      for (let offset = 1; offset <= 3; offset++) {
+        const leading = ((Number(numStr[0]) - 1 + offset) % 9) + 1;
+        options.push(readNumber(String(leading) + numStr.slice(1)));
       }
 
       // 打乱选项
@@ -548,25 +524,27 @@
     function handleReadAnswer(btn, correct, correctRead) {
       if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
       const allBtns = document.querySelectorAll('#read-options .q-btn');
+      if (Array.from(allBtns).some(b => b.disabled)) return;
       allBtns.forEach(b => {
-        b.style.pointerEvents = 'none';
+        b.disabled = true;
         if (b.textContent === correctRead) b.classList.add('correct');
       });
       if (correct) {
         updateStreak(true);
-        setTimeout(generateReadQ, 1500);
       } else {
         btn.classList.add('wrong');
         updateStreak(false);
-        setTimeout(generateReadQ, 2500);
       }
+      document.getElementById('read-next').hidden = false;
     }
+    document.getElementById('read-next').addEventListener('click', generateReadQ);
 
     // ===== 模式3: 写数 =====
     function initWrite() { generateWriteQ(); }
 
-    let writeAnswer = '';
+    let writeAnswer = '', writeLocked = false;
     function generateWriteQ() {
+      writeLocked = false; document.getElementById('write-next').hidden = true;
       const numStr = randLarge(4, 9);
       writeAnswer = numStr;
       const readStr = readNumber(numStr);
@@ -577,6 +555,7 @@
     }
 
     document.getElementById('write-submit').addEventListener('click', () => {
+      if (writeLocked) return;
       const input = document.getElementById('write-input').value.replace(/\s/g, '');
       const inputEl = document.getElementById('write-input');
       const answerEl = document.getElementById('write-answer');
@@ -584,18 +563,19 @@
         answerEl.innerHTML = '<span style="color:#FF9500">请输入数字哦~</span>';
         return;
       }
+      writeLocked = true;
       if (input === writeAnswer) {
         inputEl.classList.add('correct');
         answerEl.innerHTML = '✅ 正确！<strong>' + addSeparators(writeAnswer) + '</strong>';
         updateStreak(true);
-        setTimeout(generateWriteQ, 1500);
       } else {
         inputEl.classList.add('wrong');
         answerEl.innerHTML = '❌ 再想想~ 正确答案是 <strong>' + addSeparators(writeAnswer) + '</strong>';
         updateStreak(false);
-        setTimeout(generateWriteQ, 2500);
       }
+      document.getElementById('write-next').hidden = false;
     });
+    document.getElementById('write-next').addEventListener('click', generateWriteQ);
 
     // 回车提交
     document.getElementById('write-input').addEventListener('keydown', (e) => {
@@ -605,8 +585,9 @@
     // ===== 模式4: 比大小 =====
     function initCompare() { generateCompareQ(); }
 
-    let compareAnswer = '';
+    let compareAnswer = '', compareLocked = false;
     function generateCompareQ() {
+      compareLocked = false; document.getElementById('compare-next').hidden = true;
       const digits = 4 + Math.floor(Math.random() * 6);
       let a = randLarge(digits, digits);
       let b = randLarge(digits, digits);
@@ -630,7 +611,8 @@
 
     document.querySelectorAll('.cmp-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+        if (compareLocked) return;
+        compareLocked = true;
         const val = btn.dataset.val;
         const signEl = document.getElementById('cmp-sign');
         signEl.textContent = val;
@@ -641,7 +623,6 @@
           btn.classList.add('correct');
           signEl.style.color = '#34C759';
           updateStreak(true);
-          setTimeout(generateCompareQ, 1500);
         } else {
           btn.classList.add('wrong');
           signEl.style.color = '#FF3B30';
@@ -650,15 +631,17 @@
             if (b.dataset.val === compareAnswer) b.classList.add('correct');
           });
           updateStreak(false);
-          setTimeout(generateCompareQ, 2500);
         }
+        document.getElementById('compare-next').hidden = false;
       });
     });
+    document.getElementById('compare-next').addEventListener('click', generateCompareQ);
 
     // ===== 模式5: 近似数 =====
     function initApprox() { generateApproxQ(); }
 
     function generateApproxQ() {
+      document.getElementById('approx-next').hidden = true;
       const numStr = randLarge(5, 8);
       const n = parseInt(numStr);
       // 省略万位后面的尾数
@@ -698,19 +681,20 @@
     function handleApproxAnswer(btn, correct, correctAns) {
       if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
       const allBtns = document.querySelectorAll('#approx-options .q-btn');
+      if (Array.from(allBtns).some(b => b.disabled)) return;
       allBtns.forEach(b => {
-        b.style.pointerEvents = 'none';
+        b.disabled = true;
         if (b.textContent === correctAns) b.classList.add('correct');
       });
       if (correct) {
         updateStreak(true);
-        setTimeout(generateApproxQ, 1500);
       } else {
         btn.classList.add('wrong');
         updateStreak(false);
-        setTimeout(generateApproxQ, 2500);
       }
+      document.getElementById('approx-next').hidden = false;
     }
+    document.getElementById('approx-next').addEventListener('click', generateApproxQ);
 
     // ===== 初始化 =====
     initPlace();

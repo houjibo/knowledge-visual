@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：127；尚未登记：189。
+主题总数：316；已登记部分交互证据：128；尚未登记：188。
 
 ## 已登记部分交互证据
 
@@ -117,6 +117,8 @@
   - 桌面与移动视口覆盖六种面积换算方向的随机边界、正确选项、提示、键盘和重复提交；实际应用、估测、完成记录和真实设备尚未全面验收。 [hectare-square-kilometer-conversion-correctness.spec.js](../../tests/browser/hectare-square-kilometer-conversion-correctness.spec.js)
 - [时分秒](../../math/topics/hours-minutes-seconds/index.html)
   - 固定随机值生成、换算题切换与单次计分、四类挑战、午夜进位、排序和保存失败恢复；其他教学内容和完整无障碍未全面验收。 [time-units-practice-reliability.spec.js](../../tests/browser/time-units-practice-reliability.spec.js)
+- [大数的认识](../../math/topics/large-numbers/index.html)
+  - 桌面及移动视口验证跨数级零读法样例、固定随机出题、数位键盘、读写比较逐题计分及存储失败重试；全部读数值、近似数与真实设备尚未全面验收。 [large-numbers-reading-and-practice.spec.js](../../tests/browser/large-numbers-reading-and-practice.spec.js)
 - [折线统计图](../../math/topics/line-charts/index.html)
   - 读图和挑战的零值、并列答案、单位及标题部分场景；未覆盖整页。 [line-chart-questions.spec.js](../../tests/browser/line-chart-questions.spec.js)
 - [数学广角·推理](../../math/topics/logical-reasoning/index.html)
@@ -436,7 +438,6 @@
 - [分数乘除法](../../math/topics/fraction-multiplication-division/index.html)
 - [分数的基本性质](../../math/topics/fraction-properties/index.html)
 - [除法初步认识](../../math/topics/intro-to-division/index.html)
-- [大数的认识](../../math/topics/large-numbers/index.html)
 - [测量长度](../../math/topics/length-measurement/index.html)
 - [长度单位进阶](../../math/topics/length-units-advanced/index.html)
 - [用字母表示数](../../math/topics/letters-represent-numbers/index.html)
