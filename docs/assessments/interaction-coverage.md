@@ -71,6 +71,7 @@
   - 圆锥展开公式、计算题随机边界及挑战数值题部分场景；未覆盖所有互动或完整教学内容。 [cylinder-cone.spec.js](../../tests/browser/cylinder-cone.spec.js)
 - [圆柱和圆锥](../../math/topics/cylinder-cone/index.html)
   - 探索模式半径高度边界、圆锥母线和面积、比较练习与重复提交；挑战、真实设备及整页无障碍未全面验收。 [cylinder-cone-exploration-correctness.spec.js](../../tests/browser/cylinder-cone-exploration-correctness.spec.js)
+  - 圆柱圆锥随机边界、闯关反馈、五关保存、十关重玩及失败恢复；真实设备和整页无障碍未全面验收。 [cylinder-cone-challenge-reliability.spec.js](../../tests/browser/cylinder-cone-challenge-reliability.spec.js)
 - [有余数的除法](../../math/topics/division-with-remainder/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [除法](../../math/topics/division/index.html)

@@ -9,6 +9,7 @@
     .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding: 4px; -webkit-overflow-scrolling: touch; }
     .mode-tab { flex-shrink: 0; padding: 10px 18px; border: none; background: #E5E5EA; border-radius: 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
     .mode-tab.active { background: #00ACC1; color: white; }
+    .btn[hidden] { display: none; }
     .mode-content { display: none; }
     .mode-content.active { display: block; animation: fadeInUp 0.3s ease; }
 
@@ -198,7 +199,8 @@
       <div class="card">
         <p class="page-subtitle">连续答对，看看能闯几关</p>
         <div class="challenge-area">
-          <div class="challenge-progress" id="challenge-progress"></div>
+          <p id="challenge-status" role="status" aria-live="polite"></p>
+          <div class="challenge-progress" id="challenge-progress" aria-hidden="true"></div>
           <div class="problem-card">
             <div class="problem-text" id="challenge-text"></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
@@ -207,6 +209,8 @@
               <button class="btn challenge-opt" data-answer="C"></button>
               <button class="btn challenge-opt" data-answer="D"></button>
             </div>
+            <p id="challenge-feedback" role="status" aria-live="polite"></p>
+            <button class="btn btn-primary" id="challenge-next" hidden>下一题</button>
           </div>
         </div>
       </div>
@@ -218,7 +222,16 @@
     let streak = 0;
     let currentShape = 'cylinder';
     let currentProblem = null;
-    let challengeLevel = 0;
+    let challengeLevel = 0, challengeAnswered = false;
+    let challengeSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('cylinder-cone');
+    let completionAttempted = false;
+    function showChallengeStatus() {
+      const status = document.getElementById('challenge-status');
+      if (challengeSaved) status.textContent = '✓ 本主题已完成；本轮连续答对 ' + challengeLevel + ' / 10 题。';
+      else if (completionAttempted) status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。';
+      else status.textContent = '连续答对 ' + challengeLevel + ' / 5 题可完成本主题；未达标时刷新会清空本轮进度。';
+    }
+    document.addEventListener('math-progress-saved', () => { if (completionAttempted) { challengeSaved = true; showChallengeStatus(); } });
 
     function updateStreak() {
       document.getElementById('streak').textContent = streak;
@@ -355,6 +368,9 @@
 
     // 挑战模式
     function generateChallenge() {
+      challengeAnswered = false;
+      document.getElementById('challenge-feedback').textContent = '';
+      document.getElementById('challenge-next').hidden = true;
       const r = Random.int(2, 6);
       const h = Random.int(3, 8);
       const shape = Random.pick(['cylinder', 'cone']);
@@ -376,10 +392,12 @@
       const buttons = document.querySelectorAll('.challenge-opt');
       buttons.forEach((btn, i) => {
         btn.textContent = options[i] + ' cm³';
+        btn.disabled = false;
         btn.dataset.correct = options[i] === correctAnswer;
       });
       
       updateChallengeProgress();
+      showChallengeStatus();
     }
     
     function updateChallengeProgress() {
@@ -396,28 +414,35 @@
     
     document.querySelectorAll('.challenge-opt').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (challengeAnswered) return;
+        challengeAnswered = true;
+        const buttons = document.querySelectorAll('.challenge-opt');
+        buttons.forEach(button => { button.disabled = true; });
+        const next = document.getElementById('challenge-next');
+        const feedback = document.getElementById('challenge-feedback');
         if (btn.dataset.correct === 'true') {
-          Sound.play('correct');
-          celebrate();
-          challengeLevel++;
-          if (challengeLevel >= 5 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('cylinder-cone')) {
-            PageProgress.markDone('cylinder-cone');
+          Sound.play('correct'); celebrate(); challengeLevel++;
+          if (challengeLevel >= 5 && !challengeSaved && !completionAttempted) {
+            completionAttempted = true;
+            challengeSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('cylinder-cone');
           }
-          if (challengeLevel >= 10) {
-            showToast('🎉 恭喜通关！你是圆柱圆锥小达人！');
-            challengeLevel = 0;
-          }
-          generateChallenge();
+          feedback.textContent = challengeLevel >= 10 ? '🎉 已连续答对十题，挑战完成！' : '✅ 答对了！';
+          next.textContent = challengeLevel >= 10 ? '再玩一次' : '下一题';
         } else {
           Sound.play('wrong');
-          Animator.shake(btn);
+          const correct = Array.from(buttons).find(button => button.dataset.correct === 'true');
+          feedback.textContent = '❌ 正确答案是 ' + correct.textContent + '，可重新开始。';
           challengeLevel = 0;
-          showToast('答错了，重新开始吧！');
-          generateChallenge();
+          next.textContent = '重新开始';
         }
+        updateChallengeProgress(); showChallengeStatus(); next.hidden = false;
       });
     });
-    
+    document.getElementById('challenge-next').addEventListener('click', () => {
+      if (challengeLevel >= 10) challengeLevel = 0;
+      generateChallenge();
+    });
+
     generateChallenge();
   </script>
 </body>
