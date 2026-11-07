@@ -154,6 +154,7 @@
       <button class="mode-tab" data-mode="compare">⚖️ 比大小</button>
       <button class="mode-tab" data-mode="sequence">📊 数序填空</button>
     </div>
+    <p id="learningProgress" role="status" aria-live="polite" style="text-align:center;margin:12px;line-height:1.6"></p>
 
     <!-- 模式1: 数一数 -->
     <div class="mode-content active" id="mode-count">
@@ -169,7 +170,7 @@
           <div class="count-objects" id="count-objects"></div>
           <div class="count-input-row">
             <span style="font-size:18px;font-weight:600;color:#6E6E73;">有</span>
-            <input type="number" class="count-input" id="count-answer" min="1" max="100" placeholder="?">
+            <input type="number" class="count-input" id="count-answer" aria-label="物体数量" min="1" max="100" placeholder="?">
             <span style="font-size:18px;font-weight:600;color:#6E6E73;">个</span>
           </div>
           <div class="count-feedback" id="count-feedback"></div>
@@ -191,11 +192,11 @@
         <div class="compose-card">
           <div class="compose-number" id="compose-number">35</div>
           <div class="compose-row">
-            <input type="number" class="compose-input" id="compose-tens" min="0" max="10" placeholder="?">
+            <input type="number" class="compose-input" id="compose-tens" aria-label="十的个数" min="0" max="10" placeholder="?">
             <span class="compose-unit">个十</span>
           </div>
           <div class="compose-row">
-            <input type="number" class="compose-input" id="compose-ones" min="0" max="9" placeholder="?">
+            <input type="number" class="compose-input" id="compose-ones" aria-label="一的个数" min="0" max="9" placeholder="?">
             <span class="compose-unit">个一</span>
           </div>
           <div class="result-text" id="compose-feedback"></div>
@@ -254,6 +255,26 @@
   <script>
   (function() {
     'use strict';
+    var learningActivities = new Set();
+    var progressSaved = PageProgress.isDone('numbers-within-100');
+    var completionAttempted = false;
+    function renderLearningProgress() {
+      var status = document.getElementById('learningProgress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      var names = [['count','数一数'], ['compose','数的组成'], ['compare','比大小'], ['sequence','数序填空']];
+      status.textContent = '本次完成 ' + learningActivities.size + '/4：' + names.map(function(entry) { return (learningActivities.has(entry[0]) ? '✓ ' : '○ ') + entry[1]; }).join('、') + '。每项答对一题；未完成进度仅保留在当前页面。';
+    }
+    function finishLearningActivity(id) {
+      learningActivities.add(id);
+      if (learningActivities.size === 4 && !progressSaved && !completionAttempted) {
+        completionAttempted = true;
+        progressSaved = PageProgress.markDone('numbers-within-100');
+      }
+      renderLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', function() { if (completionAttempted) { progressSaved = true; renderLearningProgress(); } });
+    renderLearningProgress();
 
     // ========== 模式切换 ==========
     var tabs = document.querySelectorAll('.mode-tab');
@@ -282,9 +303,10 @@
     var emojis = ['🍎','🍊','🍋','🍇','🍓','🍑','🍒','🥝','🌟','⭐','🌸','🌺','🎈','🐱','🐶','🐰','🦊','🐸','🐝','🦋'];
 
     // ========== 模式1: 数一数 ==========
-    var countState = { answer: 0, correct: 0, wrong: 0 };
+    var countState = { answer: 0, correct: 0, wrong: 0, locked: false };
 
     function newCountProblem() {
+      countState.locked = false;
       var n = randInt(5, 50);
       countState.answer = n;
       var emoji = emojis[randInt(0, emojis.length - 1)];
@@ -307,21 +329,24 @@
     }
 
     document.getElementById('count-check').addEventListener('click', function() {
-      var val = parseInt(document.getElementById('count-answer').value);
-      if (isNaN(val)) {
-        document.getElementById('count-feedback').textContent = '请输入一个数字哦！';
+      if (countState.locked) return;
+      var raw = document.getElementById('count-answer').value.trim();
+      var val = Number(raw);
+      if (!raw || !Number.isInteger(val) || val < 1 || val > 100) {
+        document.getElementById('count-feedback').textContent = '请输入1到100之间的整数哦！';
         document.getElementById('count-feedback').style.color = '#FF9500';
         return;
       }
       var fb = document.getElementById('count-feedback');
       if (val === countState.answer) {
+        countState.locked = true;
         fb.textContent = '🎉 答对啦！真棒！';
         fb.style.color = '#34C759';
         countState.correct++;
+        finishLearningActivity('count');
         document.getElementById('count-correct').textContent = countState.correct;
         document.getElementById('count-check').style.display = 'none';
         document.getElementById('count-next').style.display = '';
-        setTimeout(function() { newCountProblem(); }, 1500);
       } else {
         fb.textContent = '❌ 再数一数吧～';
         fb.style.color = '#FF3B30';
@@ -337,9 +362,10 @@
     document.getElementById('count-next').addEventListener('click', function() { newCountProblem(); });
 
     // ========== 模式2: 数的组成 ==========
-    var composeState = { tens: 0, ones: 0, correct: 0, wrong: 0 };
+    var composeState = { tens: 0, ones: 0, correct: 0, wrong: 0, locked: false };
 
     function newComposeProblem() {
+      composeState.locked = false;
       var tens = randInt(1, 9);
       var ones = randInt(0, 9);
       if (tens === 0 && ones === 0) ones = randInt(1, 9);
@@ -356,22 +382,25 @@
     }
 
     document.getElementById('compose-check').addEventListener('click', function() {
-      var t = parseInt(document.getElementById('compose-tens').value);
-      var o = parseInt(document.getElementById('compose-ones').value);
-      if (isNaN(t) || isNaN(o)) {
-        document.getElementById('compose-feedback').textContent = '两个空都要填哦！';
+      if (composeState.locked) return;
+      var rawT = document.getElementById('compose-tens').value.trim();
+      var rawO = document.getElementById('compose-ones').value.trim();
+      var t = Number(rawT), o = Number(rawO);
+      if (!rawT || !rawO || !Number.isInteger(t) || !Number.isInteger(o) || t < 0 || t > 10 || o < 0 || o > 9) {
+        document.getElementById('compose-feedback').textContent = '请填写有效的十和一个数。';
         document.getElementById('compose-feedback').style.color = '#FF9500';
         return;
       }
       var fb = document.getElementById('compose-feedback');
       if (t === composeState.tens && o === composeState.ones) {
+        composeState.locked = true;
         fb.textContent = '🎉 完全正确！';
         fb.style.color = '#34C759';
         composeState.correct++;
+        finishLearningActivity('compose');
         document.getElementById('compose-correct').textContent = composeState.correct;
         document.getElementById('compose-check').style.display = 'none';
         document.getElementById('compose-next').style.display = '';
-        setTimeout(function() { newComposeProblem(); }, 1500);
       } else {
         fb.textContent = '❌ 再想想～';
         fb.style.color = '#FF3B30';
@@ -389,9 +418,10 @@
     document.getElementById('compose-next').addEventListener('click', function() { newComposeProblem(); });
 
     // ========== 模式3: 比大小 ==========
-    var compareState = { answer: '', correct: 0, wrong: 0 };
+    var compareState = { answer: '', correct: 0, wrong: 0, locked: false };
 
     function newCompareProblem() {
+      compareState.locked = false;
       var a = randInt(1, 100);
       var b = randInt(1, 100);
       // 偶尔让两个数相等
@@ -414,29 +444,28 @@
 
     document.querySelectorAll('.compare-opt').forEach(function(btn) {
       btn.addEventListener('click', function() {
+        if (compareState.locked) return;
+        document.querySelectorAll('.compare-opt').forEach(function(b) { b.classList.remove('wrong'); });
         var sym = btn.getAttribute('data-symbol');
         var fb = document.getElementById('compare-feedback');
         document.getElementById('compare-symbol').textContent = sym;
         document.getElementById('compare-symbol').style.color = '#1D1D1F';
         if (sym === compareState.answer) {
+          compareState.locked = true;
           btn.classList.add('correct');
           fb.textContent = '🎉 答对啦！';
           fb.style.color = '#34C759';
           compareState.correct++;
+          finishLearningActivity('compare');
           document.getElementById('compare-correct').textContent = compareState.correct;
           document.querySelectorAll('.compare-opt').forEach(function(b) { b.disabled = true; });
           document.getElementById('compare-next').style.display = '';
-          setTimeout(function() { newCompareProblem(); }, 1500);
         } else {
           btn.classList.add('wrong');
           fb.textContent = '❌ 再想想～';
           fb.style.color = '#FF3B30';
           compareState.wrong++;
           document.getElementById('compare-wrong').textContent = compareState.wrong;
-          setTimeout(function() {
-            btn.classList.remove('wrong');
-            fb.textContent = '';
-          }, 800);
         }
       });
     });
@@ -444,9 +473,10 @@
     document.getElementById('compare-next').addEventListener('click', function() { newCompareProblem(); });
 
     // ========== 模式4: 数序填空 ==========
-    var seqState = { answer: 0, correct: 0, wrong: 0 };
+    var seqState = { answer: 0, correct: 0, wrong: 0, locked: false };
 
     function newSequenceProblem() {
+      seqState.locked = false;
       // 生成数列类型
       var types = ['add1', 'add2', 'add5', 'add10', 'sub1', 'sub2', 'sub5'];
       var type = types[randInt(0, types.length - 1)];
@@ -484,16 +514,9 @@
       }
 
       // 生成选项（1个正确 + 3个干扰）
-      var options = [seqState.answer];
-      var distractors = new Set();
-      distractors.add(seqState.answer);
-      while (options.length < 4) {
-        var d = seqState.answer + randInt(-3, 3) * Math.abs(step || 1);
-        if (d !== seqState.answer && d > 0 && d <= 100 && !distractors.has(d)) {
-          options.push(d);
-          distractors.add(d);
-        }
-      }
+      var candidates = Array.from({length: 100}, function(_, i) { return i + 1; }).filter(function(n) { return n !== seqState.answer; });
+      candidates.sort(function(a,b) { return Math.abs(a - seqState.answer) - Math.abs(b - seqState.answer); });
+      var options = [seqState.answer].concat(shuffle(candidates.slice(0, 12)).slice(0, 3));
       shuffle(options);
 
       var optContainer = document.getElementById('seq-options');
@@ -513,27 +536,26 @@
     }
 
     function handleSeqClick(btn, val) {
+      if (seqState.locked) return;
+      document.querySelectorAll('.seq-opt').forEach(function(b) { b.classList.remove('wrong'); });
       var fb = document.getElementById('seq-feedback');
       if (val === seqState.answer) {
+        seqState.locked = true;
         btn.classList.add('correct');
         fb.textContent = '🎉 答对啦！';
         fb.style.color = '#34C759';
         document.getElementById('seq-blank-el').textContent = val;
         seqState.correct++;
+        finishLearningActivity('sequence');
         document.getElementById('seq-correct').textContent = seqState.correct;
         document.querySelectorAll('.seq-opt').forEach(function(b) { b.disabled = true; });
         document.getElementById('seq-next').style.display = '';
-        setTimeout(function() { newSequenceProblem(); }, 1500);
       } else {
         btn.classList.add('wrong');
         fb.textContent = '❌ 再看看规律～';
         fb.style.color = '#FF3B30';
         seqState.wrong++;
         document.getElementById('seq-wrong').textContent = seqState.wrong;
-        setTimeout(function() {
-          btn.classList.remove('wrong');
-          fb.textContent = '';
-        }, 800);
       }
     }
 
