@@ -74,3 +74,47 @@ test('八类计算题均有唯一答案，未知角不直接给出', async ({pag
   }
   expect(results[7].answer).toBeLessThanOrEqual(180);
 });
+
+async function finishAngleLearning(page) {
+  await page.locator('[data-mode="read"]').click();
+  await page.locator('#readOptions button').getByText('30°', {exact: true}).click();
+  await page.locator('[data-mode="draw"]').click();
+  await page.getByLabel('调整角度').fill('30');
+  await page.locator('#drawCheck').click();
+  await page.locator('[data-mode="calc"]').click();
+  await page.locator('#calcOptions button').getByText('85°', {exact: true}).click();
+}
+
+test('三项练习完成后记录进度并在知识地图显示', async ({page}) => {
+  await page.addInitScript(() => { Math.random = () => 0; });
+  await page.goto(url);
+  await expect(page.locator('#learningProgress')).toContainText('0/3');
+  await page.locator('[data-mode="read"]').click();
+  await page.locator('#readOptions button').getByText('30°', {exact: true}).click();
+  await expect(page.locator('#learningProgress')).toContainText('1/3');
+  expect(await page.evaluate(() => PageProgress.isDone('angle-measurement'))).toBe(false);
+  await finishAngleLearning(page);
+  await expect(page.locator('#learningProgress')).toHaveText('✓ 本主题已完成');
+  expect(JSON.parse(await page.evaluate(() => localStorage.getItem('kv-math-progress-v2')))['primary:angle-measurement']).toBeTruthy();
+  await page.reload();
+  await expect(page.locator('#learningProgress')).toHaveText('✓ 本主题已完成');
+  await page.goto('/math/index.html');
+  await expect(page.locator('a.topic-card[href="topics/angle-measurement/index.html"] .progress-badge')).toHaveText('✓');
+});
+
+test('完成进度保存失败时可以恢复并重试', async ({page}) => {
+  await page.addInitScript(() => {
+    Math.random = () => 0;
+    window.originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => { throw new Error('denied'); };
+  });
+  await page.goto(url);
+  await finishAngleLearning(page);
+  await expect(page.locator('#learningProgress')).toContainText('尚未保存');
+  await expect(page.locator('#math-progress-save-notice')).toContainText('暂未保存');
+  await page.evaluate(() => { Storage.prototype.setItem = window.originalSetItem; });
+  await page.locator('#math-progress-save-notice button').click();
+  await expect(page.locator('#learningProgress')).toHaveText('✓ 本主题已完成');
+  await page.reload();
+  await expect(page.locator('#learningProgress')).toHaveText('✓ 本主题已完成');
+});

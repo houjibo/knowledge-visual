@@ -54,7 +54,7 @@
 - [10以内加减法](../../math/topics/addition/index.html)
   - 从首页进入加法并获得练习正确、错误反馈；未覆盖全部学习模式。 [learning-paths.spec.js](../../tests/browser/learning-paths.spec.js)
 - [角的度量](../../math/topics/angle-measurement/index.html)
-  - 零到平角的代表射线坐标、读角刻度、固定随机值及八类计算选项、按题计数和主动换题；完成进度、真实设备和完整无障碍未验收。 [angle-measurement-model-correctness.spec.js](../../tests/browser/angle-measurement-model-correctness.spec.js)
+  - 零到平角的代表射线坐标、读角刻度、固定随机值及八类计算选项、按题计数、主动换题、三项练习完成及存储恢复；真实设备和完整无障碍未全面验收。 [angle-measurement-model-correctness.spec.js](../../tests/browser/angle-measurement-model-correctness.spec.js)
 - [年月日的认识](../../math/topics/calendar-units/index.html)
   - 十二个月北半球气象季节、世纪闰年与输入校验、日期计数口径、作答计数及进度保存失败恢复；历史历法和整页无障碍未全面验收。 [calendar-learning-accuracy.spec.js](../../tests/browser/calendar-learning-accuracy.spec.js)
 - [比大小与排序](../../math/topics/comparison-and-ordering/index.html)

@@ -123,6 +123,7 @@
   </nav>
 
   <div class="page-container">
+    <p id="learningProgress" role="status" aria-live="polite"></p>
     <div class="mode-tabs" id="modeTabs">
       <button class="mode-tab active" data-mode="learn">📏 认识量角器</button>
       <button class="mode-tab" data-mode="read">👀 读角度数</button>
@@ -260,6 +261,30 @@
 
   <script src="../../assets/js/common.js"></script>
   <script>
+    var learningMilestones = {read: false, draw: false, calc: false};
+    var milestoneNames = {read: '答对读角题', draw: '成功画角', calc: '答对计算题'};
+    var progressSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('angle-measurement');
+    var completionAttempted = false;
+    function showLearningProgress() {
+      var status = document.getElementById('learningProgress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      var remaining = Object.keys(learningMilestones).filter(function(key) { return !learningMilestones[key]; });
+      status.textContent = '本次学习完成条件 ' + (3 - remaining.length) + '/3：还需' + remaining.map(function(key) { return milestoneNames[key]; }).join('、') + '。未完成的阶段在刷新后需重新进行。';
+    }
+    function completeMilestone(key) {
+      learningMilestones[key] = true;
+      if (!progressSaved && !completionAttempted && Object.keys(learningMilestones).every(function(name) { return learningMilestones[name]; })) {
+        completionAttempted = true;
+        progressSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('angle-measurement');
+      }
+      showLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', function() {
+      if (completionAttempted) { progressSaved = true; showLearningProgress(); }
+    });
+    showLearningProgress();
+
     // === Mode tabs ===
     document.querySelectorAll('.mode-tab').forEach(btn => {
       btn.addEventListener('click', function() {
@@ -371,6 +396,7 @@
       opts[i].classList.add(ok ? 'correct' : 'wrong');
       if (!ok) opts[currentRead.ans].classList.add('correct');
       if (ok) {
+        completeMilestone('read');
         readCorrectCount++;
         document.getElementById('readCorrect').textContent = readCorrectCount;
         document.getElementById('readResult').textContent = '✅ 回答正确！';
@@ -415,6 +441,7 @@
       var sliderVal = parseInt(document.getElementById('drawSlider').value);
       var diff = Math.abs(sliderVal - drawTarget);
       if (diff <= 3) {
+        completeMilestone('draw');
         drawLocked = true;
         document.getElementById('drawCheck').disabled = true;
         drawSuccessCount++;
@@ -637,6 +664,7 @@
         }
       }
       if (ok) {
+        completeMilestone('calc');
         calcCorrectCount++;
         document.getElementById('calcCorrect').textContent = calcCorrectCount;
         document.getElementById('calcResult').textContent = '✅ 回答正确！';
