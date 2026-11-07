@@ -50,6 +50,8 @@
   .chart-btn.active { background: var(--primary); border-color: var(--primary); color: #451a03; font-weight: 700; }
   .act-btn { padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; font-weight: 700; background: var(--primary); color: #451a03; min-height: 44px; transition: all .2s; margin-right: 8px; margin-top: 6px; }
   .act-btn.ghost { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+  .band-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; color: #e2e8f0; }
+  .band-table th, .band-table td { text-align: left; padding: 5px; border-bottom: 1px solid rgba(255,255,255,.12); }
   .data-strip { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; font-size: 12.5px; line-height: 1.8; color: #cbd5e1; margin-top: 8px; max-height: 96px; overflow-y: auto; font-family: monospace; }
   .quiz { margin-top: 14px; padding: 14px; background: rgba(251,191,36,0.08); border-radius: 12px; border: 1px solid rgba(251,191,36,0.3); }
   .quiz-q { font-size: 15px; margin-bottom: 10px; line-height: 1.6; }
@@ -118,9 +120,9 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="statCanvas" width="720" height="460"></canvas>
+          <canvas id="statCanvas" width="720" height="460" role="img"></canvas>
           <div class="legend">
-            <span>某班 20 名学生一次数学测验成绩</span>
+            <span>某班学生一次数学测验成绩</span>
             <span>点击「＋随机加人」观察统计量变化</span>
           </div>
         </div>
@@ -128,14 +130,15 @@
       <div class="panel">
         <h3>统计图选择</h3>
         <div class="chart-btns" id="chartBtns">
-          <button class="chart-btn active" data-chart="bar">条形图</button>
-          <button class="chart-btn" data-chart="pie">扇形图</button>
-          <button class="chart-btn" data-chart="line">折线图</button>
+          <button class="chart-btn active" data-chart="bar" aria-pressed="true">条形图</button>
+          <button class="chart-btn" data-chart="pie" aria-pressed="false">扇形图</button>
+          <button class="chart-btn" data-chart="points" aria-pressed="false">成绩点图</button>
         </div>
         <div>
           <button class="act-btn" id="btnAdd">＋ 随机加一名学生</button>
           <button class="act-btn ghost" id="btnReset">重置</button>
         </div>
+        <p id="capacityStatus" role="status" aria-live="polite">当前 20 / 40 人。</p>
         <div class="info-grid">
           <div>平均数<br><b id="statMean">—</b></div>
           <div>中位数<br><b id="statMedian">—</b></div>
@@ -143,13 +146,14 @@
           <div>极差<br><b id="statRange">—</b></div>
         </div>
         <div class="data-strip" id="dataStrip"></div>
+        <table class="band-table"><caption>成绩分组统计（百分比独立四舍五入）</caption><thead><tr><th scope="col">分数段</th><th scope="col">人数</th><th scope="col">占比</th></tr></thead><tbody id="bandTable"></tbody></table>
         <div class="concept-card">
           <div class="title">三个统计量，三种视角</div>
-          <b>平均数</b>：总体水平（受极端值影响大）；<b>中位数</b>：中间位置（不受极端值影响）；<b>众数</b>：出现次数最多。报告"班级水平"用哪个？要看数据分布！
+          <b>平均数</b>：总体水平（受极端值影响大）；<b>中位数</b>：中间位置（通常受极端值影响较小）；<b>众数</b>：出现次数最多。报告"班级水平"用哪个？要看数据分布！
         </div>
         <div class="concept-card">
           <div class="title">统计图怎么选</div>
-          <b>条形图</b>：比较数量多少；<b>扇形图</b>：显示部分占整体的<b>百分比</b>；<b>折线图</b>：反映变化趋势。
+          <b>条形图</b>：比较数量多少；<b>扇形图</b>：显示部分占整体的<b>百分比</b>；<b>折线图</b>：适合观察按时间等有序变量的变化；学号只是编号，不表示时间变化。
         </div>
         <div class="concept-card warn">
           <div class="title">⚠️ 全面调查 vs 抽样调查</div>
@@ -268,11 +272,15 @@ function updPanel() {
   document.getElementById('statMode').textContent = s.modes.join('、') + ' 分（各 ' + s.maxF + ' 次）';
   document.getElementById('statRange').textContent = s.range + ' 分';
   document.getElementById('dataStrip').textContent =
-    `数据（n=${s.n}）：` + [...data].sort((a, b) => a - b).join(', ');
+    `排序后数据（n=${s.n}）：` + s.sorted.join(', ');
+  const counts = bandCounts();
+  document.getElementById('bandTable').innerHTML = BANDS.map(([label], i) => `<tr><th scope="row">${label}</th><td>${counts[i]}</td><td>${(counts[i] / s.n * 100).toFixed(1)}%</td></tr>`).join('');
+  document.getElementById('btnAdd').disabled = s.n >= 40;
+  document.getElementById('capacityStatus').textContent = s.n >= 40 ? '已达 40 / 40 人，重置后可继续添加。' : `当前 ${s.n} / 40 人。`;
 }
 document.querySelectorAll('.chart-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.chart-btn').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
+  document.querySelectorAll('.chart-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
+  b.classList.add('active'); b.setAttribute('aria-pressed', 'true');
   chart = b.dataset.chart;
   draw();
 }));
@@ -337,7 +345,7 @@ function drawPie() {
     ctx.closePath(); ctx.fill();
     ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
     const mid = (a0 + a1) / 2;
-    const pct = Math.round(c / total * 100);
+    const pct = (c / total * 100).toFixed(1);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 13px sans-serif';
     ctx.fillText(`${pct}%`, cx + Math.cos(mid) * r * 0.62 - 14, cy + Math.sin(mid) * r * 0.62 + 4);
     a0 = a1;
@@ -353,37 +361,27 @@ function drawPie() {
   ctx.fillText('各分数段占比（扇形图：便于看百分比）', 190, 50);
 }
 
-function drawLine() {
-  // 按学号顺序的成绩折线
+function drawPoints() {
+  // 每个点代表一名学生；学号不是时间，不连接成趋势线。
   drawAxes(100);
   const n = data.length;
-  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  data.forEach((v, i) => {
-    const x = PLOT.x0 + 20 + (i / Math.max(1, n - 1)) * (PLOT.w - 40);
-    const y = PLOT.y0 - (v / 100) * PLOT.h;
-    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-  });
-  ctx.stroke();
   data.forEach((v, i) => {
     const x = PLOT.x0 + 20 + (i / Math.max(1, n - 1)) * (PLOT.w - 40);
     const y = PLOT.y0 - (v / 100) * PLOT.h;
     ctx.fillStyle = '#fbbf24';
     ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
   });
-  // 平均线
-  const s = stats();
-  const my = PLOT.y0 - (s.mean / 100) * PLOT.h;
-  ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
-  ctx.setLineDash([6, 5]);
+  const s = stats(), my = PLOT.y0 - (s.mean / 100) * PLOT.h;
+  ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
   ctx.beginPath(); ctx.moveTo(PLOT.x0, my); ctx.lineTo(PLOT.x0 + PLOT.w, my); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = '#38bdf8'; ctx.font = '13px sans-serif';
+  ctx.setLineDash([]); ctx.fillStyle = '#38bdf8'; ctx.font = '13px sans-serif';
   ctx.fillText(`平均数 ${s.mean.toFixed(1)}`, PLOT.x0 + PLOT.w - 90, my - 8);
   ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif';
-  ctx.fillText('每人成绩（折线图：便于看波动与趋势）', 200, 50);
+  ctx.fillText('每人成绩点图：学号是编号，不表示时间趋势', 160, 50);
   ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
-  ctx.fillText('学号 →', PLOT.x0 + PLOT.w - 46, PLOT.y0 + 20);
+  ctx.fillText('1', PLOT.x0 + 18, PLOT.y0 + 20);
+  ctx.fillText(String(n), PLOT.x0 + PLOT.w - 26, PLOT.y0 + 20);
+  ctx.fillText('学号', PLOT.x0 + PLOT.w - 40, PLOT.y0 + 38);
 }
 
 function draw() {
@@ -391,7 +389,10 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (chart === 'bar') drawBar();
   else if (chart === 'pie') drawPie();
-  else drawLine();
+  else drawPoints();
+  const summary = BANDS.map(([label], i) => `${label} ${bandCounts()[i]} 人`).join('，');
+  const chartName = chart === 'bar' ? '条形图' : chart === 'pie' ? '扇形图' : '按学号排列的成绩点图，学号不表示时间趋势';
+  canvas.setAttribute('aria-label', `${chartName}；共 ${data.length} 人；${summary}。`);
 }
 
 updPanel();
