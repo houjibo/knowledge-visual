@@ -11,7 +11,7 @@
 
 ## 当前基线
 
-仓库 `houjibo/knowledge-visual` 为公开仓库、默认分支为 `main`；2026-11-07 公共 GitHub API 返回 `has_pages: false`，2026-11-08 项目站返回 404。已有静态 HTML 站点、根目录预览方式、GitHub Actions 检查及分主题浏览器测试；新增按受控目录和类型生成的发布包，并在子路径运行四学科代表性交互，提交 `e07d564` 的 [远端工作流](https://github.com/houjibo/knowledge-visual/actions/runs/42403624733) 完整检查通过，但 Configure GitHub Pages 步骤失败，部署和公网验证被跳过；公共 API 显示 Pages 尚未启用，详细失败日志需要认证后核实。2026-11-08 最近连续 11 次远端运行因后续推送取消；调整并发策略后，`bd9d8a9` 的 [远端运行](https://github.com/houjibo/knowledge-visual/actions/runs/42417809436) 完整检查通过，但旧工作流在版本已过时时构建前失败、部署跳过；新工作流的 [`72ef328` 运行](https://github.com/houjibo/knowledge-visual/actions/runs/42418174272) 检查通过，因提交过时安全跳过构建及部署；当前版本和公网发布仍待验证。公网尚未发布。部分学习进度存于浏览器本地，跨设备或更换域名不会自动同步。独立域名、域名所有权、托管及反馈渠道尚未确定。
+仓库 `houjibo/knowledge-visual` 为公开仓库、默认分支为 `main`；2026-11-07 公共 GitHub API 返回 `has_pages: false`，2026-11-08 项目站返回 404。已有静态 HTML 站点、根目录预览方式、GitHub Actions 检查及分主题浏览器测试；新增按受控目录和类型生成的发布包，并在子路径运行四学科代表性交互，提交 `e07d564` 的 [远端工作流](https://github.com/houjibo/knowledge-visual/actions/runs/42403624733) 完整检查通过，但 Configure GitHub Pages 步骤失败，部署和公网验证被跳过；公共 API 显示 Pages 尚未启用，详细失败日志需要认证后核实。2026-11-08 最近连续 11 次远端运行因后续推送取消；调整并发策略后，`bd9d8a9` 的 [远端运行](https://github.com/houjibo/knowledge-visual/actions/runs/42417809436) 完整检查通过，但旧工作流在版本已过时时构建前失败、部署跳过；新工作流的 [`72ef328` 运行](https://github.com/houjibo/knowledge-visual/actions/runs/42418174272) 检查通过，因提交过时安全跳过构建及部署；`7def5bc` 的远端检查失败，公开注释只有退出码，详细日志需认证；后续 [`8744aec` 检查](https://github.com/houjibo/knowledge-visual/actions/runs/42420783292)通过，过时构建跳过部署。浏览器报告现增加 GitHub 错误注释，本地受控失败已验证文件、行号、错误和非零退出码，远端真实失败效果仍待验证。当前版本和公网发布仍待验证。公网尚未发布。部分学习进度存于浏览器本地，跨设备或更换域名不会自动同步。独立域名、域名所有权、托管及反馈渠道尚未确定。
 
 ## 分阶段执行
 

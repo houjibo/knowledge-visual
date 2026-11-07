@@ -5,7 +5,7 @@ module.exports = defineConfig({
   fullyParallel: true,
   workers: process.env.CI ? 2 : undefined,
   retries: 0,
-  reporter: 'list',
+  reporter: process.env.GITHUB_ACTIONS ? [['list'], ['github']] : 'list',
   use: {
     baseURL: 'http://127.0.0.1:4183',
     browserName: 'chromium',
