@@ -188,7 +188,8 @@
         <div class="classify-question" id="cls-question"></div>
         <div class="classify-tri" id="cls-tri"></div>
         <div class="classify-options" id="cls-options"></div>
-        <div class="feedback" id="cls-feedback"></div>
+        <div class="feedback" id="cls-feedback" role="status" aria-live="polite"></div>
+        <button type="button" class="calc-submit" id="cls-next">下一题</button>
       </div>
     </div>
 
@@ -201,11 +202,12 @@
         </div>
         <div class="calc-problem" id="calc-problem"></div>
         <div class="calc-input-row">
-          <input type="number" class="calc-input" id="calc-answer" placeholder="?" inputmode="numeric">
+          <input type="number" class="calc-input" id="calc-answer" placeholder="?" inputmode="numeric" aria-label="未知角度">
           <span class="calc-unit">°</span>
         </div>
         <button class="calc-submit" id="calc-submit">确定</button>
-        <div class="feedback" id="calc-feedback"></div>
+        <div class="feedback" id="calc-feedback" role="status" aria-live="polite"></div>
+        <button type="button" class="calc-submit" id="calc-next">下一题</button>
       </div>
     </div>
 
@@ -219,7 +221,8 @@
         <div class="sides-question" id="sides-question"></div>
         <div class="sides-visual" id="sides-visual"></div>
         <div class="sides-options" id="sides-options"></div>
-        <div class="feedback" id="sides-feedback"></div>
+        <div class="feedback" id="sides-feedback" role="status" aria-live="polite"></div>
+        <button type="button" class="calc-submit" id="sides-next">下一题</button>
       </div>
     </div>
 
@@ -232,7 +235,8 @@
         </div>
         <div class="challenge-question" id="ch-question"></div>
         <div class="challenge-options" id="ch-options"></div>
-        <div class="feedback" id="ch-feedback"></div>
+        <div class="feedback" id="ch-feedback" role="status" aria-live="polite"></div>
+        <button type="button" class="calc-submit" id="ch-next">下一题</button>
       </div>
     </div>
   </div>
@@ -269,9 +273,9 @@
       } else if (type === 'right') {
         pts = [[30, 15], [30, 140], [170, 140]];
       } else if (type === 'obtuse') {
-        pts = [[160, 15], [30, 140], [170, 140]];
+        pts = [[175, 20], [30, 140], [145, 140]];
       } else if (type === 'equilateral') {
-        pts = [[100, 15], [30, 137], [170, 137]];
+        pts = [[100, 15], [30, 136.24], [170, 136.24]];
       } else if (type === 'isosceles') {
         pts = [[100, 15], [45, 140], [155, 140]];
       } else if (type === 'scalene') {
@@ -456,8 +460,8 @@
     function bumpTotalCorrect() {
       totalCorrect++;
       if (totalCorrect >= 8 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('triangles')) {
-        PageProgress.markDone('triangles');
-        if (typeof showToast === 'function') showToast('🎉 「三角形」知识地图已点亮！');
+        const saved = PageProgress.markDone('triangles');
+        if (saved && typeof showToast === 'function') showToast('🎉 「三角形」知识地图已点亮！');
       }
     }
 
@@ -492,7 +496,7 @@
 
       const questionText = isByAngle
         ? '这个三角形按角分类，属于哪一种？'
-        : '这个三角形按边分类，属于哪一种？';
+        : '这个三角形按边分类，最具体的名称是哪一种？（等边三角形也是等腰三角形）';
 
       document.getElementById('cls-question').textContent = questionText;
 
@@ -516,6 +520,7 @@
     function handleClassifyAnswer(btn, selected, answer, container) {
       if (clsState.locked) return;
       clsState.locked = true;
+      container.querySelectorAll('.classify-btn').forEach(b => { b.disabled = true; });
 
       const fb = document.getElementById('cls-feedback');
       if (selected === answer) {
@@ -525,7 +530,6 @@
         clsState.correct++;
         document.getElementById('cls-correct').textContent = clsState.correct;
         bumpTotalCorrect();
-        setTimeout(newClassifyQuestion, 1500);
       } else {
         btn.classList.add('wrong');
         fb.textContent = `❌ 这是${answer}`;
@@ -535,7 +539,6 @@
         container.querySelectorAll('.classify-btn').forEach(b => {
           if (b.textContent === answer) b.classList.add('correct');
         });
-        setTimeout(newClassifyQuestion, 2500);
       }
     }
 
@@ -544,6 +547,7 @@
 
     function newCalcQuestion() {
       calcState.locked = false;
+      document.getElementById('calc-submit').disabled = false;
       document.getElementById('calc-feedback').textContent = '';
       document.getElementById('calc-feedback').className = 'feedback';
       document.getElementById('calc-answer').value = '';
@@ -560,11 +564,11 @@
       const labels = angles.map((a, i) => i === hideIdx ? '?' : a + '°');
 
       const angleNames = ['∠A', '∠B', '∠C'];
-      const typeMap = (a) => a === 90 ? 'right' : a > 90 ? 'obtuse' : 'acute';
 
       const problemEl = document.getElementById('calc-problem');
       problemEl.innerHTML = `
         <svg class="calc-tri-svg" id="calc-svg" width="200" height="160"></svg>
+        <p>图形为示意，角度不按比例。</p>
         <div class="calc-text">
           已知：${angleNames[0]} = <span class="highlight-num">${labels[0]}</span>，
           ${angleNames[1]} = <span class="highlight-num">${labels[1]}</span>，
@@ -573,7 +577,7 @@
         <div class="calc-text">求 <span class="highlight-num">${angleNames[hideIdx]}</span> = ?</div>
       `;
 
-      drawTriangle(document.getElementById('calc-svg'), typeMap(angles[hideIdx] === '?' ? angles[(hideIdx+1)%3] : angles[hideIdx]), angles.map((a, i) => i === hideIdx ? '?' : a));
+      drawTriangle(document.getElementById('calc-svg'), 'scalene', angles.map((a, i) => i === hideIdx ? '?' : a));
 
       calcState.answer = angles[hideIdx];
     }
@@ -583,15 +587,16 @@
       calcState.locked = true;
 
       const input = document.getElementById('calc-answer');
-      const val = parseInt(input.value);
+      const val = Number(input.value);
       const fb = document.getElementById('calc-feedback');
 
-      if (isNaN(val)) {
-        fb.textContent = '请输入数字！';
+      if (input.value.trim() === '' || !Number.isInteger(val)) {
+        fb.textContent = '请输入整数！';
         fb.className = 'feedback wrong-fb';
         calcState.locked = false;
         return;
       }
+      document.getElementById('calc-submit').disabled = true;
 
       if (val === calcState.answer) {
         input.classList.add('correct');
@@ -600,14 +605,12 @@
         calcState.correct++;
         document.getElementById('calc-correct').textContent = calcState.correct;
         bumpTotalCorrect();
-        setTimeout(newCalcQuestion, 1500);
       } else {
         input.classList.add('wrong');
         fb.textContent = `❌ 正确答案是 ${calcState.answer}°（180° - 已知角之和）`;
         fb.className = 'feedback wrong-fb';
         calcState.wrong++;
         document.getElementById('calc-wrong').textContent = calcState.wrong;
-        setTimeout(newCalcQuestion, 2500);
       }
     });
 
@@ -661,8 +664,7 @@
           bar.className = 'sides-bar';
           const rect = document.createElement('div');
           rect.className = 'sides-bar-rect';
-          const maxW = 120;
-          const w = Math.max(20, Math.min(maxW, len * 8));
+          const w = len * 4;
           rect.style.width = w + 'px';
           rect.style.height = '20px';
           rect.style.background = ['#7B1FA2', '#4A90D9', '#FF9500'][i];
@@ -692,7 +694,7 @@
         const hi = a + b - 1;
 
         document.getElementById('sides-question').innerHTML =
-          `三角形两条边分别是 <span class="highlight-num">${a}cm</span> 和 <span class="highlight-num">${b}cm</span>，<br>第三边可能是多少？`;
+          `三角形两条边分别是 <span class="highlight-num">${a}cm</span> 和 <span class="highlight-num">${b}cm</span>，<br>第三边长度是整数厘米时，所有可能值的完整范围是多少（含端点）？`;
 
         const visual = document.getElementById('sides-visual');
         visual.innerHTML = '';
@@ -701,8 +703,7 @@
           bar.className = 'sides-bar';
           const rect = document.createElement('div');
           rect.className = 'sides-bar-rect';
-          const maxW = 120;
-          const w = Math.max(20, Math.min(maxW, len * 8));
+          const w = len * 4;
           rect.style.width = w + 'px';
           rect.style.height = '20px';
           rect.style.background = ['#7B1FA2', '#4A90D9'][i];
@@ -722,19 +723,8 @@
 
         // 生成选项：一个正确答案 + 三个错误答案
         const correctAnswer = `${lo}~${hi}cm`;
-        let options = [correctAnswer];
-
-        // 错误选项
-        const wrongOptions = [
-          `${Math.max(1, lo - randInt(1, 3))}~${hi + randInt(1, 3)}cm`,
-          `${lo + randInt(1, 3)}~${hi + randInt(2, 5)}cm`,
-          `${Math.max(1, lo - randInt(2, 4))}~${hi - randInt(1, 2)}cm`
-        ];
-        wrongOptions.forEach(w => { if (w !== correctAnswer) options.push(w); });
-        while (options.length < 4) {
-          options.push(`${randInt(1, 5)}~${randInt(8, 15)}cm`);
-        }
-        options = shuffle(options.slice(0, 4));
+        const options = shuffle([correctAnswer, `${lo}~${hi + 1}cm`,
+          `${lo + 1}~${hi}cm`, `${Math.max(1, lo - 1)}~${hi + 2}cm`]);
 
         const optContainer = document.getElementById('sides-options');
         optContainer.innerHTML = '';
@@ -751,6 +741,7 @@
     function handleSidesAnswer(btn, selected, answer, container) {
       if (sidesState.locked) return;
       sidesState.locked = true;
+      container.querySelectorAll('.sides-btn').forEach(b => { b.disabled = true; });
 
       const fb = document.getElementById('sides-feedback');
       if (selected === answer) {
@@ -760,7 +751,6 @@
         sidesState.correct++;
         document.getElementById('sides-correct').textContent = sidesState.correct;
         bumpTotalCorrect();
-        setTimeout(newSidesQuestion, 1500);
       } else {
         btn.classList.add('wrong');
         fb.textContent = `❌ 正确答案：${answer}`;
@@ -770,7 +760,6 @@
         container.querySelectorAll('.sides-btn').forEach(b => {
           if (b.textContent === answer) b.classList.add('correct');
         });
-        setTimeout(newSidesQuestion, 2500);
       }
     }
 
@@ -860,9 +849,9 @@
 
       // 去重 + 打乱
       options = [...new Set(options)];
-      while (options.length < 4) {
-        const filler = qType === 1 || qType === 4 && sub === 1 || qType === 4 && sub === 2 ? `${randInt(20, 150)}°` : (qType === 2 ? '梯形' : '可能');
-        if (!options.includes(filler)) options.push(filler);
+      for (let filler = 1; options.length < 4; filler++) {
+        const candidate = `${filler}°`;
+        if (!options.includes(candidate)) options.push(candidate);
       }
       options = shuffle(options.slice(0, 4));
       if (!options.includes(answer)) {
@@ -884,6 +873,7 @@
     function handleChAnswer(btn, selected, answer, container) {
       if (chState.locked) return;
       chState.locked = true;
+      container.querySelectorAll('.challenge-opt').forEach(b => { b.disabled = true; });
       const fb = document.getElementById('ch-feedback');
       if (selected === answer) {
         btn.classList.add('correct');
@@ -894,7 +884,6 @@
         document.getElementById('ch-correct').textContent = chState.correct;
         document.getElementById('ch-streak').textContent = chState.streak;
         bumpTotalCorrect();
-        setTimeout(newChQuestion, 1200);
       } else {
         btn.classList.add('wrong');
         fb.textContent = `❌ 正确答案：${answer}`;
@@ -904,11 +893,14 @@
         container.querySelectorAll('.challenge-opt').forEach(b => {
           if (b.textContent === answer) b.classList.add('correct');
         });
-        setTimeout(newChQuestion, 2200);
       }
     }
 
     // ========== 初始化 ==========
+    document.getElementById('cls-next').addEventListener('click', newClassifyQuestion);
+    document.getElementById('calc-next').addEventListener('click', newCalcQuestion);
+    document.getElementById('sides-next').addEventListener('click', newSidesQuestion);
+    document.getElementById('ch-next').addEventListener('click', newChQuestion);
     newClassifyQuestion();
     newCalcQuestion();
     newSidesQuestion();

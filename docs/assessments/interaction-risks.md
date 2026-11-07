@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：94；含内联 while 的页面：60。同一页面可能出现在两类中。
+含候选 div 控件的页面：94；含内联 while 的页面：59。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -156,7 +156,6 @@
 - [math/topics/simple-reasoning/index.html](../../math/topics/simple-reasoning/index.html)：431 行
 - [math/topics/subtraction/index.html](../../math/topics/subtraction/index.html)：401 行
 - [math/topics/tree-planting/index.html](../../math/topics/tree-planting/index.html)：631 行、748 行
-- [math/topics/triangles/index.html](../../math/topics/triangles/index.html)：734 行、863 行
 - [math/topics/understanding-zero/index.html](../../math/topics/understanding-zero/index.html)：389 行
 - [math/uni/discrete-math.html](../../math/uni/discrete-math.html)：386 行、530 行
 - [math/uni/group-theory.html](../../math/uni/group-theory.html)：655 行
