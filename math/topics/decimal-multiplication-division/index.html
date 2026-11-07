@@ -198,6 +198,7 @@
       <button class="mode-tab" data-mode="divide">➗ 小数除法</button>
       <button class="mode-tab" data-mode="challenge">🏆 限时挑战</button>
     </div>
+    <p id="learningProgress" role="status" aria-live="polite" style="text-align:center;margin:12px;line-height:1.6"></p>
 
     <!-- ===== 模式1: 概念理解 ===== -->
     <div class="mode-content active" id="mode-concept">
@@ -231,16 +232,16 @@
 
         <div class="rule-card">
           <h4>💡 记忆口诀</h4>
-          <p>乘法：右移点小数（乘数共几位，积就点几位）<br>
-          除法：左移除变整（除数变整数，被除数同扩）<br>
+          <p>乘法：先按整数算，积从右往左数出因数共有的小数位数<br>
+          除法：除数变整数，被除数和除数同时扩大相同倍数<br>
           乘10右移，除10左移！</p>
         </div>
 
         <div class="demo-box">
           <div class="demo-title">🎯 点击切换示例</div>
-          <div id="example-display" style="font-size:20px;font-weight:700;color:#1D1D1F;line-height:2;cursor:pointer;">
+          <button type="button" id="example-display" style="border:0;background:transparent;font-size:20px;font-weight:700;color:#1D1D1F;line-height:2;cursor:pointer;">
             2.5 × 4 = 10
-          </div>
+          </button>
           <div id="example-explain" style="font-size:14px;color:#6E6E73;margin-top:8px;line-height:1.6;">
             2.5×4 → 先算25×4=100 → 因数共1位小数 → 10.0
           </div>
@@ -265,12 +266,13 @@
         </div>
 
         <div class="answer-input-row">
-          <input type="text" class="answer-input" id="mul-answer" placeholder="?" inputmode="decimal" autocomplete="off">
+          <input type="text" class="answer-input" id="mul-answer" aria-label="乘法答案" placeholder="?" inputmode="decimal" autocomplete="off">
         </div>
 
         <button class="submit-btn" id="mul-submit">确认</button>
 
         <div class="feedback-area" id="mul-feedback"></div>
+        <button type="button" class="submit-btn" id="mul-next" hidden>下一题</button>
 
         <div class="hint-text" id="mul-hint">💡 提示：先忽略小数点，按整数乘法算，再点小数点</div>
       </div>
@@ -293,14 +295,15 @@
         </div>
 
         <div class="answer-input-row">
-          <input type="text" class="div-answer-input" id="div-answer" placeholder="?" inputmode="decimal" autocomplete="off">
+          <input type="text" class="div-answer-input" id="div-answer" aria-label="除法答案" placeholder="?" inputmode="decimal" autocomplete="off">
         </div>
 
         <button class="div-submit-btn" id="div-submit">确认</button>
 
         <div class="div-feedback-area" id="div-feedback"></div>
+        <button type="button" class="div-submit-btn" id="div-next" hidden>下一题</button>
 
-        <div class="hint-text" id="div-hint">💡 提示：小数除以整数，先按整数除，商的小数点与被除数对齐</div>
+        <div class="hint-text" id="div-hint">💡 提示：除数是小数时，先把除数和被除数同时扩大相同倍数，使除数变成整数</div>
       </div>
     </div>
 
@@ -321,6 +324,7 @@
           </div>
           <div class="challenge-problem" id="ch-problem">2.5 × 4 = ?</div>
           <div class="challenge-options" id="ch-options"></div>
+          <p id="challenge-status" role="status" aria-live="polite"></p>
         </div>
 
         <div id="challenge-result" style="display:none;">
@@ -339,6 +343,26 @@
 
   <script src="../../assets/js/common.js"></script>
   <script>
+    const learningActivities = new Set();
+    let progressSaved = PageProgress.isDone('decimal-multiplication-division');
+    let completionAttempted = false;
+    function renderLearningProgress() {
+      const status = document.getElementById('learningProgress');
+      if (progressSaved) { status.textContent = '✓ 本主题已完成'; return; }
+      if (completionAttempted) { status.textContent = '本次已达标，进度尚未保存，请使用页面上的重试保存按钮。'; return; }
+      const names = [['multiply','乘法'], ['divide','除法'], ['challenge','挑战']];
+      status.textContent = `本次完成 ${learningActivities.size}/3：` + names.map(([id, name]) => `${learningActivities.has(id) ? '✓' : '○'} ${name}`).join('、') + '。每项答对一题；未完成进度仅保留在当前页面。';
+    }
+    function finishLearningActivity(id) {
+      learningActivities.add(id);
+      if (learningActivities.size === 3 && !progressSaved && !completionAttempted) {
+        completionAttempted = true;
+        progressSaved = PageProgress.markDone('decimal-multiplication-division');
+      }
+      renderLearningProgress();
+    }
+    document.addEventListener('math-progress-saved', () => { if (completionAttempted) { progressSaved = true; renderLearningProgress(); } });
+    renderLearningProgress();
     // ===== 模式切换 =====
     document.querySelectorAll('.mode-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -346,6 +370,7 @@
         document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
         tab.classList.add('active');
         document.getElementById('mode-' + tab.dataset.mode).classList.add('active');
+        updateChallengePause();
       });
     });
 
@@ -354,6 +379,7 @@
     function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = randInt(0, i); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
     function roundTo(num, d) { return Math.round(num * Math.pow(10, d)) / Math.pow(10, d); }
     function formatAnswer(n) { return parseFloat(n.toFixed(4)).toString(); }
+    function parseDecimal(value) { return /^(?:\d+(?:\.\d*)?|\.\d+)$/.test(value) ? Number(value) : null; }
 
     // ===== 模式1: 概念理解 - 示例切换 =====
     const examples = [
@@ -375,7 +401,8 @@
         const ex = examples[exIdx];
         exDisplay.textContent = ex.expr;
         exExplain.textContent = ex.explain;
-        calcDemo.innerHTML = '<div>例：<span class="highlight-num">' + ex.a + '</span> <span style="color:#FF9800;">×</span> <span class="highlight-num">' + ex.b + '</span> = <span class="highlight-num">' + ex.result + '</span></div><div style="font-size:14px;color:#6E6E73;margin-top:8px;">' + ex.explain + '</div>';
+        const op = ex.expr.includes('÷') ? '÷' : '×';
+        calcDemo.innerHTML = '<div>例：<span class="highlight-num">' + ex.a + '</span> <span style="color:#FF9800;">' + op + '</span> <span class="highlight-num">' + ex.b + '</span> = <span class="highlight-num">' + ex.result + '</span></div><div style="font-size:14px;color:#6E6E73;margin-top:8px;">' + ex.explain + '</div>';
       });
     }
 
@@ -418,6 +445,7 @@
     }
 
     function newMulProblem() {
+      document.getElementById('mul-next').hidden = true;
       const p = genMulProblem();
       document.getElementById('mul-a').textContent = p.a;
       document.getElementById('mul-b').textContent = p.b;
@@ -433,16 +461,17 @@
     function checkMulAnswer() {
       if (mulState.locked) return;
       const userAns = document.getElementById('mul-answer').value.trim();
-      if (!userAns) return;
+      if (parseDecimal(userAns) === null) { document.getElementById('mul-feedback').textContent = '请输入有效的小数。'; return; }
       mulState.locked = true;
       const input = document.getElementById('mul-answer');
       const fb = document.getElementById('mul-feedback');
 
-      if (userAns === mulState.currentAnswer) {
+      if (parseDecimal(userAns) === Number(mulState.currentAnswer)) {
         input.className = 'answer-input correct';
         fb.textContent = '✅ 正确！太棒了！';
         fb.className = 'feedback-area correct';
         mulState.correct++;
+        finishLearningActivity('multiply');
         mulState.streak++;
         if (mulState.streak > mulState.maxStreak) mulState.maxStreak = mulState.streak;
         if (typeof Sound !== 'undefined') Sound.play('correct');
@@ -462,10 +491,11 @@
       } else {
         streakEl.textContent = '';
       }
-      setTimeout(newMulProblem, 1500);
+      document.getElementById('mul-next').hidden = false;
     }
 
     document.getElementById('mul-submit').addEventListener('click', checkMulAnswer);
+    document.getElementById('mul-next').addEventListener('click', newMulProblem);
     document.getElementById('mul-answer').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') checkMulAnswer();
     });
@@ -501,6 +531,7 @@
     }
 
     function newDivProblem() {
+      document.getElementById('div-next').hidden = true;
       const p = genDivProblem();
       document.getElementById('div-a').textContent = p.a;
       document.getElementById('div-b').textContent = p.b;
@@ -516,16 +547,17 @@
     function checkDivAnswer() {
       if (divState.locked) return;
       const userAns = document.getElementById('div-answer').value.trim();
-      if (!userAns) return;
+      if (parseDecimal(userAns) === null) { document.getElementById('div-feedback').textContent = '请输入有效的小数。'; return; }
       divState.locked = true;
       const input = document.getElementById('div-answer');
       const fb = document.getElementById('div-feedback');
 
-      if (userAns === divState.currentAnswer) {
+      if (parseDecimal(userAns) === Number(divState.currentAnswer)) {
         input.className = 'div-answer-input correct';
         fb.textContent = '✅ 正确！真厉害！';
         fb.className = 'div-feedback-area correct';
         divState.correct++;
+        finishLearningActivity('divide');
         divState.streak++;
         if (divState.streak > divState.maxStreak) divState.maxStreak = divState.streak;
         if (typeof Sound !== 'undefined') Sound.play('correct');
@@ -545,16 +577,33 @@
       } else {
         streakEl.textContent = '';
       }
-      setTimeout(newDivProblem, 1500);
+      document.getElementById('div-next').hidden = false;
     }
 
     document.getElementById('div-submit').addEventListener('click', checkDivAnswer);
+    document.getElementById('div-next').addEventListener('click', newDivProblem);
     document.getElementById('div-answer').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') checkDivAnswer();
     });
 
     // ===== 模式4: 限时挑战 =====
-    let chState = { correct: 0, wrong: 0, streak: 0, maxStreak: 0, timeLeft: 60, running: false, timerId: null };
+    let chState = { correct: 0, wrong: 0, streak: 0, maxStreak: 0, timeLeft: 60, running: false, paused: false, locked: false, timerId: null };
+    let chNextTimer = null;
+    function updateChallengePause() {
+      if (!chState.running) return;
+      const shouldPause = document.hidden || !document.getElementById('mode-challenge').classList.contains('active');
+      if (shouldPause && !chState.paused) {
+        chState.paused = true;
+        clearInterval(chState.timerId); clearTimeout(chNextTimer);
+        document.getElementById('challenge-status').textContent = '挑战已暂停，返回后继续。';
+      } else if (!shouldPause && chState.paused) {
+        chState.paused = false;
+        document.getElementById('challenge-status').textContent = '挑战继续。';
+        if (chState.locked) nextChallengeProblem();
+        startChallengeTimer();
+      }
+    }
+    document.addEventListener('visibilitychange', updateChallengePause);
 
     function genChallengeProblem() {
       const isMul = Math.random() > 0.5;
@@ -568,7 +617,8 @@
     }
 
     function nextChallengeProblem() {
-      if (!chState.running) return;
+      if (!chState.running || chState.paused) return;
+      chState.locked = false;
       const p = genChallengeProblem();
       document.getElementById('ch-problem').textContent = p.text;
       chState.currentAnswer = p.answer;
@@ -576,11 +626,7 @@
       // 生成选项
       const correctVal = parseFloat(p.answer);
       let options = new Set([p.answer]);
-      while (options.size < 4) {
-        const offset = randInt(1, 5) * (Math.random() > 0.5 ? 1 : -1) * (correctVal >= 1 ? 0.1 : 0.01);
-        const wrong = roundTo(correctVal + offset, 4);
-        if (wrong > 0) options.add(formatAnswer(wrong));
-      }
+      for (let offset = 1; options.size < 4; offset++) options.add(formatAnswer(correctVal + offset * (correctVal >= 1 ? 0.1 : 0.01)));
       const optsArr = shuffle(Array.from(options));
       const optsEl = document.getElementById('ch-options');
       optsEl.innerHTML = '';
@@ -589,10 +635,13 @@
         btn.className = 'challenge-opt';
         btn.textContent = opt;
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.challenge-opt').forEach(b => b.style.pointerEvents = 'none');
+          if (!chState.running || chState.paused || chState.locked) return;
+          chState.locked = true;
+          document.querySelectorAll('.challenge-opt').forEach(b => { b.disabled = true; });
           if (opt === chState.currentAnswer) {
             btn.classList.add('correct');
             chState.correct++;
+            finishLearningActivity('challenge');
             chState.streak++;
             if (chState.streak > chState.maxStreak) chState.maxStreak = chState.streak;
             if (typeof Sound !== 'undefined') Sound.play('correct');
@@ -604,21 +653,28 @@
             if (typeof Sound !== 'undefined') Sound.play('wrong');
           }
           document.getElementById('ch-score').textContent = chState.correct;
-          setTimeout(nextChallengeProblem, 1500);
+          chNextTimer = setTimeout(nextChallengeProblem, 1500);
         });
         optsEl.appendChild(btn);
       });
     }
 
     function startChallenge() {
-      chState = { correct: 0, wrong: 0, streak: 0, maxStreak: 0, timeLeft: 60, running: true, timerId: null };
+      clearInterval(chState.timerId); clearTimeout(chNextTimer);
+      chState = { correct: 0, wrong: 0, streak: 0, maxStreak: 0, timeLeft: 60, running: true, paused: false, locked: false, timerId: null };
       document.getElementById('challenge-start-screen').style.display = 'none';
       document.getElementById('challenge-result').style.display = 'none';
       document.getElementById('challenge-game').style.display = 'block';
       document.getElementById('ch-score').textContent = '0';
       document.getElementById('timer').textContent = '⏱ 60';
       document.getElementById('timer').classList.remove('warning');
+      document.getElementById('challenge-status').textContent = '挑战进行中。';
       nextChallengeProblem();
+      startChallengeTimer();
+      updateChallengePause();
+    }
+    function startChallengeTimer() {
+      clearInterval(chState.timerId);
       chState.timerId = setInterval(() => {
         chState.timeLeft--;
         const timerEl = document.getElementById('timer');
@@ -631,6 +687,7 @@
     function endChallenge() {
       chState.running = false;
       clearInterval(chState.timerId);
+      clearTimeout(chNextTimer);
       document.getElementById('challenge-game').style.display = 'none';
       document.getElementById('challenge-result').style.display = 'block';
       document.getElementById('r-correct').textContent = chState.correct;
