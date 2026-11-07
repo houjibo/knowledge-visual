@@ -11,7 +11,7 @@
 
 ## 当前基线
 
-仓库 `houjibo/knowledge-visual` 为公开仓库、默认分支为 `main`；2026-11-07 公共 GitHub API 返回 `has_pages: false`，2026-11-08 项目站返回 404。已有静态 HTML 站点、根目录预览方式、GitHub Actions 检查及分主题浏览器测试；新增按受控目录和类型生成的发布包，并在子路径运行四学科代表性交互，提交 `e07d564` 的 [远端工作流](https://github.com/houjibo/knowledge-visual/actions/runs/42403624733) 完整检查通过，但 Configure GitHub Pages 步骤失败，部署和公网验证被跳过；公共 API 显示 Pages 尚未启用，详细失败日志需要认证后核实。公网尚未发布。部分学习进度存于浏览器本地，跨设备或更换域名不会自动同步。独立域名、域名所有权、托管及反馈渠道尚未确定。
+仓库 `houjibo/knowledge-visual` 为公开仓库、默认分支为 `main`；2026-11-07 公共 GitHub API 返回 `has_pages: false`，2026-11-08 项目站返回 404。已有静态 HTML 站点、根目录预览方式、GitHub Actions 检查及分主题浏览器测试；新增按受控目录和类型生成的发布包，并在子路径运行四学科代表性交互，提交 `e07d564` 的 [远端工作流](https://github.com/houjibo/knowledge-visual/actions/runs/42403624733) 完整检查通过，但 Configure GitHub Pages 步骤失败，部署和公网验证被跳过；公共 API 显示 Pages 尚未启用，详细失败日志需要认证后核实。2026-11-08 最近连续 11 次远端运行因后续推送取消；已调整并发策略，实际远端队列及发布行为仍待验证。公网尚未发布。部分学习进度存于浏览器本地，跨设备或更换域名不会自动同步。独立域名、域名所有权、托管及反馈渠道尚未确定。
 
 ## 分阶段执行
 
@@ -25,7 +25,7 @@
 ### 2. 建立公开站点和发布流程
 
 1. 首选试点 GitHub Pages：仓库已公开，静态站可由 GitHub Actions 发布；项目站默认地址预计为 `https://houjibo.github.io/knowledge-visual/`，**仅启用并实际部署后才是有效地址**。该选项不排除后续迁移其他静态托管服务。
-2. 已配置受控发布流水线：仅主分支推送或手动运行在完整检查通过后，构建同一提交并部署；拉取请求只检查，同分支新运行会取消旧运行，构建和部署前还会核对提交是否仍为 main 最新提交。部署后检查版本、资源及桌面和窄屏四学科代表路径与面积到体积路线；Pages 未启用，实际部署和公网检查仍待远端验证。
+2. 已配置受控发布流水线：仅主分支推送或手动运行在完整检查通过后，构建同一提交并部署；拉取请求只检查，同分支已运行检查不被新推送取消，默认等待队列只保留最新运行；检查通过后若提交已过时则跳过构建和部署，构建后部署前再次严格核对 main 最新提交。部署后检查版本、资源及桌面和窄屏四学科代表路径与面积到体积路线；Pages 未启用，实际部署和公网检查仍待远端验证。
 3. 仓库管理员在 Settings → Pages → Build and deployment → Source 选择 GitHub Actions；确认 Actions 与 `github-pages` 环境权限。Pages 尚未启用，本机 CLI 未登录；配置后重新运行主分支工作流，并从公网检查 HTTPS、首页、深层 URL、资源、搜索、代表交互、移动视口与浏览器错误；读取站点根目录的 `release-version.json` 对照工作流提交和未修改标记，记录地址、版本和时间。故障时停止宣称发布成功。
 4. 回退候选流程：在主分支创建恢复到已知可用内容的提交，推送后等待完整检查及部署，并核验公网版本；不可直接以旧提交重新运行来保证覆盖当前版本。实际演练、缓存行为与运行记录尚待验证。
 
@@ -51,4 +51,4 @@
 
 待确定：是否使用自有域名及其名称、域名/DNS 管理权、托管偏好、反馈渠道、服务可用性目标。无需等待这些事项即可先完成发布包和子路径验证；涉及实际域名或托管账户的操作以可用权限和明确选择为准。
 
-参考：[GitHub Pages 发布源与 Actions](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)、[HTTPS 配置](https://docs.github.com/en/pages/getting-started-with-github-pages/securing-your-github-pages-site-with-https)、[域名验证](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages)。
+参考：[GitHub Actions 并发策略](https://docs.github.com/en/actions/concepts/workflows-and-actions/concurrency)、[GitHub Pages 发布源与 Actions](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)、[HTTPS 配置](https://docs.github.com/en/pages/getting-started-with-github-pages/securing-your-github-pages-site-with-https)、[域名验证](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages)。
