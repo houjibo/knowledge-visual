@@ -118,3 +118,16 @@ test('四人排队的间隔题生成四个选项且答案正确', async ({page})
   await expect(page.locator('#queue-result')).toContainText('正确');
   expect(errors).toEqual([]);
 });
+
+test('二分之一与二分之一可加载并通过等号得分', async ({page}) => {
+  const errors = await observeErrors(page);
+  await page.addInitScript(() => { Math.random = () => 0; });
+  await page.goto('/math/topics/fractions/index.html');
+  await page.locator('.mode-tab[data-mode="compare"]').click();
+  await page.locator('#btn-start-challenge').click();
+  await expect(page.locator('#compare-fracs .num')).toHaveText(['1', '1']);
+  await expect(page.locator('#compare-fracs .den')).toHaveText(['2', '2']);
+  await page.locator('#compare-opts .challenge-opt[data-ans="eq"]').click();
+  await expect(page.locator('#ch-correct')).toHaveText('1');
+  expect(errors).toEqual([]);
+});
