@@ -22,7 +22,7 @@
       max-width: 360px; position: relative; overflow: hidden;
     }
     .ruler-mark {
-      flex-shrink: 0; width: 28px; text-align: center; position: relative;
+      flex: 1 1 0; min-width: 0; text-align: center; position: relative;
     }
     .ruler-mark .tick { height: 16px; border-right: 2px solid #5D4037; margin: 0 auto; }
     .ruler-mark .tick-half { height: 10px; border-right: 1px solid #9E9E9E; margin: 0 auto; }
@@ -181,9 +181,9 @@
     <!-- 模式1: 认识厘米 -->
     <div class="mode-content active" id="mode-cm">
       <div class="card">
-        <p class="page-subtitle">用手指比一比，感受 1 厘米有多长</p>
+        <p class="page-subtitle">认识厘米刻度；屏幕图示不是实物尺，实际长度请用尺子测量。</p>
         <div class="cm-explore">
-          <h3 style="font-size:20px;color:#7B1FA2;margin-bottom:12px;">📏 1 厘米尺</h3>
+          <h3 style="font-size:20px;color:#7B1FA2;margin-bottom:12px;">📏 厘米刻度示意</h3>
           <div class="ruler-cm" id="ruler-cm"></div>
           <div class="action-bar">
             <button class="btn btn-primary" id="btn-highlight-cm">👆 高亮显示</button>
@@ -203,6 +203,7 @@
         <p class="page-subtitle">米是更大的长度单位，1 米 = 100 厘米</p>
         <div class="m-explore">
           <h3 style="font-size:20px;color:#7B1FA2;margin-bottom:12px;">📊 生活中的长度对比</h3>
+          <p>柱形高度为便于观察的示意，具体长度以标注为准。</p>
           <div class="m-visual" id="m-bars"></div>
           <div class="m-compare-row">
             <span>1 米</span>
@@ -238,7 +239,7 @@
           <div class="measure-target" id="measure-target">一部手机大约有多长？</div>
           <div class="measure-obj-name" id="measure-hint"></div>
           <div class="ruler-slider">
-            <input type="range" id="measure-slider" min="1" max="200" value="15">
+            <input type="range" id="measure-slider" min="1" max="200" value="15" aria-label="估计长度（厘米）">
             <div class="slider-value"><span id="slider-val">15</span> <span id="slider-unit">厘米</span></div>
           </div>
           <div class="measure-feedback" id="measure-feedback"></div>
@@ -304,7 +305,7 @@
         if (i % 5 === 0) {
           mark.innerHTML = `<div class="tick"></div><div class="tick-num">${i}</div>`;
         } else if (i % 1 === 0) {
-          // 毫米小刻度
+          // 每个刻度代表 1 厘米
           mark.innerHTML = `<div class="tick"></div>`;
         }
         ruler.appendChild(mark);
@@ -381,7 +382,7 @@
         { icon: '🧑', text: '小学生身高大约 1.2 ~ 1.5 米' },
         { icon: '🏀', text: '篮球筐高 3.05 米' },
         { icon: '📏', text: '1 米 = 100 厘米' },
-        { icon: '🏃', text: '操场跑道一圈是 400 米' },
+        { icon: '🏃', text: '标准田径场跑道一圈通常是 400 米' },
       ];
       const factsEl = document.getElementById('m-facts');
       factsEl.innerHTML = '';
@@ -392,10 +393,13 @@
 
     // === 模式3: 单位换算 ===
     (() => {
-      let type, val, answer;
+      let type, val, answer, answered = false, convertTimer = null;
       const convertEl = document.getElementById('convert-practice');
 
       function newConvert() {
+        clearTimeout(convertTimer);
+        convertTimer = null;
+        answered = false;
         type = Random.pick(['m2cm', 'cm2m']);
         if (type === 'm2cm') {
           val = Random.pick([1, 2, 3, 4, 5, 6, 7, 8, 10]);
@@ -408,17 +412,8 @@
         const question = type === 'm2cm' ? `${val} 米 = ? 厘米` : `${val} 厘米 = ? 米`;
 
         // 生成选项
-        const opts = [answer];
-        while (opts.length < 4) {
-          let c;
-          if (type === 'm2cm') {
-            c = Random.pick([1,2,3,4,5,6,7,8,9,10]) * 100;
-          } else {
-            c = Random.pick([1,2,3,4,5,6,7,8,9,10]);
-          }
-          if (!opts.includes(c)) opts.push(c);
-        }
-        Random.shuffle(opts);
+        const pool = Array.from({ length: 10 }, (_, i) => (i + 1) * (type === 'm2cm' ? 100 : 1)).filter(n => n !== answer);
+        const opts = Random.shuffle([answer, ...Random.shuffle(pool).slice(0, 3)]);
 
         convertEl.innerHTML = `
           <div class="convert-problem">${question}</div>
@@ -430,7 +425,8 @@
 
         document.querySelectorAll('.convert-opt').forEach(btn => {
           btn.addEventListener('click', () => {
-            if (btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+            if (answered) return;
+            answered = true;
             const v = parseInt(btn.dataset.val);
             if (v === answer) {
               btn.classList.add('correct');
@@ -438,7 +434,7 @@
               updateStreak(true);
               document.getElementById('convert-result').textContent = '🎉 答对了！';
               document.getElementById('convert-result').style.color = '#34C759';
-              setTimeout(newConvert, 1500);
+              convertTimer = setTimeout(newConvert, 1500);
             } else {
               btn.classList.add('wrong');
               Animator.shake(btn);
@@ -449,7 +445,7 @@
               document.querySelectorAll('.convert-opt').forEach(b => {
                 if (parseInt(b.dataset.val) === answer) b.classList.add('correct');
               });
-              setTimeout(newConvert, 2000);
+              convertTimer = setTimeout(newConvert, 2000);
             }
           });
         });
@@ -462,7 +458,7 @@
     (() => {
       const items = [
         { icon: '📱', name: '一部手机', question: '一部手机大约有多长？', answer: 15, hint: '提示：比铅笔短一点', unit: '厘米' },
-        { icon: '🚗', name: '一辆小汽车', question: '一辆小汽车大约有多长？', answer: 450, hint: '提示：比教室还长', unit: '厘米' },
+        { icon: '🚗', name: '一辆小汽车', question: '一辆小汽车大约有多长？', answer: 450, hint: '提示：几米长', unit: '厘米' },
         { icon: '✏️', name: '一支铅笔', question: '一支铅笔大约有多长？', answer: 18, hint: '提示：差不多一拃多', unit: '厘米' },
         { icon: '📖', name: '语文课本', question: '语文课本大约有多长？', answer: 26, hint: '提示：比手机长一些', unit: '厘米' },
         { icon: '🚪', name: '教室的门', question: '教室的门大约有多高？', answer: 200, hint: '提示：2米是多少厘米？', unit: '厘米' },
@@ -472,9 +468,10 @@
       ];
 
       // 针对超过200的items调整slider范围
-      let currentItem;
+      let currentItem, measureAnswered = false;
 
       function newMeasure() {
+        measureAnswered = false;
         currentItem = Random.pick(items);
         document.getElementById('measure-icon').textContent = currentItem.icon;
         document.getElementById('measure-target').textContent = currentItem.question;
@@ -499,6 +496,8 @@
       });
 
       document.getElementById('btn-check-measure').addEventListener('click', () => {
+        if (measureAnswered) return;
+        measureAnswered = true;
         const guess = parseInt(document.getElementById('measure-slider').value);
         const diff = Math.abs(guess - currentItem.answer);
         const pct = diff / currentItem.answer;
@@ -510,12 +509,12 @@
           streak++; Sound.play('correct'); celebrate();
           updateStreak(true);
         } else if (pct < 0.3) {
-          feedback = `👍 不错！接近了！实际是 ${currentItem.answer} 厘米`;
+          feedback = `👍 不错！接近了！示例约为 ${currentItem.answer} 厘米`;
           color = '#FF9500';
           streak++; Sound.play('correct');
           updateStreak(true);
         } else {
-          feedback = `💪 差了有点多哦，实际是 ${currentItem.answer} 厘米`;
+          feedback = `💪 差了有点多哦，示例约为 ${currentItem.answer} 厘米`;
           color = '#FF3B30';
           streak = 0; Sound.play('wrong');
           updateStreak(false);
@@ -523,7 +522,7 @@
         const fb = document.getElementById('measure-feedback');
         fb.textContent = feedback;
         fb.style.color = color;
-        document.getElementById('measure-hint').textContent = `实际答案：${currentItem.answer} 厘米`;
+        document.getElementById('measure-hint').textContent = `参考长度约 ${currentItem.answer} 厘米；实际物体的长度会不同。`;
       });
 
       document.getElementById('btn-new-measure').addEventListener('click', () => { newMeasure(); Sound.play('click'); });
