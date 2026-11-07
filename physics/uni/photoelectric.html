@@ -126,21 +126,21 @@
         <h3>📐 核心方程</h3>
         <div class="equation">
           光子能量：<b>E = hν</b><br/>
-          爱因斯坦方程：<b>Eₖ = hν − W₀</b><br/>
-          遏止电压：<b>eU₀ = Eₖ</b>
+          爱因斯坦方程（最大初动能）：<b>Eₖ,max = hν − W₀</b><br/>
+          遏止电压：<b>eU₀ = Eₖ,max</b><br/>低于截止频率时没有光电子，不适用最大初动能和遏止电压。恰在截止频率时最大初动能的理论极限为零。
         </div>
         <div class="slider-row">
-          <label>光频率 ν (×10¹⁴ Hz)</label>
+          <label for="nu">光频率 ν (×10¹⁴ Hz)</label>
           <input type="range" id="nu" min="4" max="12" step="0.1" value="7" />
           <span class="val" id="nuv">7.0</span>
         </div>
         <div class="slider-row">
-          <label>逸出功 W₀ (eV)</label>
+          <label for="w0">逸出功 W₀ (eV)</label>
           <input type="range" id="w0" min="1.5" max="4.5" step="0.1" value="2.3" />
           <span class="val" id="w0v">2.3 eV</span>
         </div>
         <div class="slider-row">
-          <label>光强（光子数）</label>
+          <label for="intensity">光强档位（示意）</label>
           <input type="range" id="intensity" min="1" max="10" value="5" />
           <span class="val" id="intensityv">5</span>
         </div>
@@ -156,7 +156,7 @@
         </div>
         <div class="concept-card electron">
           <div class="title">⚡ 光电子发射</div>
-          光子能量 ≥ 逸出功 W₀ 时，电子吸收光子后逸出金属表面，剩余能量转化为动能：Eₖ = hν − W₀。
+          光子能量高于逸出功 W₀ 时，电子可逸出；最大初动能 Eₖ,max = hν − W₀。恰在截止频率时该最大动能的理论极限为零，示意图不绘制运动电子。
         </div>
         <div class="concept-card metal">
           <div class="title">🔩 逸出功</div>
@@ -164,7 +164,7 @@
         </div>
         <div class="concept-card energy">
           <div class="title">📉 遏止电压</div>
-          反向电压恰好阻止光电子到达阳极时的电压 U₀，满足 eU₀ = Eₖ = hν − W₀。U₀ 与光强无关，只与频率有关。
+          反向电压恰好阻止光电子到达阳极时的电压 U₀，满足 eU₀ = Eₖ = hν − W₀。在模型适用范围内，U₀ 与光强无关，取决于频率和材料的逸出功。光子和电子的图标数量仅为示意，不表示实际计数。
         </div>
       </div>
     </div>
@@ -184,17 +184,17 @@
           <button class="mode-btn" data-target="u0">让 U₀ ≥ 1.5 V</button>
         </div>
         <div class="slider-row">
-          <label>光频率 ν (×10¹⁴ Hz)</label>
+          <label for="pnu">练习光频率 ν (×10¹⁴ Hz)</label>
           <input type="range" id="pnu" min="4" max="12" step="0.1" value="6" />
           <span class="val" id="pnuv">6.0</span>
         </div>
         <div class="slider-row">
-          <label>逸出功 W₀ (eV)</label>
+          <label for="pw0">练习逸出功 W₀ (eV)</label>
           <input type="range" id="pw0" min="1.5" max="4.5" step="0.1" value="3.0" />
           <span class="val" id="pw0v">3.0 eV</span>
         </div>
         <div class="slider-row">
-          <label>光强（光子数）</label>
+          <label for="pintensity">练习光强档位（示意）</label>
           <input type="range" id="pintensity" min="1" max="10" value="5" />
           <span class="val" id="pintensityv">5</span>
         </div>
@@ -272,10 +272,13 @@ function physics(nu14, w0) {
   // nu14: 频率 ×10¹⁴ Hz
   const nu = nu14 * 1e14;
   const hnu = H * nu;          // eV
-  const ek = Math.max(0, hnu - w0); // eV
-  const u0 = ek;               // V（数值相等，单位不同）
+  const delta = hnu - w0;
+  const atThreshold = Math.abs(delta) < 1e-10;
+  const below = delta < -1e-10;
+  const ek = below ? null : (atThreshold ? 0 : delta); // 最大初动能，eV
+  const u0 = ek;               // 理论值，V（数值相等，单位不同）
   const nu0 = w0 / H / 1e14;   // ×10¹⁴ Hz
-  return { hnu, ek, u0, nu0, canEmit: hnu > w0 };
+  return { hnu, ek, u0, nu0, below, atThreshold, canEmit: !below && !atThreshold };
 }
 
 /* ============================================================
@@ -290,8 +293,8 @@ function updLearn() {
   document.getElementById('intensityv').textContent = intEl.value;
   const p = physics(+nuEl.value, +w0El.value);
   document.getElementById('calc-hnu').textContent = p.hnu.toFixed(2);
-  document.getElementById('calc-ek').textContent = p.ek.toFixed(2);
-  document.getElementById('calc-u0').textContent = p.u0.toFixed(2);
+  document.getElementById('calc-ek').textContent = p.ek === null ? '不适用' : p.ek.toFixed(2);
+  document.getElementById('calc-u0').textContent = p.u0 === null ? '不适用' : p.u0.toFixed(2);
   document.getElementById('calc-nu0').textContent = p.nu0.toFixed(2);
 }
 [nuEl, w0El, intEl].forEach(el => el.addEventListener('input', () => { updLearn(); draw(); }));
@@ -324,8 +327,8 @@ function updPractice() {
   document.getElementById('pintensityv').textContent = pint.value;
   const p = physics(+pnu.value, +pw0.value);
   document.getElementById('p-hnu').textContent = p.hnu.toFixed(2);
-  document.getElementById('p-ek').textContent = p.ek.toFixed(2);
-  document.getElementById('p-u0').textContent = p.u0.toFixed(2);
+  document.getElementById('p-ek').textContent = p.ek === null ? '不适用' : p.ek.toFixed(2);
+  document.getElementById('p-u0').textContent = p.u0 === null ? '不适用' : p.u0.toFixed(2);
   const ok = targetDesc[practiceTarget].check(p);
   document.getElementById('p-status').textContent = ok ? '✅ 达成！' : '未达成';
   document.getElementById('p-status').style.color = ok ? '#10b981' : '#f59e0b';
@@ -412,7 +415,7 @@ function drawScene(ctx, W, H, nu, w0, intensity, showLabels) {
     // 无法逸出：红色叉
     ctx.fillStyle = '#ef4444';
     ctx.font = 'bold 14px sans-serif';
-    ctx.fillText('hν < W₀，电子无法逸出', metalX - 40, H * 0.5);
+    ctx.fillText(p.atThreshold ? '截止频率：最大动能理论极限为零' : 'hν < W₀，电子无法逸出', metalX - 70, H * 0.5);
   }
 
   // 截止频率参考线
@@ -439,16 +442,16 @@ setInterval(draw, 50);
  * ============================================================ */
 const quizData = [
   {
-    q: '1️⃣ 光电效应中，光电子的最大初动能 Eₖ 取决于？',
+    q: '1️⃣ 对同一金属，在超过截止频率时，光电子最大初动能取决于？',
     opts: ['光强', '光的频率', '照射时间', '金属温度'],
     ans: 1,
     fb: 'Eₖ = hν − W₀，只与频率 ν 和逸出功 W₀ 有关，与光强无关。'
   },
   {
-    q: '2️⃣ 用频率 ν 的光照射某金属，恰好能打出光电子。若换用频率 2ν 的光，Eₖ 变为原来的？',
-    opts: ['相同', '2 倍', '大于 2 倍', '小于 2 倍但大于 1 倍'],
+    q: '2️⃣ 某金属的截止频率为 ν₀，用频率 2ν₀ 的光照射时，最大初动能是多少？',
+    opts: ['0', '2W₀', '3W₀', 'W₀'],
     ans: 3,
-    fb: 'Eₖ₁ = hν − W₀ = 0；Eₖ₂ = 2hν − W₀ = hν > 0，比值 = hν/(hν−W₀) > 1 但 < 2。'
+    fb: '截止频率满足 hν₀ = W₀，因此 Eₖ,max = 2hν₀ − W₀ = W₀。截止频率处的初动能为零，不能以它作为分母计算倍数。'
   },
   {
     q: '3️⃣ 遏止电压 U₀ 的物理意义是？',

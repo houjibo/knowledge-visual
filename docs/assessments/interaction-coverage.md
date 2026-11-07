@@ -180,6 +180,7 @@
 - [光电效应 · 爱因斯坦方程 · 互动可视化](../../physics/uni/photoelectric.html)
   - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
   - 五个大学物理同构测验键盘答题、修改答案、计分及保存异常重试；不代表教学内容或其他交互已全面核验。 [university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)
+  - 截止频率边界、光强与最大动能关系及倍频题；真实光电流和全部材料数据未核验。 [photoelectric-threshold-and-quiz.spec.js](../../tests/browser/photoelectric-threshold-and-quiz.spec.js)、[university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)
 - [动物分类 · 小学科学互动可视化](../../science/animals.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [神奇的化学 · 小学科学互动可视化](../../science/chemistry.html)
