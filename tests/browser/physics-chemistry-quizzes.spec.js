@@ -44,3 +44,18 @@ for (const [path, answers] of topics) {
     expect(errors).toEqual([]);
   });
 }
+
+for (const [path, answers] of topics) {
+  test(`${path} 测验写入失败时提示未保存`, async ({page}) => {
+    await page.addInitScript(() => { Storage.prototype.setItem = () => { throw new Error('denied'); }; });
+    await page.goto(`/${path}.html`);
+    await page.locator('.tab[data-mode="quiz"]').click();
+    await page.locator('#quizStart').click();
+    for (const answer of answers) {
+      await page.locator('#quizOpts button').nth(answer).click();
+      await page.locator('#quizNext').click();
+    }
+    await page.locator('#quizNext').click();
+    await expect(page.locator('#done-mark')).toContainText('进度未保存');
+  });
+}
