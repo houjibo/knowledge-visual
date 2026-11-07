@@ -32,7 +32,8 @@
   .stage > * { min-width: 0; }
   @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } }
   .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
-  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #0c2d48 0%, #0f172a 100%); touch-action: none; }
+  .visual-scroll { overflow-x: auto; }
+  canvas { width: 100%; min-width: 640px; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #0c2d48 0%, #0f172a 100%); }
   .legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #cbd5e1; flex-wrap: wrap; }
   .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
   .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
@@ -126,7 +127,8 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="distCanvas" width="720" height="460"></canvas>
+          <div class="visual-scroll" tabindex="0" role="region" aria-label="分布图，可左右滚动"><canvas id="distCanvas" width="720" height="460" role="img"></canvas></div>
+          <p style="font-size:13px;color:#cbd5e1;margin-top:8px">图表较宽时可左右滑动查看；离散分布柱高按当前最高概率缩放。</p>
           <div class="legend">
             <span id="legendLabel">二项分布 B(n, p) 概率分布柱形图</span>
           </div>
@@ -135,27 +137,27 @@
       <div class="panel">
         <h3>选择分布</h3>
         <div class="demo-btns" id="distBtns">
-          <button class="demo-btn active" data-dist="binomial">二项分布</button>
-          <button class="demo-btn" data-dist="hyper">超几何分布</button>
-          <button class="demo-btn" data-dist="normal">正态分布</button>
+          <button class="demo-btn active" data-dist="binomial" aria-pressed="true">二项分布</button>
+          <button class="demo-btn" data-dist="hyper" aria-pressed="false">超几何分布</button>
+          <button class="demo-btn" data-dist="normal" aria-pressed="false">正态分布</button>
         </div>
         <div class="slider-row" id="rowN">
-          <label>试验次数 n</label>
+          <label for="sliderN">试验次数 n</label>
           <input type="range" id="sliderN" min="2" max="30" step="1" value="10">
           <span class="val" id="valN">10</span>
         </div>
         <div class="slider-row" id="rowP">
-          <label>概率 p</label>
+          <label for="sliderP">概率 p</label>
           <input type="range" id="sliderP" min="0.05" max="0.95" step="0.05" value="0.5">
           <span class="val" id="valP">0.50</span>
         </div>
         <div class="slider-row" id="rowM" style="display:none">
-          <label>次品数 M / N=20</label>
+          <label for="sliderM">次品数 M / N=20</label>
           <input type="range" id="sliderM" min="1" max="15" step="1" value="5">
           <span class="val" id="valM">5</span>
         </div>
         <div class="slider-row" id="rowSig" style="display:none">
-          <label>标准差 σ (μ=0)</label>
+          <label for="sliderSig">标准差 σ (μ=0)</label>
           <input type="range" id="sliderSig" min="0.5" max="3" step="0.1" value="1">
           <span class="val" id="valSig">1.0</span>
         </div>
@@ -264,9 +266,11 @@ const EQ = {
   normal: '正态分布：<b>X ~ N(μ, σ²)</b><br><span style="font-size:0.85em;color:#94a3b8">3σ 原则：68.3% / 95.4% / 99.7%，曲线下总面积 = 1</span>'
 };
 document.querySelectorAll('#distBtns .demo-btn').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('#distBtns .demo-btn').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
+  document.querySelectorAll('#distBtns .demo-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
+  b.classList.add('active'); b.setAttribute('aria-pressed', 'true');
   dist = b.dataset.dist;
+  sN.max = dist === 'hyper' ? '20' : '30';
+  if (+sN.value > +sN.max) sN.value = sN.max;
   document.getElementById('rowN').style.display = dist === 'normal' ? 'none' : 'flex';
   document.getElementById('rowP').style.display = dist === 'binomial' ? 'flex' : 'none';
   document.getElementById('rowM').style.display = dist === 'hyper' ? 'flex' : 'none';
@@ -305,7 +309,7 @@ function draw() {
     const bw = W / (n + 1);
     probs.forEach((v, k) => {
       const h = maxP ? v / maxP * H : 0;
-      const isMean = Math.abs(k - n * p) < 0.5;
+      const isMean = Math.abs(k - n * p) <= 0.5;
       ctx.fillStyle = isMean ? '#1de9b6' : '#22d3ee';
       ctx.fillRect(ox + k * bw + 2, oy - h, bw - 4, h);
       if (n <= 20) {
@@ -314,7 +318,8 @@ function draw() {
       }
     });
     ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 14px sans-serif';
-    ctx.fillText(`B(${n}, ${p.toFixed(2)})　峰值在 k≈${Math.round(n * p)}（绿色柱 = 期望位置）`, 90, 40);
+    ctx.fillText(`B(${n}, ${p.toFixed(2)})　绿柱最接近期望 ${ (n * p).toFixed(2) }`, 90, 40);
+    canvas.setAttribute('aria-label', `二项分布 n=${n}，p=${p.toFixed(2)}，期望 ${(n*p).toFixed(2)}，方差 ${(n*p*(1-p)).toFixed(2)}。柱高按最高概率 ${maxP.toFixed(3)} 缩放。`);
     ctx.fillStyle = '#64748b'; ctx.font = '12px sans-serif';
     ctx.fillText('k', ox + W + 8, oy + 16);
     ctx.fillText('P', ox - 24, oy - H - 8);
@@ -332,13 +337,14 @@ function draw() {
     const bw = W / (kMax - kMin + 1);
     probs.forEach(([k, v]) => {
       const h = maxP ? v / maxP * H : 0;
-      ctx.fillStyle = Math.abs(k - E) < 0.5 ? '#1de9b6' : '#22d3ee';
+      ctx.fillStyle = Math.abs(k - E) <= 0.5 ? '#1de9b6' : '#22d3ee';
       ctx.fillRect(ox + (k - kMin) * bw + 2, oy - h, bw - 4, h);
       ctx.fillStyle = '#94a3b8'; ctx.font = '11px sans-serif';
       ctx.fillText(k, ox + (k - kMin) * bw + bw / 2 - 4, oy + 16);
     });
     ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 14px sans-serif';
     ctx.fillText(`20 件中 ${M} 件次品，不放回取 ${n} 件，次品数 X 的分布`, 90, 40);
+    canvas.setAttribute('aria-label', `超几何分布，总数20，次品${M}，抽取${n}，期望${E.toFixed(2)}；柱高按最高概率${maxP.toFixed(3)}缩放。`);
     ctx.fillStyle = '#64748b'; ctx.font = '12px sans-serif';
     ctx.fillText('k（次品数）', ox + W - 60, oy + 16);
   } else {
@@ -346,33 +352,36 @@ function draw() {
     document.getElementById('valSig').textContent = sig.toFixed(1);
     document.getElementById('infoE').innerHTML = `均值 μ<br><b>0</b>`;
     document.getElementById('infoD').innerHTML = `P(|X−μ|<σ)<br><b>68.27%</b>`;
-    const x2c = x => ox + W / 2 + x / (4 * sig) * (W / 2);
-    const y2c = y => oy - y / (1 / (sig * Math.sqrt(2 * Math.PI))) * H * 0.92;
+    const x2c = x => ox + W / 2 + x / 12 * (W / 2);
+    const y2c = y => oy - y / (1 / (0.5 * Math.sqrt(2 * Math.PI))) * H * 0.92;
     const pdf = x => Math.exp(-x * x / (2 * sig * sig)) / (sig * Math.sqrt(2 * Math.PI));
     // 阴影 ±1σ
     ctx.fillStyle = 'rgba(29,233,182,0.30)';
     ctx.beginPath(); ctx.moveTo(x2c(-sig), oy);
     for (let x = -sig; x <= sig; x += sig / 50) ctx.lineTo(x2c(x), y2c(pdf(x)));
     ctx.lineTo(x2c(sig), oy); ctx.closePath(); ctx.fill();
-    // 曲线
+    // 固定坐标范围和密度比例，才能比较不同标准差的形状。
     ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 3;
     ctx.beginPath();
-    for (let x = -4 * sig; x <= 4 * sig; x += sig / 50) {
-      const px = x2c(x), py = y2c(pdf(x));
-      x === -4 * sig ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    for (let i = 0; i <= 400; i++) {
+      const x = -12 + i * 24 / 400;
+      i === 0 ? ctx.moveTo(x2c(x), y2c(pdf(x))) : ctx.lineTo(x2c(x), y2c(pdf(x)));
     }
     ctx.stroke();
-    // 刻度
     ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
-    for (let k = -3; k <= 3; k++) {
-      ctx.fillText(k === 0 ? 'μ' : `μ${k > 0 ? '+' : ''}${k}σ`, x2c(k * sig) - 14, oy + 18);
+    for (const x of [-12, -6, 0, 6, 12]) {
+      ctx.fillText(String(x), x2c(x) - 8, oy + 18);
       ctx.strokeStyle = '#334155'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(x2c(k * sig), oy); ctx.lineTo(x2c(k * sig), oy - 6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2c(x), oy); ctx.lineTo(x2c(x), oy - 6); ctx.stroke();
     }
+    ctx.fillText('x', ox + W + 8, oy + 18);
+    ctx.fillText('密度', ox - 34, oy - H - 4);
+    ctx.fillText('0.80', ox - 34, y2c(0.8) + 4);
+    canvas.setAttribute('aria-label', `正态分布均值0，标准差${sig.toFixed(1)}，固定坐标显示密度曲线；阴影为负一个标准差到正一个标准差，概率约68.27%。`);
     ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 14px sans-serif';
     ctx.fillText(`N(0, ${sig.toFixed(1)}²)　σ 越小曲线越瘦高`, 90, 40);
     ctx.fillStyle = '#1de9b6'; ctx.font = '13px sans-serif';
-    ctx.fillText('阴影 ≈ 68.27%', x2c(0) - 44, y2c(pdf(0)) + 24);
+    ctx.fillText('阴影 ≈ 68.27%', 485, 60);
   }
 }
 draw();
@@ -381,15 +390,15 @@ draw();
  * 计算模式
  * ============================================================ */
 const CHECKS = {
-  a1: { test: v => Math.abs(v - 0.346) / 0.346 <= 0.05,
+  a1: { test: v => Math.abs(v - 0.3456) < 0.0005,
         ok: '✅ 正确！P = C(5,3)×0.6³×0.4² = 10×0.216×0.16 = 0.3456 ≈ 0.346。',
         no: '❌ 提示：P = C(5,3) × 0.6³ × 0.4² = 10 × 0.216 × 0.16。' },
   a2: { test: v => Math.abs(v - 3) / 3 <= 0.05,
         ok: '✅ 正确！E(X) = np = 10×0.3 = 3。（顺便：D(X) = np(1−p) = 2.1）',
         no: '❌ 提示：E(X) = n·p = 10 × 0.3。' },
-  a3: { test: v => Math.abs(v - 0.467) / 0.467 <= 0.05,
-        ok: '✅ 正确！P = C(3,1)·C(7,2)/C(10,2) = 3×21/45 = 21/45 ≈ 0.467（超几何分布）。',
-        no: '❌ 提示：不放回 → 超几何：C(3,1)×C(7,2) ÷ C(10,2) = 63/45…算一算？' }
+  a3: { test: v => Math.abs(v - 21 / 45) < 0.0005,
+        ok: '✅ 正确！P = C(3,1)·C(7,1)/C(10,2) = 3×7/45 = 21/45 ≈ 0.467（超几何分布）。',
+        no: '❌ 提示：不放回 → 超几何：C(3,1)×C(7,1) ÷ C(10,2)，一件次品搭配一件正品。' }
 };
 document.querySelectorAll('[data-check]').forEach(btn => {
   btn.addEventListener('click', () => {

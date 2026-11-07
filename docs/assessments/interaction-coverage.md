@@ -27,6 +27,7 @@
   - 受控时钟和随机数验证硬币、骰子、摸球批量取消；骰子目标历史统计和柱状图、摸球换配置及一道练习；其他实验、完整题目与无障碍未全面验收。 [high-probability-experiment.spec.js](../../tests/browser/high-probability-experiment.spec.js)
 - [随机变量及其分布 · 高中数学互动可视化](../../math/high/random-variables.html)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
+  - 正态曲线实际绘制位置、σ 边界、超几何 n 上限、期望标注和两道练习反馈；全部题目和无障碍未全面验收。 [random-variable-distribution.spec.js](../../tests/browser/random-variable-distribution.spec.js)
 - [平面直角坐标系 · 初中数学互动可视化](../../math/middle/coordinate-plane.html)
   - 滑块、鼠标和触摸的坐标同步，原点及第二象限、原点对称画布位置，测验回看计分、刷新和存储失败；其他对称方式与完整无障碍未全面验收。 [coordinate-plane.spec.js](../../tests/browser/coordinate-plane.spec.js)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
