@@ -20,6 +20,10 @@ python3 -m http.server 8000
 - `science/`：小学科学导航和主题页面。
 - 各目录中的 `assets/` 保存相关共享资源；部分主题页面也自包含样式或脚本。
 
+## 项目方向
+
+项目正逐步建设独立发布的可视化学习站，完善内容质量、发布检查和持续维护。具体目标与进度见 [站点发布与专业化运营计划](docs/plans/site-operations.md)。
+
 ## 参与维护
 
 从 [项目架构](docs/architecture.md)、[工程约束](docs/constraints.md) 和 [工作流](docs/workflows/README.md) 开始。运行 `python3 scripts/check_site.py` 检查静态引用、索引和部分学段进度总数；检查范围和浏览器验证要求见工程约束。[OpenSpec](openspec/README.md) 记录能力契约与变更。
