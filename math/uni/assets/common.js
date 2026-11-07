@@ -92,30 +92,40 @@ const PageProgress = (() => {
   const KEY = 'kv-math-progress-v2';
   const AMBIGUOUS_MATH_SLUGS = ['circle', 'derivative', 'fractions', 'probability', 'sets', 'statistics'];
   const stage = 'uni';
-  let cache = null;
-  let pendingLocal = false;
+  let cache = {};
+  let pending = {};
   function load(key) {
     try {
       const value = JSON.parse(localStorage.getItem(key) || '{}');
       return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
     } catch (e) { return {}; }
   }
-  function read() {
-    // 正常时读取最新值；写入受限时保留本页尚未持久化的记录。
-    if (pendingLocal) return cache;
+  function readStored() {
     try {
-      const raw = localStorage.getItem(KEY) || '{}';
-      try {
-        const value = JSON.parse(raw);
-        cache = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
-      } catch (e) { cache = {}; }
-    } catch (e) { if (!cache) cache = {}; }
-    return cache;
+      const raw = localStorage.getItem(KEY);
+      const value = raw === null ? {} : JSON.parse(raw);
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+      return value;
+    } catch (e) { return null; }
   }
-  function write(data) {
-    cache = data;
-    try { localStorage.setItem(KEY, JSON.stringify(data)); pendingLocal = false; }
-    catch (e) { pendingLocal = true; }
+  function read() {
+    const stored = readStored();
+    // 无法读取或解析时只使用本页缓存，不修改原始数据。
+    if (stored !== null) cache = stored;
+    return { ...cache, ...pending };
+  }
+  function update(key, value) {
+    pending[key] = value;
+    const stored = readStored();
+    // 原始数据损坏或读取受限时无法安全合并，保留待写入的本页状态。
+    if (stored === null) return false;
+    const merged = { ...stored, ...pending };
+    try {
+      localStorage.setItem(KEY, JSON.stringify(merged));
+      cache = merged;
+      pending = {};
+      return true;
+    } catch (e) { return false; }
   }
   function isDone(slug) {
     const data = read();
@@ -125,10 +135,10 @@ const PageProgress = (() => {
   }
   return {
     markDone(slug) {
-      const data = read(); data[stage + ':' + slug] = Date.now(); write(data);
+      return update(stage + ':' + slug, Date.now());
     },
     clear(slug) {
-      const data = read(); data[stage + ':' + slug] = false; write(data);
+      return update(stage + ':' + slug, false);
     },
     isDone,
     // 保持跨学段总数语义；旧同名记录只能作为一条保守计数。

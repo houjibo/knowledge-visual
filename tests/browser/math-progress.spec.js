@@ -121,3 +121,61 @@ test('允许读取但写入失败时本页进度不丢失', async ({page}) => {
   await page.reload();
   expect(await page.evaluate(() => PageProgress.isDone('derivative'))).toBe(false);
 });
+
+test('四学段保留损坏数据且本页可读待写进度', async ({page}) => {
+  const paths = ['/math/topics/number-line/index.html', '/math/middle/linear-equation.html', '/math/high/derivative.html', '/math/uni/derivative.html'];
+  for (const raw of ['{broken', '[]', 'null', '']) {
+    for (const path of paths) {
+      await page.goto('/');
+      await page.evaluate(value => localStorage.setItem('kv-math-progress-v2', value), raw);
+      await page.goto(path);
+      expect(await page.evaluate(() => PageProgress.markDone('integrity-test'))).toBe(false);
+      expect(await page.evaluate(() => PageProgress.isDone('integrity-test'))).toBe(true);
+      expect(await page.evaluate(() => localStorage.getItem('kv-math-progress-v2'))).toBe(raw);
+    }
+  }
+});
+
+test('读取被拒绝时不能覆盖未知数据', async ({page}) => {
+  await page.goto('/math/high/derivative.html');
+  await page.evaluate(() => {
+    localStorage.setItem('kv-math-progress-v2', '{"uni:derivative":123}');
+    window.originalGetItem = Storage.prototype.getItem;
+    Storage.prototype.getItem = function(key) { if (key === 'kv-math-progress-v2') throw new Error('denied'); return window.originalGetItem.call(this, key); };
+  });
+  expect(await page.evaluate(() => PageProgress.markDone('derivative'))).toBe(false);
+  expect(await page.evaluate(() => PageProgress.isDone('derivative'))).toBe(true);
+  await page.evaluate(() => { Storage.prototype.getItem = window.originalGetItem; });
+  expect(JSON.parse(await page.evaluate(() => localStorage.getItem('kv-math-progress-v2')))).toEqual({'uni:derivative':123});
+});
+
+test('写入失败期间另一标签新增记录，重试时合并', async ({page, context}) => {
+  const other = await context.newPage();
+  await page.goto('/math/high/derivative.html');
+  await other.goto('/math/uni/derivative.html');
+  await page.evaluate(() => {
+    window.originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => { throw new Error('denied'); };
+  });
+  expect(await page.evaluate(() => PageProgress.markDone('derivative'))).toBe(false);
+  expect(await other.evaluate(() => PageProgress.markDone('derivative'))).toBe(true);
+  await page.evaluate(() => { Storage.prototype.setItem = window.originalSetItem; });
+  expect(await page.evaluate(() => PageProgress.markDone('conic-sections'))).toBe(true);
+  const saved = JSON.parse(await page.evaluate(() => localStorage.getItem('kv-math-progress-v2')));
+  expect(saved['high:derivative']).toBeTruthy();
+  expect(saved['high:conic-sections']).toBeTruthy();
+  expect(saved['uni:derivative']).toBeTruthy();
+  await other.close();
+});
+
+test('损坏记录恢复后合并本页待保存变更', async ({page}) => {
+  await page.goto('/math/high/derivative.html');
+  await page.evaluate(() => localStorage.setItem('kv-math-progress-v2', '{broken'));
+  expect(await page.evaluate(() => PageProgress.markDone('derivative'))).toBe(false);
+  await page.evaluate(() => localStorage.setItem('kv-math-progress-v2', JSON.stringify({'uni:derivative': 123})));
+  expect(await page.evaluate(() => PageProgress.markDone('conic-sections'))).toBe(true);
+  const saved = JSON.parse(await page.evaluate(() => localStorage.getItem('kv-math-progress-v2')));
+  expect(saved['high:derivative']).toBeTruthy();
+  expect(saved['high:conic-sections']).toBeTruthy();
+  expect(saved['uni:derivative']).toBe(123);
+});
