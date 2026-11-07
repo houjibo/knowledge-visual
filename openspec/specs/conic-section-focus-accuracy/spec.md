@@ -1,0 +1,29 @@
+# conic-section-focus-accuracy Specification
+
+## Purpose
+TBD - created by archiving change conic-section-focus-accuracy. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 椭圆焦点及边界与参数一致
+
+椭圆焦点 SHALL 随较长的半轴方向变化，其离心率 SHALL 按半焦距除以较长半轴计算；两半轴相等时 SHALL 清楚说明为圆且不显示有限准线。
+
+#### Scenario: 纵向半轴较长
+
+- **WHEN** 横向半轴为 3、纵向半轴为 5
+- **THEN** 椭圆焦点为 (0, ±4)，离心率为 0.8，图示与文本一致
+
+#### Scenario: 两半轴相等
+
+- **WHEN** 横向与纵向半轴均为 3
+- **THEN** 显示圆、重合焦点和零离心率，不显示 Infinity 或有限准线
+
+### Requirement: 双曲线焦点与轨迹示意准确
+
+双曲线焦点 SHALL 使用 c²=a²+b²；轨迹示意 SHALL 描绘相应曲线而非将其标为焦点轨迹。
+
+#### Scenario: 双曲线参数 3 和 4
+
+- **WHEN** 横向实半轴为 3、虚半轴为 4
+- **THEN** 图上双曲线焦点位于 (±5, 0)，文本与图示一致

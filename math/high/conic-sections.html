@@ -81,7 +81,7 @@
         <span class="l-ellipse">椭圆</span>
         <span class="l-hyperbola">双曲线</span>
         <span class="l-parabola">抛物线</span>
-        <span class="l-focus">焦点/顶点</span>
+        <span class="l-focus">焦点（对比：E 椭圆、H 双曲线、P 抛物线）</span>
       </div>
     </div>
 
@@ -92,7 +92,7 @@
       <div class="mode-switch">
         <div class="mode-btn active" data-mode="explore">🔍 探索模式</div>
         <div class="mode-btn" data-mode="generate">🎬 生成动画</div>
-        <div class="mode-btn" data-mode="focus">🎯 焦点轨迹</div>
+        <div class="mode-btn" data-mode="focus">🎯 曲线轨迹</div>
       </div>
 
       <div id="controls"></div>
@@ -220,18 +220,20 @@
     if (curve === 'all' || curve === 'hyperbola') drawHyperbola(a, b, colors.hyperbola, mode==='generate' ? animT : 1);
     if (curve === 'all' || curve === 'parabola') drawParabola(p, colors.parabola, mode==='generate' ? animT : 1);
 
-    // foci
-    if (curve !== 'parabola') {
+    // Foci use the same parameters as the displayed equations.
+    if (curve === 'ellipse' || curve === 'all') {
       const c = Math.sqrt(Math.abs(a*a - b*b));
-      if (curve === 'ellipse' || curve === 'all') {
-        drawPoint(c, 0, colors.focus, curve==='all'?'F₁':'F₁', 6);
-        drawPoint(-c, 0, colors.focus, curve==='all'?'F₂':'F₂', 6);
-      }
-      if (curve === 'hyperbola') {
-        drawPoint(c, 0, colors.focus, 'F₁', 6);
-        drawPoint(-c, 0, colors.focus, 'F₂', 6);
-      }
-    } else {
+      const x = a >= b ? c : 0, y = a >= b ? 0 : c;
+      drawPoint(x, y, colors.focus, curve === 'all' ? 'E₁' : 'F₁', 6);
+      if (c > 0) drawPoint(-x, -y, colors.focus, curve === 'all' ? 'E₂' : 'F₂', 6);
+    }
+    if (curve === 'hyperbola' || curve === 'all') {
+      const c = Math.sqrt(a*a + b*b);
+      drawPoint(c, 0, colors.focus, curve === 'all' ? 'H₁' : 'F₁', 6);
+      drawPoint(-c, 0, colors.focus, curve === 'all' ? 'H₂' : 'F₂', 6);
+    }
+    if (curve === 'all') drawPoint(p/2, 0, colors.focus, 'P', 6);
+    if (curve === 'parabola') {
       drawPoint(p/2, 0, colors.focus, 'F', 6);
       // directrix
       ctx.setLineDash([4,4]); ctx.strokeStyle = colors.parabola+'90';
@@ -271,39 +273,40 @@
       title.textContent = '🌠 三种圆锥曲线对比';
       eq.innerHTML = '椭圆 x²/a²+y²/b²=1 · 双曲线 x²/a²−y²/b²=1 · 抛物线 y²=2px';
       ctrl.innerHTML = `
-        <div class="slider-row"><label>a (椭圆/双曲线)</label><input type="range" min="1" max="8" step="0.1" value="${a}"><span class="val">${a.toFixed(1)}</span></div>
-        <div class="slider-row"><label>b</label><input type="range" min="1" max="6" step="0.1" value="${b}"><span class="val">${b.toFixed(1)}</span></div>
+        <div class="slider-row"><label>a (椭圆横向半轴/双曲线实半轴)</label><input type="range" min="1" max="8" step="0.1" value="${a}"><span class="val">${a.toFixed(1)}</span></div>
+        <div class="slider-row"><label>b (椭圆纵向半轴/双曲线虚半轴)</label><input type="range" min="1" max="6" step="0.1" value="${b}"><span class="val">${b.toFixed(1)}</span></div>
         <div class="slider-row"><label>p (抛物线)</label><input type="range" min="0.5" max="5" step="0.1" value="${p}"><span class="val">${p.toFixed(1)}</span></div>`;
-      const ceEllipse = Math.sqrt(Math.max(0, a*a - b*b));
+      const ceEllipse = Math.sqrt(Math.abs(a*a - b*b));
       const ceHyperbola = Math.sqrt(a*a + b*b);
       info.innerHTML = `
-        <div>椭圆离心率 <b>${(ceEllipse/a).toFixed(3)}</b></div>
+        <div>椭圆离心率 <b>${(ceEllipse/Math.max(a,b)).toFixed(3)}</b></div>
         <div>双曲线离心率 <b>${(ceHyperbola/a).toFixed(3)}</b></div>
-        <div>椭圆焦点 (±<b>${ceEllipse.toFixed(2)}</b>, 0)</div>
+        <div>椭圆焦点 ${a === b ? '(0, 0)（重合）' : a > b ? `(±${ceEllipse.toFixed(2)}, 0)` : `(0, ±${ceEllipse.toFixed(2)})`}</div>
         <div>抛物线焦点 (<b>${(p/2).toFixed(2)}</b>, 0)</div>`;
     } else if (curve === 'ellipse') {
-      const c = Math.sqrt(a*a - b*b);
-      const e = c/a;
-      title.textContent = '🔴 椭圆';
+      const c = Math.sqrt(Math.abs(a*a - b*b));
+      const e = c/Math.max(a,b);
+      const axis = a >= b ? 'x' : 'y';
+      title.textContent = a === b ? '🔴 圆（两半轴相等）' : '🔴 椭圆';
       eq.innerHTML = `x²/${a.toFixed(1)}² + y²/${b.toFixed(1)}² = 1`;
       ctrl.innerHTML = `
-        <div class="slider-row"><label>半长轴 a</label><input type="range" min="1" max="8" step="0.1" value="${a}"><span class="val">${a.toFixed(1)}</span></div>
-        <div class="slider-row"><label>半短轴 b</label><input type="range" min="1" max="${a.toFixed(1)}" step="0.1" value="${b}"><span class="val">${b.toFixed(1)}</span></div>`;
+        <div class="slider-row"><label>横向半轴 a</label><input type="range" min="1" max="8" step="0.1" value="${a}"><span class="val">${a.toFixed(1)}</span></div>
+        <div class="slider-row"><label>纵向半轴 b</label><input type="range" min="1" max="6" step="0.1" value="${b}"><span class="val">${b.toFixed(1)}</span></div>`;
       info.innerHTML = `
-        <div>焦距 c = <b>${c.toFixed(2)}</b></div>
-        <div>离心率 e = <b>${e.toFixed(3)}</b> (0&lt;e&lt;1)</div>
-        <div>焦点 (±<b>${c.toFixed(2)}</b>, 0)</div>
-        <div>准线 x = ±<b>${(a*a/c).toFixed(2)}</b></div>`;
+        <div>半焦距 c = <b>${c.toFixed(2)}</b></div>
+        <div>离心率 e = <b>${e.toFixed(3)}</b> (0≤e&lt;1)</div>
+        <div>焦点 ${c === 0 ? '(0, 0)（重合）' : axis === 'x' ? `(±${c.toFixed(2)}, 0)` : `(0, ±${c.toFixed(2)})`}</div>
+        <div>${c === 0 ? '圆无有限准线' : `准线 ${axis} = ±${(Math.max(a,b)**2/c).toFixed(2)}`}</div>`;
     } else if (curve === 'hyperbola') {
       const c = Math.sqrt(a*a + b*b);
       const e = c/a;
       title.textContent = '🟢 双曲线';
       eq.innerHTML = `x²/${a.toFixed(1)}² − y²/${b.toFixed(1)}² = 1`;
       ctrl.innerHTML = `
-        <div class="slider-row"><label>实半轴 a</label><input type="range" min="1" max="6" step="0.1" value="${a}"><span class="val">${a.toFixed(1)}</span></div>
+        <div class="slider-row"><label>实半轴 a</label><input type="range" min="1" max="8" step="0.1" value="${a}"><span class="val">${a.toFixed(1)}</span></div>
         <div class="slider-row"><label>虚半轴 b</label><input type="range" min="1" max="6" step="0.1" value="${b}"><span class="val">${b.toFixed(1)}</span></div>`;
       info.innerHTML = `
-        <div>焦距 c = <b>${c.toFixed(2)}</b></div>
+        <div>半焦距 c = <b>${c.toFixed(2)}</b></div>
         <div>离心率 e = <b>${e.toFixed(3)}</b> (e&gt;1)</div>
         <div>渐近线 y = ±<b>${(b/a).toFixed(2)}</b>x</div>
         <div>焦点 (±<b>${c.toFixed(2)}</b>, 0)</div>`;
@@ -334,7 +337,7 @@
         if (curve === 'all') {
           if (i === 0) a = v; else if (i === 1) b = v; else p = v;
         } else if (curve === 'ellipse') {
-          if (i === 0) { a = v; if (b > a) b = a; } else { b = v; }
+          if (i === 0) a = v; else b = v;
         } else if (curve === 'hyperbola') {
           if (i === 0) a = v; else b = v;
         } else if (curve === 'parabola') {
@@ -422,10 +425,9 @@
       if (mode === 'focus') {
         // precompute a focus-related trajectory
         if (curve === 'ellipse') {
-          const c = Math.sqrt(a*a - b*b);
           for (let i = 0; i <= 200; i++) {
             const t = (i/200) * Math.PI*2;
-            focusTrail.push([c*Math.cos(t), b*Math.sin(t)]);
+            focusTrail.push([a*Math.cos(t), b*Math.sin(t)]);
           }
         } else if (curve === 'hyperbola') {
           for (let i = -100; i <= 100; i++) {
