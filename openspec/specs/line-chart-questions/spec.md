@@ -1,0 +1,21 @@
+# line-chart-questions Specification
+
+## Purpose
+TBD - created by archiving change bound-line-chart-questions. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 折线图数值题有限生成
+折线图读图和挑战的数值、相邻差值题及读图的上升次数题 SHALL 在有限步骤内生成四个不同非负整数选项，包含正确答案。
+
+#### Scenario: 相邻数据相等
+- **WHEN** 读图或挑战题询问两个相等数据点的差值
+- **THEN** 四个选项包含零，选择零显示正确反馈
+
+#### Scenario: 读数为零
+- **WHEN** 读图或挑战题询问零值数据点的数值
+- **THEN** 四个选项包含零，选择零显示正确反馈
+
+#### Scenario: 没有上升
+- **WHEN** 读图题的数据点没有上升
+- **THEN** 四个选项包含零，选择零显示正确反馈

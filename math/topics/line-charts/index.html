@@ -329,6 +329,16 @@
     function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
     function shuffle(arr) { for (var i = arr.length - 1; i > 0; i--) { var j = rand(0, i); var t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; }
     function pick(arr) { return arr[rand(0, arr.length - 1)]; }
+    // 有限的非负候选值，即使正确值为 0 也能生成三个不同干扰项。
+    function numberOptions(answer, step) {
+      var candidates = [];
+      for (var offset = -3; offset <= 3; offset++) {
+        var value = answer + offset * step;
+        if (offset !== 0 && value >= 0) candidates.push('' + value);
+      }
+      return ['' + answer].concat(shuffle(candidates).slice(0, 3));
+    }
+
     function $(sel) { return document.querySelector(sel); }
     function $$(sel) { return document.querySelectorAll(sel); }
 
@@ -501,38 +511,25 @@
         var idx = rand(0, data.length - 1);
         question = theme.xLabels[idx] + '的数值是多少' + theme.unit + '？';
         answer = '' + data[idx];
-        options = [answer];
-        while (options.length < 4) {
-          var fake = data[idx] + pick([-2,-1,1,2]) * theme.step;
-          if (fake >= 0 && options.indexOf('' + fake) === -1) options.push('' + fake);
-        }
+        options = numberOptions(data[idx], theme.step);
       } else if (qType === 'diff') {
         var i1 = rand(0, data.length - 2);
         var i2 = i1 + 1;
         var diff = Math.abs(data[i2] - data[i1]);
         question = theme.xLabels[i2] + '比' + theme.xLabels[i1] + '多/少多少' + theme.unit + '？';
         answer = '' + diff;
-        options = [answer];
-        while (options.length < 4) {
-          var fake = diff + pick([-2,-1,1,2]) * theme.step;
-          if (fake > 0 && options.indexOf('' + fake) === -1) options.push('' + fake);
-        }
+        options = numberOptions(diff, theme.step);
       } else if (qType === 'count_up') {
         var countUp = 0;
         for (var i = 1; i < data.length; i++) { if (data[i] > data[i-1]) countUp++; }
         question = '数据一共上升了几次？';
         answer = '' + countUp;
         options = [answer];
-        var alt = countUp + pick([-1,1,2]);
-        if (alt < 0) alt = countUp + 2;
-        options.push('' + alt);
-        alt = countUp + pick([-2,2,3]);
-        if (alt < 0 || options.indexOf(''+alt) !== -1) alt = Math.abs(countUp - 3);
-        if (options.indexOf(''+alt) === -1) options.push('' + alt);
-        while (options.length < 4) {
-          var r = rand(0, data.length - 1);
-          if (options.indexOf('' + r) === -1) options.push('' + r);
+        var countCandidates = [];
+        for (var c = 0; c < data.length; c++) {
+          if (c !== countUp) countCandidates.push('' + c);
         }
+        options = options.concat(shuffle(countCandidates).slice(0, 3));
       }
 
       shuffle(options);
@@ -780,11 +777,7 @@
         var idx = rand(0, data.length - 1);
         question = theme.xLabels[idx] + '的数值是多少' + theme.unit + '？';
         answer = '' + data[idx];
-        options = [answer];
-        while (options.length < 4) {
-          var fake = data[idx] + pick([-2,-1,1,2]) * theme.step;
-          if (fake >= 0 && options.indexOf('' + fake) === -1) options.push('' + fake);
-        }
+        options = numberOptions(data[idx], theme.step);
       } else if (qType === 'max') {
         var maxIdx = 0;
         for (var i = 1; i < data.length; i++) { if (data[i] > data[maxIdx]) maxIdx = i; }
@@ -809,11 +802,7 @@
         var diff = Math.abs(data[i2] - data[i1]);
         question = theme.xLabels[i2] + '比' + theme.xLabels[i1] + '相差多少' + theme.unit + '？';
         answer = '' + diff;
-        options = [answer];
-        while (options.length < 4) {
-          var fake = diff + pick([-2,-1,1,2]) * theme.step;
-          if (fake > 0 && options.indexOf('' + fake) === -1) options.push('' + fake);
-        }
+        options = numberOptions(diff, theme.step);
       } else if (qType === 'segment_trend') {
         var idx = rand(0, data.length - 2);
         var diff = data[idx + 1] - data[idx];
