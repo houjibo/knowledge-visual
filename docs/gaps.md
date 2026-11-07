@@ -23,6 +23,7 @@
 | 中 | 随机变量主题已核对正态曲线固定比例、超几何抽样边界及一道计算题；其他分布图和题目仍未全面核验。 | 按分布核对坐标比例、参数范围、概率和计算反馈。 |
 | 中 | 压强主题已核对固体压力箭头、液体单位和理想液压比例，并覆盖练习首次计分；大气压实验和其他压强模型尚未全面核验。 | 继续结合权威依据检查方向、单位和图示假设。 |
 | 中 | 热机主题已修正四冲程曲柄方向、零速度和柴油机燃料自燃说明；内能主题已核对理想气体运动及比热容温升刻度。连杆与热学模型仍有简化假设，其他主题尚未系统核验。 | 结合权威资料检查热学模型的运动、能量与前提。 |
+| 中 | 高中集合的交集高亮已按真实重叠区域绘制，互动元素支持键盘并实时更新四种运算；其他集合图与练习尚未全面核验。 | 继续核查 Venn 关系、其余运算示意与练习完成反馈。 |
 | 高 | 高中函数图像探索已校正整数负次幂、零次幂和反比例函数的图像与性质；定义域概念面板已统一五个示例的坐标和断点并支持键盘，图像探索已统一网格和曲线刻度、显示实际公式并校正指数底数为 1 的常数边界；练习已修正绝对值奇偶性解析、键盘锁定及存储失败反馈；其他函数模型与习题仍需核验。依据：[OpenStax 整数指数](https://openstax.org/books/elementary-algebra-2e/pages/6-7-integer-exponents-and-scientific-notation)、[倒数函数](https://openstax.org/books/college-algebra-2e/pages/5-6-rational-functions)。 | 继续核查其他函数模型、习题与真实设备。 |
 | 高 | 高中导数页面的函数选择和滑块已支持连续键盘操作；对数函数已明确 x > 0 的定义域，非正切点显示未定义并避免无效画布标注；内置函数局部极值已统一图文并标明范围，增减色带已修正；练习逐题计分并支持保存失败重试，其他教学内容尚需核验。依据：[OpenStax 自然对数导数](https://openstax.org/books/calculus-volume-1/pages/3-9-derivatives-of-exponential-and-logarithmic-functions)、[一阶导数检验](https://openstax.org/books/calculus-volume-1/pages/4-5-derivatives-and-the-shape-of-a-graph)。 | 继续检验图示、真实触屏及其他边界。 |
 | 中 | 高中圆锥曲线已校正椭圆横纵长轴、圆边界及双曲线焦点，并将图示与数值对照；轨迹会随参数切换，滑块支持连续键盘与模拟鼠标拖动，练习逐题锁定并支持保存失败重试；其余教学内容和整页无障碍尚未全面核验。依据：[OpenStax 椭圆](https://openstax.org/books/algebra-and-trigonometry/pages/12-1-the-ellipse)、[双曲线](https://openstax.org/books/algebra-and-trigonometry/pages/12-2-the-hyperbola)。 | 继续核查其他教学内容、触屏实机及无障碍。 |

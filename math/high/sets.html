@@ -238,7 +238,8 @@ canvas { display: block; margin: 0 auto; }
   transition: width 0.5s;
 }
 .tab { font-family: inherit; color: inherit; }
-.tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
+.set-element { font: inherit; color: inherit; }
+.set-element:focus-visible, .tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
 </style>
 </head>
 <body>
@@ -322,12 +323,12 @@ canvas { display: block; margin: 0 auto; }
       <div class="venn-circle venn-b" id="vennB">B</div>
       <div class="venn-label" style="left:80px; top:200px;">全集 U</div>
     </div>
-    <div class="op-buttons">
-      <button class="op-btn" onclick="showVennRelation('subset')">A ⊆ B</button>
-      <button class="op-btn" onclick="showVennRelation('superset')">A ⊇ B</button>
-      <button class="op-btn" onclick="showVennRelation('intersect')">A ∩ B ≠ ∅</button>
-      <button class="op-btn" onclick="showVennRelation('disjoint')">A ∩ B = ∅</button>
-      <button class="op-btn active" onclick="showVennRelation('general')">一般关系</button>
+    <div class="op-buttons" id="vennRelationButtons">
+      <button class="op-btn" aria-pressed="false" onclick="showVennRelation('subset', this)">A ⊆ B</button>
+      <button class="op-btn" aria-pressed="false" onclick="showVennRelation('superset', this)">A ⊇ B</button>
+      <button class="op-btn" aria-pressed="false" onclick="showVennRelation('intersect', this)">A ∩ B ≠ ∅</button>
+      <button class="op-btn" aria-pressed="false" onclick="showVennRelation('disjoint', this)">A ∩ B = ∅</button>
+      <button class="op-btn active" aria-pressed="true" onclick="showVennRelation('general', this)">一般关系</button>
     </div>
     <div id="vennDesc" class="info-text" style="text-align:center; min-height:50px;"></div>
   </div>
@@ -407,13 +408,13 @@ canvas { display: block; margin: 0 auto; }
         <div class="set-builder" id="setBBuilder"></div>
       </div>
     </div>
-    <div class="op-buttons">
-      <button class="op-btn" onclick="calcSetOp('intersect')">A ∩ B</button>
-      <button class="op-btn" onclick="calcSetOp('union')">A ∪ B</button>
-      <button class="op-btn" onclick="calcSetOp('diffAB')">A - B</button>
-      <button class="op-btn" onclick="calcSetOp('diffBA')">B - A</button>
+    <div class="op-buttons" id="setOperationButtons">
+      <button class="op-btn" data-op="intersect" aria-pressed="false" onclick="calcSetOp('intersect')">A ∩ B</button>
+      <button class="op-btn" data-op="union" aria-pressed="false" onclick="calcSetOp('union')">A ∪ B</button>
+      <button class="op-btn" data-op="diffAB" aria-pressed="false" onclick="calcSetOp('diffAB')">A - B</button>
+      <button class="op-btn" data-op="diffBA" aria-pressed="false" onclick="calcSetOp('diffBA')">B - A</button>
     </div>
-    <div id="setOpResult" class="result-box">请选择集合元素</div>
+    <div id="setOpResult" class="result-box" role="status">请选择运算</div>
   </div>
 </div>
 
@@ -481,13 +482,16 @@ function checkElement(n, el) {
 renderElementCheck();
 
 // ===== Panel 2: Venn图关系 =====
-function showVennRelation(type) {
+function showVennRelation(type, selectedButton) {
   const a = document.getElementById('vennA');
   const b = document.getElementById('vennB');
   const desc = document.getElementById('vennDesc');
   
-  document.querySelectorAll('.op-btn').forEach(btn => btn.classList.remove('active'));
-  event.target.classList.add('active');
+  document.querySelectorAll('#vennRelationButtons .op-btn').forEach(btn => {
+    const selected = btn === selectedButton;
+    btn.classList.toggle('active', selected);
+    btn.setAttribute('aria-pressed', String(selected));
+  });
   
   switch(type) {
     case 'subset':
@@ -632,12 +636,15 @@ function drawVennOp(canvasId, type) {
   
   // Highlight based on operation
   if (type === 'intersect') {
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(cx - 30, cy, r, -0.7, 0.7);
-    ctx.arc(cx + 30, cy, r, Math.PI - 0.7, Math.PI + 0.7);
-    ctx.closePath();
+    ctx.arc(cx - 30, cy, r, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.beginPath();
+    ctx.arc(cx + 30, cy, r, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255,210,0,0.5)';
     ctx.fill();
+    ctx.restore();
   } else if (type === 'union') {
     ctx.beginPath();
     ctx.arc(cx - 30, cy, r, 0, Math.PI * 2);
@@ -676,30 +683,42 @@ drawVennOp('canvasComplement', 'complement');
 const interactiveA = new Set();
 const interactiveB = new Set();
 const universe = [1, 2, 3, 4, 5, 6, 7, 8];
+let currentSetOperation = null;
 
 function renderSetBuilders() {
   ['A', 'B'].forEach(setName => {
     const container = document.getElementById(`set${setName}Builder`);
-    container.innerHTML = '';
-    universe.forEach(n => {
-      const div = document.createElement('div');
-      div.className = 'set-element in-none';
-      div.textContent = n;
-      const targetSet = setName === 'A' ? interactiveA : interactiveB;
-      if (targetSet.has(n)) {
-        div.className = setName === 'A' ? 'set-element in-A' : 'set-element in-B';
-      }
-      div.onclick = () => {
-        if (targetSet.has(n)) targetSet.delete(n);
-        else targetSet.add(n);
-        renderSetBuilders();
-      };
-      container.appendChild(div);
+    const targetSet = setName === 'A' ? interactiveA : interactiveB;
+    if (!container.hasChildNodes()) {
+      universe.forEach(n => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = n;
+        button.setAttribute('aria-label', `集合 ${setName} 元素 ${n}`);
+        button.onclick = () => {
+          if (targetSet.has(n)) targetSet.delete(n);
+          else targetSet.add(n);
+          renderSetBuilders();
+          if (currentSetOperation) calcSetOp(currentSetOperation);
+        };
+        container.appendChild(button);
+      });
+    }
+    [...container.children].forEach((button, i) => {
+      const selected = targetSet.has(universe[i]);
+      button.className = `set-element ${selected ? `in-${setName}` : 'in-none'}`;
+      button.setAttribute('aria-pressed', String(selected));
     });
   });
 }
 
 function calcSetOp(op) {
+  currentSetOperation = op;
+  document.querySelectorAll('#setOperationButtons button').forEach(button => {
+    const selected = button.dataset.op === op;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
   const a = [...interactiveA];
   const b = [...interactiveB];
   let result = [];
@@ -728,6 +747,7 @@ function calcSetOp(op) {
   if (result.length === 0) {
     el.textContent = `${opSymbol} = ∅（空集）`;
   } else {
+    result.sort((x, y) => x - y);
     el.textContent = `${opSymbol} = {${result.join(', ')}}`;
   }
 }
