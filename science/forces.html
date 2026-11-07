@@ -31,7 +31,7 @@
   @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
 
   .canvas-wrap { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; backdrop-filter: blur(12px); }
-  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); cursor: grab; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%); cursor: grab; touch-action: none; }
   canvas:active { cursor: grabbing; }
   .legend { display: flex; gap: 16px; justify-content: center; font-size: 13px; color: #cbd5e1; margin-top: 10px; flex-wrap: wrap; }
   .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
@@ -125,7 +125,7 @@
         <span class="l-force">力的方向</span>
         <span class="l-effect">力的效果</span>
       </div>
-      <div class="drag-hint" id="dragHint">拖拽物体，或使用下方按钮操作（动画为示意）。</div>
+      <div class="drag-hint" id="dragHint">用鼠标或手指拖拽物体，也可使用下方按钮（动画为示意）。手机上请在画布外滑动页面。</div>
       <button type="button" class="canvas-action" id="canvasAction">推动小球</button>
       <p class="action-status" id="actionStatus" role="status" aria-live="polite"></p>
     </div>
@@ -390,6 +390,7 @@ let projectile = { x: 100, y: 400, vx: 0, vy: 0, launched: false };
 let apple = { x: 350, y: 100, vy: 0, falling: false };
 
 let mouseX = 0, mouseY = 0, isDragging = false;
+let activePointerId = null;
 let manualSpringStretch = 0;
 let springDragging = false, springDragStartX = 0, springDragStartStretch = 0;
 const canvasAction = document.getElementById('canvasAction');
@@ -426,7 +427,10 @@ canvasAction.addEventListener('click', () => {
 });
 updateCanvasAction();
 
-canvas.addEventListener('mousedown', (e) => {
+canvas.addEventListener('pointerdown', (e) => {
+  if (!e.isPrimary || activePointerId !== null || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  activePointerId = e.pointerId;
+  canvas.setPointerCapture(e.pointerId);
   const rect = canvas.getBoundingClientRect();
   mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
   mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
@@ -471,7 +475,8 @@ canvas.addEventListener('mousedown', (e) => {
   }
 });
 
-canvas.addEventListener('mousemove', (e) => {
+canvas.addEventListener('pointermove', (e) => {
+  if (e.pointerId !== activePointerId) return;
   const rect = canvas.getBoundingClientRect();
   mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
   mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
@@ -494,14 +499,19 @@ canvas.addEventListener('mousemove', (e) => {
   }
 });
 
-window.addEventListener('mouseup', () => {
+function endPointerInteraction(e) {
+  if (e.pointerId !== activePointerId) return;
+  activePointerId = null;
   isDragging = false;
   if (springDragging) manualSpringStretch = 0;
   springDragging = false;
   ball.dragging = false;
   box.dragging = false;
   deformObj.dragging = false;
-});
+}
+canvas.addEventListener('pointerup', endPointerInteraction);
+canvas.addEventListener('pointercancel', endPointerInteraction);
+canvas.addEventListener('lostpointercapture', endPointerInteraction);
 
 // Drawing functions
 function drawArrow(fromX, fromY, toX, toY, color, label) {

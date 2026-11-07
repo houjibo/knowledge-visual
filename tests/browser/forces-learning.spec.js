@@ -92,6 +92,71 @@ test('弹簧仅在拖动右端时变化，施加力随伸长或压缩改变方�
   expect(await page.evaluate(() => manualSpringStretch)).toBe(0);
 });
 
+test('手机手指可拖动弹簧，取消触摸后可再次操作', async ({page, isMobile}) => {
+  test.skip(!isMobile, '需要支持触摸的移动视口');
+  await page.goto(url);
+  await page.locator('[data-section="pushpull"]').tap();
+  await page.locator('[data-mode="pull"]').tap();
+  await expect(page.locator('#dragHint')).toContainText('画布外滑动');
+  const canvas = page.locator('canvas');
+  await canvas.scrollIntoViewIfNeeded();
+  const bounds = await canvas.boundingBox();
+  const point = (x, y) => ({x: bounds.x + x * bounds.width / 700, y: bounds.y + y * bounds.height / 560});
+  const cdp = await page.context().newCDPSession(page);
+  const touch = (type, points) => cdp.send('Input.dispatchTouchEvent', {type, touchPoints: points});
+  await page.evaluate(() => {
+    window.pointerTypes = [];
+    canvas.addEventListener('pointerdown', event => window.pointerTypes.push(event.pointerType));
+  });
+
+  const scrollY = await page.evaluate(() => window.scrollY);
+  await touch('touchStart', [point(450, 280)]);
+  await touch('touchMove', [point(500, 300)]);
+  await expect.poll(() => page.evaluate(() => manualSpringStretch)).toBeGreaterThan(40);
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+  expect(await page.evaluate(() => window.pointerTypes)).toContain('touch');
+  await touch('touchEnd', []);
+  expect(await page.evaluate(() => manualSpringStretch)).toBe(0);
+
+  await touch('touchStart', [point(450, 280)]);
+  await touch('touchMove', [point(410, 280)]);
+  await expect.poll(() => page.evaluate(() => manualSpringStretch)).toBeLessThan(-30);
+  await touch('touchCancel', []);
+  expect(await page.evaluate(() => ({stretch: manualSpringStretch, dragging: isDragging, pointer: activePointerId}))).toEqual({stretch: 0, dragging: false, pointer: null});
+  await touch('touchStart', [point(450, 280)]);
+  await touch('touchMove', [point(490, 280)]);
+  await expect.poll(() => page.evaluate(() => manualSpringStretch)).toBeGreaterThan(30);
+  await touch('touchEnd', []);
+  await cdp.detach();
+});
+
+test('手机手指可推动小球并拖动物体观察形变', async ({page, isMobile}) => {
+  test.skip(!isMobile, '需要支持触摸的移动视口');
+  await page.goto(url);
+  const canvas = page.locator('canvas');
+  const cdp = await page.context().newCDPSession(page);
+  const touch = (type, points) => cdp.send('Input.dispatchTouchEvent', {type, touchPoints: points});
+  async function point(x, y) {
+    await canvas.scrollIntoViewIfNeeded();
+    const b = await canvas.boundingBox();
+    return {x: b.x + x * b.width / 700, y: b.y + y * b.height / 560};
+  }
+  await touch('touchStart', [await point(350, 280)]);
+  await touch('touchMove', [await point(400, 280)]);
+  await expect.poll(() => page.evaluate(() => ball.vx)).toBeGreaterThan(0);
+  await touch('touchEnd', []);
+  expect(await page.evaluate(() => ball.dragging)).toBe(false);
+
+  await page.locator('[data-section="effect"]').tap();
+  await touch('touchStart', [await point(350, 280)]);
+  await touch('touchMove', [await point(390, 310)]);
+  await expect.poll(() => page.evaluate(() => deformObj.deformX)).toBeGreaterThan(15);
+  await expect.poll(() => page.evaluate(() => deformObj.deformY)).toBeGreaterThan(10);
+  await touch('touchEnd', []);
+  expect(await page.evaluate(() => deformObj.dragging)).toBe(false);
+  await cdp.detach();
+});
+
 test('首次答错可重测，五题正确后保存并刷新', async ({page}) => {
   await page.goto(url);
   await visitModes(page);
