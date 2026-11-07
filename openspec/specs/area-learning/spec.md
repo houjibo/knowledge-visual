@@ -1,0 +1,21 @@
+# area-learning Specification
+
+## Purpose
+TBD - created by archiving change area-learning-boundaries. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 面积学习题目与示例可靠
+认识面积页面 SHALL 有限生成比较图形，区分数学点线和真实物体表面，并防止正确答案重复计分。
+
+#### Scenario: 随机边界
+- **WHEN** 随机源反复生成空格
+- **THEN** 图形生成终止且每个图形至少有两个填色格
+
+#### Scenario: 数学线段与实物
+- **WHEN** 学习者选择数学线段示例
+- **THEN** 页面解释理想化线段没有面积，真实物体有表面
+
+#### Scenario: 重复提交
+- **WHEN** 学习者正确回答比较或铺格题后再次提交
+- **THEN** 同一题只计一次分

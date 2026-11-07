@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：45；尚未登记：271。
+主题总数：316；已登记部分交互证据：46；尚未登记：270。
 
 ## 已登记部分交互证据
 
@@ -49,6 +49,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [扇形统计图](../../math/topics/sector-statistics/index.html)
   - 扇形图滑块、估算提示及部分随机题目；未覆盖整页。 [pie-chart.spec.js](../../tests/browser/pie-chart.spec.js)
+- [认识面积](../../math/topics/understanding-area/index.html)
+  - 点线示例、比较图形随机边界、键盘铺格及重复提交部分场景；判断挑战和全部内容尚未验收。 [area-learning.spec.js](../../tests/browser/area-learning.spec.js)
 - [认识比](../../math/topics/understanding-ratio/index.html)
   - 固定随机值、读写比、等价比、重复提交和挑战题部分场景；未覆盖全部主题内容。 [ratio-learning.spec.js](../../tests/browser/ratio-learning.spec.js)
 - [认识质量单位](../../math/topics/weight-units/index.html)
@@ -294,7 +296,6 @@
 - [三角形面积](../../math/topics/triangle-area/index.html)
 - [三角形的高与分类](../../math/topics/triangle-properties/index.html)
 - [三角形的认识](../../math/topics/triangles/index.html)
-- [认识面积](../../math/topics/understanding-area/index.html)
 - [认识倍](../../math/topics/understanding-multiples/index.html)
 - [认识零](../../math/topics/understanding-zero/index.html)
 - [体积与容积单位](../../math/topics/volume-units/index.html)
