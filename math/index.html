@@ -133,6 +133,16 @@
     }
     .level-tab:hover { transform: translateY(-2px); }
     .level-tab.active { background: #43A047; color: white; }
+    .topic-search { margin: 0 0 20px; padding: 18px; border-radius: 18px; background: white; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+    .topic-search label { display: block; font-weight: 700; margin-bottom: 8px; }
+    .topic-search-controls { display: flex; gap: 8px; }
+    .topic-search input { flex: 1; min-width: 0; padding: 11px 12px; border: 2px solid #8a8a8f; border-radius: 10px; font: inherit; }
+    .topic-search button { padding: 10px 16px; border: 0; border-radius: 10px; background: #267a31; color: white; font: inherit; cursor: pointer; }
+    .topic-search input:focus-visible, .topic-search button:focus-visible { outline: 3px solid #1565c0; outline-offset: 2px; }
+    .topic-search-status { margin-top: 10px; color: #444; min-height: 1.5em; }
+    .topic-search-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 12px; margin: 0 0 24px; }
+    .topic-search-results .topic-node { width: auto; }
+    #topic-search[hidden], #topic-browse[hidden], #topic-search-results[hidden] { display: none; }
     .stage-progress {
       display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
       margin: 0 0 20px;
@@ -170,6 +180,16 @@
     <!-- 学段进度汇总（localStorage kv-math-progress） -->
     <div class="stage-progress" id="stageProgress" aria-label="各学段学习进度"></div>
 
+    <section id="topic-search" class="topic-search" hidden aria-label="查找小学数学主题">
+      <label for="topic-query">查找小学数学主题</label>
+      <div class="topic-search-controls">
+        <input id="topic-query" type="search" placeholder="输入主题、关键词或年级，如面积、G1" autocomplete="off">
+        <button id="topic-clear" type="button">清空</button>
+      </div>
+      <p id="topic-search-status" class="topic-search-status" role="status" aria-live="polite">输入关键词查找主题</p>
+    </section>
+    <div id="topic-search-results" class="topic-search-results" aria-label="搜索结果" hidden></div>
+    <div id="topic-browse">
     <!-- ===== 横向知识地图 ===== -->
     <h2 style="font-size:18px;color:#6E6E73;padding:0 0 8px;">🗺️ 知识依赖图</h2>
     <div class="knowledge-map">
@@ -1722,6 +1742,7 @@
         <div class="card-grades"><span class="grade-tag grade-g5">G5</span></div>
       </a>
     </div>
+    </div><!-- topic-browse -->
   </div>
 
   <script src="assets/js/common.js"></script>
@@ -1731,7 +1752,42 @@
       PageProgress.renderBadges('.topic-card');
       PageProgress.renderBadges('.topic-node');
       renderStageProgress();
+      initTopicSearch();
     });
+
+    // 两种视图可能指向同一主题；合并检索文字并保留一个结果。
+    function initTopicSearch() {
+      const search = document.getElementById('topic-search');
+      const query = document.getElementById('topic-query');
+      const clear = document.getElementById('topic-clear');
+      const status = document.getElementById('topic-search-status');
+      const results = document.getElementById('topic-search-results');
+      const browse = document.getElementById('topic-browse');
+      const topics = new Map();
+      browse.querySelectorAll('.topic-card[href^="topics/"], .topic-node[href^="topics/"]').forEach(link => {
+        const path = link.getAttribute('href');
+        const item = topics.get(path) || {link, text: ''};
+        item.text += ' ' + link.textContent.toLowerCase();
+        topics.set(path, item);
+      });
+      function update() {
+        const terms = query.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+        const searching = terms.length > 0;
+        browse.hidden = searching;
+        results.hidden = !searching;
+        results.replaceChildren();
+        if (!searching) {
+          status.textContent = '输入关键词查找主题';
+          return;
+        }
+        const matches = [...topics.values()].filter(item => terms.every(term => item.text.includes(term)));
+        matches.forEach(item => results.appendChild(item.link.cloneNode(true)));
+        status.textContent = matches.length ? `找到 ${matches.length} 个主题` : '没有找到相关主题，请尝试其他关键词';
+      }
+      query.addEventListener('input', update);
+      clear.addEventListener('click', () => { query.value = ''; update(); query.focus(); });
+      search.hidden = false;
+    }
 
     // 学段进度汇总 chip：小学 slug 从 DOM 提取（topics/<slug>/），
     // 初/高/大为平铺 <slug>.html，hardcode 与各自目录保持一致。
