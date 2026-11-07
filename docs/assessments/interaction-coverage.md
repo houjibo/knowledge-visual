@@ -164,6 +164,7 @@
 - [多普勒效应 · 大学物理互动可视化](../../physics/uni/doppler.html)
   - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
   - 五个大学物理同构测验键盘答题、修改答案、计分及保存异常重试；不代表教学内容或其他交互已全面核验。 [university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)
+  - 一维声源和观察者方向、亚声速频率、声速边界与练习；波前不按频率比例绘制，宇宙学内容未全面核验。 [doppler-direction-and-sonic-boundary.spec.js](../../tests/browser/doppler-direction-and-sonic-boundary.spec.js)、[university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)
 - [流体力学 · 伯努利方程 · 互动可视化](../../physics/uni/fluid-mechanics.html)
   - 五个大学物理主题的顶层模式键盘切换、可见面板与焦点；未核验主题内容或内部交互。 [university-physics-mode-accessibility.spec.js](../../tests/browser/university-physics-mode-accessibility.spec.js)
   - 五个大学物理同构测验键盘答题、修改答案、计分及保存异常重试；不代表教学内容或其他交互已全面核验。 [university-physics-quiz-accessibility.spec.js](../../tests/browser/university-physics-quiz-accessibility.spec.js)

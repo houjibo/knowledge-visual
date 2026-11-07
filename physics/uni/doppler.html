@@ -123,22 +123,22 @@
       <div class="panel">
         <h3>📐 核心公式</h3>
         <div class="equation">
-          观察者接收频率：<b>f' = f₀ × (v ± v<sub>o</sub>) / (v ∓ v<sub>s</sub>)</b><br/>
+          亚声速一维接收频率：<b>f' = f₀ × (v + v<sub>o</sub>) / (v − v<sub>s</sub>)</b><br/>观察者位于声源右侧：vₛ 向右为正，vₒ 向左为正；均相对静止空气。仅在 |vₛ| &lt; v 时显示该式结果。<br/>
           声速 v = 340 m/s（15°C 空气中）<br/>
-          马赫数：<b>Ma = v<sub>s</sub> / v</b>
+          马赫数：<b>Ma = |v<sub>s</sub>| / v</b><br/>波前图为瞬时方向示意，间距与频率不按真实比例。
         </div>
         <div class="slider-row">
-          <label>波源速度 vₛ (m/s)</label>
-          <input type="range" id="vs" min="0" max="400" step="5" value="100" />
+          <label for="vs">声源速度 vₛ（向右为正，m/s）</label>
+          <input type="range" id="vs" min="-400" max="400" step="5" value="100" />
           <span class="val" id="vsv">100 m/s</span>
         </div>
         <div class="slider-row">
-          <label>观察者速度 vₒ (m/s)</label>
-          <input type="range" id="vo" min="0" max="100" step="5" value="0" />
+          <label for="vo">观察者速度 vₒ（向左为正，m/s）</label>
+          <input type="range" id="vo" min="-100" max="100" step="5" value="0" />
           <span class="val" id="vov">0 m/s</span>
         </div>
         <div class="slider-row">
-          <label>波源频率 f₀ (Hz)</label>
+          <label for="f0">声源频率 f₀ (Hz)</label>
           <input type="range" id="f0" min="100" max="2000" step="50" value="500" />
           <span class="val" id="f0v">500 Hz</span>
         </div>
@@ -158,7 +158,7 @@
         </div>
         <div class="concept-card wave">
           <div class="title">🌊 冲击波与音爆</div>
-          当波源速度超过波速（Ma > 1），波前无法向前传播，在后方形成锥形冲击波。半锥角 sinθ = v/vₛ = 1/Ma。这就是音爆和船首波的原理。
+          声源相对介质的速度超过声速（Ma > 1）时，波前包络形成马赫锥；半锥角 sinθ = 1/Ma。恰好达到声速时是临界情况，不套用超声速锥角结论。
         </div>
         <div class="concept-card redshift">
           <div class="title">🔴 宇宙学红移</div>
@@ -182,17 +182,17 @@
           <button class="mode-btn" data-target="shock">冲击波</button>
         </div>
         <div class="slider-row">
-          <label>波源速度 vₛ (m/s)</label>
-          <input type="range" id="pvs" min="0" max="400" step="5" value="100" />
+          <label for="pvs">练习声源速度 vₛ（向右为正，m/s）</label>
+          <input type="range" id="pvs" min="-400" max="400" step="5" value="100" />
           <span class="val" id="pvsv">100 m/s</span>
         </div>
         <div class="slider-row">
-          <label>观察者速度 vₒ (m/s)</label>
-          <input type="range" id="pvo" min="0" max="100" step="5" value="0" />
+          <label for="pvo">练习观察者速度 vₒ（向左为正，m/s）</label>
+          <input type="range" id="pvo" min="-100" max="100" step="5" value="0" />
           <span class="val" id="pvov">0 m/s</span>
         </div>
         <div class="slider-row">
-          <label>波源频率 f₀ (Hz)</label>
+          <label for="pf0">练习声源频率 f₀ (Hz)</label>
           <input type="range" id="pf0" min="100" max="2000" step="50" value="500" />
           <span class="val" id="pf0v">500 Hz</span>
         </div>
@@ -266,18 +266,16 @@ tabs.forEach(t => {
  * 多普勒计算
  * ============================================================ */
 function doppler(vs, vo, f0) {
-  const v = 340; // 声速 m/s
-  // 波源向观察者运动（vs > 0），观察者静止或向波源运动（vo > 0）
-  // f' = f0 * (v + vo) / (v - vs)  — 假设相互靠近
+  const v = 340;
+  const ma = Math.abs(vs) / v;
+  if (ma >= 1) return { f_prime: null, df: null, ma, state: ma === 1 ? '声速临界（公式不适用）' : '超声速（公式不适用）' };
   const f_prime = f0 * (v + vo) / (v - vs);
   const df = f_prime - f0;
-  const ma = vs / v;
-  let state;
-  if (ma >= 1) state = '冲击波';
-  else if (df > 0) state = '蓝移（频率升高）';
-  else if (df < 0) state = '红移（频率降低）';
-  else state = '无偏移';
+  const state = df > 1e-9 ? '频率升高' : df < -1e-9 ? '频率降低' : '无偏移';
   return { f_prime, df, ma, state };
+}
+function frequencyText(value, signed = false) {
+  return value === null ? '不适用' : (signed && value > 0 ? '+' : '') + value.toFixed(1) + ' Hz';
 }
 
 /* ============================================================
@@ -291,8 +289,8 @@ function updLearn() {
   document.getElementById('vov').textContent = voEl.value + ' m/s';
   document.getElementById('f0v').textContent = f0El.value + ' Hz';
   const d = doppler(+vsEl.value, +voEl.value, +f0El.value);
-  document.getElementById('calc-f').textContent = d.f_prime.toFixed(1) + ' Hz';
-  document.getElementById('calc-df').textContent = (d.df >= 0 ? '+' : '') + d.df.toFixed(1) + ' Hz';
+  document.getElementById('calc-f').textContent = frequencyText(d.f_prime);
+  document.getElementById('calc-df').textContent = frequencyText(d.df, true);
   document.getElementById('calc-ma').textContent = d.ma.toFixed(2);
   document.getElementById('calc-state').textContent = d.state;
 }
@@ -307,9 +305,9 @@ const pvo = document.getElementById('pvo');
 const pf0 = document.getElementById('pf0');
 let practiceTarget = 'approach';
 const targetDesc = {
-  approach: { text: '靠近（蓝移）', check: d => d.df > 50, hint: '让波源向观察者运动（vₛ > 0），频率升高超过 50 Hz。' },
-  recede:   { text: '远离（红移）', check: d => d.df < -50, hint: '让波源远离观察者（vₛ 为负方向，即 vₛ 设为较小值，vₒ 设为较大值），或增大 vₒ 使相对速度远离。' },
-  shock:    { text: '冲击波', check: d => d.ma >= 1, hint: '让波源速度超过声速 340 m/s（Ma ≥ 1），形成冲击波。' }
+  approach: { text: '靠近（蓝移）', check: d => d.df !== null && d.df > 50, hint: '让波源向观察者运动（vₛ > 0），频率升高超过 50 Hz。' },
+  recede:   { text: '远离（红移）', check: d => d.df !== null && d.df < -50, hint: '将声源速度设为负值（向左），或观察者速度设为负值（向右），使频率降低超过 50 Hz。' },
+  shock:    { text: '冲击波', check: d => d.ma > 1, hint: '让声源速度的绝对值超过声速 340 m/s（Ma > 1），观察马赫锥示意。' }
 };
 document.querySelectorAll('.mode-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -325,8 +323,8 @@ function updPractice() {
   document.getElementById('pvov').textContent = pvo.value + ' m/s';
   document.getElementById('pf0v').textContent = pf0.value + ' Hz';
   const d = doppler(+pvs.value, +pvo.value, +pf0.value);
-  document.getElementById('p-f').textContent = d.f_prime.toFixed(1) + ' Hz';
-  document.getElementById('p-df').textContent = (d.df >= 0 ? '+' : '') + d.df.toFixed(1) + ' Hz';
+  document.getElementById('p-f').textContent = frequencyText(d.f_prime);
+  document.getElementById('p-df').textContent = frequencyText(d.df, true);
   document.getElementById('p-ma').textContent = d.ma.toFixed(2);
   const ok = targetDesc[practiceTarget].check(d);
   document.getElementById('p-status').textContent = ok ? '✅ 达成！' : '未达成';
@@ -346,7 +344,7 @@ function drawScene(ctx, W, H, vs, vo, f0, showLabels) {
   const v = 340; // 声速
 
   // 波源位置（从左向右运动）
-  const srcX = 100 + (t * vs * 0.3) % (W - 250);
+  const srcX = W * 0.38; // 固定在瞬时位置，避免运动回绕混淆
   const srcY = H / 2;
 
   // 观察者位置（右侧）
@@ -359,8 +357,7 @@ function drawScene(ctx, W, H, vs, vo, f0, showLabels) {
   const nWaves = 8;
   for (let i = 0; i < nWaves; i++) {
     const age = ((t * waveSpeed * 60 + i * 30) % maxR);
-    const emitTime = t - age / (waveSpeed * 60);
-    const emitX = 100 + (emitTime * vs * 0.3) % (W - 250);
+    const emitX = srcX - (vs / v) * age;
     const alpha = 0.3 * (1 - age / maxR);
     ctx.strokeStyle = `rgba(245,158,11,${alpha})`;
     ctx.lineWidth = 2;
@@ -399,7 +396,7 @@ function drawScene(ctx, W, H, vs, vo, f0, showLabels) {
   ctx.textAlign = 'left';
   ctx.fillText('vₛ=' + vs + ' m/s', srcX + vs * 0.15 + 5, srcY - 26);
 
-  if (vo > 0) {
+  if (vo !== 0) {
     ctx.strokeStyle = '#10b981';
     ctx.beginPath();
     ctx.moveTo(obsX, obsY - 30);
@@ -410,7 +407,7 @@ function drawScene(ctx, W, H, vs, vo, f0, showLabels) {
   }
 
   // 冲击波锥（Ma > 1 时）
-  if (d.ma >= 1) {
+  if (d.ma > 1) {
     const sinTheta = 1 / d.ma;
     const theta = Math.asin(sinTheta);
     const coneLen = 150;
@@ -420,18 +417,18 @@ function drawScene(ctx, W, H, vs, vo, f0, showLabels) {
     // 上锥
     ctx.beginPath();
     ctx.moveTo(srcX, srcY);
-    ctx.lineTo(srcX - coneLen * Math.cos(theta), srcY - coneLen * Math.sin(theta));
+    ctx.lineTo(srcX - Math.sign(vs) * coneLen * Math.cos(theta), srcY - coneLen * Math.sin(theta));
     ctx.stroke();
     // 下锥
     ctx.beginPath();
     ctx.moveTo(srcX, srcY);
-    ctx.lineTo(srcX - coneLen * Math.cos(theta), srcY + coneLen * Math.sin(theta));
+    ctx.lineTo(srcX - Math.sign(vs) * coneLen * Math.cos(theta), srcY + coneLen * Math.sin(theta));
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = '#ef4444';
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('冲击波 θ=' + (theta * 180 / Math.PI).toFixed(1) + '°', srcX - coneLen * 0.5, srcY - coneLen * 0.35);
+    ctx.fillText('冲击波 θ=' + (theta * 180 / Math.PI).toFixed(1) + '°', srcX - Math.sign(vs) * coneLen * 0.5, srcY - coneLen * 0.35);
   }
 
   // 信息标注
@@ -440,10 +437,10 @@ function drawScene(ctx, W, H, vs, vo, f0, showLabels) {
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText("f₀ = " + f0 + " Hz", 20, 30);
-    ctx.fillText("f' = " + d.f_prime.toFixed(1) + " Hz", 20, 52);
-    ctx.fillText('Δf = ' + (d.df >= 0 ? '+' : '') + d.df.toFixed(1) + ' Hz', 20, 74);
+    ctx.fillText("f' = " + frequencyText(d.f_prime), 20, 52);
+    ctx.fillText('Δf = ' + frequencyText(d.df, true), 20, 74);
     ctx.fillText('Ma = ' + d.ma.toFixed(2), 20, 96);
-    ctx.fillStyle = d.state.includes('蓝移') ? '#3b82f6' : d.state.includes('红移') ? '#ef4444' : '#f59e0b';
+    ctx.fillStyle = d.state.includes('升高') ? '#3b82f6' : d.state.includes('降低') ? '#ef4444' : '#f59e0b';
     ctx.fillText(d.state, 20, 118);
   }
 }
