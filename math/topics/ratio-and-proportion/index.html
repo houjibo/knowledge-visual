@@ -70,6 +70,7 @@
     .challenge-problem { font-size: 26px; font-weight: 700; color: #4A90D9; margin: 24px 0; line-height: 1.5; }
     .challenge-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 400px; margin: 24px auto; padding: 0 16px; }
     .challenge-opt { padding: 20px; border: 3px solid #E5E5EA; background: white; border-radius: 16px; font-size: 18px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .challenge-opt:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 3px; }
     .challenge-opt:active { transform: scale(0.9); }
     .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
     .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
@@ -229,16 +230,17 @@
       ];
       function newRatio() {
         const sc = Random.pick(scenarios);
-        let a, b;
-        do { a = Random.int(sc.min, sc.max); b = Random.int(sc.min, sc.max); } while (a === b);
+        const a = Random.int(sc.min, sc.max);
+        const candidates = Array.from({length: sc.max - sc.min + 1}, (_, i) => sc.min + i).filter(n => n !== a);
+        const b = Random.pick(candidates);
         const s = simplifyRatio(a, b);
         const ratioStr = `${s.a}:${s.b}`;
         const fracStr = `${s.a}/${s.b}`;
 
-        // 方块可视化（简化后最多显示 8 个）
+        // 每个图标对应一个实际物体。
         let blocksA = '', blocksB = '';
-        for (let i = 0; i < s.a; i++) blocksA += `<div class="ratio-block a">${sc.iconA}</div>`;
-        for (let i = 0; i < s.b; i++) blocksB += `<div class="ratio-block b">${sc.iconB}</div>`;
+        for (let i = 0; i < a; i++) blocksA += `<div class="ratio-block a">${sc.iconA}</div>`;
+        for (let i = 0; i < b; i++) blocksB += `<div class="ratio-block b">${sc.iconB}</div>`;
 
         document.getElementById('ratio-visual').innerHTML = `
           <div class="ratio-group">
@@ -261,7 +263,7 @@
 
         const div = a / b;
         document.getElementById('ratio-hint').innerHTML = `
-          <strong>💡 理解：</strong> ${sc.label} A 是 B 的 <span style="color:#4A90D9;font-weight:700">${div.toFixed(2)}</span> 倍<br>
+          <strong>💡 理解：</strong> ${sc.label} A 约是 B 的 <span style="color:#4A90D9;font-weight:700">${div.toFixed(2)}</span> 倍<br>
           <strong>📌 化简：</strong> ${a} 和 ${b} 同时除以 ${gcd(a,b)}，得到最简比 <span style="color:#4A90D9;font-weight:700">${s.a}:${s.b}</span>
         `;
 
@@ -557,9 +559,9 @@
           const mapCm = Random.int(2, 10);
           const real = mapCm * ratio;
           question = `比例尺 1:${ratio}，图上 ${mapCm} cm，实际多少 m？`;
-          answer = real;
-          options = [real, real / 2, real * 2, real + ratio];
-          hint = `💡 实际距离 = 图上距离 × 比例尺分母`;
+          answer = real / 100;
+          options = [answer, answer / 2, answer * 2, answer + ratio / 100];
+          hint = `💡 ${mapCm} × ${ratio} = ${real} cm，再除以 100 换成米`;
         } else {
           // 解比例方程
           const a = Random.int(2, 5), b = Random.int(2, 5), c = Random.int(2, 5);
@@ -592,8 +594,8 @@
         }
 
         options = [...new Set(options.map(x => typeof x === 'number' && !Number.isInteger(x) ? parseFloat(x.toFixed(2)) : x))];
-        while (options.length < 4) {
-          const fake = typeof answer === 'number' ? answer + Random.int(-5, 5) : `${Random.int(1, 9)}:${Random.int(1, 9)}`;
+        for (let offset = 1; options.length < 4; offset++) {
+          const fake = typeof answer === 'number' ? answer + offset : `${Number(answer.split(':')[0]) + offset}:${answer.split(':')[1]}`;
           if (!options.includes(fake)) options.push(fake);
         }
         options = Random.shuffle(options).slice(0, 4);
@@ -605,10 +607,14 @@
         `;
         const container = document.getElementById('challenge-options');
         container.innerHTML = '';
+        let answered = false;
         Random.shuffle(options).forEach(val => {
-          const btn = document.createElement('div');
+          const btn = document.createElement('button');
+          btn.type = 'button';
           btn.className = 'challenge-opt'; btn.textContent = val;
           btn.addEventListener('click', () => {
+            if (answered) return;
+            answered = true;
             if (val === answer) {
               btn.classList.add('correct'); streak++; challengeCorrect++;
               Sound.play('correct'); celebrate(); updateStreak();
