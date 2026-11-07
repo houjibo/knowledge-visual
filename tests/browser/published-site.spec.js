@@ -62,7 +62,7 @@ test('发布站子路径的面积到体积路线可连续学习', async ({page})
   page.on('response', response => { if (response.url().startsWith(base) && response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
   await page.goto(base);
   await page.getByRole('link',{name:/数学 小学/}).click();
-  await page.locator('#area-volume-path').getByRole('link',{name:/认识面积/}).click();
+  await page.locator('#area-volume-path ol').getByRole('link',{name:/认识面积/}).click();
   for (const slug of ['understanding-area','area-and-perimeter','solid-shapes','surface-area','volume']) {
     await expect(page).toHaveURL(new URL(`math/topics/${slug}/index.html`,base).href);
     const nav=page.getByRole('navigation',{name:'从面积到体积学习路线'});

@@ -28,10 +28,13 @@
     .learning-path p { margin: 10px 0; color: #315b42; line-height: 1.6; }
     .learning-path ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; padding: 0; margin: 14px 0; list-style: none; counter-reset: journey; }
     .learning-path li { counter-increment: journey; min-width: 0; }
-    .learning-path a { display: block; height: 100%; padding: 12px 42px 12px 14px; background: white; border: 1px solid #c8ded0; border-radius: 12px; color: #164e31; text-decoration: none; }
-    .learning-path a::before { content: counter(journey) ". "; font-weight: 700; }
-    .learning-path a strong { font-size: 16px; }
-    .learning-path a span { display: block; margin-top: 5px; color: #42584b; font-size: 13px; line-height: 1.5; }
+    .learning-path ol a { display: block; height: 100%; padding: 12px 42px 12px 14px; background: white; border: 1px solid #c8ded0; border-radius: 12px; color: #164e31; text-decoration: none; }
+    .learning-path ol a::before { content: counter(journey) ". "; font-weight: 700; }
+    .learning-path ol a strong { font-size: 16px; }
+    .learning-path ol a span { display: block; margin-top: 5px; color: #42584b; font-size: 13px; line-height: 1.5; }
+
+    .learning-path .resume-link { display: inline-block; padding: 9px 12px; border-radius: 10px; background: #1b5e35; color: white; font-weight: 700; text-decoration: none; }
+    .learning-path .resume-link[hidden] { display: none; }
 
     /* 知识地图 - 横向流程图 */
     .knowledge-map {
@@ -214,6 +217,8 @@
         <li><a href="topics/volume/index.html"><strong>体积与容积</strong><span>逐层计入小方块，观察长、宽、高与体积的关系。</span></a></li>
       </ol>
       <p>各主题有自己的完成条件；✓ 表示已保存完成，记录保存在当前浏览器。</p>
+      <p id="path-progress" role="status" aria-live="polite" hidden></p>
+      <a id="path-resume" class="resume-link" hidden>继续学习</a>
     </details>
     <!-- ===== 横向知识地图 ===== -->
     <h2 style="font-size:18px;color:#6E6E73;padding:0 0 8px;">🗺️ 知识依赖图</h2>
@@ -1791,11 +1796,30 @@
       if (stores) {
         PageProgress.renderBadges('.topic-card');
         PageProgress.renderBadges('.topic-node');
-        PageProgress.renderBadges('.learning-path a');
+        PageProgress.renderBadges('.learning-path ol a');
       }
       renderStageProgress(stores);
+      renderLearningPathProgress(stores);
       const query = document.getElementById('topic-query');
       if (query.value.trim()) query.dispatchEvent(new Event('input'));
+    }
+    function renderLearningPathProgress(stores) {
+      const status = document.getElementById('path-progress');
+      const resume = document.getElementById('path-resume');
+      status.hidden = false;
+      resume.hidden = true;
+      resume.removeAttribute('href');
+      if (!stores) { status.textContent = '路线进度暂不可读取。'; return; }
+      const links = Array.from(document.querySelectorAll('#area-volume-path ol a'));
+      const completed = links.map(link => PageProgress.isDone(link.getAttribute('href').split('/')[1]));
+      const count = completed.filter(Boolean).length;
+      const next = completed.indexOf(false);
+      if (next < 0) { status.textContent = `已完成 ${count} / ${links.length} 个主题。`; return; }
+      const title = links[next].querySelector('strong').textContent;
+      status.textContent = `已完成 ${count} / ${links.length} 个主题；建议继续：${title}。`;
+      resume.href = links[next].getAttribute('href');
+      resume.textContent = `继续学习：${title}`;
+      resume.hidden = false;
     }
     document.addEventListener('DOMContentLoaded', () => {
       refreshMathProgress();
