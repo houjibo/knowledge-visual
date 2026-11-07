@@ -25,3 +25,17 @@ TBD - created by archiving change light-ray-geometry. Update Purpose after archi
 #### Scenario: 调整至极限角度
 - **WHEN** 使用键盘选择滑块的两端
 - **THEN** 光线保持在对应介质并显示不超过 80° 的入射角
+
+### Requirement: 不透明障碍物形成正确的点光源影子
+直线传播模式 SHALL 将中心光线限制在障碍物前，并根据点光源到障碍物的几何关系绘制后方阴影。
+
+#### Scenario: 移动障碍物
+- **WHEN** 学习者将障碍物从靠近光源移动到远离光源
+- **THEN** 光线始终停在障碍物处，固定屏幕位置的阴影变小
+
+### Requirement: 障碍物位置可使用键盘调整
+学习者 SHALL 能通过原生滑块调整障碍物位置，状态文字和画布同步。
+
+#### Scenario: 使用键盘到达两端并重置
+- **WHEN** 学习者用 Home、End 调整障碍物后选择重置
+- **THEN** 状态反映远近变化，重置后恢复中间位置

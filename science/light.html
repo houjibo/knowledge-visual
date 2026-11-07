@@ -187,6 +187,11 @@
   <div class="stage">
     <div class="canvas-wrap">
       <canvas id="lightCanvas" width="700" height="500" role="img" aria-label="光路示意图"></canvas>
+      <div class="angle-control" id="obstacleControl">
+        <label for="obstacleSlider">障碍物位置</label>
+        <input id="obstacleSlider" type="range" min="250" max="600" step="1" value="350" aria-describedby="obstacleInfo">
+        <p id="obstacleInfo" role="status">光源与障碍物距离：中等。</p>
+      </div>
       <div class="angle-control hidden" id="angleControl">
         <label for="angleSlider">入射方向角（相对法线）</label>
         <input id="angleSlider" type="range" min="-80" max="80" step="1" value="30" aria-describedby="angleInfo">
@@ -205,7 +210,7 @@
         <h3>📏 光沿直线传播</h3>
         <div class="concept-box">
           光在<span class="hl">同种均匀介质</span>中沿<span class="hl">直线</span>传播。<br>
-          遇到不透明物体时，会在物体后面形成<span class="hl2">影子</span>。
+          遇到不透明物体时，会在物体后面形成<span class="hl2">影子</span>。本图把光源简化为一个点，观察距离变化对影子的影响。
         </div>
         <div class="info-grid">
           <div><b>🔦 光源</b><br>能发光的物体，如太阳、灯泡</div>
@@ -366,8 +371,10 @@ function drawStraight() {
   ctx.fill();
   ctx.shadowBlur = 0;
   
-  // 光线（动画）
-  const maxLen = W - 150;
+  // 点光源到不透明障碍物的中心光线不会穿过障碍物。
+  const obsX = Math.max(250, Math.min(mouseX, 600));
+  const obsW = 40, obsH = 120;
+  const maxLen = obsX - (lightX + 20);
   const len = animating ? maxLen * animProgress : maxLen;
   
   ctx.beginPath();
@@ -389,9 +396,7 @@ function drawStraight() {
     ctx.fill();
   }
   
-  // 障碍物（鼠标位置）
-  const obsX = Math.max(250, Math.min(mouseX, W - 50));
-  const obsW = 40, obsH = 120;
+  // 障碍物位置由滑块或鼠标控制。
   ctx.fillStyle = '#475569';
   ctx.fillRect(obsX, lightY - obsH/2, obsW, obsH);
   ctx.strokeStyle = '#64748b';
@@ -399,13 +404,17 @@ function drawStraight() {
   ctx.strokeRect(obsX, lightY - obsH/2, obsW, obsH);
   
   // 影子
-  if (len > obsX - lightX - 20) {
+  if (!animating || animProgress >= 1) {
+    // 阴影边界是从点光源经过障碍物上下边缘的直线。
+    const slope = (obsH / 2) / (obsX - lightX);
+    const nearHalf = slope * (obsX + obsW - lightX);
+    const farHalf = slope * (W - lightX);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.beginPath();
-    ctx.moveTo(obsX + obsW, lightY - obsH/2);
-    ctx.lineTo(W, lightY - obsH);
-    ctx.lineTo(W, lightY + obsH);
-    ctx.lineTo(obsX + obsW, lightY + obsH/2);
+    ctx.moveTo(obsX + obsW, lightY - nearHalf);
+    ctx.lineTo(W, lightY - farHalf);
+    ctx.lineTo(W, lightY + farHalf);
+    ctx.lineTo(obsX + obsW, lightY + nearHalf);
     ctx.closePath();
     ctx.fill();
     
@@ -418,7 +427,7 @@ function drawStraight() {
   // 标签
   ctx.fillStyle = '#fbbf24';
   ctx.font = 'bold 14px sans-serif';
-  ctx.fillText('光源', lightX - 10, lightY - 30);
+  ctx.fillText('点光源', lightX - 22, lightY - 30);
   
   ctx.fillStyle = '#64748b';
   ctx.fillText('障碍物', obsX, lightY - obsH/2 - 10);
@@ -426,7 +435,7 @@ function drawStraight() {
   // 说明文字
   ctx.fillStyle = '#cbd5e1';
   ctx.font = '13px sans-serif';
-  ctx.fillText('移动鼠标改变障碍物位置', 20, 30);
+  ctx.fillText('滑动控件或移动鼠标改变障碍物位置', 20, 30);
 }
 
 function drawReflect() {
@@ -701,9 +710,21 @@ canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
   mouseX = (e.clientX - rect.left) * (W / rect.width);
   mouseY = (e.clientY - rect.top) * (H / rect.height);
+  if (currentMode === 'straight') setObstaclePosition(mouseX);
   if (currentMode === 'reflect') setLightAngle(Math.atan2(H / 2 - mouseY, Math.max(1, W / 2 - mouseX)) * 180 / Math.PI);
   if (currentMode === 'refract') setLightAngle(Math.atan2(W / 2 - mouseX, Math.max(1, H / 2 - mouseY)) * 180 / Math.PI);
 });
+
+const obstacleSlider = document.getElementById('obstacleSlider');
+function setObstaclePosition(value) {
+  mouseX = Math.max(250, Math.min(600, Math.round(value)));
+  obstacleSlider.value = mouseX;
+  const label = mouseX < 350 ? '较近' : mouseX > 500 ? '较远' : '中等';
+  document.getElementById('obstacleInfo').textContent = `光源与障碍物距离：${label}。越靠近光源，远处的影子越大。`;
+  if (currentMode === 'straight') canvas.setAttribute('aria-label', document.getElementById('obstacleInfo').textContent);
+}
+obstacleSlider.addEventListener('input', () => setObstaclePosition(Number(obstacleSlider.value)));
+setObstaclePosition(mouseX);
 
 const angleSlider = document.getElementById('angleSlider');
 function setLightAngle(value) {
@@ -723,8 +744,9 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.setAttribute('aria-pressed', 'true');
     currentMode = tab.dataset.mode;
     document.getElementById('angleControl').classList.toggle('hidden', currentMode === 'straight');
+    document.getElementById('obstacleControl').classList.toggle('hidden', currentMode !== 'straight');
     if (currentMode !== 'straight') setLightAngle(lightAngle);
-    else canvas.setAttribute('aria-label', '光沿直线传播和障碍物影子示意图');
+    else setObstaclePosition(mouseX);
     visitedTabs.add(currentMode);
     
     document.querySelectorAll('.panel > div').forEach(p => p.classList.add('hidden'));
@@ -740,6 +762,7 @@ document.getElementById('btnReset').addEventListener('click', () => {
   mouseX = W/2;
   mouseY = H/2;
   if (currentMode !== 'straight') setLightAngle(0);
+  else setObstaclePosition(W / 2);
   animProgress = 0;
   animating = true;
 });
@@ -751,7 +774,7 @@ document.getElementById('btnAnimate').addEventListener('click', () => {
 
 document.getElementById('btnHint').addEventListener('click', () => {
   const hints = {
-    straight: '💡 提示：光沿直线传播，遇到障碍物会形成影子。试试移动鼠标改变障碍物位置！',
+    straight: '💡 提示：光沿直线传播，遇到障碍物会形成影子。试试滑块或移动鼠标改变障碍物位置！',
     reflect: '💡 提示：入射角等于反射角。移动鼠标改变入射角度，观察反射光线的变化。',
     refract: '💡 提示：光从空气斜射进入水中时折射角较小；垂直入射时方向不变。'
   };

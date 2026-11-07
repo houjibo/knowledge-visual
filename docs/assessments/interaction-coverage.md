@@ -110,7 +110,7 @@
 - [我们的身体 · 小学科学互动可视化](../../science/human-body.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [光的世界 · 小学科学互动可视化](../../science/light.html)
-  - 反射与空气到水折射的画布路径、法线角度和键盘滑块边界；直线传播及测验未全面验收。 [light-ray.spec.js](../../tests/browser/light-ray.spec.js)
+  - 点光源遮挡与影子路径、反射和空气到水折射的画布路径、键盘滑块；扩展光源和测验未全面验收。 [light-ray.spec.js](../../tests/browser/light-ray.spec.js)
 - [生物世界 · 小学科学互动可视化](../../science/living-things.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [材料的世界 · 小学科学互动可视化](../../science/materials.html)

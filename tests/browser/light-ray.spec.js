@@ -53,3 +53,45 @@ test('空气到水的折射服从斯涅尔定律，垂直入射不偏折', async
   expect(rays['#fbbf24'][0][0]).toBeCloseTo(rays['#34d399'][1][0], 5);
   await expect(page.locator('#panel-refract .concept-box')).toContainText('沿法线入射时方向不变');
 });
+
+async function shadowPaths(page) {
+  return page.evaluate(() => {
+    const proto = CanvasRenderingContext2D.prototype;
+    const original = {beginPath: proto.beginPath, moveTo: proto.moveTo, lineTo: proto.lineTo, stroke: proto.stroke, fill: proto.fill};
+    let points = [], line, shadow;
+    proto.beginPath = function() { points = []; return original.beginPath.call(this); };
+    proto.moveTo = function(x, y) { points.push([x, y]); return original.moveTo.call(this, x, y); };
+    proto.lineTo = function(x, y) { points.push([x, y]); return original.lineTo.call(this, x, y); };
+    proto.stroke = function(...args) {
+      if (this.strokeStyle === 'rgba(251, 191, 36, 0.8)' && points.length === 2) line = points.slice();
+      return original.stroke.apply(this, args);
+    };
+    proto.fill = function(...args) {
+      if (this.fillStyle === 'rgba(0, 0, 0, 0.5)' && points.length === 4) shadow = points.slice();
+      return original.fill.apply(this, args);
+    };
+    try { animating = false; draw(); return {line, shadow}; }
+    finally { Object.assign(proto, original); }
+  });
+}
+
+test('点光源被遮挡，影子随位置改变并可键盘重置', async ({page}) => {
+  await page.goto(url);
+  const slider = page.getByLabel('障碍物位置');
+  await slider.focus(); await page.keyboard.press('Home');
+  await expect(page.locator('#obstacleInfo')).toContainText('较近');
+  const near = await shadowPaths(page);
+  expect(near.line[1][0]).toBe(250);
+  expect(near.shadow[1][0]).toBe(700);
+  expect(near.shadow[1][1]).toBeCloseTo(10, 5);
+  expect(near.shadow[2][1]).toBeCloseTo(490, 5);
+  await page.keyboard.press('End');
+  await expect(page.locator('#obstacleInfo')).toContainText('较远');
+  const far = await shadowPaths(page);
+  expect(far.line[1][0]).toBe(600);
+  expect(far.shadow[2][1] - far.shadow[1][1]).toBeLessThan(near.shadow[2][1] - near.shadow[1][1]);
+  expect(far.shadow[1][1]).toBeCloseTo(178, 5);
+  await page.locator('#btnReset').click();
+  await expect(slider).toHaveValue('350');
+  await expect(page.locator('#panel-straight .concept-box')).toContainText('简化为一个点');
+});
