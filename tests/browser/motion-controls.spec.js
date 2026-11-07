@@ -1,0 +1,43 @@
+const {test, expect} = require('@playwright/test');
+
+test('机械运动：键盘和指针选择速度及图像', async ({page}) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/physics/middle/motion.html');
+  await page.getByRole('button', {name: '匀速运动'}).click();
+  const slow = page.locator('[data-mode="slow"]');
+  const medium = page.locator('[data-mode="medium"]');
+  const fast = page.locator('[data-mode="fast"]');
+  await slow.focus();
+  await page.keyboard.press('Tab');
+  await expect(medium).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(fast).toBeFocused();
+  await expect(fast).toHaveCSS('outline-style', 'solid');
+  await page.keyboard.press('Space');
+  await expect(fast).toHaveAttribute('aria-pressed', 'true');
+  await expect(slow).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('#uniSpeed')).toContainText('10.0');
+  await medium.click();
+  await expect(medium).toHaveAttribute('aria-pressed', 'true');
+  await expect(fast).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('#uniSpeed')).toContainText('5.0');
+
+  await page.getByRole('button', {name: '运动图像'}).click();
+  const st = page.locator('[data-graph="st"]');
+  const vt = page.locator('[data-graph="vt"]');
+  const both = page.locator('[data-graph="both"]');
+  const canvas = page.locator('#mainCanvas');
+  const initial = await canvas.evaluate(el => el.toDataURL());
+  await st.focus();
+  await page.keyboard.press('Tab');
+  await expect(vt).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(vt).toHaveAttribute('aria-pressed', 'true');
+  await expect(st).toHaveAttribute('aria-pressed', 'false');
+  expect(await canvas.evaluate(el => el.toDataURL())).not.toBe(initial);
+  await both.click();
+  await expect(both).toHaveAttribute('aria-pressed', 'true');
+  await expect(vt).toHaveAttribute('aria-pressed', 'false');
+  expect(errors).toEqual([]);
+});
