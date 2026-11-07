@@ -40,6 +40,7 @@
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
 - [概率初步 · 初中数学互动可视化](../../math/middle/probability-intro.html)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
+  - 固定随机数验证球数组成变更清空、单次及多次抽样、频率点、刻度、键盘滑块和移动视口滚动；题目内容及完整无障碍未全面核验。 [probability-experiment.spec.js](../../tests/browser/probability-experiment.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
   - 从首页进入加法并获得练习正确、错误反馈；未覆盖全部学习模式。 [learning-paths.spec.js](../../tests/browser/learning-paths.spec.js)
 - [圆柱与圆锥](../../math/topics/cylinder-and-cone/index.html)

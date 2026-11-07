@@ -32,7 +32,9 @@
   .stage > * { min-width: 0; }
   @media (max-width: 1100px) { .stage { grid-template-columns: 1fr; } }
   .canvas-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
-  canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #2e1a0e 0%, #0f172a 100%); touch-action: none; }
+  .visual-scroll { overflow-x: auto; }
+  canvas { width: 100%; min-width: 640px; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #2e1a0e 0%, #0f172a 100%); }
+  .scroll-hint { font-size: 13px; color: #cbd5e1; margin-top: 8px; }
   .legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; color: #cbd5e1; flex-wrap: wrap; }
   .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); }
   .panel h3 { margin: 0 0 12px; font-size: 1.1rem; color: #e2e8f0; }
@@ -125,7 +127,8 @@
     <div class="stage">
       <div>
         <div class="canvas-wrap">
-          <canvas id="simCanvas" width="720" height="480"></canvas>
+          <div class="visual-scroll" tabindex="0" role="region" aria-label="实验图表，可左右滚动"><canvas id="simCanvas" width="720" height="480" role="img"></canvas></div>
+          <p class="scroll-hint">图表较宽时可左右滑动查看完整图示。</p>
           <div class="legend">
             <span style="color:#ef4444">● 红球</span>
             <span style="color:#60a5fa">● 蓝球</span>
@@ -136,12 +139,12 @@
       <div class="panel">
         <h3>🎰 摸球实验（摸后放回）</h3>
         <div class="slider-row">
-          <label>红球个数</label>
+          <label for="sliderRed">红球个数</label>
           <input type="range" id="sliderRed" min="1" max="8" step="1" value="3">
           <span class="val" id="valRed">3 个</span>
         </div>
         <div class="slider-row">
-          <label>蓝球个数</label>
+          <label for="sliderBlue">蓝球个数</label>
           <input type="range" id="sliderBlue" min="1" max="8" step="1" value="2">
           <span class="val" id="valBlue">2 个</span>
         </div>
@@ -150,6 +153,7 @@
           <button class="act-btn" id="btnDraw50">连摸 50 次</button>
           <button class="act-btn ghost" id="btnReset">重置</button>
         </div>
+        <p id="experimentStatus" role="status" aria-live="polite">调整球数会开始新一轮实验。</p>
         <div class="info-grid">
           <div>理论 P(红球)<br><b id="infoTheory">3/5 = 0.600</b></div>
           <div>已摸次数<br><b id="infoN">0 次</b></div>
@@ -269,10 +273,20 @@ function updPanel() {
   document.getElementById('infoN').textContent = trials.length + ' 次';
   const reds = trials.filter(Boolean).length;
   document.getElementById('infoRedN').textContent = reds + ' 次';
-  document.getElementById('infoFreq').textContent = trials.length ? (reds / trials.length).toFixed(3) : '—';
+  const frequency = trials.length ? (reds / trials.length).toFixed(3) : '暂无数据';
+  document.getElementById('infoFreq').textContent = trials.length ? frequency : '—';
+  canvas.setAttribute('aria-label', `袋中红球 ${t.r} 个，蓝球 ${t.b} 个，理论红球概率 ${t.p.toFixed(3)}。已摸 ${trials.length} 次，红球 ${reds} 次，实际频率 ${frequency}。${lastDraw === null ? '尚未摸球。' : `最近摸出${lastDraw ? '红球' : '蓝球'}。`}图中曲线显示每次摸球后的累计频率，虚线是理论概率。`);
 }
-sliderRed.addEventListener('input', () => { updPanel(); draw(); });
-sliderBlue.addEventListener('input', () => { updPanel(); draw(); });
+function newExperiment(reason) {
+  trials = []; lastDraw = null;
+  document.getElementById('experimentStatus').textContent = reason;
+  updPanel(); draw();
+}
+function changeComposition() {
+  newExperiment('球数已改变，已清空上一轮结果；当前袋子开始新的实验。');
+}
+sliderRed.addEventListener('input', changeComposition);
+sliderBlue.addEventListener('input', changeComposition);
 
 function drawOnce() {
   const t = theory();
@@ -280,6 +294,7 @@ function drawOnce() {
   trials.push(isRed);
   lastDraw = isRed;
   animT = performance.now();
+  document.getElementById('experimentStatus').textContent = `本轮第 ${trials.length} 次摸出${isRed ? '红球' : '蓝球'}，摸后放回。`;
   updPanel(); draw();
 }
 document.getElementById('btnDraw1').addEventListener('click', drawOnce);
@@ -287,11 +302,12 @@ document.getElementById('btnDraw50').addEventListener('click', () => {
   const t = theory();
   for (let i = 0; i < 50; i++) trials.push(Math.random() < t.p);
   lastDraw = trials[trials.length - 1];
+  animT = performance.now();
+  document.getElementById('experimentStatus').textContent = `本轮已摸 ${trials.length} 次，最近摸出${lastDraw ? '红球' : '蓝球'}，每次摸后放回。`;
   updPanel(); draw();
 });
 document.getElementById('btnReset').addEventListener('click', () => {
-  trials = []; lastDraw = null;
-  updPanel(); draw();
+  newExperiment('已清空本轮结果，球数保持不变。');
 });
 
 function drawBag(t) {
@@ -347,12 +363,17 @@ function drawFreqChart(t) {
   ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + w, oy); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox, oy - h); ctx.stroke();
   ctx.fillStyle = '#cbd5e1'; ctx.font = '12px sans-serif';
-  ctx.fillText('摸球次数 n', ox + w - 70, oy + 18);
+  ctx.fillText('摸球次数 n', ox + w - 70, oy + 36);
   ctx.fillText('红球频率', ox - 58, oy - h + 16);
   ctx.font = '10px sans-serif'; ctx.fillStyle = '#64748b';
   for (const f of [0, 0.25, 0.5, 0.75, 1]) {
     const y = oy - f * h;
     ctx.fillText(f.toFixed(2), ox - 34, y + 3);
+  }
+  const maxN = Math.max(trials.length, 50);
+  for (const n of [0, Math.round(maxN / 2), maxN]) {
+    const x = ox + n / maxN * w;
+    ctx.fillText(String(n), x - (n === 0 ? 2 : 10), oy + 16);
   }
   // 理论概率虚线
   const ty = oy - t.p * h;
@@ -364,7 +385,7 @@ function drawFreqChart(t) {
   ctx.fillText(`理论 ${t.p.toFixed(3)}`, ox + w - 78, ty - 6);
   // 频率曲线（分段最多取 500 个点）
   if (trials.length > 1) {
-    const step = Math.max(1, Math.floor(trials.length / 500));
+    const step = Math.max(1, Math.ceil(trials.length / 500));
     ctx.strokeStyle = '#10b981'; ctx.lineWidth = 2.5;
     ctx.beginPath();
     let reds = 0, started = false;
@@ -372,12 +393,17 @@ function drawFreqChart(t) {
       if (trials[i]) reds++;
       const n = i + 1;
       if (n % step !== 0 && n !== trials.length) continue;
-      const x = ox + (n / Math.max(trials.length, 50)) * w;
+      const x = ox + (n / maxN) * w;
       const y = oy - (reds / n) * h;
       started ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
       started = true;
     }
     ctx.stroke();
+  }
+  if (trials.length) {
+    const reds = trials.filter(Boolean).length;
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath(); ctx.arc(ox + trials.length / maxN * w, oy - reds / trials.length * h, 5, 0, Math.PI * 2); ctx.fill();
   }
 }
 
