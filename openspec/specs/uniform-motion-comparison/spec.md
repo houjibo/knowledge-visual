@@ -1,0 +1,17 @@
+# uniform-motion-comparison Specification
+
+## Purpose
+TBD - created by archiving change uniform-motion-comparison. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 三车对比按各自速度计算
+机械运动的匀速对比 SHALL 使三辆车从同一起点按各自固定速度和共同时间运动，选中车辆的路程读数等于该车速度乘以时间。
+
+#### Scenario: 同时运动两秒
+- **WHEN** 三辆车运行两秒
+- **THEN** 2、5、10 m/s 的车辆分别运动 4、10、20 m，图示位置按该路程计算
+
+#### Scenario: 切换查看车辆
+- **WHEN** 运行中选择另一速度
+- **THEN** 共同时间和各车位置保持，路程读数立即更新为所选车辆的路程

@@ -198,13 +198,14 @@
           <button type="button" class="mode-btn" data-mode="fast" aria-pressed="false">🚗 快速 10m/s</button>
         </div>
 
+        <p>三辆车同时出发；选择速度可查看对应车辆的路程。画面每 80 m 循环，累计路程继续增加。</p>
         <div class="data-display">
           <div class="data-item speed">
             <div class="label">当前速度</div>
             <div class="value" id="uniSpeed">2.0<span class="unit">m/s</span></div>
           </div>
           <div class="data-item dist">
-            <div class="label">已走路程</div>
+            <div class="label">选中车辆路程</div>
             <div class="value" id="uniDist">0.0<span class="unit">m</span></div>
           </div>
           <div class="data-item time">
@@ -388,6 +389,9 @@ document.querySelectorAll('#sec-uniform .mode-btn').forEach(btn => {
     const mode = btn.dataset.mode;
     uniState.speed = mode === 'slow' ? 2 : mode === 'medium' ? 5 : 10;
     document.getElementById('uniSpeed').innerHTML = uniState.speed.toFixed(1) + '<span class="unit">m/s</span>';
+    uniState.dist = uniState.speed * uniState.time;
+    updateUniDisplay();
+    drawScene();
   });
 });
 
@@ -424,7 +428,7 @@ function animateUni(timestamp) {
   if (!uniState.running) return;
   const dt = elapsedSeconds(timestamp) * uniState.scale;
   uniState.time += dt;
-  uniState.dist += uniState.speed * dt;
+  uniState.dist = uniState.speed * uniState.time;
   uniState.carX = 80 + (uniState.carX - 80 + uniState.speed * 6 * dt) % 670;
   updateUniDisplay();
   drawScene();
@@ -640,17 +644,11 @@ function drawUniScene() {
     ctx.fillStyle = colors[i];
     ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(labels[i] + ' ' + speeds[i] + 'm/s', 70, y - 8);
+    ctx.fillText(labels[i] + ' ' + speeds[i] + 'm/s' + (speeds[i] === uniState.speed ? '（当前查看）' : ''), 70, y - 8);
     
-    // 计算位置
-    let carX;
-    if (i === 1) {
-      carX = 80 + (uniState.dist % 80) * 8;
-    } else {
-      carX = 80 + ((uniState.speed === speeds[i] ? uniState.dist : speeds[i] * uniState.time) % 80) * 8;
-    }
-    if (carX > 720) carX = 80;
-    
+    // 各车始终按各自固定速度从同一起点出发，画面每 80 m 循环。
+    const carX = 80 + ((speeds[i] * uniState.time) % 80) * 8;
+
     // 小车
     ctx.fillStyle = colors[i];
     ctx.beginPath();
