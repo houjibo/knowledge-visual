@@ -99,11 +99,11 @@
       <div class="card">
         <p class="page-subtitle">连一连：数一数有多少种搭配</p>
         <div class="slider-group">
-          <div class="slider-label"><span>👕 上衣件数</span><span id="valA">2 件</span></div>
+          <label class="slider-label" for="sliderA"><span>👕 上衣件数</span><span id="valA">2 件</span></label>
           <input type="range" id="sliderA" min="1" max="4" value="2">
         </div>
         <div class="slider-group">
-          <div class="slider-label"><span>👖 裤子条数</span><span id="valB">3 条</span></div>
+          <label class="slider-label" for="sliderB"><span>👖 裤子条数</span><span id="valB">3 条</span></label>
           <input type="range" id="sliderB" min="1" max="5" value="3">
         </div>
         <div class="explore-canvas-wrap"><canvas id="matchCanvas" width="640" height="340"></canvas></div>
@@ -135,6 +135,7 @@
           <div class="problem-card">
             <div class="problem-text" id="chText"></div>
             <div class="answer-grid" id="chOpts"></div>
+            <div class="feedback" id="chFeedback" aria-live="polite"></div>
           </div>
         </div>
       </div>
@@ -202,7 +203,7 @@
     /* ---------- 出题器 ---------- */
     function genQ() {
       const kind = Math.random();
-      let q, ans, tip;
+      let q, ans, tip, unit = '种';
       if (kind < 0.35) {
         const a = 2 + Math.floor(Math.random() * 4), b = 2 + Math.floor(Math.random() * 4);
         ans = a * b;
@@ -223,13 +224,15 @@
         ans = n * (n - 1) / 2;
         q = `${n} 个同学每两人握一次手，一共要握多少次？`;
         tip = `${n - 1}+…+1 = ${ans} 次（握手不讲顺序）。`;
+        unit = '次';
       }
-      const opts = new Set([ans]);
-      while (opts.size < 4) {
-        const d = ans + (1 + Math.floor(Math.random() * 4)) * (Math.random() < .5 ? -1 : 1);
-        if (d > 0 && d !== ans) opts.add(d);
+      const candidates = [-4, -3, -2, -1, 1, 2, 3, 4]
+        .map(offset => ans + offset).filter(value => value > 0);
+      for (let i = candidates.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
       }
-      return { q, ans, opts: [...opts].sort((x, y) => x - y), tip };
+      return { q, ans, opts: [ans, ...candidates.slice(0, 3)].sort((x, y) => x - y), tip, unit };
     }
     let streak = 0, totalAnswered = 0, totalCorrect = 0;
     function recordAnswer(ok) {
@@ -254,7 +257,7 @@
       box.innerHTML = '';
       pQ.opts.forEach(o => {
         const b = document.createElement('button');
-        b.className = 'answer-btn'; b.textContent = o + ' 种';
+        b.className = 'answer-btn'; b.textContent = o + ' ' + pQ.unit;
         b.addEventListener('click', () => {
           const ok = o === pQ.ans;
           b.classList.add(ok ? 'correct' : 'wrong');
@@ -290,21 +293,26 @@
       chQ = genQ();
       chLock = false;
       document.getElementById('chText').textContent = `第 ${chIdx + 1} 题：${chQ.q}`;
+      const feedback = document.getElementById('chFeedback');
+      feedback.className = 'feedback'; feedback.textContent = '';
       const box = document.getElementById('chOpts');
       box.innerHTML = '';
       chQ.opts.forEach(o => {
         const b = document.createElement('button');
-        b.className = 'answer-btn'; b.textContent = o + ' 种';
+        b.className = 'answer-btn'; b.textContent = o + ' ' + chQ.unit;
         b.addEventListener('click', () => {
           if (chLock) return; chLock = true;
           const ok = o === chQ.ans;
           b.classList.add(ok ? 'correct' : 'wrong');
+          box.querySelectorAll('.answer-btn').forEach(option => { option.disabled = true; });
+          feedback.className = 'feedback ' + (ok ? 'correct' : 'wrong');
+          feedback.textContent = (ok ? '✅ 答对啦！' : `❌ 正确答案 ${chQ.ans} ${chQ.unit}。`) + chQ.tip;
           ok ? chCorrect++ : chWrong++;
           document.getElementById('chCorrect').textContent = chCorrect;
           document.getElementById('chWrong').textContent = chWrong;
           recordAnswer(ok);
           chIdx++;
-          setTimeout(nextCh, ok ? 800 : 1600);
+          setTimeout(nextCh, ok ? 1800 : 2500);
         });
         box.appendChild(b);
       });
