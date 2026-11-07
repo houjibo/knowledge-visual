@@ -275,17 +275,19 @@
 
     // === 模式2: 读写比 ===
     let rwAnswer = { front: 4, back: 3 };
+    let rwLocked = false, rwTimer = null;
 
     function generateReadWrite() {
+      clearTimeout(rwTimer);
+      rwLocked = false;
       const names = [['苹果','🍎'],['梨','🍐'],['桃子','🍑'],['香蕉','🍌'],['草莓','🍓'],['葡萄','🍇']];
       const pair = Random.shuffle(names).slice(0, 2);
       rwItems = [
         { name: pair[0][0], emoji: pair[0][1], count: Random.int(2, 8) },
         { name: pair[1][0], emoji: pair[1][1], count: Random.int(2, 8) }
       ];
-      while (rwItems[0].count === rwItems[1].count) {
-        rwItems[1].count = Random.int(2, 8);
-      }
+      const candidates = [2, 3, 4, 5, 6, 7, 8].filter(n => n !== rwItems[0].count);
+      rwItems[1].count = Random.pick(candidates);
       rwAnswer = { front: rwItems[0].count, back: rwItems[1].count };
       document.getElementById('rw-problem').innerHTML = 
         `${rwItems[0].name}有 ${rwItems[0].count} 个，${rwItems[1].name}有 ${rwItems[1].count} 个<br>
@@ -297,12 +299,13 @@
     }
 
     document.getElementById('rw-check').addEventListener('click', () => {
-      const front = parseInt(document.getElementById('rw-front').value);
-      const back = parseInt(document.getElementById('rw-back').value);
+      if (rwLocked) return;
+      const front = Number(document.getElementById('rw-front').value);
+      const back = Number(document.getElementById('rw-back').value);
       const hint = document.getElementById('rw-hint');
       
-      if (isNaN(front) || isNaN(back)) {
-        hint.textContent = '请输入完整的比！';
+      if (!Number.isSafeInteger(front) || !Number.isSafeInteger(back) || front <= 0 || back <= 0) {
+        hint.textContent = '请输入两个大于零的整数！';
         hint.style.color = '#FF3B30';
         return;
       }
@@ -319,7 +322,8 @@
         streak++;
         updateStars();
         celebrate();
-        setTimeout(generateReadWrite, 1500);
+        rwLocked = true;
+        rwTimer = setTimeout(generateReadWrite, 1500);
       } else {
         hint.textContent = `❌ 再想想，${rwItems[0].name}有${rwAnswer.front}个，${rwItems[1].name}有${rwAnswer.back}个`;
         hint.style.color = '#FF3B30';
@@ -341,12 +345,8 @@
 
       document.getElementById('val-problem').textContent = `${front} : ${back} = ?`;
 
-      const options = [value];
-      while (options.length < 4) {
-        const opt = Random.int(1, 10);
-        if (!options.includes(opt)) options.push(opt);
-      }
-      const shuffled = Random.shuffle(options);
+      const candidates = Array.from({length: 10}, (_, i) => i + 1).filter(n => n !== value);
+      const shuffled = Random.shuffle([value, ...Random.shuffle(candidates).slice(0, 3)]);
 
       const container = document.getElementById('val-options');
       container.innerHTML = '';
@@ -361,7 +361,7 @@
 
     function checkValue(btn, selected) {
       const allBtns = document.querySelectorAll('.value-opt');
-      allBtns.forEach(b => b.classList.add('disabled'));
+      allBtns.forEach(b => { b.classList.add('disabled'); b.disabled = true; });
 
       if (selected === valAnswer) {
         btn.classList.add('correct');
@@ -434,9 +434,11 @@
 
     function checkApply(btn, selected, hint) {
       const allBtns = document.querySelectorAll('.apply-opt');
-      allBtns.forEach(b => b.classList.add('disabled'));
+      allBtns.forEach(b => { b.classList.add('disabled'); b.disabled = true; });
 
-      if (selected === applyAnswer) {
+      const [a, b] = allBtns[selected].textContent.split(':').map(Number);
+      const [c, d] = allBtns[applyAnswer].textContent.split(':').map(Number);
+      if (a * d === c * b) {
         btn.classList.add('correct');
         streak++;
         updateStars();
@@ -444,7 +446,10 @@
         setTimeout(generateApply, 1500);
       } else {
         btn.classList.add('wrong');
-        allBtns[applyAnswer].classList.add('correct');
+        allBtns.forEach(option => {
+          const [x, y] = option.textContent.split(':').map(Number);
+          if (x * d === c * y) option.classList.add('correct');
+        });
         streak = 0;
         updateStars();
         showToast(hint, '', 2500);
@@ -464,10 +469,10 @@
           hint: '6和8的最大公因数是2，6÷2=3，8÷2=4'
         },
         {
-          text: '比的比值一定是什么数？',
-          options: ['整数', '分数', '小数或整数', '0'],
+          text: '3:2 的比值是多少？',
+          options: ['2', '3', '1.5', '0.5'],
           answer: 2,
-          hint: '比值 = 前项÷后项，可以是整数或小数'
+          hint: '比值 = 前项÷后项，3÷2 = 1.5'
         },
         {
           text: '甲:乙 = 5:3，甲是乙的几倍？',
@@ -513,7 +518,7 @@
 
     function checkChallenge(btn, selected, hint) {
       const allBtns = document.querySelectorAll('.challenge-opt');
-      allBtns.forEach(b => b.classList.add('disabled'));
+      allBtns.forEach(b => { b.classList.add('disabled'); b.disabled = true; });
 
       if (selected === chalAnswer) {
         btn.classList.add('correct');

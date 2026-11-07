@@ -1,0 +1,21 @@
+# ratio-learning Specification
+
+## Purpose
+TBD - created by archiving change ratio-learning-reliability. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 比的题目有限生成且判断正确
+认识比页面 SHALL 有限生成读写比和比值题，正确接受等价比，并阻止同题重复计分。
+
+#### Scenario: 固定随机边界
+- **WHEN** 随机源持续返回相同值
+- **THEN** 页面初始化及题目生成仍完成，比值题有四个不同选项
+
+#### Scenario: 等价比与无效输入
+- **WHEN** 学习者输入等价正整数比或选择等价应用题选项
+- **THEN** 获得正确反馈；零、负数和非整数输入不能获得正确反馈
+
+#### Scenario: 重复作答
+- **WHEN** 学习者重复提交已答对的同一题
+- **THEN** 不重复增加成绩或触发多次切题
