@@ -1,0 +1,29 @@
+# conic-learning-interaction-reliability Specification
+
+## Purpose
+TBD - created by archiving change conic-learning-interaction-reliability. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 曲线轨迹随参数保持一致
+
+轨迹模式 SHALL 描绘当前曲线并在参数或曲线切换后更新；综合模式及双曲线轨迹范围 SHALL 明确说明。
+
+#### Scenario: 改变参数或曲线
+
+- **WHEN** 学习者在轨迹模式下更改参数或切换曲线
+- **THEN** 显示更新后的曲线轨迹，画布点击不会引入曲线外的点
+
+### Requirement: 练习逐题操作并如实保存进度
+
+每题选择后 SHALL 锁定并由学习者手动进入下一题；六道不同题均答对后 SHALL 根据实际存储结果反馈完成状态并支持失败重试。
+
+#### Scenario: 连续点击与模式切换
+
+- **WHEN** 学习者作答后重复点击或切换模式
+- **THEN** 不出现自动跳题或重复计数，反馈可读
+
+#### Scenario: 存储失败后恢复
+
+- **WHEN** 全部答对后存储不可用
+- **THEN** 页面说明未保存并提供重试；重试成功后才显示已保存

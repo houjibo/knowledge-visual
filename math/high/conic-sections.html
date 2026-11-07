@@ -56,7 +56,8 @@
   .legend .l-focus::before { background: #fbbf24; }
   footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
 .tab { font-family: inherit; color: inherit; }
-.tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
+.mode-btn, .quiz-opt { font-family: inherit; color: inherit; text-align: left; }
+.mode-btn:focus-visible, .quiz-opt:focus-visible, .quiz button:focus-visible, .tab:focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
 </style>
 </head>
 <body>
@@ -90,11 +91,12 @@
       <div class="equation" id="equation">x²/a² + y²/b² = 1</div>
 
       <div class="mode-switch">
-        <div class="mode-btn active" data-mode="explore">🔍 探索模式</div>
-        <div class="mode-btn" data-mode="generate">🎬 生成动画</div>
-        <div class="mode-btn" data-mode="focus">🎯 曲线轨迹</div>
+        <button type="button" class="mode-btn active" data-mode="explore" aria-pressed="true">🔍 探索模式</button>
+        <button type="button" class="mode-btn" data-mode="generate" aria-pressed="false">🎬 生成动画</button>
+        <button type="button" class="mode-btn" data-mode="focus" aria-pressed="false">🎯 曲线轨迹</button>
       </div>
 
+      <p id="trajectoryNote" aria-live="polite" hidden></p>
       <div id="controls"></div>
 
       <div class="info-grid" id="infoGrid"></div>
@@ -102,7 +104,9 @@
       <div class="quiz" id="quizBox" style="display:none;">
         <div class="quiz-q" id="quizQ"></div>
         <div class="quiz-opts" id="quizOpts"></div>
-        <div class="quiz-feedback" id="quizFb"></div>
+        <div class="quiz-feedback" id="quizFb" role="status"></div>
+        <button type="button" id="quizNext" hidden>下一题</button>
+        <button type="button" id="quizRetry" hidden>重试保存</button>
       </div>
     </div>
   </div>
@@ -343,7 +347,7 @@
         } else if (curve === 'parabola') {
           p = v;
         }
-        focusTrail = [];
+        updateTrajectory();
         updatePanel();
       });
     });
@@ -355,7 +359,7 @@
     { q: '双曲线 x²/16 − y²/9 = 1 的渐近线方程是？', opts: ['y=±3x/4', 'y=±4x/3', 'y=±9x/16', 'y=±16x/9'], ans: 0 },
     { q: '抛物线 y² = 8x 的焦点坐标是？', opts: ['(2,0)', '(4,0)', '(0,2)', '(8,0)'], ans: 0 },
     { q: '离心率 e = √2 的圆锥曲线是？', opts: ['椭圆', '双曲线', '抛物线', '圆'], ans: 1 },
-    { q: '椭圆上任意一点到两焦点距离之和等于？', opts: ['a', 'b', '2a', '2b'], ans: 2 },
+    { q: '长半轴为 a 的椭圆上任意一点到两焦点距离之和等于？', opts: ['a', 'b', '2a', '2b'], ans: 2 },
     { q: '抛物线 y² = 4x 的准线方程是？', opts: ['x=−1', 'x=1', 'y=−1', 'y=1'], ans: 0 },
   ];
   const totalQuestions = quizzes.length; // 6
@@ -366,43 +370,57 @@
   }
   let curQuiz = 0;
   let answeredThis = false;
+  let saveAttempted = false;
+  let progressSaved = false;
+  const quizFeedback = document.getElementById('quizFb');
+  const quizNext = document.getElementById('quizNext');
+  const quizRetry = document.getElementById('quizRetry');
+  function saveCompletion() {
+    saveAttempted = true;
+    progressSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('conic-sections');
+    quizRetry.hidden = !!progressSaved;
+    return progressSaved ? '全部答对，完成记录已保存。' : '全部答对，但完成记录未保存；可重试保存。';
+  }
+  document.addEventListener('math-progress-saved', () => {
+    if (saveAttempted) {
+      progressSaved = true;
+      quizRetry.hidden = true;
+      quizFeedback.textContent = '全部答对，完成记录已保存。';
+    }
+  });
+  quizRetry.addEventListener('click', () => { quizFeedback.textContent = saveCompletion(); });
+  quizNext.addEventListener('click', () => { curQuiz = (curQuiz + 1) % quizzes.length; loadQuiz(); });
   function loadQuiz() {
-    const q = quizzes[curQuiz % quizzes.length];
+    const q = quizzes[curQuiz];
     answeredThis = false;
-    document.getElementById('quizQ').textContent = q.q;
+    document.getElementById('quizQ').textContent = `${curQuiz + 1}/${totalQuestions} ${q.q}`;
     const opts = document.getElementById('quizOpts');
     opts.innerHTML = '';
+    quizNext.hidden = true;
+    quizRetry.hidden = !saveAttempted || progressSaved;
     q.opts.forEach((o, i) => {
-      const d = document.createElement('div');
+      const d = document.createElement('button');
+      d.type = 'button';
       d.className = 'quiz-opt';
       d.textContent = String.fromCharCode(65+i) + '. ' + o;
       d.onclick = () => {
-        opts.querySelectorAll('.quiz-opt').forEach(x => x.classList.remove('correct','wrong'));
-        if (i === q.ans) {
-          d.classList.add('correct');
-          if (!answeredThis) {
-            answeredThis = true;
-            answeredCorrect.add(curQuiz % quizzes.length);
-            const prog = checkAllDone();
-            let msg = `✅ 正确！（已掌握 ${prog.done}/${prog.total}）`;
-            if (prog.allDone && typeof PageProgress !== 'undefined') {
-              PageProgress.markDone('conic-sections');
-              msg += ' 🎉 全部掌握，已标记完成！';
-            }
-            document.getElementById('quizFb').textContent = msg;
-          } else {
-            document.getElementById('quizFb').textContent = '✅ 正确！';
-          }
-        } else {
-          d.classList.add('wrong');
-          opts.children[q.ans].classList.add('correct');
-          document.getElementById('quizFb').textContent = '❌ 再看一眼，正确答案已标出。';
-        }
-        setTimeout(() => { curQuiz++; loadQuiz(); }, 1600);
+        if (answeredThis) return;
+        answeredThis = true;
+        opts.querySelectorAll('.quiz-opt').forEach(x => { x.disabled = true; });
+        opts.children[q.ans].classList.add('correct');
+        if (i === q.ans) answeredCorrect.add(curQuiz);
+        else d.classList.add('wrong');
+        let msg = i === q.ans ? '✅ 正确！' : '❌ 再看一眼，正确答案已标出。';
+        const prog = checkAllDone();
+        msg += ` 已答对 ${prog.done}/${prog.total} 题（本页有效）。`;
+        if (prog.allDone && !progressSaved) msg += ' ' + saveCompletion();
+        else if (prog.allDone) msg += ' 完成记录已保存。';
+        quizFeedback.textContent = msg;
+        quizNext.hidden = false;
       };
       opts.appendChild(d);
     });
-    document.getElementById('quizFb').textContent = '';
+    quizFeedback.textContent = `已答对 ${answeredCorrect.size}/${totalQuestions} 题（本页有效）。`;
   }
 
   // ---------- events ----------
@@ -412,50 +430,46 @@
       t.classList.add('active');
       t.setAttribute('aria-pressed', 'true');
       curve = t.dataset.curve;
-      animT = 0; focusTrail = [];
+      animT = 0;
+      updateTrajectory();
       updatePanel();
     };
   });
+  function updateTrajectory() {
+    focusTrail = [];
+    const note = document.getElementById('trajectoryNote');
+    note.hidden = mode !== 'focus';
+    if (mode !== 'focus') return;
+    if (curve === 'quiz') { note.textContent = '练习模式不显示轨迹。'; return; }
+    if (curve === 'all') note.textContent = '综合对比中突出显示椭圆轨迹。';
+    else if (curve === 'hyperbola') note.textContent = '突出显示双曲线右支的一段轨迹。';
+    else note.textContent = '突出显示当前曲线的轨迹。';
+    if (curve === 'hyperbola') {
+      for (let i = -100; i <= 100; i++) {
+        const t = (i/100) * 2;
+        focusTrail.push([a*Math.cosh(t), b*Math.sinh(t)]);
+      }
+    } else if (curve === 'parabola') {
+      for (let i = -80; i <= 80; i++) {
+        const y = (i/80)*6;
+        focusTrail.push([y*y/(2*p), y]);
+      }
+    } else {
+      for (let i = 0; i <= 200; i++) {
+        const t = (i/200) * Math.PI*2;
+        focusTrail.push([a*Math.cos(t), b*Math.sin(t)]);
+      }
+    }
+  }
   document.querySelectorAll('.mode-btn').forEach(m => {
     m.onclick = () => {
-      document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.mode-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed', 'false'); });
       m.classList.add('active');
+      m.setAttribute('aria-pressed', 'true');
       mode = m.dataset.mode;
-      animT = 0; focusTrail = [];
-      if (mode === 'focus') {
-        // precompute a focus-related trajectory
-        if (curve === 'ellipse') {
-          for (let i = 0; i <= 200; i++) {
-            const t = (i/200) * Math.PI*2;
-            focusTrail.push([a*Math.cos(t), b*Math.sin(t)]);
-          }
-        } else if (curve === 'hyperbola') {
-          for (let i = -100; i <= 100; i++) {
-            const t = (i/100) * 2;
-            focusTrail.push([a*Math.cosh(t), b*Math.sinh(t)]);
-          }
-        } else if (curve === 'parabola') {
-          for (let i = -80; i <= 80; i++) {
-            const y = (i/80)*6;
-            focusTrail.push([y*y/(2*p), y]);
-          }
-        } else {
-          for (let i = 0; i <= 200; i++) {
-            const t = (i/200) * Math.PI*2;
-            focusTrail.push([a*Math.cos(t), b*Math.sin(t)]);
-          }
-        }
-      }
+      animT = 0;
+      updateTrajectory();
     };
-  });
-
-  // touch/click to add focus point
-  cv.addEventListener('click', (e) => {
-    const rect = cv.getBoundingClientRect();
-    const sx = (e.clientX - rect.left) * (W/rect.width);
-    const sy = (e.clientY - rect.top) * (H/rect.height);
-    const x = (sx - cx)/scale, y = -(sy - cy)/scale;
-    if (mode === 'focus') focusTrail.push([x, y]);
   });
 
   // loop
