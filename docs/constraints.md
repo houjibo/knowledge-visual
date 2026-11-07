@@ -19,6 +19,6 @@
 
 真实浏览器试点需要 Node.js 20.19 或更高版本，使用 `npm ci`、`npx playwright install chromium` 安装开发依赖与浏览器，然后运行 `npm run test:browser`；它启动独立本地服务器并覆盖四条代表路径的桌面与窄屏场景。可用 `KV_CHROMIUM_PATH` 指定兼容的本机 Chromium 可执行文件；运行 `npm run test:browser:smoke` 对清单中全部 HTML 做桌面浏览器加载冒烟，范围及局限见 [加载检查记录](assessments/browser-load-2026-11-07.md)。安装后运行 `npm run check` 可依次执行静态、OpenSpec、代表路径及全站加载检查；`npm run check:static` 只运行不需要浏览器的检查。浏览器安装只用于开发验证，不是静态站点运行要求。
 
-`.github/workflows/checks.yml` 配置在推送和拉取请求时运行同一组检查；远端首次运行状态需在推送后核实，不能将本地通过视为 GitHub Actions 通过。
+`.github/workflows/checks.yml` 配置在推送和拉取请求时运行检查，并在主分支部署后检查公网版本、资源及代表学习路径；实际发布状态需在推送后核实，不能将本地通过视为 GitHub Actions 或公网检查通过。
 
 涉及页面交互或布局时，使用静态服务器在浏览器检查受影响页面、主要操作和窄屏，并记录浏览器、结果及未测范围；内容修改还需核验知识依据。检查失败要记录原因，不能用删减标准掩盖失败。

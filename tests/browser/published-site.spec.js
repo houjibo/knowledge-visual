@@ -3,7 +3,18 @@ const {startReleaseServer} = require('./release-server');
 const {execFileSync} = require('node:child_process');
 
 let release, base;
-test.beforeAll(async () => { release = await startReleaseServer(); base = release.base; });
+test.beforeAll(async () => {
+  if (process.env.KV_PUBLISHED_BASE_URL) {
+    const url = new URL(process.env.KV_PUBLISHED_BASE_URL);
+    const localHttp = url.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname);
+    if ((!localHttp && url.protocol !== 'https:') || url.username || url.password || url.search || url.hash)
+      throw new Error('Published site URL must use HTTPS or loopback HTTP, without credentials, query or fragment');
+    base = url.href.replace(/\/*$/, '/');
+  } else {
+    release = await startReleaseServer();
+    base = release.base;
+  }
+});
 test.afterAll(async () => { if (release) await release.close(); });
 
 test('发布包子路径的首页搜索和四学科学习交互', async ({page}) => {
@@ -17,11 +28,11 @@ test('发布包子路径的首页搜索和四学科学习交互', async ({page})
   expect(version).toEqual({
     schema_version: 1,
     revision: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(),
-    site_files_modified: expect.any(Boolean),
+    site_files_modified: process.env.KV_PUBLISHED_BASE_URL ? false : expect.any(Boolean),
   });
   await page.getByRole('searchbox', {name: '关键词'}).fill('加法');
   await page.locator('#site-results a[href="math/topics/addition/index.html"]').click();
-  await expect(page).toHaveURL(/knowledge-visual\/math\/topics\/addition\/index\.html$/);
+  await expect(page).toHaveURL(new URL('math/topics/addition/index.html', base).href);
   await page.getByRole('button', {name: '✏️ 练习'}).click();
   await expect(page.locator('#practice-problem')).toBeVisible();
   await page.goto(base);
