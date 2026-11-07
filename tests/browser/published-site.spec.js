@@ -75,3 +75,17 @@ test('发布站子路径的面积到体积路线可连续学习', async ({page})
   await expect(page.locator('#area-volume-path')).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('发布站各数学学段目录可加载进度脚本并显示完成标记', async ({page}) => {
+  const failures=[];
+  page.on('pageerror', e=>failures.push(e.message));
+  page.on('response', response=>{if(response.url().startsWith(base)&&response.status()>=400) failures.push(`${response.status()} ${response.url()}`);});
+  await page.goto(new URL('math/index.html',base).href);
+  await page.evaluate(()=>localStorage.setItem('kv-math-progress-v2',JSON.stringify({'middle:linear-equation':1,'high:derivative':1,'uni:derivative':1})));
+  for(const [stage,slug] of [['middle','linear-equation'],['high','derivative'],['uni','derivative']]) {
+    await page.goto(new URL(`math/${stage}/index.html`,base).href);
+    await expect(page.locator(`a[href="${slug}.html"] .progress-badge`)).toHaveCount(1);
+    await expect(page.locator('#mathProgressNotice')).toBeHidden();
+  }
+  expect(failures).toEqual([]);
+});

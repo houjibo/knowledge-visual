@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：107；尚未登记：209。
+主题总数：316；已登记部分交互证据：110；尚未登记：206。
 
 ## 已登记部分交互证据
 
@@ -23,6 +23,8 @@
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [化学平衡 · 大学化学互动可视化](../../chemistry/uni/equilibrium.html)
   - 综合练习逐题得分、重试及完成；未覆盖平衡和相图模拟。 [equilibrium-quiz.spec.js](../../tests/browser/equilibrium-quiz.spec.js)
+- [导数 · 概念、运算与应用互动可视化](../../math/high/derivative.html)
+  - 初中、高中、大学目录的跨标签徽章、存储异常及同名主题隔离；不代表全部主题的完成条件已核验。 [math-stage-directory-progress.spec.js](../../tests/browser/math-stage-directory-progress.spec.js)、[math-progress.spec.js](../../tests/browser/math-progress.spec.js)
 - [概率 - 高中数学互动可视化](../../math/high/probability.html)
   - 受控时钟和随机数验证硬币、骰子、摸球批量取消；骰子目标历史统计和柱状图、摸球换配置及一道练习；其他实验、完整题目与无障碍未全面验收。 [high-probability-experiment.spec.js](../../tests/browser/high-probability-experiment.spec.js)
   - 线段长度与端点边界、采样重算和画布点位置、蒙特卡洛估算重置；全部题目和无障碍未全面验收。 [geometric-probability.spec.js](../../tests/browser/geometric-probability.spec.js)
@@ -42,6 +44,8 @@
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
 - [相交线与平行线 · 初中数学互动可视化](../../math/middle/intersecting-parallel-lines.html)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
+- [一元一次方程 - 初中数学七年级](../../math/middle/linear-equation.html)
+  - 初中、高中、大学目录的跨标签徽章、存储异常及同名主题隔离；不代表全部主题的完成条件已核验。 [math-stage-directory-progress.spec.js](../../tests/browser/math-stage-directory-progress.spec.js)、[math-progress.spec.js](../../tests/browser/math-progress.spec.js)
 - [二元一次方程组 · 初中数学互动可视化](../../math/middle/linear-equations-2var.html)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
 - [概率初步 · 初中数学互动可视化](../../math/middle/probability-intro.html)
@@ -186,6 +190,8 @@
   - 路线完成计数、跨标签变化、首个未完成建议和存储不可读；真实学习者体验未全面验收。 [area-to-volume-resume-learning.spec.js](../../tests/browser/area-to-volume-resume-learning.spec.js)
 - [认识质量单位](../../math/topics/weight-units/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
+- [导数与微分 · 大学数学互动可视化](../../math/uni/derivative.html)
+  - 初中、高中、大学目录的跨标签徽章、存储异常及同名主题隔离；不代表全部主题的完成条件已核验。 [math-stage-directory-progress.spec.js](../../tests/browser/math-stage-directory-progress.spec.js)、[math-progress.spec.js](../../tests/browser/math-progress.spec.js)
 - [交变电流 · 高中物理互动可视化](../../physics/high/alternating-current.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [光的折射与全反射 · 高中物理互动可视化](../../physics/high/optics.html)
@@ -337,7 +343,6 @@
 - [复数 · 高中数学互动可视化](../../math/high/complex-numbers.html)
 - [圆锥曲线 · 椭圆/双曲线/抛物线互动可视化](../../math/high/conic-sections.html)
 - [计数原理 - 高中数学互动可视化](../../math/high/counting.html)
-- [导数 · 概念、运算与应用互动可视化](../../math/high/derivative.html)
 - [指数与对数 - 高中数学可视化](../../math/high/exponential-log.html)
 - [函数 - 互动可视化](../../math/high/function.html)
 - [不等式 · 性质、解集与均值不等式互动可视化](../../math/high/inequality.html)
@@ -357,7 +362,6 @@
 - [几何初步 - 初中数学七年级](../../math/middle/geometry-basics.html)
 - [整式的加减 - 初中数学七年级](../../math/middle/integral-expressions.html)
 - [反比例函数 - 初中数学九年级](../../math/middle/inverse-function.html)
-- [一元一次方程 - 初中数学七年级](../../math/middle/linear-equation.html)
 - [一次函数 - 初中数学八年级](../../math/middle/linear-function.html)
 - [平行四边形 - 初中数学八年级](../../math/middle/parallelogram.html)
 - [整式乘除与因式分解 - 初中数学八年级](../../math/middle/polynomial-operations.html)
@@ -443,7 +447,6 @@
 - [认识零](../../math/topics/understanding-zero/index.html)
 - [组合数学 · 互动可视化](../../math/uni/combinatorics.html)
 - [复变函数 · 大学数学互动可视化](../../math/uni/complex-analysis.html)
-- [导数与微分 · 大学数学互动可视化](../../math/uni/derivative.html)
 - [离散数学 · 图论互动可视化](../../math/uni/discrete-math.html)
 - [特征值与特征向量 · 大学数学互动可视化](../../math/uni/eigenvalues.html)
 - [傅里叶级数 · 频谱可视化互动学习](../../math/uni/fourier-analysis.html)

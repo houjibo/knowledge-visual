@@ -14,6 +14,7 @@
 - `assets/math-quiz.js` 为八个同构的初高中数学页面提供逐题计分；题目、学段进度和页面布局仍由调用页面维护，变更需回归全部调用页及直接打开文件。
 - 首页查找数据 `assets/topic-catalog.js` 从主题标题和导航文字生成；内容变更后运行 `python3 scripts/build_topic_catalog.py`，`npm run check:static` 会检查是否过期。数据已随站点提供，浏览器使用时无需构建或联网。
 - 无仓库级构建系统或服务端。直接用浏览器打开 `index.html`，也可在仓库根目录运行 `python3 -m http.server 8000`，访问 `http://localhost:8000/`。
+- 初中、高中和大学数学目录通过 `math/assets/js/stage-directory-progress.js` 刷新完成徽章并提示存储不可读；小学目录另有学习路线与汇总。
 - 数学新学习进度以学段与主题为标识写入 `kv-math-progress-v2`；旧记录兼容和不可判定情况见 [进度说明](assessments/math-progress-2026-11-07.md)。
 - `docs/` 保存当前工程知识，`openspec/specs/` 保存已归档能力契约，`openspec/changes/` 保存进行中及归档变更；源码是实际行为的最终依据，发现冲突时先核实并更新文档。
 
