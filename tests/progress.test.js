@@ -39,7 +39,7 @@ function homepage(store) {
   const match = read('index.html').match(/<script>[\s\S]*?<\/script>/);
   assert.ok(match, 'homepage script missing');
   const code = match[0].replace(/^<script>/, '').replace(/<\/script>$/, '');
-  const catalogContext = {window: {}};
+  const catalogContext = {window: {addEventListener() {}}};
   vm.runInNewContext(read('assets/topic-catalog.js'), catalogContext);
   vm.runInNewContext(code, {window: catalogContext.window, document: {querySelectorAll: () => cards},
     localStorage: {getItem: key => store[key] || null}, requestAnimationFrame: fn => fn()});
