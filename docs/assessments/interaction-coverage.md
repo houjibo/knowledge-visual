@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：49；尚未登记：267。
+主题总数：316；已登记部分交互证据：50；尚未登记：266。
 
 ## 已登记部分交互证据
 
@@ -45,6 +45,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [认识数字 0-100](../../math/topics/numbers/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
+- [一一对应](../../math/topics/one-to-one-correspondence/index.html)
+  - 练习图形数量、配对游戏及挑战的固定随机边界与部分反馈；学习完成记录尚未实现。 [correspondence-learning.spec.js](../../tests/browser/correspondence-learning.spec.js)
 - [几个和第几](../../math/topics/ordinal-numbers/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [搭配中的学问](../../math/topics/pairing-combinations/index.html)
@@ -259,7 +261,6 @@
 - [100以内数的认识](../../math/topics/numbers-within-100/index.html)
 - [万以内数的认识](../../math/topics/numbers-within-10000/index.html)
 - [观察物体](../../math/topics/observing-objects/index.html)
-- [一一对应](../../math/topics/one-to-one-correspondence/index.html)
 - [数学广角——优化](../../math/topics/optimization/index.html)
 - [口算速算](../../math/topics/oral-calculation/index.html)
 - [数对与位置](../../math/topics/ordered-pairs/index.html)

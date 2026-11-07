@@ -337,10 +337,9 @@
 
     function genPractice() {
       var a = randInt(2, 6), b = randInt(2, 6);
-      while (b === a) b = randInt(2, 6);
       var eA = EMOJIS[randInt(0, EMOJIS.length - 1)];
-      var eB;
-      do { eB = EMOJIS[randInt(0, EMOJIS.length - 1)]; } while (eB === eA);
+      var otherEmojis = EMOJIS.filter(function(e) { return e !== eA; });
+      var eB = otherEmojis[randInt(0, otherEmojis.length - 1)];
 
       var answer = a > b ? '>' : a < b ? '<' : '=';
       var itemsA = '', itemsB = '';
@@ -364,14 +363,14 @@
         '<div class="game-visual">' +
           '<div class="game-group">' +
             '<div class="game-group-items">' +
-              q.itemsA.split('').map(function(e) { return '<span class="game-group-item">' + e + '</span>'; }).join('') +
+              Array.from(q.itemsA).map(function(e) { return '<span class="game-group-item">' + e + '</span>'; }).join('') +
             '</div>' +
             '<div class="game-group-label">' + q.eA + ' ' + q.a + '个</div>' +
           '</div>' +
           '<div style="font-size:32px;font-weight:700;color:#43A047;align-self:center">VS</div>' +
           '<div class="game-group">' +
             '<div class="game-group-items">' +
-              q.itemsB.split('').map(function(e) { return '<span class="game-group-item">' + e + '</span>'; }).join('') +
+              Array.from(q.itemsB).map(function(e) { return '<span class="game-group-item">' + e + '</span>'; }).join('') +
             '</div>' +
             '<div class="game-group-label">' + q.eB + ' ' + q.b + '个</div>' +
           '</div>' +
@@ -404,7 +403,7 @@
               if (b.getAttribute('data-val') === q.answer) b.classList.add('correct');
             });
           }
-          area.querySelectorAll('.opt-btn').forEach(function(b) { b.style.pointerEvents = 'none'; });
+          area.querySelectorAll('.opt-btn').forEach(function(b) { b.disabled = true; });
           setTimeout(nextPractice, 1500);
         });
       });
@@ -420,8 +419,7 @@
       if (type === 0) {
         // Can they match exactly?
         a = randInt(2, 6);
-        b = Math.random() < 0.4 ? a : randInt(2, 6);
-        while (b === a && Math.random() < 0.6) b = randInt(2, 6);
+        b = Math.random() < 0.4 ? a : pickDifferent(2, 6, a);
         answer = a === b ? 'yes' : 'no';
       } else if (type === 1) {
         // How many more?
@@ -431,14 +429,12 @@
       } else {
         // Which is more?
         a = randInt(2, 6);
-        b = randInt(2, 6);
-        while (b === a) b = randInt(2, 6);
+        b = pickDifferent(2, 6, a);
         answer = a > b ? 'A' : 'B';
       }
 
       var eA = EMOJIS[randInt(0, 9)];
-      var eB;
-      do { eB = EMOJIS[randInt(10, EMOJIS.length - 1)]; } while (eB === eA);
+      var eB = EMOJIS[randInt(10, EMOJIS.length - 1)];
 
       return { a: a, b: b, eA: eA, eB: eB, type: type, answer: answer };
     }
@@ -469,12 +465,8 @@
       } else if (q.type === 1) {
         questionText = q.eA + ' 比 ' + q.eB + ' 多几个？';
         var correctAns = q.a - q.b;
-        var opts = [correctAns];
-        while (opts.length < 4) {
-          var v = randInt(1, 5);
-          if (opts.indexOf(v) < 0) opts.push(v);
-        }
-        opts = shuffle(opts);
+        var candidates = [1, 2, 3, 4, 5].filter(function(v) { return v !== correctAns; });
+        var opts = shuffle([correctAns].concat(shuffle(candidates).slice(0, 3)));
         optionsHTML = opts.map(function(o) {
           return '<button class="game-opt" data-val="' + o + '">' + o + ' 个</button>';
         }).join('');
@@ -519,7 +511,7 @@
             gWrong++;
             document.getElementById('g-wrong').textContent = gWrong;
           }
-          area.querySelectorAll('.game-opt').forEach(function(b) { b.style.pointerEvents = 'none'; });
+          area.querySelectorAll('.game-opt').forEach(function(b) { b.disabled = true; });
           gRound++;
           setTimeout(nextGame, 1500);
         });
@@ -546,11 +538,8 @@
         a = randInt(3, 8); b = randInt(2, a);
         question = a + '个苹果分给 ' + b + '个小朋友，每人一个，还剩几个？';
         answer = String(a - b);
-        options = [answer];
-        while (options.length < 4) {
-          var v = randInt(0, 6);
-          if (options.indexOf(String(v)) < 0) options.push(String(v));
-        }
+        var candidates = ['0', '1', '2', '3', '4', '5', '6'].filter(function(v) { return v !== answer; });
+        options = [answer].concat(shuffle(candidates).slice(0, 3));
       } else {
         a = randInt(2, 5);
         question = a + '只兔子和 ' + a + '根胡萝卜能一一对应吗？';
@@ -636,13 +625,18 @@
               if (b.getAttribute('data-val') === q.answer) b.classList.add('correct');
             });
           }
-          content.querySelectorAll('.game-opt').forEach(function(b) { b.style.pointerEvents = 'none'; });
+          content.querySelectorAll('.game-opt').forEach(function(b) { b.disabled = true; });
           setTimeout(function() { if (chRunning) nextChallenge(); }, 1500);
         });
       });
     }
 
     /* ===== 工具函数 ===== */
+    function pickDifferent(min, max, excluded) {
+      var choices = [];
+      for (var value = min; value <= max; value++) if (value !== excluded) choices.push(value);
+      return choices[randInt(0, choices.length - 1)];
+    }
     function randInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
