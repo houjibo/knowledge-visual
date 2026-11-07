@@ -137,6 +137,7 @@
           <div class="problem-card">
             <div class="problem-text" id="chText"></div>
             <div class="answer-grid" id="chOpts"></div>
+            <div class="feedback" id="chFeedback" aria-live="polite"></div>
           </div>
         </div>
       </div>
@@ -204,9 +205,9 @@
       { q: '三个盒子分别装着红球、黄球、蓝球。A 盒不是红球也不是黄球。A 盒装的是？',
         opts: ['红球', '黄球', '蓝球'], ans: 2,
         ex: '不是红也不是黄 → 排除法：一定是蓝球。' },
-      { q: '小猫、小狗、小兔排队。小猫不在最前面，小狗在小猫前面。谁在最前面？',
+      { q: '小猫、小狗、小兔排队。小狗在小猫前面，小兔在小猫后面。谁在最前面？',
         opts: ['小猫', '小狗', '小兔'], ans: 1,
-        ex: '小猫不在最前；小狗还在小猫前面 → 小狗在最前面。' },
+        ex: '小狗在小猫前面，小兔在小猫后面 → 顺序是小狗、小猫、小兔。' },
       { q: '三人分别属鼠、属牛、属虎。小明不属鼠，小红属鼠。小明属什么？（已知小刚属虎）',
         opts: ['属鼠', '属牛', '属虎'], ans: 1,
         ex: '小红属鼠、小刚属虎 → 小明只能属牛。' },
@@ -224,13 +225,18 @@
         ex: '青蛙 > 兔子 > 乌龟 → 乌龟最近。' }
     ];
 
-    let usedIdx = [];
+    function shuffledBank() {
+      const pool = BANK.slice();
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      return pool;
+    }
+    let practicePool = [];
     function pickQ() {
-      let i;
-      do { i = Math.floor(Math.random() * BANK.length); } while (usedIdx.includes(i) && usedIdx.length < BANK.length);
-      usedIdx.push(i);
-      if (usedIdx.length >= BANK.length) usedIdx = [];
-      return BANK[i];
+      if (!practicePool.length) practicePool = shuffledBank();
+      return practicePool.pop();
     }
     let streak = 0, totalAnswered = 0, totalCorrect = 0;
     function recordAnswer(ok) {
@@ -273,7 +279,7 @@
     document.getElementById('practiceNext').addEventListener('click', newPractice);
 
     /* ---------- 挑战 ---------- */
-    let chIdx = 0, chCorrect = 0, chWrong = 0, chQ = null, chLock = false;
+    let chIdx = 0, chCorrect = 0, chWrong = 0, chQ = null, chLock = false, chQuestions = [];
     const area = document.getElementById('challengeArea');
     function renderDots() {
       document.getElementById('challengeDots').innerHTML = Array.from({ length: 10 }, (_, i) =>
@@ -288,8 +294,10 @@
         btn.textContent = `得分 ${chCorrect}/10（${pct}分）· 再来一次`;
         return;
       }
-      chQ = pickQ();
+      chQ = chQuestions[chIdx];
       chLock = false;
+      const feedback = document.getElementById('chFeedback');
+      feedback.className = 'feedback'; feedback.textContent = '';
       document.getElementById('chText').textContent = `第 ${chIdx + 1} 题：${chQ.q}`;
       const box = document.getElementById('chOpts');
       box.innerHTML = '';
@@ -300,6 +308,12 @@
           if (chLock) return; chLock = true;
           const ok = i === chQ.ans;
           b.classList.add(ok ? 'correct' : 'wrong');
+          box.querySelectorAll('.answer-btn').forEach((button, index) => {
+            button.disabled = true;
+            if (index === chQ.ans) button.classList.add('correct');
+          });
+          feedback.className = 'feedback ' + (ok ? 'correct' : 'wrong');
+          feedback.textContent = (ok ? '✅ 答对啦！' : '❌ 正确答案：' + chQ.opts[chQ.ans] + '。') + chQ.ex;
           ok ? chCorrect++ : chWrong++;
           document.getElementById('chCorrect').textContent = chCorrect;
           document.getElementById('chWrong').textContent = chWrong;
@@ -313,6 +327,7 @@
     }
     document.getElementById('challengeStart').addEventListener('click', () => {
       chIdx = 0; chCorrect = 0; chWrong = 0;
+      chQuestions = shuffledBank();
       document.getElementById('chCorrect').textContent = '0';
       document.getElementById('chWrong').textContent = '0';
       area.classList.add('challenge-active');

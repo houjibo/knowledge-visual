@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：78；尚未登记：238。
+主题总数：316；已登记部分交互证据：79；尚未登记：237。
 
 ## 已登记部分交互证据
 
@@ -73,6 +73,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [折线统计图](../../math/topics/line-charts/index.html)
   - 读图和挑战的零值、并列答案、单位及标题部分场景；未覆盖整页。 [line-chart-questions.spec.js](../../tests/browser/line-chart-questions.spec.js)
+- [数学广角·推理](../../math/topics/logical-reasoning/index.html)
+  - 排队线索唯一性、题库答案、固定随机值的十题抽取、挑战解释、完成记录及分步表格；未替代完整教学评审。 [logical-reasoning-questions.spec.js](../../tests/browser/logical-reasoning-questions.spec.js)
 - [搭配问题](../../math/topics/matching/index.html)
   - 探索滑块、四类题目边界、答题反馈及完成记录部分场景；未覆盖全部内容与无障碍要求。 [matching-practice.spec.js](../../tests/browser/matching-practice.spec.js)
 - [认识长度单位](../../math/topics/measurements/index.html)
@@ -305,7 +307,6 @@
 - [用字母表示数](../../math/topics/letters-represent-numbers/index.html)
 - [线段、射线、直线](../../math/topics/line-segment-ray/index.html)
 - [认识线段](../../math/topics/line-segments/index.html)
-- [数学广角·推理](../../math/topics/logical-reasoning/index.html)
 - [混合运算](../../math/topics/mixed-operations/index.html)
 - [认识人民币](../../math/topics/money/index.html)
 - [多位数乘法](../../math/topics/multi-digit-multiplication/index.html)
