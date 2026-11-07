@@ -66,7 +66,7 @@
 - [认识面积](../../math/topics/understanding-area/index.html)
   - 点线示例、比较图形随机边界、键盘铺格及重复提交部分场景；判断挑战和全部内容尚未验收。 [area-learning.spec.js](../../tests/browser/area-learning.spec.js)
 - [认识倍](../../math/topics/understanding-multiples/index.html)
-  - 固定随机边界、摆放图示与输入同步、挑战解释及八道应用题完成记录；其他题型与无障碍未全面验收。 [understanding-multiples.spec.js](../../tests/browser/understanding-multiples.spec.js)
+  - 固定随机边界、摆放图示与输入、挑战解释，以及八次作答进度、旧记录和写入失败；其他题型与无障碍未全面验收。 [understanding-multiples.spec.js](../../tests/browser/understanding-multiples.spec.js)
 - [认识比](../../math/topics/understanding-ratio/index.html)
   - 固定随机值、读写比、等价比、重复提交和挑战题部分场景；未覆盖全部主题内容。 [ratio-learning.spec.js](../../tests/browser/ratio-learning.spec.js)
 - [认识质量单位](../../math/topics/weight-units/index.html)

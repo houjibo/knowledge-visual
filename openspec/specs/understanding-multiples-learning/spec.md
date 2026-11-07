@@ -18,3 +18,14 @@ TBD - created by archiving change understanding-multiples-reliability. Update Pu
 #### Scenario: 八次独立作答
 - **WHEN** 学习者答对七次独立作答并重复提交同一题
 - **THEN** 不记录完成；答对第八次独立作答后记录完成
+
+### Requirement: 完成状态如实反馈
+页面 SHALL 显示八次正确作答的完成条件，并在持久化失败时显示未保存而非声称地图已点亮。
+
+#### Scenario: 存储写入失败
+- **WHEN** 学习者答对八题但浏览器拒绝存储写入
+- **THEN** 页面显示本次已达标但未保存，刷新后不显示已完成
+
+#### Scenario: 已有完成记录
+- **WHEN** 学习者刷新已保存完成的主题
+- **THEN** 页面显示已完成

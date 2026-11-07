@@ -42,6 +42,7 @@ test('大基数不截断输入，挑战答题后锁定并解释乘除关系', as
 test('应用题每题只计一次，八次独立答对后记录进度', async ({page}) => {
   await page.addInitScript(() => { Math.random = () => 0; });
   await page.goto(url);
+  await expect(page.locator('#learning-progress')).toContainText('累计答对 8 题');
   await page.locator('[data-mode="word"]').click();
   for (let i = 1; i <= 8; i++) {
     await page.getByLabel('应用题答案').fill('4');
@@ -50,6 +51,33 @@ test('应用题每题只计一次，八次独立答对后记录进度', async ({
     expect(await page.evaluate(() => PageProgress.isDone('understanding-multiples'))).toBe(i === 8);
     if (i < 8) await page.locator('#btn-word-next').click();
   }
+  await expect(page.locator('#learning-progress')).toContainText('已完成');
   await page.reload();
+  await expect(page.locator('#learning-progress')).toContainText('已完成');
   expect(await page.evaluate(() => PageProgress.isDone('understanding-multiples'))).toBe(true);
+});
+
+
+test('存储写入失败时提示已达标但未保存，刷新不显示完成', async ({page}) => {
+  await page.addInitScript(() => {
+    Math.random = () => 0;
+    Storage.prototype.setItem = () => { throw new Error('denied'); };
+  });
+  await page.goto(url);
+  await page.locator('[data-mode="word"]').click();
+  for (let i = 0; i < 8; i++) {
+    await page.getByLabel('应用题答案').fill('4');
+    await page.locator('#btn-word-submit').click();
+    if (i < 7) await page.locator('#btn-word-next').click();
+  }
+  await expect(page.locator('#learning-progress')).toContainText('已达标，但进度未保存');
+  await page.reload();
+  await expect(page.locator('#learning-progress')).toContainText('本次已答对 0 题');
+});
+
+test('保留旧格式完成记录', async ({page}) => {
+  await page.goto(url);
+  await page.evaluate(() => localStorage.setItem('kv-math-progress', JSON.stringify({'understanding-multiples': 1})));
+  await page.reload();
+  await expect(page.locator('#learning-progress')).toContainText('已完成');
 });

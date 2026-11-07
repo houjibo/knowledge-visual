@@ -148,6 +148,7 @@
       <div style="width:56px"></div>
     </nav>
     <div class="score-display"><span>连续答对</span><span id="streak" style="color:#FF9500">0</span><span>次</span><span class="score-stars" id="stars-display"></span></div>
+    <p id="learning-progress" role="status" aria-live="polite" style="margin:8px 0 16px;color:#27632b;line-height:1.5;"></p>
 
     <div class="mode-tabs">
       <button class="mode-tab active" data-mode="concept">📖 认识</button>
@@ -234,13 +235,29 @@
     document.querySelector('.nav-back').addEventListener('click', () => window.location.href = '../../index.html');
     let streak = 0;
     let totalCorrect = 0;
-    function bumpTotalCorrect() {
-      totalCorrect++;
-      if (totalCorrect >= 8 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('understanding-multiples')) {
-        PageProgress.markDone('understanding-multiples');
-        showToast('🎉「认识倍数」知识地图已点亮！');
+    let progressSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('understanding-multiples');
+    function renderLearningProgress() {
+      const status = document.getElementById('learning-progress');
+      if (progressSaved) {
+        status.textContent = '✅ 已完成「认识倍数」。';
+      } else if (totalCorrect >= 8) {
+        status.textContent = '✅ 本次已答对 ' + totalCorrect + ' 题，已达标，但进度未保存。';
+      } else {
+        status.textContent = '本次已答对 ' + totalCorrect + ' 题；累计答对 8 题可完成。';
       }
     }
+    function bumpTotalCorrect() {
+      totalCorrect++;
+      if (totalCorrect >= 8 && !progressSaved && typeof PageProgress !== 'undefined') {
+        PageProgress.markDone('understanding-multiples');
+        try {
+          const stored = JSON.parse(localStorage.getItem('kv-math-progress-v2') || '{}');
+          progressSaved = !!stored['primary:understanding-multiples'];
+        } catch (e) { progressSaved = false; }
+      }
+      renderLearningProgress();
+    }
+    renderLearningProgress();
     function updateStreak() {
       document.getElementById('streak').textContent = streak;
       document.getElementById('stars-display').textContent = '⭐'.repeat(Math.min(streak, 10));
