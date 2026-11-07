@@ -257,6 +257,7 @@
           <span class="val" id="graphSpeedVal">5 m/s</span>
         </div>
 
+        <p>调整速度会清除已有图像，请重新绘制。</p>
         <div class="btn-row">
           <button class="btn btn-primary" id="btnGraphStart">▶ 绘制图像</button>
           <button class="btn btn-outline" id="btnGraphReset">↺ 清除</button>
@@ -296,17 +297,25 @@ const canvas = document.getElementById('mainCanvas');
 const ctx = canvas.getContext('2d');
 let currentTab = 'concept';
 let animFrame = null;
+function cancelPendingAnimation() {
+  if (animFrame !== null) cancelAnimationFrame(animFrame);
+  animFrame = null;
+}
 
 // ========== Tab 切换 ==========
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
+    if (tab.dataset.tab === currentTab) return;
+    cancelPendingAnimation();
+    if (conceptState.running) { conceptState.running = false; document.getElementById('btnStart').textContent = '▶ 继续'; }
+    if (uniState.running) { uniState.running = false; document.getElementById('btnUniStart').textContent = '▶ 继续'; }
+    if (graphState.running) { graphState.running = false; document.getElementById('btnGraphStart').textContent = '▶ 继续'; }
     document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-pressed', 'false'); });
     tab.classList.add('active');
     tab.setAttribute('aria-pressed', 'true');
     currentTab = tab.dataset.tab;
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById('sec-' + currentTab).classList.add('active');
-    cancelAnimationFrame(animFrame);
     drawScene();
   });
 });
@@ -323,6 +332,7 @@ speedSlider.addEventListener('input', () => {
 
 document.getElementById('btnStart').addEventListener('click', () => {
   if (conceptState.running) {
+    cancelPendingAnimation();
     conceptState.running = false;
     document.getElementById('btnStart').textContent = '▶ 继续';
   } else {
@@ -333,6 +343,7 @@ document.getElementById('btnStart').addEventListener('click', () => {
 });
 
 document.getElementById('btnReset').addEventListener('click', () => {
+  cancelPendingAnimation();
   conceptState.running = false;
   conceptState.dist = 0;
   conceptState.time = 0;
@@ -384,6 +395,7 @@ document.getElementById('timeScale').addEventListener('input', (e) => {
 
 document.getElementById('btnUniStart').addEventListener('click', () => {
   if (uniState.running) {
+    cancelPendingAnimation();
     uniState.running = false;
     document.getElementById('btnUniStart').textContent = '▶ 继续';
   } else {
@@ -394,6 +406,7 @@ document.getElementById('btnUniStart').addEventListener('click', () => {
 });
 
 document.getElementById('btnUniReset').addEventListener('click', () => {
+  cancelPendingAnimation();
   uniState.running = false;
   uniState.dist = 0;
   uniState.time = 0;
@@ -440,13 +453,21 @@ document.querySelectorAll('#sec-graphs .mode-btn').forEach(btn => {
 document.getElementById('graphSpeed').addEventListener('input', (e) => {
   graphState.speed = parseInt(e.target.value);
   document.getElementById('graphSpeedVal').textContent = graphState.speed + ' m/s';
+  cancelPendingAnimation();
+  graphState.running = false;
+  graphState.points = [];
+  graphState.t = 0;
+  document.getElementById('btnGraphStart').textContent = '▶ 绘制图像';
+  drawScene();
 });
 
 document.getElementById('btnGraphStart').addEventListener('click', () => {
   if (graphState.running) {
+    cancelPendingAnimation();
     graphState.running = false;
     document.getElementById('btnGraphStart').textContent = '▶ 继续';
   } else {
+    if (graphState.t >= 10) { graphState.points = []; graphState.t = 0; }
     graphState.running = true;
     document.getElementById('btnGraphStart').textContent = '⏸ 暂停';
     animateGraph();
@@ -454,6 +475,7 @@ document.getElementById('btnGraphStart').addEventListener('click', () => {
 });
 
 document.getElementById('btnGraphReset').addEventListener('click', () => {
+  cancelPendingAnimation();
   graphState.running = false;
   graphState.points = [];
   graphState.t = 0;
@@ -463,10 +485,11 @@ document.getElementById('btnGraphReset').addEventListener('click', () => {
 
 function animateGraph() {
   if (!graphState.running) return;
-  graphState.t += 0.1;
+  graphState.t = Math.min(10, graphState.t + 0.1);
   const s = graphState.speed * graphState.t;
   graphState.points.push({ t: graphState.t, s: s, v: graphState.speed });
-  if (graphState.t > 10) {
+  if (graphState.t >= 10 - 1e-9) {
+    graphState.t = 10;
     graphState.running = false;
     document.getElementById('btnGraphStart').textContent = '▶ 绘制图像';
   }
@@ -692,7 +715,7 @@ function drawSTGraph(ox, oy, w, h) {
     ctx.stroke();
     ctx.fillStyle = '#64748b';
     ctx.textAlign = 'right';
-    ctx.fillText(i * 20, ox - 8, oy - i * h/5 + 4);
+    ctx.fillText(i * 24, ox - 8, oy - i * h/5 + 4);
   }
   for (let i = 1; i <= 5; i++) {
     ctx.beginPath();
@@ -711,7 +734,7 @@ function drawSTGraph(ox, oy, w, h) {
     ctx.beginPath();
     graphState.points.forEach((p, i) => {
       const x = ox + (p.t / 10) * w;
-      const y = oy - (p.s / 100) * h;
+      const y = oy - (p.s / 120) * h;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
@@ -720,7 +743,7 @@ function drawSTGraph(ox, oy, w, h) {
     // 当前点
     const last = graphState.points[graphState.points.length - 1];
     const lx = ox + (last.t / 10) * w;
-    const ly = oy - (last.s / 100) * h;
+    const ly = oy - (last.s / 120) * h;
     ctx.fillStyle = '#10b981';
     ctx.beginPath();
     ctx.arc(lx, ly, 6, 0, Math.PI * 2);

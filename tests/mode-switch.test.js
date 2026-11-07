@@ -27,7 +27,8 @@ function check(file, modes, physics) {
   if (physics) {
     source = html.slice(html.indexOf("document.querySelectorAll('.tab').forEach(tab => {"), html.indexOf('// ========== 1. 速度概念场景'));
     context = {document: {querySelectorAll: selector => selector === '.tab' ? tabs : Object.values(sections),
-      getElementById: id => sections[id.slice(4)]}, cancelAnimationFrame() {}, drawScene() {}, animFrame: null};
+      getElementById: id => sections[id.slice(4)]}, cancelPendingAnimation() {}, drawScene() {},
+      currentTab: modes[0], conceptState: {running: false}, uniState: {running: false}, graphState: {running: false}};
   } else {
     source = html.slice(html.indexOf("tabs.forEach(t => t.addEventListener('click'"), html.indexOf('/* ============================================================\n * 探究模式'));
     context = {tabs, sections, draw() {}};
