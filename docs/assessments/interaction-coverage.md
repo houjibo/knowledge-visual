@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：82；尚未登记：234。
+主题总数：316；已登记部分交互证据：83；尚未登记：233。
 
 ## 已登记部分交互证据
 
@@ -186,6 +186,8 @@
   - 杠杆力矩状态、实际杆方向和竖直吊线；理想动滑轮绕绳及条件；计算与完整物理模型未验收。 [simple-machines.spec.js](../../tests/browser/simple-machines.spec.js)
 - [沉与浮 · 小学科学互动可视化](../../science/sink-float.html)
   - 沉浮示意比例及部分测验、进度场景；不代表整页或完整科学内容验收。 [buoyancy-visualization.spec.js](../../tests/browser/buoyancy-visualization.spec.js)、[science-quiz-progress.spec.js](../../tests/browser/science-quiz-progress.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
+- [声音的奥秘 · 小学科学互动可视化](../../science/sound.html)
+  - 波形相对频率与振幅、介质状态、动画暂停、测验回看及完成记录；不模拟真实声压或播放声音。 [science-sound-learning.spec.js](../../tests/browser/science-sound-learning.spec.js)
 - [时间的测量 · 小学科学互动可视化](../../science/time-measurement.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
 - [天气与水循环 · 小学科学互动可视化](../../science/weather-water-cycle.html)
@@ -429,4 +431,3 @@
 - [振动与波 · 互动可视化](../../physics/uni/vibration-wave.html)
 - [神奇的化学 · 小学科学互动可视化](../../science/chemistry.html)
 - [物质的变化 · 小学科学互动可视化](../../science/matter-changes.html)
-- [声音的奥秘 · 小学科学互动可视化](../../science/sound.html)

@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：103；含内联 while 的页面：64。同一页面可能出现在两类中。
+含候选 div 控件的页面：102；含内联 while 的页面：64。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -112,7 +112,6 @@
 - [science/chemistry.html](../../science/chemistry.html)：90 行（tab）、91 行（tab）、92 行（tab）
 - [science/magnets.html](../../science/magnets.html)：284 行（quiz-opt）、285 行（quiz-opt）、286 行（quiz-opt）、287 行（quiz-opt）
 - [science/matter-changes.html](../../science/matter-changes.html)：106 行（tab）、107 行（tab）、108 行（tab）、109 行（tab）、133 行（mode-btn）、134 行（mode-btn）、135 行（mode-btn）、247 行（mode-btn）、248 行（mode-btn）
-- [science/sound.html](../../science/sound.html)：191 行（tab）、192 行（tab）、193 行（tab）、194 行（tab）
 
 ## 内联 while 循环
 
