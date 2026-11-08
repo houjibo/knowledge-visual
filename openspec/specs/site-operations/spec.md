@@ -1,7 +1,7 @@
 # site-operations Specification
 
 ## Purpose
-TBD - created by archiving change professional-site-operations-goals. Update Purpose after archive.
+规范面向学习者的独立公开站点目标、自动化质量门禁、唯一可追溯的静态发布流程、线上版本验证与运维责任边界。
 
 ## Requirements
 
@@ -23,6 +23,17 @@ TBD - created by archiving change professional-site-operations-goals. Update Pur
 - **WHEN** 主分支提交的检查失败
 - **THEN** 发布包构建和部署不运行
 
-#### Scenario: 新提交覆盖旧运行
-- **WHEN** 同一分支有更新的工作流运行
-- **THEN** 旧运行被取消以避免旧版本后续发布
+#### Scenario: 过时提交不得部署
+- **WHEN** 较新的主分支提交已成为当前版本，而较早提交仍在检查或等待发布
+- **THEN** 较早提交 SHALL 跳过构建或部署，不得覆盖当前版本
+
+### Requirement: Pages deployment uses one verified static publisher
+The project SHALL use exactly one automatic GitHub Pages deployment workflow, and that workflow SHALL publish only a static artifact built after project checks and verified against its source revision.
+
+#### Scenario: Main branch update is published
+- **WHEN** a current `main` commit passes the project checks and release provenance validation
+- **THEN** the sole Pages workflow SHALL deploy the generated static artifact and verify the deployed revision and representative learning paths
+
+#### Scenario: A second Pages publisher is introduced
+- **WHEN** another workflow is configured to deploy to GitHub Pages
+- **THEN** the static validation SHALL fail before the repository accepts that configuration

@@ -218,7 +218,7 @@
         <div class="formula">z = a + bi &nbsp;↔&nbsp; 点 (a, b)</div>
         <div class="info-grid">
           <div><b>|z| 模</b><br>到原点的距离 √(a²+b²)</div>
-          <div><b>arg(z) 辐角</b><br>与正实轴的夹角 θ</div>
+          <div><b>arg(z) 辐角</b><br>非零复数与正实轴的夹角 θ；z = 0 时未定义</div>
           <div><b>共轭复数</b><br>z̄ = a − bi，关于实轴对称</div>
           <div><b>虚数单位</b><br>i² = −1</div>
         </div>
@@ -265,7 +265,8 @@
         <h3>🔄 旋转与缩放</h3>
         <div class="concept-box">
           乘以 e<sup>iθ</sup> = cosθ + i·sinθ 实现<span class="hl">旋转</span> θ 角。<br>
-          乘以实数 r 实现<span class="hl">缩放</span> r 倍。
+          乘以实数 r 实现<span class="hl">缩放</span> r 倍。<br>
+          动画中，端点按当前角度旋转并同步缩放；两者同时变化时沿螺旋线移动。
         </div>
         <div class="formula">z · e<sup>iθ</sup> = r · e<sup>i(α+θ)</sup></div>
         <div class="info-grid">
@@ -309,6 +310,11 @@ let scaleFactor = 1.5;
 // 坐标转换
 function toScreen(a, b) { return [cx + a * scale, cy - b * scale]; }
 function toComplex(sx, sy) { return { a: (sx - cx) / scale, b: (cy - sy) / scale }; }
+function formatComplex(a, b, decimals = 0) {
+  const real = Number(a.toFixed(decimals)) || 0;
+  const imaginary = Number(b.toFixed(decimals)) || 0;
+  return `${real.toFixed(decimals)}${imaginary < 0 ? '−' : '+'}${Math.abs(imaginary).toFixed(decimals)}i`;
+}
 
 // 绘制网格和坐标轴
 function drawGrid() {
@@ -350,15 +356,17 @@ function drawVector(a, b, color, label, dashed) {
   ctx.lineWidth = 3;
   ctx.stroke();
   ctx.setLineDash([]);
-  // 箭头
-  const angle = Math.atan2(cy - sy, sx - cx);
-  ctx.beginPath();
-  ctx.moveTo(sx, sy);
-  ctx.lineTo(sx - 12 * Math.cos(angle - 0.3), sy + 12 * Math.sin(angle - 0.3));
-  ctx.lineTo(sx - 12 * Math.cos(angle + 0.3), sy + 12 * Math.sin(angle + 0.3));
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
+  // 零向量只有原点，没有可指向的箭头。
+  if (Math.hypot(a, b) > Number.EPSILON) {
+    const angle = Math.atan2(cy - sy, sx - cx);
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx - 12 * Math.cos(angle - 0.3), sy + 12 * Math.sin(angle - 0.3));
+    ctx.lineTo(sx - 12 * Math.cos(angle + 0.3), sy + 12 * Math.sin(angle + 0.3));
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
   // 点
   ctx.beginPath();
   ctx.arc(sx, sy, 6, 0, Math.PI * 2);
@@ -379,6 +387,7 @@ function drawVector(a, b, color, label, dashed) {
 
 // 绘制弧线（辐角）
 function drawArc(a, b, color, label) {
+  if (Math.hypot(a, b) <= Number.EPSILON) return;
   const angle = Math.atan2(b, a);
   const r = 30;
   ctx.beginPath();
@@ -414,13 +423,17 @@ function drawParallelogram(z1, z2, color) {
 // 模式1：复平面
 function drawPlane() {
   drawGrid();
-  drawVector(z1.a, z1.b, '#3b82f6', `z₁ = ${z1.a}+${z1.b}i`);
-  drawArc(z1.a, z1.b, '#f59e0b', 'θ');
+  drawVector(z1.a, z1.b, '#3b82f6', `z₁ = ${formatComplex(z1.a, z1.b)}`);
+  const modulus = Math.hypot(z1.a, z1.b);
+  if (modulus > Number.EPSILON) drawArc(z1.a, z1.b, '#f59e0b', 'θ');
   // 模
-  const mod = Math.sqrt(z1.a * z1.a + z1.b * z1.b).toFixed(2);
+  const mod = modulus.toFixed(2);
   ctx.fillStyle = '#f59e0b';
   ctx.font = '13px sans-serif';
   ctx.fillText(`|z₁| = ${mod}`, cx + 10, cy - 50);
+  if (modulus <= Number.EPSILON) {
+    ctx.fillText('arg(z₁) 未定义', cx + 10, cy - 30);
+  }
   // 虚线到轴
   const [sx, sy] = toScreen(z1.a, z1.b);
   ctx.beginPath();
@@ -433,12 +446,16 @@ function drawPlane() {
   ctx.setLineDash([]);
   // 共轭
   ctx.beginPath();
-  ctx.arc(...toScreen(z1.a, -z1.b), 5, 0, Math.PI * 2);
+  const [conjugateX, conjugateY] = toScreen(z1.a, -z1.b);
+  ctx.arc(conjugateX, conjugateY, 5, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(239,68,68,0.5)';
   ctx.fill();
   ctx.fillStyle = '#ef4444';
   ctx.font = '12px sans-serif';
-  ctx.fillText(`z̄₁ = ${z1.a}${z1.b >= 0 ? '-' : '+'}${Math.abs(z1.b)}i`, sx + 10, sy + 20);
+  const conjugateLabel = `z̄₁ = ${formatComplex(z1.a, -z1.b)}`;
+  const conjugateLabelX = conjugateX + (z1.a >= 0 ? 10 : -ctx.measureText(conjugateLabel).width - 10);
+  const conjugateLabelY = conjugateY + (-z1.b >= 0 ? -10 : 18);
+  ctx.fillText(conjugateLabel, conjugateLabelX, conjugateLabelY);
 }
 
 // 模式2：运算
@@ -453,50 +470,61 @@ function drawOps() {
   // 信息
   ctx.fillStyle = '#e2e8f0';
   ctx.font = '13px sans-serif';
-  ctx.fillText(`z₁ = ${z1.a}+${z1.b}i`, 20, 30);
-  ctx.fillText(`z₂ = ${z2.a}+${z2.b}i`, 20, 50);
+  ctx.fillText(`z₁ = ${formatComplex(z1.a, z1.b)}`, 20, 30);
+  ctx.fillText(`z₂ = ${formatComplex(z2.a, z2.b)}`, 20, 50);
   ctx.fillStyle = '#10b981';
-  ctx.fillText(`z₁+z₂ = ${sum.a}+${sum.b}i`, 20, 70);
+  ctx.fillText(`z₁+z₂ = ${formatComplex(sum.a, sum.b)}`, 20, 70);
 }
 
 // 模式3：旋转
 function drawRotate() {
   drawGrid();
-  // 原始
   drawVector(z1.a, z1.b, '#3b82f6', 'z');
-  // 旋转后
-  const cos = Math.cos(rotateAngle), sin = Math.sin(rotateAngle);
-  const ra = z1.a * cos - z1.b * sin;
-  const rb = z1.a * sin + z1.b * cos;
-  // 缩放
-  const sa = ra * scaleFactor, sb = rb * scaleFactor;
-  // 动画插值
-  const t = animProgress;
-  const ia = z1.a + (sa - z1.a) * t;
-  const ib = z1.b + (sb - z1.b) * t;
-  
-  // 轨迹弧
-  ctx.beginPath();
-  const r = Math.sqrt(z1.a * z1.a + z1.b * z1.b) * scale;
-  const startAngle = Math.atan2(z1.b, z1.a);
-  const endAngle = Math.atan2(sb, sa);
-  ctx.arc(cx, cy, r, -startAngle, -startAngle + (-startAngle + startAngle - (startAngle - endAngle)) * t, endAngle < startAngle);
-  ctx.strokeStyle = 'rgba(245,158,11,0.4)';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([4, 4]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  
-  drawVector(ia, ib, '#f59e0b', "z'");
-  
-  // 角度弧
-  const arcR = 40;
-  ctx.beginPath();
-  ctx.arc(cx, cy, arcR, -startAngle, -(startAngle + (endAngle - startAngle) * t), true);
-  ctx.strokeStyle = '#f59e0b';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  
+  const modulus = Math.hypot(z1.a, z1.b);
+  const t = Math.max(0, Math.min(1, animProgress));
+  let current = null;
+  if (modulus <= Number.EPSILON) {
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('z = 0，零向量的辐角未定义；旋转与缩放后仍为 0', 20, 90);
+  } else {
+    const transformAt = progress => {
+      const angle = rotateAngle * progress;
+      const radialScale = 1 + (scaleFactor - 1) * progress;
+      const cos = Math.cos(angle), sin = Math.sin(angle);
+      return {
+        a: (z1.a * cos - z1.b * sin) * radialScale,
+        b: (z1.a * sin + z1.b * cos) * radialScale,
+      };
+    };
+    current = transformAt(t);
+
+    // 同步旋转和线性缩放时，端点沿螺旋线移动；画出截至当前帧的实际路径。
+    const steps = Math.max(1, Math.ceil(60 * t));
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const point = transformAt(t * i / steps);
+      const [x, y] = toScreen(point.a, point.b);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = 'rgba(245,158,11,0.4)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    drawVector(current.a, current.b, '#f59e0b', "z'");
+
+    // 使用未折返的旋转角，避免起始和终止辐角跨过 ±π 时画出错误方向。
+    const startAngle = Math.atan2(z1.b, z1.a);
+    ctx.beginPath();
+    ctx.arc(cx, cy, 40, -startAngle, -(startAngle + rotateAngle * t), rotateAngle > 0);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
   // 信息
   const deg = Math.round(rotateAngle * 180 / Math.PI);
   ctx.fillStyle = '#e2e8f0';
@@ -504,7 +532,11 @@ function drawRotate() {
   ctx.fillText(`旋转: ${deg}°`, 20, 30);
   ctx.fillText(`缩放: ×${scaleFactor.toFixed(1)}`, 20, 50);
   ctx.fillStyle = '#f59e0b';
-  ctx.fillText(`z' = ${ia.toFixed(1)}+${ib.toFixed(1)}i`, 20, 70);
+  if (modulus <= Number.EPSILON) {
+    ctx.fillText("z' = 0", 20, 70);
+  } else {
+    ctx.fillText(`z' = ${formatComplex(current.a, current.b, 1)}`, 20, 70);
+  }
 }
 
 function draw() {
