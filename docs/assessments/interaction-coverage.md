@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：142；尚未登记：174。
+主题总数：316；已登记部分交互证据：143；尚未登记：173。
 
 ## 已登记部分交互证据
 
@@ -272,6 +272,8 @@
   - 桌面和移动视口验证四个画布模块切换、所有画布绘制像素、滑块更新与视口变窄；四道不同测验题去重、完成刷新恢复及电动机题损耗前提；真实设备和整页无障碍未全面验收。 [constant-current-visual-learning-reliability.spec.js](../../tests/browser/constant-current-visual-learning-reliability.spec.js)
 - [曲线运动 - 高中物理互动可视化](../../physics/high/curve-motion.html)
   - 桌面与窄屏验证曲线运动五张画布的尺寸、绘制像素、缩放和五种动画跨主题恢复及参数保留；测验同题重复五次不计为不同题，五道不同题完成并刷新恢复。未覆盖所有物理模型准确性、真实设备及整页无障碍。 [curve-motion-learning-reliability.spec.js](../../tests/browser/curve-motion-learning-reliability.spec.js)
+- [磁场 - 高中物理互动可视化](../../physics/high/magnetic-field.html)
+  - 桌面与窄屏验证磁感线、安培力、洛伦兹力和带电粒子轨道四张画布的尺寸与绘制；检查磁针相对位置、磁体类型、方向与滑块反馈、隐藏动画暂停/返回恢复，以及同题去重、三道不同题完成和刷新恢复。未全面核验全部物理模型、真实设备及整页键盘/屏幕阅读器无障碍。 [magnetic-field-canvas-reliability.spec.js](../../tests/browser/magnetic-field-canvas-reliability.spec.js)
 - [牛顿运动定律 - 高中物理互动可视化](../../physics/high/newton-laws.html)
   - 桌面与窄屏逐标签检查牛顿运动定律五张画布的尺寸和绘制像素，验证连接体滑块、缩放与运行中动画切换主题后返回的状态恢复；重复答对同题不计作三道不同题，并验证不同题完成与刷新恢复。未覆盖所有物理模型准确性、真实设备及整页无障碍。 [newton-laws-learning-reliability.spec.js](../../tests/browser/newton-laws-learning-reliability.spec.js)
 - [光的折射与全反射 · 高中物理互动可视化](../../physics/high/optics.html)
@@ -540,7 +542,6 @@
 - [电磁感应 - 高中物理互动可视化](../../physics/high/em-induction.html)
 - [万有引力 - 高中物理互动可视化](../../physics/high/gravitation.html)
 - [相互作用 · 高中物理互动可视化](../../physics/high/interactions.html)
-- [磁场 - 高中物理互动可视化](../../physics/high/magnetic-field.html)
 - [机械能 - 高中物理互动可视化](../../physics/high/mechanical-energy.html)
 - [近代物理 · 高中物理互动可视化](../../physics/high/modern-physics.html)
 - [动量 - 高中物理互动可视化](../../physics/high/momentum.html)

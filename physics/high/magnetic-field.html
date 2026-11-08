@@ -404,6 +404,7 @@ canvas {
 <script>
 // 进度追踪：累计答对 3 题点亮「磁场」
 let totalCorrect = 0;
+let activeSectionIndex = 0;
 function bumpTotalCorrect() {
   totalCorrect++;
   if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('magnetic-field')) {
@@ -414,8 +415,13 @@ function bumpTotalCorrect() {
 
 // ========== Tab Switching ==========
 function switchTab(idx) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
-  document.querySelectorAll('.section').forEach((s,i) => s.classList.toggle('active', i===idx));
+  const nextIndex = Math.max(0, Math.min(4, idx));
+  if (activeSectionIndex === 2 && nextIndex !== 2) pauseLorentzAnimation();
+  if (activeSectionIndex === 3 && nextIndex !== 3) pauseOrbitAnimation();
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===nextIndex));
+  document.querySelectorAll('.section').forEach((s,i) => s.classList.toggle('active', i===nextIndex));
+  activeSectionIndex = nextIndex;
+  renderActiveSection(activeSectionIndex);
 }
 
 // ========== 1. Magnetic Field Lines ==========
@@ -424,9 +430,15 @@ const fieldCtx = fieldC.getContext('2d');
 let magnetType = 'bar';
 let needleX = null, needleY = null;
 let draggingNeedle = false;
+let fieldWidth = 0;
 
 function resizeField() {
-  fieldC.width = fieldC.offsetWidth * 2;
+  const nextWidth = fieldC.offsetWidth;
+  if (needleX !== null && fieldWidth > 0 && nextWidth > 0) {
+    needleX = needleX * nextWidth / fieldWidth;
+  }
+  fieldWidth = nextWidth;
+  fieldC.width = Math.round(nextWidth * 2);
   fieldC.height = 360 * 2;
   fieldCtx.scale(2, 2);
 }
@@ -889,15 +901,19 @@ function drawLorentzStatic(v, B) {
 function launchParticle() {
   if (particleLaunched) {
     particleLaunched = false;
-    cancelAnimationFrame(lorAnimId);
+    pauseLorentzAnimation();
   }
   particleLaunched = true;
   particleT = 0;
-  animateLorentz();
+  resumeLorentzAnimation();
 }
 
 function animateLorentz() {
-  if (!particleLaunched) return;
+  if (!particleLaunched || activeSectionIndex !== 2) {
+    lorAnimId = null;
+    return;
+  }
+  lorAnimId = null;
   const w = lorC.offsetWidth, h = 340;
   const v = parseFloat(document.getElementById('vSlider').value);
   const B = parseFloat(document.getElementById('b2Slider').value);
@@ -966,7 +982,19 @@ function animateLorentz() {
     lorAnimId = requestAnimationFrame(animateLorentz);
   } else {
     particleLaunched = false;
+    lorAnimId = null;
   }
+}
+
+function pauseLorentzAnimation() {
+  if (lorAnimId !== null) {
+    cancelAnimationFrame(lorAnimId);
+    lorAnimId = null;
+  }
+}
+
+function resumeLorentzAnimation() {
+  if (particleLaunched && activeSectionIndex === 2 && lorAnimId === null) animateLorentz();
 }
 
 // ========== 4. Orbit ==========
@@ -1099,6 +1127,11 @@ function drawOrbit(v, B, m, r) {
 }
 
 function animateOrbit() {
+  if (activeSectionIndex !== 3) {
+    orbAnimId = null;
+    return;
+  }
+  orbAnimId = null;
   const v = parseFloat(document.getElementById('ovSlider').value);
   const B = parseFloat(document.getElementById('obSlider').value);
   const m = parseFloat(document.getElementById('omSlider').value);
@@ -1108,6 +1141,35 @@ function animateOrbit() {
   orbAngle += omega;
   drawOrbit(v, B, m, r);
   orbAnimId = requestAnimationFrame(animateOrbit);
+}
+
+function pauseOrbitAnimation() {
+  if (orbAnimId !== null) {
+    cancelAnimationFrame(orbAnimId);
+    orbAnimId = null;
+  }
+}
+
+function resumeOrbitAnimation() {
+  if (activeSectionIndex === 3 && orbAnimId === null) animateOrbit();
+}
+
+function renderActiveSection(idx) {
+  if (idx === 0) {
+    resizeField();
+    drawField();
+  } else if (idx === 1) {
+    resizeAmpere();
+    updateAmpere();
+  } else if (idx === 2) {
+    resizeLorentz();
+    updateLorentz();
+    resumeLorentzAnimation();
+  } else if (idx === 3) {
+    resizeOrbit();
+    updateOrbit();
+    resumeOrbitAnimation();
+  }
 }
 
 // ========== Quiz ==========
@@ -1135,17 +1197,13 @@ function checkQuiz(qIdx, optIdx) {
 
 // ========== Init ==========
 function init() {
-  resizeField(); resizeAmpere(); resizeLorentz(); resizeOrbit();
-  drawField();
-  updateAmpere();
-  updateLorentz();
-  updateOrbit();
-  animateOrbit();
+  renderActiveSection(activeSectionIndex);
 }
 
 window.addEventListener('resize', () => {
-  resizeField(); resizeAmpere(); resizeLorentz(); resizeOrbit();
-  drawField(); updateAmpere(); updateLorentz(); updateOrbit();
+  if (activeSectionIndex === 2) pauseLorentzAnimation();
+  if (activeSectionIndex === 3) pauseOrbitAnimation();
+  renderActiveSection(activeSectionIndex);
 });
 
 init();
