@@ -19,7 +19,7 @@
 1. **按官方兼容主版本升级 Pages Action。** 使用 `actions/configure-pages@v6`、`actions/upload-pages-artifact@v5` 和 `actions/deploy-pages@v5`。官方发布说明明确 configure-pages v6 与 deploy-pages v5 使用 Node.js 24；Pages artifact v5 内部固定调用 upload-artifact v7.0.0。保留工作流既有的主版本标签约定。参考：[configure-pages 发布记录](https://github.com/actions/configure-pages/releases/tag/v6.0.0)、[deploy-pages 发布记录](https://github.com/actions/deploy-pages/releases/tag/v5.0.0)、[upload-pages-artifact action 定义](https://github.com/actions/upload-pages-artifact/blob/v5/action.yml)。
 2. **将诊断 artifact action 升到 v7。** `upload-artifact@v7` 的 action 定义声明 Node.js 24；这覆盖工作流中失败时上传浏览器诊断的两处调用。参考：[upload-artifact v7 action 定义](https://github.com/actions/upload-artifact/blob/v7/action.yml)。
 3. **保留现有 checkout/setup-node。** 它们已经使用 Node.js 24 action runtime；`setup-node` 输入的 Node.js 22 是项目测试环境，不是 action runtime，因此不改动。
-4. **用完整远端工作流验证兼容性。** 静态检查不能执行 GitHub runner 上的 action；推送后的 checks、构建、部署和部署后验收是最终集成证据，并检查日志中不再有 Node.js 20 弃用警告。
+4. **用完整远端工作流验证兼容性。** 静态检查不能执行 GitHub runner 上的 action；推送后的 checks、构建、部署和部署后验收是最终集成证据。核对 Action 定义使用 Node.js 24，并检查运行摘要和注释中没有 Node.js 20 弃用提醒；若 GitHub 要求登录才能读取步骤原始日志，需记录这一证据边界。
 
 ## Risks / Trade-offs
 
