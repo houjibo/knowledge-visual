@@ -282,7 +282,7 @@
   - 四冲程曲柄和活塞实际绘制位置、速度零值、手动跳转及暂停；连杆为简化模型，其他内容和无障碍未全面验收。 [heat-engine-cycle.spec.js](../../tests/browser/heat-engine-cycle.spec.js)
 - [生活用电 · 初中物理互动可视化](../../physics/middle/household-circuits.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
-  - 短路保护后电流与画布状态、验电提示及测验；实际接线、保护动作和全页安全内容未全面验收。 [household-circuit-safety.spec.js](../../tests/browser/household-circuit-safety.spec.js)
+  - 短路保护后电流与画布状态、验电提示、常显触电自保与呼救三步、320 像素窄屏布局及保险丝熔断求助测验；实际接线、保护动作、真实设备和全页无障碍未全面验收。 [household-circuit-safety.spec.js](../../tests/browser/household-circuit-safety.spec.js)
 - [内能 · 初中物理互动可视化](../../physics/middle/internal-energy.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
   - 温升与温度计绘制、零时火焰、理想气体速度比例、暂停与测验回归；真实扩散及全部内容未全面验收。 [internal-energy-model.spec.js](../../tests/browser/internal-energy-model.spec.js)

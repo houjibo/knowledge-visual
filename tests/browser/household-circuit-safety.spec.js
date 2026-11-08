@@ -43,3 +43,34 @@ test('验电示意与测验均不把不亮视为无电证明',async({page})=>{
   await page.getByRole('button',{name:'🧪 计算'}).click();
   await expect(page.locator('#sec-practice')).toContainText('不表示实际线路的安全容量');
 });
+test('触电处置流程先自保呼救，保险丝熔断题引导求助专业人员',async({page})=>{
+  await page.goto(url);
+  const response=page.locator('#shockResponse');
+  await expect(response).toBeVisible();
+  const steps=response.locator('li');
+  await expect(steps).toHaveCount(3);
+  await expect(steps.nth(0)).toContainText('先呼救');
+  await expect(steps.nth(0)).toContainText('成年人');
+  await expect(steps.nth(1)).toContainText('安全位置');
+  await expect(steps.nth(2)).toContainText('未确认断电前');
+  await expect(steps.nth(2)).toContainText('伤者或电线');
+  const viewport=page.viewportSize();
+  const columns=await response.locator('.shock-steps').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
+  expect(columns).toBe(viewport.width>768?3:1);
+  await expect(response).toContainText('高压或落地电线');
+  await expect(response).toContainText('立即远离');
+  await expect(response).toContainText('电力部门和急救服务');
+
+  await page.setViewportSize({width:320,height:844});
+  const narrowColumns=await response.locator('.shock-steps').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
+  expect(narrowColumns).toBe(1);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+
+  await page.getByRole('button',{name:'🎯 测验'}).click();
+  await page.locator('#quizStart').click();
+  for(let i=0;i<4;i++) await page.locator('#quizNext').click();
+  await expect(page.locator('#quizQ')).toContainText('保险丝熔断');
+  await page.locator('#quizOpts button').nth(2).click();
+  await expect(page.locator('#quizFb')).toContainText('专业人员');
+  await expect(page.locator('#quizFb')).toContainText('铜丝');
+});

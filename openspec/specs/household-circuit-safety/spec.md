@@ -1,7 +1,7 @@
 # household-circuit-safety Specification
 
 ## Purpose
-TBD - created by archiving change household-circuit-safety-model. Update Purpose after archive.
+约束家庭电路教学中的安全示意与应急提示，避免学习者把简化模型或测验理解为实际验电、触电施救及电气维修指引。
 
 ## Requirements
 
@@ -18,3 +18,21 @@ TBD - created by archiving change household-circuit-safety-model. Update Purpose
 #### Scenario: 切换到短路场景
 - **WHEN** 学习者选择短路跳闸
 - **THEN** 保险装置显示已熔断，负载电流归零，图示负载端与正常状态区分
+
+### Requirement: 触电应急说明以学习者自身安全为先
+家庭电路学习页 SHALL 始终显示适合中学生理解的触电应急步骤，先要求学习者呼救并保护自身；只有成年人能从安全位置操作时才切断电源；未确认断电前不得接触伤者或线路。遇高压或落地电线时，学习者 SHALL 被告知立即远离现场、不进入危险区域，并呼叫成年人、电力部门和急救服务。
+
+#### Scenario: 查看触电应急步骤
+- **WHEN** 学习者打开家庭电路页面
+- **THEN** 呼救与自保、安全断电条件、断电前勿接触伤者或线路三步始终可见且顺序清楚
+
+#### Scenario: 了解高压或落地电线处置
+- **WHEN** 学习者查看高压触电或落地电线提示
+- **THEN** 页面要求远离现场、不进入危险区域并联系成年人、电力部门和急救服务
+
+### Requirement: 保险丝熔断后的处置不指导未成年人维修
+家庭电路学习页 SHALL 说明保险丝熔断可能表示过载或故障，禁止用铜丝等金属丝替代，并指引学习者不要自行拆换或反复送电，而应告知成年人并由专业人员检查处理。
+
+#### Scenario: 回答保险丝熔断安全题
+- **WHEN** 学习者回答保险丝熔断后应如何处理
+- **THEN** 唯一正确选项是停止自行操作并告知成年人或联系专业人员，反馈同时说明不可用金属丝替代
