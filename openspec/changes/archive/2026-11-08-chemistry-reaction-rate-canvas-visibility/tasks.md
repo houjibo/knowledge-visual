@@ -13,4 +13,4 @@
 - [x] 3.1 在桌面和窄屏项目运行新浏览器回归，确认参数交互、标签往返及缩放后各画布均可绘制且无页面异常。
 - [x] 3.2 运行 `npm run check:static`、330 页桌面冒烟和 `openspec validate --all --strict`；修复本次引入的失败。
 - [x] 3.3 归档 OpenSpec 变更并确认主规格生成；运行 `openspec validate --all --strict`。
-- [ ] 3.4 提交并推送；确认 GitHub Actions 检查、Pages 部署和发布后验收成功，打开本地与公网版本复核。
+- [x] 3.4 提交并推送 `8a4591f`；Actions run `42470732683` 的全量检查、Pages 部署与发布后验收成功，浏览器 1328 项通过、2 项跳过；本地与公网页均已复核。
