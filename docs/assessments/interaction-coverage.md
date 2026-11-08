@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：135；尚未登记：181。
+主题总数：316；已登记部分交互证据：136；尚未登记：180。
 
 ## 已登记部分交互证据
 
@@ -181,6 +181,8 @@
   - 练习图形数量、配对及挑战边界，以及跨模式完成条件、刷新和存储失败；其余内容尚未全面验收。 [correspondence-learning.spec.js](../../tests/browser/correspondence-learning.spec.js)、[correspondence-progress.spec.js](../../tests/browser/correspondence-progress.spec.js)
 - [口算速算](../../math/topics/oral-calculation/index.html)
   - 固定随机值下填数与闯关选项、错误答案高亮、限时进度和到期重开；未覆盖所有难度与整页内容。 [oral-calculation-reliability.spec.js](../../tests/browser/oral-calculation-reliability.spec.js)
+- [数对与位置](../../math/topics/ordered-pairs/index.html)
+  - 挑战模式两种数对问法在固定极端随机值下的有界出题、四个唯一选项、正确作答及 320 像素窄屏；其他模式和完整无障碍未全面验收。 [ordered-pairs-bounded-options.spec.js](../../tests/browser/ordered-pairs-bounded-options.spec.js)
 - [几个和第几](../../math/topics/ordinal-numbers/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
   - 固定随机值下四模式出题、目标水果、答错继续、键盘圈画及首次作答统计；未覆盖所有随机序列与整页内容。 [ordinal-numbers-learning.spec.js](../../tests/browser/ordinal-numbers-learning.spec.js)
@@ -478,7 +480,6 @@
 - [数与形](../../math/topics/number-and-shape/index.html)
 - [观察物体](../../math/topics/observing-objects/index.html)
 - [数学广角——优化](../../math/topics/optimization/index.html)
-- [数对与位置](../../math/topics/ordered-pairs/index.html)
 - [平行与垂直](../../math/topics/parallel-perpendicular/index.html)
 - [规律与序列](../../math/topics/pattern-sequences/index.html)
 - [扇形统计图](../../math/topics/pie-charts/index.html)
