@@ -18,4 +18,4 @@
 ## 4. 集成验收
 
 - [x] 4.1 运行静态检查、OpenSpec 严格校验、专项/全量浏览器及发布包验收；记录各命令结果并验证 OpenSpec 变更通过 `openspec validate --all --strict`。
-- [ ] 4.2 推送代码并核验 GitHub Actions 和 Pages 发布清单 revision 与最终提交一致；将 Actions run、发布 revision 和未覆盖项写入差距记录后再归档此变更。
+- [x] 4.2 推送代码并核验 GitHub Actions 和 Pages 发布清单 revision 与最终提交一致；将 Actions run、发布 revision 和未覆盖项写入差距记录后再归档此变更。
