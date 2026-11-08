@@ -270,7 +270,7 @@
   - 桌面及移动视口逐个验证三个主题模式入口的键盘切换、状态和面板变化，并验证移动触摸返回；真实设备及模式内控件未全面验收。 [middle-physics-mode-keyboard-access.spec.js](../../tests/browser/middle-physics-mode-keyboard-access.spec.js)
 - [电流和电路 · 初中物理互动可视化](../../physics/middle/current-circuits.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
-  - 串并联画布路径、开关断开闭合、电流读数、支路路径与动画暂停；粒子速度仅为示意，全部题目与无障碍未全面验收。 [current-circuit-topology.spec.js](../../tests/browser/current-circuit-topology.spec.js)
+  - 串并联画布路径、开关断开闭合、电流读数、支路路径与动画暂停；短路说明 Enter/空格展开收起因果流程，练习和测验限定模型边界并提醒勿实操，320 像素视口无横向溢出；全部题目与整页无障碍未全面验收。 [current-circuit-topology.spec.js](../../tests/browser/current-circuit-topology.spec.js)
 - [电功率 · 初中物理互动可视化](../../physics/middle/electric-power.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
   - 电压边界、额定状态、功率表比例、光晕渐变和计算输入；真实灯丝温度、其他题目和无障碍未全面验收。 [electric-power-model.spec.js](../../tests/browser/electric-power-model.spec.js)

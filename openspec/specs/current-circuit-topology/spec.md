@@ -1,7 +1,7 @@
 # current-circuit-topology Specification
 
 ## Purpose
-TBD - created by archiving change current-circuit-topology. Update Purpose after archive.
+定义初中物理《电流和电路》互动图示、串并联状态与短路说明的可观察行为，帮助学习者对照电路模型、操作结果和安全边界理解电流。
 
 ## Requirements
 
@@ -18,3 +18,18 @@ TBD - created by archiving change current-circuit-topology. Update Purpose after
 #### Scenario: 暂停后切换模式
 - **WHEN** 学习者暂停动画、离开并返回探究模式
 - **THEN** 动画仍暂停且电路状态可见
+
+### Requirement: 短路解释标明因果关系、模型边界和安全边界
+《电流和电路》学习页 SHALL 将短路说明为连接电源两端的低电阻通路，说明电流可能增大并导致导线或电源过热、损坏或起火，同时说明实际电流受电源内阻、导线和保护装置等条件影响。页面 SHALL 提供可访问的因果示意，且不得把未建模的故障电流显示为数值或将示意表述为实际接线、实验指导。
+
+#### Scenario: 查看短路因果示意
+- **WHEN** 学习者展开短路机理说明
+- **THEN** 页面按顺序呈现低电阻通路、电流可能增大、过热或损坏风险，并注明实际电流未计算且不得实际短接电源
+
+#### Scenario: 使用键盘展开和收起说明
+- **WHEN** 学习者将焦点移到短路机理控件并按 Enter 或空格
+- **THEN** 示意内容按控件状态显示或隐藏，展开状态可由辅助技术识别，步骤文字可被顺序读取
+
+#### Scenario: 在窄屏查看说明
+- **WHEN** 学习者在 320 像素宽视口展开短路机理说明
+- **THEN** 因果步骤改为适合窄屏的排列，文本不被裁切且页面不产生横向溢出
