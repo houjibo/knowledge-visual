@@ -11,7 +11,7 @@ REQUIRED_RELEASE_STEPS = (
     "python3 scripts/build_site.py",
     "release-version.json",
     "python3 scripts/verify_published_site.py",
-    "tests/browser/published-site.spec.js",
+    "tests/browser/published-live-site.spec.js",
 )
 
 

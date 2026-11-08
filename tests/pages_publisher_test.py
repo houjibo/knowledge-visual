@@ -13,7 +13,7 @@ PUBLISHER = """\
     run: python3 scripts/build_site.py
     release-version.json
     run: python3 scripts/verify_published_site.py
-    run: npx playwright test tests/browser/published-site.spec.js
+    run: npx playwright test tests/browser/published-live-site.spec.js
 """
 
 
