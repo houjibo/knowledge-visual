@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：145；尚未登记：171。
+主题总数：316；已登记部分交互证据：146；尚未登记：170。
 
 ## 已登记部分交互证据
 
@@ -272,6 +272,8 @@
   - 桌面和移动视口验证四个画布模块切换、所有画布绘制像素、滑块更新与视口变窄；四道不同测验题去重、完成刷新恢复及电动机题损耗前提；真实设备和整页无障碍未全面验收。 [constant-current-visual-learning-reliability.spec.js](../../tests/browser/constant-current-visual-learning-reliability.spec.js)
 - [曲线运动 - 高中物理互动可视化](../../physics/high/curve-motion.html)
   - 桌面与窄屏验证曲线运动五张画布的尺寸、绘制像素、缩放和五种动画跨主题恢复及参数保留；测验同题重复五次不计为不同题，五道不同题完成并刷新恢复。未覆盖所有物理模型准确性、真实设备及整页无障碍。 [curve-motion-learning-reliability.spec.js](../../tests/browser/curve-motion-learning-reliability.spec.js)
+- [电磁感应 - 高中物理互动可视化](../../physics/high/em-induction.html)
+  - 桌面与窄屏检查四主题键盘标签、隐藏画布进入/缩放尺寸及位置参数保留；验证磁铁位置键盘调节、按住拖动及悬停不误移；控制 RAF 验证磁铁与交流模拟暂停续播仅留一帧、交流相位按实际时间推进；核对四种磁极/运动方向、相对量与匝数一次线性关系，以及三道不同题首次答对后完成、错答不计、选项锁定和刷新恢复。未覆盖真实设备、整页屏幕阅读器及完整电磁场定量模型。 [em-induction-learning-reliability.spec.js](../../tests/browser/em-induction-learning-reliability.spec.js)
 - [磁场 - 高中物理互动可视化](../../physics/high/magnetic-field.html)
   - 桌面与窄屏验证磁感线、安培力、洛伦兹力和带电粒子轨道四张画布的尺寸与绘制；检查磁针相对位置、磁体类型、方向与滑块反馈、隐藏动画暂停/返回恢复，以及同题去重、三道不同题完成和刷新恢复。未全面核验全部物理模型、真实设备及整页键盘/屏幕阅读器无障碍。 [magnetic-field-canvas-reliability.spec.js](../../tests/browser/magnetic-field-canvas-reliability.spec.js)
 - [机械能 - 高中物理互动可视化](../../physics/high/mechanical-energy.html)
@@ -543,7 +545,6 @@
 - [拓扑学入门 · 互动可视化](../../math/uni/topology.html)
 - [矢量分析 · 梯度 散度 旋度 · 互动可视化](../../math/uni/vector-calculus.html)
 - [静电场 - 高中物理互动可视化](../../physics/high/electrostatic-field.html)
-- [电磁感应 - 高中物理互动可视化](../../physics/high/em-induction.html)
 - [万有引力 - 高中物理互动可视化](../../physics/high/gravitation.html)
 - [相互作用 · 高中物理互动可视化](../../physics/high/interactions.html)
 - [近代物理 · 高中物理互动可视化](../../physics/high/modern-physics.html)
