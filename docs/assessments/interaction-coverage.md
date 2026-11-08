@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：136；尚未登记：180。
+主题总数：316；已登记部分交互证据：137；尚未登记：179。
 
 ## 已登记部分交互证据
 
@@ -111,6 +111,8 @@
   - 面积单位示意图的网格数、单位说明及四种相邻换算提示；真实设备及其他教学内容未全面验收。 [area-units-visual-meaning.spec.js](../../tests/browser/area-units-visual-meaning.spec.js)
 - [运算律](../../math/topics/arithmetic-laws/index.html)
   - 桌面及移动视口用固定随机值和受控时钟验证唯一选项、重复提交、超时答案、每题计时、切换恢复及存储失败重试；其他随机值、演示和真实设备尚未全面验收。 [arithmetic-laws-challenge-reliability.spec.js](../../tests/browser/arithmetic-laws-challenge-reliability.spec.js)
+- [条形统计图](../../math/topics/bar-charts/index.html)
+  - 读图差值题以相同计数为固定边界，验证“相差”题意、四个唯一答案选项、零差值计分及桌面/移动回归；其他题型、图表绘制与完整无障碍未全面验收。 [bar-chart-read-difference-consistency.spec.js](../../tests/browser/bar-chart-read-difference-consistency.spec.js)
 - [年月日的认识](../../math/topics/calendar-units/index.html)
   - 十二个月北半球气象季节、世纪闰年与输入校验、日期计数口径、作答计数及进度保存失败恢复；历史历法和整页无障碍未全面验收。 [calendar-learning-accuracy.spec.js](../../tests/browser/calendar-learning-accuracy.spec.js)
 - [鸡兔同笼](../../math/topics/chicken-rabbit/index.html)
@@ -450,7 +452,6 @@
 - [万以内加减法](../../math/topics/addition-subtraction-within-10000/index.html)
 - [平均数](../../math/topics/average/index.html)
 - [轴对称图形](../../math/topics/axis-symmetry/index.html)
-- [条形统计图](../../math/topics/bar-charts/index.html)
 - [统计图表的选择](../../math/topics/chart-selection/index.html)
 - [圆的认识](../../math/topics/circle/index.html)
 - [分类与规律](../../math/topics/classification-and-patterns/index.html)
