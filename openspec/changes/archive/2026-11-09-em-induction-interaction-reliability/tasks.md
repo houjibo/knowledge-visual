@@ -21,4 +21,4 @@
 - [x] 3.1 Run focused desktop/mobile tests and record evidence in `docs/assessments/interaction-evidence.json` (16/16 passed).
 - [x] 3.2 Regenerate page inventory, interaction coverage, and interaction risks; update `docs/gaps.md` with verified results and limits.
 - [x] 3.3 Run static checks, full browser regression, all-page smoke, and `openspec validate --all --strict`.
-- [ ] 3.4 Commit and push the feature, confirm GitHub Actions and public release manifest, then archive the OpenSpec change.
+- [x] 3.4 Commit and push the feature, confirm GitHub Actions and public release manifest, then archive the OpenSpec change.
