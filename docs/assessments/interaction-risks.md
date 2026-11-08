@@ -113,7 +113,7 @@
 - [math/topics/length-measurement/index.html](../../math/topics/length-measurement/index.html)：482 行
 - [math/topics/letters-represent-numbers/index.html](../../math/topics/letters-represent-numbers/index.html)：242 行
 - [math/topics/line-segments/index.html](../../math/topics/line-segments/index.html)：377 行
-- [math/topics/money/index.html](../../math/topics/money/index.html)：537 行、552 行、562 行
+- [math/topics/money/index.html](../../math/topics/money/index.html)：553 行
 - [math/topics/multi-digit-multiplication/index.html](../../math/topics/multi-digit-multiplication/index.html)：736 行
 - [math/topics/multiplication/index.html](../../math/topics/multiplication/index.html)：540 行
 - [math/topics/multiplication-tables/index.html](../../math/topics/multiplication-tables/index.html)：342 行、401 行
