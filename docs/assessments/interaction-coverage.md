@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：139；尚未登记：177。
+主题总数：316；已登记部分交互证据：140；尚未登记：176。
 
 ## 已登记部分交互证据
 
@@ -19,6 +19,8 @@
   - 物质的量图示比例、选项与测验部分场景；未覆盖全部计算及教学内容。 [mole-visualization.spec.js](../../tests/browser/mole-visualization.spec.js)、[physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
 - [化学反应与能量 · 高中化学互动可视化](../../chemistry/high/reaction-energy.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
+- [化学反应速率与平衡 - 高中化学可视化](../../chemistry/high/reaction-rate.html)
+  - 桌面与窄屏逐主题检查反应速率、影响因素、化学平衡和勒夏特列原理的八张画布在切换及缩放后具有可见尺寸和绘制像素，并检查参数与平衡动画状态保留；不代表化学模型正确性、键盘无障碍或真实设备体验已全面验收。 [reaction-rate-canvas-visibility.spec.js](../../tests/browser/reaction-rate-canvas-visibility.spec.js)
 - [原子与元素 · 初中化学互动可视化](../../chemistry/middle/04-atom-element.html)
   - 桌面与移动视口逐个验证三个主题的模式键盘切换、选中状态及内容，并模拟触摸返回；真实设备与模式内部控件尚未全面验收。 [middle-chemistry-mode-keyboard-access.spec.js](../../tests/browser/middle-chemistry-mode-keyboard-access.spec.js)
 - [化学式与化合价 · 互动可视化](../../chemistry/middle/05-formula.html)
@@ -394,7 +396,6 @@
 - [水溶液中的离子平衡 - 高中化学可视化](../../chemistry/high/ion-equilibrium.html)
 - [非金属及其化合物 · 互动可视化](../../chemistry/high/nonmetals.html)
 - [有机化学基础 · 互动可视化](../../chemistry/high/organic.html)
-- [化学反应速率与平衡 - 高中化学可视化](../../chemistry/high/reaction-rate.html)
 - [氧化还原反应 · 互动可视化](../../chemistry/high/redox.html)
 - [物质的世界 - 初中化学](../../chemistry/middle/01-matter.html)
 - [空气与氧气 - 初中化学](../../chemistry/middle/02-air-oxygen.html)
