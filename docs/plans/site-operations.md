@@ -10,7 +10,7 @@
 - 用 AI 辅助分析与实施，以仓库文档、OpenSpec、自动测试和可复核结果保持知识与决策可追溯。
 
 ## 当前基线
-仓库 `houjibo/knowledge-visual` 为公开项目，默认分支为 `main`。管理员已启用 GitHub Pages 的 Actions 发布源；通用 Jekyll workflow 曾使项目首页返回 HTTP 200，但没有 `release-version.json`，因此无法确认被服务的提交。该模板现已从代码工作区移除，避免与项目发布链竞争。仓库保留的 `.github/workflows/checks.yml` 在完整检查、发布来源校验后部署受控 Static HTML 产物，并验证线上版本和代表性交互；这一唯一发布链及当前提交的公网结果仍待最新远端运行确认。历史上曾出现快速推送取消运行、移动端进度用例失败等问题，修正及边界记录见下方远端运行历史和 [项目差距](../gaps.md)。站点地址 `https://houjibo.github.io/knowledge-visual/` 已可访问，但需以发布清单匹配的版本作为可验证发布。独立域名、域名所有权、托管成本及反馈责任尚未确定。
+仓库 `houjibo/knowledge-visual` 为公开项目，默认分支为 `main`。GitHub Pages 已启用，站点 `https://houjibo.github.io/knowledge-visual/` 的首次可验证发布来自 `08751e6`；[Actions run 42430059152](https://github.com/houjibo/knowledge-visual/actions/runs/42430059152) 的检查、构建、部署和部署后验收均成功，公网清单匹配该提交且标记站点文件未修改。首次自动部署使用的 Jekyll 模板没有版本清单，已移除；后续由通过全量质量门禁的 Static HTML 产物唯一发布。详细范围与限制见[发布记录](../assessments/site-release-2026-11-08.md)。独立域名、域名所有权、托管成本及反馈责任尚未确定。
 ## 分阶段执行
 
 ### 1. 构建可发布的静态产物
@@ -24,10 +24,10 @@
 
 1. GitHub Pages 为首个试点：仓库公开，Pages 的 Source 已选 GitHub Actions，站点地址为 `https://houjibo.github.io/knowledge-visual/`。该选项不排除后续迁移其他静态托管服务。
 2. `.github/workflows/checks.yml` 是唯一 Pages 发布者：主分支推送或手动运行先完成静态与浏览器检查，再构建带 `release-version.json` 的受控静态包，核对版本溯源后部署；拉取请求只检查。新静态守卫防止添加第二个自动 Pages 发布者。
-3. 发布后工作流核对提交版本、资源以及桌面和窄屏的四学科代表学习路径；以该步骤成功且公网清单匹配当前提交为发布依据。刚启用 Pages 后的模板部署没有版本清单，本次推送会触发项目发布链并补齐证据。
+3. 首次 Pages 发布已通过版本清单、站点资源和桌面/窄屏四学科代表学习路径核验，证据见[发布记录](../assessments/site-release-2026-11-08.md)。每次后续更新仍以部署后步骤成功且公网清单匹配当前提交为发布依据。
 4. 回退候选流程：在主分支创建恢复到已知可用内容的提交，推送后等待完整检查及部署，并核验公网版本；不可直接以旧提交重新运行来保证覆盖当前版本。实际演练、缓存行为与运行记录尚待验证。
 
-已由仓库管理员在 Settings → Pages → Build and deployment 中选择 GitHub Actions，CLI 认证不是继续发布的前置步骤。首次完整发布后记录版本、时间与公网验收；如果流水线失败，则继续展示当前线上状态，不报告新版本已发布。
+已由仓库管理员在 Settings → Pages → Build and deployment 中选择 GitHub Actions，CLI 认证不是继续发布的前置步骤。每次完整发布记录版本、时间与公网验收；如果流水线失败，则继续展示当前线上状态，不报告新版本已发布。
 ### 3. 独立域名与产品入口
 
 - 先选择并确认域名的所有权、续费责任和 DNS 管理方式；接入前核查成本和服务可用性。配置域名验证、DNS 和 HTTPS，确认旧项目站链接及外部深链的处理方式。
