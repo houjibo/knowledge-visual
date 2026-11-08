@@ -15,4 +15,4 @@
 - [x] 3.1 更新 `docs/gaps.md`，记录已验证行为与物理模型依据、真实设备、键盘/屏幕阅读器的剩余差距。
 - [x] 3.2 运行专项桌面/移动回归、`npm run check:static`、330 页加载冒烟和严格 OpenSpec 校验。
 - [x] 3.3 归档 OpenSpec 变更并确认主规格生成；归档后重新运行严格校验。
-- [ ] 3.4 提交推送并确认 Actions 全部成功、Pages 发布清单与最终提交一致，同时打开本地和公网页面复核。
+- [x] 3.4 提交推送并确认 Actions run #152 的检查、构建、Pages 部署和发布后核验全部成功；公网 `release-version.json` revision 与 `bdd1b13c816aabb855afc8f50c676184f014a7f8` 一致，同时打开本地和公网页面复核。
