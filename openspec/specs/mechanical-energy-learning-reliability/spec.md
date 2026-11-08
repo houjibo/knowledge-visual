@@ -1,0 +1,70 @@
+# mechanical-energy-learning-reliability Specification
+
+## Purpose
+TBD - created by archiving change mechanical-energy-learning-reliability. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 主题入口和活动画布可键盘操作并正确绘制
+
+机械能页面 SHALL 让学习者通过鼠标、触摸和键盘选择四个主题。活动主题的画布 SHALL 在首次显示、主题切换、返回主题和视口变化后具有非零缓冲尺寸并按当前内容重绘；切换主题 SHALL 保留各主题的参数状态。
+
+#### Scenario: 首次进入和切换主题
+- **WHEN** 学习者首次打开页面并逐个进入功与功率、动能定理、机械能守恒主题
+- **THEN** 每个活动主题的画布 SHALL 可见、具有非零内部尺寸并包含绘制像素
+
+#### Scenario: 键盘切换主题
+- **WHEN** 学习者聚焦主题按钮并使用方向键、Home 或 End
+- **THEN** 焦点和选中状态 SHALL 更新到对应主题，面板可见且关联语义正确
+
+#### Scenario: 窄屏缩放并返回主题
+- **WHEN** 学习者在主题之间切换后将视口缩至 320 CSS px 并返回原主题
+- **THEN** 画布 SHALL 按新宽度重绘，主题的滑块与方向状态 SHALL 保留
+
+### Requirement: 功与平均功率反馈与输入一致
+
+页面 SHALL 按恒力做功 `W = F·s·cosθ` 计算功，并按输入时间 `t > 0` 计算平均功率 `P = W/t`。功的显示类型 SHALL 与四舍五入到 0.1 J 的显示值一致。
+
+#### Scenario: 调整位移时间和方向
+- **WHEN** 学习者设定 `F=10 N`、`s=5 m`、`θ=0°`、`t=5 s`，再将 `t` 改为 `10 s`
+- **THEN** 页面 SHALL 分别显示 `W=50.0 J, P=10.0 W` 和 `W=50.0 J, P=5.0 W`
+
+#### Scenario: 零功与负功边界
+- **WHEN** 学习者将力与位移夹角设为 `90°` 或 `180°`
+- **THEN** 页面 SHALL 分别显示零功或负功类型，且读数 SHALL 与 `W` 和 `P` 的符号一致
+
+### Requirement: 动能定理动画与恒力做功一致
+
+页面 SHALL 按实际动画帧间时间推进恒力运动。运动期间质量、初速度和合力 SHALL 保持固定。显示的合力做功 SHALL 为运动过程中各段 `F·Δx` 之和，并与当前动能减初动能在显示精度内一致。
+
+#### Scenario: 正合力下启动物体
+- **WHEN** 学习者使用固定质量、初速度和正合力发射物体
+- **THEN** 速度与位置 SHALL 按恒加速度运动学更新，页面显示的 `W合` SHALL 与 `ΔEk` 相等至 0.1 J
+
+#### Scenario: 负合力和停止后修改条件
+- **WHEN** 学习者施加负合力，或在动画停止后修改任一初始参数
+- **THEN** 物体 SHALL 留在可见范围内按力的方向运动；修改条件后 SHALL 从更新后的初始状态重新显示一致的能量和功
+
+### Requirement: 自由落体演示保持机械能守恒
+
+页面 SHALL 清楚说明机械能演示忽略空气阻力且不模拟地面碰撞。学习者 SHALL 能通过键盘可用的高度控件或画布拖动设置释放高度，并启动演示。自由落体至接触地面前，`Ek + Ep` SHALL 保持等于 `mgh₀`；到达地面时动画 SHALL 停止且总机械能 SHALL 仍保持该值。
+
+#### Scenario: 调节释放高度并自由落体
+- **WHEN** 学习者选择质量 `m`、重力加速度 `g` 和释放高度 `h₀` 并启动下落
+- **THEN** 动能、势能和总能量 SHALL 分别反映 `½mv²`、`mgh` 和 `mgh₀`，总机械能 SHALL 在整个下落过程中保持不变
+
+#### Scenario: 到达地面
+- **WHEN** 物体到达 `h=0`
+- **THEN** 演示 SHALL 停止，动能 SHALL 为 `mgh₀`、势能 SHALL 为 0，总机械能 SHALL 保持 `mgh₀`
+
+### Requirement: 测验完成按不同题目计数
+
+每道测验题 SHALL 只接受一次答案。页面 SHALL 仅在至少三道不同题答对后记录主题完成，并在刷新后恢复完成状态。题目选项 SHALL 只有一个正确答案。
+
+#### Scenario: 重复激活同一题
+- **WHEN** 学习者通过鼠标或键盘重复激活同一道题的答案
+- **THEN** 该题 SHALL 只计入一次，且页面 SHALL NOT 因单题重复作答标记主题完成
+
+#### Scenario: 答对三道不同题
+- **WHEN** 学习者答对三道不同题目
+- **THEN** 页面 SHALL 记录主题完成，并在刷新后保留该状态
