@@ -16,6 +16,9 @@ test.beforeAll(async () => {
   }
 });
 test.afterAll(async () => { if (release) await release.close(); });
+test.beforeEach(async ({page}) => {
+  await page.setExtraHTTPHeaders({'Cache-Control': 'no-cache'});
+});
 
 test('发布包子路径的首页搜索和四学科学习交互', async ({page}) => {
   const errors = [];
@@ -34,6 +37,7 @@ test('发布包子路径的首页搜索和四学科学习交互', async ({page})
   await page.locator('#site-results a[href="math/topics/addition/index.html"]').click();
   await expect(page).toHaveURL(new URL('math/topics/addition/index.html', base).href);
   await page.getByRole('button', {name: '✏️ 练习'}).click();
+  await expect(page.locator('#mode-practice')).toHaveClass(/active/);
   await expect(page.locator('#practice-problem')).toBeVisible();
   await page.goto(base);
   await page.getByRole('link', {name: /物理 初中/}).click();
