@@ -46,11 +46,16 @@
   .quiz { margin-top: 10px; padding: 12px; background: rgba(14,165,233,0.08); border-radius: 12px; border: 1px solid rgba(14,165,233,0.3); }
   .quiz-q { font-size: 13px; margin-bottom: 8px; }
   .quiz-opts { display: grid; gap: 5px; }
-  .quiz-opt { padding: 7px 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 12px; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt { width: 100%; padding: 7px 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font: inherit; text-align: left; color: inherit; transition: all .2s; border: 1px solid transparent; }
   .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt:focus-visible, .quiz-control:focus-visible { outline: 3px solid #fbbf24; outline-offset: 2px; }
+  .quiz-opt:disabled { cursor: default; }
   .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
   .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
   .quiz-fb { margin-top: 6px; font-size: 12px; min-height: 16px; }
+  .quiz-controls { display: flex; justify-content: flex-end; margin-top: 10px; }
+  .quiz-control { padding: 8px 14px; border: 0; border-radius: 8px; background: var(--primary); color: #fff; cursor: pointer; font: inherit; }
+  .quiz-control:disabled { opacity: .55; cursor: not-allowed; }
   .legend { display: flex; gap: 12px; justify-content: center; font-size: 11px; color: #cbd5e1; margin-top: 6px; flex-wrap: wrap; }
   .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
   .legend .l-v::before { background: var(--velocity); }
@@ -90,13 +95,28 @@
 
 <script src="assets/common.js"></script>
 <script>
-// 进度追踪：累计答对 3 题点亮「运动的描述」
-let totalCorrect = 0;
-function bumpTotalCorrect() {
-  totalCorrect++;
-  if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('motion')) {
+// 五道题按固定顺序练习；完成门槛按本次会话中不同题目去重。
+const motionQuizQuestions = [
+  { id: 'particle-model', q: '关于质点，下列说法正确的是？', opts: ['任何小的物体都可以看作质点', '只有静止的物体才能看作质点', '当物体形状大小对研究问题无影响时可看作质点', '质点就是很小的点'], ans: 2 },
+  { id: 'displacement-distance', q: '一个人沿操场跑道跑一圈回到起点，位移和路程分别是？', opts: ['位移=0，路程=跑道周长', '位移=路程=跑道周长', '位移和路程都是0', '位移=跑道周长，路程=0'], ans: 0 },
+  { id: 'acceleration-direction', q: '加速度方向与速度方向相同时，物体做？', opts: ['减速运动', '加速运动', '匀速运动', '无法判断'], ans: 1 },
+  { id: 'velocity-time-area', q: 'v-t 图像中，图线与 t 轴围成的有向面积表示？', opts: ['加速度', '速度', '位移', '时间'], ans: 2 },
+  { id: 'uniform-acceleration-graph', q: '匀加速直线运动中，v-t 图像是？', opts: ['水平直线', '倾斜直线', '抛物线', '曲线'], ans: 1 }
+];
+let motionQuizIndex = 0;
+let motionQuizAnswers = new Map();
+let motionQuizMasteredIds = new Set();
+
+function motionQuizProgressText() {
+  if (typeof PageProgress !== 'undefined' && PageProgress.isDone('motion')) return '掌握进度：知识地图已点亮';
+  return `掌握进度：答对 ${motionQuizMasteredIds.size} / 3 道不同题`;
+}
+
+function recordMotionQuizMastery(question) {
+  motionQuizMasteredIds.add(question.id);
+  if (motionQuizMasteredIds.size >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('motion')) {
     PageProgress.markDone('motion');
-    if (typeof showToast === 'function') showToast('🎉 「运动的描述」知识地图已点亮！');
+    if (PageProgress.isDone('motion') && typeof showToast === 'function') showToast('🎉 「运动的描述」知识地图已点亮！');
   }
 }
 
@@ -295,39 +315,68 @@ function updatePanel() {
 
 function showQuiz() {
   const content = document.getElementById('panelContent');
-  const quizzes = [
-    { q: "关于质点，下列说法正确的是？", opts: ["任何小的物体都可以看作质点", "只有静止的物体才能看作质点", "当物体形状大小对研究问题无影响时可看作质点", "质点就是很小的点"], ans: 2 },
-    { q: "一个人沿操场跑道跑一圈回到起点，位移和路程分别是？", opts: ["位移=0，路程=跑道周长", "位移=路程=跑道周长", "位移和路程都是0", "位移=跑道周长，路程=0"], ans: 0 },
-    { q: "加速度方向与速度方向相同时，物体做？", opts: ["减速运动", "加速运动", "匀速运动", "无法判断"], ans: 1 },
-    { q: "v-t 图像中，图线与 t 轴围成的面积表示？", opts: ["加速度", "速度", "位移", "时间"], ans: 2 },
-    { q: "匀加速直线运动中，v-t 图像是？", opts: ["水平直线", "倾斜直线", "抛物线", "曲线"], ans: 1 }
-  ];
-  const quiz = quizzes[Math.floor(Math.random() * quizzes.length)];
-  content.innerHTML = `
-    <div class="quiz">
-      <div class="quiz-q">${quiz.q}</div>
-      <div class="quiz-opts">
-        ${quiz.opts.map((o, i) => `<div class="quiz-opt" data-i="${i}">${o}</div>`).join('')}
-      </div>
-      <div class="quiz-fb" id="fb"></div>
-    </div>
-  `;
-  document.querySelectorAll('.quiz-opt').forEach(opt => {
-    opt.addEventListener('click', () => {
-      const sel = parseInt(opt.dataset.i);
-      const fb = document.getElementById('fb');
-      if (sel === quiz.ans) {
-        opt.classList.add('correct');
-        fb.textContent = '✓ 正确！';
-        fb.style.color = '#10b981';
-        bumpTotalCorrect();
-      } else {
-        opt.classList.add('wrong');
-        document.querySelectorAll('.quiz-opt')[quiz.ans].classList.add('correct');
-        fb.textContent = '✗ 正确答案已标出';
-        fb.style.color = '#ef4444';
-      }
+  if (motionQuizIndex >= motionQuizQuestions.length) {
+    const roundCorrect = [...motionQuizAnswers.values()].filter(answer => answer.correct).length;
+    content.innerHTML = `
+      <section class="quiz" aria-labelledby="motionQuizResult">
+        <h4 class="quiz-q" id="motionQuizResult">本轮练习完成</h4>
+        <p class="quiz-fb" role="status" aria-live="polite">本轮答对 ${roundCorrect} / ${motionQuizQuestions.length} 题。${motionQuizProgressText()}</p>
+        <div class="quiz-controls"><button class="quiz-control" id="motionQuizRetry" type="button">重新练习</button></div>
+      </section>
+    `;
+    document.getElementById('motionQuizRetry').addEventListener('click', () => {
+      motionQuizIndex = 0;
+      motionQuizAnswers = new Map();
+      showQuiz();
+      document.querySelector('.quiz-opt')?.focus();
     });
+    draw();
+    return;
+  }
+
+  const question = motionQuizQuestions[motionQuizIndex];
+  const answer = motionQuizAnswers.get(question.id);
+  content.innerHTML = `
+    <section class="quiz" aria-labelledby="motionQuizQuestion">
+      <div class="quiz-q"><b>第 ${motionQuizIndex + 1} / ${motionQuizQuestions.length} 题</b></div>
+      <p class="quiz-q" id="motionQuizQuestion">${question.q}</p>
+      <p class="quiz-fb" id="motionQuizProgress" role="status" aria-live="polite">${motionQuizProgressText()}</p>
+      <div class="quiz-opts">
+        ${question.opts.map((option, index) => {
+          const selected = answer?.selected === index;
+          const correct = answer && index === question.ans;
+          const className = ['quiz-opt', correct ? 'correct' : '', selected && !answer.correct ? 'wrong' : ''].filter(Boolean).join(' ');
+          return `<button class="${className}" type="button" data-index="${index}" aria-pressed="${selected}" ${answer ? 'disabled' : ''}>${option}</button>`;
+        }).join('')}
+      </div>
+      <p class="quiz-fb" id="motionQuizFeedback" role="status" aria-live="polite">${answer ? (answer.correct ? '✓ 正确！' : '✗ 错误，正确答案已标出') : '请选择一个答案。'}</p>
+      <div class="quiz-controls"><button class="quiz-control" id="motionQuizNext" type="button" ${answer ? '' : 'disabled'}>${motionQuizIndex === motionQuizQuestions.length - 1 ? '查看本轮结果' : '下一题'}</button></div>
+    </section>
+  `;
+  content.querySelectorAll('.quiz-opt').forEach(button => {
+    button.addEventListener('click', () => {
+      if (motionQuizAnswers.has(question.id)) return;
+      const selected = Number(button.dataset.index);
+      const correct = selected === question.ans;
+      motionQuizAnswers.set(question.id, {selected, correct});
+      if (correct && !motionQuizMasteredIds.has(question.id)) recordMotionQuizMastery(question);
+      content.querySelectorAll('.quiz-opt').forEach((option, index) => {
+        option.disabled = true;
+        option.setAttribute('aria-pressed', String(index === selected));
+        if (index === question.ans) option.classList.add('correct');
+        if (index === selected && !correct) option.classList.add('wrong');
+      });
+      document.getElementById('motionQuizFeedback').textContent = correct ? '✓ 正确！' : '✗ 错误，正确答案已标出';
+      document.getElementById('motionQuizFeedback').style.color = correct ? '#10b981' : '#ef4444';
+      document.getElementById('motionQuizProgress').textContent = motionQuizProgressText();
+      document.getElementById('motionQuizNext').disabled = false;
+    });
+  });
+  document.getElementById('motionQuizNext').addEventListener('click', () => {
+    if (!motionQuizAnswers.has(question.id)) return;
+    motionQuizIndex++;
+    showQuiz();
+    document.querySelector('.quiz-opt')?.focus();
   });
   // Draw quiz canvas
   draw();

@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：148；尚未登记：168。
+主题总数：316；已登记部分交互证据：149；尚未登记：167。
 
 ## 已登记部分交互证据
 
@@ -284,6 +284,8 @@
   - 桌面与窄屏验证三张主题画布进入/切换/缩放、键盘主题导航、平均功率与正负零功边界、动能定理动画功-能一致、无耗散自由落体能量守恒与拖拽释放，以及三道不同题完成并刷新恢复。未覆盖真实设备、整页屏幕阅读器和其他物理模型的完整依据审查。 [mechanical-energy-learning-reliability.spec.js](../../tests/browser/mechanical-energy-learning-reliability.spec.js)
 - [动量 - 高中物理互动可视化](../../physics/high/momentum.html)
   - 桌面与窄屏验证四主题键盘导航、三张画布切换/缩放后的尺寸与绘制、可调冲量时长和动量定理、三种碰撞守恒及有符号动量柱、反冲参数锁定与重置清理，以及三道不同题的首次作答和刷新恢复。真实设备、整页屏幕阅读器和全部物理边界组合尚未全面验收。 [momentum-interaction-reliability.spec.js](../../tests/browser/momentum-interaction-reliability.spec.js)
+- [运动的描述 · 高中物理互动可视化](../../physics/high/motion.html)
+  - 桌面和 320px 窄屏验证五道不同题按固定顺序展示、键盘 Enter/Space 作答、首次作答锁定、错题反馈、切换模式后状态保留、三道不同题完成、轮末成绩和重练去重。未全面核验运动模拟模型、真实设备及整页屏幕阅读器。 [high-motion-practice-learning-reliability.spec.js](../../tests/browser/high-motion-practice-learning-reliability.spec.js)
 - [牛顿运动定律 - 高中物理互动可视化](../../physics/high/newton-laws.html)
   - 桌面与窄屏逐标签检查牛顿运动定律五张画布的尺寸和绘制像素，验证连接体滑块、缩放与运行中动画切换主题后返回的状态恢复；重复答对同题不计作三道不同题，并验证不同题完成与刷新恢复。未覆盖所有物理模型准确性、真实设备及整页无障碍。 [newton-laws-learning-reliability.spec.js](../../tests/browser/newton-laws-learning-reliability.spec.js)
 - [光的折射与全反射 · 高中物理互动可视化](../../physics/high/optics.html)
@@ -550,7 +552,6 @@
 - [矢量分析 · 梯度 散度 旋度 · 互动可视化](../../math/uni/vector-calculus.html)
 - [相互作用 · 高中物理互动可视化](../../physics/high/interactions.html)
 - [近代物理 · 高中物理互动可视化](../../physics/high/modern-physics.html)
-- [运动的描述 · 高中物理互动可视化](../../physics/high/motion.html)
 - [力 · 初中物理互动可视化](../../physics/middle/force.html)
 - [透镜及其应用 · 初中物理互动可视化](../../physics/middle/lens.html)
 - [光现象 - 初中物理互动可视化](../../physics/middle/light.html)
