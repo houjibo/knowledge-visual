@@ -54,6 +54,12 @@ body {
   color: white;
   border-color: var(--primary);
 }
+.tab:focus-visible, .btn:focus-visible, .quiz-option:focus-visible,
+input[type="range"]:focus-visible, canvas[tabindex]:focus-visible {
+  outline: 3px solid #fdd835;
+  outline-offset: 3px;
+}
+.tab { font-family: inherit; }
 .section { display: none; padding: 20px 16px; max-width: 800px; margin: 0 auto; }
 .section.active { display: block; }
 .section-title {
@@ -77,6 +83,7 @@ canvas {
   background: #050f1a;
   touch-action: none;
 }
+canvas[tabindex] { cursor: crosshair; }
 .controls {
   display: flex;
   gap: 12px;
@@ -86,6 +93,7 @@ canvas {
 }
 .control-group {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
@@ -142,6 +150,19 @@ input[type="range"] {
   margin-top: 8px;
   text-align: center;
 }
+.potential-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #4f80ff, #f3f6fb 50%, #ff4f4f);
+  color: #071729;
+  font-size: 0.8em;
+  font-weight: 700;
+}
 .quiz-option {
   display: block;
   width: 100%;
@@ -165,6 +186,9 @@ input[type="range"] {
   font-weight: bold;
   text-align: center;
 }
+@media (max-width: 420px) {
+  .header { padding-top: 52px; }
+}
 </style>
 </head>
 <body>
@@ -174,77 +198,80 @@ input[type="range"] {
   <p>高中物理 · 互动可视化</p>
 </div>
 
-<div class="tabs">
-  <div class="tab active" data-tab="coulomb">库仑定律</div>
-  <div class="tab" data-tab="field">电场线</div>
-  <div class="tab" data-tab="potential">电势分布</div>
-  <div class="tab" data-tab="quiz">互动练习</div>
+<div class="tabs" role="tablist" aria-label="静电场学习主题">
+  <button class="tab active" id="tab-coulomb" type="button" role="tab" aria-selected="true" aria-controls="coulomb" tabindex="0" data-tab="coulomb">库仑定律</button>
+  <button class="tab" id="tab-field" type="button" role="tab" aria-selected="false" aria-controls="field" tabindex="-1" data-tab="field">电场线</button>
+  <button class="tab" id="tab-potential" type="button" role="tab" aria-selected="false" aria-controls="potential" tabindex="-1" data-tab="potential">电势分布</button>
+  <button class="tab" id="tab-quiz" type="button" role="tab" aria-selected="false" aria-controls="quiz" tabindex="-1" data-tab="quiz">互动练习</button>
 </div>
 
 <!-- 库仑定律 -->
-<div class="section active" id="coulomb">
+<div class="section active" id="coulomb" role="tabpanel" aria-labelledby="tab-coulomb" tabindex="0">
   <h2 class="section-title">🔬 库仑定律</h2>
   <div class="card">
-    <canvas id="coulombCanvas" width="700" height="400"></canvas>
+    <canvas id="coulombCanvas" width="700" height="400" role="img" aria-label="库仑力示意图；显示带符号电荷、力方向和米制间距。图上像素按每米一千像素映射。"></canvas>
     <div class="controls">
       <div class="control-group">
-        <label>q₁:</label>
+        <label for="q1Slider">q₁（μC）:</label>
         <input type="range" id="q1Slider" min="-10" max="10" value="5">
-        <span id="q1Value">+5μC</span>
+        <output id="q1Value" for="q1Slider">+5 μC</output>
       </div>
       <div class="control-group">
-        <label>q₂:</label>
+        <label for="q2Slider">q₂（μC）:</label>
         <input type="range" id="q2Slider" min="-10" max="10" value="-3">
-        <span id="q2Value">-3μC</span>
+        <output id="q2Value" for="q2Slider">-3 μC</output>
       </div>
       <div class="control-group">
-        <label>距离:</label>
-        <input type="range" id="distSlider" min="50" max="300" value="150">
-        <span id="distValue">150px</span>
+        <label for="distSlider">距离（m）:</label>
+        <input type="range" id="distSlider" min="0.05" max="0.30" step="0.01" value="0.15">
+        <output id="distValue" for="distSlider">0.15 m</output>
       </div>
     </div>
     <div class="charge-display">
       <div class="charge-item positive">
-        <div>F = <span class="value" id="forceValue">0.00</span> N</div>
+        <div>F = <output class="value" id="forceValue" aria-live="polite">0.00</output> N</div>
         <div style="font-size:0.8em;color:var(--text-dim)">库仑力</div>
+        <div id="forceDirection" data-force-type="attractive" aria-live="polite" style="font-size:0.8em;color:var(--text-dim)">异种电荷相吸</div>
       </div>
     </div>
     <div class="info-box">
       <strong>库仑定律：</strong><span class="formula">F = k · |q₁q₂| / r²</span><br>
-      k = 9×10⁹ N·m²/C²，同种电荷相斥，异种电荷相吸
+      q 以库仑代入（滑块单位为 μC），r 以米代入；k ≈ 8.99×10⁹ N·m²/C²。同种电荷相斥，异种电荷相吸。<br>
+      <span>图示比例：1000 px = 1 m；画布距离和实际间距按比例缩放。</span>
     </div>
     <p class="hint">💡 拖动滑块改变电荷量和距离，观察力的变化</p>
   </div>
 </div>
 
 <!-- 电场线 -->
-<div class="section" id="field">
+<div class="section" id="field" role="tabpanel" aria-labelledby="tab-field" tabindex="0">
   <h2 class="section-title">🌐 电场线可视化</h2>
   <div class="card">
-    <canvas id="fieldCanvas" width="700" height="500"></canvas>
+    <canvas id="fieldCanvas" width="700" height="500" tabindex="0" role="application" aria-label="可交互点电荷画布" aria-describedby="fieldHint fieldStatus"></canvas>
+    <p id="fieldStatus" role="status" aria-live="polite">当前 2 个电荷。聚焦画布后按 + 或 − 添加，方向键移动选中电荷，Delete 删除。</p>
     <div class="controls">
       <button class="btn" id="addPositive">+ 正电荷</button>
       <button class="btn" id="addNegative">- 负电荷</button>
       <button class="btn" id="clearCharges">清空</button>
-      <button class="btn" id="toggleLines" class="active">显示电场线</button>
+      <button class="btn active" id="toggleLines" type="button" aria-pressed="true">显示电场线</button>
     </div>
     <div class="info-box">
       <strong>电场线特性：</strong>
       <ul style="margin-top:8px;padding-left:20px;font-size:0.9em">
-        <li>从正电荷出发，终止于负电荷</li>
+        <li>场线从正电荷出发，终止于负电荷或延伸到图外</li>
         <li>电场线不相交</li>
-        <li>疏密表示电场强弱</li>
+        <li>箭头表示电场方向；本图是方向示意，不用于定量测量场强</li>
       </ul>
     </div>
-    <p class="hint">💡 点击画布添加电荷，拖动电荷改变位置</p>
+    <p class="hint" id="fieldHint">💡 点击空白处添加正电荷；拖动电荷改变位置。键盘聚焦画布后按 + / − 添加，方向键移动选中电荷，Delete 删除。</p>
   </div>
 </div>
 
 <!-- 电势分布 -->
-<div class="section" id="potential">
+<div class="section" id="potential" role="tabpanel" aria-labelledby="tab-potential" tabindex="0">
   <h2 class="section-title">🗺️ 电势分布</h2>
   <div class="card">
-    <canvas id="potentialCanvas" width="700" height="500"></canvas>
+    <canvas id="potentialCanvas" width="700" height="500" role="img" aria-label="点电荷总电势分布图；蓝色表示负电势，接近白色表示零电势，红色表示正电势。等势线以伏特计量。"></canvas>
     <div class="controls">
       <div class="control-group">
         <label>电荷类型:</label>
@@ -254,15 +281,18 @@ input[type="range"] {
       </div>
     </div>
     <div class="info-box">
-      <strong>电势：</strong><span class="formula">V = kq/r</span><br>
-      等势面与电场线垂直，电势沿电场线方向降低
+      <strong>电势：</strong><span class="formula">V = kq/r</span>，多电荷的电势按代数和叠加。<br>
+      等势线与电场线垂直，电势沿电场线方向降低。颜色在 ±1 MV 饱和；电荷圆盘内的计算距离截断为 0.02 m。
     </div>
-    <p class="hint">💡 颜色表示电势高低：红色=高电势，蓝色=低电势</p>
+    <div class="potential-legend" aria-label="电势颜色图例">
+      <span>蓝色 −1 MV</span><span>近白 0 V</span><span>红色 +1 MV</span>
+    </div>
+    <p class="hint">💡 颜色和等势线来自点电荷模型；超出色标范围时颜色饱和，电荷核心区域采用显示截断。</p>
   </div>
 </div>
 
 <!-- 互动练习 -->
-<div class="section" id="quiz">
+<div class="section" id="quiz" role="tabpanel" aria-labelledby="tab-quiz" tabindex="0">
   <h2 class="section-title">📝 互动练习</h2>
   <div class="card">
     <div id="quizContainer"></div>
@@ -272,9 +302,11 @@ input[type="range"] {
 
 <script src="assets/touch.js"></script>
 <script src="assets/common.js"></script>
+<script src="assets/electrostatic-model.js"></script>
 <script>
 // 进度追踪：累计答对 3 题点亮「静电场」
 let totalCorrect = 0;
+const masteredQuestionIds = new Set();
 function bumpTotalCorrect() {
   totalCorrect++;
   if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('electrostatic-field')) {
@@ -283,42 +315,71 @@ function bumpTotalCorrect() {
   }
 }
 
-// Tab switching
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById(tab.dataset.tab).classList.add('active');
+// Semantic tabs with roving focus and redraw on activation.
+const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+function activateTab(tab, moveFocus = false) {
+  tabs.forEach(item => {
+    const selected = item === tab;
+    item.classList.toggle('active', selected);
+    item.setAttribute('aria-selected', String(selected));
+    item.tabIndex = selected ? 0 : -1;
+    const panel = document.getElementById(item.dataset.tab);
+    panel.classList.toggle('active', selected);
+    panel.hidden = !selected;
+  });
+  if (moveFocus) tab.focus();
+  if (tab.dataset.tab === 'field') drawField();
+  if (tab.dataset.tab === 'potential') drawPotential();
+}
+tabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => activateTab(tab));
+  tab.addEventListener('keydown', event => {
+    let nextIndex = index;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % tabs.length;
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (index - 1 + tabs.length) % tabs.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = tabs.length - 1;
+    else return;
+    event.preventDefault();
+    activateTab(tabs[nextIndex], true);
   });
 });
+document.querySelectorAll('[role="tabpanel"]').forEach(panel => { panel.hidden = !panel.classList.contains('active'); });
 
 // Coulomb's Law
 const coulombCanvas = document.getElementById('coulombCanvas');
 const coulombCtx = coulombCanvas.getContext('2d');
-let q1 = 5, q2 = -3, dist = 150;
+const METERS_PER_PIXEL = 0.001;
+const COULOMB_DISPLAY_PIXELS_PER_METER = 1 / METERS_PER_PIXEL;
+let q1 = 5, q2 = -3, distMeters = 0.15;
 
 function drawCoulomb() {
   const w = coulombCanvas.width, h = coulombCanvas.height;
   coulombCtx.clearRect(0, 0, w, h);
   
   const cx = w / 2, cy = h / 2;
-  const x1 = cx - dist / 2, x2 = cx + dist / 2;
+  const distPixels = distMeters * COULOMB_DISPLAY_PIXELS_PER_METER;
+  const x1 = cx - distPixels / 2, x2 = cx + distPixels / 2;
   
   // Draw charges
   drawCharge(x1, cy, q1, 'q₁');
   drawCharge(x2, cy, q2, 'q₂');
   
   // Draw force arrows
-  const force = 9e9 * Math.abs(q1 * q2) / (dist * dist * 1e-12) * 1e-6;
+  const force = ElectrostaticModel.coulombForceMagnitude(q1, q2, distMeters);
   document.getElementById('forceValue').textContent = force.toFixed(2);
-  
-  const arrowLen = Math.min(force * 20, 80);
-  if (q1 * q2 < 0) {
+  const forceKind = ElectrostaticModel.forceType(q1, q2);
+  const direction = document.getElementById('forceDirection');
+  direction.dataset.forceType = forceKind;
+  direction.textContent = forceKind === 'attractive' ? '异种电荷相吸' :
+    forceKind === 'repulsive' ? '同种电荷相斥' : '至少一个为零电荷，无库仑力';
+
+  const arrowLen = Math.min(Math.max(force * 12, 8), distPixels * 0.35, 90);
+  if (forceKind === 'attractive') {
     // Attractive
     drawArrow(x1 + 30, cy, x1 + 30 + arrowLen, cy, '#4caf50');
     drawArrow(x2 - 30, cy, x2 - 30 - arrowLen, cy, '#4caf50');
-  } else {
+  } else if (forceKind === 'repulsive') {
     // Repulsive
     drawArrow(x1 - 30, cy, x1 - 30 - arrowLen, cy, '#f44336');
     drawArrow(x2 + 30, cy, x2 + 30 + arrowLen, cy, '#f44336');
@@ -335,12 +396,12 @@ function drawCoulomb() {
   coulombCtx.fillStyle = '#fdd835';
   coulombCtx.font = '14px sans-serif';
   coulombCtx.textAlign = 'center';
-  coulombCtx.fillText(`r = ${dist}px`, cx, cy + 70);
+  coulombCtx.fillText(`r = ${distMeters.toFixed(2)} m`, cx, cy + 70);
 }
 
 function drawCharge(x, y, q, label) {
   const radius = 25;
-  const color = q > 0 ? '#e53935' : '#1e88e5';
+  const color = q > 0 ? '#e53935' : q < 0 ? '#1e88e5' : '#607d8b';
   
   // Glow
   const gradient = coulombCtx.createRadialGradient(x, y, 0, x, y, radius * 2);
@@ -362,12 +423,12 @@ function drawCharge(x, y, q, label) {
   coulombCtx.font = 'bold 20px sans-serif';
   coulombCtx.textAlign = 'center';
   coulombCtx.textBaseline = 'middle';
-  coulombCtx.fillText(q > 0 ? '+' : '-', x, y);
+  coulombCtx.fillText(q > 0 ? '+' : q < 0 ? '−' : '0', x, y);
   
   // Label
   coulombCtx.fillStyle = '#90caf9';
   coulombCtx.font = '12px sans-serif';
-  coulombCtx.fillText(`${label}=${q>0?'+':''}${q}μC`, x, y - 40);
+  coulombCtx.fillText(`${label}=${q > 0 ? '+' : ''}${q} μC`, x, y - 40);
 }
 
 function drawArrow(x1, y1, x2, y2, color) {
@@ -392,19 +453,19 @@ function drawArrow(x1, y1, x2, y2, color) {
 
 document.getElementById('q1Slider').addEventListener('input', e => {
   q1 = parseInt(e.target.value);
-  document.getElementById('q1Value').textContent = `${q1>0?'+':''}${q1}μC`;
+  document.getElementById('q1Value').textContent = `${q1 > 0 ? '+' : ''}${q1} μC`;
   drawCoulomb();
 });
 
 document.getElementById('q2Slider').addEventListener('input', e => {
   q2 = parseInt(e.target.value);
-  document.getElementById('q2Value').textContent = `${q2>0?'+':''}${q2}μC`;
+  document.getElementById('q2Value').textContent = `${q2 > 0 ? '+' : ''}${q2} μC`;
   drawCoulomb();
 });
 
 document.getElementById('distSlider').addEventListener('input', e => {
-  dist = parseInt(e.target.value);
-  document.getElementById('distValue').textContent = `${dist}px`;
+  distMeters = parseFloat(e.target.value);
+  document.getElementById('distValue').textContent = `${distMeters.toFixed(2)} m`;
   drawCoulomb();
 });
 
@@ -419,6 +480,33 @@ let charges = [
 ];
 let showLines = true;
 let dragCharge = null;
+let selectedCharge = 1;
+let pointerMoved = false;
+let suppressClickAfterDrag = false;
+
+function fieldChargesInMeters() {
+  return charges.map(charge => ({
+    x: charge.x * METERS_PER_PIXEL,
+    y: charge.y * METERS_PER_PIXEL,
+    qMicroC: charge.q,
+  }));
+}
+
+function updateFieldStatus(prefix = '') {
+  const status = document.getElementById('fieldStatus');
+  const selected = selectedCharge >= 0 && charges[selectedCharge];
+  const selectedText = selected
+    ? `已选中第 ${selectedCharge + 1} 个${selected.q > 0 ? '正' : selected.q < 0 ? '负' : '中性'}电荷，位置 ${Math.round(selected.x)}, ${Math.round(selected.y)} px。`
+    : '当前没有选中的电荷。';
+  status.textContent = `${prefix}${selectedText}当前共 ${charges.length} 个电荷。`;
+}
+
+function addFieldCharge(q, x = fieldCanvas.width / 2, y = fieldCanvas.height / 2) {
+  charges.push({ x, y, q });
+  selectedCharge = charges.length - 1;
+  drawField();
+  updateFieldStatus('已添加电荷。');
+}
 
 function drawField() {
   const w = fieldCanvas.width, h = fieldCanvas.height;
@@ -426,9 +514,9 @@ function drawField() {
   
   if (showLines) {
     // Draw field lines
-    const numLines = 16;
     charges.forEach(charge => {
       if (charge.q > 0) {
+        const numLines = Math.min(32, Math.max(4, Math.round(16 * Math.abs(charge.q) / 5)));
         for (let i = 0; i < numLines; i++) {
           const angle = (i / numLines) * Math.PI * 2;
           traceFieldLine(charge.x + Math.cos(angle) * 30, charge.y + Math.sin(angle) * 30, angle);
@@ -438,8 +526,8 @@ function drawField() {
   }
   
   // Draw charges
-  charges.forEach(charge => {
-    drawChargeOnCanvas(fieldCtx, charge.x, charge.y, charge.q);
+  charges.forEach((charge, index) => {
+    drawChargeOnCanvas(fieldCtx, charge.x, charge.y, charge.q, index === selectedCharge);
   });
 }
 
@@ -453,13 +541,14 @@ function traceFieldLine(startX, startY, startAngle) {
   fieldCtx.lineWidth = 1.5;
   fieldCtx.beginPath();
   fieldCtx.moveTo(x, y);
+  const arrows = [];
   
   for (let i = 0; i < maxSteps; i++) {
-    const Ex = calculateEx(x, y);
-    const Ey = calculateEy(x, y);
-    const E = Math.sqrt(Ex * Ex + Ey * Ey);
+    const vector = calculateField(x, y);
+    const Ex = vector.x, Ey = vector.y;
+    const E = vector.magnitude;
     
-    if (E < 0.01) break;
+    if (E < 1e-9) break;
     
     angle = Math.atan2(Ey, Ex);
     x += Math.cos(angle) * step;
@@ -478,81 +567,117 @@ function traceFieldLine(startX, startY, startAngle) {
     if (hitNegative) break;
     
     fieldCtx.lineTo(x, y);
+    if (i % 16 === 15) arrows.push({
+      x1: x - Math.cos(angle) * step * 2,
+      y1: y - Math.sin(angle) * step * 2,
+      x2: x,
+      y2: y,
+    });
   }
   fieldCtx.stroke();
+  arrows.forEach(arrow => drawFieldArrow(arrow.x1, arrow.y1, arrow.x2, arrow.y2));
 }
 
-function calculateEx(x, y) {
-  let Ex = 0;
-  charges.forEach(charge => {
-    const dx = x - charge.x, dy = y - charge.y;
-    const r2 = dx * dx + dy * dy;
-    const r = Math.sqrt(r2);
-    if (r > 5) {
-      Ex += charge.q * dx / (r2 * r);
-    }
-  });
-  return Ex;
+function drawFieldArrow(x1, y1, x2, y2) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const length = 6;
+  fieldCtx.save();
+  fieldCtx.strokeStyle = '#fff176';
+  fieldCtx.lineWidth = 1.5;
+  fieldCtx.beginPath();
+  fieldCtx.moveTo(x2, y2);
+  fieldCtx.lineTo(x2 - length * Math.cos(angle - 0.55), y2 - length * Math.sin(angle - 0.55));
+  fieldCtx.moveTo(x2, y2);
+  fieldCtx.lineTo(x2 - length * Math.cos(angle + 0.55), y2 - length * Math.sin(angle + 0.55));
+  fieldCtx.stroke();
+  fieldCtx.restore();
 }
 
-function calculateEy(x, y) {
-  let Ey = 0;
-  charges.forEach(charge => {
-    const dx = x - charge.x, dy = y - charge.y;
-    const r2 = dx * dx + dy * dy;
-    const r = Math.sqrt(r2);
-    if (r > 5) {
-      Ey += charge.q * dy / (r2 * r);
-    }
-  });
-  return Ey;
+function calculateField(x, y) {
+  return ElectrostaticModel.electricFieldAt(fieldChargesInMeters(), {
+    x: x * METERS_PER_PIXEL,
+    y: y * METERS_PER_PIXEL,
+  }, 0.02);
 }
 
-function drawChargeOnCanvas(ctx, x, y, q) {
+function drawChargeOnCanvas(ctx, x, y, q, selected = false) {
   const radius = 20;
-  const color = q > 0 ? '#e53935' : '#1e88e5';
+  const color = q > 0 ? '#e53935' : q < 0 ? '#1e88e5' : '#607d8b';
   
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
+  if (selected) {
+    ctx.strokeStyle = '#fff176';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
   
   ctx.fillStyle = 'white';
   ctx.font = 'bold 16px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(q > 0 ? '+' : '-', x, y);
+  ctx.fillText(q > 0 ? '+' : q < 0 ? '−' : '0', x, y);
 }
 
-fieldCanvas.addEventListener('mousedown', e => {
+function canvasPoint(event) {
   const rect = fieldCanvas.getBoundingClientRect();
-  const x = (e.clientX - rect.left) * fieldCanvas.width / rect.width;
-  const y = (e.clientY - rect.top) * fieldCanvas.height / rect.height;
+  return {
+    x: (event.clientX - rect.left) * fieldCanvas.width / rect.width,
+    y: (event.clientY - rect.top) * fieldCanvas.height / rect.height,
+  };
+}
+
+fieldCanvas.addEventListener('pointerdown', event => {
+  if (!event.isPrimary || event.button !== 0) return;
+  const {x, y} = canvasPoint(event);
+  dragCharge = null;
+  pointerMoved = false;
   
-  charges.forEach((charge, i) => {
+  charges.forEach((charge, index) => {
     const dx = x - charge.x, dy = y - charge.y;
     if (Math.sqrt(dx * dx + dy * dy) < 25) {
-      dragCharge = i;
+      dragCharge = index;
+      selectedCharge = index;
     }
   });
+  if (dragCharge !== null) {
+    fieldCanvas.setPointerCapture(event.pointerId);
+    drawField();
+    updateFieldStatus();
+  }
 });
 
-fieldCanvas.addEventListener('mousemove', e => {
+fieldCanvas.addEventListener('pointermove', event => {
   if (dragCharge !== null) {
-    const rect = fieldCanvas.getBoundingClientRect();
-    charges[dragCharge].x = (e.clientX - rect.left) * fieldCanvas.width / rect.width;
-    charges[dragCharge].y = (e.clientY - rect.top) * fieldCanvas.height / rect.height;
+    event.preventDefault();
+    const {x, y} = canvasPoint(event);
+    if (Math.hypot(x - charges[dragCharge].x, y - charges[dragCharge].y) > 1) pointerMoved = true;
+    charges[dragCharge].x = Math.max(20, Math.min(fieldCanvas.width - 20, x));
+    charges[dragCharge].y = Math.max(20, Math.min(fieldCanvas.height - 20, y));
     drawField();
   }
 });
 
-fieldCanvas.addEventListener('mouseup', () => { dragCharge = null; });
+function finishFieldPointer(event) {
+  if (dragCharge === null) return;
+  suppressClickAfterDrag = pointerMoved;
+  dragCharge = null;
+  pointerMoved = false;
+  if (fieldCanvas.hasPointerCapture(event.pointerId)) fieldCanvas.releasePointerCapture(event.pointerId);
+  drawField();
+  updateFieldStatus();
+}
+fieldCanvas.addEventListener('pointerup', finishFieldPointer);
+fieldCanvas.addEventListener('pointercancel', finishFieldPointer);
 
-fieldCanvas.addEventListener('click', e => {
-  if (dragCharge !== null) return;
-  const rect = fieldCanvas.getBoundingClientRect();
-  const x = (e.clientX - rect.left) * fieldCanvas.width / rect.width;
-  const y = (e.clientY - rect.top) * fieldCanvas.height / rect.height;
+fieldCanvas.addEventListener('click', event => {
+  if (suppressClickAfterDrag) {
+    suppressClickAfterDrag = false;
+    return;
+  }
+  const {x, y} = canvasPoint(event);
   
   // Check if clicked on existing charge
   let clicked = false;
@@ -561,39 +686,78 @@ fieldCanvas.addEventListener('click', e => {
     if (Math.sqrt(dx * dx + dy * dy) < 25) clicked = true;
   });
   
-  if (!clicked) {
-    charges.push({ x, y, q: 5 });
+  if (!clicked) addFieldCharge(5, x, y);
+  else if (selectedCharge >= 0) updateFieldStatus();
+});
+
+fieldCanvas.addEventListener('keydown', event => {
+  if (event.key === '+' || event.key === '=') {
+    event.preventDefault();
+    addFieldCharge(5);
+    return;
+  }
+  if (event.key === '-' || event.key === '_') {
+    event.preventDefault();
+    addFieldCharge(-5);
+    return;
+  }
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key) && selectedCharge >= 0) {
+    event.preventDefault();
+    const step = event.shiftKey ? 20 : 5;
+    const charge = charges[selectedCharge];
+    if (event.key === 'ArrowUp') charge.y = Math.max(20, charge.y - step);
+    if (event.key === 'ArrowDown') charge.y = Math.min(fieldCanvas.height - 20, charge.y + step);
+    if (event.key === 'ArrowLeft') charge.x = Math.max(20, charge.x - step);
+    if (event.key === 'ArrowRight') charge.x = Math.min(fieldCanvas.width - 20, charge.x + step);
     drawField();
+    updateFieldStatus('已移动电荷。');
+    return;
+  }
+  if ((event.key === 'Delete' || event.key === 'Backspace') && selectedCharge >= 0) {
+    event.preventDefault();
+    charges.splice(selectedCharge, 1);
+    selectedCharge = charges.length ? Math.min(selectedCharge, charges.length - 1) : -1;
+    drawField();
+    updateFieldStatus('已删除电荷。');
   }
 });
 
-document.getElementById('addPositive').addEventListener('click', () => {
-  charges.push({ x: 350 + Math.random() * 100 - 50, y: 250 + Math.random() * 100 - 50, q: 5 });
-  drawField();
-});
+document.getElementById('addPositive').addEventListener('click', () => addFieldCharge(5));
 
-document.getElementById('addNegative').addEventListener('click', () => {
-  charges.push({ x: 350 + Math.random() * 100 - 50, y: 250 + Math.random() * 100 - 50, q: -5 });
-  drawField();
-});
+document.getElementById('addNegative').addEventListener('click', () => addFieldCharge(-5));
 
 document.getElementById('clearCharges').addEventListener('click', () => {
   charges = [];
+  selectedCharge = -1;
   drawField();
+  updateFieldStatus('已清空画布。');
 });
 
 document.getElementById('toggleLines').addEventListener('click', e => {
   showLines = !showLines;
   e.target.classList.toggle('active');
+  e.target.setAttribute('aria-pressed', String(showLines));
   drawField();
 });
 
 drawField();
+updateFieldStatus();
 
 // Potential Distribution
 const potentialCanvas = document.getElementById('potentialCanvas');
 const potentialCtx = potentialCanvas.getContext('2d');
 let potentialConfig = 'dipole';
+const POTENTIAL_COLOR_LIMIT_VOLTS = 1_000_000;
+const POTENTIAL_CORE_RADIUS_METERS = 0.02;
+const EQUIPOTENTIAL_LEVELS_VOLTS = [-800000, -400000, -200000, 0, 200000, 400000, 800000];
+
+function potentialSourcesInMeters(chargeConfig) {
+  return chargeConfig.map(charge => ({
+    x: charge.x * METERS_PER_PIXEL,
+    y: charge.y * METERS_PER_PIXEL,
+    qMicroC: charge.q,
+  }));
+}
 
 function drawPotential() {
   const w = potentialCanvas.width, h = potentialCanvas.height;
@@ -610,42 +774,36 @@ function drawPotential() {
       { x: w / 2 + 100, y: h / 2, q: -10 }
     ];
   }
+  potentialCanvas.dataset.configuration = potentialConfig;
+  const sources = potentialSourcesInMeters(chargeConfig);
   
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      let V = 0;
-      chargeConfig.forEach(charge => {
-        const dx = x - charge.x, dy = y - charge.y;
-        const r = Math.sqrt(dx * dx + dy * dy);
-        if (r > 10) {
-          V += charge.q / r;
-        }
-      });
-      
+      const potential = ElectrostaticModel.electricPotentialAt(sources, {
+        x: x * METERS_PER_PIXEL,
+        y: y * METERS_PER_PIXEL,
+      }, POTENTIAL_CORE_RADIUS_METERS);
+      const normalized = Math.max(-1, Math.min(1, potential / POTENTIAL_COLOR_LIMIT_VOLTS));
       const idx = (y * w + x) * 4;
-      const normalized = Math.tanh(V * 0.5);
-      
       if (normalized > 0) {
+        const shade = Math.round(255 * (1 - normalized));
         imageData.data[idx] = 255;
-        imageData.data[idx + 1] = Math.floor(255 * (1 - normalized));
-        imageData.data[idx + 2] = 0;
+        imageData.data[idx + 1] = shade;
+        imageData.data[idx + 2] = shade;
       } else {
-        imageData.data[idx] = 0;
-        imageData.data[idx + 1] = Math.floor(255 * (1 + normalized));
+        const shade = Math.round(255 * (1 + normalized));
+        imageData.data[idx] = shade;
+        imageData.data[idx + 1] = shade;
         imageData.data[idx + 2] = 255;
       }
-      imageData.data[idx + 3] = 200;
+      imageData.data[idx + 3] = 255;
     }
   }
   
   potentialCtx.putImageData(imageData, 0, 0);
   
-  // Draw equipotential lines
-  potentialCtx.strokeStyle = 'rgba(255,255,255,0.3)';
-  potentialCtx.lineWidth = 1;
-  for (let level = -2; level <= 2; level += 0.5) {
-    drawEquipotential(chargeConfig, level);
-  }
+  // Draw equipotential contours in volts over the total potential map.
+  EQUIPOTENTIAL_LEVELS_VOLTS.forEach(level => drawEquipotential(sources, level));
   
   // Draw charges
   chargeConfig.forEach(charge => {
@@ -653,28 +811,44 @@ function drawPotential() {
   });
 }
 
-function drawEquipotential(chargeConfig, level) {
+function drawEquipotential(sources, level) {
   const w = potentialCanvas.width, h = potentialCanvas.height;
-  const step = 10;
-  
+  const step = 8;
+  const xs = [], ys = [];
+  for (let x = 0; x < w; x += step) xs.push(x);
+  if (xs[xs.length - 1] !== w - 1) xs.push(w - 1);
+  for (let y = 0; y < h; y += step) ys.push(y);
+  if (ys[ys.length - 1] !== h - 1) ys.push(h - 1);
+  const values = ys.map(y => xs.map(x => ElectrostaticModel.electricPotentialAt(sources, {
+    x: x * METERS_PER_PIXEL,
+    y: y * METERS_PER_PIXEL,
+  }, POTENTIAL_CORE_RADIUS_METERS)));
+
   potentialCtx.beginPath();
-  for (let y = 0; y < h; y += step) {
-    for (let x = 0; x < w; x += step) {
-      let V = 0;
-      chargeConfig.forEach(charge => {
-        const dx = x - charge.x, dy = y - charge.y;
-        const r = Math.sqrt(dx * dx + dy * dy);
-        if (r > 10) {
-          V += charge.q / r;
-        }
-      });
-      
-      if (Math.abs(V - level) < 0.3) {
-        potentialCtx.rect(x, y, 2, 2);
+  for (let row = 0; row < ys.length - 1; row++) {
+    for (let column = 0; column < xs.length - 1; column++) {
+      const points = [
+        {x: xs[column], y: ys[row], value: values[row][column]},
+        {x: xs[column + 1], y: ys[row], value: values[row][column + 1]},
+        {x: xs[column + 1], y: ys[row + 1], value: values[row + 1][column + 1]},
+        {x: xs[column], y: ys[row + 1], value: values[row + 1][column]},
+      ];
+      const crossings = [];
+      for (let edge = 0; edge < 4; edge++) {
+        const a = points[edge], b = points[(edge + 1) % 4];
+        if ((a.value < level) === (b.value < level) || a.value === b.value) continue;
+        const ratio = (level - a.value) / (b.value - a.value);
+        crossings.push({x: a.x + (b.x - a.x) * ratio, y: a.y + (b.y - a.y) * ratio});
+      }
+      for (let index = 0; index + 1 < crossings.length; index += 2) {
+        potentialCtx.moveTo(crossings[index].x, crossings[index].y);
+        potentialCtx.lineTo(crossings[index + 1].x, crossings[index + 1].y);
       }
     }
   }
-  potentialCtx.fill();
+  potentialCtx.strokeStyle = level === 0 ? 'rgba(255,255,255,0.9)' : 'rgba(5,15,26,0.55)';
+  potentialCtx.lineWidth = level === 0 ? 2 : 1;
+  potentialCtx.stroke();
 }
 
 document.getElementById('singlePositive').addEventListener('click', () => {
@@ -720,23 +894,35 @@ const quizQuestions = [
 
 let currentQuiz = 0;
 let score = 0;
+let answeredCurrent = false;
+let quizAdvanceTimer = null;
 
 function renderQuiz() {
+  if (quizAdvanceTimer !== null) {
+    clearTimeout(quizAdvanceTimer);
+    quizAdvanceTimer = null;
+  }
+  answeredCurrent = false;
   const container = document.getElementById('quizContainer');
   const q = quizQuestions[currentQuiz];
+  const result = document.getElementById('quizResult');
+  result.style.display = 'none';
   
   container.innerHTML = `
     <h3 style="margin-bottom:16px">第 ${currentQuiz + 1} / ${quizQuestions.length} 题</h3>
     <p style="margin-bottom:16px;font-size:1.1em">${q.q}</p>
     ${q.options.map((opt, i) => `
-      <button class="quiz-option" data-index="${i}">${opt}</button>
+      <button class="quiz-option" type="button" data-index="${i}">${opt}</button>
     `).join('')}
   `;
   
   container.querySelectorAll('.quiz-option').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.index);
-      const result = document.getElementById('quizResult');
+      if (answeredCurrent) return;
+      answeredCurrent = true;
+      const idx = parseInt(btn.dataset.index, 10);
+      const options = Array.from(container.querySelectorAll('.quiz-option'));
+      options.forEach(option => { option.disabled = true; });
       result.style.display = 'block';
       
       if (idx === q.answer) {
@@ -745,28 +931,32 @@ function renderQuiz() {
         result.style.background = 'rgba(76, 175, 80, 0.2)';
         result.style.color = '#4caf50';
         score++;
-        bumpTotalCorrect();
+        if (!masteredQuestionIds.has(currentQuiz)) {
+          masteredQuestionIds.add(currentQuiz);
+          bumpTotalCorrect();
+        }
       } else {
         btn.classList.add('wrong');
-        container.querySelectorAll('.quiz-option')[q.answer].classList.add('correct');
+        options[q.answer].classList.add('correct');
         result.textContent = '✗ 错误，正确答案已标出';
         result.style.background = 'rgba(244, 67, 54, 0.2)';
         result.style.color = '#f44336';
       }
       
-      setTimeout(() => {
+      quizAdvanceTimer = setTimeout(() => {
+        quizAdvanceTimer = null;
         currentQuiz++;
         if (currentQuiz < quizQuestions.length) {
           renderQuiz();
-          result.style.display = 'none';
         } else {
           container.innerHTML = `
             <h3 style="text-align:center;margin-bottom:16px">练习完成！</h3>
-            <p style="text-align:center;font-size:1.5em;color:var(--primary)">
+            <p style="text-align:center;font-size:1.5em;color:var(--primary)" id="quizScore">
               得分：${score} / ${quizQuestions.length}
             </p>
-            <button class="btn" style="margin:20px auto;display:block" onclick="resetQuiz()">重新练习</button>
+            <button class="btn" id="resetQuiz" type="button" style="margin:20px auto;display:block">重新练习</button>
           `;
+          container.querySelector('#resetQuiz').addEventListener('click', resetQuiz);
         }
       }, 1500);
     });
@@ -774,10 +964,13 @@ function renderQuiz() {
 }
 
 function resetQuiz() {
+  if (quizAdvanceTimer !== null) {
+    clearTimeout(quizAdvanceTimer);
+    quizAdvanceTimer = null;
+  }
   currentQuiz = 0;
   score = 0;
   renderQuiz();
-  document.getElementById('quizResult').style.display = 'none';
 }
 
 renderQuiz();

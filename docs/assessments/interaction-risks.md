@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：78；含内联 while 的页面：45。同一页面可能出现在两类中。
+含候选 div 控件的页面：77；含内联 while 的页面：45。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -66,7 +66,6 @@
 - [math/uni/stochastic-process.html](../../math/uni/stochastic-process.html)：191 行（tab）、192 行（tab）、193 行（tab）、194 行（tab）
 - [math/uni/topology.html](../../math/uni/topology.html)：90 行（tab）、91 行（tab）、92 行（tab）、93 行（tab）
 - [math/uni/vector-calculus.html](../../math/uni/vector-calculus.html)：97 行（tab）、98 行（tab）、99 行（tab）
-- [physics/high/electrostatic-field.html](../../physics/high/electrostatic-field.html)：178 行（tab）、179 行（tab）、180 行（tab）、181 行（tab）
 - [physics/high/interactions.html](../../physics/high/interactions.html)：73 行（tab）、74 行（tab）、75 行（tab）、76 行（tab）、77 行（tab）
 - [physics/high/magnetic-field.html](../../physics/high/magnetic-field.html)：202 行（tab）、203 行（tab）、204 行（tab）、205 行（tab）、206 行（tab）
 - [physics/high/modern-physics.html](../../physics/high/modern-physics.html)：72 行（tab）、73 行（tab）、74 行（tab）、75 行（tab）、76 行（tab）

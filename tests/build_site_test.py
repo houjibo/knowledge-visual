@@ -19,6 +19,7 @@ class ReleaseArtifactTest(unittest.TestCase):
             self.assertGreater(builder.build(output), 300)
             for name in ['index.html', 'favicon.ico', 'assets/topic-catalog.js',
                          'physics/high/assets/gravitation-model.js',
+                         'physics/high/assets/electrostatic-model.js',
                          'math/topics/addition/index.html', 'physics/middle/motion.html',
                          'chemistry/high/mole-concept.html', 'science/sink-float.html']:
                 self.assertTrue((output / name).is_file(), name)

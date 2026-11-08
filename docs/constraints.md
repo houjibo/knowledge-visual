@@ -15,7 +15,7 @@
 
 ## 验证
 
-在仓库根目录运行 `python3 scripts/check_site.py`：检查 HTML 中静态声明的相对链接/资源、AGENTS.md 中本地 Markdown 链接，数学学段进度清单与导航主题的一致性，数学跨学段同名主题清单，以及物理和化学学段进度分母与主题卡片数量的一致性。另由 `python3 scripts/check_agents_index.py` 检查根 AGENTS.md 只包含标题和仓库内 Markdown 索引，并包含架构、约束、差距、三个工作流和 OpenSpec 入口；相应回归为 `python3 tests/agents_index_test.py`。以上静态检查不执行 JavaScript、不检查外链、片段或 CSS 内引用，也不验证教学准确性和视觉效果。用 `node tests/progress.test.js` 运行进度回归场景；它在模拟 DOM 和存储中执行实际入口脚本，不代替浏览器测试。`python3 scripts/build_topic_catalog.py --check assets/topic-catalog.js` 检查首页查找目录与页面/导航是否同步；`python3 scripts/check_homepage_totals.py` 检查首页各学科进度分母与数量徽标是否匹配主题目录；可用 `openspec validate --all --strict` 检查 OpenSpec 工件。
+在仓库根目录运行 `python3 scripts/check_site.py`：检查 HTML 中静态声明的相对链接/资源、AGENTS.md 中本地 Markdown 链接，数学学段进度清单与导航主题的一致性，数学跨学段同名主题清单，以及物理和化学学段进度分母与主题卡片数量的一致性。另由 `python3 scripts/check_agents_index.py` 检查根 AGENTS.md 只包含标题和仓库内 Markdown 索引，并包含架构、约束、差距、三个工作流和 OpenSpec 入口；相应回归为 `python3 tests/agents_index_test.py`。以上静态检查不执行 JavaScript、不检查外链、片段或 CSS 内引用，也不验证教学准确性和视觉效果。用 `node tests/progress.test.js` 运行进度回归场景；`node tests/electrostatic-model.test.js` 覆盖独立静电场物理模型。两者均不代替浏览器测试。`python3 scripts/build_topic_catalog.py --check assets/topic-catalog.js` 检查首页查找目录与页面/导航是否同步；`python3 scripts/check_homepage_totals.py` 检查首页各学科进度分母与数量徽标是否匹配主题目录；可用 `openspec validate --all --strict` 检查 OpenSpec 工件。
 
 真实浏览器试点需要 Node.js 20.19 或更高版本，使用 `npm ci`、`npx playwright install chromium` 安装开发依赖与浏览器，然后运行 `npm run test:browser`；它启动独立本地服务器并覆盖四条代表路径的桌面与窄屏场景。可用 `KV_CHROMIUM_PATH` 指定兼容的本机 Chromium 可执行文件；运行 `npm run test:browser:smoke` 对清单中全部 HTML 做桌面浏览器加载冒烟，范围及局限见 [加载检查记录](assessments/browser-load-2026-11-07.md)。安装后运行 `npm run check` 可依次执行静态、OpenSpec、代表路径及全站加载检查；`npm run check:static` 只运行不需要浏览器的检查。浏览器安装只用于开发验证，不是静态站点运行要求。
 
