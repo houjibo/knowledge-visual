@@ -31,6 +31,7 @@
   - 综合练习逐题得分、重试及完成；未覆盖平衡和相图模拟。 [equilibrium-quiz.spec.js](../../tests/browser/equilibrium-quiz.spec.js)
 - [复数 · 高中数学互动可视化](../../math/high/complex-numbers.html)
   - 桌面与移动视口检查旋转缩放滑块交互、中间轨迹坐标、跨越 ±π 的旋转方向、零复数辐角说明及共轭标签坐标；复数题库、整页无障碍与真实设备尚未全面验收。 [complex-rotation-visual-accuracy.spec.js](../../tests/browser/complex-rotation-visual-accuracy.spec.js)
+  - 桌面与移动视口验证十题答案、错答反馈、Enter／空格、掌握状态回看、题组边界及保存失败重试；真实设备、屏幕阅读器和整页无障碍尚未全面验收。 [complex-number-practice-reliability.spec.js](../../tests/browser/complex-number-practice-reliability.spec.js)
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
 - [圆锥曲线 · 椭圆/双曲线/抛物线互动可视化](../../math/high/conic-sections.html)
   - 桌面与移动视口验证滑块名称、连续键盘、模拟鼠标拖动、焦点和公式更新；真实触屏拖动尚未实机验收。 [conic-continuous-parameter-control.spec.js](../../tests/browser/conic-continuous-parameter-control.spec.js)

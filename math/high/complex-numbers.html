@@ -156,11 +156,17 @@
     background: rgba(255,255,255,0.06); 
     border-radius: 10px; 
     cursor: pointer; 
+    font-family: inherit;
     font-size: 14px; 
+    color: inherit;
+    text-align: left;
+    width: 100%;
     transition: all .2s; 
     border: 2px solid transparent; 
   }
   .quiz-opt:hover { background: rgba(255,255,255,0.12); }
+  .quiz-opt:focus-visible { outline: 3px solid #ffdb70; outline-offset: 2px; }
+  .quiz-opt:disabled { cursor: default; }
   .quiz-opt.correct { background: rgba(52,211,153,0.3); border-color: #34d399; }
   .quiz-opt.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
   .quiz-feedback { margin-top: 12px; font-size: 14px; color: var(--primary); min-height: 22px; line-height: 1.6; }
@@ -224,8 +230,8 @@
         </div>
         <div class="quiz">
           <div class="quiz-q" id="quiz-q-plane"></div>
-          <div class="quiz-opts" id="quiz-opts-plane"></div>
-          <div class="quiz-feedback" id="quiz-fb-plane"></div>
+          <div class="quiz-opts" id="quiz-opts-plane" role="group" aria-labelledby="quiz-q-plane"></div>
+          <div class="quiz-feedback" id="quiz-fb-plane" role="status" aria-live="polite" aria-atomic="true"></div>
           <div class="quiz-nav">
             <button id="quiz-prev-plane" disabled>上一题</button>
             <button id="quiz-next-plane">下一题</button>
@@ -251,8 +257,8 @@
         </div>
         <div class="quiz">
           <div class="quiz-q" id="quiz-q-ops"></div>
-          <div class="quiz-opts" id="quiz-opts-ops"></div>
-          <div class="quiz-feedback" id="quiz-fb-ops"></div>
+          <div class="quiz-opts" id="quiz-opts-ops" role="group" aria-labelledby="quiz-q-ops"></div>
+          <div class="quiz-feedback" id="quiz-fb-ops" role="status" aria-live="polite" aria-atomic="true"></div>
           <div class="quiz-nav">
             <button id="quiz-prev-ops" disabled>上一题</button>
             <button id="quiz-next-ops">下一题</button>
@@ -277,8 +283,8 @@
         </div>
         <div class="quiz">
           <div class="quiz-q" id="quiz-q-rotate"></div>
-          <div class="quiz-opts" id="quiz-opts-rotate"></div>
-          <div class="quiz-feedback" id="quiz-fb-rotate"></div>
+          <div class="quiz-opts" id="quiz-opts-rotate" role="group" aria-labelledby="quiz-q-rotate"></div>
+          <div class="quiz-feedback" id="quiz-fb-rotate" role="status" aria-live="polite" aria-atomic="true"></div>
           <div class="quiz-nav">
             <button id="quiz-prev-rotate" disabled>上一题</button>
             <button id="quiz-next-rotate">下一题</button>
@@ -642,10 +648,18 @@ let quizIndex = { plane: 0, ops: 0, rotate: 0 };
 // 完成度追踪：记录每个 mode 已答对的题号
 const answeredCorrect = { plane: new Set(), ops: new Set(), rotate: new Set() };
 const totalQuestions = Object.values(quizzes).reduce((s, arr) => s + arr.length, 0); // 10
+let quizCompleted = false;
+let completionSaved = false;
+let completionFeedback = null;
 
 function checkAllDone() {
   const done = answeredCorrect.plane.size + answeredCorrect.ops.size + answeredCorrect.rotate.size;
   return { done, total: totalQuestions, allDone: done === totalQuestions };
+}
+
+function completionMessage() {
+  if (completionSaved) return ' 🎉 全部答对，已记录完成 ✓';
+  return ' 🎉 全部答对，但进度暂未保存；请通过页面提示重试。';
 }
 
 function loadQuiz(mode) {
@@ -655,14 +669,28 @@ function loadQuiz(mode) {
   const optsDiv = document.getElementById(`quiz-opts-${mode}`);
   optsDiv.innerHTML = '';
   quiz.opts.forEach((opt, i) => {
-    const div = document.createElement('div');
-    div.className = 'quiz-opt';
-    div.textContent = opt;
-    div.addEventListener('click', () => checkAnswer(mode, i));
-    optsDiv.appendChild(div);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'quiz-opt';
+    button.textContent = opt;
+    button.setAttribute('aria-pressed', 'false');
+    button.addEventListener('click', () => checkAnswer(mode, i));
+    optsDiv.appendChild(button);
   });
-  document.getElementById(`quiz-fb-${mode}`).textContent = '';
+  const mastered = answeredCorrect[mode].has(idx);
+  if (mastered) {
+    const correct = optsDiv.children[quiz.ans];
+    correct.classList.add('correct');
+    correct.setAttribute('aria-pressed', 'true');
+    optsDiv.querySelectorAll('.quiz-opt').forEach(button => { button.disabled = true; });
+    const progress = checkAllDone();
+    document.getElementById(`quiz-fb-${mode}`).textContent =
+      `✅ 已掌握（已掌握 ${progress.done}/${progress.total}）${progress.allDone ? completionMessage() : ''}`;
+  } else {
+    document.getElementById(`quiz-fb-${mode}`).textContent = '';
+  }
   document.getElementById(`quiz-prev-${mode}`).disabled = idx === 0;
+  document.getElementById(`quiz-next-${mode}`).disabled = idx === quizzes[mode].length - 1;
 }
 
 function checkAnswer(mode, selected) {
@@ -670,22 +698,34 @@ function checkAnswer(mode, selected) {
   const opts = document.querySelectorAll(`#quiz-opts-${mode} .quiz-opt`);
   opts.forEach((opt, i) => {
     opt.classList.remove('correct', 'wrong');
+    opt.setAttribute('aria-pressed', i === selected ? 'true' : 'false');
     if (i === quiz.ans) opt.classList.add('correct');
     else if (i === selected) opt.classList.add('wrong');
   });
   const fb = document.getElementById(`quiz-fb-${mode}`);
+  const progress = checkAllDone();
   if (selected === quiz.ans) {
     answeredCorrect[mode].add(quizIndex[mode]);
-    const prog = checkAllDone();
-    fb.textContent = `✅ 正确！（已掌握 ${prog.done}/${prog.total}）`;
-    if (prog.allDone && typeof PageProgress !== 'undefined') {
-      PageProgress.markDone('complex-numbers');
-      fb.textContent += ' 🎉 全部答对，已记录完成 ✓';
+    opts.forEach(opt => { opt.disabled = true; });
+    const updatedProgress = checkAllDone();
+    fb.textContent = `✅ 正确！（已掌握 ${updatedProgress.done}/${updatedProgress.total}）`;
+    if (updatedProgress.allDone) {
+      quizCompleted = true;
+      completionFeedback = fb;
+      completionSaved = typeof PageProgress !== 'undefined' && PageProgress.markDone('complex-numbers') === true;
+      fb.textContent += completionMessage();
     }
   } else {
-    fb.textContent = `❌ 正确答案是：${quiz.opts[quiz.ans]}`;
+    fb.textContent = `❌ 正确答案是：${quiz.opts[quiz.ans]}（已掌握 ${progress.done}/${progress.total}）`;
   }
 }
+
+document.addEventListener('math-progress-saved', () => {
+  if (!quizCompleted || !completionFeedback) return;
+  completionSaved = true;
+  const progress = checkAllDone();
+  completionFeedback.textContent = `✅ 正确！（已掌握 ${progress.done}/${progress.total}）${completionMessage()}`;
+});
 
 ['plane', 'ops', 'rotate'].forEach(mode => {
   document.getElementById(`quiz-next-${mode}`).addEventListener('click', () => {
