@@ -135,6 +135,6 @@
 - [math/uni/number-theory.html](../../math/uni/number-theory.html)：213 行、220 行、274 行、506 行、521 行
 - [math/uni/statistics.html](../../math/uni/statistics.html)：379 行、380 行
 - [math/uni/stochastic-process.html](../../math/uni/stochastic-process.html)：533 行、652 行、653 行
-- [physics/high/constant-current.html](../../physics/high/constant-current.html)：545 行
+- [physics/high/constant-current.html](../../physics/high/constant-current.html)：553 行
 - [physics/uni/phase-transitions.html](../../physics/uni/phase-transitions.html)：295 行、302 行
 - [physics/uni/thermodynamics.html](../../physics/uni/thermodynamics.html)：323 行

@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：138；尚未登记：178。
+主题总数：316；已登记部分交互证据：139；尚未登记：177。
 
 ## 已登记部分交互证据
 
@@ -266,6 +266,8 @@
   - 初中、高中、大学目录的跨标签徽章、存储异常及同名主题隔离；不代表全部主题的完成条件已核验。 [math-stage-directory-progress.spec.js](../../tests/browser/math-stage-directory-progress.spec.js)、[math-progress.spec.js](../../tests/browser/math-progress.spec.js)
 - [交变电流 · 高中物理互动可视化](../../physics/high/alternating-current.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
+- [恒定电流 - 高中物理互动可视化](../../physics/high/constant-current.html)
+  - 桌面和移动视口验证四个画布模块切换、所有画布绘制像素、滑块更新与视口变窄；四道不同测验题去重、完成刷新恢复及电动机题损耗前提；真实设备和整页无障碍未全面验收。 [constant-current-visual-learning-reliability.spec.js](../../tests/browser/constant-current-visual-learning-reliability.spec.js)
 - [光的折射与全反射 · 高中物理互动可视化](../../physics/high/optics.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [热学 · 气体与热力学定律 · 高中物理互动可视化](../../physics/high/thermal.html)
@@ -529,7 +531,6 @@
 - [随机过程入门 · 马尔可夫链 / 泊松过程 / 布朗运动](../../math/uni/stochastic-process.html)
 - [拓扑学入门 · 互动可视化](../../math/uni/topology.html)
 - [矢量分析 · 梯度 散度 旋度 · 互动可视化](../../math/uni/vector-calculus.html)
-- [恒定电流 - 高中物理互动可视化](../../physics/high/constant-current.html)
 - [曲线运动 - 高中物理互动可视化](../../physics/high/curve-motion.html)
 - [静电场 - 高中物理互动可视化](../../physics/high/electrostatic-field.html)
 - [电磁感应 - 高中物理互动可视化](../../physics/high/em-induction.html)

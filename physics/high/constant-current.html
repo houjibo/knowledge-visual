@@ -451,7 +451,7 @@ input[type="range"] {
   </div>
 
   <div class="card" id="quizCard4">
-    <p style="font-weight:bold;margin-bottom:10px;">4. 一台电动机线圈电阻为 2Ω，接在 220V 电源上，正常工作时电流为 5A。电动机输出的机械功率为多少？</p>
+    <p style="font-weight:bold;margin-bottom:10px;">4. 一台电动机线圈电阻为 2Ω，接在 220V 电源上，正常工作时电流为 5A。只考虑线圈电阻产生的焦耳热，忽略摩擦、铁芯等其他损耗，机械输出功率为多少？</p>
     <button class="quiz-option" onclick="checkQuiz(4,'A')">A. 1100W</button>
     <button class="quiz-option" onclick="checkQuiz(4,'B')">B. 1050W</button>
     <button class="quiz-option" onclick="checkQuiz(4,'C')">C. 50W</button>
@@ -463,9 +463,17 @@ input[type="range"] {
 <script src="assets/common.js"></script>
 <script>
 // ========== Tab switching ==========
+function drawActiveTab(idx) {
+  if (idx === 0) drawOhm();
+  else if (idx === 1) drawCircuit();
+  else if (idx === 2) drawEMF();
+  else if (idx === 3) drawPower();
+}
+
 function switchTab(idx) {
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
   document.querySelectorAll('.section').forEach((s,i) => s.classList.toggle('active', i===idx));
+  drawActiveTab(idx);
 }
 
 // ========== Section 0: Ohm's Law ==========
@@ -1169,10 +1177,10 @@ function drawBulb(I, R, P) {
 });
 
 // ========== Progress tracking (r100) ==========
-let totalCorrect = 0;
-function bumpTotalCorrect() {
-  totalCorrect++;
-  if (totalCorrect >= 4 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('constant-current')) {
+const correctlyAnsweredQuestions = new Set();
+function bumpTotalCorrect(questionNumber) {
+  correctlyAnsweredQuestions.add(questionNumber);
+  if (correctlyAnsweredQuestions.size >= 4 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('constant-current')) {
     PageProgress.markDone('constant-current');
     if (typeof showToast === 'function') showToast('🎉 「恒定电流」知识地图已点亮！');
   }
@@ -1183,7 +1191,7 @@ const quizAnswers = {
   1: { answer: 'C', explain: 'R = U/I = 6/0.3 = 20Ω。电压增大到18V时，I = 18/20 = 0.9A。电阻不变，电压变为3倍，电流也变为3倍。' },
   2: { answer: 'C', explain: '并联总电阻：1/R = 1/6 + 1/3 = 1/2，R = 2Ω。I = U/R = 6/2 = 3A。也可以分别求电流：I₁=1A, I₂=2A, I=3A。' },
   3: { answer: 'A', explain: 'I = E/(R+r) = 12/(10+2) = 1A。路端电压 U = IR = 1×10 = 10V。也可以 U = E - Ir = 12 - 1×2 = 10V。' },
-  4: { answer: 'B', explain: '这是非纯电阻电路！总电功率 P = UI = 220×5 = 1100W。热功率 P热 = I²R = 25×2 = 50W。机械功率 = 1100 - 50 = 1050W。' }
+  4: { answer: 'B', explain: '按题目给出的理想化条件，忽略摩擦、铁芯等其他损耗。总电功率 P = UI = 220×5 = 1100W。线圈热功率 P热 = I²R = 25×2 = 50W。机械输出功率 = 1100 - 50 = 1050W。' }
 };
 
 function checkQuiz(num, choice) {
@@ -1202,7 +1210,7 @@ function checkQuiz(num, choice) {
     fb.style.background = 'rgba(76,175,80,0.15)';
     fb.style.color = '#81c784';
     fb.innerHTML = '✅ <b>正确！</b>' + quizAnswers[num].explain;
-    bumpTotalCorrect();
+    bumpTotalCorrect(num);
   } else {
     fb.style.background = 'rgba(244,67,54,0.15)';
     fb.style.color = '#ef9a9a';
@@ -1212,10 +1220,9 @@ function checkQuiz(num, choice) {
 
 // ========== Init ==========
 function initAll() {
-  drawOhm();
-  drawCircuit();
-  drawEMF();
-  drawPower();
+  const activeSection = Array.from(document.querySelectorAll('.section'))
+    .findIndex(section => section.classList.contains('active'));
+  drawActiveTab(activeSection < 0 ? 0 : activeSection);
 }
 
 window.addEventListener('resize', initAll);
