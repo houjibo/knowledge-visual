@@ -3,7 +3,7 @@ const url = '/math/topics/ordinal-numbers/index.html';
 
 for (const seed of [0, 0.5, 0.999999]) {
   test(`重复随机值 ${seed} 下各模式可出题并准确计数`, async ({ page }) => {
-    await page.clock.install(); await page.clock.pauseAt(Date.now());
+    await page.clock.install({time: new Date('2026-01-01T00:00:00Z')}); await page.clock.pauseAt(new Date('2026-01-01T00:00:00Z'));
     await page.addInitScript(value => { Math.random = () => value; }, seed);
     await page.goto(url, { timeout: 10000 });
     const fruits = await page.evaluate(() => learnData);

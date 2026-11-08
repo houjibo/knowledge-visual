@@ -3,8 +3,7 @@ const url = '/math/topics/comparison-and-ordering/index.html';
 
 for (const seed of [0, 0.4, 0.999999]) {
   test(`重复随机值 ${seed} 初始化并正确生成各类挑战`, async ({ page }) => {
-    await page.clock.install();
-    await page.clock.pauseAt(Date.now());
+    await page.clock.install({time: new Date('2026-01-01T00:00:00Z')}); await page.clock.pauseAt(new Date('2026-01-01T00:00:00Z'));
     await page.addInitScript(value => { Math.random = () => value; }, seed);
     await page.goto(url, { timeout: 10000 });
     await page.locator('[data-mode="numberline"]').click();
@@ -68,7 +67,7 @@ for (const seed of [0, 0.4, 0.999999]) {
 }
 
 test('切换排序方向及挑战到期不会执行过期回调', async ({ page }) => {
-  await page.clock.install(); await page.clock.pauseAt(Date.now());
+  await page.clock.install({time: new Date('2026-01-01T00:00:00Z')}); await page.clock.pauseAt(new Date('2026-01-01T00:00:00Z'));
   await page.addInitScript(() => { Math.random = () => 0; });
   await page.goto(url);
   await page.locator('[data-mode="sort"]').click();

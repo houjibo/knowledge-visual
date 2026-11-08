@@ -31,8 +31,7 @@ for (const seed of [0, 0.5, 0.999999]) {
 }
 
 test('限时练习记录对错，结束时取消旧题回调，重开显示 60 秒', async ({ page }) => {
-  await page.clock.install();
-  await page.clock.pauseAt(Date.now());
+  await page.clock.install({time: new Date('2026-01-01T00:00:00Z')}); await page.clock.pauseAt(new Date('2026-01-01T00:00:00Z'));
   await page.addInitScript(() => { Math.random = () => 0; });
   await page.goto(url);
   await page.locator('[data-mode="speed"]').click();

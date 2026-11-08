@@ -44,7 +44,7 @@ test('搅拌有键盘入口，糖盐消失判断不受沙子干扰',async({page}
 });
 
 test('气泡动画有限，说明化学反应与物理释放',async({page})=>{
-  await page.clock.install();await page.clock.pauseAt(Date.now());
+  await page.clock.install({time: new Date('2026-01-01T00:00:00Z')}); await page.clock.pauseAt(new Date('2026-01-01T00:00:00Z'));
   await page.goto(url);
   await page.getByRole('button',{name:'💥 气泡反应'}).click();
   await page.getByRole('button',{name:'🧂 加小苏打'}).click();
@@ -59,7 +59,7 @@ test('气泡动画有限，说明化学反应与物理释放',async({page})=>{
 });
 
 test('不同题目计分且存储失败可重试',async({page})=>{
-  await page.clock.install();await page.clock.pauseAt(Date.now());
+  await page.clock.install({time: new Date('2026-01-01T00:00:00Z')}); await page.clock.pauseAt(new Date('2026-01-01T00:00:00Z'));
   await page.addInitScript(()=>{
     const old=Storage.prototype.setItem;
     Storage.prototype.setItem=function(k,v){if(k==='kv-science-progress')throw new Error('blocked');return old.call(this,k,v);};

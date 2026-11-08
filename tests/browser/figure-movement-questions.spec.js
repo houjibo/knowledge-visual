@@ -45,7 +45,7 @@ test('键盘移动到目标后离开，提示随位置更新', async ({ page }) 
 });
 
 test('重开判断和挑战时不会触发旧题回调', async ({ page }) => {
-  await page.clock.install(); await page.clock.pauseAt(Date.now());
+  await page.clock.install({time: new Date('2026-01-01T00:00:00Z')}); await page.clock.pauseAt(new Date('2026-01-01T00:00:00Z'));
   await page.addInitScript(() => { Math.random = () => 0; });
   await page.goto(url);
   await page.locator('[data-mode="judge"]').click();

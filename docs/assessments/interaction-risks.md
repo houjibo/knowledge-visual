@@ -4,7 +4,7 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：80；含内联 while 的页面：44。同一页面可能出现在两类中。
+含候选 div 控件的页面：79；含内联 while 的页面：44。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
@@ -71,7 +71,6 @@
 - [physics/high/interactions.html](../../physics/high/interactions.html)：73 行（tab）、74 行（tab）、75 行（tab）、76 行（tab）、77 行（tab）
 - [physics/high/magnetic-field.html](../../physics/high/magnetic-field.html)：202 行（tab）、203 行（tab）、204 行（tab）、205 行（tab）、206 行（tab）
 - [physics/high/modern-physics.html](../../physics/high/modern-physics.html)：72 行（tab）、73 行（tab）、74 行（tab）、75 行（tab）、76 行（tab）
-- [physics/high/momentum.html](../../physics/high/momentum.html)：203 行（tab）、204 行（tab）、205 行（tab）、206 行（tab）
 - [physics/high/motion.html](../../physics/high/motion.html)：71 行（tab）、72 行（tab）、73 行（tab）、74 行（tab）、75 行（tab）
 - [physics/middle/force.html](../../physics/middle/force.html)：117 行（tab）、118 行（tab）、119 行（tab）、120 行（tab）、121 行（tab）、172 行（mode-btn）、173 行（mode-btn）、174 行（mode-btn）、226 行（mode-btn）、227 行（mode-btn）、228 行（mode-btn）、281 行（mode-btn）、282 行（mode-btn）、283 行（mode-btn）、342 行（mode-btn）、343 行（mode-btn）、344 行（mode-btn）
 - [physics/middle/lens.html](../../physics/middle/lens.html)：90 行（tab）、91 行（tab）、92 行（tab）、93 行（tab）

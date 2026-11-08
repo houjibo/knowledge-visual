@@ -35,7 +35,7 @@ test('温度边界说明相态可能共存，物质选择互不干扰',async({pa
 });
 
 test('加热过程在熔化与沸腾期间保持温度，暂停和重置可用',async({page})=>{
-  await page.clock.install();await page.clock.pauseAt(Date.now());
+  await page.clock.install({time: new Date('2026-01-01T00:00:00Z')}); await page.clock.pauseAt(new Date('2026-01-01T00:00:00Z'));
   await page.goto(url);
   await page.getByRole('button',{name:'🧪 互动实验'}).click();
   await page.getByRole('button',{name:'🔥 开始加热'}).focus();await page.keyboard.press('Enter');

@@ -40,6 +40,7 @@ body {
   flex-wrap: wrap;
 }
 .tab {
+  font-family: inherit;
   padding: 8px 16px;
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,0.1);
@@ -54,8 +55,13 @@ body {
   color: white;
   border-color: var(--primary);
 }
+.tab:focus-visible, .btn:focus-visible, .quiz-option:focus-visible {
+  outline: 3px solid #fdd835;
+  outline-offset: 2px;
+}
 .section { display: none; padding: 20px 16px; max-width: 800px; margin: 0 auto; }
 .section.active { display: block; }
+.section[hidden] { display: none; }
 .section-title {
   font-size: 1.2em;
   margin-bottom: 16px;
@@ -73,10 +79,12 @@ body {
 }
 canvas {
   width: 100%;
+  height: 280px;
   border-radius: 8px;
   background: #050a14;
   touch-action: none;
 }
+#collisionCanvas { height: 300px; }
 .controls {
   display: flex;
   gap: 12px;
@@ -147,6 +155,7 @@ input[type="range"] {
   border-left: 3px solid var(--primary);
 }
 .quiz-option {
+  font-family: inherit;
   display: block;
   width: 100%;
   padding: 12px 16px;
@@ -199,15 +208,15 @@ input[type="range"] {
   <p>冲量与动量定理 · 动量守恒定律 · 碰撞问题</p>
 </div>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab(0)">🎯 冲量与动量</div>
-  <div class="tab" onclick="switchTab(1)">💥 碰撞模拟</div>
-  <div class="tab" onclick="switchTab(2)">🔄 反冲运动</div>
-  <div class="tab" onclick="switchTab(3)">📝 练习</div>
+<div class="tabs" role="tablist" aria-label="动量学习主题">
+  <button class="tab active" type="button" role="tab" id="tab-impulse" aria-selected="true" aria-controls="panel-impulse" tabindex="0">🎯 冲量与动量</button>
+  <button class="tab" type="button" role="tab" id="tab-collision" aria-selected="false" aria-controls="panel-collision" tabindex="-1">💥 碰撞模拟</button>
+  <button class="tab" type="button" role="tab" id="tab-recoil" aria-selected="false" aria-controls="panel-recoil" tabindex="-1">🔄 反冲运动</button>
+  <button class="tab" type="button" role="tab" id="tab-quiz" aria-selected="false" aria-controls="panel-quiz" tabindex="-1">📝 练习</button>
 </div>
 
 <!-- Section 0: 冲量与动量 -->
-<div class="section active">
+<div class="section active" id="panel-impulse" role="tabpanel" aria-labelledby="tab-impulse" tabindex="0">
   <div class="section-title">🎯 冲量与动量定理</div>
   
   <div class="card">
@@ -218,21 +227,25 @@ input[type="range"] {
     <canvas id="impulseCanvas" height="280"></canvas>
     <div class="controls">
       <div class="control-group">
-        <label>质量 m = <span id="massVal">2</span> kg</label>
+        <label for="massSlider">质量 m = <span id="massVal">2</span> kg</label>
         <input type="range" id="massSlider" min="0.5" max="10" value="2" step="0.5">
       </div>
       <div class="control-group">
-        <label>初速度 v₀ = <span id="v0Val">3</span> m/s</label>
+        <label for="v0Slider">初速度 v₀ = <span id="v0Val">3</span> m/s</label>
         <input type="range" id="v0Slider" min="-10" max="10" value="3" step="1">
       </div>
       <div class="control-group">
-        <label>作用力 F = <span id="forceVal">5</span> N</label>
+        <label for="forceSlider">作用力 F = <span id="forceVal">5</span> N</label>
         <input type="range" id="forceSlider" min="-20" max="20" value="5" step="1">
+      </div>
+      <div class="control-group">
+        <label for="impulseDurationSlider">作用时长 Δt = <span id="durationVal">3</span> s</label>
+        <input type="range" id="impulseDurationSlider" min="1" max="6" value="3" step="1">
       </div>
     </div>
     <div style="display:flex;gap:8px;margin:8px 0">
-      <button class="btn" onclick="applyForce()">⚡ 施加力</button>
-      <button class="btn accent" onclick="resetImpulse()">🔄 重置</button>
+      <button class="btn" id="applyForceButton" type="button">⚡ 施加力</button>
+      <button class="btn accent" id="resetImpulseButton" type="button">🔄 重置</button>
     </div>
     <div class="data-display">
       <div class="data-item">
@@ -266,7 +279,7 @@ input[type="range"] {
 </div>
 
 <!-- Section 1: 碰撞模拟 -->
-<div class="section">
+<div class="section" id="panel-collision" role="tabpanel" aria-labelledby="tab-collision" tabindex="0" hidden>
   <div class="section-title">💥 碰撞模拟</div>
   
   <div class="card">
@@ -282,25 +295,25 @@ input[type="range"] {
     </div>
     <div class="controls">
       <div class="control-group">
-        <label>A质量 m₁ = <span id="m1Val">2</span> kg</label>
+        <label for="m1Slider">A质量 m₁ = <span id="m1Val">2</span> kg</label>
         <input type="range" id="m1Slider" min="0.5" max="8" value="2" step="0.5">
       </div>
       <div class="control-group">
-        <label>A速度 v₁ = <span id="v1Val">4</span> m/s</label>
+        <label for="v1Slider">A速度 v₁ = <span id="v1Val">4</span> m/s</label>
         <input type="range" id="v1Slider" min="-8" max="8" value="4" step="1">
       </div>
       <div class="control-group">
-        <label>B质量 m₂ = <span id="m2Val">3</span> kg</label>
+        <label for="m2Slider">B质量 m₂ = <span id="m2Val">3</span> kg</label>
         <input type="range" id="m2Slider" min="0.5" max="8" value="3" step="0.5">
       </div>
       <div class="control-group">
-        <label>B速度 v₂ = <span id="v2Val">-2</span> m/s</label>
+        <label for="v2Slider">B速度 v₂ = <span id="v2Val">-2</span> m/s</label>
         <input type="range" id="v2Slider" min="-8" max="8" value="-2" step="1">
       </div>
     </div>
     <div class="controls">
       <div class="control-group">
-        <label>碰撞类型</label>
+        <label for="collisionType">碰撞类型</label>
         <select id="collisionType" style="padding:6px;border-radius:8px;background:var(--bg-dark);color:var(--text);border:1px solid rgba(255,255,255,0.2)">
           <option value="elastic">完全弹性碰撞</option>
           <option value="inelastic">完全非弹性碰撞</option>
@@ -309,8 +322,8 @@ input[type="range"] {
       </div>
     </div>
     <div style="display:flex;gap:8px;margin:8px 0">
-      <button class="btn" onclick="startCollision()">▶ 开始碰撞</button>
-      <button class="btn accent" onclick="resetCollision()">🔄 重置</button>
+      <button class="btn" id="collisionStartButton" type="button">▶ 开始碰撞</button>
+      <button class="btn accent" id="collisionResetButton" type="button">🔄 重置</button>
     </div>
     <div class="data-display">
       <div class="data-item">
@@ -343,7 +356,7 @@ input[type="range"] {
 </div>
 
 <!-- Section 2: 反冲运动 -->
-<div class="section">
+<div class="section" id="panel-recoil" role="tabpanel" aria-labelledby="tab-recoil" tabindex="0" hidden>
   <div class="section-title">🔄 反冲运动</div>
   
   <div class="card">
@@ -354,21 +367,21 @@ input[type="range"] {
     <canvas id="recoilCanvas" height="280"></canvas>
     <div class="controls">
       <div class="control-group">
-        <label>主体质量 M = <span id="mainMassVal">5</span> kg</label>
+        <label for="mainMassSlider">主体质量 M = <span id="mainMassVal">5</span> kg</label>
         <input type="range" id="mainMassSlider" min="1" max="10" value="5" step="0.5">
       </div>
       <div class="control-group">
-        <label>抛射物质量 m = <span id="projMassVal">1</span> kg</label>
+        <label for="projMassSlider">抛射物质量 m = <span id="projMassVal">1</span> kg</label>
         <input type="range" id="projMassSlider" min="0.1" max="5" value="1" step="0.1">
       </div>
       <div class="control-group">
-        <label>抛射速度 v = <span id="projVelVal">8</span> m/s</label>
+        <label for="projVelSlider">抛射速度 v = <span id="projVelVal">8</span> m/s</label>
         <input type="range" id="projVelSlider" min="2" max="15" value="8" step="1">
       </div>
     </div>
     <div style="display:flex;gap:8px;margin:8px 0">
-      <button class="btn" onclick="fireRecoil()">🚀 发射</button>
-      <button class="btn accent" onclick="resetRecoil()">🔄 重置</button>
+      <button class="btn" id="recoilFireButton" type="button">🚀 发射</button>
+      <button class="btn accent" id="resetRecoilButton" type="button">🔄 重置</button>
     </div>
     <div class="data-display">
       <div class="data-item">
@@ -402,7 +415,7 @@ input[type="range"] {
 </div>
 
 <!-- Section 3: 练习 -->
-<div class="section">
+<div class="section" id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" tabindex="0" hidden>
   <div class="section-title">📝 动量练习</div>
   
   <div class="card" id="quiz1Card">
@@ -410,11 +423,11 @@ input[type="range"] {
     <p style="font-size:0.9em;line-height:1.6;margin-bottom:12px">
       一个质量为 2kg 的物体以 3m/s 的速度运动，受到一个与运动方向相同的 10N 的力作用 2s，求末动量。
     </p>
-    <div class="quiz-option" onclick="checkQuiz('q1',0)">A. 6 kg·m/s</div>
-    <div class="quiz-option" onclick="checkQuiz('q1',1)">B. 20 kg·m/s</div>
-    <div class="quiz-option" onclick="checkQuiz('q1',2)">C. 26 kg·m/s</div>
-    <div class="quiz-option" onclick="checkQuiz('q1',3)">D. 32 kg·m/s</div>
-    <div class="explanation" id="q1Exp">
+    <button type="button" class="quiz-option" onclick="checkQuiz('q1',0)">A. 6 kg·m/s</button>
+    <button type="button" class="quiz-option" onclick="checkQuiz('q1',1)">B. 20 kg·m/s</button>
+    <button type="button" class="quiz-option" onclick="checkQuiz('q1',2)">C. 26 kg·m/s</button>
+    <button type="button" class="quiz-option" onclick="checkQuiz('q1',3)">D. 32 kg·m/s</button>
+    <div class="explanation" id="q1Exp" role="status" aria-live="polite">
       <b>答案：C</b><br>
       初动量 p₀ = mv₀ = 2×3 = 6 kg·m/s<br>
       冲量 I = FΔt = 10×2 = 20 N·s<br>
@@ -427,11 +440,11 @@ input[type="range"] {
     <p style="font-size:0.9em;line-height:1.6;margin-bottom:12px">
       质量分别为 1kg 和 3kg 的A、B两球，A以 4m/s 向右运动，B静止。发生完全弹性碰撞后，A的速度为？
     </p>
-    <div class="quiz-option" onclick="checkQuiz('q2',0)">A. -2 m/s（向左）</div>
-    <div class="quiz-option" onclick="checkQuiz('q2',1)">B. 1 m/s（向右）</div>
-    <div class="quiz-option" onclick="checkQuiz('q2',2)">C. 4 m/s（向右）</div>
-    <div class="quiz-option" onclick="checkQuiz('q2',3)">D. 0 m/s（静止）</div>
-    <div class="explanation" id="q2Exp">
+    <button type="button" class="quiz-option" onclick="checkQuiz('q2',0)">A. -2 m/s（向左）</button>
+    <button type="button" class="quiz-option" onclick="checkQuiz('q2',1)">B. 1 m/s（向右）</button>
+    <button type="button" class="quiz-option" onclick="checkQuiz('q2',2)">C. 4 m/s（向右）</button>
+    <button type="button" class="quiz-option" onclick="checkQuiz('q2',3)">D. 0 m/s（静止）</button>
+    <div class="explanation" id="q2Exp" role="status" aria-live="polite">
       <b>答案：A</b><br>
       完全弹性碰撞公式：<br>
       v₁' = (m₁-m₂)v₁/(m₁+m₂) = (1-3)×4/(1+3) = -8/4 = <b>-2 m/s</b><br>
@@ -445,11 +458,11 @@ input[type="range"] {
     <p style="font-size:0.9em;line-height:1.6;margin-bottom:12px">
       质量为 200kg 的小船上站着一个 50kg 的人，船静止在水面。人以 4m/s（相对地面）向前跳上岸，忽略水的阻力，船的速度为？
     </p>
-    <div class="quiz-option" onclick="checkQuiz('q3',0)">A. 1 m/s 向前</div>
-    <div class="quiz-option" onclick="checkQuiz('q3',1)">B. 1 m/s 向后</div>
-    <div class="quiz-option" onclick="checkQuiz('q3',2)">C. 4 m/s 向后</div>
-    <div class="quiz-option" onclick="checkQuiz('q3',3)">D. 0.8 m/s 向后</div>
-    <div class="explanation" id="q3Exp">
+    <button type="button" class="quiz-option" onclick="checkQuiz('q3',0)">A. 1 m/s 向前</button>
+    <button type="button" class="quiz-option" onclick="checkQuiz('q3',1)">B. 1 m/s 向后</button>
+    <button type="button" class="quiz-option" onclick="checkQuiz('q3',2)">C. 4 m/s 向后</button>
+    <button type="button" class="quiz-option" onclick="checkQuiz('q3',3)">D. 0.8 m/s 向后</button>
+    <div class="explanation" id="q3Exp" role="status" aria-live="polite">
       <b>答案：B</b><br>
       系统初始静止，总动量为零。<br>
       由动量守恒：m人v人 + m船v船 = 0<br>
@@ -462,33 +475,70 @@ input[type="range"] {
 <script src="assets/touch.js"></script>
 <script src="assets/common.js"></script>
 <script>
-// 进度追踪：累计答对 3 题点亮「动量与冲量」
-let totalCorrect = 0;
-function bumpTotalCorrect() {
-  totalCorrect++;
-  if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('momentum')) {
+// 进度追踪：三道不同题目首次答对后点亮「动量与冲量」
+const answeredQuestions = new Set();
+const correctQuestions = new Set();
+function recordQuizAnswer(qid, isCorrect) {
+  if (answeredQuestions.has(qid)) return false;
+  answeredQuestions.add(qid);
+  if (isCorrect) correctQuestions.add(qid);
+  if (correctQuestions.size >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('momentum')) {
     PageProgress.markDone('momentum');
     if (typeof showToast === 'function') showToast('🎉 「动量与冲量」知识地图已点亮！');
   }
+  return true;
 }
 
 // Tab switching
 function switchTab(idx) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
-  document.querySelectorAll('.section').forEach((s,i) => s.classList.toggle('active', i===idx));
+  tabButtons.forEach((tab, i) => {
+    const selected = i === idx;
+    tab.classList.toggle('active', selected);
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  });
+  tabPanels.forEach((panel, i) => {
+    const selected = i === idx;
+    panel.classList.toggle('active', selected);
+    panel.hidden = !selected;
+  });
+  resizeActiveCanvas();
+}
+
+const tabButtons = Array.from(document.querySelectorAll('.tab[role="tab"]'));
+const tabPanels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+tabButtons.forEach((tab, index) => {
+  tab.addEventListener('click', () => switchTab(index));
+  tab.addEventListener('keydown', event => {
+    let next = index;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (index + 1) % tabButtons.length;
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (index - 1 + tabButtons.length) % tabButtons.length;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = tabButtons.length - 1;
+    else return;
+    event.preventDefault();
+    switchTab(next);
+    tabButtons[next].focus();
+  });
+});
+
+function setControlsDisabled(ids, disabled) {
+  ids.forEach(id => { document.getElementById(id).disabled = disabled; });
+}
+
+function logicalCanvasWidth(canvas) {
+  return Number(canvas.dataset.logicalWidth || 0) || canvas.clientWidth;
 }
 
 // ============ Section 0: Impulse & Momentum ============
 const ic = document.getElementById('impulseCanvas');
 const ictx = ic.getContext('2d');
 let impulseState = { applying: false, t: 0, v: 3, x: 60 };
-
-function resizeIC() { ic.width = ic.parentElement.clientWidth - 40; }
-resizeIC();
-window.addEventListener('resize', resizeIC);
+let impulseTimer = null;
 
 function drawImpulse() {
-  const W = ic.width, H = ic.height;
+  const W = ic.clientWidth, H = ic.clientHeight;
+  if (!W || !H) return;
   ictx.clearRect(0,0,W,H);
   
   // Grid
@@ -543,7 +593,7 @@ function drawImpulse() {
   
   // Force arrow (when applying)
   if(impulseState.applying) {
-    const F = parseFloat(document.getElementById('forceSlider').value);
+    const F = impulseState.force;
     const fScale = 5;
     const fLen = F * fScale;
     if(Math.abs(fLen) > 2) {
@@ -565,11 +615,11 @@ function drawImpulse() {
     
     // Time indicator
     ictx.fillStyle = 'rgba(255,111,0,0.3)';
-    ictx.fillRect(10, 10, Math.min(impulseState.t / 3 * (W-20), W-20), 6);
+    ictx.fillRect(10, 10, Math.min(impulseState.t / impulseState.duration * (W-20), W-20), 6);
     ictx.fillStyle = '#ff6f00';
     ictx.font = '11px sans-serif';
     ictx.textAlign = 'left';
-    ictx.fillText('t = ' + impulseState.t.toFixed(1) + 's', 10, 30);
+    ictx.fillText('t = ' + impulseState.t.toFixed(1) + '/' + impulseState.duration.toFixed(1) + 's', 10, 30);
   }
   
   // Momentum bar
@@ -593,38 +643,51 @@ function drawImpulse() {
 
 function applyForce() {
   if(impulseState.applying) return;
-  impulseState.applying = true;
-  impulseState.t = 0;
   const F = parseFloat(document.getElementById('forceSlider').value);
   const m = parseFloat(document.getElementById('massSlider').value);
+  const v0 = parseFloat(document.getElementById('v0Slider').value);
+  const totalTime = parseFloat(document.getElementById('impulseDurationSlider').value);
+  impulseState = { applying: true, t: 0, v: v0, x: 60, force: F, mass: m, v0, duration: totalTime };
   const a = F / m;
   const dt = 0.05;
-  const totalTime = 3;
+  setControlsDisabled(['massSlider','v0Slider','forceSlider','impulseDurationSlider'], true);
+  document.getElementById('applyForceButton').disabled = true;
+  updateImpulseData();
+  drawImpulse();
   
-  const interval = setInterval(() => {
-    impulseState.t += dt;
-    impulseState.v += a * dt;
-    impulseState.x += impulseState.v * 8 * dt;
+  impulseTimer = setInterval(() => {
+    const nextTime = Math.min(impulseState.t + dt, totalTime);
+    const step = nextTime - impulseState.t;
+    impulseState.t = nextTime;
+    impulseState.v += a * step;
+    impulseState.x += impulseState.v * 8 * step;
     
     // Wrap around
-    if(impulseState.x > ic.width + 30) impulseState.x = -30;
-    if(impulseState.x < -30) impulseState.x = ic.width + 30;
+    const sceneWidth = logicalCanvasWidth(ic);
+    if(impulseState.x > sceneWidth + 30) impulseState.x = -30;
+    if(impulseState.x < -30) impulseState.x = sceneWidth + 30;
     
     updateImpulseData();
     drawImpulse();
     
     if(impulseState.t >= totalTime) {
-      clearInterval(interval);
+      clearInterval(impulseTimer);
+      impulseTimer = null;
       impulseState.applying = false;
+      document.getElementById('applyForceButton').disabled = false;
+      setControlsDisabled(['massSlider','v0Slider','forceSlider','impulseDurationSlider'], false);
+      updateImpulseData();
+      drawImpulse();
     }
   }, 50);
 }
 
 function resetImpulse() {
-  impulseState.applying = false;
-  impulseState.t = 0;
-  impulseState.v = parseFloat(document.getElementById('v0Slider').value);
-  impulseState.x = 60;
+  if (impulseTimer !== null) clearInterval(impulseTimer);
+  impulseTimer = null;
+  impulseState = { applying: false, t: 0, v: parseFloat(document.getElementById('v0Slider').value), x: 60 };
+  document.getElementById('applyForceButton').disabled = false;
+  setControlsDisabled(['massSlider','v0Slider','forceSlider','impulseDurationSlider'], false);
   updateImpulseData();
   drawImpulse();
 }
@@ -644,15 +707,11 @@ function updateImpulseData() {
 }
 
 // Slider events for impulse section
-['massSlider','v0Slider','forceSlider'].forEach(id => {
+['massSlider','v0Slider','forceSlider','impulseDurationSlider'].forEach(id => {
   document.getElementById(id).addEventListener('input', function() {
-    const label = id.replace('Slider','Val');
+    const label = id === 'impulseDurationSlider' ? 'durationVal' : id.replace('Slider','Val');
     document.getElementById(label).textContent = this.value;
-    if(!impulseState.applying && id !== 'forceSlider') {
-      impulseState.v = parseFloat(document.getElementById('v0Slider').value);
-    }
-    updateImpulseData();
-    drawImpulse();
+    resetImpulse();
   });
 });
 
@@ -662,10 +721,7 @@ const cctx = cc.getContext('2d');
 let colState = { running: false, collided: false, t: 0 };
 let ballA = { x: 0, v: 4, m: 2, r: 22 };
 let ballB = { x: 0, v: -2, m: 3, r: 27 };
-
-function resizeCC() { cc.width = cc.parentElement.clientWidth - 40; }
-resizeCC();
-window.addEventListener('resize', resizeCC);
+let collisionTimer = null;
 
 function startCollision() {
   if(colState.running) return;
@@ -680,12 +736,16 @@ function startCollision() {
   ballB.m = parseFloat(document.getElementById('m2Slider').value);
   ballB.v = parseFloat(document.getElementById('v2Slider').value);
   ballB.r = 18 + ballB.m * 2;
-  ballB.x = cc.width - 60;
+  ballB.x = cc.clientWidth - 60;
   
   const type = document.getElementById('collisionType').value;
   const dt = 0.03;
+  setControlsDisabled(['m1Slider','v1Slider','m2Slider','v2Slider','collisionType'], true);
+  document.getElementById('collisionStartButton').disabled = true;
+  updateCollisionData();
+  drawCollision();
   
-  const interval = setInterval(() => {
+  collisionTimer = setInterval(() => {
     colState.t += dt;
     
     ballA.x += ballA.v * 30 * dt;
@@ -714,29 +774,38 @@ function startCollision() {
     updateCollisionData();
     drawCollision();
     
-    if(ballA.x < -50 || ballA.x > cc.width + 50 || ballB.x < -50 || ballB.x > cc.width + 50 || colState.t > 8) {
-      clearInterval(interval);
+    const sceneWidth = logicalCanvasWidth(cc);
+    if(ballA.x < -50 || ballA.x > sceneWidth + 50 || ballB.x < -50 || ballB.x > sceneWidth + 50 || colState.t > 8) {
+      clearInterval(collisionTimer);
+      collisionTimer = null;
       colState.running = false;
+      document.getElementById('collisionStartButton').disabled = false;
+      setControlsDisabled(['m1Slider','v1Slider','m2Slider','v2Slider','collisionType'], false);
     }
   }, 30);
 }
 
 function resetCollision() {
+  if (collisionTimer !== null) clearInterval(collisionTimer);
+  collisionTimer = null;
   colState = { running: false, collided: false, t: 0 };
   ballA.x = 60;
-  ballB.x = cc.width - 60;
+  ballB.x = Math.max(cc.clientWidth, 120) - 60;
   ballA.v = parseFloat(document.getElementById('v1Slider').value);
   ballB.v = parseFloat(document.getElementById('v2Slider').value);
   ballA.m = parseFloat(document.getElementById('m1Slider').value);
   ballB.m = parseFloat(document.getElementById('m2Slider').value);
   ballA.r = 18 + ballA.m * 2;
   ballB.r = 18 + ballB.m * 2;
+  document.getElementById('collisionStartButton').disabled = false;
+  setControlsDisabled(['m1Slider','v1Slider','m2Slider','v2Slider','collisionType'], false);
   updateCollisionData();
   drawCollision();
 }
 
 function drawCollision() {
-  const W = cc.width, H = cc.height;
+  const W = cc.clientWidth, H = cc.clientHeight;
+  if (!W || !H) return;
   cctx.clearRect(0,0,W,H);
   
   // Grid
@@ -786,39 +855,47 @@ function drawCollision() {
   cctx.fillStyle = '#1e88e5';
   cctx.fillText('v=' + ballB.v.toFixed(1), ballB.x, gy - ballB.r*2 - 18);
   
-  // Momentum bar chart
-  const barBaseY = H - 15;
-  const barH = 40;
+  // Momentum bars share a zero axis: positive points right, negative points left.
   const pA = ballA.m * ballA.v;
   const pB = ballB.m * ballB.v;
   const pT = pA + pB;
   const maxP = Math.max(Math.abs(pA), Math.abs(pB), Math.abs(pT), 1) * 1.2;
   const scale = (W * 0.25) / maxP;
+  const axisX = W / 2;
+  const barH = 12;
+  const aY = H - 54;
+  const bY = H - 34;
+  const totalY = H - 77;
   
   // Bar labels
   cctx.font = '10px sans-serif';
   cctx.textAlign = 'center';
+  cctx.strokeStyle = 'rgba(255,255,255,0.45)';
+  cctx.beginPath();
+  cctx.moveTo(axisX, totalY - 2);
+  cctx.lineTo(axisX, H - 12);
+  cctx.stroke();
   
   // pA bar
   const bAw = pA * scale;
   cctx.fillStyle = 'rgba(229,57,53,0.6)';
-  cctx.fillRect(W/2 - 5, barBaseY - barH, -bAw, barH);
+  cctx.fillRect(axisX, aY, bAw, barH);
   cctx.fillStyle = '#e53935';
-  cctx.fillText('pA=' + pA.toFixed(1), W/2 - 5 - bAw/2, barBaseY - barH - 4);
+  cctx.fillText('pA=' + pA.toFixed(1), Math.max(20, Math.min(W - 20, axisX + bAw / 2)), aY - 4);
   
   // pB bar
   const bBw = pB * scale;
   cctx.fillStyle = 'rgba(30,136,229,0.6)';
-  cctx.fillRect(W/2 + 5, barBaseY - barH, bBw, barH);
+  cctx.fillRect(axisX, bY, bBw, barH);
   cctx.fillStyle = '#1e88e5';
-  cctx.fillText('pB=' + pB.toFixed(1), W/2 + 5 + bBw/2, barBaseY - barH - 4);
+  cctx.fillText('pB=' + pB.toFixed(1), Math.max(20, Math.min(W - 20, axisX + bBw / 2)), bY - 4);
   
   // Total bar
   cctx.fillStyle = 'rgba(253,216,53,0.4)';
   const bTw = pT * scale;
-  cctx.fillRect(W/2 - 3, barBaseY - barH*2 - 5, bTw, 8);
+  cctx.fillRect(axisX, totalY, bTw, 7);
   cctx.fillStyle = '#fdd835';
-  cctx.fillText('Σp=' + pT.toFixed(1), W/2 + bTw/2, barBaseY - barH*2 - 10);
+  cctx.fillText('Σp=' + pT.toFixed(1), Math.max(20, Math.min(W - 20, axisX + bTw / 2)), totalY - 4);
   
   // Collision flash
   if(colState.collided && colState.t < 0.3) {
@@ -865,14 +942,7 @@ function updateCollisionData() {
     const label = id.replace('Slider','Val');
     document.getElementById(label).textContent = this.value;
     if(!colState.running) {
-      ballA.m = parseFloat(document.getElementById('m1Slider').value);
-      ballA.v = parseFloat(document.getElementById('v1Slider').value);
-      ballA.r = 18 + ballA.m * 2;
-      ballB.m = parseFloat(document.getElementById('m2Slider').value);
-      ballB.v = parseFloat(document.getElementById('v2Slider').value);
-      ballB.r = 18 + ballB.m * 2;
-      updateCollisionData();
-      drawCollision();
+      resetCollision();
     }
   });
 });
@@ -881,10 +951,7 @@ function updateCollisionData() {
 const rc = document.getElementById('recoilCanvas');
 const rctx = rc.getContext('2d');
 let recoilState = { fired: false, t: 0, mainV: 0, projV: 0, mainX: 0, projX: 0 };
-
-function resizeRC() { rc.width = rc.parentElement.clientWidth - 40; }
-resizeRC();
-window.addEventListener('resize', resizeRC);
+let recoilTimer = null;
 
 function fireRecoil() {
   if(recoilState.fired) return;
@@ -897,11 +964,15 @@ function fireRecoil() {
   
   recoilState.projV = v;
   recoilState.mainV = -(m * v) / M;
-  recoilState.mainX = rc.width / 2 - 40;
-  recoilState.projX = rc.width / 2 + 40;
+  recoilState.mainX = rc.clientWidth / 2 - 40;
+  recoilState.projX = rc.clientWidth / 2 + 40;
+  setControlsDisabled(['mainMassSlider','projMassSlider','projVelSlider'], true);
+  document.getElementById('recoilFireButton').disabled = true;
+  updateRecoilData();
+  drawRecoil();
   
   const dt = 0.05;
-  const interval = setInterval(() => {
+  recoilTimer = setInterval(() => {
     recoilState.t += dt;
     recoilState.mainX += recoilState.mainV * 20 * dt;
     recoilState.projX += recoilState.projV * 20 * dt;
@@ -909,21 +980,31 @@ function fireRecoil() {
     updateRecoilData();
     drawRecoil();
     
-    if(recoilState.mainX < -60 || recoilState.projX > rc.width + 60 || recoilState.t > 6) {
-      clearInterval(interval);
+    const sceneWidth = logicalCanvasWidth(rc);
+    if(recoilState.mainX < -60 || recoilState.projX > sceneWidth + 60 || recoilState.t > 6) {
+      clearInterval(recoilTimer);
+      recoilTimer = null;
       recoilState.fired = false;
+      document.getElementById('recoilFireButton').disabled = false;
+      setControlsDisabled(['mainMassSlider','projMassSlider','projVelSlider'], false);
+      drawRecoil();
     }
   }, 30);
 }
 
 function resetRecoil() {
-  recoilState = { fired: false, t: 0, mainV: 0, projV: 0, mainX: rc.width/2 - 40, projX: rc.width/2 + 40 };
+  if (recoilTimer !== null) clearInterval(recoilTimer);
+  recoilTimer = null;
+  recoilState = { fired: false, t: 0, mainV: 0, projV: 0, mainX: rc.clientWidth/2 - 40, projX: rc.clientWidth/2 + 40 };
+  document.getElementById('recoilFireButton').disabled = false;
+  setControlsDisabled(['mainMassSlider','projMassSlider','projVelSlider'], false);
   updateRecoilData();
   drawRecoil();
 }
 
 function drawRecoil() {
-  const W = rc.width, H = rc.height;
+  const W = rc.clientWidth, H = rc.clientHeight;
+  if (!W || !H) return;
   rctx.clearRect(0,0,W,H);
   
   // Grid
@@ -1028,35 +1109,79 @@ function updateRecoilData() {
   document.getElementById(id).addEventListener('input', function() {
     const label = id.replace('Slider','Val');
     document.getElementById(label).textContent = this.value;
-    if(!recoilState.fired) {
-      drawRecoil();
-    }
+    if(!recoilState.fired) resetRecoil();
   });
 });
+
+const canvasRecords = [
+  {canvas: ic, context: ictx, draw: drawImpulse, scale: factor => { impulseState.x *= factor; }},
+  {canvas: cc, context: cctx, draw: drawCollision, scale: factor => { ballA.x *= factor; ballB.x *= factor; }},
+  {canvas: rc, context: rctx, draw: drawRecoil, scale: factor => { recoilState.mainX *= factor; recoilState.projX *= factor; }},
+];
+
+function resizeActiveCanvas() {
+  const activeIndex = tabButtons.findIndex(tab => tab.getAttribute('aria-selected') === 'true');
+  const record = canvasRecords[activeIndex];
+  if (!record) return;
+  const {canvas, context} = record;
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  if (!width || !height) return;
+
+  const previousWidth = Number(canvas.dataset.logicalWidth || 0);
+  if (previousWidth && previousWidth !== width) record.scale(width / previousWidth);
+  if (activeIndex === 1 && !colState.running && !previousWidth) {
+    ballA.x = 60;
+    ballB.x = width - 60;
+  }
+  if (activeIndex === 2 && !recoilState.fired && !previousWidth) {
+    recoilState.mainX = width / 2 - 40;
+    recoilState.projX = width / 2 + 40;
+  }
+
+  const ratio = window.devicePixelRatio || 1;
+  const bufferWidth = Math.round(width * ratio);
+  const bufferHeight = Math.round(height * ratio);
+  if (canvas.width !== bufferWidth) canvas.width = bufferWidth;
+  if (canvas.height !== bufferHeight) canvas.height = bufferHeight;
+  context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  canvas.dataset.logicalWidth = String(width);
+  record.draw();
+}
+window.addEventListener('resize', resizeActiveCanvas);
 
 // ============ Section 3: Quiz ============
 const quizAnswers = { q1: 2, q2: 0, q3: 1 };
 
 function checkQuiz(qid, choice) {
+  if (answeredQuestions.has(qid)) return;
   const card = document.getElementById('quiz' + qid.slice(1) + 'Card');
   const options = card.querySelectorAll('.quiz-option');
   const correct = quizAnswers[qid];
+  recordQuizAnswer(qid, choice === correct);
   
   options.forEach((opt, i) => {
+    opt.disabled = true;
     opt.classList.remove('correct','wrong');
-    if(i === correct) { opt.classList.add('correct'); bumpTotalCorrect(); }
+    if(i === correct) opt.classList.add('correct');
     else if(i === choice && choice !== correct) opt.classList.add('wrong');
   });
   
   document.getElementById(qid + 'Exp').classList.add('show');
 }
 
-// Initial draw
+document.getElementById('applyForceButton').addEventListener('click', applyForce);
+document.getElementById('resetImpulseButton').addEventListener('click', resetImpulse);
+document.getElementById('collisionStartButton').addEventListener('click', startCollision);
+document.getElementById('collisionResetButton').addEventListener('click', resetCollision);
+document.getElementById('recoilFireButton').addEventListener('click', fireRecoil);
+document.getElementById('resetRecoilButton').addEventListener('click', resetRecoil);
+
+// Draw only after the first tab has a measurable layout.
 updateImpulseData();
-drawImpulse();
 updateCollisionData();
-drawCollision();
-drawRecoil();
+updateRecoilData();
+resizeActiveCanvas();
 </script>
   <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中物理"></script>
 </body>

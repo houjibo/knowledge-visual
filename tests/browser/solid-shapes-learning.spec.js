@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const url = '/math/topics/solid-shapes/index.html';
 
 test('固定随机值下分类可用键盘且每题只计一次', async ({ page }) => {
-  await page.clock.install(); await page.clock.pauseAt(Date.now());
+  await page.clock.install({time: new Date('2026-01-01T00:00:00Z')}); await page.clock.pauseAt(new Date('2026-01-01T00:00:00Z'));
   await page.addInitScript(() => { Math.random = () => 0; });
   await page.goto(url, { timeout: 10000 });
   await page.locator('[data-mode="sort"]').click();
@@ -21,7 +21,7 @@ test('固定随机值下分类可用键盘且每题只计一次', async ({ page 
 });
 
 test('五类题目的选项互异且参考答案正确', async ({ page }) => {
-  await page.clock.install(); await page.clock.pauseAt(Date.now());
+  await page.clock.install({time: new Date('2026-01-01T00:00:00Z')}); await page.clock.pauseAt(new Date('2026-01-01T00:00:00Z'));
   await page.addInitScript(() => { Math.random = () => 0; });
   await page.goto(url);
   await page.locator('[data-mode="quiz"]').click();
@@ -72,7 +72,7 @@ test('形状详情可键盘查看，区分平面、曲面和圆形边界', async
 });
 
 test('各形状和题型都只有一个选项计为正确', async ({ page }) => {
-  await page.clock.install(); await page.clock.pauseAt(Date.now());
+  await page.clock.install({time: new Date('2026-01-01T00:00:00Z')}); await page.clock.pauseAt(new Date('2026-01-01T00:00:00Z'));
   await page.addInitScript(() => { Math.random = () => 0; });
   await page.goto(url);
   await page.locator('[data-mode="quiz"]').click();
