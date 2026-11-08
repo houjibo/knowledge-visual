@@ -437,6 +437,8 @@ canvas {
     <div style="text-align:center">
       <div style="font-size:0.8em;color:var(--text-dim)">得分</div>
       <div style="font-size:2em;font-weight:bold;color:var(--warning)" id="scoreDisplay">0 / 0</div>
+        <div style="font-size:0.8em;color:var(--text-dim);margin-top:8px">答对不同题目（点亮知识地图）</div>
+        <div style="font-size:1.2em;font-weight:bold;color:var(--success)" id="distinctCorrectDisplay">0 / 3</div>
     </div>
   </div>
 </div>
@@ -444,20 +446,48 @@ canvas {
 <script src="assets/touch.js"></script>
 <script src="assets/common.js"></script>
 <script>
-// 进度追踪：累计答对 3 题点亮「牛顿定律」
-let totalCorrect = 0;
-function bumpTotalCorrect() {
-  totalCorrect++;
-  if (totalCorrect >= 3 && typeof PageProgress !== 'undefined' && !PageProgress.isDone('newton-laws')) {
+// 进度追踪：三道不同题目答对后点亮「牛顿定律」
+const distinctQuestionThreshold = 3;
+const correctQuestionIndexes = new Set();
+
+function updateDistinctCorrectDisplay() {
+  const display = document.getElementById('distinctCorrectDisplay');
+  if (!display) return;
+  const alreadyDone = typeof PageProgress !== 'undefined' && PageProgress.isDone('newton-laws');
+  const count = Math.min(Math.max(correctQuestionIndexes.size, alreadyDone ? distinctQuestionThreshold : 0), distinctQuestionThreshold);
+  display.textContent = `${count} / ${distinctQuestionThreshold}`;
+}
+
+function bumpTotalCorrect(questionIndex) {
+  correctQuestionIndexes.add(questionIndex);
+  updateDistinctCorrectDisplay();
+  if (correctQuestionIndexes.size >= distinctQuestionThreshold && typeof PageProgress !== 'undefined' && !PageProgress.isDone('newton-laws')) {
     PageProgress.markDone('newton-laws');
     if (typeof showToast === 'function') showToast('🎉 「牛顿定律」知识地图已点亮！');
+    updateDistinctCorrectDisplay();
   }
 }
 
 // Tab switching
+function drawSectionCanvases(idx) {
+  if (idx === 0) {
+    drawInertia();
+    drawFMA();
+    drawN3();
+  } else if (idx === 2) {
+    drawConnect();
+    drawIncline();
+  }
+}
+
+function activeSectionIndex() {
+  return [...document.querySelectorAll('.section')].findIndex(section => section.classList.contains('active'));
+}
+
 function switchTab(idx) {
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
   document.querySelectorAll('.section').forEach((s,i) => s.classList.toggle('active', i===idx));
+  drawSectionCanvases(idx);
 }
 
 // ===== Section 0: Inertia (Newton's 1st Law) =====
@@ -466,9 +496,16 @@ const ictx = inertiaC.getContext('2d');
 let inertiaState = { x: 60, v: 0, running: false, friction: 0 };
 
 function resizeCanvas(canvas) {
-  canvas.width = canvas.clientWidth * (window.devicePixelRatio || 1);
-  canvas.height = canvas.clientHeight * (window.devicePixelRatio || 1);
-  canvas.getContext('2d').scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+  const dpr = window.devicePixelRatio || 1;
+  if (!canvas.dataset.logicalHeight) {
+    const attributeHeight = Number(canvas.getAttribute('height'));
+    canvas.dataset.logicalHeight = String(attributeHeight > 0 ? attributeHeight : 150);
+  }
+  const logicalHeight = Number(canvas.dataset.logicalHeight);
+  canvas.style.height = `${logicalHeight}px`;
+  canvas.width = Math.round(canvas.clientWidth * dpr);
+  canvas.height = Math.round(logicalHeight * dpr);
+  canvas.getContext('2d').scale(dpr, dpr);
 }
 
 function drawInertia() {
@@ -1257,7 +1294,7 @@ function answerQuiz(idx) {
   if(idx === q.ans) {
     score++;
     document.getElementById('qopt'+idx).classList.add('correct');
-    bumpTotalCorrect();
+    bumpTotalCorrect(quizIdx % quizzes.length);
   } else {
     document.getElementById('qopt'+idx).classList.add('wrong');
     document.getElementById('qopt'+q.ans).classList.add('correct');
@@ -1275,21 +1312,15 @@ function nextQuiz() {
 
 // ===== Init =====
 function init() {
-  drawInertia();
-  drawFMA();
-  drawN3();
-  drawConnect();
-  drawIncline();
+  drawSectionCanvases(activeSectionIndex());
   updateElevDisplay();
   renderQuiz();
+  updateDistinctCorrectDisplay();
   
   // Handle resize
   window.addEventListener('resize', () => {
-    drawInertia();
-    drawFMA();
-    drawN3();
-    drawConnect();
-    drawIncline();
+    const idx = activeSectionIndex();
+    if (idx >= 0) drawSectionCanvases(idx);
   });
 }
 

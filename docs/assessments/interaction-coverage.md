@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：140；尚未登记：176。
+主题总数：316；已登记部分交互证据：141；尚未登记：175。
 
 ## 已登记部分交互证据
 
@@ -270,6 +270,8 @@
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [恒定电流 - 高中物理互动可视化](../../physics/high/constant-current.html)
   - 桌面和移动视口验证四个画布模块切换、所有画布绘制像素、滑块更新与视口变窄；四道不同测验题去重、完成刷新恢复及电动机题损耗前提；真实设备和整页无障碍未全面验收。 [constant-current-visual-learning-reliability.spec.js](../../tests/browser/constant-current-visual-learning-reliability.spec.js)
+- [牛顿运动定律 - 高中物理互动可视化](../../physics/high/newton-laws.html)
+  - 桌面与窄屏逐标签检查牛顿运动定律五张画布的尺寸和绘制像素，验证连接体滑块、缩放与运行中动画切换主题后返回的状态恢复；重复答对同题不计作三道不同题，并验证不同题完成与刷新恢复。未覆盖所有物理模型准确性、真实设备及整页无障碍。 [newton-laws-learning-reliability.spec.js](../../tests/browser/newton-laws-learning-reliability.spec.js)
 - [光的折射与全反射 · 高中物理互动可视化](../../physics/high/optics.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [热学 · 气体与热力学定律 · 高中物理互动可视化](../../physics/high/thermal.html)
@@ -542,7 +544,6 @@
 - [近代物理 · 高中物理互动可视化](../../physics/high/modern-physics.html)
 - [动量 - 高中物理互动可视化](../../physics/high/momentum.html)
 - [运动的描述 · 高中物理互动可视化](../../physics/high/motion.html)
-- [牛顿运动定律 - 高中物理互动可视化](../../physics/high/newton-laws.html)
 - [力 · 初中物理互动可视化](../../physics/middle/force.html)
 - [透镜及其应用 · 初中物理互动可视化](../../physics/middle/lens.html)
 - [光现象 - 初中物理互动可视化](../../physics/middle/light.html)
