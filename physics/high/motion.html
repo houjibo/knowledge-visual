@@ -21,10 +21,11 @@
   header h1 { font-size: 2rem; background: linear-gradient(90deg, var(--velocity), var(--displace), var(--position)); -webkit-background-clip: text; color: transparent; margin: 0; }
   header p { color: #94a3b8; margin: 6px 0 0; font-size: 14px; }
   .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-  .tab { padding: 8px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; color: #cbd5e1; }
+  .tab { padding: 8px 18px; border-radius: 999px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all .25s; border: 1px solid rgba(255,255,255,0.1); font: inherit; font-size: 14px; color: #cbd5e1; }
   .tab.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 20px rgba(14,165,233,.4); }
   .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
   .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .stage.quiz-text-only { grid-template-columns: 1fr; }
   @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
   .canvas-wrap { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); }
   canvas { width: 100%; height: auto; display: block; border-radius: 10px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
@@ -72,17 +73,17 @@
     <p>质点 · 参考系 · 位移 · 速度 · 加速度 · 运动图像</p>
   </header>
 
-  <div class="tabs">
-    <div class="tab active" data-mode="concept">📖 运动概念</div>
-    <div class="tab" data-mode="motion">🎬 运动模拟</div>
-    <div class="tab" data-mode="graph">📊 运动图像</div>
-    <div class="tab" data-mode="vt">📈 v-t 图像</div>
-    <div class="tab" data-mode="quiz">🎯 互动练习</div>
+  <div class="tabs" role="group" aria-label="运动学习模式">
+    <button class="tab active" type="button" data-mode="concept">📖 运动概念</button>
+    <button class="tab" type="button" data-mode="motion">🎬 运动模拟</button>
+    <button class="tab" type="button" data-mode="graph">📊 运动图像</button>
+    <button class="tab" type="button" data-mode="vt">📈 v-t 图像</button>
+    <button class="tab" type="button" data-mode="quiz">🎯 互动练习</button>
   </div>
 
   <div class="stage">
     <div class="canvas-wrap">
-      <canvas id="cv" width="720" height="560"></canvas>
+      <canvas id="cv" width="720" height="560" role="img" aria-label="运动的描述概念示意图"></canvas>
       <div class="legend" id="legend"></div>
     </div>
     <div class="panel">
@@ -110,6 +111,12 @@ let motionQuizMasteredIds = new Set();
 function motionQuizProgressText() {
   if (typeof PageProgress !== 'undefined' && PageProgress.isDone('motion')) return '掌握进度：知识地图已点亮';
   return `掌握进度：答对 ${motionQuizMasteredIds.size} / 3 道不同题`;
+}
+
+function updateQuizCanvasVisibility() {
+  const hasRelevantContext = mode !== 'quiz' || motionQuizIndex === 3 || motionQuizIndex === 4;
+  document.querySelector('.canvas-wrap').hidden = !hasRelevantContext;
+  document.querySelector('.stage').classList.toggle('quiz-text-only', mode === 'quiz' && !hasRelevantContext);
 }
 
 function recordMotionQuizMastery(question) {
@@ -143,6 +150,7 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 function updatePanel() {
+  updateQuizCanvasVisibility();
   const title = document.getElementById('panelTitle');
   const content = document.getElementById('panelContent');
   
@@ -314,6 +322,7 @@ function updatePanel() {
 }
 
 function showQuiz() {
+  updateQuizCanvasVisibility();
   const content = document.getElementById('panelContent');
   if (motionQuizIndex >= motionQuizQuestions.length) {
     const roundCorrect = [...motionQuizAnswers.values()].filter(answer => answer.correct).length;
@@ -346,7 +355,8 @@ function showQuiz() {
           const selected = answer?.selected === index;
           const correct = answer && index === question.ans;
           const className = ['quiz-opt', correct ? 'correct' : '', selected && !answer.correct ? 'wrong' : ''].filter(Boolean).join(' ');
-          return `<button class="${className}" type="button" data-index="${index}" aria-pressed="${selected}" ${answer ? 'disabled' : ''}>${option}</button>`;
+          const label = answer ? `aria-label="${option}${correct ? '，正确答案' : ''}${selected ? '，你的选择' : ''}" aria-describedby="motionQuizFeedback"` : '';
+          return `<button class="${className}" type="button" data-index="${index}" ${label} ${answer ? 'disabled' : ''}>${option}</button>`;
         }).join('')}
       </div>
       <p class="quiz-fb" id="motionQuizFeedback" role="status" aria-live="polite">${answer ? (answer.correct ? '✓ 正确！' : '✗ 错误，正确答案已标出') : '请选择一个答案。'}</p>
@@ -362,9 +372,10 @@ function showQuiz() {
       if (correct && !motionQuizMasteredIds.has(question.id)) recordMotionQuizMastery(question);
       content.querySelectorAll('.quiz-opt').forEach((option, index) => {
         option.disabled = true;
-        option.setAttribute('aria-pressed', String(index === selected));
         if (index === question.ans) option.classList.add('correct');
         if (index === selected && !correct) option.classList.add('wrong');
+        option.setAttribute('aria-label', `${question.opts[index]}${index === question.ans ? '，正确答案' : ''}${index === selected ? '，你的选择' : ''}`);
+        option.setAttribute('aria-describedby', 'motionQuizFeedback');
       });
       document.getElementById('motionQuizFeedback').textContent = correct ? '✓ 正确！' : '✗ 错误，正确答案已标出';
       document.getElementById('motionQuizFeedback').style.color = correct ? '#10b981' : '#ef4444';
@@ -1077,6 +1088,10 @@ function drawVT() {
 function drawQuizCanvas() {
   ctx.fillStyle = '#0f172a';
   ctx.fillRect(0, 0, W, H);
+  const isUniformAcceleration = motionQuizIndex === 4;
+  cv.setAttribute('aria-label', isUniformAcceleration
+    ? '匀加速直线运动的 v-t 图像为斜直线'
+    : 'v-t 图像下方面积表示位移');
   
   ctx.fillStyle = '#7dd3fc';
   ctx.font = 'bold 24px sans-serif';
@@ -1103,24 +1118,25 @@ function drawQuizCanvas() {
   ctx.fillText('v (m/s)', margin - 10, plotY - 10);
   ctx.fillText('t (s)', W - margin + 40, plotY + plotH + 5);
   
-  // Draw a v-t graph
-  const points = [
-    {t: 0, v: 0}, {t: 2, v: 6}, {t: 5, v: 6}, {t: 8, v: 0}
-  ];
+  // Question 4 explores signed area; question 5 compares the constant-acceleration line.
+  const points = isUniformAcceleration
+    ? [{t: 0, v: 1}, {t: 8, v: 7}]
+    : [{t: 0, v: 0}, {t: 2, v: 6}, {t: 5, v: 6}, {t: 8, v: 0}];
   
   const tScale = plotW / 10;
   const vScale = plotH / 10;
   const toX = t => margin + t * tScale;
   const toYv = v => plotY + plotH - v * vScale;
   
-  // Fill area
-  ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
-  ctx.beginPath();
-  ctx.moveTo(toX(0), toYv(0));
-  points.forEach(p => ctx.lineTo(toX(p.t), toYv(p.v)));
-  ctx.lineTo(toX(8), toYv(0));
-  ctx.closePath();
-  ctx.fill();
+  if (!isUniformAcceleration) {
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toYv(0));
+    points.forEach(p => ctx.lineTo(toX(p.t), toYv(p.v)));
+    ctx.lineTo(toX(8), toYv(0));
+    ctx.closePath();
+    ctx.fill();
+  }
   
   // Draw line
   ctx.strokeStyle = '#3b82f6';
@@ -1140,20 +1156,28 @@ function drawQuizCanvas() {
     ctx.fill();
   });
   
-  // Question
   ctx.fillStyle = '#e2e8f0';
   ctx.font = '15px sans-serif';
-  ctx.fillText('如图所示，求物体在 0~8s 内的总位移', W/2, plotY + plotH + 50);
-  
   ctx.fillStyle = '#6ee7b7';
   ctx.font = '14px sans-serif';
-  ctx.fillText('提示：计算 v-t 图像与 t 轴围成的面积', W/2, plotY + plotH + 80);
-  
-  // Area breakdown
   ctx.fillStyle = '#94a3b8';
   ctx.font = '12px sans-serif';
-  ctx.fillText('三角形面积 + 矩形面积 + 三角形面积', W/2, plotY + plotH + 110);
-  ctx.fillText('= ½×2×6 + 3×6 + ½×3×6 = 6 + 18 + 9 = 33 m', W/2, plotY + plotH + 130);
+  if (isUniformAcceleration) {
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '15px sans-serif';
+    ctx.fillText('匀加速直线运动：速度随时间均匀增加', W/2, plotY + plotH + 55);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('v-t 图像斜率恒定，表示加速度恒定', W/2, plotY + plotH + 85);
+  } else {
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '15px sans-serif';
+    ctx.fillText('阴影区域的有向面积表示位移', W/2, plotY + plotH + 50);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('三角形面积 + 矩形面积 + 三角形面积', W/2, plotY + plotH + 80);
+    ctx.fillText('= ½×2×6 + 3×6 + ½×3×6 = 33 m', W/2, plotY + plotH + 100);
+  }
 }
 
 // Initialize

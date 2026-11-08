@@ -12,7 +12,8 @@
 
 - 将题库和本会话状态提升到面板渲染函数之外，使用题目索引、当轮答案映射、当轮正确数和会话内已掌握题目集合，避免每次切换面板时随机丢失进度。
 - 以一题一屏呈现并按固定顺序前进；提交后禁用全部答案按钮，答完第五题再显示本轮摘要和“再练一次”。重练清空当轮答案，不清空已掌握题目集合。
-- 每题使用原生 `<button>`，状态区使用 `role="status"`/`aria-live="polite"`，保留浏览器默认 Enter/Space 激活行为。
+- 页面模式入口与答案项都使用原生 `<button>`，已作答选项补充正确/已选标签；状态区使用 `role="status"`/`aria-live="polite"`，保留浏览器默认 Enter/Space 激活行为。
+- 非图像题隐藏独立的 v-t 图画布并让题目面板占满布局；面积题显示 v-t 面积图，匀加速题显示恒定正斜率图，canvas 可访问名称随题目更新。
 - 达到三道不同题只调用一次现有 `PageProgress` 接口；已保存状态仍由共享的高中物理进度模块管理。
 
 ## Risks / Trade-offs
@@ -23,6 +24,6 @@
 ## Validation
 
 - 本轮题面中将 v-t 图像面积明确为“有向面积”；OpenStax Physics 2.4 说明速度—时间图像下的面积表示位移，教材积分章节进一步指出净有向面积计入运动方向：[Velocity vs. Time Graphs](https://openstax.org/books/physics/pages/2-4-velocity-vs-time-graphs)、[The Definite Integral](https://openstax.org/books/calculus-volume-2/pages/1-2-the-definite-integral)。
-- 专项 Playwright：固定顺序、答错与重复触发、逐题锁定、模式切换恢复、键盘操作、三道不同题完成、重练及只写入一次。
+- 专项 Playwright：固定顺序、答错与重复触发、逐题锁定、模式切换恢复、键盘操作、题图对应关系、三道不同题完成、重练及只写入一次。
 - 对变更页面运行桌面与窄屏场景，检查无横向溢出、题目按钮和状态反馈可见。
 - 运行 `npm run check:static`、`npm run test:browser`、`npm run test:browser:smoke` 和 `npm run test:release`。

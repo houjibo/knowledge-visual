@@ -285,7 +285,7 @@
 - [动量 - 高中物理互动可视化](../../physics/high/momentum.html)
   - 桌面与窄屏验证四主题键盘导航、三张画布切换/缩放后的尺寸与绘制、可调冲量时长和动量定理、三种碰撞守恒及有符号动量柱、反冲参数锁定与重置清理，以及三道不同题的首次作答和刷新恢复。真实设备、整页屏幕阅读器和全部物理边界组合尚未全面验收。 [momentum-interaction-reliability.spec.js](../../tests/browser/momentum-interaction-reliability.spec.js)
 - [运动的描述 · 高中物理互动可视化](../../physics/high/motion.html)
-  - 桌面和 320px 窄屏验证五道不同题按固定顺序展示、键盘 Enter/Space 作答、首次作答锁定、错题反馈、切换模式后状态保留、三道不同题完成、轮末成绩和重练去重。未全面核验运动模拟模型、真实设备及整页屏幕阅读器。 [high-motion-practice-learning-reliability.spec.js](../../tests/browser/high-motion-practice-learning-reliability.spec.js)
+  - 桌面和 320px 窄屏验证键盘进入练习、五道不同题按固定顺序展示、概念题隐藏无关画布、面积题和匀加速题显示对应图形与可访问名称、答案按钮 Enter/Space 作答、首次作答锁定、错题反馈、切换模式后状态保留、三道不同题完成、轮末成绩和重练去重。未全面核验运动模拟模型、真实设备及整页屏幕阅读器。 [high-motion-practice-learning-reliability.spec.js](../../tests/browser/high-motion-practice-learning-reliability.spec.js)
 - [牛顿运动定律 - 高中物理互动可视化](../../physics/high/newton-laws.html)
   - 桌面与窄屏逐标签检查牛顿运动定律五张画布的尺寸和绘制像素，验证连接体滑块、缩放与运行中动画切换主题后返回的状态恢复；重复答对同题不计作三道不同题，并验证不同题完成与刷新恢复。未覆盖所有物理模型准确性、真实设备及整页无障碍。 [newton-laws-learning-reliability.spec.js](../../tests/browser/newton-laws-learning-reliability.spec.js)
 - [光的折射与全反射 · 高中物理互动可视化](../../physics/high/optics.html)
