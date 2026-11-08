@@ -353,6 +353,8 @@ canvas {
     <div style="text-align:center">
       <div style="font-size:0.8em;color:var(--text-dim)">得分</div>
       <div style="font-size:2em;font-weight:bold;color:var(--warning)" id="scoreDisplay">0 / 0</div>
+      <div style="font-size:0.8em;color:var(--text-dim);margin-top:8px">答对不同题目（点亮知识地图）</div>
+      <div style="font-size:1.2em;font-weight:bold;color:var(--success)" id="distinctCorrectDisplay">0 / 5</div>
     </div>
   </div>
 </div>
@@ -360,15 +362,52 @@ canvas {
 <script>
 const g = 9.8;
 const DPR = window.devicePixelRatio || 1;
+const initializedCanvasSections = new Set();
+
+function drawSectionCanvases(idx) {
+  if (idx < 0 || idx > 2) return;
+  if (!initializedCanvasSections.has(idx)) {
+    if (idx === 0) resetBoat();
+    else if (idx === 1) {
+      resetProjectile();
+      resetAngled();
+    } else {
+      resetCircular();
+      resetVertCircle();
+    }
+    initializedCanvasSections.add(idx);
+    return;
+  }
+
+  if (idx === 0) drawBoat();
+  else if (idx === 1) {
+    drawProjectile();
+    drawAngled();
+  } else {
+    drawCircular();
+    drawVertCircle();
+  }
+}
+
+function activeSectionIndex() {
+  return [...document.querySelectorAll('.section')].findIndex(section => section.classList.contains('active'));
+}
 
 function switchTab(idx) {
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
   document.querySelectorAll('.section').forEach((s,i) => s.classList.toggle('active', i===idx));
+  drawSectionCanvases(idx);
 }
 
 function resizeC(c) {
-  c.width = c.clientWidth * DPR;
-  c.height = c.clientHeight * DPR;
+  if (!c.dataset.logicalHeight) {
+    const attributeHeight = Number(c.getAttribute('height'));
+    c.dataset.logicalHeight = String(attributeHeight > 0 ? attributeHeight : 150);
+  }
+  const logicalHeight = Number(c.dataset.logicalHeight);
+  c.style.height = `${logicalHeight}px`;
+  c.width = Math.round(c.clientWidth * DPR);
+  c.height = Math.round(logicalHeight * DPR);
   c.getContext('2d').scale(DPR, DPR);
 }
 
@@ -1238,6 +1277,16 @@ const quizzes = [
 ];
 
 let quizIdx = 0, score = 0, total = 0;
+const distinctQuestionThreshold = Math.ceil(quizzes.length * 0.6);
+const correctQuestionIndexes = new Set();
+
+function updateDistinctCorrectDisplay() {
+  const display = document.getElementById('distinctCorrectDisplay');
+  if (!display) return;
+  const alreadyDone = typeof PageProgress !== 'undefined' && PageProgress.isDone('curve-motion');
+  const count = Math.min(Math.max(correctQuestionIndexes.size, alreadyDone ? distinctQuestionThreshold : 0), distinctQuestionThreshold);
+  display.textContent = `${count} / ${distinctQuestionThreshold}`;
+}
 
 function renderQuiz() {
   const q = quizzes[quizIdx % quizzes.length];
@@ -1250,12 +1299,14 @@ function renderQuiz() {
 }
 
 function answerQuiz(idx) {
-  const q = quizzes[quizIdx % quizzes.length];
+  const questionIndex = quizIdx % quizzes.length;
+  const q = quizzes[questionIndex];
   total++;
   document.querySelectorAll('.quiz-option').forEach(o => o.disabled = true);
   if(idx === q.ans) {
     score++;
     document.getElementById('qopt'+idx).classList.add('correct');
+    correctQuestionIndexes.add(questionIndex);
   } else {
     document.getElementById('qopt'+idx).classList.add('wrong');
     document.getElementById('qopt'+q.ans).classList.add('correct');
@@ -1263,9 +1314,11 @@ function answerQuiz(idx) {
   document.getElementById('quizExplain').style.display = 'block';
   document.getElementById('quizExplain').innerHTML = '<strong>解析：</strong>' + q.explain;
   document.getElementById('scoreDisplay').textContent = score + ' / ' + total;
-  if (score >= Math.ceil(quizzes.length * 0.6) && typeof PageProgress !== 'undefined' && !PageProgress.isDone('curve-motion')) {
+  updateDistinctCorrectDisplay();
+  if (correctQuestionIndexes.size >= distinctQuestionThreshold && typeof PageProgress !== 'undefined' && !PageProgress.isDone('curve-motion')) {
     PageProgress.markDone('curve-motion');
     document.getElementById('scoreDisplay').textContent += ' ✅ 已记录完成';
+    updateDistinctCorrectDisplay();
   }
 }
 
@@ -1276,19 +1329,13 @@ function nextQuiz() {
 
 // ===== Init =====
 function init() {
-  resetBoat();
-  resetProjectile();
-  resetAngled();
-  drawCircular();
-  resetVertCircle();
+  drawSectionCanvases(activeSectionIndex());
   renderQuiz();
+  updateDistinctCorrectDisplay();
   
   window.addEventListener('resize', () => {
-    drawBoat();
-    drawProjectile();
-    drawAngled();
-    drawCircular();
-    drawVertCircle();
+    const idx = activeSectionIndex();
+    if (idx >= 0) drawSectionCanvases(idx);
   });
 }
 
