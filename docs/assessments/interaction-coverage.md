@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：163；尚未登记：153。
+主题总数：316；已登记部分交互证据：164；尚未登记：152。
 
 ## 已登记部分交互证据
 
@@ -164,6 +164,8 @@
   - 桌面与移动固定随机 0、0.5、0.8、0.999999 验证页面初始化、分一分及三类选择题的互异选项、邻近整数干扰项和唯一答案、正确计数与下一题生成，并对写算式模式执行完整答题；0.8 覆盖除数等于商，320px 检查选项不横向溢出。完整教学内容、真实设备和整页无障碍尚未全面验收。 [intro-division-finite-options.spec.js](../../tests/browser/intro-division-finite-options.spec.js)
 - [大数的认识](../../math/topics/large-numbers/index.html)
   - 桌面及移动视口验证跨数级零读法样例、固定随机出题、数位键盘、读写比较逐题计分及存储失败重试；全部读数值、近似数与真实设备尚未全面验收。 [large-numbers-reading-and-practice.spec.js](../../tests/browser/large-numbers-reading-and-practice.spec.js)
+- [测量长度](../../math/topics/length-measurement/index.html)
+  - 桌面与移动以固定序列构造同长度初始物品并验证有限换题；固定随机 0、0.999999 核对线段长度、正确方向和答题反馈；重复提交及 320px 窄屏。真实设备和整页无障碍尚未全面验收。 [length-comparison-bounded-options.spec.js](../../tests/browser/length-comparison-bounded-options.spec.js)
 - [折线统计图](../../math/topics/line-charts/index.html)
   - 读图和挑战的零值、并列答案、单位及标题部分场景；未覆盖整页。 [line-chart-questions.spec.js](../../tests/browser/line-chart-questions.spec.js)
 - [认识线段](../../math/topics/line-segments/index.html)
@@ -515,7 +517,6 @@
 - [找次品](../../math/topics/finding-defective/index.html)
 - [分数乘除法](../../math/topics/fraction-multiplication-division/index.html)
 - [分数的基本性质](../../math/topics/fraction-properties/index.html)
-- [测量长度](../../math/topics/length-measurement/index.html)
 - [长度单位进阶](../../math/topics/length-units-advanced/index.html)
 - [用字母表示数](../../math/topics/letters-represent-numbers/index.html)
 - [线段、射线、直线](../../math/topics/line-segment-ray/index.html)
