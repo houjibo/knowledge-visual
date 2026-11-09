@@ -183,6 +183,7 @@
   - 桌面与移动视口以固定 Math.random 0、0.4、0.5、0.999999 覆盖首次加载、填空唯一答案、看积题全部正确因数对、互异错误因数对、答对反馈及下一题生成；其他学习模式、整页教学内容、真实设备和完整无障碍未全面验收。 [bounded-multiplication-table-generators.spec.js](../../tests/browser/bounded-multiplication-table-generators.spec.js)
 - [负数的初步认识](../../math/topics/negative-numbers/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
+  - 桌面与移动视口以固定随机 0、0.5、0.625、0.999999 验证页面加载、比较题互异与关系判定、正确计分和下一题；数轴题核对答案及四个互异且处于 −10 至 10 的选项、答题反馈和下一题；320px 核查选项边界与触控高度。其他学习模式、真实设备和整页无障碍尚未全面验收。 [negative-number-practice-reliability.spec.js](../../tests/browser/negative-number-practice-reliability.spec.js)
 - [数的组成](../../math/topics/number-composition/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [数轴](../../math/topics/number-line/index.html)

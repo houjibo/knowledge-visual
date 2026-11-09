@@ -331,11 +331,22 @@
       document.getElementById('nl-question').textContent = q.q;
       document.getElementById('nl-input').value = '';
       document.getElementById('nl-feedback').style.display = 'none';
-      // 按钮选项
-      const opts = [q.a, q.a + 2, q.a - 1, q.a + 3].filter((v,i,a) => a.indexOf(v) === i).slice(0,4);
-      while (opts.length < 4) opts.push(Math.floor(Math.random()*21) - 10);
+      // 选项必须落在数轴显示范围内，并与答案互异。
+      const distractors = [q.a + 2, q.a - 1, q.a + 3]
+        .filter(value => value >= -10 && value <= 10 && value !== q.a);
+      const remaining = Array.from({ length: 21 }, (_, index) => index - 10)
+        .filter(value => value !== q.a && !distractors.includes(value));
+      for (let index = distractors.length; index < 3; index++) {
+        const candidateIndex = Math.floor(Math.random() * remaining.length);
+        distractors.push(remaining.splice(candidateIndex, 1)[0]);
+      }
+      const opts = [q.a, ...distractors];
+      for (let index = opts.length - 1; index > 0; index--) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [opts[index], opts[swapIndex]] = [opts[swapIndex], opts[index]];
+      }
       const ctrl = document.getElementById('nl-controls');
-      ctrl.innerHTML = opts.sort(() => Math.random()-0.5).map(v =>
+      ctrl.innerHTML = opts.map(v =>
         `<button class="nl-btn" data-val="${v}">${v >= 0 ? '+' : ''}${v}</button>`
       ).join('');
       ctrl.querySelectorAll('.nl-btn').forEach(b => {
@@ -368,9 +379,11 @@
     let cmpCorrectCount = 0, cmpTotalCount = 0;
     function newCompare() {
       const nums = [-10,-8,-7,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,10];
-      cmpA = nums[Math.floor(Math.random()*nums.length)];
-      cmpB = nums[Math.floor(Math.random()*nums.length)];
-      while (cmpB === cmpA) cmpB = nums[Math.floor(Math.random()*nums.length)];
+      const firstIndex = Math.floor(Math.random() * nums.length);
+      const secondIndex = Math.floor(Math.random() * (nums.length - 1));
+      const distinctSecondIndex = secondIndex >= firstIndex ? secondIndex + 1 : secondIndex;
+      cmpA = nums[firstIndex];
+      cmpB = nums[distinctSecondIndex];
       const leftEl = document.getElementById('cmp-left');
       const rightEl = document.getElementById('cmp-right');
       leftEl.textContent = (cmpA >= 0 ? '+' : '') + cmpA;
