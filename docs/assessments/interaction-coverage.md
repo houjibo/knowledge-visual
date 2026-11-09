@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：156；尚未登记：160。
+主题总数：316；已登记部分交互证据：157；尚未登记：159。
 
 ## 已登记部分交互证据
 
@@ -251,6 +251,8 @@
 - [梯形面积](../../math/topics/trapezoid-area/index.html)
   - 故事及探索拼图的几何关系、缩放和参数边界；练习、进度、真机和完整无障碍尚未验收。 [trapezoid-area-assembly-geometry.spec.js](../../tests/browser/trapezoid-area-assembly-geometry.spec.js)
   - 四类练习、生活题单位和解析、学习进度与保存失败恢复；真机和完整无障碍尚未全面验收。 [trapezoid-area-practice-completion.spec.js](../../tests/browser/trapezoid-area-practice-completion.spec.js)
+- [植树问题](../../math/topics/tree-planting/index.html)
+  - 桌面与移动固定随机 0、0.5、0.999999 验证页面初始化、互异正整数选项、两端都种/两端不种/封闭圆形的独立答案计算、最小/最大答案、正确反馈计分及下一题；320px 检查选项边界和触控高度。教学内容整体、真实设备及整页无障碍尚未全面验收。 [tree-planting-finite-quiz-options.spec.js](../../tests/browser/tree-planting-finite-quiz-options.spec.js)
 - [三角形面积](../../math/topics/triangle-area/index.html)
   - 静态拼图与动态极端参数下的对应顶点、平行四边形和面积，五类唯一选项与单次计分、生活题公式、跨活动完成与存储恢复；完整无障碍未全面验收。 [triangle-area-geometry-and-practice.spec.js](../../tests/browser/triangle-area-geometry-and-practice.spec.js)
 - [三角形的认识](../../math/topics/triangles/index.html)
@@ -528,7 +530,6 @@
 - [简便计算](../../math/topics/simplified-calculation/index.html)
 - [统计与数据整理](../../math/topics/statistics/index.html)
 - [时间计算](../../math/topics/time-calculation/index.html)
-- [植树问题](../../math/topics/tree-planting/index.html)
 - [三角形的高与分类](../../math/topics/triangle-properties/index.html)
 - [认识零](../../math/topics/understanding-zero/index.html)
 - [组合数学 · 互动可视化](../../math/uni/combinatorics.html)
