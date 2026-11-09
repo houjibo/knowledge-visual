@@ -10,5 +10,5 @@
 
 ## 3. 发布与归档
 
-- [ ] 3.1 提交并推送修复，确认 GitHub Actions 发布和公开资源版本核验成功
-- [ ] 3.2 归档 OpenSpec 变更，确认主规格同步且严格校验通过
+- [x] 3.1 提交 `5b03f07cf8336c9526055764462ddc3b95251523` 并推送；Actions [run #203](https://github.com/houjibo/knowledge-visual/actions/runs/42708711026) 的检查、构建、Pages 部署和部署后核验全部成功，且本地与公开乘法挑战页均已打开确认
+- [x] 3.2 已归档至 `2026-11-10-bounded-multiplication-challenge-options`，能力规格已同步到 `openspec/specs/multiplication-challenge-reliability/`；`openspec validate --all --strict` 通过（229 项）
