@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：158；尚未登记：158。
+主题总数：316；已登记部分交互证据：159；尚未登记：157。
 
 ## 已登记部分交互证据
 
@@ -270,6 +270,8 @@
   - 固定随机边界、摆放图示与输入、挑战解释，以及八次作答进度、旧记录和写入失败；其他题型与无障碍未全面验收。 [understanding-multiples.spec.js](../../tests/browser/understanding-multiples.spec.js)
 - [认识比](../../math/topics/understanding-ratio/index.html)
   - 固定随机值、读写比、等价比、重复提交和挑战题部分场景；未覆盖全部主题内容。 [ratio-learning.spec.js](../../tests/browser/ratio-learning.spec.js)
+- [认识零](../../math/topics/understanding-zero/index.html)
+  - 桌面与移动固定随机 0、0.5、0.999999 验证加减乘题的独立答案、互异且位于 0 到 10 的选项、答题反馈、连对计数和下一题生成；320px 检查选项边界与触控高度。其他学习模式、真实设备及整页无障碍尚未全面验收。 [understanding-zero-bounded-options.spec.js](../../tests/browser/understanding-zero-bounded-options.spec.js)
 - [体积与容积单位](../../math/topics/volume-units/index.html)
   - 换算精确判分、限时挑战重复提交、估测题数和保存失败恢复；搭方块画布与完整无障碍未全面验收。 [volume-units-practice-reliability.spec.js](../../tests/browser/volume-units-practice-reliability.spec.js)
   - 八种目标、桌面键盘、移动触摸模拟、缩放布局和反馈更新；真实设备及整页无障碍尚未全面验收。 [volume-units-accessible-building.spec.js](../../tests/browser/volume-units-accessible-building.spec.js)
@@ -532,7 +534,6 @@
 - [统计与数据整理](../../math/topics/statistics/index.html)
 - [时间计算](../../math/topics/time-calculation/index.html)
 - [三角形的高与分类](../../math/topics/triangle-properties/index.html)
-- [认识零](../../math/topics/understanding-zero/index.html)
 - [组合数学 · 互动可视化](../../math/uni/combinatorics.html)
 - [复变函数 · 大学数学互动可视化](../../math/uni/complex-analysis.html)
 - [离散数学 · 图论互动可视化](../../math/uni/discrete-math.html)
