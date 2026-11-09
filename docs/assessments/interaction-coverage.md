@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：157；尚未登记：159。
+主题总数：316；已登记部分交互证据：158；尚未登记：158。
 
 ## 已登记部分交互证据
 
@@ -162,6 +162,8 @@
   - 桌面及移动视口验证跨数级零读法样例、固定随机出题、数位键盘、读写比较逐题计分及存储失败重试；全部读数值、近似数与真实设备尚未全面验收。 [large-numbers-reading-and-practice.spec.js](../../tests/browser/large-numbers-reading-and-practice.spec.js)
 - [折线统计图](../../math/topics/line-charts/index.html)
   - 读图和挑战的零值、并列答案、单位及标题部分场景；未覆盖整页。 [line-chart-questions.spec.js](../../tests/browser/line-chart-questions.spec.js)
+- [认识线段](../../math/topics/line-segments/index.html)
+  - 桌面与移动固定随机 0、0.25、0.5、0.999999 验证页面初始化、依据 SVG 点数独立计算四种线段答案、互异正整数选项、正确反馈计分及下一题；320px 检查选项边界和触控高度。其余学习模式、真实设备及整页无障碍尚未全面验收。 [line-segments-bounded-options.spec.js](../../tests/browser/line-segments-bounded-options.spec.js)
 - [数学广角·推理](../../math/topics/logical-reasoning/index.html)
   - 排队线索唯一性、题库答案、固定随机值的十题抽取、挑战解释、完成记录及分步表格；未替代完整教学评审。 [logical-reasoning-questions.spec.js](../../tests/browser/logical-reasoning-questions.spec.js)
 - [搭配问题](../../math/topics/matching/index.html)
@@ -508,7 +510,6 @@
 - [长度单位进阶](../../math/topics/length-units-advanced/index.html)
 - [用字母表示数](../../math/topics/letters-represent-numbers/index.html)
 - [线段、射线、直线](../../math/topics/line-segment-ray/index.html)
-- [认识线段](../../math/topics/line-segments/index.html)
 - [混合运算](../../math/topics/mixed-operations/index.html)
 - [表内乘法](../../math/topics/multiplication/index.html)
 - [数与形](../../math/topics/number-and-shape/index.html)
