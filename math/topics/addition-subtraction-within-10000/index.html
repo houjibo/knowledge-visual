@@ -280,6 +280,16 @@
     // ========== 工具函数 ==========
     function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
     function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+    function finiteOptions(requiredValues, candidateValues) {
+      const options = [...new Set(requiredValues)];
+      for (const value of shuffle(candidateValues)) {
+        if (!Number.isInteger(value) || value < 0 || options.includes(value)) continue;
+        options.push(value);
+        if (options.length === 4) break;
+      }
+      if (options.length !== 4) throw new Error('无法生成四个互异的非负整数选项');
+      return shuffle(options);
+    }
 
     // ========== 模式1: 竖式演示 ==========
     let vProblem = null;
@@ -481,13 +491,8 @@
       document.getElementById('choiceProgress').style.width = (choiceNum * 10) + '%';
       document.getElementById('choiceFeedback').textContent = '';
 
-      const opts = new Set([choiceAnswer]);
-      while (opts.size < 4) {
-        let wrong = choiceAnswer + randInt(-200, 200);
-        if (wrong < 0) wrong = randInt(0, choiceAnswer + 200);
-        if (wrong !== choiceAnswer) opts.add(wrong);
-      }
-      const shuffled = shuffle([...opts]);
+      const offsets = [-200, 200, -150, 150, -100, 100, -50, 50, -25, 25, -10, 10];
+      const shuffled = finiteOptions([choiceAnswer], offsets.map(offset => choiceAnswer + offset));
       const container = document.getElementById('choiceOptions');
       container.innerHTML = '';
       shuffled.forEach(opt => {
@@ -572,15 +577,9 @@
       document.getElementById('estHint').innerHTML = `💡 提示：把数看成最接近的整百数再计算<br>${a} ≈ ${roundA}，${b} ≈ ${roundB}`;
 
       // 生成选项（精确值附近 ± 估算值）
-      const opts = new Set([estResult]);
-      // 添加精确答案
-      opts.add(estAnswer);
-      while (opts.size < 4) {
-        let wrong = estAnswer + randInt(-500, 500);
-        if (wrong < 0) wrong = randInt(0, estAnswer + 500);
-        if (wrong !== estAnswer && wrong !== estResult) opts.add(wrong);
-      }
-      const shuffled = shuffle([...opts]);
+      const offsets = [-500, 500, -400, 400, -300, 300, -200, 200, -100, 100, -50, 50, -25, 25, -10, 10];
+      const candidates = offsets.map(offset => estAnswer + offset);
+      const shuffled = finiteOptions([estResult, estAnswer], candidates);
       const container = document.getElementById('estOptions');
       container.innerHTML = '';
       shuffled.forEach(opt => {
