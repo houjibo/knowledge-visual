@@ -1,0 +1,30 @@
+# rounding-number-finite-options Specification
+
+## Purpose
+TBD - created by archiving change finite-rounding-number-practice-options. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 近似数练习有限生成唯一选项
+
+四舍五入与应用选择题 SHALL 从有限候选池生成四个互异选项，并恰有一个符合题目答案的正确选项。选项生成 SHALL 在随机值重复时终止。干扰项 SHALL 保持在题型定义的既有数值范围内。
+
+#### Scenario: 固定随机边界下初始化
+
+- **WHEN** 页面以固定随机值 0、0.5、0.8 或 0.999999 启动
+- **THEN** 四舍五入、比大小与应用题目均可生成，页面可完成加载
+
+#### Scenario: 四舍五入答案唯一
+
+- **WHEN** 学习者查看省略千位、万位或亿位后面尾数的练习
+- **THEN** 四个选项互不相同，且只有一个选项等于按题目精度计算的四舍五入结果
+
+#### Scenario: 应用题答案唯一
+
+- **WHEN** 学习者查看万为单位近似、最接近数或生活总价估算题
+- **THEN** 四个选项互不相同，且恰有一个符合题目计算结果
+
+#### Scenario: 作答后继续练习
+
+- **WHEN** 学习者选择四舍五入题或应用题的正确答案
+- **THEN** 正确计数增加一次，页面生成下一道含四个唯一选项的题目
