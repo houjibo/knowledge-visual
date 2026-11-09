@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：149；尚未登记：167。
+主题总数：316；已登记部分交互证据：150；尚未登记：166。
 
 ## 已登记部分交互证据
 
@@ -166,6 +166,8 @@
   - 中位数、唯一众数及挑战的固定随机边界和部分答题；概念内容及所有题型尚未全面验收。 [median-mode.spec.js](../../tests/browser/median-mode.spec.js)
 - [认识人民币](../../math/topics/money/index.html)
   - 六种挑战题型在重复随机值下生成四个唯一选项并覆盖正确答案；比较题覆盖大于、小于、相等及正确计分，桌面与移动视口通过；人民币其他模式和完整无障碍未全面验收。 [money-challenge-bounded-options.spec.js](../../tests/browser/money-challenge-bounded-options.spec.js)
+- [多位数乘法](../../math/topics/multi-digit-multiplication/index.html)
+  - 桌面与移动视口验证限时挑战答案组可访问名称、可见键盘焦点、Enter/Space 作答、实时反馈、首次响应锁定、超时后拒绝迟到输入，以及新题焦点恢复；全页屏幕阅读器和真实设备尚未验收。 [multidigit-challenge-accessibility-and-lock.spec.js](../../tests/browser/multidigit-challenge-accessibility-and-lock.spec.js)
 - [乘法的初步认识](../../math/topics/multiplication-intro/index.html)
   - 桌面与移动视口验证四项活动完成、主动切题、重复提交、完成记录刷新及目录徽章、保存失败重试；真实设备及整页无障碍尚未全面验收。 [multiplication-intro-learning-completion.spec.js](../../tests/browser/multiplication-intro-learning-completion.spec.js)
   - 桌面及移动视口检查常量随机加载、三类练习键盘作答，枚举全部整数参数并验证四个不同选项与唯一正确答案；真实设备、进度记录和整页无障碍尚未全面验收。 [multiplication-intro-question-correctness.spec.js](../../tests/browser/multiplication-intro-question-correctness.spec.js)
@@ -497,7 +499,6 @@
 - [线段、射线、直线](../../math/topics/line-segment-ray/index.html)
 - [认识线段](../../math/topics/line-segments/index.html)
 - [混合运算](../../math/topics/mixed-operations/index.html)
-- [多位数乘法](../../math/topics/multi-digit-multiplication/index.html)
 - [乘法口诀表](../../math/topics/multiplication-tables/index.html)
 - [表内乘法](../../math/topics/multiplication/index.html)
 - [数与形](../../math/topics/number-and-shape/index.html)

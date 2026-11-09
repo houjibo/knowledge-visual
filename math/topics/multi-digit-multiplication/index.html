@@ -143,13 +143,17 @@
       max-width: 400px; margin: 20px auto; padding: 0 16px;
     }
     .challenge-opt {
-      padding: 20px; border: 3px solid #E5E5EA; background: white;
+      padding: 20px; border: 3px solid #E5E5EA; background: white; color: #1D1D1F;
       border-radius: 16px; font-size: 24px; font-weight: 700; cursor: pointer;
+      font-family: inherit; text-align: center;
       transition: all 0.2s ease;
     }
     .challenge-opt:active { transform: scale(0.9); }
+    .challenge-opt:focus-visible { outline: 4px solid #1D64C8; outline-offset: 3px; }
+    .challenge-opt:disabled { cursor: default; }
     .challenge-opt.correct { border-color: #34C759; background: rgba(52,199,89,0.15); color: #34C759; }
     .challenge-opt.wrong { border-color: #FF3B30; background: rgba(255,59,48,0.1); color: #FF3B30; }
+    .challenge-feedback { min-height: 24px; margin: 8px 0; font-weight: 600; }
     .challenge-score {
       display: flex; justify-content: center; gap: 24px; margin: 12px 0;
       font-size: 16px;
@@ -286,8 +290,9 @@
           </div>
           <button class="challenge-start-btn" id="btn-start-challenge">🏆 开始挑战！</button>
           <div class="challenge-running">
-            <div class="challenge-problem" id="challenge-problem">23 × 4 = ?</div>
-            <div class="challenge-options" id="challenge-options"></div>
+            <div class="challenge-problem" id="challenge-problem" aria-live="polite">23 × 4 = ?</div>
+            <div class="challenge-options" id="challenge-options" role="group" aria-labelledby="challenge-problem"></div>
+            <div class="challenge-feedback" id="challenge-feedback" role="status" aria-live="polite" aria-atomic="true"></div>
           </div>
         </div>
       </div>
@@ -718,8 +723,26 @@
     (function() {
       var correct = 0, wrong = 0, answer = 0, timer = null, timeLeft = 100, running = false;
       var difficulty = 'easy';
+      var answered = false;
+
+      function setOptionsDisabled(disabled) {
+        document.querySelectorAll('#challenge-options .challenge-opt').forEach(function(option) {
+          option.disabled = disabled;
+        });
+      }
+
+      function scheduleNextProblem(restoreKeyboardFocus) {
+        setTimeout(function() {
+          newProblem();
+          if (restoreKeyboardFocus) {
+            var firstOption = document.querySelector('#challenge-options .challenge-opt');
+            if (firstOption) firstOption.focus();
+          }
+        }, 1500);
+      }
 
       function newProblem() {
+        answered = false;
         var a, b;
         if (difficulty === 'easy') {
           a = Random.int(11, 99); b = Random.int(2, 9);
@@ -737,23 +760,32 @@
         var shuffled = Random.shuffle([answer].concat(distractors));
         var container = document.getElementById('challenge-options');
         container.innerHTML = '';
+        document.getElementById('challenge-feedback').textContent = '';
         shuffled.forEach(function(val) {
-          var btn = document.createElement('div');
+          var btn = document.createElement('button');
+          btn.type = 'button';
           btn.className = 'challenge-opt'; btn.textContent = val;
-          btn.addEventListener('click', function() {
+          btn.addEventListener('click', function(event) {
+            if (answered) return;
+            answered = true;
+            var restoreKeyboardFocus = event.detail === 0;
+            setOptionsDisabled(true);
             clearInterval(timer); timer = null;
             var isCorrect = val === answer;
             if (isCorrect) {
               btn.classList.add('correct'); correct++; streak++;
               Sound.play('correct'); celebrate(); updateStreak();
               document.getElementById('ch-correct').textContent = correct;
-              setTimeout(newProblem, 1500);
+              document.getElementById('challenge-feedback').textContent = '正确。累计答对 ' + correct + ' 题。';
+              scheduleNextProblem(restoreKeyboardFocus);
             } else {
               btn.classList.add('wrong'); Animator.shake(btn);
               wrong++; streak = 0; Sound.play('wrong'); updateStreak();
               document.getElementById('ch-wrong').textContent = wrong;
-              showToast('答案是 ' + answer + '，再想想');
-              setTimeout(newProblem, 1500);
+              var feedback = '答错了。正确答案是 ' + answer + '，累计答错 ' + wrong + ' 题。';
+              document.getElementById('challenge-feedback').textContent = feedback;
+              showToast(feedback);
+              scheduleNextProblem(restoreKeyboardFocus);
             }
           });
           container.appendChild(btn);
@@ -772,9 +804,15 @@
           document.getElementById('timer-fill').style.width = timeLeft + '%';
           if (timeLeft <= 0) {
             clearInterval(timer); timer = null;
+            if (answered) return;
+            answered = true;
+            var restoreKeyboardFocus = document.activeElement.matches('#challenge-options .challenge-opt:focus-visible');
+            setOptionsDisabled(true);
             streak = 0; Sound.play('wrong'); updateStreak();
-            showToast('⏰ 时间到！答案是 ' + answer);
-            setTimeout(newProblem, 1500);
+            var feedback = '⏰ 时间到！答案是 ' + answer + '。';
+            document.getElementById('challenge-feedback').textContent = feedback;
+            showToast(feedback);
+            scheduleNextProblem(restoreKeyboardFocus);
           }
         }, 100);
       }
