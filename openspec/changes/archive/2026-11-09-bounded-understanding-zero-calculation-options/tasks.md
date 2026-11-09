@@ -12,4 +12,4 @@
 ## 3. 集成与发布
 
 - [x] 3.1 运行桌面/移动专项测试、静态检查、严格 OpenSpec 与完整 `npm run check`。
-- [ ] 3.2 提交推送并核实 Actions、Pages revision、本地与公网页面的实际作答。
+- [x] 3.2 提交推送并核实 Actions、Pages revision、本地与公网页面的实际作答。
