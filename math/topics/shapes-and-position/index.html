@@ -49,11 +49,13 @@
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 12px;
     }
     .classify-btn {
-      padding: 16px 8px; border: 3px solid #E5E5EA; background: white;
+      width: 100%; min-width: 0; padding: 16px 8px; border: 3px solid #E5E5EA; background: white;
       border-radius: 16px; cursor: pointer; transition: all 0.2s ease;
       display: flex; align-items: center; justify-content: center;
-      aspect-ratio: 1;
+      aspect-ratio: 1; appearance: none; font: inherit; color: inherit;
     }
+    .classify-btn:focus-visible { outline: 4px solid #1D4ED8; outline-offset: 3px; z-index: 1; }
+    .classify-btn:disabled { cursor: default; }
     .classify-btn:active { transform: scale(0.95); }
     .classify-btn svg { width: 56px; height: 56px; }
     .classify-btn.correct { border-color: #34C759; background: rgba(52,199,89,0.15); }
@@ -145,7 +147,9 @@
 
     @media (max-width: 480px) {
       .shape-showcase { grid-template-columns: repeat(2, 1fr); }
-      .classify-options { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .classify-options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 8px; max-width: 320px; margin: 0 auto; }
+      .classify-btn { min-width: 56px; min-height: 56px; padding: 2px; border-width: 2px; }
+      .classify-btn svg { width: min(56px, 100%); height: auto; }
     }
   </style>
 </head>
@@ -184,7 +188,7 @@
         <div class="classify-area">
           <p class="classify-prompt" id="classify-prompt">哪个是圆形？</p>
           <div class="classify-example" id="classify-shape"></div>
-          <div class="classify-options" id="classify-options"></div>
+          <div class="classify-options" id="classify-options" role="group" aria-labelledby="classify-prompt"></div>
         </div>
       </div>
     </div>
@@ -317,25 +321,29 @@
     // === 模式2: 分类游戏 ===
     (() => {
       let targetShape;
+      let answered = false;
       function newClassify() {
+        answered = false;
         targetShape = Random.pick(shapeKeys);
         document.getElementById('classify-prompt').textContent = `哪个是 ${SHAPES[targetShape].name}？`;
         document.getElementById('classify-shape').innerHTML = SHAPES[targetShape].svgSmall;
-        // 选项：正确答案 + 3个干扰项
-        const opts = [targetShape];
-        while (opts.length < 4) {
-          const k = Random.pick(shapeKeys);
-          if (!opts.includes(k)) opts.push(k);
-        }
-        const shuffled = Random.shuffle(opts);
+        // 从有限图形集合抽取干扰项，重复随机值也能完成出题。
+        const distractors = Random.shuffle(shapeKeys.filter(key => key !== targetShape)).slice(0, 3);
+        const shuffled = Random.shuffle([targetShape, ...distractors]);
         const container = document.getElementById('classify-options');
         container.innerHTML = '';
         shuffled.forEach(key => {
-          const btn = document.createElement('div');
+          const btn = document.createElement('button');
+          btn.type = 'button';
           btn.className = 'classify-btn';
+          btn.setAttribute('aria-label', SHAPES[key].name);
           btn.innerHTML = SHAPES[key].svgSmall;
+          btn.querySelector('svg').setAttribute('aria-hidden', 'true');
           btn.addEventListener('click', () => {
+            if (answered) return;
             if (key === targetShape) {
+              answered = true;
+              container.querySelectorAll('button').forEach(option => { option.disabled = true; });
               btn.classList.add('correct');
               streak++; Sound.play('correct'); celebrate();
               updateStreak(); bumpTotalCorrect();

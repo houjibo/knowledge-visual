@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：151；尚未登记：165。
+主题总数：316；已登记部分交互证据：152；尚未登记：164。
 
 ## 已登记部分交互证据
 
@@ -218,6 +218,8 @@
   - 桌面与移动视口使用六个固定随机值验证图示计数、五类挑战答案、四个唯一选项及单题重复提交；其他模式、存储异常与整页无障碍未全面验收。 [ratio-proportion-learning-correctness.spec.js](../../tests/browser/ratio-proportion-learning-correctness.spec.js)
 - [扇形统计图](../../math/topics/sector-statistics/index.html)
   - 扇形图滑块、估算提示及部分随机题目；未覆盖整页。 [pie-chart.spec.js](../../tests/browser/pie-chart.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
+- [认识图形与位置](../../math/topics/shapes-and-position/index.html)
+  - 桌面/移动固定随机 0、0.5、0.999999 验证页面加载、四个互异选项与目标图形；核对题目分组及图形按钮可访问名称、Space 错答与 Enter/Space/指针答对、答对锁定和单题计分，并在 320px 检查触控尺寸、SVG 边界及横向溢出。其他三个学习模式、整页屏幕阅读器与真实设备尚未全面验收。 [shapes-and-position-classification.spec.js](../../tests/browser/shapes-and-position-classification.spec.js)
 - [简单推理](../../math/topics/simple-reasoning/index.html)
   - 桌面和移动视口验证四类活动完成、重复提交、表格锁定、刷新目录与保存失败重试；真实设备及整页无障碍尚未全面验收。 [simple-reasoning-learning-completion.spec.js](../../tests/browser/simple-reasoning-learning-completion.spec.js)
   - 桌面及移动视口验证固定随机值、排除法线索唯一性和键盘、代换全部数值组合及两道修正逻辑题；其他题目、进度和真实设备尚未全面验收。 [simple-reasoning-question-correctness.spec.js](../../tests/browser/simple-reasoning-question-correctness.spec.js)
@@ -519,7 +521,6 @@
 - [集合（重叠问题）](../../math/topics/set-overlap/index.html)
 - [集合与韦恩图](../../math/topics/sets/index.html)
 - [图形的运动](../../math/topics/shape-motions/index.html)
-- [认识图形与位置](../../math/topics/shapes-and-position/index.html)
 - [简便计算](../../math/topics/simplified-calculation/index.html)
 - [统计与数据整理](../../math/topics/statistics/index.html)
 - [时间计算](../../math/topics/time-calculation/index.html)
