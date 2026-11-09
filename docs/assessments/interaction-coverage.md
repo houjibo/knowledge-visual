@@ -153,7 +153,7 @@
 - [时分秒](../../math/topics/hours-minutes-seconds/index.html)
   - 固定随机值生成、换算题切换与单次计分、四类挑战、午夜进位、排序和保存失败恢复；其他教学内容和完整无障碍未全面验收。 [time-units-practice-reliability.spec.js](../../tests/browser/time-units-practice-reliability.spec.js)
 - [除法初步认识](../../math/topics/intro-to-division/index.html)
-  - 桌面与移动固定随机 0、0.5、0.8、0.999999 验证页面初始化、分一分及三类选择题的互异选项和唯一答案、正确计数与下一题生成，并对写算式模式执行完整答题；0.8 覆盖除数等于商，320px 检查选项不横向溢出。完整教学内容、真实设备和整页无障碍尚未全面验收。 [intro-division-finite-options.spec.js](../../tests/browser/intro-division-finite-options.spec.js)
+  - 桌面与移动固定随机 0、0.5、0.8、0.999999 验证页面初始化、分一分及三类选择题的互异选项、邻近整数干扰项和唯一答案、正确计数与下一题生成，并对写算式模式执行完整答题；0.8 覆盖除数等于商，320px 检查选项不横向溢出。完整教学内容、真实设备和整页无障碍尚未全面验收。 [intro-division-finite-options.spec.js](../../tests/browser/intro-division-finite-options.spec.js)
 - [大数的认识](../../math/topics/large-numbers/index.html)
   - 桌面及移动视口验证跨数级零读法样例、固定随机出题、数位键盘、读写比较逐题计分及存储失败重试；全部读数值、近似数与真实设备尚未全面验收。 [large-numbers-reading-and-practice.spec.js](../../tests/browser/large-numbers-reading-and-practice.spec.js)
 - [折线统计图](../../math/topics/line-charts/index.html)

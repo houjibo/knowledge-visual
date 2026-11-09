@@ -9,6 +9,16 @@ function expectedShareAnswer(prompt) {
   return Number(match[1]) / Number(match[2]);
 }
 
+function expectedNearbyOptions(answer) {
+  const options = [answer];
+  for (let distance = 1; options.length < 3 && distance <= 8; distance += 1) {
+    for (const candidate of [answer - distance, answer + distance]) {
+      if (candidate >= 1 && candidate <= 9 && !options.includes(candidate)) options.push(candidate);
+    }
+  }
+  return options.map(String).sort((a, b) => Number(a) - Number(b));
+}
+
 function expectedQuizAnswer(question) {
   let match = question.match(/^(\d+)\s*÷\s*(\d+)\s*=\s*？$/);
   if (match) return String(Number(match[1]) / Number(match[2]));
@@ -62,6 +72,7 @@ for (const value of randomValues) {
     const shareAnswer = String(expectedShareAnswer(sharePrompt));
     expect(new Set(shareValues).size).toBe(3);
     expect(shareValues.filter(value => value === shareAnswer)).toHaveLength(1);
+    expect([...shareValues].sort((a, b) => Number(a) - Number(b))).toEqual(expectedNearbyOptions(Number(shareAnswer)));
 
     await watchForNextOptions(page, '#share-options');
     await page.locator(`#share-options .share-opt[data-val="${shareAnswer}"]`).click();
@@ -76,6 +87,9 @@ for (const value of randomValues) {
     const quizAnswer = expectedQuizAnswer(quizQuestion);
     expect(new Set(quizLabels).size).toBe(3);
     expect(quizLabels.filter(label => label === quizAnswer)).toHaveLength(1);
+    if (/^\d+\s*÷/.test(quizQuestion)) {
+      expect([...quizLabels].sort((a, b) => Number(a) - Number(b))).toEqual(expectedNearbyOptions(Number(quizAnswer)));
+    }
 
     await watchForNextOptions(page, '#quiz-options');
     await quizOptions.filter({ hasText: new RegExp(`^${quizAnswer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) }).click();
