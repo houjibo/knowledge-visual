@@ -122,7 +122,7 @@ test('手机手指可拖动弹簧，取消触摸后可再次操作', async ({pag
   await touch('touchMove', [point(410, 280)]);
   await expect.poll(() => page.evaluate(() => manualSpringStretch)).toBeLessThan(-30);
   await touch('touchCancel', []);
-  expect(await page.evaluate(() => ({stretch: manualSpringStretch, dragging: isDragging, pointer: activePointerId}))).toEqual({stretch: 0, dragging: false, pointer: null});
+  await expect.poll(() => page.evaluate(() => ({stretch: manualSpringStretch, dragging: isDragging, pointer: activePointerId}))).toEqual({stretch: 0, dragging: false, pointer: null});
   await touch('touchStart', [point(450, 280)]);
   await touch('touchMove', [point(490, 280)]);
   await expect.poll(() => page.evaluate(() => manualSpringStretch)).toBeGreaterThan(30);
