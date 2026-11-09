@@ -290,6 +290,17 @@
       return arr;
     }
 
+    function buildOptions(answer, format, candidates) {
+      const distractors = [...new Set(candidates)]
+        .filter(value => Number.isFinite(value) && value > 0 && value !== answer)
+        .sort((a, b) => Math.abs(a - answer) - Math.abs(b - answer) || a - b)
+        .slice(0, 3);
+      if (distractors.length !== 3) {
+        throw new Error('近似数题目的有限候选不足以组成四个唯一选项');
+      }
+      return shuffle([format(answer), ...distractors.map(format)]);
+    }
+
     function formatNumber(num) {
       return num.toLocaleString('zh-CN');
     }
@@ -326,62 +337,44 @@
       document.getElementById('round-feedback').innerHTML = '';
 
       const type = randInt(0, 2);
-      let num, target, unit, answer, options = [];
+      let num, target, answer, options = [];
 
       if (type === 0) {
         // 省略万位后面的尾数
         num = randInt(10000, 99999999);
         target = '省略万位后面的尾数';
-        unit = 10000;
+        const unit = 10000;
         answer = roundTo(num, unit);
-        const answerText = (answer / 10000) + '万';
-        
-        options = [answerText];
-        while (options.length < 4) {
-          const fake = answer + (randInt(0, 1) === 0 ? 1 : -1) * 10000 * randInt(1, 3);
-          if (fake > 0) {
-            const fakeText = (fake / 10000) + '万';
-            if (!options.includes(fakeText)) options.push(fakeText);
-          }
-        }
-        options = shuffle(options);
-        answer = answerText;
+        options = buildOptions(
+          answer,
+          value => (value / unit) + '万',
+          [-3, -2, -1, 1, 2, 3].map(offset => answer + offset * unit)
+        );
+        answer = (answer / 10000) + '万';
       } else if (type === 1) {
         // 省略亿位后面的尾数
         num = randInt(100000000, 9999999999);
         target = '省略亿位后面的尾数';
-        unit = 100000000;
+        const unit = 100000000;
         answer = roundTo(num, unit);
-        const answerText = (answer / 100000000) + '亿';
-        
-        options = [answerText];
-        while (options.length < 4) {
-          const fake = answer + (randInt(0, 1) === 0 ? 1 : -1) * 100000000 * randInt(1, 2);
-          if (fake > 0) {
-            const fakeText = (fake / 100000000) + '亿';
-            if (!options.includes(fakeText)) options.push(fakeText);
-          }
-        }
-        options = shuffle(options);
-        answer = answerText;
+        options = buildOptions(
+          answer,
+          value => (value / unit) + '亿',
+          [-2, -1, 1, 2].map(offset => answer + offset * unit)
+        );
+        answer = (answer / 100000000) + '亿';
       } else {
         // 省略千位后面的尾数
         num = randInt(1000, 999999);
         target = '省略千位后面的尾数';
-        unit = 1000;
+        const unit = 1000;
         answer = roundTo(num, unit);
-        const answerText = formatNumber(answer);
-        
-        options = [answerText];
-        while (options.length < 4) {
-          const fake = answer + (randInt(0, 1) === 0 ? 1 : -1) * 1000 * randInt(1, 3);
-          if (fake > 0) {
-            const fakeText = formatNumber(fake);
-            if (!options.includes(fakeText)) options.push(fakeText);
-          }
-        }
-        options = shuffle(options);
-        answer = answerText;
+        options = buildOptions(
+          answer,
+          formatNumber,
+          [-3, -2, -1, 1, 2, 3].map(offset => answer + offset * unit)
+        );
+        answer = formatNumber(answer);
       }
 
       document.getElementById('round-num').textContent = formatNumber(num);
@@ -512,12 +505,11 @@
         const approx = exact / 10000;
         question = `${scene.emoji} ${scene.name}有 <span class="highlight-num">${formatNumber(exact)}</span> 人，<br>用"万"作单位约是（ ）`;
         answer = approx + '万';
-        options = [answer];
-        while (options.length < 4) {
-          const fake = approx + randInt(-3, 3);
-          if (fake > 0 && !options.includes(fake + '万')) options.push(fake + '万');
-        }
-        options = shuffle(options);
+        options = buildOptions(
+          approx,
+          value => value + '万',
+          [-3, -2, -1, 1, 2, 3].map(offset => approx + offset)
+        );
       } else if (type === 1) {
         // 判断哪个是近似数
         const base = randInt(100, 999);
@@ -525,12 +517,11 @@
         question = `下面哪个数最接近 <span class="highlight-num">${formatNumber(exact)}</span>？`;
         const correct = base + '万';
         answer = correct;
-        options = [correct];
-        while (options.length < 4) {
-          const fake = base + randInt(-5, 5);
-          if (fake > 0 && !options.includes(fake + '万')) options.push(fake + '万');
-        }
-        options = shuffle(options);
+        options = buildOptions(
+          base,
+          value => value + '万',
+          [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5].map(offset => base + offset)
+        );
       } else {
         // 估算问题
         const price = randInt(2, 9) * 100000;
@@ -538,12 +529,11 @@
         const total = price * count;
         question = `一套房子约 <span class="highlight-num">${price / 10000}万</span> 元，<br>买 <span class="highlight-num">${count}</span> 套大约需要多少钱？`;
         answer = (total / 10000) + '万元';
-        options = [answer];
-        while (options.length < 4) {
-          const fake = total + (randInt(0, 1) === 0 ? 1 : -1) * price * randInt(1, 2);
-          if (fake > 0 && !options.includes((fake / 10000) + '万元')) options.push((fake / 10000) + '万元');
-        }
-        options = shuffle(options);
+        options = buildOptions(
+          total,
+          value => (value / 10000) + '万元',
+          [-2, -1, 1, 2].map(offset => total + offset * price)
+        );
       }
 
       document.getElementById('app-scene').textContent = scene.emoji;
