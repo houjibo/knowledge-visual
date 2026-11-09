@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：164；尚未登记：152。
+主题总数：316；已登记部分交互证据：165；尚未登记：151。
 
 ## 已登记部分交互证据
 
@@ -239,6 +239,8 @@
   - 桌面与移动视口固定随机 0、0.5、0.8、0.999999 验证四舍五入和三类应用题的唯一答案与有限选项、正确计分及下一题生成；320px 核对选项可见边界与触控尺寸。学习内容整体、真实设备及整页无障碍尚未全面验收。 [rounding-number-finite-options.spec.js](../../tests/browser/rounding-number-finite-options.spec.js)
 - [扇形统计图](../../math/topics/sector-statistics/index.html)
   - 扇形图滑块、估算提示及部分随机题目；未覆盖整页。 [pie-chart.spec.js](../../tests/browser/pie-chart.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
+- [集合（重叠问题）](../../math/topics/set-overlap/index.html)
+  - 桌面与移动固定随机值验证练习和十题挑战在重复候选及零重叠答案下有限生成四个互异选项、正确答案唯一、答题反馈和计分；320px 检查两种模式无横向溢出。真实设备和整页无障碍尚未全面验收。 [set-overlap-bounded-options.spec.js](../../tests/browser/set-overlap-bounded-options.spec.js)
 - [认识图形与位置](../../math/topics/shapes-and-position/index.html)
   - 桌面/移动固定随机 0、0.5、0.999999 验证页面加载、四个互异选项与目标图形；核对题目分组及图形按钮可访问名称、Space 错答与 Enter/Space/指针答对、答对锁定和单题计分，并在 320px 检查触控尺寸、SVG 边界及横向溢出。其他三个学习模式、整页屏幕阅读器与真实设备尚未全面验收。 [shapes-and-position-classification.spec.js](../../tests/browser/shapes-and-position-classification.spec.js)
 - [简单推理](../../math/topics/simple-reasoning/index.html)
@@ -533,7 +535,6 @@
 - [可能性](../../math/topics/possibility/index.html)
 - [认识四边形](../../math/topics/quadrilaterals/index.html)
 - [图形的放大与缩小](../../math/topics/scale-drawings/index.html)
-- [集合（重叠问题）](../../math/topics/set-overlap/index.html)
 - [集合与韦恩图](../../math/topics/sets/index.html)
 - [图形的运动](../../math/topics/shape-motions/index.html)
 - [简便计算](../../math/topics/simplified-calculation/index.html)
