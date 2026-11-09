@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：160；尚未登记：156。
+主题总数：316；已登记部分交互证据：161；尚未登记：155。
 
 ## 已登记部分交互证据
 
@@ -227,6 +227,8 @@
   - 桌面及移动视口验证 1–50 质数判断、6–36 因数选项、键盘筛选与三类活动完成、刷新目录及保存失败恢复；真实设备及整页无障碍尚未全面验收。 [prime-composite-learning-reliability.spec.js](../../tests/browser/prime-composite-learning-reliability.spec.js)
 - [比和比例](../../math/topics/ratio-and-proportion/index.html)
   - 桌面与移动视口使用六个固定随机值验证图示计数、五类挑战答案、四个唯一选项及单题重复提交；其他模式、存储异常与整页无障碍未全面验收。 [ratio-proportion-learning-correctness.spec.js](../../tests/browser/ratio-proportion-learning-correctness.spec.js)
+- [比的应用](../../math/topics/ratio-applications/index.html)
+  - 桌面与移动固定随机 0、0.5、0.999999 验证页面加载、按题面独立计算答案、四个正整数唯一选项与 ±10 干扰范围、正确计分和下一题；循环随机序列核验错误反馈、答案显示和单题锁定；320px 检查选项边界及页面横向溢出。其他学习模式、真实设备与整页无障碍尚未全面验收。 [ratio-applications-challenge-reliability.spec.js](../../tests/browser/ratio-applications-challenge-reliability.spec.js)
 - [近似数](../../math/topics/rounding-numbers/index.html)
   - 桌面与移动视口固定随机 0、0.5、0.8、0.999999 验证四舍五入和三类应用题的唯一答案与有限选项、正确计分及下一题生成；320px 核对选项可见边界与触控尺寸。学习内容整体、真实设备及整页无障碍尚未全面验收。 [rounding-number-finite-options.spec.js](../../tests/browser/rounding-number-finite-options.spec.js)
 - [扇形统计图](../../math/topics/sector-statistics/index.html)
@@ -527,7 +529,6 @@
 - [鸽巢问题](../../math/topics/pigeonhole-problem/index.html)
 - [可能性](../../math/topics/possibility/index.html)
 - [认识四边形](../../math/topics/quadrilaterals/index.html)
-- [比的应用](../../math/topics/ratio-applications/index.html)
 - [图形的放大与缩小](../../math/topics/scale-drawings/index.html)
 - [集合（重叠问题）](../../math/topics/set-overlap/index.html)
 - [集合与韦恩图](../../math/topics/sets/index.html)
