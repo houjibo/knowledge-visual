@@ -229,6 +229,21 @@
     // ========== 工具函数 ==========
     function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
     function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = randInt(0, i); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+    function nearbyNumbers(answer, min, max) {
+      const candidates = [];
+      for (let distance = 1; distance <= max - min; distance++) {
+        for (const value of [answer - distance, answer + distance]) {
+          if (value >= min && value <= max) candidates.push(value);
+        }
+      }
+      return candidates;
+    }
+    function uniqueOptions(answer, candidates) {
+      const available = [...new Set(candidates)].filter(value => String(value) !== String(answer));
+      const distractors = shuffle(available).slice(0, 2);
+      if (distractors.length !== 2) throw new Error('选择题需要两个互异干扰项');
+      return shuffle([answer, ...distractors]);
+    }
     const emojis = ['🍎', '🍊', '🍋', '🍇', '🍓', '🍬', '🍪', '🧁', '⭐', '🎈'];
 
     // ========== 分一分 ==========
@@ -249,11 +264,7 @@
       }
       document.getElementById('share-groups').innerHTML = groupsHtml;
 
-      const options = shuffle([quotient, quotient + randInt(1, 2), Math.max(1, quotient - randInt(1, 2))]);
-      // ensure unique options
-      const uniqueOpts = [...new Set(options)];
-      while (uniqueOpts.length < 3) uniqueOpts.push(randInt(1, 9));
-      shuffle(uniqueOpts);
+      const uniqueOpts = uniqueOptions(quotient, nearbyNumbers(quotient, 1, 9));
 
       let optsHtml = '';
       uniqueOpts.forEach(opt => {
@@ -353,12 +364,7 @@
         const total = divisor * quotient;
         question = `${total} ÷ ${divisor} = ？`;
         answer = quotient;
-        const wrongs = new Set();
-        while (wrongs.size < 2) {
-          const w = quotient + randInt(-2, 3);
-          if (w > 0 && w !== quotient) wrongs.add(w);
-        }
-        options = shuffle([quotient, ...wrongs]);
+        options = uniqueOptions(quotient, nearbyNumbers(quotient, 1, 9));
       } else if (type === 1) {
         // 选算式
         const divisor = randInt(2, 5);
@@ -366,10 +372,9 @@
         const total = divisor * quotient;
         question = `把 ${total} 个苹果平均分给 ${divisor} 个小朋友，每人几个？列式为：`;
         answer = `${total} ÷ ${divisor} = ${quotient}`;
-        options = shuffle([
-          `${total} ÷ ${divisor} = ${quotient}`,
-          `${total} ÷ ${quotient} = ${divisor}`,
-          `${divisor} × ${quotient} = ${total}`
+        options = uniqueOptions(answer, [
+          `${total} ÷ ${divisor} = ${quotient - 1}`,
+          `${total} ÷ ${divisor} = ${quotient + 1}`
         ]);
       } else {
         // 求除数
@@ -378,12 +383,7 @@
         const total = divisor * quotient;
         question = `${total} ÷ ？ = ${quotient}，除数是多少？`;
         answer = divisor;
-        const wrongs = new Set();
-        while (wrongs.size < 2) {
-          const w = divisor + randInt(-2, 3);
-          if (w > 0 && w !== divisor) wrongs.add(w);
-        }
-        options = shuffle([divisor, ...wrongs]);
+        options = uniqueOptions(divisor, nearbyNumbers(divisor, 1, 9));
       }
 
       document.getElementById('quiz-question').textContent = question;
