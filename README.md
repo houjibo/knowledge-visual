@@ -1,31 +1,32 @@
-# knowledge-visual
+# 知识可视化学习站
 
-知识可视化学习站：按学科和学段组织互动可视化内容，帮助学习者通过观察和操作理解知识。
+通过图示、动画和互动探索数学、物理、化学与小学科学，帮助不同学段的学习者观察变化、理解概念并检验自己的判断。
 
-## 开始学习
+**在线学习：**[打开知识可视化学习站](https://houjibo.github.io/knowledge-visual/)
 
-用浏览器直接打开 [首页](index.html)，或在仓库根目录启动静态服务器：
+## 学习内容
+
+- **数学：**小学、初中、高中和大学主题
+- **物理：**初中、高中和大学主题
+- **化学：**初中、高中和大学主题
+- **科学：**小学主题
+
+## 如何使用
+
+### 在线学习
+
+打开[在线站点](https://houjibo.github.io/knowledge-visual/)，选择学科、学段和主题。通过页面中的动画、图表、滑块和练习观察概念变化；学习进度保存在当前浏览器中。
+
+### 本地预览
+
+项目是静态网页，无需构建。克隆仓库后，在仓库根目录运行：
 
 ```sh
 python3 -m http.server 8000
 ```
 
-然后访问 <http://localhost:8000/>。首页可按关键词、学科和学段查找主题，也可选择数学、物理、化学或小学科学，逐级进入学习内容。
+然后访问 <http://localhost:8000/>。
 
-## 目录
+## 反馈
 
-- `index.html`：学科入口。
-- `math/`：小学数学知识地图（`topics/` 中每个主题一个目录），以及 `middle/`、`high/`、`uni/` 学段页面。
-- `physics/`、`chemistry/`：初中、高中、大学学段导航和主题页面。
-- `science/`：小学科学导航和主题页面。
-- 各目录中的 `assets/` 保存相关共享资源；部分主题页面也自包含样式或脚本。
-
-## 项目方向
-
-项目正逐步建设独立发布的可视化学习站，完善内容质量、发布检查和持续维护。具体目标与进度见 [站点发布与专业化运营计划](docs/plans/site-operations.md)。
-
-## 参与维护
-
-从 [项目架构](docs/architecture.md)、[工程约束](docs/constraints.md) 和 [工作流](docs/workflows/README.md) 开始。运行 `python3 scripts/check_site.py` 检查静态引用、索引和部分学段进度总数；检查范围和浏览器验证要求见工程约束。[OpenSpec](openspec/README.md) 记录能力契约与变更。
-
-部分小学内容合并自 `primary-math-visual` 项目。
+发现内容错误、交互问题或有改进建议时，请在[项目问题区](https://github.com/houjibo/knowledge-visual/issues)提交反馈。
