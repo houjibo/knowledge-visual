@@ -13,4 +13,4 @@
 ## 3. 集成与发布
 
 - [x] 3.1 运行桌面/移动专项测试、静态检查、严格 OpenSpec 与完整 `npm run check`。
-- [ ] 3.2 提交推送并核实 Actions、Pages revision、本地与公网练习作答。
+- [x] 3.2 提交推送并核实 Actions、Pages revision、本地与公网练习作答。提交 `87fd8acf088e6253e1c974932c9a4161479972f6` 的 Actions run #191 检查、构建、部署和部署后验证全部成功；公开清单 revision 匹配且 `site_files_modified:false`；本地和公网的找图形、猜图形练习均已打开并正确作答计分。
