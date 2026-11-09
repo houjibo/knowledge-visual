@@ -11,5 +11,5 @@
 ## 3. 集成与发布
 
 - [x] 3.1 运行桌面/移动专项、窄屏检查和完整 `npm run check`。
-- [ ] 3.2 推送并确认 Actions 检查、Pages 部署、发布清单 revision 和部署后浏览器验证通过。
-- [ ] 3.3 更新 `docs/gaps.md`，严格校验并归档 OpenSpec 变更。
+- [x] 3.2 推送提交 `576b9005875ea1a28a2b5d9f525b350c4742f720`；Actions #198 检查、构建、部署和部署后验证通过，公网发布清单 revision 匹配。
+- [x] 3.3 更新 `docs/gaps.md`，严格校验并归档 OpenSpec 变更。

@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：162；尚未登记：154。
+主题总数：316；已登记部分交互证据：163；尚未登记：153。
 
 ## 已登记部分交互证据
 
@@ -135,6 +135,8 @@
 - [圆柱和圆锥](../../math/topics/cylinder-cone/index.html)
   - 探索模式半径高度边界、圆锥母线和面积、比较练习与重复提交；挑战、真实设备及整页无障碍未全面验收。 [cylinder-cone-exploration-correctness.spec.js](../../tests/browser/cylinder-cone-exploration-correctness.spec.js)
   - 圆柱圆锥随机边界、闯关反馈、五关保存、十关重玩及失败恢复；真实设备和整页无障碍未全面验收。 [cylinder-cone-challenge-reliability.spec.js](../../tests/browser/cylinder-cone-challenge-reliability.spec.js)
+- [小数加减法](../../math/topics/decimal-addition-subtraction/index.html)
+  - 桌面与移动固定随机值 0 验证页面初始化；独立生成加减应用题和四类挑战题，核对题面计算、选项唯一及正确答案标记；覆盖最小候选和 320px 窄屏。真实设备和整页无障碍尚未全面验收。 [decimal-addition-subtraction-reliability.spec.js](../../tests/browser/decimal-addition-subtraction-reliability.spec.js)
 - [小数乘除法](../../math/topics/decimal-multiplication-division/index.html)
   - 桌面及移动视口验证乘除生成边界、示例符号、等值小数、挑战固定随机与暂停、三项完成及存储失败重试；真实设备与整页无障碍尚未全面验收。 [decimal-multiplication-division-reliability.spec.js](../../tests/browser/decimal-multiplication-division-reliability.spec.js)
 - [有余数的除法](../../math/topics/division-with-remainder/index.html)
@@ -506,7 +508,6 @@
 - [复式统计图](../../math/topics/compound-charts/index.html)
 - [复式统计表](../../math/topics/compound-statistical-tables/index.html)
 - [数据收集与整理](../../math/topics/data-collection/index.html)
-- [小数加减法](../../math/topics/decimal-addition-subtraction/index.html)
 - [小数的初步认识](../../math/topics/decimals/index.html)
 - [数字编码](../../math/topics/digital-codes/index.html)
 - [正反比例](../../math/topics/direct-inverse-proportion/index.html)

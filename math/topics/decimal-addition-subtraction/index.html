@@ -279,6 +279,28 @@
       return parseFloat(num.toFixed(4)).toString();
     }
 
+    function addNumericOption(options, value, minimum) {
+      var numeric = parseFloat(value);
+      if (!Number.isFinite(numeric) || numeric < minimum) return false;
+
+      var formatted = formatAnswer(numeric);
+      numeric = parseFloat(formatted);
+      if (!Number.isFinite(numeric) || numeric < minimum) return false;
+      for (var i = 0; i < options.length; i++) {
+        if (parseFloat(options[i]) === numeric) return false;
+      }
+      options.push(formatted);
+      return true;
+    }
+
+    function fillFiniteNumericOptions(options, answer, minimum) {
+      for (var step = 1; step <= 20 && options.length < 4; step++) {
+        addNumericOption(options, parseFloat(answer) + step * 0.1, minimum);
+        addNumericOption(options, parseFloat(answer) - step * 0.1, minimum);
+      }
+      return options;
+    }
+
     // ========== 模式1: 对齐演示 ==========
     var alignAnswer = '';
     function newAlignProblem() {
@@ -418,9 +440,11 @@
       var scene = Random.pick(appScenes);
       var unit = appUnits[scene.icon];
       var isAdd = Math.random() > 0.35;
-      var item1 = Random.pick(scene.items);
-      var item2;
-      do { item2 = Random.pick(scene.items); } while (item2 === item1);
+      var item1Index = Random.int(0, scene.items.length - 1);
+      var item1 = scene.items[item1Index];
+      var item2 = isAdd
+        ? scene.items[(item1Index + Random.int(1, scene.items.length - 1)) % scene.items.length]
+        : item1;
 
       var places = Random.int(1, 2);
       var v1, v2, answer, question, options;
@@ -454,15 +478,9 @@
       var allOpts = [correctStr];
       var candidates = [wrong1, wrong2, wrong3, formatAnswer(answer + 1), formatAnswer(answer - 0.1)];
       for (var i = 0; i < candidates.length && allOpts.length < 4; i++) {
-        var c = candidates[i];
-        if (c !== correctStr && allOpts.indexOf(c) === -1 && parseFloat(c) > 0) {
-          allOpts.push(c);
-        }
+        addNumericOption(allOpts, candidates[i], 0);
       }
-      while (allOpts.length < 4) {
-        var r = formatAnswer(answer + Random.int(-5, 5) * 0.1);
-        if (r !== correctStr && allOpts.indexOf(r) === -1 && parseFloat(r) >= 0) allOpts.push(r);
-      }
+      fillFiniteNumericOptions(allOpts, answer, 0);
 
       var shuffled = Random.shuffle(allOpts);
       var optHtml = '';
@@ -670,10 +688,7 @@
         question = a + ' + ? = ' + formatAnswer(sum) + '\n? 是多少？';
         answer = formatAnswer(parseFloat(b));
         options = [answer];
-        while (options.length < 4) {
-          var w = formatAnswer(parseFloat(b) + Random.pick([-1, 1, -0.1, 0.1, 2, -2]));
-          if (options.indexOf(w) === -1 && parseFloat(w) > 0) options.push(w);
-        }
+        fillFiniteNumericOptions(options, answer, 0.0001);
       } else if (type === 3) {
         // 估算
         var a = randDecimal(10, 99, 1);
@@ -695,10 +710,7 @@
         question = '? − ' + formatAnswer(parseFloat(b)) + ' = ' + formatAnswer(diff) + '\n? 是多少？';
         answer = formatAnswer(parseFloat(a));
         options = [answer];
-        while (options.length < 4) {
-          var w = formatAnswer(parseFloat(a) + Random.pick([-1, 1, -0.1, 0.1, 5, -5]));
-          if (options.indexOf(w) === -1 && parseFloat(w) > 0) options.push(w);
-        }
+        fillFiniteNumericOptions(options, answer, 0.0001);
       }
 
       options = Random.shuffle(options.slice(0, 4));
