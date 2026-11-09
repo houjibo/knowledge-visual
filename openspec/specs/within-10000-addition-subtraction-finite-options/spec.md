@@ -1,0 +1,31 @@
+# within-10000-addition-subtraction-finite-options Specification
+
+## Purpose
+TBD - created by archiving change finite-addition-subtraction-options. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 万以内加减法选择题有限生成唯一选项
+
+选择挑战和估算练习 SHALL 使用有限候选生成四个互异的非负整数选项，并恰有一个符合当前题目规则的正确答案。选项生成 SHALL 在随机值重复时完成。估算答案与精确答案不同时，精确值 SHALL 保留为干扰项。
+
+#### Scenario: 固定随机值下首次加载
+
+- **WHEN** 页面以固定随机值 0、0.5 或 0.999999 初始化
+- **THEN** 竖式演示、口算、选择挑战、估算和应用题均完成初始化
+
+#### Scenario: 选择挑战具有唯一答案
+
+- **WHEN** 学习者打开选择挑战
+- **THEN** 页面显示四个互异的非负整数选项，且只有一个等于题目的精确计算结果
+
+#### Scenario: 估算题区分估算值和精确值
+
+- **WHEN** 学习者打开估算练习
+- **THEN** 四个选项互异，且只有一个等于两个操作数取整百后的估算结果
+- **AND** 当估算结果与精确结果不同，精确结果作为干扰项出现
+
+#### Scenario: 答题后生成下一题
+
+- **WHEN** 学习者在选择挑战或估算练习中选择正确答案
+- **THEN** 相应正确计数增加一次，并生成下一道具有四个互异选项的题目

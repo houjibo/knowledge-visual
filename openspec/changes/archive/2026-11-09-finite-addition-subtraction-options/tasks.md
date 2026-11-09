@@ -14,4 +14,4 @@
 
 - [x] 3.1 Register the browser test and refresh interaction evidence, coverage, risk, and gap indexes.
 - [x] 3.2 Run targeted desktop/mobile tests, static validation, and the full project check.
-- [ ] 3.3 Commit, push, verify Actions and Pages, and inspect the local and public page.
+- [x] 3.3 Commit, push, verify Actions and Pages, and inspect the local and public page.
