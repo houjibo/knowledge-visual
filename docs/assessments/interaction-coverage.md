@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：150；尚未登记：166。
+主题总数：316；已登记部分交互证据：151；尚未登记：165。
 
 ## 已登记部分交互证据
 
@@ -171,6 +171,8 @@
 - [乘法的初步认识](../../math/topics/multiplication-intro/index.html)
   - 桌面与移动视口验证四项活动完成、主动切题、重复提交、完成记录刷新及目录徽章、保存失败重试；真实设备及整页无障碍尚未全面验收。 [multiplication-intro-learning-completion.spec.js](../../tests/browser/multiplication-intro-learning-completion.spec.js)
   - 桌面及移动视口检查常量随机加载、三类练习键盘作答，枚举全部整数参数并验证四个不同选项与唯一正确答案；真实设备、进度记录和整页无障碍尚未全面验收。 [multiplication-intro-question-correctness.spec.js](../../tests/browser/multiplication-intro-question-correctness.spec.js)
+- [乘法口诀表](../../math/topics/multiplication-tables/index.html)
+  - 桌面与移动视口以固定 Math.random 0、0.4、0.5、0.999999 覆盖首次加载、填空唯一答案、看积题全部正确因数对、互异错误因数对、答对反馈及下一题生成；其他学习模式、整页教学内容、真实设备和完整无障碍未全面验收。 [bounded-multiplication-table-generators.spec.js](../../tests/browser/bounded-multiplication-table-generators.spec.js)
 - [负数的初步认识](../../math/topics/negative-numbers/index.html)
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [数的组成](../../math/topics/number-composition/index.html)
@@ -499,7 +501,6 @@
 - [线段、射线、直线](../../math/topics/line-segment-ray/index.html)
 - [认识线段](../../math/topics/line-segments/index.html)
 - [混合运算](../../math/topics/mixed-operations/index.html)
-- [乘法口诀表](../../math/topics/multiplication-tables/index.html)
 - [表内乘法](../../math/topics/multiplication/index.html)
 - [数与形](../../math/topics/number-and-shape/index.html)
 - [观察物体](../../math/topics/observing-objects/index.html)

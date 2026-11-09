@@ -337,14 +337,14 @@
           probEl.innerHTML = `${a} × <span class="fill-blank">?</span> = ${a * b}`;
         }
 
-        // 生成4个选项
-        let opts = new Set([answer]);
-        while (opts.size < 4) {
-          let fake = answer + Random.int(-5, 5);
-          if (fake >= 1 && fake <= 81 && fake !== answer) opts.add(fake);
-          else opts.add(Random.int(1, 9));
+        // 从有限近邻候选中取三个干扰项，避免重复随机值卡住出题。
+        const low = Math.max(1, answer - 5);
+        const high = Math.min(81, answer + 5);
+        const distractors = [];
+        for (let value = low; value <= high; value++) {
+          if (value !== answer) distractors.push(value);
         }
-        let optArr = Random.shuffle([...opts]);
+        const optArr = Random.shuffle([answer].concat(Random.shuffle(distractors).slice(0, 3)));
         optArr.forEach(v => {
           const btn = document.createElement('button');
           btn.className = 'fill-opt';
@@ -395,18 +395,17 @@
           }
         }
 
-        // 生成选项：正确答案 + 干扰项
-        let options = [];
-        allPairs.forEach(p => options.push(p));
-        while (options.length < 4) {
-          const fa = Random.int(1, 9), fb = Random.int(fa, 9);
-          if (fa * fb !== product) {
-            // 避免重复
-            const exists = options.some(o => o[0] === fa && o[1] === fb);
-            if (!exists) options.push([fa, fb]);
+        // 保留该积的所有口诀，再从有限且不重复的错误因数对中补足四项。
+        const distractors = [];
+        for (let i = 1; i <= 9; i++) {
+          for (let j = i; j <= 9; j++) {
+            if (i * j !== product) distractors.push([i, j]);
           }
         }
-        options = Random.shuffle(options.slice(0, 4));
+        const remainingCount = 4 - allPairs.length;
+        const options = Random.shuffle(
+          allPairs.concat(Random.shuffle(distractors).slice(0, remainingCount))
+        );
 
         const optsEl = document.getElementById('product-options');
         optsEl.innerHTML = '';
