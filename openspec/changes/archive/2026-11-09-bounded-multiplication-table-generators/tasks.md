@@ -11,4 +11,4 @@
 
 - [x] 3.1 更新差距清单和交互证据索引，确认新测试已注册且生成索引检查通过。
 - [x] 3.2 运行 `npm run check` 与 `openspec validate --all --strict`；确认完整浏览器、330 页冒烟及发布包检查通过后归档 OpenSpec 变更。
-- [ ] 3.3 提交推送并核对 GitHub Actions、Pages 发布 revision，以及本地和公网乘法口诀表两种练习的实际交互。
+- [x] 3.3 提交推送并核对 GitHub Actions、Pages 发布 revision，以及本地和公网乘法口诀表两种练习的实际交互。
