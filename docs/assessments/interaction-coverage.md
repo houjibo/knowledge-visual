@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：155；尚未登记：161。
+主题总数：316；已登记部分交互证据：156；尚未登记：160。
 
 ## 已登记部分交互证据
 
@@ -95,6 +95,8 @@
 - [认识算盘](../../math/topics/abacus/index.html)
   - 桌面与移动视口验证三类活动完成、刷新及知识地图节点、存储失败重试，以及受控时钟下切换模式和模拟隐藏页面的暂停恢复；真实设备与整页无障碍尚未全面验收。 [abacus-learning-completion-and-timer.spec.js](../../tests/browser/abacus-learning-completion-and-timer.spec.js)
   - 桌面和移动视口验证 0–9 珠子间距与数值、键盘拨数、固定随机读数、单题计分及挑战重复提交；挑战切换模式的计时、完成记录与真实设备尚未全面验收。 [abacus-learning-interaction-reliability.spec.js](../../tests/browser/abacus-learning-interaction-reliability.spec.js)
+- [100以内加减法](../../math/topics/addition-subtraction-within-100/index.html)
+  - 桌面与移动固定随机 0、0.5、0.999999 验证限时挑战启动、四个互异非负选项、精确答案及 ±10 干扰项、正确计分和下一题；320px 检查选项边界与触控高度。其余教学模式、真实设备和整页无障碍尚未全面验收。 [finite-within-100-addition-subtraction-challenge-options.spec.js](../../tests/browser/finite-within-100-addition-subtraction-challenge-options.spec.js)
 - [万以内加减法](../../math/topics/addition-subtraction-within-10000/index.html)
   - 桌面与移动视口固定随机 0、0.5、0.999999 验证页面初始化、挑战及估算的互异非负选项、答案范围、近似答案与精确值干扰项、正确计分及下一题生成；320px 检查选项边界与触控尺寸。其余学习内容、真实设备和整页无障碍尚未全面验收。 [addition-subtraction-within-10000-finite-options.spec.js](../../tests/browser/addition-subtraction-within-10000-finite-options.spec.js)
 - [10以内加减法](../../math/topics/addition/index.html)
@@ -483,7 +485,6 @@
 - [相似 - 初中数学九年级](../../math/middle/similarity.html)
 - [三角形与全等 - 初中数学八年级](../../math/middle/triangle-congruence.html)
 - [锐角三角函数 - 初中数学九年级](../../math/middle/trigonometric-functions.html)
-- [100以内加减法](../../math/topics/addition-subtraction-within-100/index.html)
 - [平均数](../../math/topics/average/index.html)
 - [轴对称图形](../../math/topics/axis-symmetry/index.html)
 - [统计图表的选择](../../math/topics/chart-selection/index.html)
