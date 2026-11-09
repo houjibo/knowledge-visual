@@ -1,6 +1,6 @@
 # 项目差距与后续方向
 
-最后核查：2026-11-09；基于仓库文件、Actions 状态和公开站点核验，而非全站人工审计。优先级是当前判断，不代表已排期；每次交付应复核相关项并把可执行工作转为 OpenSpec change。
+最后核查：2026-11-10；基于仓库文件、Actions 状态和公开站点核验，而非全站人工审计。优先级是当前判断，不代表已排期；每次交付应复核相关项并把可执行工作转为 OpenSpec change。
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
@@ -126,6 +126,7 @@
 | 高 | 小学数学“植树问题”练习在页面初始化时通过无界随机重抽生成选项；固定随机值 0 已复现为 2.5 秒页面加载超时。现改为有限偏移候选并让两个生成器共用；固定随机 0、0.5、0.999999、独立答案计算、最小/最大答案 2/16、正确计分、下一题和 320px 桌面/移动回归 12/12 通过。完整 `npm run check`（浏览器 1512 项、全站冒烟 330 项、发布包 6 项及发布页 330 项）与严格 OpenSpec（220 项）通过；OpenSpec 归档严格校验 248 项通过。提交 `7e695bfc4651cfc3684f2eee9c04589fe07bbfff` 的 [Actions run #185](https://github.com/houjibo/knowledge-visual/actions/runs/42597016190) 检查、构建、Pages 部署和部署后验证全部成功，公开清单 revision 匹配且 `site_files_modified:false`；本地与公网练习页均已打开并正确作答计分。教学内容整体、真实设备和整页无障碍仍未全面核验；[OpenSpec 变更](../openspec/changes/archive/2026-11-09-finite-tree-planting-challenge-options/proposal.md) 与[交互证据](assessments/interaction-coverage.md)。 | 继续复现风险清单中的随机生成候选，并优先核对可视化内容与题目依据。 |
 | 高 | 小学数学“认识线段”的数线段练习在首次加载时通过无界随机重抽补齐选项；固定随机值 0、0.25、0.5、0.999999 均使页面脚本卡住。现改用有限的正整数邻近候选，覆盖四种答案、正确反馈、计分与下一题。桌面/移动专项回归 12/12 通过；完整 `npm run check` 的严格 OpenSpec 221 项、全量浏览器回归 1524 项、全站冒烟 330 项、发布包功能 6 项及发布页面 330 项全部通过；归档严格校验 249 项通过。提交 `739df66aef21f007c536df180a3603366ea9044e` 已推送；[Actions run #187](https://github.com/houjibo/knowledge-visual/actions/runs/42605377574) 的检查、构建、Pages 部署及部署后验证全部成功，公开清单 revision 匹配且 `site_files_modified:false`；本地与公网页面均已打开并独立数图答对计分。[归档 OpenSpec 变更](../openspec/changes/archive/2026-11-09-bounded-line-segment-count-options/proposal.md) 与[交互证据](assessments/interaction-coverage.md)。 | 继续复现并处理交互风险索引中的随机生成候选。 |
 | 高 | 小学数学“认识0”的运算练习在页面初始化时用无界随机重抽补齐选项，固定随机值 0 已复现页面加载超时；现改为从 0 到 10 有限整数域中取三个互异干扰项。固定随机 0、0.5、0.999999 的桌面/移动专项回归 8/8 通过，覆盖加减乘答案、计分、下一题和 320px 布局；完整 `npm run check` 的浏览器回归 1532 项、严格 OpenSpec 222 项、全站冒烟 330 项、发布包功能 6 项和发布页面检查 330 项均通过，README 改动后的静态检查也通过。提交 `2c6c7a311bc94af91e4febdaaca7c8fa18267f7a` 已推送；[Actions run #189](https://github.com/houjibo/knowledge-visual/actions/runs/42645408507) 的检查、发布构建、Pages 部署和部署后验证全部成功，公开清单 revision 匹配且 `site_files_modified:false`；本地与公网练习页均已打开并独立答题计分。[归档 OpenSpec 变更](../openspec/changes/archive/2026-11-09-bounded-understanding-zero-calculation-options/proposal.md) 与[交互证据](assessments/interaction-coverage.md)。 | 继续检查风险索引中的其他随机题生成与页面初始化路径。 |
+| 高 | 小学数学“认识平面图形”页面启动时立即生成“找图形”和“猜图形”题，随机拒绝循环在固定随机值下卡住主线程；修复前固定随机 0 已复现为 HTTP 200 但页面 `load` 超时 2.5 秒。现改为有限图形候选，保留找图形的目标/非目标结构，并从其余图形中有限抽取三个互异干扰项。固定随机 0、0.5、0.999999 下桌面/移动专项回归 8/8 通过，独立核对图形目标、线索答案、选项唯一、下一题和 320px 布局；完整 `npm run check` 的浏览器回归 1540 项、严格 OpenSpec 223 项、全站冒烟 330 项、发布包功能 6 项和发布页面检查 330 项均通过。提交推送、Actions、Pages 和本地/公网交互核验待完成。[本次 OpenSpec 变更](../openspec/changes/bounded-plane-shapes-generators/proposal.md) 与[交互证据](assessments/interaction-coverage.md)。 | 推送后核验本地与公网练习及发布 revision。 |
 | 中 | 共享资源和自包含页面并存，覆盖与一致性未盘点；直接合并可能影响既有交互。 | 先梳理重复与依赖，选可观察的单一重构切片，保持行为。 |
 | 中 | 静态检查只覆盖部分引用，未覆盖动态路径、CSS 资源、外链及浏览器异常。 | 根据实际缺陷逐步扩展检查；失败时保留证据。 |
 | 低 | README 已改为面向公开读者的项目介绍，提供正式站点、在线学习、免构建本地预览和反馈入口；已移除旧项目迁移来源、建设中状态及内部维护细节。学科范围随内容发展仍需同步维护；[本次文档变更](../openspec/changes/archive/2026-11-09-public-facing-readme/proposal.md)。 | 内容范围或正式站点地址变化时核对 README。 |

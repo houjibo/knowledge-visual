@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：159；尚未登记：157。
+主题总数：316；已登记部分交互证据：160；尚未登记：156。
 
 ## 已登记部分交互证据
 
@@ -214,6 +214,8 @@
   - 挑战题的分数转百分数、增长率、答题反馈与键盘部分场景；其余探索和应用未全面验证。 [percentage-challenge.spec.js](../../tests/browser/percentage-challenge.spec.js)
 - [认识周长](../../math/topics/perimeter/index.html)
   - 固定随机值下五类计算题、花坛题单位及五关、边长查看键盘操作与重置；未覆盖整页内容。 [perimeter-question-correctness.spec.js](../../tests/browser/perimeter-question-correctness.spec.js)
+- [认识平面图形](../../math/topics/plane-shapes/index.html)
+  - 桌面/移动固定随机 0、0.5、0.999999 验证页面初始化与下一题；从可见 SVG 独立核验找图形题同时包含目标和非目标，从线索核对猜图形的正确项、四个互异选项；320px 检查猜图形选项可见且不溢出。真实设备和整页无障碍尚未验收。 [plane-shapes-bounded-generators.spec.js](../../tests/browser/plane-shapes-bounded-generators.spec.js)
 - [多边形的面积](../../math/topics/polygon-area/index.html)
   - 剪拼画布顶点、步骤滑块与播放暂停、部分练习和挑战反馈、完成门槛与保存失败重试；完整无障碍未验收。 [polygon-area.spec.js](../../tests/browser/polygon-area.spec.js)
 - [位置与方向](../../math/topics/position-and-direction/index.html)
@@ -522,7 +524,6 @@
 - [扇形统计图](../../math/topics/pie-charts/index.html)
 - [鸽巢原理](../../math/topics/pigeonhole-principle/index.html)
 - [鸽巢问题](../../math/topics/pigeonhole-problem/index.html)
-- [认识平面图形](../../math/topics/plane-shapes/index.html)
 - [可能性](../../math/topics/possibility/index.html)
 - [认识四边形](../../math/topics/quadrilaterals/index.html)
 - [比的应用](../../math/topics/ratio-applications/index.html)
