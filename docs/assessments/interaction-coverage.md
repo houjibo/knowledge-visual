@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：161；尚未登记：155。
+主题总数：316；已登记部分交互证据：162；尚未登记：154。
 
 ## 已登记部分交互证据
 
@@ -123,6 +123,8 @@
   - 十二个月北半球气象季节、世纪闰年与输入校验、日期计数口径、作答计数及进度保存失败恢复；历史历法和整页无障碍未全面验收。 [calendar-learning-accuracy.spec.js](../../tests/browser/calendar-learning-accuracy.spec.js)
 - [鸡兔同笼](../../math/topics/chicken-rabbit/index.html)
   - 桌面与移动视口枚举鸡兔数量和提问方向，验证唯一选项、假设提示、无解图示、重复计分及保存失败恢复；其他图解步骤、真实设备和整页无障碍尚未全面验收。 [chicken-rabbit-learning-correctness.spec.js](../../tests/browser/chicken-rabbit-learning-correctness.spec.js)
+- [圆的认识](../../math/topics/circle/index.html)
+  - 桌面与移动视口以固定随机序列复现直径为 2 的圆面积题无界循环，覆盖五类题型及半径 1/15，独立核对公式答案、四个数值互异选项和正确计分；320px 检查选项可见与页面无横向溢出。真实设备与整页无障碍尚未全面验收。 [circle-challenge-bounded-options.spec.js](../../tests/browser/circle-challenge-bounded-options.spec.js)
 - [比大小与排序](../../math/topics/comparison-and-ordering/index.html)
   - 固定随机值下数轴比较、排序和找位置，三类挑战、重复计分及键盘与回调时序；未覆盖所有取值。 [comparison-ordering-reliability.spec.js](../../tests/browser/comparison-ordering-reliability.spec.js)
 - [圆柱与圆锥](../../math/topics/cylinder-and-cone/index.html)
@@ -499,7 +501,6 @@
 - [平均数](../../math/topics/average/index.html)
 - [轴对称图形](../../math/topics/axis-symmetry/index.html)
 - [统计图表的选择](../../math/topics/chart-selection/index.html)
-- [圆的认识](../../math/topics/circle/index.html)
 - [分类与规律](../../math/topics/classification-and-patterns/index.html)
 - [组合图形](../../math/topics/composite-shapes/index.html)
 - [复式统计图](../../math/topics/compound-charts/index.html)
