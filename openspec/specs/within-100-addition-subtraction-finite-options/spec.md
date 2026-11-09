@@ -1,0 +1,28 @@
+# within-100-addition-subtraction-finite-options Specification
+
+## Purpose
+TBD - created by archiving change finite-within-100-addition-subtraction-options. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 限时挑战有限生成唯一选项
+
+100 以内加减法的限时挑战 SHALL 使用有限候选生成四个互异的非负整数选项，且恰有一个选项等于当前算式的精确答案。选项生成 SHALL 在随机值重复时完成；每个干扰项与正确答案的差值 SHALL 不超过 10。
+
+#### Scenario: 固定随机值下开始挑战
+
+- **WHEN** 学习者使用固定随机值 0、0.5 或 0.999999 开始限时挑战
+- **THEN** 挑战正常启动并显示当前算式及四个互异选项
+
+#### Scenario: 挑战选项对应精确答案
+
+- **WHEN** 学习者查看挑战算式的选项
+- **THEN** 四个选项均为非负整数
+- **AND** 其中恰有一个选项等于算式的精确答案
+- **AND** 每个错误选项与正确答案相差不超过 10
+
+#### Scenario: 答题后进入下一题
+
+- **WHEN** 学习者选择正确答案
+- **THEN** 正确计数增加一次
+- **AND** 在随机值重复时仍生成下一题的四个互异选项
