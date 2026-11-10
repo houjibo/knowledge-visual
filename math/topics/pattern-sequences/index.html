@@ -256,6 +256,10 @@
       }
       return shuffle(result);
     }
+    function buildOptions(answer, candidates) {
+      var distractors = uniqueShuffle(candidates.filter(function(value) { return value !== answer; }));
+      return shuffle([answer].concat(distractors.slice(0, 3)));
+    }
 
     // ===== Tab 切换 =====
     var tabs = document.querySelectorAll('.mode-tab');
@@ -327,13 +331,8 @@
       document.getElementById('shape-hint').textContent = '';
 
       // 生成选项
-      var opts = [shapeAnswer];
       var allItems = ['🔴','🔵','⭐','🌙','🔺','🟢','🟡','🔶','🔷','❤️','💙','🌟','🍎','🍊','🐱','🐶','☀️','🌧️','💚','🍋'];
-      while (opts.length < 4) {
-        var item = allItems[rand(0, allItems.length - 1)];
-        if (opts.indexOf(item) === -1) opts.push(item);
-      }
-      shuffle(opts);
+      var opts = buildOptions(shapeAnswer, allItems);
 
       var optDiv = document.getElementById('shape-options');
       optDiv.innerHTML = '';
@@ -435,18 +434,11 @@
       document.getElementById('num-hint').textContent = '';
 
       // 选项
-      var opts = [numAnswer];
       var nearby = [numAnswer - 2, numAnswer - 1, numAnswer + 1, numAnswer + 2, numAnswer + 3, numAnswer - 3, numAnswer + 5, numAnswer - 5];
       nearby = nearby.filter(function(n) { return n > 0 && n !== numAnswer; });
-      shuffle(nearby);
-      for (var i = 0; i < nearby.length && opts.length < 4; i++) {
-        if (opts.indexOf(nearby[i]) === -1) opts.push(nearby[i]);
-      }
-      while (opts.length < 4) {
-        var r = rand(Math.max(1, numAnswer - 10), numAnswer + 10);
-        if (opts.indexOf(r) === -1) opts.push(r);
-      }
-      shuffle(opts);
+      var candidateStart = Math.max(1, numAnswer - 10);
+      var fallbackCandidates = Array.from({ length: 21 }, function(_, index) { return candidateStart + index; });
+      var opts = buildOptions(numAnswer, nearby.concat(fallbackCandidates));
 
       var optDiv = document.getElementById('num-options');
       optDiv.innerHTML = '';
@@ -517,15 +509,16 @@
       }
 
       // 挖空几个格子
-      var blanks = [];
       var totalCells = colorRows * colorCols;
       var numBlanks = rand(2, Math.min(4, Math.floor(totalCells / 3)));
-      while (blanks.length < numBlanks) {
-        var br = rand(0, colorRows - 1);
-        var bc = rand(0, colorCols - 1);
-        var key = br + ',' + bc;
-        if (blanks.indexOf(key) === -1) blanks.push(key);
+      var blankCandidates = [];
+      for (var blankRow = 0; blankRow < colorRows; blankRow++) {
+        for (var blankColumn = 0; blankColumn < colorCols; blankColumn++) {
+          blankCandidates.push(blankRow + ',' + blankColumn);
+        }
       }
+      shuffle(blankCandidates);
+      var blanks = blankCandidates.slice(0, numBlanks);
 
       colorGridData = [];
       for (var r = 0; r < colorRows; r++) {
@@ -650,13 +643,8 @@
             : '<span style="display:inline-block;width:48px;height:48px;background:white;border-radius:12px;line-height:48px;font-size:28px;vertical-align:middle;margin:4px;box-shadow:0 1px 4px rgba(0,0,0,0.08)">' + s + '</span>';
         }).join('');
 
-        var opts = [chAnswer];
         var allItems = ['🔴','🔵','⭐','🌙','🔺','🟢','🟡','🔶','❤️','💙','🌟','🍎'];
-        while (opts.length < 4) {
-          var item = allItems[rand(0, allItems.length - 1)];
-          if (opts.indexOf(item) === -1) opts.push(item);
-        }
-        shuffle(opts);
+        var opts = buildOptions(chAnswer, allItems);
 
         content.innerHTML = '<div class="challenge-question">找出下一个图形</div>' +
           '<div style="text-align:center;margin:12px 0">' + display + '</div>' +
@@ -674,15 +662,12 @@
 
         var display = seq.join(' → ') + ' → <b>?</b>';
 
-        var opts = [chAnswer];
+        var answerNumber = parseInt(chAnswer, 10);
         var nearby = [String(parseInt(chAnswer) - step), String(parseInt(chAnswer) + 1), String(parseInt(chAnswer) - 1), String(parseInt(chAnswer) + step)];
         nearby = nearby.filter(function(n) { return n !== chAnswer && parseInt(n) > 0; });
-        nearby = uniqueShuffle(nearby);
-        while (opts.length < 4) {
-          var r = String(rand(Math.max(1, parseInt(chAnswer) - 5), parseInt(chAnswer) + 5));
-          if (opts.indexOf(r) === -1) opts.push(r);
-        }
-        shuffle(opts);
+        var challengeStart = Math.max(1, answerNumber - 7);
+        var challengeFallback = Array.from({ length: 16 }, function(_, index) { return String(challengeStart + index); });
+        var opts = buildOptions(chAnswer, nearby.concat(challengeFallback));
 
         content.innerHTML = '<div class="challenge-question">找出下一个数字</div>' +
           '<div style="text-align:center;font-size:22px;font-weight:700;margin:16px 0">' + display + '</div>' +

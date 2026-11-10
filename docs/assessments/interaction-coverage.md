@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：166；尚未登记：150。
+主题总数：316；已登记部分交互证据：167；尚未登记：149。
 
 ## 已登记部分交互证据
 
@@ -217,6 +217,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [平行四边形面积](../../math/topics/parallelogram-area/index.html)
   - 割补几何、练习和生活题单位、学习完成及保存恢复；真机和完整无障碍尚未全面验收。 [parallelogram-area-learning-correctness.spec.js](../../tests/browser/parallelogram-area-learning-correctness.spec.js)
+- [规律与序列](../../math/topics/pattern-sequences/index.html)
+  - 桌面与移动专项 8/8 通过：固定随机 0、0.999999 验证页面初始化、图形/数字练习、涂色网格和图形挑战；另以重复候选核验数字挑战有限生成及正确计分。独立逐项作答并核对唯一正确选项，按行/列/对角线规律填色并检查反馈；320px 检查四模式无横向溢出。真实设备与整页无障碍尚未全面验收。 [pattern-sequences-bounded-generators.spec.js](../../tests/browser/pattern-sequences-bounded-generators.spec.js)
 - [百分数的应用](../../math/topics/percentage-applications/index.html)
   - 桌面及移动视口验证固定随机出题、三类简化场景、折扣小数金额、逐题计分及存储失败重试；实际税务和存款规则、真实设备及整页无障碍不在验证范围。 [percentage-applications-learning-correctness.spec.js](../../tests/browser/percentage-applications-learning-correctness.spec.js)
 - [百分数](../../math/topics/percentage/index.html)
@@ -529,7 +531,6 @@
 - [观察物体](../../math/topics/observing-objects/index.html)
 - [数学广角——优化](../../math/topics/optimization/index.html)
 - [平行与垂直](../../math/topics/parallel-perpendicular/index.html)
-- [规律与序列](../../math/topics/pattern-sequences/index.html)
 - [扇形统计图](../../math/topics/pie-charts/index.html)
 - [鸽巢原理](../../math/topics/pigeonhole-principle/index.html)
 - [鸽巢问题](../../math/topics/pigeonhole-problem/index.html)
