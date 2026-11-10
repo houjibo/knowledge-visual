@@ -15,5 +15,5 @@
 
 ## 4. 发布与归档
 
-- [ ] 4.1 提交并推送修复；GitHub Actions 检查、Pages 部署及部署后公开资源核验全部成功
-- [ ] 4.2 归档 OpenSpec 变更并同步主规格；`openspec validate --all --strict` 全部通过
+- [x] 4.1 提交 `bce049d` 并推送修复；GitHub Actions [run #205](https://github.com/houjibo/knowledge-visual/actions/runs/42727124240) 检查、Pages 部署及部署后公开验证成功，公网发布清单 revision `bce049dffff356cdb94e024a1e3001319e0cac36` 匹配，规律与序列页面返回 HTTP 200 且无 `while` 重抽
+- [x] 4.2 归档 OpenSpec 变更并同步主规格；`openspec validate --all --strict` 全部 231 项通过
