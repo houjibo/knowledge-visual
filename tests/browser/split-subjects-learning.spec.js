@@ -4,6 +4,7 @@ const pages = [
   '/computer/primary/robot-algorithms.html',
   '/computer/middle/binary-pixels.html',
   '/ai/high/classifier-lab.html',
+  '/ai/high/train-test-generalization.html',
   '/ai/uni/neuron-forward-pass.html',
 ];
 
@@ -83,7 +84,7 @@ test('进度存储被拒绝时大学神经元仍能完成计算', async ({page})
       return original.call(this, key, value);
     };
   });
-  await page.goto(pages[3]);
+  await page.goto(pages[4]);
   await page.getByRole('button', {name: '计算神经元输出'}).click();
   await expect(page.locator('#z-output')).toHaveText('0.80');
   await expect(page.locator('#activation-output')).toHaveText('0.6900');
@@ -114,7 +115,7 @@ test('高中分类边界重新计算逐点预测和评价指标', async ({page})
   await expect(page.locator('#accuracy-output')).toHaveText('—');
 });
 
-test('四个主题在 320px 下无页面级横向溢出', async ({page}) => {
+test('计算机与人工智能五个主题在 320px 下无页面级横向溢出', async ({page}) => {
   await page.setViewportSize({width: 320, height: 760});
   for (const path of pages) {
     await page.goto(path);
@@ -132,7 +133,7 @@ test('旧进度合并进独立学科，新记录优先且旧键保留', async ({
   });
   await page.goto('/');
   await expect(page.locator('[data-subject="computer"] .sp-label')).toHaveText('尚未开始');
-  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/2');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/3');
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('kv-computer-primary-progress'))))
     .toEqual({'robot-algorithms': false});
   await page.goto('/computer/primary/index.html');

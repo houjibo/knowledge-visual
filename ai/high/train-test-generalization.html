@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="调整虚构分类阈值，比较训练集与留出测试集的预测和准确率。">
+  <title>训练与测试集实验室 · 高中人工智能</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .dataset-plot { display: block; width: 100%; height: auto; margin-block: 12px; }
+    .dataset-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 8px 0; padding: 0; list-style: none; }
+    .dataset-legend li { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-mark { display: inline-grid; width: 18px; height: 18px; place-items: center; font-weight: 800; }
+    .legend-a { color: #454190; }
+    .legend-b { color: #8a4e00; }
+    .legend-correct { color: #167847; }
+    .legend-error { color: #b8302d; }
+    .sample-list { margin-block: 8px 16px; }
+    .sample-list li { overflow-wrap: anywhere; }
+    .caution { border-left: 4px solid #986000; padding: 10px 12px; background: #fff7df; }
+    .metric small { display: block; margin-top: 4px; color: #4a5569; }
+    @media (max-width: 380px) {
+      .visual { padding: 10px; }
+      .dataset-legend { gap: 6px 10px; font-size: .9rem; }
+    }
+  </style>
+</head>
+<body data-subject="ai" data-stage="high">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑">
+      <a href="../../index.html">首页</a><span aria-hidden="true">›</span>
+      <a href="../index.html">人工智能</a><span aria-hidden="true">›</span>
+      <a href="index.html">高中</a><span aria-hidden="true">›</span>
+      <span aria-current="page">训练与测试集实验室</span>
+    </nav>
+    <main id="main-content">
+      <header class="hero">
+        <p class="eyebrow">高中 · 机器学习评价</p>
+        <h1>训练与测试集实验室</h1>
+        <p>先根据训练样本调整分类阈值，再查看模型面对留出样本时的结果。</p>
+      </header>
+
+      <section class="panel" aria-labelledby="experiment-heading">
+        <h2 id="experiment-heading">同一条规则，分开检查两组样本</h2>
+        <div class="learning-layout">
+          <div class="visual">
+            <h3>虚构样本特征分值</h3>
+            <svg id="dataset-plot" class="dataset-plot" viewBox="0 0 620 210" role="img" aria-labelledby="plot-title plot-description">
+              <title id="plot-title">训练集和留出测试集样本及分类阈值</title>
+              <desc id="plot-description">训练样本和测试样本分列显示。测试真实类别在首次评估前隐藏。竖线表示当前分类阈值。</desc>
+              <g id="plot-axis"></g>
+              <g id="plot-threshold"></g>
+              <g id="plot-training"></g>
+              <g id="plot-test"></g>
+            </svg>
+            <ul class="dataset-legend" aria-label="图例">
+              <li><span class="legend-mark legend-a" aria-hidden="true">●</span>类别 A</li>
+              <li><span class="legend-mark legend-b" aria-hidden="true">■</span>类别 B</li>
+              <li><span class="legend-mark legend-correct" aria-hidden="true">✓</span>预测正确</li>
+              <li><span class="legend-mark legend-error" aria-hidden="true">×</span>预测错误</li>
+              <li><span class="legend-mark" aria-hidden="true">?</span>测试标签未查看</li>
+            </ul>
+            <p id="plot-summary" class="note" role="status" aria-live="polite" aria-atomic="true">训练集 8 个标签可见；测试集 4 个标签尚未查看。</p>
+          </div>
+
+          <div class="controls">
+            <div class="control">
+              <label for="threshold">分类阈值：<output id="threshold-value" for="threshold">8</output></label>
+              <input id="threshold" type="range" min="2" max="14" step="1" value="8" aria-describedby="rule-description">
+              <p id="rule-description" class="note">规则：特征分值大于或等于阈值时预测类别 B，否则预测类别 A。你在手动选择简单规则，模拟参数选择；这里没有执行模型训练。</p>
+            </div>
+            <div class="metric-row" aria-label="训练与测试指标">
+              <div class="metric"><span>训练集准确率</span><strong id="training-accuracy">100%</strong><small id="training-count">正确 8 / 8</small></div>
+              <div class="metric"><span>留出测试集准确率</span><strong id="test-accuracy">尚未查看</strong><small id="test-count">共 4 个样本</small></div>
+            </div>
+            <div class="button-row">
+              <button type="button" id="reveal-test">查看留出测试结果</button>
+              <button type="button" id="reset-threshold" class="secondary">恢复初始阈值</button>
+            </div>
+            <p id="experiment-feedback" class="status" role="status" aria-live="polite" aria-atomic="true">先观察训练集指标，再决定是否查看测试结果。</p>
+            <p id="test-warning" class="caution" role="status" aria-live="polite" aria-atomic="true" hidden>你已查看这组测试样本。再按测试结果调整阈值，会把测试集用于模型选择；当前测试分数不再是独立的最终评估。</p>
+            <p id="progress-status" class="note" role="status" aria-live="polite">学习进度保存在当前浏览器。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="samples-heading">
+        <h2 id="samples-heading">逐项预测</h2>
+        <h3>训练样本</h3>
+        <ol id="training-results" class="sample-list" aria-label="训练集逐项预测"></ol>
+        <h3>留出测试样本</h3>
+        <p id="test-hidden" class="note">真实类别先保持隐藏；查看测试结果后，这些样本会成为已查看的数据。</p>
+        <ol id="test-results" class="sample-list" aria-label="测试集逐项预测" hidden></ol>
+      </section>
+
+      <section class="panel">
+        <h2>怎样理解这组结果？</h2>
+        <p>训练集用于选择规则，留出的测试集用于检查规则面对尚未参与选择的样本时表现如何。两组准确率不同并不自动证明模型好或坏；它提醒我们，训练样本上的高分不能单独说明模型能处理新样本。</p>
+        <p class="caution">本实验使用 12 个虚构样本和一个手动阈值规则，只用于观察评价流程。样本太少，不能代表现实数据，也不能据此估计真实模型性能。查看测试结果后反复调阈值，会让测试集信息进入选择过程。</p>
+        <p>进一步阅读：<a href="https://developers.google.com/machine-learning/crash-course/overfitting/dividing-datasets">Google：划分训练、验证和测试数据</a>；<a href="https://scikit-learn.org/stable/common_pitfalls.html#data-leakage">scikit-learn：数据泄漏与测试数据</a>。</p>
+      </section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回高中人工智能</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script>
+  (() => {
+    const subject = 'ai', stage = 'high', slug = 'train-test-generalization';
+    const training = [
+      {score: 1, label: 'A'}, {score: 2, label: 'A'}, {score: 5, label: 'A'}, {score: 7, label: 'A'},
+      {score: 9, label: 'B'}, {score: 10, label: 'B'}, {score: 12, label: 'B'}, {score: 14, label: 'B'}
+    ];
+    const testing = [
+      {score: 3, label: 'A'}, {score: 8, label: 'A'}, {score: 7, label: 'B'}, {score: 11, label: 'B'}
+    ];
+    const ns = 'http://www.w3.org/2000/svg';
+    const threshold = document.getElementById('threshold');
+    const thresholdValue = document.getElementById('threshold-value');
+    const axis = document.getElementById('plot-axis');
+    const boundary = document.getElementById('plot-threshold');
+    const trainingPoints = document.getElementById('plot-training');
+    const testingPoints = document.getElementById('plot-test');
+    const trainingResults = document.getElementById('training-results');
+    const testResults = document.getElementById('test-results');
+    const testHidden = document.getElementById('test-hidden');
+    const testWarning = document.getElementById('test-warning');
+    const feedback = document.getElementById('experiment-feedback');
+    const progressStatus = document.getElementById('progress-status');
+    let testRevealed = false;
+    let testUsedForTuning = false;
+
+    const x = score => 72 + score * 36;
+    const predicted = sample => Number(sample.score) >= Number(threshold.value) ? 'B' : 'A';
+    const correctCount = samples => samples.filter(sample => predicted(sample) === sample.label).length;
+
+    function svgElement(tag, attributes, text) {
+      const node = document.createElementNS(ns, tag);
+      Object.entries(attributes).forEach(([name, value]) => node.setAttribute(name, String(value)));
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function renderAxis() {
+      axis.replaceChildren();
+      axis.append(svgElement('line', {x1: 72, y1: 176, x2: 576, y2: 176, stroke: '#354258', 'stroke-width': 2}));
+      axis.append(svgElement('text', {x: 12, y: 70, fill: '#20273a', 'font-size': 14}, '训练'));
+      axis.append(svgElement('text', {x: 12, y: 136, fill: '#20273a', 'font-size': 14}, '测试'));
+      axis.append(svgElement('text', {x: 576, y: 200, fill: '#354258', 'font-size': 13, 'text-anchor': 'end'}, '特征分值'));
+      for (let value = 0; value <= 14; value += 2) {
+        axis.append(svgElement('line', {x1: x(value), y1: 172, x2: x(value), y2: 181, stroke: '#354258', 'stroke-width': 1}));
+        axis.append(svgElement('text', {x: x(value), y: 196, fill: '#354258', 'font-size': 12, 'text-anchor': 'middle'}, value));
+      }
+    }
+
+    function addSample(group, sample, index, rowY, role, showLabel) {
+      const cx = x(sample.score);
+      const actualPrediction = predicted(sample);
+      const isCorrect = actualPrediction === sample.label;
+      const fill = role === 'test' && !showLabel ? '#e1e5ed' : isCorrect ? '#167847' : '#b8302d';
+      const stroke = role === 'test' && !showLabel ? '#59667a' : '#17233a';
+      const marker = showLabel && sample.label === 'B'
+        ? svgElement('rect', {x: cx - 8, y: rowY - 8, width: 16, height: 16, rx: 2, fill, stroke, 'stroke-width': 2})
+        : svgElement('circle', {cx, cy: rowY, r: 8, fill, stroke, 'stroke-width': 2});
+      group.append(marker);
+      group.append(svgElement('text', {x: cx, y: rowY + 24, fill: '#20273a', 'font-size': 12, 'text-anchor': 'middle'}, showLabel ? sample.score : '?'));
+      if (showLabel) {
+        const status = isCorrect ? '正确' : '误分类';
+        const item = document.createElement('li');
+        item.textContent = `${role === 'training' ? '训练' : '测试'}样本 ${index + 1}：特征分值 ${sample.score}，真实类别 ${sample.label}，预测 ${actualPrediction}，${status}`;
+        (role === 'training' ? trainingResults : testResults).append(item);
+      }
+    }
+
+    function renderMetrics() {
+      const trainCorrect = correctCount(training);
+      const trainAccuracy = trainCorrect / training.length * 100;
+      document.getElementById('training-accuracy').textContent = `${trainAccuracy}%`;
+      document.getElementById('training-count').textContent = `正确 ${trainCorrect} / ${training.length}`;
+      if (testRevealed) {
+        const testCorrect = correctCount(testing);
+        document.getElementById('test-accuracy').textContent = `${testCorrect / testing.length * 100}%`;
+        document.getElementById('test-count').textContent = `正确 ${testCorrect} / ${testing.length}`;
+      }
+    }
+
+    function renderPlot() {
+      thresholdValue.value = threshold.value;
+      boundary.replaceChildren(svgElement('line', {
+        x1: x(threshold.value), y1: 32, x2: x(threshold.value), y2: 166,
+        stroke: '#343177', 'stroke-width': 3, 'stroke-dasharray': '8 5'
+      }));
+      boundary.append(svgElement('text', {
+        x: x(threshold.value), y: 24, fill: '#343177', 'font-size': 13, 'text-anchor': 'middle'
+      }, `阈值 ${threshold.value}`));
+      trainingPoints.replaceChildren();
+      testingPoints.replaceChildren();
+      trainingResults.replaceChildren();
+      testResults.replaceChildren();
+      training.forEach((sample, index) => addSample(trainingPoints, sample, index, 62, 'training', true));
+      testing.forEach((sample, index) => addSample(testingPoints, sample, index, 128, 'test', testRevealed));
+      testResults.hidden = !testRevealed;
+      testHidden.hidden = testRevealed;
+      testWarning.hidden = !testUsedForTuning;
+      document.getElementById('plot-summary').textContent = testRevealed
+        ? `训练集 ${training.length} 个样本；测试集 ${testing.length} 个标签已查看。当前阈值 ${threshold.value}。`
+        : `训练集 ${training.length} 个标签可见；测试集 ${testing.length} 个标签尚未查看。当前阈值 ${threshold.value}。`;
+      renderMetrics();
+    }
+
+    function completionMessage() {
+      progressStatus.textContent = SubjectProgress.markComplete(subject, stage, slug)
+        ? '本机已记录这个主题完成。'
+        : '测试结果仍可查看；本机存储不可用，进度未能保存。';
+    }
+
+    threshold.addEventListener('input', () => {
+      if (testRevealed) testUsedForTuning = true;
+      renderPlot();
+      feedback.className = 'status';
+      feedback.textContent = testRevealed
+        ? '阈值已改变。比较指标时请注意：你已使用这组测试样本调整规则。'
+        : '阈值已改变；训练集指标已更新，测试标签仍保持隐藏。';
+    });
+
+    document.getElementById('reveal-test').addEventListener('click', () => {
+      const firstView = !testRevealed;
+      testRevealed = true;
+      if (!firstView) testUsedForTuning = true;
+      renderPlot();
+      feedback.className = 'status success';
+      feedback.textContent = firstView
+        ? `已查看留出测试集：当前阈值 ${threshold.value}，${correctCount(testing)} / ${testing.length} 个预测正确。`
+        : '已重新计算测试结果；这组数据已被查看，不能再作为独立的最终评估。';
+      if (firstView) completionMessage();
+    });
+
+    document.getElementById('reset-threshold').addEventListener('click', () => {
+      threshold.value = '8';
+      renderPlot();
+      feedback.className = 'status';
+      feedback.textContent = testRevealed
+        ? '阈值已恢复为 8；测试集标签仍保持可见，不能把它当作新的独立数据。'
+        : '阈值已恢复为 8。';
+    });
+
+    renderAxis();
+    const prior = SubjectProgress.read(subject, stage);
+    if (prior === null) progressStatus.textContent = '本机进度暂不可用；你仍可完成实验。';
+    else if (prior[slug]) progressStatus.textContent = '本机已记录这个主题完成。';
+    renderPlot();
+  })();
+  </script>
+</body>
+</html>

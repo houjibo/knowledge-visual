@@ -92,6 +92,18 @@ test('发布包子路径的首页搜索和六学科学习交互', async ({page})
   for (let i = 0; i < 4; i++) await threshold.press('ArrowLeft');
   await page.getByRole('button', {name: '重新评估样本'}).click();
   await expect(page.locator('#accuracy-output')).toHaveText('87.5%');
+  await gotoPublished(page, base);
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('训练集');
+  await page.locator('#site-results a[href="ai/high/train-test-generalization.html"]').click();
+  await waitForPublishedDocument(page);
+  await page.getByRole('button', {name: '查看留出测试结果'}).click();
+  await expect(page.locator('#test-accuracy')).toHaveText('50%');
+  await page.getByRole('slider', {name: /分类阈值/}).focus();
+  await page.getByRole('slider', {name: /分类阈值/}).press('ArrowLeft');
+  await expect(page.locator('#test-accuracy')).toHaveText('75%');
+  await expect(page.locator('#test-warning')).toBeVisible();
   await page.goto(new URL('computer-ai/primary/robot-algorithms.html', base).href);
   await expect(page).toHaveURL(new URL('computer/primary/robot-algorithms.html', base).href);
   expect((await page.request.get(base + 'README.md')).status()).toBe(404);

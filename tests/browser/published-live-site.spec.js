@@ -71,5 +71,17 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   for (let i = 0; i < 4; i++) await threshold.press('ArrowLeft');
   await page.getByRole('button', {name: '重新评估样本'}).click();
   await expect(page.locator('#accuracy-output')).toHaveText('87.5%');
+  await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('训练集');
+  await page.locator('#site-results a[href="ai/high/train-test-generalization.html"]').click();
+  await expect(page).toHaveURL(/ai\/high\/train-test-generalization\.html/);
+  await page.getByRole('button', {name: '查看留出测试结果'}).click();
+  await expect(page.locator('#test-accuracy')).toHaveText('50%');
+  await page.getByRole('slider', {name: /分类阈值/}).focus();
+  await page.getByRole('slider', {name: /分类阈值/}).press('ArrowLeft');
+  await expect(page.locator('#test-accuracy')).toHaveText('75%');
+  await expect(page.locator('#test-warning')).toBeVisible();
   expect(failures).toEqual([]);
 });

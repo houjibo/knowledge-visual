@@ -67,6 +67,11 @@ const denied = createProgress({
 }).api;
 assert.equal(denied.markComplete('ai', 'uni', 'neuron-forward-pass'), false);
 
+storage = memoryStorage();
+api = createProgress(storage).api;
+assert.equal(api.markComplete('ai', 'high', 'train-test-generalization'), true);
+assert.deepEqual(JSON.parse(storage.values.get('kv-ai-high-progress')), {'train-test-generalization': true});
+
 storage = memoryStorage({'kv-computer-ai-primary-progress': JSON.stringify({'robot-algorithms': true})});
 const migrationDenied = createProgress({
   getItem: key => storage.getItem(key),

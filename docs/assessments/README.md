@@ -1,6 +1,6 @@
 # 站点评估基线
 
-[页面清单](page-inventory.json) 于 2026-11-07 从当前仓库生成：包含 330 个 HTML 文件，其中 316 个按目录规则归为主题页、14 个归为导航页；从首页沿静态 HTML 链接可到达全部 330 个。此结果反映当时的文件和链接图，不等于所有主题均有正确的交互或已验证的内容。
+[页面清单](page-inventory.json) 于 2026-11-11 根据当前仓库重新生成：包含 350 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
 
 重新生成：`python3 scripts/inventory_pages.py --output docs/assessments/page-inventory.json`；运行 `python3 scripts/inventory_pages.py --check docs/assessments/page-inventory.json` 检查清单是否过期，运行 `python3 tests/inventory_test.py` 验证基本解析及导航行为。生成结果按路径稳定排序，无时间戳，可用版本差异检查变化。
 

@@ -1,9 +1,10 @@
 # 项目差距与后续方向
 
-最后核查：2026-11-11；本轮计算机/人工智能拆分已通过本地检查、GitHub Actions 与公网版本核对。优先级是当前判断，不代表已排期；每次交付应复核相关项并把可执行工作转为 OpenSpec change。
+最后核查：2026-11-11；计算机/人工智能拆分已有远端发布证据；本轮高中 AI 训练/测试可视化通过专项回归、全站静态检查、350 页桌面加载及发布包检查，GitHub Actions 与公网版本待确认。优先级是当前判断，不代表已排期；每次交付应复核相关项并把可执行工作转为 OpenSpec change。
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
+| 高 | 高中人工智能现在有分类边界与训练/测试集两个主题。新实验使用 12 个固定虚构样本和手动阈值：阈值 8 时训练集 8/8、测试集 2/4；阈值 7 时训练集 7/8、测试集 3/4。测试标签首次查看后继续调参会显示独立性警示；页面声明不是实际模型训练或现实性能估计。专项桌面/移动 32/32 通过；`npm run check:static` 与 235 项严格 OpenSpec 校验通过；全站桌面加载 350/350，发布包关键流程 6/6 且页面加载 350/350 通过。[OpenSpec 变更](../openspec/changes/high-ai-train-test-visualization/proposal.md)。 | 提交后确认完整 GitHub Actions、部署版本清单和公网交互，再归档。小学、初中 AI 主题仍为空；导航发现和教学内容尚无真实学习者验证。 |
 | 高 | 计算机与人工智能已拆为两个首页入口和课程目录：计算机包括小学算法、初中数据表示；人工智能包括高中分类器、大学神经元。旧 `computer-ai/` 页面和四学段书签提供兼容导航，旧进度键在读取时合并且不删除。严格静态检查、桌面/移动交互、349 页本地加载与发布包检查通过；GitHub Actions [run #224](https://github.com/houjibo/knowledge-visual/actions/runs/42853182855) 的检查、构建、部署和部署后验证全部成功，公开版本清单 revision 为 `68d9a0ca6713315278eb7d2f8383eaea2a643c75`。公网首页、两个学科入口和旧 AI 书签跳转已核验；公网代表交互浏览器检查通过。[归档 OpenSpec 变更](../openspec/changes/archive/2026-11-11-split-computer-and-ai-subjects/proposal.md)。 | 后续依据两个独立课程设计分别扩充内容，并通过真实学习者验证导航和交互。 |
 | 中 | 小学数学“多位数乘法”限时挑战的答案已改为键盘可操作的语义按钮，题目/选项组有关联，答题与超时有实时反馈并锁定本题；桌面与移动专项回归 6 项通过，覆盖 Enter、Space、迟到输入和新题焦点恢复。Actions [run #170](https://github.com/houjibo/knowledge-visual/actions/runs/42545837435) 的完整检查、发布构建、Pages 部署及部署后验证全部成功；公开清单 revision `061890f66b2ef63cf33636f80f8b95bda7ce2723` 匹配提交，本地和公网挑战页均已打开核实。全页屏幕阅读器与真实设备尚未验收；[交互证据](assessments/interaction-coverage.md) 与[归档 OpenSpec 变更](../openspec/changes/archive/2026-11-09-keyboard-accessible-multidigit-challenge/proposal.md)。 | 后续在真实辅助技术和设备上复核完整学习路径。
 | 中 | 小学数学“乘法口诀表”的填空和看积找口诀曾在首次加载时依赖无界随机重抽，固定随机值可卡住主线程；现改为有限近邻答案和有限因数对候选。桌面/移动固定随机 0、0.4、0.5、0.999999 回归共 16 项通过，核对选项唯一性、全部正确口诀、答对反馈及下一题；完整 `npm run check`、严格 OpenSpec、全量浏览器回归、330 页冒烟和发布包检查均通过。提交 `de3bfa93e30b4a5930faa15a1a3709078d8d02ba` 的 [Actions run #172](https://github.com/houjibo/knowledge-visual/actions/runs/42551477125) 检查、构建、Pages 部署和部署后验证成功，公网清单 revision 匹配；本地和公网页面均已打开并核对两种练习可用。[交互证据](assessments/interaction-coverage.md) 与[归档 OpenSpec 变更](../openspec/changes/archive/2026-11-09-bounded-multiplication-table-generators/proposal.md)。 | 下一轮从交互风险清单检查随机生成和练习状态路径，优先处理可复现的卡死与不可达题型。 |
