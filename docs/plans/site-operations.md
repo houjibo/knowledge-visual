@@ -12,7 +12,7 @@
 ## 当前基线
 仓库 `houjibo/knowledge-visual` 为公开项目，默认分支为 `main`。GitHub Pages 已启用，站点 `https://houjibo.github.io/knowledge-visual/` 的首次可验证发布来自 `08751e6`；[Actions run 42430059152](https://github.com/houjibo/knowledge-visual/actions/runs/42430059152) 的检查、构建、部署和部署后验收均成功，公网清单匹配该提交且标记站点文件未修改。首次自动部署使用的 Jekyll 模板没有版本清单，已移除；后续由通过全量质量门禁的 Static HTML 产物唯一发布。详细范围与限制见[发布记录](../assessments/site-release-2026-11-08.md)。独立域名、域名所有权、托管成本及反馈责任尚未确定。
 
-截至 2026-11-10，计算机与人工智能页面已发布。提交 `34f9a56` 的公网 `release-version.json` 匹配且 `site_files_modified:false`，直接发布核验确认 6 个资源可访问。Actions [run #208](https://github.com/houjibo/knowledge-visual/actions/runs/42739511880) 的检查和构建成功，但 Pages deployment 运行约 10 分钟后转为 error，工作流取消且部署后 job 被跳过；其 deployment 状态记录仍显示目标提交已到公网。job 日志接口返回 403，具体平台原因未确认。当前 OpenSpec 变更 [stabilize-pages-deploy-acknowledgement](../../openspec/changes/stabilize-pages-deploy-acknowledgement/proposal.md) 将用更长但有界的窗口复验此行为。
+截至 2026-11-10，计算机与人工智能页面已发布。归档提交 `34f9a56` 的 Actions [run #208](https://github.com/houjibo/knowledge-visual/actions/runs/42739511880) 检查和构建成功，但 Pages deployment 约 10 分钟后转为 error，工作流取消且部署后 job 被跳过；公网清单已匹配该提交，直接核验确认 6 个资源可访问。job 日志接口返回 403，具体平台原因未确认。后续提交 `9f22f6a` 将部署 job 上限增至 20 分钟，并由静态守卫验证超时和后置核验依赖；Actions [run #209](https://github.com/houjibo/knowledge-visual/actions/runs/42747644282) 的检查、构建、deploy 和部署后核验全部成功，deploy 用时约 32 秒，公网清单 revision 匹配且 `site_files_modified:false`。此次复验支持更有弹性的窗口配置，但单次成功不能证明 #208 的唯一原因已隔离；继续观察后续发布。相关[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-10-stabilize-pages-deploy-acknowledgement/proposal.md)。
 ## 分阶段执行
 
 ### 1. 构建可发布的静态产物

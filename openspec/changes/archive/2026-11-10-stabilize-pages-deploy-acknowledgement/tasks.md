@@ -11,5 +11,5 @@
 ## 3. 集成验证和运行观察
 
 - [x] 3.1 运行 `python3 tests/pages_publisher_test.py`、`npm run check:static` 和 `openspec validate --all --strict`；全部通过。
-- [ ] 3.2 推送变更并等待 GitHub Actions 的 checks、build、deploy、verify-deployment 全部成功；公网清单 revision 与提交一致且 `site_files_modified:false`。
-- [ ] 3.3 若部署仍超时或返回错误，保留 deployment 状态、job 时长与公网版本证据，继续诊断而不归档；若成功则记录时长及验证结果。
+- [x] 3.2 推送变更并等待 GitHub Actions 的 checks、build、deploy、verify-deployment 全部成功；公网清单 revision 与提交一致且 `site_files_modified:false`。
+- [x] 3.3 若部署仍超时或返回错误，保留 deployment 状态、job 时长与公网版本证据，继续诊断而不归档；若成功则记录时长及验证结果。
