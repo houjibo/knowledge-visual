@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：321；已登记部分交互证据：175；尚未登记：146。
+主题总数：322；已登记部分交互证据：176；尚未登记：146。
 
 ## 已登记部分交互证据
 
@@ -12,6 +12,8 @@
   - 桌面与移动浏览器验证两个独立学科入口、旧主题地址跳转、四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘操作、旧进度迁移及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [split-subjects-learning.spec.js](../../tests/browser/split-subjects-learning.spec.js)
 - [训练与测试集实验室 · 高中人工智能训练集和留出测试集样本及分类阈值](../../ai/high/train-test-generalization.html)
   - 桌面与移动浏览器验证固定样本下训练/测试准确率、测试标签揭示、调参警示、键盘阈值、进度存储拒绝和高中目录计数；现实数据代表性、真实设备和整页屏幕阅读器未验收。 [high-ai-train-test-visualization.spec.js](../../tests/browser/high-ai-train-test-visualization.spec.js)
+- [特征线索分类实验室 · 小学人工智能](../../ai/primary/feature-classification-lab.html)
+  - 桌面与移动浏览器检查颜色/形状多数规则、并列不确定、测试标签揭示、看过样例后的比较提示、键盘、进度存储拒绝、首页搜索和 320px；样例是固定合成示意，真实模型训练、真实图像、真实设备和整页屏幕阅读器未验收。 [primary-ai-feature-classification.spec.js](../../tests/browser/primary-ai-feature-classification.spec.js)
 - [神经元前向计算器 · 大学人工智能双输入单输出神经元示意图](../../ai/uni/neuron-forward-pass.html)
   - 桌面与移动浏览器验证两个独立学科入口、旧主题地址跳转、四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘操作、旧进度迁移及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [split-subjects-learning.spec.js](../../tests/browser/split-subjects-learning.spec.js)
 - [化学键与分子结构 · 互动可视化](../../chemistry/high/chemical-bond.html)

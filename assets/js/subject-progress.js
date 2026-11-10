@@ -2,7 +2,7 @@
   'use strict';
   const stagesBySubject = {
     computer: new Set(['primary', 'middle']),
-    ai: new Set(['high', 'uni'])
+    ai: new Set(['primary', 'high', 'uni'])
   };
 
   function readRecord(key) {

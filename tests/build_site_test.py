@@ -24,7 +24,8 @@ class ReleaseArtifactTest(unittest.TestCase):
                          'chemistry/high/mole-concept.html', 'science/sink-float.html',
                          'computer/index.html', 'computer/primary/index.html',
                          'computer/primary/robot-algorithms.html', 'computer/middle/binary-pixels.html',
-                         'ai/index.html', 'ai/high/index.html', 'ai/high/classifier-lab.html',
+                         'ai/index.html', 'ai/primary/index.html', 'ai/primary/feature-classification-lab.html',
+                         'ai/high/index.html', 'ai/high/classifier-lab.html',
                          'ai/high/train-test-generalization.html',
                          'ai/uni/neuron-forward-pass.html', 'computer-ai/index.html',
                          'computer-ai/primary/robot-algorithms.html', 'computer-ai/high/classifier-lab.html']:

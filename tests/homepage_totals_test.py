@@ -18,7 +18,7 @@ def card(subject, total, badge=None):
 
 class HomepageTotalsTest(unittest.TestCase):
     def test_counts_and_badges_match_catalog(self):
-        counts = {'math': 2, 'physics': 3, 'chemistry': 4, 'science': 5, 'computer': 2, 'ai': 3}
+        counts = {'math': 2, 'physics': 3, 'chemistry': 4, 'science': 5, 'computer': 2, 'ai': 4}
         html = ''.join(card(name, total) for name, total in counts.items())
         self.assertEqual(checker.check(html, counts), [])
         self.assertTrue(any('progress total' in e for e in checker.check(html.replace('data-total="2"', 'data-total="1"', 1), counts)))

@@ -18,6 +18,8 @@ CHECKS = (
     ('science/sink-float.html', '<title>沉与浮 · 小学科学互动可视化</title>'),
     ('computer/index.html', '<title>计算机 · 知识可视化学习站</title>'),
     ('ai/index.html', '<title>人工智能 · 知识可视化学习站</title>'),
+    ('ai/primary/index.html', '<title>小学人工智能 · 知识可视化学习站</title>'),
+    ('ai/primary/feature-classification-lab.html', '<title>特征线索分类实验室 · 小学人工智能</title>'),
     ('computer/primary/robot-algorithms.html', '<title>指令小机器人 · 小学计算机</title>'),
     ('ai/high/classifier-lab.html', '<title>分类边界实验室 · 高中人工智能</title>'),
     ('ai/high/train-test-generalization.html', '<title>训练与测试集实验室 · 高中人工智能</title>'),

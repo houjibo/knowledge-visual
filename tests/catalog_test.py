@@ -23,7 +23,9 @@ class CatalogTest(unittest.TestCase):
                 'computer/index.html': '<title>计算机</title><a href="primary/index.html">小学</a>',
                 'computer/primary/index.html': '<a href="robot-algorithms.html">指令算法</a>',
                 'computer/primary/robot-algorithms.html': '<title>指令小机器人</title>',
-                'ai/index.html': '<title>人工智能</title><a href="high/index.html">高中</a>',
+                'ai/index.html': '<title>人工智能</title><a href="primary/index.html">小学</a><a href="high/index.html">高中</a>',
+                'ai/primary/index.html': '<a href="feature-classification-lab.html">小学人工智能 特征分类线索</a>',
+                'ai/primary/feature-classification-lab.html': '<title>特征线索分类实验室 · 小学人工智能</title>',
                 'ai/high/index.html': '<a href="classifier-lab.html">机器学习 分类边界</a>'
                                       '<a href="train-test-generalization.html">训练集与测试集实验室</a>',
                 'ai/high/classifier-lab.html': '<title>分类边界实验室</title>',
@@ -38,7 +40,7 @@ class CatalogTest(unittest.TestCase):
             subprocess.run([sys.executable, str(SCRIPT), '--root', str(root), '--output', str(output)], check=True)
             data = output.read_text(encoding='utf-8').split('window.KV_TOPIC_CATALOG = ', 1)[1].rsplit(';', 1)[0]
             entries = json.loads(data)
-            self.assertEqual(len(entries), 5)  # identical titles must not merge
+            self.assertEqual(len(entries), 6)  # identical titles must not merge
             primary = next(x for x in entries if x['subject'] == 'math' and x['stage'] == 'primary')
             self.assertEqual(primary['title'], '10以内加减法')
             self.assertIn('加法 G1', primary['aliases'])
@@ -53,6 +55,10 @@ class CatalogTest(unittest.TestCase):
             self.assertEqual(train_test['subject'], 'ai')
             self.assertEqual(train_test['stage'], 'high')
             self.assertIn('训练集与测试集实验室', train_test['aliases'])
+            feature_classification = next(x for x in entries if x['path'] == 'ai/primary/feature-classification-lab.html')
+            self.assertEqual(feature_classification['subject'], 'ai')
+            self.assertEqual(feature_classification['stage'], 'primary')
+            self.assertIn('小学人工智能 特征分类线索', feature_classification['aliases'])
             self.assertNotIn('computer-ai', {x['subject'] for x in entries})
             subprocess.run([sys.executable, str(SCRIPT), '--root', str(root), '--check', str(output)], check=True, capture_output=True)
             (root / 'math/index.html').write_text('<a href="topics/addition/">新名称</a>', encoding='utf-8')

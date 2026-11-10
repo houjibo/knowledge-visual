@@ -83,5 +83,17 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.getByRole('slider', {name: /分类阈值/}).press('ArrowLeft');
   await expect(page.locator('#test-accuracy')).toHaveText('75%');
   await expect(page.locator('#test-warning')).toBeVisible();
+  await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('线索分类');
+  await page.locator('#site-results a[href="ai/primary/feature-classification-lab.html"]').click();
+  await expect(page).toHaveURL(/ai\/primary\/feature-classification-lab\.html/);
+  await page.getByRole('button', {name: '查看真实标签'}).click();
+  await expect(page.locator('#test-summary')).toContainText('预测正确 2/4');
+  await page.locator('#feature-color').focus();
+  await page.locator('#feature-color').press('ArrowRight');
+  await expect(page.locator('#test-summary')).toContainText('预测正确 4/4');
+  await expect(page.locator('#seen-warning')).toBeVisible();
   expect(failures).toEqual([]);
 });
