@@ -12,4 +12,4 @@
 
 - [x] 3.1 更新 AI 课程地图、交互证据、差距台账和生成的主题目录/页面清单，标注合成数据、手动阈值模拟与剩余课程空白。
 - [x] 3.2 专项桌面/移动回归 32/32；`npm run check:static`（235 项严格 OpenSpec 校验通过）、`npm run test:browser:smoke`（350 页）及 `npm run test:release`（6 项关键流程、350 页）均通过。
-- [ ] 3.3 推送后确认 GitHub Actions、部署版本清单和公网 AI 训练/测试交互；更新 OpenSpec 主契约，严格校验并归档本变更。
+- [x] 3.3 GitHub Actions #226 检查、构建、部署及部署后核验全部成功；公网版本清单匹配提交 `565b20d3bfd139264d29f1de357d0a36a6596649`，浏览器确认两组指标和调参警示；更新 OpenSpec 主契约、严格校验并归档本变更。
