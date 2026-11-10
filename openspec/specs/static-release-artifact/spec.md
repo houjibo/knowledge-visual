@@ -29,3 +29,10 @@ TBD - created by archiving change static-release-artifact. Update Purpose after 
 #### Scenario: 验证发布包所有页面
 - **WHEN** 维护者运行发布包检查
 - **THEN** 清单中的每个页面在桌面浏览器加载并检查标题、HTTP 错误与未捕获异常，同时保留代表性桌面及窄屏交互检查
+
+### Requirement: 计算机与人工智能页面进入发布包
+静态发布包 SHALL 包含计算机与人工智能学科导航、四个学段目录、首批主题页面和本地资源，并通过项目站点子路径检查内部资源引用。
+
+#### Scenario: 子路径发布新学科主题
+- **WHEN** 发布包部署在仓库子路径并从首页进入大学神经元主题
+- **THEN** 页面、脚本、样式和交互均在子路径下加载且无缺失本地资源
