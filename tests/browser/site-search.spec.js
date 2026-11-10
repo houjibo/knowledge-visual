@@ -36,16 +36,26 @@ test('筛选、无结果和键盘清空', async ({page}) => {
   await expect(page.getByRole('link', {name: /物理 初中/})).toBeVisible();
 });
 
-test('计算机与人工智能主题可按学科、学段和导航别名查找', async ({page}) => {
+test('计算机和人工智能主题可独立按学科、学段和导航别名查找', async ({page}) => {
   await page.goto('/');
-  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer-ai');
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
   await page.getByRole('searchbox', {name: '关键词'}).fill('算法');
-  const result = page.locator('#site-results a[href="computer-ai/primary/robot-algorithms.html"]');
+  const result = page.locator('#site-results a[href="computer/primary/robot-algorithms.html"]');
   await expect(result).toBeVisible();
-  await expect(result).toContainText('计算机与人工智能 · 小学');
+  await expect(result).toContainText('计算机 · 小学');
   await result.click();
-  await expect(page).toHaveURL(/computer-ai\/primary\/robot-algorithms\.html$/);
+  await expect(page).toHaveURL(/computer\/primary\/robot-algorithms\.html$/);
+
+  await page.goto('/');
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('分类边界');
+  const aiResult = page.locator('#site-results a[href="ai/high/classifier-lab.html"]');
+  await expect(aiResult).toBeVisible();
+  await expect(aiResult).toContainText('人工智能 · 高中');
+  await aiResult.click();
+  await expect(page).toHaveURL(/ai\/high\/classifier-lab\.html$/);
 });
 
 test('本地文件可搜索并进入主题', async ({page}) => {

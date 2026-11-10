@@ -8,7 +8,7 @@
   const clear = document.getElementById('site-clear');
   const status = document.getElementById('site-search-status');
   const results = document.getElementById('site-results');
-  const subjectNames = {math: '数学', physics: '物理', chemistry: '化学', science: '科学', 'computer-ai': '计算机与人工智能'};
+  const subjectNames = {math: '数学', physics: '物理', chemistry: '化学', science: '科学', computer: '计算机', ai: '人工智能'};
   const stageNames = {primary: '小学', middle: '初中', high: '高中', uni: '大学'};
 
   function update() {
@@ -21,7 +21,7 @@
       return;
     }
     const matches = catalog.filter(item => {
-      const text = [item.title, ...(item.aliases || []), subjectNames[item.subject], stageNames[item.stage]]
+      const text = [item.title, ...(item.aliases || []), subjectNames[item.subject], '计算机与人工智能', stageNames[item.stage]]
         .join(' ').toLowerCase();
       return (!subject.value || item.subject === subject.value) &&
         (!stage.value || item.stage === stage.value) && terms.every(term => text.includes(term));

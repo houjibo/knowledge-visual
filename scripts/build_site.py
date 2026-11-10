@@ -9,7 +9,7 @@ import subprocess
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
-SITE_DIRS = {'assets', 'math', 'physics', 'chemistry', 'science', 'computer-ai'}
+SITE_DIRS = {'assets', 'math', 'physics', 'chemistry', 'science', 'computer', 'ai', 'computer-ai'}
 ROOT_FILES = {'index.html', 'favicon.ico'}
 EXTENSIONS = {'.html', '.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.woff', '.woff2'}
 

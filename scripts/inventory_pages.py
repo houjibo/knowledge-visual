@@ -81,18 +81,20 @@ def build_inventory(root):
     pages = []
     for name, page in parsed.items():
         parts = Path(name).parts
-        kind = ('topic' if len(parts) >= 4 and parts[:2] == ('math', 'topics')
+        kind = ('compatibility' if parts[0] == 'computer-ai'
+                else 'topic' if len(parts) >= 4 and parts[:2] == ('math', 'topics')
                 else 'navigation' if Path(name).name == 'index.html' else 'topic')
         stage = ('primary' if parts[0] == 'science' or parts[:2] == ('math', 'topics')
-                 or parts[:2] == ('computer-ai', 'primary')
                  else parts[1] if len(parts) > 1 and parts[1] in {'middle', 'high', 'uni'}
                  else None)
+        if len(parts) > 1 and parts[0] in {'computer', 'ai'} and parts[1] in {'primary', 'middle', 'high', 'uni'}:
+            stage = parts[1]
         pages.append({
             'path': name,
             'title': ' '.join(''.join(page.title).split()),
             'kind': kind,
-            'subject': parts[0] if parts[0] in {'math', 'physics', 'chemistry', 'science', 'computer-ai'} else None,
-            'stage': stage,
+            'subject': parts[0] if parts[0] in {'math', 'physics', 'chemistry', 'science', 'computer', 'ai'} else None,
+            'stage': stage if kind != 'compatibility' else None,
             'static_signals': page.signals,
             'static_reachability': 'reachable' if name in reachable else 'not-reached',
             'functional_verification': 'unverified',

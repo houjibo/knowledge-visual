@@ -24,6 +24,11 @@ for (const [title, action] of [
     await page.getByRole('button', {name: '运行指令'}).click();
     await expect(page.locator('#robot-status')).toContainText('抵达目标');
   }],
+  ['分类边界实验室', async page => {
+    await page.getByRole('button', {name: '重新评估样本'}).click();
+    await expect(page.locator('#accuracy-output')).not.toHaveText('—');
+    await expect(page.locator('#sample-results')).toContainText('预测');
+  }],
 ]) {
   test(`从首页动手入口体验${title}`, async ({page}) => {
     await page.goto('/');
@@ -51,8 +56,9 @@ test('禁用脚本时动手入口仍可导航', async ({browser}) => {
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4183/');
   const links = page.getByRole('region', {name: '✨ 从动手开始'}).getByRole('link');
-  await expect(links).toHaveCount(5);
-  await expect(links.filter({hasText: '指令小机器人'})).toHaveAttribute('href', 'computer-ai/primary/robot-algorithms.html');
+  await expect(links).toHaveCount(6);
+  await expect(links.filter({hasText: '指令小机器人'})).toHaveAttribute('href', 'computer/primary/robot-algorithms.html');
+  await expect(links.filter({hasText: '分类边界实验室'})).toHaveAttribute('href', 'ai/high/classifier-lab.html');
   await links.filter({hasText: '机械运动'}).click();
   await expect(page).toHaveURL(/physics\/middle\/motion\.html$/);
   await context.close();

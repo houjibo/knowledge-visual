@@ -16,6 +16,12 @@ CHECKS = (
     ('physics/middle/motion.html', '<title>机械运动 · 初中物理互动可视化</title>'),
     ('chemistry/high/mole-concept.html', '<title>物质的量 · 高中化学互动可视化</title>'),
     ('science/sink-float.html', '<title>沉与浮 · 小学科学互动可视化</title>'),
+    ('computer/index.html', '<title>计算机 · 知识可视化学习站</title>'),
+    ('ai/index.html', '<title>人工智能 · 知识可视化学习站</title>'),
+    ('computer/primary/robot-algorithms.html', '<title>指令小机器人 · 小学计算机</title>'),
+    ('ai/high/classifier-lab.html', '<title>分类边界实验室 · 高中人工智能</title>'),
+    ('computer-ai/primary/robot-algorithms.html', 'url=../../computer/primary/robot-algorithms.html'),
+    ('computer-ai/high/classifier-lab.html', 'url=../../ai/high/classifier-lab.html'),
 )
 MAX_BYTES = 1024 * 1024
 

@@ -3,7 +3,7 @@ const {test, expect} = require('@playwright/test');
 const baseValue = process.env.KV_PUBLISHED_BASE_URL;
 const expectedRevision = process.env.GITHUB_SHA;
 
-test('公网发布版本、万有引力和计算机人工智能交互可用', async ({page}) => {
+test('公网发布版本、万有引力及计算机和人工智能交互可用', async ({page}) => {
   expect(baseValue, '发布验收需指定 KV_PUBLISHED_BASE_URL').toBeTruthy();
   expect(expectedRevision, '发布验收需指定 GITHUB_SHA').toMatch(/^[a-f0-9]{40}$/);
 
@@ -53,12 +53,23 @@ test('公网发布版本、万有引力和计算机人工智能交互可用', as
   await expect(page.locator('#velInfo')).toHaveAttribute('data-trajectory', 'impact');
 
   await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
-  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer-ai');
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
   await page.getByRole('searchbox', {name: '关键词'}).fill('算法');
-  await page.locator('#site-results a[href="computer-ai/primary/robot-algorithms.html"]').click();
-  await expect(page).toHaveURL(/computer-ai\/primary\/robot-algorithms\.html/);
+  await page.locator('#site-results a[href="computer/primary/robot-algorithms.html"]').click();
+  await expect(page).toHaveURL(/computer\/primary\/robot-algorithms\.html/);
   await page.getByRole('button', {name: '运行指令'}).click();
   await expect(page.locator('#robot-status')).toContainText('抵达目标', {timeout: 5000});
+  await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('分类边界');
+  await page.locator('#site-results a[href="ai/high/classifier-lab.html"]').click();
+  await expect(page).toHaveURL(/ai\/high\/classifier-lab\.html/);
+  const threshold = page.locator('#threshold');
+  await threshold.focus();
+  for (let i = 0; i < 4; i++) await threshold.press('ArrowLeft');
+  await page.getByRole('button', {name: '重新评估样本'}).click();
+  await expect(page.locator('#accuracy-output')).toHaveText('87.5%');
   expect(failures).toEqual([]);
 });

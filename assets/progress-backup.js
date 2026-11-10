@@ -4,7 +4,11 @@
     'kv-math-progress', 'kv-math-progress-v2',
     'kv-physics-middle-progress', 'kv-physics-high-progress', 'kv-physics-uni-progress',
     'kv-chemistry-middle-progress', 'kv-chemistry-high-progress', 'kv-chemistry-uni-progress',
-    'kv-science-progress'
+    'kv-science-progress',
+    'kv-computer-primary-progress', 'kv-computer-middle-progress',
+    'kv-ai-high-progress', 'kv-ai-uni-progress',
+    'kv-computer-ai-primary-progress', 'kv-computer-ai-middle-progress',
+    'kv-computer-ai-high-progress', 'kv-computer-ai-uni-progress'
   ];
   const exportButton = document.getElementById('progress-export');
   const input = document.getElementById('progress-import-file');

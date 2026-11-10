@@ -1,29 +1,51 @@
 (function () {
   'use strict';
-  const stages = new Set(['primary', 'middle', 'high', 'uni']);
+  const stagesBySubject = {
+    computer: new Set(['primary', 'middle']),
+    ai: new Set(['high', 'uni'])
+  };
 
-  function read(stage) {
-    if (!stages.has(stage)) return null;
+  function readRecord(key) {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return {raw: null, value: {}, valid: true};
     try {
-      const raw = localStorage.getItem(`kv-computer-ai-${stage}-progress`);
-      if (raw === null) return {};
       const value = JSON.parse(raw);
-      return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+      return {raw, value, valid: !!value && typeof value === 'object' && !Array.isArray(value)};
+    } catch (_) { return {raw, value: {}, valid: false}; }
+  }
+
+  function read(subject, stage) {
+    if (!stagesBySubject[subject] || !stagesBySubject[subject].has(stage)) return null;
+    try {
+      const current = readRecord(`kv-${subject}-${stage}-progress`);
+      const legacy = readRecord(`kv-computer-ai-${stage}-progress`);
+      if (!current.valid) return null;
+
+      const previous = legacy.valid ? legacy.value : {};
+      const value = Object.assign(Object.create(null), previous, current.value);
+      const missingLegacyEntries = Object.keys(previous).some(name =>
+        !Object.prototype.hasOwnProperty.call(current.value, name));
+      if (legacy.raw !== null && missingLegacyEntries) {
+        try {
+          localStorage.setItem(`kv-${subject}-${stage}-progress`, JSON.stringify(value));
+        } catch (_) { /* Keep the merged legacy view usable when migration is blocked. */ }
+      }
+      return value;
     } catch (_) { return null; }
   }
 
-  function markComplete(stage, slug) {
-    if (!stages.has(stage) || !/^[a-z0-9-]+$/.test(slug)) return false;
+  function markComplete(subject, stage, slug) {
+    if (!stagesBySubject[subject] || !stagesBySubject[subject].has(stage) ||
+        !/^[a-z0-9-]+$/.test(slug)) return false;
     try {
-      const raw = localStorage.getItem(`kv-computer-ai-${stage}-progress`);
-      const value = raw === null ? {} : JSON.parse(raw);
-      if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+      const value = read(subject, stage);
+      if (!value) return false;
       value[slug] = true;
-      localStorage.setItem(`kv-computer-ai-${stage}-progress`, JSON.stringify(value));
+      localStorage.setItem(`kv-${subject}-${stage}-progress`, JSON.stringify(value));
       window.dispatchEvent(new Event('kv-progress-changed'));
       return true;
     } catch (_) { return false; }
   }
 
-  window.ComputerAIProgress = {read, markComplete};
+  window.SubjectProgress = {read, markComplete};
 })();

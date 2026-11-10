@@ -119,18 +119,43 @@ def main():
                 errors.append(f'{subject}/{stage}: cannot identify progress total or topic cards')
             elif int(matches[0]) != count:
                 errors.append(f'{subject}/{stage}: progress total {matches[0]}, topic cards {count}')
-    computer_ai_topics = {
-        'primary': 'robot-algorithms.html',
-        'middle': 'binary-pixels.html',
-        'high': 'classifier-lab.html',
-        'uni': 'neuron-forward-pass.html',
+    subject_topics = {
+        'computer/primary/index.html': 'robot-algorithms.html',
+        'computer/middle/index.html': 'binary-pixels.html',
+        'ai/high/index.html': 'classifier-lab.html',
+        'ai/uni/index.html': 'neuron-forward-pass.html',
     }
-    for stage, expected_href in computer_ai_topics.items():
-        name = f'computer-ai/{stage}/index.html'
+    for name, expected_href in subject_topics.items():
         hrefs = topic_hrefs.get(name, [])
         count = topic_counts.get(name, 0)
         if count != 1 or hrefs != [expected_href]:
             errors.append(f'{name}: expected one topic card for {expected_href}, found {hrefs}')
+    legacy_targets = {
+        'computer-ai/primary/index.html': '../../computer/primary/index.html',
+        'computer-ai/primary/robot-algorithms.html': '../../computer/primary/robot-algorithms.html',
+        'computer-ai/middle/index.html': '../../computer/middle/index.html',
+        'computer-ai/middle/binary-pixels.html': '../../computer/middle/binary-pixels.html',
+        'computer-ai/high/index.html': '../../ai/high/index.html',
+        'computer-ai/high/classifier-lab.html': '../../ai/high/classifier-lab.html',
+        'computer-ai/uni/index.html': '../../ai/uni/index.html',
+        'computer-ai/uni/neuron-forward-pass.html': '../../ai/uni/neuron-forward-pass.html',
+    }
+    for name, target in legacy_targets.items():
+        try:
+            content = (ROOT / name).read_text(encoding='utf-8')
+        except (UnicodeError, OSError) as exc:
+            errors.append(f'{name}: cannot read compatibility route: {exc}')
+            continue
+        if f'url={target}' not in content or f'href="{target}"' not in content:
+            errors.append(f'{name}: missing redirect or fallback to {target}')
+    try:
+        legacy_home = (ROOT / 'computer-ai/index.html').read_text(encoding='utf-8')
+    except (UnicodeError, OSError) as exc:
+        errors.append(f'computer-ai/index.html: cannot read legacy chooser: {exc}')
+    else:
+        for target in ('../computer/index.html', '../ai/index.html'):
+            if f'href="{target}"' not in legacy_home:
+                errors.append(f'computer-ai/index.html: missing subject link {target}')
     index = ROOT / 'AGENTS.md'
     try:
         for line, text in enumerate(index.read_text(encoding='utf-8').splitlines(), 1):
@@ -144,7 +169,7 @@ def main():
         print('\n'.join(errors), file=sys.stderr)
         print(f'FAILED: {len(errors)} issue(s)', file=sys.stderr)
         return 1
-    print(f'OK: {pages} HTML pages, AGENTS.md links, math/physics/chemistry progress lists, computer-ai topic routes checked')
+    print(f'OK: {pages} HTML pages, AGENTS.md links, math/physics/chemistry progress lists, split subject and compatibility routes checked')
     return 0
 
 

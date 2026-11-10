@@ -17,14 +17,16 @@ test('首页只计入当前学段中有效且完成的记录', async ({page}) =>
   await expect(page.locator('[data-subject="physics"] .sp-label')).toHaveText('已学 2/55');
   await expect(page.locator('[data-subject="chemistry"] .sp-label')).toHaveText('已学 1/46');
   await expect(page.locator('[data-subject="science"] .sp-label')).toHaveText('已学 1/17');
-  await expect(page.locator('[data-subject="computer-ai"] .sp-label')).toHaveText('已学 2/4');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toHaveText('已学 1/2');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/2');
 });
 
 test('存储损坏或目录不可用时不假称尚未开始', async ({page}) => {
   await page.addInitScript(() => localStorage.setItem('kv-science-progress', '{broken'));
   await page.goto('/');
   await expect(page.locator('[data-subject="science"] .sp-label')).toHaveText('进度暂不可用');
-  await expect(page.locator('[data-subject="computer-ai"] .sp-label')).toHaveText('尚未开始');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toHaveText('尚未开始');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('尚未开始');
   await expect(page.locator('[data-subject="math"] .sp-label')).toHaveText('尚未开始');
   expect(await page.evaluate(() => localStorage.getItem('kv-science-progress'))).toBe('{broken');
   await page.route('**/assets/topic-catalog.js', route => route.abort());
@@ -39,7 +41,8 @@ test('拒绝读取存储时如实提示进度不可用', async ({page}) => {
   await page.goto('/');
   await expect(page.locator('[data-subject="math"] .sp-label')).toHaveText('进度暂不可用');
   await expect(page.locator('[data-subject="science"] .sp-label')).toHaveText('进度暂不可用');
-  await expect(page.locator('[data-subject="computer-ai"] .sp-label')).toHaveText('进度暂不可用');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toHaveText('进度暂不可用');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('进度暂不可用');
 });
 
 test('目录不完整时不误报零进度', async ({page}) => {
@@ -47,5 +50,6 @@ test('目录不完整时不误报零进度', async ({page}) => {
   await page.goto('/');
   await expect(page.locator('[data-subject="math"] .sp-label')).toHaveText('进度暂不可用');
   await expect(page.locator('[data-subject="science"] .sp-label')).toHaveText('进度暂不可用');
-  await expect(page.locator('[data-subject="computer-ai"] .sp-label')).toHaveText('进度暂不可用');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toHaveText('进度暂不可用');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('进度暂不可用');
 });
