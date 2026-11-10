@@ -143,7 +143,7 @@
 | 高 | 复式统计图读图练习两组总量相等时正确答案为 0，固定随机序列已复现只有三个选项；原因是重复干扰项经去重后数量不足。现在用有限整数偏移补齐数值题的四个互异非负选项，并保留正确答案。桌面/移动端固定序列回归 4/4 通过，覆盖零差值题、四类数值题的非负互异选项、唯一正确答案、答对反馈、计分和自动下一题。提交 `b287ba6829f40db48c57d986af19635dbc5074ba` 的 Actions [run #218](https://github.com/houjibo/knowledge-visual/actions/runs/42777017950) 与补充分支覆盖提交 `8abc16ef955a799bbce475b84431b0e1c074f172` 的 Actions [run #219](https://github.com/houjibo/knowledge-visual/actions/runs/42779523071) checks、构建、Pages 部署及部署后验证全部成功；公网清单匹配 `8abc16e` 且 `site_files_modified:false`。移动公网实测确认零差值题答案 0 唯一、正确计分并生成下一题；本地与公网页面已同时打开。[归档 OpenSpec 变更](../openspec/changes/archive/2026-11-10-bounded-compound-chart-read-options/proposal.md)。 | 按风险清单继续排查其他尚未核实的有限生成路径，并优先选择可复现且有学习影响的问题。 |
 | 低 | 232 份主规格均有不少于 50 个字符的用途说明；原 162 个 CLI 归档占位已根据对应需求与场景补全。静态守卫 `scripts/check_spec_purposes.py` 会拒绝用途缺失、过短或仍含占位文本的规格。[归档 OpenSpec 变更](../openspec/changes/archive/2026-11-10-complete-openspec-spec-purposes/proposal.md)。 | 新建或归档能力规格时继续按实际契约撰写用途，并通过 `npm run check:static` 确认没有回归。 |
 | 中 | 共享资源和自包含页面并存，覆盖与一致性未盘点；直接合并可能影响既有交互。 | 先梳理重复与依赖，选可观察的单一重构切片，保持行为。 |
-| 中 | 静态检查只覆盖部分引用，未覆盖动态路径、CSS 资源、外链及浏览器异常。 | 根据实际缺陷逐步扩展检查；失败时保留证据。 |
+| 中 | 本地静态门禁已覆盖 HTML 静态引用、根索引及全仓 Markdown 行内/图片/引用式本地链接；动态 JavaScript 路径、CSS 内引用、外链可达性、片段和浏览器异常仍未覆盖。 | 按真实缺陷证据逐项扩展检查，并保留无法静态验证的边界。 |
 | 低 | README 已改为面向公开读者的项目介绍，提供正式站点、在线学习、免构建本地预览和反馈入口；已移除旧项目迁移来源、建设中状态及内部维护细节。学科范围随内容发展仍需同步维护；[本次文档变更](../openspec/changes/archive/2026-11-09-public-facing-readme/proposal.md)。 | 内容范围或正式站点地址变化时核对 README。 |
 | 低 | 计算机与人工智能课程设计中首批主题的 OpenSpec 链接曾指向归档前目录；现已指向归档提案并核对目标存在。[文档修复](../openspec/changes/archive/2026-11-10-correct-computer-ai-curriculum-source-link/proposal.md)。 | 归档或迁移变更目录时同步检查文档链接。 |
 
