@@ -14,9 +14,9 @@
 
 - [x] 3.1 更新发布白名单、发布清单、全页盘点及交互证据索引；运行静态发布包和清单一致性测试。
 - [x] 3.2 更新 README、架构和计算机/人工智能课程设计索引，确认公开说明分别介绍两个学科和实际已有学段。
-- [ ] 3.3 更新 OpenSpec 主契约和差距记录，运行 `openspec validate --all --strict`。
+- [x] 3.3 更新 OpenSpec 主契约和差距记录，运行 `openspec validate --all --strict`；归档时将变更合并进主契约，严格校验 235 项全部通过。
 
 ## 4. 集成验收
 
 - [x] 4.1 更新桌面/移动交互测试，验证两个学科的导航、主题操作、旧链接、进度迁移、键盘和 320px 布局。
-- [ ] 4.2 运行 `npm run check:static`、`npm run test:browser`、`npm run test:browser:smoke` 和 `npm run test:release`；公网部署后分别核验两个学科及旧链接兼容。
+- [x] 4.2 运行 `npm run check:static`、`npm run test:browser`、`npm run test:browser:smoke` 和 `npm run test:release`；公网部署后分别核验两个学科及旧链接兼容。完整检查由 GitHub Actions [run #224](https://github.com/houjibo/knowledge-visual/actions/runs/42853182855) 完成，公网版本清单与提交一致，桌面公网交互与旧 AI 书签兼容检查通过。
