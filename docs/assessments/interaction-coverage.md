@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：323；已登记部分交互证据：177；尚未登记：146。
+主题总数：324；已登记部分交互证据：178；尚未登记：146。
 
 ## 已登记部分交互证据
 
@@ -14,6 +14,8 @@
   - 桌面与移动浏览器验证固定样本下训练/测试准确率、测试标签揭示、调参警示、键盘阈值、进度存储拒绝和高中目录计数；现实数据代表性、真实设备和整页屏幕阅读器未验收。 [high-ai-train-test-visualization.spec.js](../../tests/browser/high-ai-train-test-visualization.spec.js)
 - [数据标签侦察实验室 · 初中人工智能](../../ai/middle/data-label-quality.html)
   - 桌面与 320px 浏览器验证冲突标签的平票、更正、排除、复核依据、重置、键盘选择、首页搜索与进度；样例是固定虚构示意，真实模型训练、真实数据判断、真实设备和整页屏幕阅读器未验收。 [middle-ai-data-label-quality.spec.js](../../tests/browser/middle-ai-data-label-quality.spec.js)
+- [数据来源与覆盖实验室 · 初中人工智能](../../ai/middle/data-source-coverage.html)
+  - 桌面与 320px 浏览器验证同样四条样例的窄来源/跨条件覆盖差异、手动选取、空集合、键盘操作、进度与保存失败；合成集合不产生现实准确率、群体代表性或公平结论。真实设备、真实学习者和整页屏幕阅读器尚未验收。 [middle-ai-data-source-coverage.spec.js](../../tests/browser/middle-ai-data-source-coverage.spec.js)
 - [特征线索分类实验室 · 小学人工智能](../../ai/primary/feature-classification-lab.html)
   - 桌面与移动浏览器检查颜色/形状多数规则、并列不确定、测试标签揭示、看过样例后的比较提示、键盘、进度存储拒绝、首页搜索和 320px；样例是固定合成示意，真实模型训练、真实图像、真实设备和整页屏幕阅读器未验收。 [primary-ai-feature-classification.spec.js](../../tests/browser/primary-ai-feature-classification.spec.js)
 - [神经元前向计算器 · 大学人工智能双输入单输出神经元示意图](../../ai/uni/neuron-forward-pass.html)

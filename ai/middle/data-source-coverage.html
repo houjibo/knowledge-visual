@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="选择虚构训练样例，观察采集条件与标签如何影响样本覆盖。">
+  <title>数据来源与覆盖实验室 · 初中人工智能</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .sample-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 14px 0; }
+    .sample-controls button { min-width: 0; min-height: 44px; }
+    .sample-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+    .sample-card { display: grid; min-width: 0; min-height: 132px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; }
+    .sample-card:focus-within { outline: 3px solid #4c46b5; outline-offset: 2px; }
+    .sample-card.is-selected { border: 2px solid #413a9d; padding: 9px; box-shadow: 0 0 0 2px #413a9d1a; }
+    .sample-card input { width: 21px; height: 21px; margin: 0; accent-color: #403d99; }
+    .sample-face { display: grid; min-height: 76px; align-content: center; justify-items: center; gap: 3px; margin-top: 6px; border-radius: 9px; color: #172033; }
+    .sample-card[data-condition="bright"] .sample-face { background: #fff3c9; }
+    .sample-card[data-condition="dim"] .sample-face { background: #dfe3ec; }
+    .condition-name, .sample-name { font-size: .88rem; font-weight: 700; text-align: center; }
+    .shape-mark { line-height: 1; font-size: 1.8rem; font-weight: 900; }
+    .sample-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 12px 0; }
+    .sample-metric { min-width: 0; padding: 11px; border-radius: 10px; background: #eef1fb; }
+    .sample-metric span { display: block; color: #4b566a; font-size: .9rem; }
+    .sample-metric strong { display: block; margin-top: 4px; color: #292564; font-size: 1.05rem; overflow-wrap: anywhere; }
+    .matrix-wrap { max-width: 100%; overflow-x: auto; }
+    .coverage-table { width: 100%; min-width: 290px; border-collapse: collapse; }
+    .coverage-table caption { padding: 0 0 8px; font-weight: 800; text-align: left; }
+    .coverage-table th, .coverage-table td { padding: 9px 7px; border: 1px solid #d5deeb; text-align: center; }
+    .coverage-table th { background: #f2f4fa; }
+    .coverage-table td { background: #fff; font-weight: 700; }
+    .coverage-table td.is-covered { background: #e8f5ec; color: #174c2c; }
+    .coverage-table td.is-missing { background: #fff0e5; color: #743400; }
+    .missing-list { margin: 8px 0; font-weight: 700; }
+    .scope-note { border-left: 4px solid #6a62bb; padding: 11px 13px; background: #f1f0ff; }
+    @media (max-width: 560px) {
+      .sample-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .sample-summary { grid-template-columns: 1fr; }
+      .sample-controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 340px) {
+      .sample-card { min-height: 120px; padding: 8px; }
+      .sample-card.is-selected { padding: 7px; }
+      .sample-face { min-height: 70px; }
+      .coverage-table th, .coverage-table td { padding: 8px 4px; }
+    }
+  </style>
+</head>
+<body data-subject="ai" data-stage="middle">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑">
+      <a href="../../index.html">首页</a><span aria-hidden="true">›</span>
+      <a href="../index.html">人工智能</a><span aria-hidden="true">›</span>
+      <a href="index.html">初中</a><span aria-hidden="true">›</span>
+      <span aria-current="page">数据来源与覆盖实验室</span>
+    </nav>
+    <main id="main-content">
+      <header class="hero">
+        <p class="eyebrow">初中 · 样本从哪里来</p>
+        <h1>数据来源与覆盖实验室</h1>
+        <p>同样选 4 条样例，如果它们都来自明亮桌面，数据里还看得到低照度下的图案吗？试着选择样例，再比较覆盖矩阵。</p>
+      </header>
+
+      <section class="panel" aria-labelledby="collection-title">
+        <h2 id="collection-title">一组虚构的目标样例</h2>
+        <p>假设要让一个分类器辨认圆形或三角形图案。这个小集合有明亮与低照度两种拍摄条件，每种条件都包含两类图案。勾选哪些样例用于本次演示。</p>
+        <div class="sample-controls" aria-label="样例选择预设">
+          <button type="button" class="secondary" id="preset-narrow">只用明亮处的 4 条</button>
+          <button type="button" class="secondary" id="preset-cross">明暗各取样，仍选 4 条</button>
+          <button type="button" class="secondary" id="reset-samples">恢复初始样例</button>
+        </div>
+        <fieldset class="sample-selection">
+          <legend>从 8 条样例中选择</legend>
+          <div class="sample-grid" id="sample-grid">
+            <label class="sample-card is-selected" data-condition="bright" data-label="circle">
+              <input id="sample-01" type="checkbox" value="01" checked aria-label="选择样例 01：明亮桌面，圆形图案">
+              <span class="sample-face"><span class="condition-name">明亮桌面</span><span class="shape-mark" aria-hidden="true">●</span><span class="sample-name">圆形 · 样例 01</span></span>
+            </label>
+            <label class="sample-card is-selected" data-condition="bright" data-label="circle">
+              <input id="sample-02" type="checkbox" value="02" checked aria-label="选择样例 02：明亮桌面，圆形图案">
+              <span class="sample-face"><span class="condition-name">明亮桌面</span><span class="shape-mark" aria-hidden="true">●</span><span class="sample-name">圆形 · 样例 02</span></span>
+            </label>
+            <label class="sample-card is-selected" data-condition="bright" data-label="triangle">
+              <input id="sample-03" type="checkbox" value="03" checked aria-label="选择样例 03：明亮桌面，三角形图案">
+              <span class="sample-face"><span class="condition-name">明亮桌面</span><span class="shape-mark" aria-hidden="true">▲</span><span class="sample-name">三角形 · 样例 03</span></span>
+            </label>
+            <label class="sample-card is-selected" data-condition="bright" data-label="triangle">
+              <input id="sample-04" type="checkbox" value="04" checked aria-label="选择样例 04：明亮桌面，三角形图案">
+              <span class="sample-face"><span class="condition-name">明亮桌面</span><span class="shape-mark" aria-hidden="true">▲</span><span class="sample-name">三角形 · 样例 04</span></span>
+            </label>
+            <label class="sample-card" data-condition="dim" data-label="circle">
+              <input id="sample-05" type="checkbox" value="05" aria-label="选择样例 05：低照度桌面，圆形图案">
+              <span class="sample-face"><span class="condition-name">低照度桌面</span><span class="shape-mark" aria-hidden="true">●</span><span class="sample-name">圆形 · 样例 05</span></span>
+            </label>
+            <label class="sample-card" data-condition="dim" data-label="circle">
+              <input id="sample-06" type="checkbox" value="06" aria-label="选择样例 06：低照度桌面，圆形图案">
+              <span class="sample-face"><span class="condition-name">低照度桌面</span><span class="shape-mark" aria-hidden="true">●</span><span class="sample-name">圆形 · 样例 06</span></span>
+            </label>
+            <label class="sample-card" data-condition="dim" data-label="triangle">
+              <input id="sample-07" type="checkbox" value="07" aria-label="选择样例 07：低照度桌面，三角形图案">
+              <span class="sample-face"><span class="condition-name">低照度桌面</span><span class="shape-mark" aria-hidden="true">▲</span><span class="sample-name">三角形 · 样例 07</span></span>
+            </label>
+            <label class="sample-card" data-condition="dim" data-label="triangle">
+              <input id="sample-08" type="checkbox" value="08" aria-label="选择样例 08：低照度桌面，三角形图案">
+              <span class="sample-face"><span class="condition-name">低照度桌面</span><span class="shape-mark" aria-hidden="true">▲</span><span class="sample-name">三角形 · 样例 08</span></span>
+            </label>
+          </div>
+        </fieldset>
+      </section>
+
+      <section class="panel" aria-labelledby="coverage-title">
+        <h2 id="coverage-title">看样本里有哪些条件</h2>
+        <div class="sample-summary" aria-label="当前选择的样例统计">
+          <div class="sample-metric"><span>已选样例</span><strong id="sample-count">4 / 8</strong></div>
+          <div class="sample-metric"><span>图案标签</span><strong id="label-count">圆形 2 · 三角形 2</strong></div>
+          <div class="sample-metric"><span>采集条件</span><strong id="condition-count">明亮 4 · 低照度 0</strong></div>
+        </div>
+        <p id="coverage-total" class="status" role="status" aria-live="polite" aria-atomic="true">本演示集合已覆盖 2 / 4 个条件组合。</p>
+        <div class="matrix-wrap">
+          <table class="coverage-table">
+            <caption>按采集条件与图案标签统计（已选 / 集合中）</caption>
+            <thead><tr><th scope="col">采集条件</th><th scope="col">圆形</th><th scope="col">三角形</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">明亮桌面</th><td id="cell-bright-circle" class="is-covered">2 / 2 · 已覆盖</td><td id="cell-bright-triangle" class="is-covered">2 / 2 · 已覆盖</td></tr>
+              <tr><th scope="row">低照度桌面</th><td id="cell-dim-circle" class="is-missing">0 / 2 · 缺少</td><td id="cell-dim-triangle" class="is-missing">0 / 2 · 缺少</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="missing-list" id="missing-combinations">还没有低照度桌面下的圆形和三角形样例。</p>
+        <p id="selection-status" class="note" role="status" aria-live="polite" aria-atomic="true">同样的类别数量，可以来自不同的采集条件。</p>
+        <p id="progress-status" class="note" role="status" aria-live="polite">覆盖四种条件组合即可完成本主题；进度保存在当前浏览器。</p>
+        <p class="scope-note">这些图案、标签和光照条件都是为教学构造的虚构数据。覆盖 4/4 只表示本演示中的四种组合都有样例，不代表样本量足够、抽样没有偏差，也不能说明真实模型的准确率或公平性。</p>
+        <div class="button-row"><button type="button" class="secondary" id="reset-samples-bottom">恢复初始样例</button></div>
+      </section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回初中人工智能</a>　·　<a href="../index.html">返回人工智能学科</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script>
+  (() => {
+    const stage = 'middle', slug = 'data-source-coverage';
+    const cards = [...document.querySelectorAll('.sample-card')];
+    const checks = cards.map(card => card.querySelector('input[type="checkbox"]'));
+    const combinations = [
+      {condition: 'bright', label: 'circle', id: 'cell-bright-circle', name: '明亮桌面—圆形'},
+      {condition: 'bright', label: 'triangle', id: 'cell-bright-triangle', name: '明亮桌面—三角形'},
+      {condition: 'dim', label: 'circle', id: 'cell-dim-circle', name: '低照度桌面—圆形'},
+      {condition: 'dim', label: 'triangle', id: 'cell-dim-triangle', name: '低照度桌面—三角形'}
+    ];
+    const hasSavedProgress = () => {
+      const saved = SubjectProgress.read('ai', stage);
+      if (saved === null) {
+        document.getElementById('progress-status').textContent = '本机进度暂不可用；样例选择与覆盖统计仍可使用。';
+        return null;
+      }
+      return !!saved[slug];
+    };
+    let hasCompleted = hasSavedProgress();
+
+    function setSampleSelection(ids) {
+      const wanted = new Set(ids);
+      checks.forEach(input => { input.checked = wanted.has(input.value); });
+      render();
+    }
+
+    function completeIfCovered(coveredCount) {
+      if (coveredCount !== combinations.length || hasCompleted === true) return;
+      if (SubjectProgress.markComplete('ai', stage, slug)) {
+        hasCompleted = true;
+        document.getElementById('progress-status').textContent = '已在本机记录完成此主题。';
+      } else {
+        document.getElementById('progress-status').textContent = '样例选择仍可继续，但本机进度未能保存。';
+      }
+    }
+
+    function render() {
+      const selected = cards.filter(card => card.querySelector('input').checked);
+      const counts = {bright: {circle: 0, triangle: 0}, dim: {circle: 0, triangle: 0}};
+      selected.forEach(card => { counts[card.dataset.condition][card.dataset.label] += 1; });
+      cards.forEach(card => card.classList.toggle('is-selected', card.querySelector('input').checked));
+
+      document.getElementById('sample-count').textContent = `${selected.length} / ${cards.length}`;
+      document.getElementById('label-count').textContent = `圆形 ${counts.bright.circle + counts.dim.circle} · 三角形 ${counts.bright.triangle + counts.dim.triangle}`;
+      document.getElementById('condition-count').textContent = `明亮 ${counts.bright.circle + counts.bright.triangle} · 低照度 ${counts.dim.circle + counts.dim.triangle}`;
+
+      const covered = combinations.filter(item => counts[item.condition][item.label] > 0);
+      const missing = combinations.filter(item => counts[item.condition][item.label] === 0);
+      document.getElementById('coverage-total').textContent = `本演示集合已覆盖 ${covered.length} / ${combinations.length} 个条件组合。`;
+      combinations.forEach(item => {
+        const cell = document.getElementById(item.id);
+        const count = counts[item.condition][item.label];
+        cell.textContent = `${count} / 2 · ${count ? '已覆盖' : '缺少'}`;
+        cell.classList.toggle('is-covered', count > 0);
+        cell.classList.toggle('is-missing', count === 0);
+      });
+      document.getElementById('missing-combinations').textContent = missing.length
+        ? `尚未覆盖：${missing.map(item => item.name).join('、')}。`
+        : '四种条件组合都有已选样例。';
+      document.getElementById('selection-status').textContent = selected.length
+        ? `已从 8 条虚构样例中选取 ${selected.length} 条；图案标签数量相同也不表示采集条件相同。`
+        : '当前没有选中样例；此时无法观察任何条件组合。';
+      if (hasCompleted === true) document.getElementById('progress-status').textContent = '本机已记录完成此主题。';
+      else if (hasCompleted === false) document.getElementById('progress-status').textContent = '覆盖四种条件组合即可完成本主题；进度保存在当前浏览器。';
+      completeIfCovered(covered.length);
+    }
+
+    checks.forEach(input => input.addEventListener('change', render));
+    document.getElementById('preset-narrow').addEventListener('click', () => setSampleSelection(['01', '02', '03', '04']));
+    document.getElementById('preset-cross').addEventListener('click', () => setSampleSelection(['01', '03', '05', '07']));
+    const reset = () => setSampleSelection(['01', '02', '03', '04']);
+    document.getElementById('reset-samples').addEventListener('click', reset);
+    document.getElementById('reset-samples-bottom').addEventListener('click', reset);
+    render();
+  })();
+  </script>
+</body>
+</html>
