@@ -8,6 +8,7 @@ import re
 DEPLOY_STEP = re.compile(r"(?m)^\s*(?:-\s*)?uses:\s*actions/deploy-pages@")
 JOB_HEADER = re.compile(r"^  ([A-Za-z0-9_-]+):\s*(?:#.*)?$")
 DEPLOY_TIMEOUT_MINUTES = 15
+CHECKS_TIMEOUT_MINUTES = 25
 REQUIRED_RELEASE_STEPS = (
     "needs: checks",
     "python3 scripts/build_site.py",
@@ -54,6 +55,13 @@ def check_pages_publisher(repository_root: Path) -> Path:
         raise ValueError(f"{path.name} is missing required release safeguards: {', '.join(missing)}")
     if path.name != "checks.yml":
         raise ValueError(f"expected the verified publisher in checks.yml, found {path.name}")
+
+    checks_job = _job_block(content, "checks")
+    checks_timeout = re.search(r"(?m)^    timeout-minutes:\s*(\d+)\s*(?:#.*)?$", checks_job or "")
+    if checks_timeout is None or int(checks_timeout.group(1)) < CHECKS_TIMEOUT_MINUTES:
+        raise ValueError(
+            f"{path.name} checks job must set timeout-minutes to at least {CHECKS_TIMEOUT_MINUTES}"
+        )
 
     deploy_job = _job_block(content, "deploy")
     timeout = re.search(r"(?m)^    timeout-minutes:\s*(\d+)\s*(?:#.*)?$", deploy_job or "")

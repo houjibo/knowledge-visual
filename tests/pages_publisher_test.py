@@ -10,6 +10,7 @@ from scripts.check_pages_publisher import check_pages_publisher
 PUBLISHER = """\
 jobs:
   checks:
+    timeout-minutes: 30
     steps:
       - run: npm run check
   build-release:
@@ -43,6 +44,23 @@ class PagesPublisherTests(unittest.TestCase):
         publisher = self.workflows / "checks.yml"
         publisher.write_text(PUBLISHER, encoding="utf-8")
         self.assertEqual(check_pages_publisher(self.root), publisher)
+
+    def test_rejects_checks_timeout_below_minimum(self):
+        publisher = self.workflows / "checks.yml"
+        publisher.write_text(PUBLISHER.replace("timeout-minutes: 30", "timeout-minutes: 20"), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "checks job must set timeout-minutes to at least 25"):
+            check_pages_publisher(self.root)
+
+    def test_accepts_checks_timeout_at_minimum(self):
+        publisher = self.workflows / "checks.yml"
+        publisher.write_text(PUBLISHER.replace("timeout-minutes: 30", "timeout-minutes: 25"), encoding="utf-8")
+        self.assertEqual(check_pages_publisher(self.root), publisher)
+
+    def test_rejects_missing_checks_timeout(self):
+        publisher = self.workflows / "checks.yml"
+        publisher.write_text(PUBLISHER.replace("    timeout-minutes: 30\n", ""), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "checks job must set timeout-minutes to at least 25"):
+            check_pages_publisher(self.root)
 
     def test_rejects_a_second_pages_publisher(self):
         (self.workflows / "checks.yml").write_text(PUBLISHER, encoding="utf-8")
