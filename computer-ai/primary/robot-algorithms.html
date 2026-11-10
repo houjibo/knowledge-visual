@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="编排方向指令，逐步执行机器人路线，理解算法顺序。"><title>指令小机器人 · 小学计算机与人工智能</title><link rel="stylesheet" href="../assets/computer-ai.css"></head>
+<body><a class="skip-link" href="#main-content">跳到主要内容</a><div class="shell">
+  <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机与人工智能</a><span aria-hidden="true">›</span><a href="index.html">小学</a><span aria-hidden="true">›</span><span aria-current="page">指令小机器人</span></nav>
+  <main id="main-content"><header class="hero"><p class="eyebrow">小学 · 算法与顺序</p><h1>🤖 指令小机器人</h1><p>把“到达绿色目标格”拆成一步一步的指令。机器人从左下角出发；灰色格子是墙，碰到墙时不会移动。</p></header>
+    <section class="panel learning-layout" aria-labelledby="mission-title"><div class="visual"><h2 id="mission-title">路线地图</h2><div id="robot-grid" class="robot-grid" role="img" aria-label="5 列 4 行路线地图，机器人在第 1 列第 4 行，目标在第 5 列第 1 行"></div><p class="note">🤖 机器人　🏁 目标　深灰格是墙</p><p id="robot-status" class="status" role="status" aria-live="polite" aria-atomic="true">准备好后，逐条执行或运行完整指令。</p></div>
+      <div class="controls"><div class="control"><h2>编排指令</h2><p class="note">试着让机器人绕过墙，到达右上角。</p><div class="command-list" id="command-list"></div></div><div class="button-row"><button type="button" id="step-button">执行下一条</button><button type="button" id="run-button">运行指令</button><button type="button" id="reset-button" class="secondary">重置关卡</button></div><p id="step-status" class="note" aria-live="polite">已执行 0 / 7 条指令</p></div>
+    </section>
+    <section class="panel"><h2>想一想</h2><p>为什么同样的几条指令，换一个顺序就可能撞上墙？程序会按书写的顺序执行每一步。</p><p id="progress-status" class="note" role="status" aria-live="polite">学习进度保存在当前浏览器。</p></section>
+  </main><footer class="footer-nav"><a href="index.html">← 返回小学计算机与人工智能</a></footer></div>
+<script src="../assets/progress.js"></script><script>
+(() => {
+  const stage = 'primary', slug = 'robot-algorithms';
+  const start = {x: 0, y: 3}, goal = {x: 4, y: 0};
+  const walls = new Set(['2,2', '3,1']);
+  const directions = {up: {dx: 0, dy: -1, label: '向上'}, right: {dx: 1, dy: 0, label: '向右'}, down: {dx: 0, dy: 1, label: '向下'}, left: {dx: -1, dy: 0, label: '向左'}};
+  const solution = ['up', 'up', 'right', 'up', 'right', 'right', 'right'];
+  const grid = document.getElementById('robot-grid');
+  const commands = document.getElementById('command-list');
+  const status = document.getElementById('robot-status');
+  const stepStatus = document.getElementById('step-status');
+  const progressStatus = document.getElementById('progress-status');
+  const stepButton = document.getElementById('step-button');
+  const runButton = document.getElementById('run-button');
+  let position = {...start}, instruction = 0, timer = null, completed = false;
+
+  solution.forEach((direction, index) => {
+    const label = document.createElement('label');
+    label.textContent = `第 ${index + 1} 条指令`;
+    const select = document.createElement('select');
+    select.setAttribute('aria-label', `第 ${index + 1} 条指令`);
+    select.dataset.command = String(index);
+    Object.entries(directions).forEach(([value, data]) => {
+      const option = document.createElement('option'); option.value = value; option.textContent = data.label;
+      if (value === direction) option.selected = true;
+      select.append(option);
+    });
+    label.append(select); commands.append(label);
+  });
+
+  function renderGrid() {
+    grid.replaceChildren();
+    for (let y = 0; y < 4; y++) for (let x = 0; x < 5; x++) {
+      const cell = document.createElement('div'); cell.className = 'robot-cell';
+      if (walls.has(`${x},${y}`)) cell.classList.add('wall');
+      if (goal.x === x && goal.y === y) cell.classList.add('goal');
+      cell.setAttribute('aria-hidden', 'true');
+      cell.textContent = position.x === x && position.y === y ? '🤖' : goal.x === x && goal.y === y ? '🏁' : walls.has(`${x},${y}`) ? '■' : '';
+      grid.append(cell);
+    }
+    const positionText = `机器人在第 ${position.x + 1} 列第 ${position.y + 1} 行`;
+    grid.setAttribute('aria-label', `5 列 4 行路线地图，${positionText}，目标在第 5 列第 1 行；灰色格为墙`);
+    stepStatus.textContent = `已执行 ${instruction} / ${solution.length} 条指令`;
+  }
+
+  function finish() {
+    completed = true;
+    clearInterval(timer); timer = null;
+    stepButton.disabled = true; runButton.disabled = true;
+    status.className = 'status success';
+    status.textContent = ComputerAIProgress.markComplete(stage, slug)
+      ? '抵达目标！指令顺序正确，已在本机记录完成。'
+      : '抵达目标！本次学习已完成，但本机存储不可用，进度未能保存。';
+    progressStatus.textContent = status.textContent;
+  }
+
+  function runStep() {
+    if (completed) return;
+    if (instruction >= solution.length) {
+      clearInterval(timer); timer = null; runButton.disabled = false;
+      stepButton.disabled = false;
+      status.className = 'status error'; status.textContent = '指令已用完，还没有到达目标。修改路线后重置再试。';
+      return;
+    }
+    const direction = directions[commands.querySelector(`[data-command="${instruction}"]`).value];
+    const next = {x: position.x + direction.dx, y: position.y + direction.dy};
+    instruction++;
+    if (next.x < 0 || next.x > 4 || next.y < 0 || next.y > 3 || walls.has(`${next.x},${next.y}`)) {
+      status.className = 'status error'; status.textContent = `第 ${instruction} 条指令遇到边界或墙，机器人留在原地。`;
+    } else {
+      position = next;
+      status.className = 'status'; status.textContent = `执行第 ${instruction} 条指令：${direction.label}。`;
+    }
+    renderGrid();
+    if (position.x === goal.x && position.y === goal.y) finish();
+    else if (timer && instruction >= solution.length) runStep();
+  }
+
+  stepButton.addEventListener('click', runStep);
+  runButton.addEventListener('click', () => {
+    if (timer || completed) return;
+    runButton.disabled = true; stepButton.disabled = true;
+    timer = setInterval(() => {
+      runStep();
+      if (!timer || completed) { clearInterval(timer); timer = null; }
+    }, 220);
+  });
+  document.getElementById('reset-button').addEventListener('click', () => {
+    clearInterval(timer); timer = null; position = {...start}; instruction = 0; completed = false;
+    commands.querySelectorAll('select').forEach((select, index) => { select.value = solution[index]; select.disabled = false; });
+    stepButton.disabled = false; runButton.disabled = false;
+    status.className = 'status'; status.textContent = '关卡已重置。重新检查指令顺序，再试一次。';
+    progressStatus.textContent = '学习进度保存在当前浏览器。';
+    renderGrid();
+  });
+  const prior = ComputerAIProgress.read(stage);
+  if (prior === null) progressStatus.textContent = '本机进度暂不可用；你仍可完成关卡。';
+  else if (prior[slug]) progressStatus.textContent = '本机已记录这个主题完成。';
+  renderGrid();
+})();
+</script></body></html>

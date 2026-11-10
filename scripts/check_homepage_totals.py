@@ -9,7 +9,7 @@ import sys
 from build_topic_catalog import build_catalog
 
 ROOT = Path(__file__).resolve().parent.parent
-SUBJECTS = ('math', 'physics', 'chemistry', 'science')
+SUBJECTS = ('math', 'physics', 'chemistry', 'science', 'computer-ai')
 
 
 class Cards(HTMLParser):

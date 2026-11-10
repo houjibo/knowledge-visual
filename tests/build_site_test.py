@@ -21,7 +21,10 @@ class ReleaseArtifactTest(unittest.TestCase):
                          'physics/high/assets/gravitation-model.js',
                          'physics/high/assets/electrostatic-model.js',
                          'math/topics/addition/index.html', 'physics/middle/motion.html',
-                         'chemistry/high/mole-concept.html', 'science/sink-float.html']:
+                         'chemistry/high/mole-concept.html', 'science/sink-float.html',
+                         'computer-ai/index.html', 'computer-ai/primary/robot-algorithms.html',
+                         'computer-ai/middle/binary-pixels.html', 'computer-ai/high/classifier-lab.html',
+                         'computer-ai/uni/neuron-forward-pass.html']:
                 self.assertTrue((output / name).is_file(), name)
             for name in ['.git', '.github', 'docs', 'openspec', 'tests', 'node_modules', 'README.md']:
                 self.assertFalse((output / name).exists(), name)

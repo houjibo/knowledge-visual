@@ -18,14 +18,14 @@ def card(subject, total, badge=None):
 
 class HomepageTotalsTest(unittest.TestCase):
     def test_counts_and_badges_match_catalog(self):
-        counts = dict(math=2, physics=3, chemistry=4, science=5)
+        counts = {'math': 2, 'physics': 3, 'chemistry': 4, 'science': 5, 'computer-ai': 6}
         html = ''.join(card(name, total) for name, total in counts.items())
         self.assertEqual(checker.check(html, counts), [])
         self.assertTrue(any('progress total' in e for e in checker.check(html.replace('data-total="2"', 'data-total="1"', 1), counts)))
         self.assertTrue(any('badge' in e for e in checker.check(html.replace('3 个知识点', '9 个知识点', 1), counts)))
 
     def test_missing_duplicate_and_empty_subjects_are_detected(self):
-        counts = dict(math=2, physics=3, chemistry=4, science=0)
+        counts = {'math': 2, 'physics': 3, 'chemistry': 4, 'science': 0, 'computer-ai': 6}
         html = ''.join(card(name, total) for name, total in counts.items()) + card('math', 2)
         errors = checker.check(html, counts)
         self.assertTrue(any('duplicate' in e for e in errors))

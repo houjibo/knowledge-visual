@@ -84,13 +84,14 @@ def build_inventory(root):
         kind = ('topic' if len(parts) >= 4 and parts[:2] == ('math', 'topics')
                 else 'navigation' if Path(name).name == 'index.html' else 'topic')
         stage = ('primary' if parts[0] == 'science' or parts[:2] == ('math', 'topics')
+                 or parts[:2] == ('computer-ai', 'primary')
                  else parts[1] if len(parts) > 1 and parts[1] in {'middle', 'high', 'uni'}
                  else None)
         pages.append({
             'path': name,
             'title': ' '.join(''.join(page.title).split()),
             'kind': kind,
-            'subject': parts[0] if parts[0] in {'math', 'physics', 'chemistry', 'science'} else None,
+            'subject': parts[0] if parts[0] in {'math', 'physics', 'chemistry', 'science', 'computer-ai'} else None,
             'stage': stage,
             'static_signals': page.signals,
             'static_reachability': 'reachable' if name in reachable else 'not-reached',

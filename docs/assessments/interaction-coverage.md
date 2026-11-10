@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：316；已登记部分交互证据：167；尚未登记：149。
+主题总数：320；已登记部分交互证据：171；尚未登记：149。
 
 ## 已登记部分交互证据
 
@@ -31,6 +31,14 @@
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [化学平衡 · 大学化学互动可视化](../../chemistry/uni/equilibrium.html)
   - 综合练习逐题得分、重试及完成；未覆盖平衡和相图模拟。 [equilibrium-quiz.spec.js](../../tests/browser/equilibrium-quiz.spec.js)
+- [分类边界实验室 · 高中计算机与人工智能合成二维样本分类图](../../computer-ai/high/classifier-lab.html)
+  - 桌面与移动浏览器验证四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘关键操作及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [computer-ai-learning.spec.js](../../tests/browser/computer-ai-learning.spec.js)
+- [二进制像素工坊 · 初中计算机与人工智能](../../computer-ai/middle/binary-pixels.html)
+  - 桌面与移动浏览器验证四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘关键操作及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [computer-ai-learning.spec.js](../../tests/browser/computer-ai-learning.spec.js)
+- [指令小机器人 · 小学计算机与人工智能](../../computer-ai/primary/robot-algorithms.html)
+  - 桌面与移动浏览器验证四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘关键操作及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [computer-ai-learning.spec.js](../../tests/browser/computer-ai-learning.spec.js)
+- [神经元前向计算器 · 大学计算机与人工智能双输入单输出神经元示意图](../../computer-ai/uni/neuron-forward-pass.html)
+  - 桌面与移动浏览器验证四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘关键操作及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [computer-ai-learning.spec.js](../../tests/browser/computer-ai-learning.spec.js)
 - [复数 · 高中数学互动可视化](../../math/high/complex-numbers.html)
   - 桌面与移动视口检查旋转缩放滑块交互、中间轨迹坐标、跨越 ±π 的旋转方向、零复数辐角说明及共轭标签坐标；复数题库、整页无障碍与真实设备尚未全面验收。 [complex-rotation-visual-accuracy.spec.js](../../tests/browser/complex-rotation-visual-accuracy.spec.js)
   - 桌面与移动视口验证十题答案、错答反馈、Enter／空格、掌握状态回看、题组边界及保存失败重试；真实设备、屏幕阅读器和整页无障碍尚未全面验收。 [complex-number-practice-reliability.spec.js](../../tests/browser/complex-number-practice-reliability.spec.js)

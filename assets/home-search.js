@@ -8,7 +8,7 @@
   const clear = document.getElementById('site-clear');
   const status = document.getElementById('site-search-status');
   const results = document.getElementById('site-results');
-  const subjectNames = {math: '数学', physics: '物理', chemistry: '化学', science: '科学'};
+  const subjectNames = {math: '数学', physics: '物理', chemistry: '化学', science: '科学', 'computer-ai': '计算机与人工智能'};
   const stageNames = {primary: '小学', middle: '初中', high: '高中', uni: '大学'};
 
   function update() {

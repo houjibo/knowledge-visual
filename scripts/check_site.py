@@ -119,6 +119,18 @@ def main():
                 errors.append(f'{subject}/{stage}: cannot identify progress total or topic cards')
             elif int(matches[0]) != count:
                 errors.append(f'{subject}/{stage}: progress total {matches[0]}, topic cards {count}')
+    computer_ai_topics = {
+        'primary': 'robot-algorithms.html',
+        'middle': 'binary-pixels.html',
+        'high': 'classifier-lab.html',
+        'uni': 'neuron-forward-pass.html',
+    }
+    for stage, expected_href in computer_ai_topics.items():
+        name = f'computer-ai/{stage}/index.html'
+        hrefs = topic_hrefs.get(name, [])
+        count = topic_counts.get(name, 0)
+        if count != 1 or hrefs != [expected_href]:
+            errors.append(f'{name}: expected one topic card for {expected_href}, found {hrefs}')
     index = ROOT / 'AGENTS.md'
     try:
         for line, text in enumerate(index.read_text(encoding='utf-8').splitlines(), 1):
@@ -132,7 +144,7 @@ def main():
         print('\n'.join(errors), file=sys.stderr)
         print(f'FAILED: {len(errors)} issue(s)', file=sys.stderr)
         return 1
-    print(f'OK: {pages} HTML pages, AGENTS.md links, math/physics/chemistry progress lists checked')
+    print(f'OK: {pages} HTML pages, AGENTS.md links, math/physics/chemistry progress lists, computer-ai topic routes checked')
     return 0
 
 

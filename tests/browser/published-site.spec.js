@@ -27,7 +27,7 @@ test.beforeEach(async ({page}) => {
   await page.setExtraHTTPHeaders({'Cache-Control': 'no-cache'});
 });
 
-test('发布包子路径的首页搜索和四学科学习交互', async ({page}) => {
+test('发布包子路径的首页搜索和五学科学习交互', async ({page}) => {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('response', response => { if (response.url().startsWith(base) && response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
@@ -73,6 +73,14 @@ test('发布包子路径的首页搜索和四学科学习交互', async ({page})
   await waitForPublishedDocument(page);
   await page.getByRole('button', {name: '🔩 铁块'}).click();
   await expect(page.locator('#infoState')).toContainText('下沉');
+  await gotoPublished(page, base);
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer-ai');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('算法');
+  await page.locator('#site-results a[href="computer-ai/primary/robot-algorithms.html"]').click();
+  await waitForPublishedDocument(page);
+  await page.getByRole('button', {name: '运行指令'}).click();
+  await expect(page.locator('#robot-status')).toContainText('抵达目标');
   expect((await page.request.get(base + 'README.md')).status()).toBe(404);
   expect(errors).toEqual([]);
 });
