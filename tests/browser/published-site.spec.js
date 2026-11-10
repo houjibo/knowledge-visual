@@ -116,6 +116,17 @@ test('发布包子路径的首页搜索和六学科学习交互', async ({page})
   await page.locator('#feature-color').press('ArrowRight');
   await expect(page.locator('#test-summary')).toContainText('预测正确 4/4');
   await expect(page.locator('#seen-warning')).toBeVisible();
+  await gotoPublished(page, base);
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('数据标签');
+  await page.locator('#site-results a[href="ai/middle/data-label-quality.html"]').click();
+  await waitForPublishedDocument(page);
+  await expect(page.locator('#group-a-prediction')).toHaveText('暂时无法判断');
+  await page.getByRole('radio', {name: /按合成复核记录更正为/}).check();
+  await expect(page.locator('#group-a-prediction')).toHaveText('预测类别甲');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-middle-progress'))))
+    .toEqual({'data-label-quality': true});
   await page.goto(new URL('computer-ai/primary/robot-algorithms.html', base).href);
   await expect(page).toHaveURL(new URL('computer/primary/robot-algorithms.html', base).href);
   expect((await page.request.get(base + 'README.md')).status()).toBe(404);

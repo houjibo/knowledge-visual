@@ -66,7 +66,7 @@ test('小学 AI 目录、首页搜索和进度统计可以直达新主题', asyn
   await expect(page.locator('[data-topic-slug="feature-classification-lab"] [data-completion]'))
     .toHaveText('✓ 已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="ai"] .sp-label')).toContainText('已学 1/4');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toContainText('已学 1/5');
 });
 
 test('小学人工智能主题在 320px 下无横向溢出且主要控件可见', async ({page}) => {

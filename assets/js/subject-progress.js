@@ -2,6 +2,10 @@
   'use strict';
   const stagesBySubject = {
     computer: new Set(['primary', 'middle']),
+    ai: new Set(['primary', 'middle', 'high', 'uni'])
+  };
+  const legacyStagesBySubject = {
+    computer: new Set(['primary', 'middle']),
     ai: new Set(['primary', 'high', 'uni'])
   };
 
@@ -18,7 +22,10 @@
     if (!stagesBySubject[subject] || !stagesBySubject[subject].has(stage)) return null;
     try {
       const current = readRecord(`kv-${subject}-${stage}-progress`);
-      const legacy = readRecord(`kv-computer-ai-${stage}-progress`);
+      const canReadLegacy = legacyStagesBySubject[subject].has(stage);
+      const legacy = canReadLegacy
+        ? readRecord(`kv-computer-ai-${stage}-progress`)
+        : {raw: null, value: {}, valid: true};
       if (!current.valid) return null;
 
       const previous = legacy.valid ? legacy.value : {};

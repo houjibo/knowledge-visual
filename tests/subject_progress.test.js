@@ -28,7 +28,8 @@ assert.equal(api.markComplete('ai', 'primary', 'feature-classification-lab'), tr
 assert.deepEqual(JSON.parse(storage.values.get('kv-ai-primary-progress')), {'feature-classification-lab': true});
 assert.deepEqual(events, ['kv-progress-changed', 'kv-progress-changed']);
 assert.equal(api.markComplete('computer', 'high', 'classifier-lab'), false);
-assert.equal(api.markComplete('ai', 'middle', 'feature-classification-lab'), false);
+assert.equal(api.markComplete('ai', 'middle', 'data-label-quality'), true);
+assert.deepEqual(JSON.parse(storage.values.get('kv-ai-middle-progress')), {'data-label-quality': true});
 assert.equal(api.markComplete('computer', 'primary', '../robot'), false);
 
 storage = memoryStorage({
@@ -62,6 +63,15 @@ storage = memoryStorage({'kv-computer-middle-progress': '[]'});
 api = createProgress(storage).api;
 assert.equal(api.read('computer', 'middle'), null);
 assert.equal(api.markComplete('computer', 'middle', 'binary-pixels'), false);
+
+storage = memoryStorage({'kv-computer-ai-middle-progress': JSON.stringify({'binary-pixels': true})});
+api = createProgress(storage).api;
+assert.deepEqual({...api.read('ai', 'middle')}, {});
+assert.deepEqual({...api.read('computer', 'middle')}, {'binary-pixels': true});
+assert.deepEqual(JSON.parse(storage.values.get('kv-computer-middle-progress')), {'binary-pixels': true});
+assert.equal(storage.values.has('kv-ai-middle-progress'), false);
+assert.equal(api.markComplete('ai', 'middle', 'data-label-quality'), true);
+assert.deepEqual(JSON.parse(storage.values.get('kv-ai-middle-progress')), {'data-label-quality': true});
 
 const denied = createProgress({
   getItem() { return null; },

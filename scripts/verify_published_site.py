@@ -20,6 +20,8 @@ CHECKS = (
     ('ai/index.html', '<title>人工智能 · 知识可视化学习站</title>'),
     ('ai/primary/index.html', '<title>小学人工智能 · 知识可视化学习站</title>'),
     ('ai/primary/feature-classification-lab.html', '<title>特征线索分类实验室 · 小学人工智能</title>'),
+    ('ai/middle/index.html', '<title>初中人工智能 · 知识可视化学习站</title>'),
+    ('ai/middle/data-label-quality.html', '<title>数据标签侦察实验室 · 初中人工智能</title>'),
     ('computer/primary/robot-algorithms.html', '<title>指令小机器人 · 小学计算机</title>'),
     ('ai/high/classifier-lab.html', '<title>分类边界实验室 · 高中人工智能</title>'),
     ('ai/high/train-test-generalization.html', '<title>训练与测试集实验室 · 高中人工智能</title>'),

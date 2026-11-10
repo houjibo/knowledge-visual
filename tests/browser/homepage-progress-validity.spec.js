@@ -9,6 +9,7 @@ test('首页只计入当前学段中有效且完成的记录', async ({page}) =>
     localStorage.setItem('kv-chemistry-high-progress', JSON.stringify({'mole-concept': 100, 'reaction-energy': 0, ghost: 2}));
     localStorage.setItem('kv-science-progress', JSON.stringify({'sink-float': 100, sound: null, ghost: 1}));
     localStorage.setItem('kv-computer-ai-primary-progress', JSON.stringify({'robot-algorithms': true, ghost: true}));
+    localStorage.setItem('kv-computer-ai-middle-progress', JSON.stringify({'binary-pixels': true}));
     localStorage.setItem('kv-computer-ai-high-progress', JSON.stringify({'classifier-lab': true}));
   });
   await page.goto('/');
@@ -17,8 +18,9 @@ test('首页只计入当前学段中有效且完成的记录', async ({page}) =>
   await expect(page.locator('[data-subject="physics"] .sp-label')).toHaveText('已学 2/55');
   await expect(page.locator('[data-subject="chemistry"] .sp-label')).toHaveText('已学 1/46');
   await expect(page.locator('[data-subject="science"] .sp-label')).toHaveText('已学 1/17');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toHaveText('已学 1/2');
-  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/4');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toHaveText('已学 2/2');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/5');
+  expect(await page.evaluate(() => localStorage.getItem('kv-ai-middle-progress'))).toBeNull();
 });
 
 test('存储损坏或目录不可用时不假称尚未开始', async ({page}) => {

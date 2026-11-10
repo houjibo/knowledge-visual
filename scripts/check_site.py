@@ -123,6 +123,7 @@ def main():
         'computer/primary/index.html': ['robot-algorithms.html'],
         'computer/middle/index.html': ['binary-pixels.html'],
         'ai/primary/index.html': ['feature-classification-lab.html'],
+        'ai/middle/index.html': ['data-label-quality.html'],
         'ai/high/index.html': ['classifier-lab.html', 'train-test-generalization.html'],
         'ai/uni/index.html': ['neuron-forward-pass.html'],
     }
