@@ -1,7 +1,7 @@
 # equilibrium-quiz Specification
 
 ## Purpose
-TBD - created by archiving change equilibrium-quiz-integrity. Update Purpose after archive.
+本规格规范平衡练习按题记录正确状态，核心边界为：化学平衡综合练习必须允许错题重试、每题正确只计一分，在所有不同题目均答对时记录完成，并提供键盘操作。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # factor-multiple-challenge Specification
 
 ## Purpose
-TBD - created by archiving change factor-multiple-challenge. Update Purpose after archive.
+本规格规范闯关题目生成可靠；每题只记录一次；完成十题记录进度，核心边界为：系统必须使用有限候选生成正确答案和互不重复的选项，并明确最小正倍数。
 
 ## Requirements
 

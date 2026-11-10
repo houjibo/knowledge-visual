@@ -1,7 +1,7 @@
 # area-learning Specification
 
 ## Purpose
-TBD - created by archiving change area-learning-boundaries. Update Purpose after archive.
+本规格规范面积学习题目与示例可靠，核心边界为：认识面积页面必须有限生成比较图形，区分数学点线和真实物体表面，并防止正确答案重复计分。
 
 ## Requirements
 

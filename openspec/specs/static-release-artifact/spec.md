@@ -1,7 +1,7 @@
 # static-release-artifact Specification
 
 ## Purpose
-TBD - created by archiving change static-release-artifact. Update Purpose after archive.
+本规格规范发布产物只包含受控站点文件；子路径中的代表性学习操作可用；发布包页面有子路径加载检查等要求，核心边界为：系统必须从版本跟踪的受控站点目录及文件类型生成静态发布包，拒绝覆盖已有输出目录，并检查包内声明的 HTML 本地引用。
 
 ## Requirements
 

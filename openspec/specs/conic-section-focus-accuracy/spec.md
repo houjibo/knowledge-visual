@@ -1,7 +1,7 @@
 # conic-section-focus-accuracy Specification
 
 ## Purpose
-TBD - created by archiving change conic-section-focus-accuracy. Update Purpose after archive.
+本规格规范椭圆焦点及边界与参数一致；双曲线焦点与轨迹示意准确，核心边界为：椭圆焦点必须随较长的半轴方向变化，其离心率必须按半焦距除以较长半轴计算；两半轴相等时必须清楚说明为圆且不显示有限准线。
 
 ## Requirements
 

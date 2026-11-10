@@ -1,7 +1,7 @@
 # ratio-learning Specification
 
 ## Purpose
-TBD - created by archiving change ratio-learning-reliability. Update Purpose after archive.
+本规格规范比的题目有限生成且判断正确，核心边界为：认识比页面必须有限生成读写比和比值题，正确接受等价比，并阻止同题重复计分。
 
 ## Requirements
 

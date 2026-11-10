@@ -1,7 +1,7 @@
 # mechanical-energy-learning-reliability Specification
 
 ## Purpose
-TBD - created by archiving change mechanical-energy-learning-reliability. Update Purpose after archive.
+本规格规范主题入口和活动画布可键盘操作并正确绘制；功与平均功率反馈与输入一致；动能定理动画与恒力做功一致等要求，核心边界为：机械能页面必须让学习者通过鼠标、触摸和键盘选择四个主题。活动主题的画布必须在首次显示、主题切换、返回主题和视口变化后具有非零缓冲尺寸并按当前内容重绘；切换主题必须保留各主题的参数状态。
 
 ## Requirements
 

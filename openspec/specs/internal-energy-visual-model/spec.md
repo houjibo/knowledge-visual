@@ -1,7 +1,7 @@
 # internal-energy-visual-model Specification
 
 ## Purpose
-TBD - created by archiving change internal-energy-visual-model. Update Purpose after archive.
+本规格规范比热容温升图与模型一致；气体运动与扩散明确区分，核心边界为：温升示意必须使用共同且覆盖模型范围的刻度，并说明相同质量、相同吸热功率和恒定比热容等假设。
 
 ## Requirements
 

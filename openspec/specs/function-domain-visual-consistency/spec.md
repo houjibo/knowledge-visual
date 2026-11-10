@@ -1,7 +1,7 @@
 # function-domain-visual-consistency Specification
 
 ## Purpose
-TBD - created by archiving change function-domain-visual-consistency. Update Purpose after archive.
+本规格规范定义域示例图像与坐标一致，核心边界为：函数定义域探索器必须在统一坐标系绘制各示例，并在无定义或不可见区域断开曲线；示例必须可通过键盘选择。
 
 ## Requirements
 

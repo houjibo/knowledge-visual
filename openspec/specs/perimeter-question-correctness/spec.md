@@ -1,7 +1,7 @@
 # perimeter-question-correctness Specification
 
 ## Purpose
-TBD - created by archiving change perimeter-question-correctness. Update Purpose after archive.
+本规格规范周长题准确且有限生成；键盘查看示例边长，核心边界为：系统必须使用有限候选生成合法三角形及四个互异选项，确保正确答案、算式及显示单位与题目一致。
 
 ## Requirements
 

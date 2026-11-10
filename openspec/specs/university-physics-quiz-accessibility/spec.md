@@ -1,7 +1,7 @@
 # university-physics-quiz-accessibility Specification
 
 ## Purpose
-TBD - created by archiving change university-physics-quiz-accessibility. Update Purpose after archive.
+本规格规范测验选项可用键盘操作；进度保存反馈真实，核心边界为：五个大学物理主题的测验必须使用可聚焦选项并反馈选择状态，提交后按题目正确数评分。
 
 ## Requirements
 

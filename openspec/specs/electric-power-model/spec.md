@@ -1,7 +1,7 @@
 # electric-power-model Specification
 
 ## Purpose
-TBD - created by archiving change electric-power-model-clarity. Update Purpose after archive.
+本规格规范电功率模型显示准确的额定状态；计算反馈不接受无效字符，核心边界为：模型必须使用明确的恒定电阻假设，并仅在实际电压等于 220 V 时显示额定电压状态；功率条必须标出 150% 满刻度。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # light-ray-exploration Specification
 
 ## Purpose
-TBD - created by archiving change light-ray-geometry. Update Purpose after archive.
+本规格规范反射光与法线对称；空气到水的折射方向正确；角度可键盘操作等要求，核心边界为：反射模式必须将入射与反射光绘制在镜面同侧，并显示相对于法线的相等角度。
 
 ## Requirements
 

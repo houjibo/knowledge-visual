@@ -1,7 +1,7 @@
 # math-stage-directory-progress Specification
 
 ## Purpose
-TBD - created by archiving change math-stage-directory-progress. Update Purpose after archive.
+本规格规范数学学段目录区分进度不可读；学段目录徽章随记录变化刷新，核心边界为：初中、高中和大学数学目录必须在进度存储不可读或损坏时显示提示并保留原始记录。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # statistics-chart-interpretation Specification
 
 ## Purpose
-TBD - created by archiving change statistics-chart-interpretation. Update Purpose after archive.
+本规格规范学生成绩图不暗示时间趋势；分组统计与容量状态可见，核心边界为：按学号展示学生成绩时，图表必须使用独立数据点，并说明学号是编号而不是时间。
 
 ## Requirements
 

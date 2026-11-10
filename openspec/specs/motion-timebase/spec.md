@@ -1,7 +1,7 @@
 # motion-timebase Specification
 
 ## Purpose
-TBD - created by archiving change motion-elapsed-time. Update Purpose after archive.
+本规格规范机械运动按实际经过时间推进，核心边界为：机械运动各动画必须使用帧间实际经过时间推进模拟；匀速模式以所选倍率缩放，暂停期间和页面隐藏后不计时间。
 
 ## Requirements
 

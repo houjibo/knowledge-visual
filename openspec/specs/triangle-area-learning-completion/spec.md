@@ -1,7 +1,7 @@
 # triangle-area-learning-completion Specification
 
 ## Purpose
-TBD - created by archiving change triangle-area-learning-completion. Update Purpose after archive.
+本规格规范三角形面积的完成条件可见且可保存；完成进度保存失败可恢复，核心边界为：页面必须跟踪探索图形或拼图、答对三道练习和答对一道生活题，全部达标后保存小学主题完成记录。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # uniform-motion-comparison Specification
 
 ## Purpose
-TBD - created by archiving change uniform-motion-comparison. Update Purpose after archive.
+本规格规范三车对比按各自速度计算，核心边界为：机械运动的匀速对比必须使三辆车从同一起点按各自固定速度和共同时间运动，选中车辆的路程读数等于该车速度乘以时间。
 
 ## Requirements
 

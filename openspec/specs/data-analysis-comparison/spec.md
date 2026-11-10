@@ -1,7 +1,7 @@
 # data-analysis-comparison Specification
 
 ## Purpose
-TBD - created by archiving change data-analysis-comparison-accuracy. Update Purpose after archive.
+本规格规范对比结论反映当前数据；控件状态与可操作行为一致，核心边界为：对比图必须根据两组当前方差生成波动比较；两组平均数不同时必须提醒考虑平均水平。
 
 ## Requirements
 

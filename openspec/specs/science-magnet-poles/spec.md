@@ -1,7 +1,7 @@
 # science-magnet-poles Specification
 
 ## Purpose
-TBD - created by archiving change science-magnet-poles. Update Purpose after archive.
+本规格规范磁极预设与画面一致；模型限制及物品反馈清晰，核心边界为：系统必须使异极预设的相对磁极为 N 和 S，同极预设的相对磁极相同；距离控件必须与画面中的中心间距同步。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # time-measurement-model-conditions Specification
 
 ## Purpose
-TBD - created by archiving change time-measurement-model-conditions. Update Purpose after archive.
+本规格规范日晷与单摆示意条件明确；水钟可控且不会无提示归零，核心边界为：页面必须将日影方向限定于示意地点和太阳时，并说明单摆周期的小幅、长度和重力条件。
 
 ## Requirements
 

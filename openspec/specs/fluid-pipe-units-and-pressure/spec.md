@@ -1,7 +1,7 @@
 # fluid-pipe-units-and-pressure Specification
 
 ## Purpose
-TBD - created by archiving change fluid-pipe-units-and-pressure. Update Purpose after archive.
+本规格规范管径和流量单位一致，核心边界为：页面必须将入口及出口半径以毫米标示，并使用换算后的截面积计算连续流量与水平理想流动的压力差。
 
 ## Requirements
 

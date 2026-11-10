@@ -1,7 +1,7 @@
 # probability-experiment Specification
 
 ## Purpose
-TBD - created by archiving change probability-experiment-consistency. Update Purpose after archive.
+本规格规范频率与理论概率使用相同实验配置；频率图可读且与结果一致，核心边界为：摸球实验必须在球数改变时清空此前样本并告知学习者；每次摸球后放回。
 
 ## Requirements
 

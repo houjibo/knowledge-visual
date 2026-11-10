@@ -1,7 +1,7 @@
 # mole-visualization Specification
 
 ## Purpose
-TBD - created by archiving change mole-visual-scale-and-units. Update Purpose after archive.
+本规格规范物质的量图示随数值变化，核心边界为：物质的量探索必须在完整滑块范围内以固定比例显示示意点，明确示意比例、所选粒子种类及计算所用的常数近似值。
 
 ## Requirements
 

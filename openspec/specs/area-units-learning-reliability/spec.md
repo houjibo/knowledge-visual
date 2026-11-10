@@ -1,7 +1,7 @@
 # area-units-learning-reliability Specification
 
 ## Purpose
-TBD - created by archiving change area-units-learning-reliability. Update Purpose after archive.
+本规格规范面积单位活动有限生成且可重复操作；挑战进度可靠保存，核心边界为：页面必须有限生成换算选项和一致的矩形网格，每题最多计分一次并允许主动换题。
 
 ## Requirements
 

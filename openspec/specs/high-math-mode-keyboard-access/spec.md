@@ -1,7 +1,7 @@
 # high-math-mode-keyboard-access Specification
 
 ## Purpose
-TBD - created by archiving change high-math-mode-keyboard-access. Update Purpose after archive.
+本规格规范模式入口可通过键盘操作，核心边界为：复数、圆锥曲线、导数、函数、不等式和集合主题的顶层模式入口必须使用可聚焦按钮，提供可见焦点和可感知的选中状态。
 
 ## Requirements
 

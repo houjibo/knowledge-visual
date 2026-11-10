@@ -1,7 +1,7 @@
 # math-directory-progress-refresh Specification
 
 ## Purpose
-TBD - created by archiving change math-directory-progress-refresh. Update Purpose after archive.
+本规格规范数学目录区分无法读取和未开始；目录和学习路线刷新完成状态，核心边界为：小学数学目录必须在进度存储不可读取或损坏时显示不可用，不修改原记录或展示可能过期的完成徽章。
 
 ## Requirements
 

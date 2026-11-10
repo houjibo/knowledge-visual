@@ -1,7 +1,7 @@
 # ci-failure-diagnostics Specification
 
 ## Purpose
-TBD - created by archiving change improve-ci-failure-diagnostics. Update Purpose after archive.
+本规格规范远端浏览器失败可定位，核心边界为：GitHub Actions 的浏览器测试必须保留列表报告，并为失败测试输出包含测试位置和错误信息的 GitHub 检查注释。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # learning-progress-backup Specification
 
 ## Purpose
-TBD - created by archiving change learning-progress-backup. Update Purpose after archive.
+本规格规范本地备份主题完成记录；预览后安全合并记录，核心边界为：首页必须允许用户将学科主题完成记录导出为本地版本化文件，并说明不包含其他学习历史。
 
 ## Requirements
 

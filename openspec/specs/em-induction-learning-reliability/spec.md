@@ -1,7 +1,7 @@
 # em-induction-learning-reliability Specification
 
 ## Purpose
-TBD - created by archiving change em-induction-interaction-reliability. Update Purpose after archive.
+本规格规范高中物理电磁感应主题的键盘可访问导航、模拟控件与画布重绘、动画暂停、楞次定律方向、法拉第定律读数和逐题测验，确保参数变化、可视反馈与模型说明保持一致。
 
 ## Requirements
 

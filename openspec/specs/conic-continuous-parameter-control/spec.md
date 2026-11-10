@@ -1,7 +1,7 @@
 # conic-continuous-parameter-control Specification
 
 ## Purpose
-TBD - created by archiving change conic-continuous-parameter-control. Update Purpose after archive.
+本规格规范参数控件支持连续操作，核心边界为：圆锥曲线参数滑块必须有关联的可见名称，参数变化时必须保持原有滑块节点并同步更新图示和公式。
 
 ## Requirements
 

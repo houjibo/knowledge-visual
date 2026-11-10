@@ -1,7 +1,7 @@
 # sound-echo-time-consistency Specification
 
 ## Purpose
-TBD - created by archiving change sound-echo-time-consistency. Update Purpose after archive.
+本规格规范回声示意反映理想往返时间；回声过程可操作和分步观察，核心边界为：页面必须按当前距离与温度近似计算声速和往返时间，并使位置与去程及回程一致。
 
 ## Requirements
 

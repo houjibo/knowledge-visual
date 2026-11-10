@@ -1,7 +1,7 @@
 # polygon-area-learning Specification
 
 ## Purpose
-TBD - created by archiving change polygon-area-geometry. Update Purpose after archive.
+本规格规范剪拼图形和公式一致；练习可靠出题；可控制并理解剪拼过程等要求，核心边界为：推导必须显示平行四边形剪片平移成矩形、两个三角形及两个梯形各拼成平行四边形，最终共边且无重叠。
 
 ## Requirements
 

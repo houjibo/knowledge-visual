@@ -1,7 +1,7 @@
 # simple-machines-exploration Specification
 
 ## Purpose
-TBD - created by archiving change simple-machines-visual-accuracy. Update Purpose after archive.
+本规格规范杠杆图示与力矩一致；理想动滑轮示意，核心边界为：杠杆探究必须在左、右力矩更大时分别显示对应端下沉，力矩相等时显示水平；悬挂线保持竖直。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # motion-average-speed Specification
 
 ## Purpose
-TBD - created by archiving change motion-average-speed. Update Purpose after archive.
+本规格规范区分设定速度与平均速度，核心边界为：机械运动速度概念必须显示设定速度和总路程除以总时间得到的平均速度；尚未运动时平均速度显示未定义。
 
 ## Requirements
 

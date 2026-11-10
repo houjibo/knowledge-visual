@@ -1,7 +1,7 @@
 # number-line-learning Specification
 
 ## Purpose
-TBD - created by archiving change number-line-learning. Update Purpose after archive.
+本规格规范找数和比较可稳定出题；限时挑战每题只计一次；通过操作探索数字的位置，核心边界为：数轴页面必须在固定随机值下初始化并给出不同选项，图中点的位置与正确答案一致。
 
 ## Requirements
 

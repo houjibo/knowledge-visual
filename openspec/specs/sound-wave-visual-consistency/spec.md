@@ -1,7 +1,7 @@
 # sound-wave-visual-consistency Specification
 
 ## Purpose
-TBD - created by archiving change sound-wave-visual-consistency. Update Purpose after archive.
+本规格规范声波示意的波形和标尺一致；动画可暂停且尊重减少动态效果；真空示意不传播声音，核心边界为：音调与响度模式必须以固定示例声速和明确空间尺度展示波形，波形周期与波长标尺一致，所有波形共用振幅尺度。
 
 ## Requirements
 

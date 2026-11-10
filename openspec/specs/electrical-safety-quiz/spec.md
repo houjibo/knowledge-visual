@@ -1,7 +1,7 @@
 # electrical-safety-quiz Specification
 
 ## Purpose
-TBD - created by archiving change electrical-safety-quiz-consistency. Update Purpose after archive.
+本规格规范测验与电气安全说明一致；电阻结论说明前提，核心边界为：电压主题测验必须说明触电危险受电流、接触条件和时间等因素影响，不得把某一低电压作为无条件安全的正确答案。
 
 ## Requirements
 

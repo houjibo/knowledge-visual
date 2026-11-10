@@ -1,7 +1,7 @@
 # phase-transition-model-accuracy Specification
 
 ## Purpose
-TBD - created by archiving change phase-transition-model-accuracy. Update Purpose after archive.
+本规格规范相变图反映模型局限；区分临界温度与超临界区域，核心边界为：页面必须将范德瓦尔斯曲线标为未平衡修正的模型，不将未经等面积构造的线段标为共存平台。
 
 ## Requirements
 

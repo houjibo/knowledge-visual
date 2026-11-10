@@ -1,7 +1,7 @@
 # cross-tab-progress-verification Specification
 
 ## Purpose
-TBD - created by archiving change clarify-cross-tab-progress-verification. Update Purpose after archive.
+本规格规范跨标签顺序写入的验证边界，核心边界为：进度回归必须在第二标签页收到首条存储更新并验证可读后执行第二次写入，检查两条记录均保留；此测试必须不视为并发事务证明。
 
 ## Requirements
 

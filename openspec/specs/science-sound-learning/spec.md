@@ -1,7 +1,7 @@
 # science-sound-learning Specification
 
 ## Purpose
-TBD - created by archiving change science-sound-learning. Update Purpose after archive.
+本规格规范声音图示不伪装成实际测量；交互及测验可重复使用，核心边界为：系统必须将未标定的频率与振幅标为示意档位，且将声速数据限定为具体材料与条件。
 
 ## Requirements
 

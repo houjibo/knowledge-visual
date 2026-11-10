@@ -1,7 +1,7 @@
 # angle-learning-completion Specification
 
 ## Purpose
-TBD - created by archiving change angle-learning-completion. Update Purpose after archive.
+本规格规范角度主题学习完成条件可见且可保存；保存失败可恢复，核心边界为：页面必须跟踪本次学习中答对读角题、成功画角及答对计算题，全部达标后保存小学主题完成记录。
 
 ## Requirements
 

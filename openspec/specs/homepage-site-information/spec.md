@@ -1,7 +1,7 @@
 # homepage-site-information Specification
 
 ## Purpose
-TBD - created by archiving change homepage-site-information. Update Purpose after archive.
+本规格规范学习者可了解站点和反馈方式，核心边界为：首页必须提供站点用途、公开反馈入口和本地学习进度保存边界，且不依赖脚本渲染这些信息。
 
 ## Requirements
 

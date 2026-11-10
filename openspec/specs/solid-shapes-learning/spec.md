@@ -1,7 +1,7 @@
 # solid-shapes-learning Specification
 
 ## Purpose
-TBD - created by archiving change solid-shapes-learning. Update Purpose after archive.
+本规格规范立体图形练习具有唯一正确选项；表面与直棱口径清晰；分类可用且每题只计一次，核心边界为：系统必须对每道题生成四个互异选项，并且恰有一个选项计为正确。
 
 ## Requirements
 

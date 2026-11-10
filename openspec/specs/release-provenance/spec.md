@@ -1,7 +1,7 @@
 # release-provenance Specification
 
 ## Purpose
-TBD - created by archiving change release-provenance. Update Purpose after archive.
+本规格规范发布包提供可核对的来源；自动部署核验来源，核心边界为：构建必须生成包含完整提交哈希和已跟踪站点文件修改状态的公开清单。
 
 ## Requirements
 

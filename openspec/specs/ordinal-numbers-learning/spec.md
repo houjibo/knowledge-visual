@@ -1,7 +1,7 @@
 # ordinal-numbers-learning Specification
 
 ## Purpose
-TBD - created by archiving change ordinal-numbers-learning. Update Purpose after archive.
+本规格规范序数题目明确且有限生成；作答可继续并如实统计，核心边界为：系统必须保证所问的香蕉存在且唯一，并从有限候选生成水果和选项。
 
 ## Requirements
 

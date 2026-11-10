@@ -1,7 +1,7 @@
 # science-quiz-progress Specification
 
 ## Purpose
-TBD - created by archiving change science-quiz-progress-integrity. Update Purpose after archive.
+本规格规范测验按不同题目计算分数，核心边界为：沉与浮测验必须保留本轮每题的首次答案，按不同题目的正确数评分，至少正确四题才记录完成。
 
 ## Requirements
 

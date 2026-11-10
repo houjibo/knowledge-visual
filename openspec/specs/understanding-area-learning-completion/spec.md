@@ -1,7 +1,7 @@
 # understanding-area-learning-completion Specification
 
 ## Purpose
-TBD - created by archiving change understanding-area-learning-completion. Update Purpose after archive.
+本规格规范认识面积的学习完成可见并保存；学习者可以阅读作答反馈，核心边界为：页面必须跟踪面积比较、铺格和判断三类活动，全部达标后保存完成记录。
 
 ## Requirements
 

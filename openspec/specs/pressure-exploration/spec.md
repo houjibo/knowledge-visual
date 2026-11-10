@@ -1,7 +1,7 @@
 # pressure-exploration Specification
 
 ## Purpose
-TBD - created by archiving change pressure-exploration-integrity. Update Purpose after archive.
+本规格规范固液压强图示与计算一致；练习进度基于独立首次作答，核心边界为：固体压力箭头必须指向受力面，静止液体显示的深度单位及压强增量必须与当前密度和深度一致。
 
 ## Requirements
 

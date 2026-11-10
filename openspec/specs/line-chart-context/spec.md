@@ -1,7 +1,7 @@
 # line-chart-context Specification
 
 ## Purpose
-TBD - created by archiving change line-chart-context-and-units. Update Purpose after archive.
+本规格规范图表问题的单位与上下文清晰，核心边界为：折线图的数值及差值题必须使用与纵轴一致的单位，挑战模式必须在图表旁显示当前数据主题。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # triangle-area-geometry-and-practice Specification
 
 ## Purpose
-TBD - created by archiving change triangle-area-geometry-and-practice. Update Purpose after archive.
+本规格规范拼接图保留原三角形；面积练习选项唯一且按题统计；生活题反馈给出计算依据，核心边界为：页面必须用两个全等三角形构造与原三角形同底等高的平行四边形，并在控件范围内显示完整图形。
 
 ## Requirements
 

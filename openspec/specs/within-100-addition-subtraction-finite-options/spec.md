@@ -1,7 +1,7 @@
 # within-100-addition-subtraction-finite-options Specification
 
 ## Purpose
-TBD - created by archiving change finite-within-100-addition-subtraction-options. Update Purpose after archive.
+本规格规范限时挑战有限生成唯一选项，核心边界为：100 以内加减法的限时挑战必须使用有限候选生成四个互异的非负整数选项，且恰有一个选项等于当前算式的精确答案。选项生成必须在随机值重复时完成；每个干扰项与正确答案的差值必须不超过 10。
 
 ## Requirements
 

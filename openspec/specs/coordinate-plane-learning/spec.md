@@ -1,7 +1,7 @@
 # coordinate-plane-learning Specification
 
 ## Purpose
-TBD - created by archiving change coordinate-plane-learning. Update Purpose after archive.
+本规格规范坐标探索可通过键盘完成；每道测验题最多计分一次，核心边界为：学习者必须能用键盘设置坐标点，并获得象限、距离和对称点的可见文字反馈。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # line-chart-answer-validity Specification
 
 ## Purpose
-TBD - created by archiving change clarify-line-chart-answers. Update Purpose after archive.
+本规格规范折线图选项与显示的数据一致，核心边界为：读图与挑战的最大值、最小值题以及趋势的最快上升、最多下降和最小变化题必须接受所有显示的正确选项；没有上升或下降区间时必须提供对应的无区间答案。
 
 ## Requirements
 

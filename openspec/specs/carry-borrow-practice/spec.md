@@ -1,7 +1,7 @@
 # carry-borrow-practice Specification
 
 ## Purpose
-TBD - created by archiving change carry-borrow-practice. Update Purpose after archive.
+本规格规范出题有限且符合进退位条件；练习计分与题目对应，核心边界为：系统必须有限生成 20 以内的进位加法、退位减法和四个互异选项。
 
 ## Requirements
 

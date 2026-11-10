@@ -1,7 +1,7 @@
 # triangle-classification-practice-accuracy Specification
 
 ## Purpose
-TBD - created by archiving change triangle-classification-practice-accuracy. Update Purpose after archive.
+本规格规范三角形分类图与几何性质一致；第三边范围条件明确；挑战题有限生成并保留反馈，核心边界为：分类图必须体现对应角或边的几何性质，并清楚区分最具体的边分类。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # heat-engine-cycle Specification
 
 ## Purpose
-TBD - created by archiving change heat-engine-cycle-accuracy. Update Purpose after archive.
+本规格规范曲轴与四冲程保持一致；动画速度与暂停状态可见，核心边界为：简化热机动画必须在一个四冲程循环中让曲轴同向转动两圈，活塞随冲程上下往复，并说明模型限制。
 
 ## Requirements
 

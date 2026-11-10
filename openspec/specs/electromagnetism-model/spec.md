@@ -1,7 +1,7 @@
 # electromagnetism-model Specification
 
 ## Purpose
-TBD - created by archiving change electromagnetism-model-clarity. Update Purpose after archive.
+本规格规范电磁铁示意反映零电流状态；动画和空间示意可理解，核心边界为：本示意模型必须在电流档位为零或断开时隐藏通电产生的磁场与磁极，并说明忽略剩磁和吸针数量非实测。
 
 ## Requirements
 

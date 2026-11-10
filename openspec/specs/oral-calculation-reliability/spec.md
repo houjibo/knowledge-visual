@@ -1,7 +1,7 @@
 # oral-calculation-reliability Specification
 
 ## Purpose
-TBD - created by archiving change oral-calculation-reliability. Update Purpose after archive.
+本规格规范口算题有限生成并反馈正确答案；限时答题状态一致，核心边界为：系统必须有限生成互异干扰项，答错时必须标示正确选项。
 
 ## Requirements
 

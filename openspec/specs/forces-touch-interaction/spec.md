@@ -1,7 +1,7 @@
 # forces-touch-interaction Specification
 
 ## Purpose
-TBD - created by archiving change forces-touch-interaction. Update Purpose after archive.
+本规格确保物理力主题画布支持触屏拖动，同时保留鼠标拖动与键盘按钮操作，让不同输入方式都能完成同一探索活动。
 
 ## Requirements
 

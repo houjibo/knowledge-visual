@@ -1,7 +1,7 @@
 # motion-simulation Specification
 
 ## Purpose
-TBD - created by archiving change motion-simulation-controls. Update Purpose after archive.
+本规格规范模式切换和动画状态一致；匀速图像反映所选速度，核心边界为：机械运动模拟必须在切换模式时暂停当前动画并保留读数，按钮显示可继续；暂停和重置必须取消待执行动画帧。
 
 ## Requirements
 

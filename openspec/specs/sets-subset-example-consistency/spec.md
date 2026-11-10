@@ -1,7 +1,7 @@
 # sets-subset-example-consistency Specification
 
 ## Purpose
-TBD - created by archiving change sets-subset-example-consistency. Update Purpose after archive.
+本规格规范子集动画与示例一致；元素归属可通过键盘探索，核心边界为：子集动画必须仅绘制 A={1,2}、B={1,2,3,4} 中的元素，且元素位置必须与集合归属一致。
 
 ## Requirements
 

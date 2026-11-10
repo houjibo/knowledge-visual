@@ -1,7 +1,7 @@
 # parallelogram-area-learning-correctness Specification
 
 ## Purpose
-TBD - created by archiving change parallelogram-area-learning-correctness. Update Purpose after archive.
+本规格规范割补图保持几何对应；练习使用正确单位和判分；学习完成可见并可恢复保存，核心边界为：页面必须按同一比例展示原平行四边形、对应的切割三角形和拼成的长方形。
 
 ## Requirements
 

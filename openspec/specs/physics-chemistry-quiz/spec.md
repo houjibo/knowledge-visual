@@ -1,7 +1,7 @@
 # physics-chemistry-quiz Specification
 
 ## Purpose
-TBD - created by archiving change physics-chemistry-quiz-integrity. Update Purpose after archive.
+本规格规范物理化学同源测验按题计分，核心边界为：使用该测验模板的初高中物理、化学主题必须对每道题只计一次分，保留返回后的本轮答案，并支持键盘操作测验入口和选项。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # photoelectric-threshold-and-quiz Specification
 
 ## Purpose
-TBD - created by archiving change photoelectric-threshold-and-quiz. Update Purpose after archive.
+本规格规范光电效应边界清晰；测验避免除以零，核心边界为：页面必须区分截止频率以下无发射、截止处最大动能理论极限为零以及截止以上的最大初动能。
 
 ## Requirements
 

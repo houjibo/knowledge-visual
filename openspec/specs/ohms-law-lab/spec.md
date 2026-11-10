@@ -1,7 +1,7 @@
 # ohms-law-lab Specification
 
 ## Purpose
-TBD - created by archiving change ohms-law-circuit-accuracy. Update Purpose after archive.
+本规格规范理想电路与计算一致；记录状态可见，核心边界为：实验必须用理想电源和单一电阻表示 I = U / R，电流表串联，电压表并联在电阻两端，并说明模型条件。
 
 ## Requirements
 

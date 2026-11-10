@@ -1,7 +1,7 @@
 # area-to-volume-learning-path Specification
 
 ## Purpose
-TBD - created by archiving change area-to-volume-learning-path. Update Purpose after archive.
+本规格规范学习者可从面积逐步探索体积，核心边界为：小学数学目录必须提供可折叠的建议路径，链接面积认识、面积与周长、立体图形、表面积和体积主题，并说明每步操作。
 
 ## Requirements
 

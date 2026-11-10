@@ -1,7 +1,7 @@
 # random-variable-distribution Specification
 
 ## Purpose
-TBD - created by archiving change random-variable-distribution-accuracy. Update Purpose after archive.
+本规格规范固定坐标比较正态密度；超几何参数和解释一致，核心边界为：正态分布图必须在改变标准差时维持坐标比例，以显示密度曲线宽高变化，并说明阴影概率。
 
 ## Requirements
 

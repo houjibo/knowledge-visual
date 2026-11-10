@@ -1,7 +1,7 @@
 # telling-time-learning-reliability Specification
 
 ## Purpose
-TBD - created by archiving change telling-time-learning-reliability. Update Purpose after archive.
+本规格规范钟表练习有限生成且不会重复计分；学习完成条件可见且可保存，核心边界为：页面必须在随机值持续重复时加载并生成四个不同选项，单道题必须最多计一次连对。
 
 ## Requirements
 

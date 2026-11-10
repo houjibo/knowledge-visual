@@ -1,7 +1,7 @@
 # matching-practice Specification
 
 ## Purpose
-TBD - created by archiving change matching-practice-reliability. Update Purpose after archive.
+本规格规范搭配练习题目可用且反馈明确，核心边界为：搭配问题练习及挑战必须有限生成四个不同的正整数选项，单位符合题意，答题后显示解释并防止重复计分。
 
 ## Requirements
 

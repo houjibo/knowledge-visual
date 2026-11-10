@@ -1,7 +1,7 @@
 # line-chart-questions Specification
 
 ## Purpose
-TBD - created by archiving change bound-line-chart-questions. Update Purpose after archive.
+本规格规范折线图数值题有限生成，核心边界为：折线图读图和挑战的数值、相邻差值题及读图的上升次数题必须在有限步骤内生成四个不同非负整数选项，包含正确答案。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # volume-practice-and-concept-reliability Specification
 
 ## Purpose
-TBD - created by archiving change volume-practice-and-concept-reliability. Update Purpose after archive.
+本规格规范体积换算题每题只计一次；挑战题有明确条件和唯一答案；完成记录区分保存失败，核心边界为：页面必须精确判定非空答案，锁定已提交题目并等待学习者主动换题。
 
 ## Requirements
 

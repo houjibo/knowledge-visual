@@ -1,7 +1,7 @@
 # volume-units-practice-reliability Specification
 
 ## Purpose
-TBD - created by archiving change volume-units-practice-reliability. Update Purpose after archive.
+本规格规范换算和挑战逐题可靠计分；估测与完成进度状态准确，核心边界为：页面必须对每题只计一次分，换算答案使用精确数值判定。
 
 ## Requirements
 

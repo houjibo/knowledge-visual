@@ -1,7 +1,7 @@
 # homepage-interactive-start Specification
 
 ## Purpose
-TBD - created by archiving change homepage-interactive-start. Update Purpose after archive.
+本规格规范首页提供可动手的学习起点，核心边界为：首页必须提供跨学科的可视化主题入口，说明学段及进入后的具体操作，并支持键盘、窄屏与本地文件访问。
 
 ## Requirements
 

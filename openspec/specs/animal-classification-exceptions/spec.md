@@ -1,7 +1,7 @@
 # animal-classification-exceptions Specification
 
 ## Purpose
-TBD - created by archiving change animal-classification-exceptions. Update Purpose after archive.
+本规格规范动物类群示意包括典型例外，核心边界为：页面必须区分动物类群的常见特征与典型例外，并提供可通过键盘选择和文字阅读的类群信息。
 
 ## Requirements
 

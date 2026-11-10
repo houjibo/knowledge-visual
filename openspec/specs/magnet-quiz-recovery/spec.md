@@ -1,7 +1,7 @@
 # magnet-quiz-recovery Specification
 
 ## Purpose
-TBD - created by archiving change magnet-quiz-recovery. Update Purpose after archive.
+本规格规范测验可恢复并如实反馈；保存失败可见且可重试，核心边界为：磁铁主题必须说明首次答对的完成条件，允许重新开始一轮，并根据实际作答报告结果。
 
 ## Requirements
 

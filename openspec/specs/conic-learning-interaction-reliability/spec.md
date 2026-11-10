@@ -1,7 +1,7 @@
 # conic-learning-interaction-reliability Specification
 
 ## Purpose
-TBD - created by archiving change conic-learning-interaction-reliability. Update Purpose after archive.
+本规格规范曲线轨迹随参数保持一致；练习逐题操作并如实保存进度，核心边界为：轨迹模式必须描绘当前曲线并在参数或曲线切换后更新；综合模式及双曲线轨迹范围必须明确说明。
 
 ## Requirements
 

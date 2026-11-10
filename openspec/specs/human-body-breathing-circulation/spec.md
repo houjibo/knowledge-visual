@@ -1,7 +1,7 @@
 # human-body-breathing-circulation Specification
 
 ## Purpose
-TBD - created by archiving change human-body-breathing-circulation. Update Purpose after archive.
+本规格规范呼吸示意与阶段一致；血液循环示意区分肺和全身，核心边界为：页面必须使肺在吸气示意中扩张、呼气示意中缩小，并提供暂停、分步和文字状态。
 
 ## Requirements
 

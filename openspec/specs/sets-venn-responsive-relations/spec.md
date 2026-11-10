@@ -1,7 +1,7 @@
 # sets-venn-responsive-relations Specification
 
 ## Purpose
-TBD - created by archiving change sets-venn-responsive-relations. Update Purpose after archive.
+本规格规范Venn 关系在窄屏保持可见和正确，核心边界为：Venn 关系图必须适应 320 像素及以上视口，保持集合圆为圆，并在缩放后正确表达包含、相交与不相交。
 
 ## Requirements
 

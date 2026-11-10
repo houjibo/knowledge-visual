@@ -1,7 +1,7 @@
 # water-cycle-exploration Specification
 
 ## Purpose
-TBD - created by archiving change water-cycle-model-clarity. Update Purpose after archive.
+本规格规范解释水循环模型的边界；控制动画与练习反馈，核心边界为：探索模式必须将滑块标为简化环境温度，说明蒸发还受风和湿度影响，雨雪图示不等同于天气预测。
 
 ## Requirements
 

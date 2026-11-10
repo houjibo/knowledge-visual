@@ -1,7 +1,7 @@
 # topic-interaction-evidence Specification
 
 ## Purpose
-TBD - created by archiving change topic-interaction-evidence-index. Update Purpose after archive.
+本规格规范逐主题交互证据可追踪，核心边界为：仓库必须提供逐主题的部分交互证据索引，明确测试范围并列出尚未登记的主题，不能把加载冒烟或测试存在描述为完整验收。
 
 ## Requirements
 

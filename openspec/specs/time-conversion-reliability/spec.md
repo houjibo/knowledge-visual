@@ -1,7 +1,7 @@
 # time-conversion-reliability Specification
 
 ## Purpose
-TBD - created by archiving change time-conversion-reliability. Update Purpose after archive.
+本规格规范计时转换说明与所选时刻一致；练习有限生成且可以键盘操作，核心边界为：页面必须正确区分午夜、中午和其他时段，并随所选时间更新普通钟面及24时制数字说明。
 
 ## Requirements
 

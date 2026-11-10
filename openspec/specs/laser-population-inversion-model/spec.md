@@ -1,7 +1,7 @@
 # laser-population-inversion-model Specification
 
 ## Purpose
-TBD - created by archiving change laser-population-inversion-model. Update Purpose after archive.
+本规格规范反转与阈值示意符合模型假设，核心边界为：页面必须使用明确简化假设的三能级模型，使反转和阈值随泵浦、寿命及镜面反射率变化，并说明不计算实际输出功率。
 
 ## Requirements
 

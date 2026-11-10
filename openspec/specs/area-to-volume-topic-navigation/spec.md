@@ -1,7 +1,7 @@
 # area-to-volume-topic-navigation Specification
 
 ## Purpose
-TBD - created by archiving change area-to-volume-topic-navigation. Update Purpose after archive.
+本规格规范学习者可在面积到体积路线中连续导航，核心边界为：五个路线主题必须提供指向相邻主题及返回路线的静态链接，不强制学习顺序。
 
 ## Requirements
 

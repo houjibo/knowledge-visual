@@ -1,7 +1,7 @@
 # angle-comparison-learning-correctness Specification
 
 ## Purpose
-TBD - created by archiving change angle-comparison-learning-correctness. Update Purpose after archive.
+本规格规范角的比较答案与图形一致；找角与比较可用键盘操作，核心边界为：比较题必须按两条射线的夹角给出正确答案，并支持完成后重新进入。
 
 ## Requirements
 

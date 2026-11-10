@@ -1,7 +1,7 @@
 # motion-exploration-controls Specification
 
 ## Purpose
-TBD - created by archiving change motion-exploration-controls. Update Purpose after archive.
+本规格规范键盘探索机械运动，核心边界为：机械运动页面的速度和图像类型选择器必须可通过键盘聚焦和激活，显示焦点并暴露各组选中状态，同时保持原有模拟和图像切换行为。
 
 ## Requirements
 

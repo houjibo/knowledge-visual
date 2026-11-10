@@ -1,7 +1,7 @@
 # math-shared-quiz Specification
 
 ## Purpose
-TBD - created by archiving change math-shared-quiz-integrity. Update Purpose after archive.
+本规格规范测验逐题计分且支持回看；可用键盘答题并如实报告进度，核心边界为：使用共享组件的页面必须按每道题的首次答案计分，回看保留反馈，未作答题计零分，重测清空本轮答案。
 
 ## Requirements
 

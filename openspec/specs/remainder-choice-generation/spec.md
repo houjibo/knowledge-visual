@@ -1,7 +1,7 @@
 # remainder-choice-generation Specification
 
 ## Purpose
-TBD - created by archiving change fix-remainder-choice-generation. Update Purpose after archive.
+本规格规范有余数除法选择题有限生成，核心边界为：有余数除法页面的四种选择题必须在每次生成时终止，提供四个不同的整数选项，其中恰有一个与题目正确答案一致。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # earth-moon-phases Specification
 
 ## Purpose
-TBD - created by archiving change earth-moon-phases. Update Purpose after archive.
+本规格规范月相与位置一致；演示可暂停及键盘操作，核心边界为：系统必须在理想示意中按日地月相对位置显示月相和地球可见亮面。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # force-direction-and-units Specification
 
 ## Purpose
-TBD - created by archiving change force-direction-and-units. Update Purpose after archive.
+本规格规范力的示意须标明含义和限制；弹簧操作与力方向一致，核心边界为：页面必须使用无单位档位表明未标定的动画，并标明箭头代表施加于物体的力。
 
 ## Requirements
 

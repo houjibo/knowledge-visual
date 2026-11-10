@@ -1,7 +1,7 @@
 # high-function-practice-reliability Specification
 
 ## Purpose
-TBD - created by archiving change high-function-practice-reliability. Update Purpose after archive.
+本规格规范函数练习内容和反馈可靠，核心边界为：函数性质题和测验必须提供可键盘操作且作答后禁用的选项，解释必须正确描述绝对值函数；完成记录必须以实际存储结果反馈。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # seed-germination-learning Specification
 
 ## Purpose
-TBD - created by archiving change seed-germination-learning. Update Purpose after archive.
+本规格规范种子萌发示意条件清晰且可控制；练习答错后可重试，核心边界为：页面必须将一种不需光萌发的种子与后续示意生长区分，并提供暂停、逐步推进和重置。
 
 ## Requirements
 

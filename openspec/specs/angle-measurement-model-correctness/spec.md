@@ -1,7 +1,7 @@
 # angle-measurement-model-correctness Specification
 
 ## Purpose
-TBD - created by archiving change angle-measurement-model-correctness. Update Purpose after archive.
+本规格规范角度图示与度数一致；练习可独立解答并有限生成；作答后反馈持续可读，核心边界为：页面必须按所选度数绘制角的射线和弧，分类示意必须对应所标的角类型。
 
 ## Requirements
 

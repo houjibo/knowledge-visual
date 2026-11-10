@@ -1,7 +1,7 @@
 # science-electricity-topology Specification
 
 ## Purpose
-TBD - created by archiving change science-electricity-topology. Update Purpose after archive.
+本规格规范电路图连接与元件一致；条件及交互可理解，核心边界为：系统必须将电池、开关和灯泡接入导线回路，不得画出绕过灯泡的直接导线。
 
 ## Requirements
 

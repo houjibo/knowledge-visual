@@ -1,7 +1,7 @@
 # interaction-risk-inventory Specification
 
 ## Purpose
-TBD - created by archiving change interaction-risk-inventory. Update Purpose after archive.
+本规格规范交互线索可重复生成，核心边界为：系统必须从仓库 HTML 中稳定生成候选 div 控件和内联 while 的页面与行号，并明确扫描限制与非验收性质。
 
 ## Requirements
 

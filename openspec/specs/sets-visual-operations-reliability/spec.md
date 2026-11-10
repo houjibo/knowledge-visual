@@ -1,7 +1,7 @@
 # sets-visual-operations-reliability Specification
 
 ## Purpose
-TBD - created by archiving change sets-visual-operations-reliability. Update Purpose after archive.
+本规格规范集合交集与互动结果一致，核心边界为：集合交集示意必须仅高亮两集合的重叠区域；互动元素必须可键盘选择，元素改变后必须更新当前运算结果。
 
 ## Requirements
 

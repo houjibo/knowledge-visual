@@ -1,7 +1,7 @@
 # calendar-learning-accuracy Specification
 
 ## Purpose
-TBD - created by archiving change calendar-learning-accuracy. Update Purpose after archive.
+本规格规范月份和闰年按明确规则表达；日期题与作答统计无歧义，核心边界为：日历必须正确显示北半球气象季节；闰年计算必须使用格里高利历规则且只接受有效整数年份。
 
 ## Requirements
 

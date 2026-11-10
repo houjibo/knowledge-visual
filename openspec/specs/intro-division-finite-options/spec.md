@@ -1,7 +1,7 @@
 # intro-division-finite-options Specification
 
 ## Purpose
-TBD - created by archiving change finite-intro-division-question-options. Update Purpose after archive.
+本规格规范有限生成互异数字选项；选算式题的答案唯一；选择后可以继续练习，核心边界为：“除法初步认识”中的分一分、求商和求除数练习必须以有限候选生成数字选项，且每题选项互不相同并包含唯一正确答案。
 
 ## Requirements
 

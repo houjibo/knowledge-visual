@@ -1,7 +1,7 @@
 # sets-quiz-completion-reliability Specification
 
 ## Purpose
-TBD - created by archiving change sets-quiz-completion-reliability. Update Purpose after archive.
+本规格规范集合练习按回合可靠完成，核心边界为：集合练习必须支持键盘作答并在选择后锁定，每轮五题至少答对三题才尝试保存完成记录，且必须如实反馈保存结果。
 
 ## Requirements
 

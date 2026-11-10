@@ -1,7 +1,7 @@
 # figure-movement-questions Specification
 
 ## Purpose
-TBD - created by archiving change figure-movement-questions. Update Purpose after archive.
+本规格规范平移和旋转题目可判断；交互状态与当前运动一致，核心边界为：系统必须为每个挑战题提供四个互异选项，明确移动对象和参照条件。
 
 ## Requirements
 

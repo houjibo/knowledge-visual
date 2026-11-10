@@ -1,7 +1,7 @@
 # surface-area-learning-completion Specification
 
 ## Purpose
-TBD - created by archiving change surface-area-learning-completion. Update Purpose after archive.
+本规格规范表面积计算题只计分一次；学习进度按不同活动保存，核心边界为：页面必须对每道计算题首次有效提交计分，并保留反馈直到学习者主动换题。
 
 ## Requirements
 

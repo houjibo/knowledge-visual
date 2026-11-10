@@ -1,7 +1,7 @@
 # geometric-probability Specification
 
 ## Purpose
-TBD - created by archiving change geometric-probability-consistency. Update Purpose after archive.
+本规格规范线段采样与区间范围一致；π 估算可完整重置，核心边界为：线段模拟必须保持 0≤a<b≤L，并在 L 改变时清除原采样点；改变 a、b必须重新统计已有采样点。
 
 ## Requirements
 

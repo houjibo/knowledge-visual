@@ -1,7 +1,7 @@
 # within-10000-addition-subtraction-finite-options Specification
 
 ## Purpose
-TBD - created by archiving change finite-addition-subtraction-options. Update Purpose after archive.
+本规格规范万以内加减法选择题有限生成唯一选项，核心边界为：选择挑战和估算练习必须使用有限候选生成四个互异的非负整数选项，并恰有一个符合当前题目规则的正确答案。选项生成必须在随机值重复时完成。估算答案与精确答案不同时，精确值必须保留为干扰项。
 
 ## Requirements
 

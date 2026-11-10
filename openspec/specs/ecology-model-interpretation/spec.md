@@ -1,7 +1,7 @@
 # ecology-model-interpretation Specification
 
 ## Purpose
-TBD - created by archiving change ecology-model-interpretation. Update Purpose after archive.
+本规格规范生态关系示意可解释；环境练习避免绝对结论，核心边界为：页面必须将草原图标与指数标注为静态示意，公开计算规则和局限，并使滑杆、画布与文字反馈一致。
 
 ## Requirements
 

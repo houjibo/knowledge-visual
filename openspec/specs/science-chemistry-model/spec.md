@@ -1,7 +1,7 @@
 # science-chemistry-model Specification
 
 ## Purpose
-TBD - created by archiving change science-chemistry-model. Update Purpose after archive.
+本规格规范化学示意反馈与模型范围一致；不同题目计分并如实保存，核心边界为：系统必须正确显示石蕊酸碱颜色，区分反应生成气体和已有气体释放，并说明动画不计算实际数量或速率。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # university-physics-mode-accessibility Specification
 
 ## Purpose
-TBD - created by archiving change university-physics-mode-accessibility. Update Purpose after archive.
+本规格规范大学物理主题的模式按钮可访问，核心边界为：五个同构大学物理主题必须提供可聚焦的原生按钮，以键盘或指针切换学习、练习及测验，并同步可见面板和按钮状态。
 
 ## Requirements
 

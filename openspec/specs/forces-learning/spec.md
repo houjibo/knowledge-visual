@@ -1,7 +1,7 @@
 # forces-learning Specification
 
 ## Purpose
-TBD - created by archiving change forces-accessible-interaction. Update Purpose after archive.
+本规格规范学习模式和示范可通过键盘操作；测验可重新开始并如实报告保存，核心边界为：力主题必须使用可聚焦控件切换学习模式、推拉方式和实验，并提供画布动作的按钮及文字反馈。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # science-water-phase-learning Specification
 
 ## Purpose
-TBD - created by archiving change science-water-phase-learning. Update Purpose after archive.
+本规格规范纯水相变边界有明确条件；加热示意包含恒温吸热阶段；测验结果可回看且保存状态如实显示，核心边界为：系统必须将标准大气压下 0°C 与 100°C 标为相应两相可能共存的边界，并说明仅凭温度不能确定相态比例。
 
 ## Requirements
 

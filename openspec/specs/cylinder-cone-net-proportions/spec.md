@@ -1,7 +1,7 @@
 # cylinder-cone-net-proportions Specification
 
 ## Purpose
-TBD - created by archiving change cylinder-cone-net-proportions. Update Purpose after archive.
+本规格规范展开图与底面按同一比例绘制，核心边界为：页面必须使圆柱侧面长方形的长和圆锥侧面扇形的弧长分别等于底面周长。
 
 ## Requirements
 

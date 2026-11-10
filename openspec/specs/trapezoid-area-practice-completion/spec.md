@@ -1,7 +1,7 @@
 # trapezoid-area-practice-completion Specification
 
 ## Purpose
-TBD - created by archiving change trapezoid-area-practice-completion. Update Purpose after archive.
+本规格规范梯形面积练习可靠计分；生活题反馈与完成记录，核心边界为：页面必须提供无重复选项，并对每题的首次回答计分，允许学习者主动进入下一题。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # numbers-shapes-learning Specification
 
 ## Purpose
-TBD - created by archiving change numbers-shapes-learning. Update Purpose after archive.
+本规格规范有限取半的精确与近似表达；有限生成并解释挑战题，核心边界为：系统必须将有限次取半的结果表示为精确分数，并用近似符号标示舍入后的十进制数。
 
 ## Requirements
 

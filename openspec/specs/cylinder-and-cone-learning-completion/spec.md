@@ -1,7 +1,7 @@
 # cylinder-and-cone-learning-completion Specification
 
 ## Purpose
-TBD - created by archiving change cylinder-and-cone-learning-completion. Update Purpose after archive.
+本规格规范圆柱与圆锥练习保留反馈；跨活动完成记录可恢复，核心边界为：页面必须每题只接受一次答案，并保留反馈直至学习者主动进入下一题。
 
 ## Requirements
 

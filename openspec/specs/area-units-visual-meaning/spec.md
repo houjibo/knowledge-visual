@@ -1,7 +1,7 @@
 # area-units-visual-meaning Specification
 
 ## Purpose
-TBD - created by archiving change area-units-visual-meaning. Update Purpose after archive.
+本规格规范面积单位网格与单位一致；换算提示使用完整面积单位，核心边界为：页面必须用十行十列展示平方分米中的平方厘米及平方米中的平方分米，并说明图形不按实际比例。
 
 ## Requirements
 

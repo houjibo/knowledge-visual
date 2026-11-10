@@ -1,7 +1,7 @@
 # homepage-progress-validity Specification
 
 ## Purpose
-TBD - created by archiving change homepage-progress-validity. Update Purpose after archive.
+本规格规范首页进度只统计有效完成记录；首页学科数量与主题目录一致，核心边界为：首页必须按当前主题目录、学科和学段统计有效且完成的进度记录，不删除历史数据，并保留数学旧记录的歧义提示。
 
 ## Requirements
 

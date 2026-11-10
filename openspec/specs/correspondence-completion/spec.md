@@ -1,7 +1,7 @@
 # correspondence-completion Specification
 
 ## Purpose
-TBD - created by archiving change correspondence-completion-progress. Update Purpose after archive.
+本规格规范一一对应主题可记录学习完成，核心边界为：一一对应主题必须清楚说明完成条件，并在本次会话答满十题且正确率至少 80% 时记录完成；存储失败时必须提示未保存。
 
 ## Requirements
 

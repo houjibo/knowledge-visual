@@ -1,7 +1,7 @@
 # university-physics-animation-controls Specification
 
 ## Purpose
-TBD - created by archiving change university-physics-animation-controls. Update Purpose after archive.
+本规格规范可控制大学物理动画，核心边界为：流体、光电和多普勒主题必须提供可通过键盘操作的动画暂停和继续控件，并尊重系统减少动态效果偏好。
 
 ## Requirements
 

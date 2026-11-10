@@ -1,7 +1,7 @@
 # high-probability-experiments Specification
 
 ## Purpose
-TBD - created by archiving change high-probability-experiment-integrity. Update Purpose after archive.
+本规格规范重置终止该实验待执行的批量操作；骰子目标重新匹配历史结果，核心边界为：硬币、骰子和摸球实验必须在重置时取消该实验尚未执行的批量任务；摸球配置变化必须也取消批量并清空旧样本。
 
 ## Requirements
 

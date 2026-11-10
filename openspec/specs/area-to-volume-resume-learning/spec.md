@@ -1,7 +1,7 @@
 # area-to-volume-resume-learning Specification
 
 ## Purpose
-TBD - created by archiving change area-to-volume-resume-learning. Update Purpose after archive.
+本规格规范学习路线支持继续未完成主题，核心边界为：路线必须根据已保存的主题记录显示完成数并建议第一个未完成的主题，不限制其他步骤的访问。
 
 ## Requirements
 

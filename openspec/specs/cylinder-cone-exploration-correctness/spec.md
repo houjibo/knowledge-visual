@@ -1,7 +1,7 @@
 # cylinder-cone-exploration-correctness Specification
 
 ## Purpose
-TBD - created by archiving change cylinder-cone-exploration-correctness. Update Purpose after archive.
+本规格规范圆柱圆锥探索数值与示意一致；比较题按给定体积计算，核心边界为：页面必须根据所选半径和高度显示对应图形、面积与体积，圆锥母线以长度单位表示。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # buoyancy-visualization Specification
 
 ## Purpose
-TBD - created by archiving change correct-buoyancy-visualization. Update Purpose after archive.
+本规格规范漂浮比例与图示一致，核心边界为：沉与浮模拟必须按物体密度除以液体密度计算漂浮平衡的浸入体积比，并使可视化矩形的浸入高度比例与显示百分比一致。
 
 ## Requirements
 

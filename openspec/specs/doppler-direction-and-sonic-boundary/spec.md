@@ -1,7 +1,7 @@
 # doppler-direction-and-sonic-boundary Specification
 
 ## Purpose
-TBD - created by archiving change doppler-direction-and-sonic-boundary. Update Purpose after archive.
+本规格规范一维声学多普勒方向和边界清晰，核心边界为：页面必须允许按标明的方向调整声源与观察者速度，在亚声速区根据相对介质的速度计算接收频率，并在声速及超声速不套用该公式。
 
 ## Requirements
 

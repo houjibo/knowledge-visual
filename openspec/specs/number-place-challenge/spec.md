@@ -1,7 +1,7 @@
 # number-place-challenge Specification
 
 ## Purpose
-TBD - created by archiving change number-place-challenge. Update Purpose after archive.
+本规格规范数位挑战有限生成；拨珠支持键盘操作及重置，核心边界为：系统必须有限生成挑战题及互异选项，并保证数位题询问该数已有的数位。
 
 ## Requirements
 

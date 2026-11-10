@@ -1,7 +1,7 @@
 # volume-layer-exploration Specification
 
 ## Purpose
-TBD - created by archiving change volume-layer-exploration. Update Purpose after archive.
+本规格规范学习者可以逐层累计体积，核心边界为：页面必须根据长、宽、高展示各层方块并允许逐层计数和重置。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # volume-units-accessible-building Specification
 
 ## Purpose
-TBD - created by archiving change volume-units-accessible-building. Update Purpose after archive.
+本规格规范搭方块支持键盘和响应式指针操作，核心边界为：页面必须提供可缩放的方格、可辨识的目标位置和已放置状态，并支持键盘及指针操作。
 
 ## Requirements
 

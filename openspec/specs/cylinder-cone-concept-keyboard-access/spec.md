@@ -1,7 +1,7 @@
 # cylinder-cone-concept-keyboard-access Specification
 
 ## Purpose
-TBD - created by archiving change cylinder-cone-concept-keyboard-access. Update Purpose after archive.
+本规格规范概念图形可用键盘选择，核心边界为：页面必须使用具名按钮选择圆柱与圆锥，并同步所选状态与详情。
 
 ## Requirements
 

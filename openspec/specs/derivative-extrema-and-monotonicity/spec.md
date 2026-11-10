@@ -1,7 +1,7 @@
 # derivative-extrema-and-monotonicity Specification
 
 ## Purpose
-TBD - created by archiving change derivative-extrema-and-monotonicity. Update Purpose after archive.
+本规格规范极值及增减色带与函数一致，核心边界为：导数页面必须显示内置函数在指定范围内的局部极值，并在可见画布中按导数符号显示增减色带；图中标记与文字必须使用相同数据。
 
 ## Requirements
 

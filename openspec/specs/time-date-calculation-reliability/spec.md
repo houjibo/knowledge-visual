@@ -1,7 +1,7 @@
 # time-date-calculation-reliability Specification
 
 ## Purpose
-TBD - created by archiving change time-date-calculation-reliability. Update Purpose after archive.
+本规格规范时间计算题正确显示和判分；练习有限生成且反馈保持；日历支持键盘选择，核心边界为：页面必须对整点、半点及半小时运算保持钟面、题目、选项和解释一致。
 
 ## Requirements
 

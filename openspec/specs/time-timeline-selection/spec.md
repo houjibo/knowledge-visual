@@ -1,7 +1,7 @@
 # time-timeline-selection Specification
 
 ## Purpose
-TBD - created by archiving change time-timeline-selection. Update Purpose after archive.
+本规格规范时间线的选择与题目同步；时间线反馈不被旧操作覆盖，核心边界为：时间线必须支持键盘选择事件，题目必须使用所选事件及时间。
 
 ## Requirements
 

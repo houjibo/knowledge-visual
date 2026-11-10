@@ -1,7 +1,7 @@
 # resistance-experiment Specification
 
 ## Purpose
-TBD - created by archiving change resistance-experiment-model. Update Purpose after archive.
+本规格规范理想电路图与计算模型一致；动画可暂停且不重复调度，核心边界为：电源、导体、灯泡和电流表必须串联，电压表必须跨接导体两端，电路必须说明定值元件和温度假设。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # function-graph-label-and-exponential-boundary Specification
 
 ## Purpose
-TBD - created by archiving change function-graph-label-and-exponential-boundary. Update Purpose after archive.
+本规格规范绘图公式和参数边界明确，核心边界为：函数图像探索必须显示实际绘制的公式，参数控件必须具有可识别名称；指数底数为 1 时必须显示常数函数的性质。
 
 ## Requirements
 

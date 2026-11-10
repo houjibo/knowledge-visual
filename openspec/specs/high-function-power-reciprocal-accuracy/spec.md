@@ -1,7 +1,7 @@
 # high-function-power-reciprocal-accuracy Specification
 
 ## Purpose
-TBD - created by archiving change high-function-power-reciprocal-accuracy. Update Purpose after archive.
+本规格规范整数幂与反比例函数图文一致，核心边界为：函数图像探索必须根据整数幂指数和反比例系数计算图像、定义域、值域、奇偶性和分区间单调性；x=0 不属于零次幂和反比例函数的定义域。
 
 ## Requirements
 

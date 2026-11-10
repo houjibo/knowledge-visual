@@ -1,7 +1,7 @@
 # material-properties-and-safety Specification
 
 ## Purpose
-TBD - created by archiving change material-properties-and-safety. Update Purpose after archive.
+本规格规范材料性质按具体条件表达；安全和漂浮练习避免绝对结论，核心边界为：页面必须将材料性质说明限定于示例和条件，不将无依据星级当作各类材料的实测比较。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # area-to-volume-release-verification Specification
 
 ## Purpose
-TBD - created by archiving change area-to-volume-release-verification. Update Purpose after archive.
+本规格规范面积到体积路线在发布子路径可用；本地静态文件路径可导航，核心边界为：发布验证必须检查从首页进入路线、依次访问五个主题、操作体积探索并返回路线。
 
 ## Requirements
 

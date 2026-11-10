@@ -1,7 +1,7 @@
 # comparison-ordering-reliability Specification
 
 ## Purpose
-TBD - created by archiving change comparison-ordering-reliability. Update Purpose after archive.
+本规格规范比较和排序练习有限生成；练习支持键盘且每题计分一次，核心边界为：系统必须使用有限候选生成不同数字和互异选项，并确保正确答案与题目一致。
 
 ## Requirements
 

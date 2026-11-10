@@ -1,7 +1,7 @@
 # cylinder-cone-learning Specification
 
 ## Purpose
-TBD - created by archiving change cylinder-cone-learning-correctness. Update Purpose after archive.
+本规格规范圆柱圆锥题目生成与公式正确，核心边界为：圆柱与圆锥的计算及挑战题必须有限生成四个不同选项，明确数值题的近似规则和单位；圆锥展开说明必须正确描述侧面积公式。
 
 ## Requirements
 

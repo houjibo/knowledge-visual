@@ -1,7 +1,7 @@
 # understanding-multiples-learning Specification
 
 ## Purpose
-TBD - created by archiving change understanding-multiples-reliability. Update Purpose after archive.
+本规格规范题目可靠生成且摆放与输入一致；每题只计一次；完成状态如实反馈，核心边界为：页面必须在固定随机值下正常初始化，摆放图形数量必须与有效倍数输入一致。
 
 ## Requirements
 

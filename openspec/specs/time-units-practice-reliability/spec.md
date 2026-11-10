@@ -1,7 +1,7 @@
 # time-units-practice-reliability Specification
 
 ## Purpose
-TBD - created by archiving change time-units-practice-reliability. Update Purpose after archive.
+本规格规范时分秒练习有限生成；换算和计分可持续操作；挑战选项可判断，核心边界为：页面必须在随机值持续重复时完成初始化，并生成足够数量的不同选项。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # area-perimeter-practice-reliability Specification
 
 ## Purpose
-TBD - created by archiving change area-perimeter-practice-reliability. Update Purpose after archive.
+本规格规范练习与挑战逐题可靠计分；面积比较题可处理相等，核心边界为：页面必须对每题的首次有效完成计分，并分别维护普通练习和挑战的连对数。
 
 ## Requirements
 

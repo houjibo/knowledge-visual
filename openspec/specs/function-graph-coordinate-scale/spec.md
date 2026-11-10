@@ -1,7 +1,7 @@
 # function-graph-coordinate-scale Specification
 
 ## Purpose
-TBD - created by archiving change function-graph-coordinate-scale. Update Purpose after archive.
+本规格规范图像刻度与曲线坐标一致，核心边界为：函数图像画布必须使用与曲线相同的坐标映射绘制网格和数字刻度，并说明横纵显示比例；定义域画布的数字刻度必须对应其曲线坐标。
 
 ## Requirements
 

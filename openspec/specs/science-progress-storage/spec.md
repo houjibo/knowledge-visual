@@ -1,7 +1,7 @@
 # science-progress-storage Specification
 
 ## Purpose
-TBD - created by archiving change science-progress-storage-resilience. Update Purpose after archive.
+本规格规范科学进度异常时不阻断学习；顺序写入保留其他标签页进度，核心边界为：科学进度必须在数据损坏或存储不可用时避免抛出异常并保留原始异常数据，当前页面可继续使用内存状态；沉与浮无法保存通关时必须提示进度未保存。
 
 ## Requirements
 

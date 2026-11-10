@@ -1,7 +1,7 @@
 # high-motion-practice Specification
 
 ## Purpose
-TBD - created by archiving change motion-practice-learning-reliability. Update Purpose after archive.
+本规格规范高中运动练习按五道不同题逐题作答；练习选项支持键盘并播报状态；练习画布与题目上下文一致等要求，核心边界为：高中物理“运动的描述”练习必须按固定顺序展示五道不同题，显示题号、本轮状态和逐题反馈。每题首次作答后必须锁定全部选项；切换到其他学习模式并返回必须保留当前题及其已答状态；完成本轮后必须提供重新练习入口。
 
 ## Requirements
 

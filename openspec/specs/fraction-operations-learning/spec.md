@@ -1,7 +1,7 @@
 # fraction-operations-learning Specification
 
 ## Purpose
-TBD - created by archiving change fraction-operations-reliability. Update Purpose after archive.
+本规格规范题面与答案一致；有限生成与可重试闯关；探索器的图示与结果一致等要求，核心边界为：自由练习的减法必须在需要时交换整个分数，计算并接受显示题目的正确答案。
 
 ## Requirements
 

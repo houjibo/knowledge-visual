@@ -1,7 +1,7 @@
 # logical-reasoning-questions Specification
 
 ## Purpose
-TBD - created by archiving change logical-reasoning-questions. Update Purpose after archive.
+本规格规范线索支持所给结论；题库有限抽取并解释答案，核心边界为：系统必须确保排队题给出的线索能唯一确定首位，并提供相应解释。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # derivative-log-domain-accuracy Specification
 
 ## Purpose
-TBD - created by archiving change derivative-log-domain-accuracy. Update Purpose after archive.
+本规格规范自然对数定义域清晰，核心边界为：选择 ln(x) 时页面必须说明定义域 x > 0；当切点不在定义域时必须用可理解的未定义提示替代 NaN，且不绘制无效点或切线。
 
 ## Requirements
 

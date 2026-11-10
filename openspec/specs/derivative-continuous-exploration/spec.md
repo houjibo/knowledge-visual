@@ -1,7 +1,7 @@
 # derivative-continuous-exploration Specification
 
 ## Purpose
-TBD - created by archiving change derivative-continuous-exploration. Update Purpose after archive.
+本规格规范导数参数和函数可连续操作，核心边界为：导数页面必须提供有名称的参数滑块与可聚焦的函数按钮；调整数值必须保持滑块焦点并更新数值和图示。
 
 ## Requirements
 

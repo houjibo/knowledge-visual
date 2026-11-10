@@ -1,7 +1,7 @@
 # area-perimeter-visual-consistency Specification
 
 ## Purpose
-TBD - created by archiving change area-perimeter-visual-consistency. Update Purpose after archive.
+本规格规范图形与计算保持一致；控件状态可辨识，核心边界为：页面必须以长不小于宽的矩形展示面积和周长，并在参数更新时同步显示完整单位格。
 
 ## Requirements
 

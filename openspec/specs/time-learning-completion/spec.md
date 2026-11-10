@@ -1,7 +1,7 @@
 # time-learning-completion Specification
 
 ## Purpose
-TBD - created by archiving change time-learning-completion. Update Purpose after archive.
+本规格规范时间主题的完成条件可见且可记录；存储失败可恢复，核心边界为：页面必须显示并跟踪本次学习的调整时间、答对转换题、答对时间线题和完成五组配对；全部达标后保存到小学主题进度。
 
 ## Requirements
 

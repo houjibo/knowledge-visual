@@ -1,7 +1,7 @@
 # science-quiz-coverage Specification
 
 ## Purpose
-TBD - created by archiving change science-quiz-integrity-remaining-topics. Update Purpose after archive.
+本规格规范科学同源测验的计分与完成可靠，核心边界为：动物分类、生物世界、地球宇宙、人体、天气水循环、时间测量、材料、环境及简单机械的测验必须按不同题目计分，保留返回后的答案，并提供键盘可操作的模式与选项。
 
 ## Requirements
 

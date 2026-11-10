@@ -1,7 +1,7 @@
 # physics-chemistry-progress-storage Specification
 
 ## Purpose
-TBD - created by archiving change physics-chemistry-progress-resilience. Update Purpose after archive.
+本规格规范物理化学进度异常可恢复；顺序记录完成不丢失；测验保存失败提示，核心边界为：物理与化学各学段进度必须保留格式异常的原始数据，使页面继续运行，并在本页内存中保留无法保存的修改。
 
 ## Requirements
 

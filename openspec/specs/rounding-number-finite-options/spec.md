@@ -1,7 +1,7 @@
 # rounding-number-finite-options Specification
 
 ## Purpose
-TBD - created by archiving change finite-rounding-number-practice-options. Update Purpose after archive.
+本规格规范近似数练习有限生成唯一选项，核心边界为：四舍五入与应用选择题必须从有限候选池生成四个互异选项，并恰有一个符合题目答案的正确选项。选项生成必须在随机值重复时终止。干扰项必须保持在题型定义的既有数值范围内。
 
 ## Requirements
 

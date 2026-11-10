@@ -1,7 +1,7 @@
 # percentage-challenge Specification
 
 ## Purpose
-TBD - created by archiving change percentage-challenge-correctness. Update Purpose after archive.
+本规格规范百分数挑战题目与反馈正确，核心边界为：百分数挑战必须正确处理小数百分数，确保增加题的数据确实增加，作答前不显示答案，作答后提供解释并阻止重复计分。
 
 ## Requirements
 

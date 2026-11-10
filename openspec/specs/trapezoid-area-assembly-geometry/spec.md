@@ -1,7 +1,7 @@
 # trapezoid-area-assembly-geometry Specification
 
 ## Purpose
-TBD - created by archiving change trapezoid-area-assembly-geometry. Update Purpose after archive.
+本规格规范梯形拼图保持几何对应，核心边界为：页面必须展示两个全等梯形通过旋转拼成的平行四边形，拼成图形的底为梯形两底之和，高相同。
 
 ## Requirements
 

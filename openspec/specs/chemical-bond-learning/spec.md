@@ -1,7 +1,7 @@
 # chemical-bond-learning Specification
 
 ## Purpose
-TBD - created by archiving change chemical-bond-accessible-learning. Update Purpose after archive.
+本规格规范主题主要选择可键盘操作；不重复计数并可靠反馈进度；分子极性说明不得使用绝对简化判据等要求，核心边界为：主题必须使用原生控件选择模式、键型、杂化、分子和极性，并同步选中状态与说明。
 
 ## Requirements
 

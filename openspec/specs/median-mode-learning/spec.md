@@ -1,7 +1,7 @@
 # median-mode-learning Specification
 
 ## Purpose
-TBD - created by archiving change median-mode-question-reliability. Update Purpose after archive.
+本规格规范中位数与众数题目可生成且答案明确，核心边界为：中位数、众数及限时挑战必须在随机值重复时有限生成四个不同选项；众数数据必须有唯一正确众数，作答后防止重复计分。
 
 ## Requirements
 

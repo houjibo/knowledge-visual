@@ -1,7 +1,7 @@
 # surface-area-geometry-and-answers Specification
 
 ## Purpose
-TBD - created by archiving change surface-area-geometry-and-answers. Update Purpose after archive.
+本规格规范表面积示意图对应同一立体；生活题答案符合计算条件，核心边界为：页面必须展示公共棱相接的立体示意，并以一致尺寸展示展开图的六个面。
 
 ## Requirements
 

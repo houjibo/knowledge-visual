@@ -1,7 +1,7 @@
 # position-direction-questions Specification
 
 ## Purpose
-TBD - created by archiving change position-direction-questions. Update Purpose after archive.
+本规格规范方向题有限生成；题意支持唯一答案，核心边界为：系统必须从有限候选生成非零位置偏移、路线方向和四个互异选项，避免重复随机值阻塞页面。
 
 ## Requirements
 

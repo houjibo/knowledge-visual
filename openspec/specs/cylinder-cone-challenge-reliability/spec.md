@@ -1,7 +1,7 @@
 # cylinder-cone-challenge-reliability Specification
 
 ## Purpose
-TBD - created by archiving change cylinder-cone-challenge-reliability. Update Purpose after archive.
+本规格规范圆柱圆锥闯关保留结果并可重玩；完成记录可恢复，核心边界为：页面必须对每题只接受一次回答，显示反馈并允许学习者主动继续。
 
 ## Requirements
 

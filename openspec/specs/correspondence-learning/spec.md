@@ -1,7 +1,7 @@
 # correspondence-learning Specification
 
 ## Purpose
-TBD - created by archiving change correspondence-visual-reliability. Update Purpose after archive.
+本规格规范一一对应图形与数量一致，核心边界为：一一对应练习必须将每个对象完整显示为一个图形，数量与文字一致；练习、配对游戏和挑战必须在重复随机值下有限生成题目。
 
 ## Requirements
 

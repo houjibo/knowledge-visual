@@ -1,7 +1,7 @@
 # measurement-estimation-reliability Specification
 
 ## Purpose
-TBD - created by archiving change measurement-estimation-reliability. Update Purpose after archive.
+本规格规范换算与估算可靠计分；明确图示和估算边界，核心边界为：系统必须有限生成换算选项，并对每道换算或估算题最多记录一次提交。
 
 ## Requirements
 

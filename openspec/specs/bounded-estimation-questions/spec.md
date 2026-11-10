@@ -1,7 +1,7 @@
 # bounded-estimation-questions Specification
 
 ## Purpose
-TBD - created by archiving change bounded-estimation-questions. Update Purpose after archive.
+本规格规范估算题生成有限且选项唯一；估算规则可判断，核心边界为：四舍五入、估算和生活题必须使用有限候选生成四个不重复选项，不依赖随机值发生变化才能结束。
 
 ## Requirements
 

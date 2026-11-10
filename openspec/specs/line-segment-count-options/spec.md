@@ -1,7 +1,7 @@
 # line-segment-count-options Specification
 
 ## Purpose
-TBD - created by archiving change bounded-line-segment-count-options. Update Purpose after archive.
+本规格规范有限生成数线段练习选项，核心边界为：页面启动和后续出题必须在随机数重复或固定时仍有限结束，并为答案 1、3、6、10 生成各不相同的四个正整数选项。
 
 ## Requirements
 
