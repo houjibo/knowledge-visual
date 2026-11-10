@@ -1,6 +1,6 @@
 # 计算机与人工智能课程设计
 
-状态：分阶段建设；首批四个交互主题由 OpenSpec 变更 [add-computer-ai-learning-subject](../../openspec/changes/add-computer-ai-learning-subject/) 跟踪。本设计作为学科内容地图，不表示所有列出的主题均已实现或通过教学验收。
+状态：分阶段建设；首批四个交互主题由已归档 OpenSpec 变更 [add-computer-ai-learning-subject](../../openspec/changes/archive/2026-11-10-add-computer-ai-learning-subject/proposal.md) 跟踪。本设计作为学科内容地图，不表示所有列出的主题均已实现或通过教学验收。
 
 ## 目标与边界
 
