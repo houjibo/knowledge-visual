@@ -136,7 +136,7 @@
 - [比大小与排序](../../math/topics/comparison-and-ordering/index.html)
   - 固定随机值下数轴比较、排序和找位置，三类挑战、重复计分及键盘与回调时序；未覆盖所有取值。 [comparison-ordering-reliability.spec.js](../../tests/browser/comparison-ordering-reliability.spec.js)
 - [复式统计图](../../math/topics/compound-charts/index.html)
-  - 桌面与移动固定随机序列验证零差值总量题的四个互异非负整数选项、唯一正确答案、答题反馈、计分及自动下一题；其他题型、真实设备和整页无障碍尚未全面验收。 [compound-chart-bounded-read-options.spec.js](../../tests/browser/compound-chart-bounded-read-options.spec.js)
+  - 桌面与移动固定随机序列验证零差值总量题的四个互异非负整数选项、唯一正确答案、答题反馈、计分及自动下一题；另覆盖四类数值题的重复候选；其他题型、真实设备和整页无障碍尚未全面验收。 [compound-chart-bounded-read-options.spec.js](../../tests/browser/compound-chart-bounded-read-options.spec.js)
 - [复式统计表](../../math/topics/compound-statistical-tables/index.html)
   - 固定随机 0 和接近 1 验证查值/合计题初始化、有限且互异的正整数答案、依据表格计算正确值、反馈、计分及自动下一题；其他练习模式、真实设备和整页无障碍未全面验收。 [compound-statistical-table-bounded-options.spec.js](../../tests/browser/compound-statistical-table-bounded-options.spec.js)
 - [圆柱与圆锥](../../math/topics/cylinder-and-cone/index.html)
