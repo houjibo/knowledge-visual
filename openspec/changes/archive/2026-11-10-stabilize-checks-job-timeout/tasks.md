@@ -7,6 +7,6 @@
 ## 2. 记录运行证据并集成验证
 
 - [x] 2.1 更新站点运营计划和差距台账，记录 #211 的取消状态、各测试套件结果与新时限依据；运行静态检查确认文档及链接无回归。
-- [ ] 2.2 运行 `openspec validate --all --strict`、`npm run check:static` 和 `npm run check`；各命令以零状态结束并记录测试通过数、跳过数。
-- [ ] 2.3 推送变更并核对 GitHub Actions 检查、发布构建、Pages 部署及部署后验证全部成功；若仍超时则根据 Actions 证据定位耗时步骤。
-- [ ] 2.4 归档变更并同步主规格；再次运行严格 OpenSpec 校验和静态检查确认归档结果一致。
+- [x] 2.2 运行 `openspec validate --all --strict`、`npm run check:static` 和 `npm run check`；各命令均以零状态结束，浏览器测试及两组 339 页检查通过，2 项既有用例跳过。
+- [x] 2.3 推送提交 `844cda0` 并核对 Actions [run #212](https://github.com/houjibo/knowledge-visual/actions/runs/42759471240)：checks、发布构建、Pages 部署及部署后验证全部成功；checks 耗时 13 分 22 秒。
+- [x] 2.4 归档变更并同步主规格；再次运行严格 OpenSpec 校验和静态检查确认归档结果一致。

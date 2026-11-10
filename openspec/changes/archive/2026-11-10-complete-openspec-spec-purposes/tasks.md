@@ -18,5 +18,5 @@
 
 ## 4. 发布与归档
 
-- [ ] 4.1 提交并推送补全结果，核对 GitHub Actions 检查、构建、Pages 部署和部署后版本验证均成功。
-- [ ] 4.2 归档本变更并同步主规格；再次运行严格 OpenSpec 与用途静态守卫，确认归档后契约和计数一致。
+- [x] 4.1 推送提交 `844cda0` 后核对 Actions [run #212](https://github.com/houjibo/knowledge-visual/actions/runs/42759471240)；检查、构建、Pages 部署和部署后版本验证全部成功。
+- [x] 4.2 归档本变更并同步主规格；再次运行严格 OpenSpec 与用途静态守卫，确认归档后契约和计数一致。

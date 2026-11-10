@@ -14,7 +14,7 @@
 
 截至 2026-11-10，计算机与人工智能页面已发布。归档提交 `34f9a56` 的 Actions [run #208](https://github.com/houjibo/knowledge-visual/actions/runs/42739511880) 检查和构建成功，但 Pages deployment 约 10 分钟后转为 error，工作流取消且部署后 job 被跳过；公网清单已匹配该提交，直接核验确认 6 个资源可访问。job 日志接口返回 403，具体平台原因未确认。后续提交 `9f22f6a` 将部署 job 上限增至 20 分钟，并由静态守卫验证超时和后置核验依赖；Actions [run #209](https://github.com/houjibo/knowledge-visual/actions/runs/42747644282) 的检查、构建、deploy 和部署后核验全部成功，deploy 用时约 32 秒，公网清单 revision 匹配且 `site_files_modified:false`。此次复验支持更有弹性的窗口配置，但单次成功不能证明 #208 的唯一原因已隔离；继续观察后续发布。相关[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-10-stabilize-pages-deploy-acknowledgement/proposal.md)。
 
-后续提交 `3742870` 的 Actions [run #211](https://github.com/houjibo/knowledge-visual/actions/runs/42756210604) 在 `checks` job 的 20 分钟上限处被取消，build、deploy 和部署后验证均跳过。GitHub 注释显示浏览器回归 1,646 项通过、2 项跳过，全站冒烟两轮各 339 项通过，发布包交互 6 项通过；本地 `npm run check` 完整通过。该证据说明测试结果已大部分产出，但工作流没有成功终态，不能据此称为 CI 通过。后续变更把 checks 上限提高到 30 分钟，并由静态守卫要求至少 25 分钟；继续观测 CI 耗时，如果仍触及上限，应按新日志定位具体阻塞阶段。[OpenSpec 变更](../../openspec/changes/stabilize-checks-job-timeout/proposal.md)。
+后续提交 `3742870` 的 Actions [run #211](https://github.com/houjibo/knowledge-visual/actions/runs/42756210604) 在 `checks` job 的 20 分钟上限处被取消，build、deploy 和部署后验证均跳过。GitHub 注释显示浏览器回归 1,646 项通过、2 项跳过，全站冒烟两轮各 339 项通过，发布包交互 6 项通过；本地 `npm run check` 完整通过。该证据说明测试结果已大部分产出，但工作流没有成功终态，不能据此称为 CI 通过。提交 `844cda0` 将 checks 上限提高到 30 分钟，并由静态守卫要求至少 25 分钟；Actions [run #212](https://github.com/houjibo/knowledge-visual/actions/runs/42759471240) 的 checks 在 13 分 22 秒完成，build-release、deploy 和部署后核验均成功，公网版本清单匹配且 `site_files_modified:false`。继续观测 CI 耗时，如果接近上限，应按新日志定位具体阻塞阶段。[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-10-stabilize-checks-job-timeout/proposal.md)。
 ## 分阶段执行
 
 ### 1. 构建可发布的静态产物
