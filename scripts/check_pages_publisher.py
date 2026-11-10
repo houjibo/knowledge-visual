@@ -6,6 +6,8 @@ import re
 
 
 DEPLOY_STEP = re.compile(r"(?m)^\s*(?:-\s*)?uses:\s*actions/deploy-pages@")
+JOB_HEADER = re.compile(r"^  ([A-Za-z0-9_-]+):\s*(?:#.*)?$")
+DEPLOY_TIMEOUT_MINUTES = 15
 REQUIRED_RELEASE_STEPS = (
     "needs: checks",
     "python3 scripts/build_site.py",
@@ -13,6 +15,25 @@ REQUIRED_RELEASE_STEPS = (
     "python3 scripts/verify_published_site.py",
     "tests/browser/published-live-site.spec.js",
 )
+
+
+def _job_block(content: str, job_id: str) -> str | None:
+    lines = content.splitlines()
+    start = next(
+        (
+            index
+            for index, line in enumerate(lines)
+            if (match := JOB_HEADER.match(line)) and match.group(1) == job_id
+        ),
+        None,
+    )
+    if start is None:
+        return None
+    end = next(
+        (index for index in range(start + 1, len(lines)) if JOB_HEADER.match(lines[index])),
+        len(lines),
+    )
+    return "\n".join(lines[start + 1:end])
 
 
 def check_pages_publisher(repository_root: Path) -> Path:
@@ -33,6 +54,27 @@ def check_pages_publisher(repository_root: Path) -> Path:
         raise ValueError(f"{path.name} is missing required release safeguards: {', '.join(missing)}")
     if path.name != "checks.yml":
         raise ValueError(f"expected the verified publisher in checks.yml, found {path.name}")
+
+    deploy_job = _job_block(content, "deploy")
+    timeout = re.search(r"(?m)^    timeout-minutes:\s*(\d+)\s*(?:#.*)?$", deploy_job or "")
+    if timeout is None or int(timeout.group(1)) < DEPLOY_TIMEOUT_MINUTES:
+        raise ValueError(
+            f"{path.name} deploy job must set timeout-minutes to at least {DEPLOY_TIMEOUT_MINUTES}"
+        )
+
+    verify_job = _job_block(content, "verify-deployment")
+    verify_missing = [
+        step for step in REQUIRED_RELEASE_STEPS[-2:]
+        if verify_job is None or step not in verify_job
+    ]
+    if (
+        verify_job is None
+        or not re.search(r"(?m)^    needs:\s*deploy\s*$", verify_job)
+        or verify_missing
+    ):
+        raise ValueError(
+            f"{path.name} verify-deployment job must depend on deploy and run all post-deployment checks"
+        )
     return path
 
 

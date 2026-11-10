@@ -1,7 +1,8 @@
 # published-release-verification Specification
 
 ## Purpose
-TBD - created by archiving change published-release-verification. Update Purpose after archive.
+
+该规格定义静态站点的发布后核验流程，要求公开版本对应经过检查的提交，并确认关键资源与代表学习路径可访问；未完成核验的部署不能记为发布成功。
 
 ## Requirements
 

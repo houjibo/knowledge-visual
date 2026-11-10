@@ -11,6 +11,8 @@
 
 ## 当前基线
 仓库 `houjibo/knowledge-visual` 为公开项目，默认分支为 `main`。GitHub Pages 已启用，站点 `https://houjibo.github.io/knowledge-visual/` 的首次可验证发布来自 `08751e6`；[Actions run 42430059152](https://github.com/houjibo/knowledge-visual/actions/runs/42430059152) 的检查、构建、部署和部署后验收均成功，公网清单匹配该提交且标记站点文件未修改。首次自动部署使用的 Jekyll 模板没有版本清单，已移除；后续由通过全量质量门禁的 Static HTML 产物唯一发布。详细范围与限制见[发布记录](../assessments/site-release-2026-11-08.md)。独立域名、域名所有权、托管成本及反馈责任尚未确定。
+
+截至 2026-11-10，计算机与人工智能页面已发布。提交 `34f9a56` 的公网 `release-version.json` 匹配且 `site_files_modified:false`，直接发布核验确认 6 个资源可访问。Actions [run #208](https://github.com/houjibo/knowledge-visual/actions/runs/42739511880) 的检查和构建成功，但 Pages deployment 运行约 10 分钟后转为 error，工作流取消且部署后 job 被跳过；其 deployment 状态记录仍显示目标提交已到公网。job 日志接口返回 403，具体平台原因未确认。当前 OpenSpec 变更 [stabilize-pages-deploy-acknowledgement](../../openspec/changes/stabilize-pages-deploy-acknowledgement/proposal.md) 将用更长但有界的窗口复验此行为。
 ## 分阶段执行
 
 ### 1. 构建可发布的静态产物
@@ -27,7 +29,7 @@
 3. 首次 Pages 发布已通过版本清单、站点资源和桌面/窄屏四学科代表学习路径核验，证据见[发布记录](../assessments/site-release-2026-11-08.md)。每次后续更新仍以部署后步骤成功且公网清单匹配当前提交为发布依据。
 4. 回退候选流程：在主分支创建恢复到已知可用内容的提交，推送后等待完整检查及部署，并核验公网版本；不可直接以旧提交重新运行来保证覆盖当前版本。实际演练、缓存行为与运行记录尚待验证。
 
-已由仓库管理员在 Settings → Pages → Build and deployment 中选择 GitHub Actions，CLI 认证不是继续发布的前置步骤。每次完整发布记录版本、时间与公网验收；如果流水线失败，则继续展示当前线上状态，不报告新版本已发布。
+已由仓库管理员在 Settings → Pages → Build and deployment 中选择 GitHub Actions，CLI 认证不是继续发布的前置步骤。每次发布都记录版本、时间与公网验收。只有检查、构建、deploy 和部署后核验全部成功才记为自动发布完成；若 job 失败或取消，即使公网清单已经更新，也单独记录内容状态和未完成的自动门禁，不宣称流水线通过。
 ### 3. 独立域名与产品入口
 
 - 先选择并确认域名的所有权、续费责任和 DNS 管理方式；接入前核查成本和服务可用性。配置域名验证、DNS 和 HTTPS，确认旧项目站链接及外部深链的处理方式。
@@ -48,4 +50,4 @@
 
 待确定：是否使用自有域名及其名称、域名/DNS 管理权、托管偏好、反馈渠道、服务可用性目标。无需等待这些事项即可先完成发布包和子路径验证；涉及实际域名或托管账户的操作以可用权限和明确选择为准。
 
-参考：[GitHub Actions 并发策略](https://docs.github.com/en/actions/concepts/workflows-and-actions/concurrency)、[GitHub Pages 发布源与 Actions](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)、[HTTPS 配置](https://docs.github.com/en/pages/getting-started-with-github-pages/securing-your-github-pages-site-with-https)、[域名验证](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages)。
+参考：[GitHub Actions 工作流语法与 job 超时](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)、[GitHub Actions 并发策略](https://docs.github.com/en/actions/concepts/workflows-and-actions/concurrency)、[GitHub Pages 发布源与 Actions](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)、[HTTPS 配置](https://docs.github.com/en/pages/getting-started-with-github-pages/securing-your-github-pages-site-with-https)、[域名验证](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages)。
