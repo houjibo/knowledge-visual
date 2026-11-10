@@ -13,4 +13,4 @@
 
 - [x] 3.1 更新人工智能课程图、架构、路线图、差距台账、交互证据和页面盘点；文档明确标记初中 AI 主题及虚构规则边界。
 - [x] 3.2 运行静态/严格 OpenSpec、全量 `npm run test:browser`（1698 通过、2 跳过）、全站冒烟（354/354）和发布包检查（6/6、354/354）；新增测试均通过。
-- [ ] 3.3 推送变更并核对 GitHub Actions、Pages 部署 revision 和公网初中 AI 页面交互；验证成功后更新差距台账、勾选任务并归档 OpenSpec change。
+- [x] 3.3 推送变更并核对 GitHub Actions、Pages 部署 revision 和公网初中 AI 页面交互；Actions run [42901939885](https://github.com/houjibo/knowledge-visual/actions/runs/42901939885) 全部成功，公网 revision `b8a9a1c3bababbfaf8f16bdef15feeaa91a4cbd3` 匹配且 17 项资源可访问，页面更正标签后预测为类别甲、重置后恢复平票；差距台账已更新。
