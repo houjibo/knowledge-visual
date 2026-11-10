@@ -6,4 +6,4 @@
 ## 2. 项目证据与发布
 
 - [x] 2.1 将回归登记到 `test:browser`、交互证据及风险清单，并在差距台账记录复现和修复结果；运行 `npm run check:static` 与 `openspec validate --all --strict`。
-- [ ] 2.2 推送变更，确认 Actions、发布版本清单和公网读图操作通过后归档 OpenSpec。
+- [x] 2.2 推送变更，确认 Actions、发布版本清单和公网读图操作通过后归档 OpenSpec。
