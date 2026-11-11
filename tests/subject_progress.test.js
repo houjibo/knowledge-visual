@@ -30,8 +30,9 @@ assert.deepEqual(events, ['kv-progress-changed', 'kv-progress-changed']);
 assert.equal(api.markComplete('computer', 'high', 'classifier-lab'), false);
 assert.equal(api.markComplete('ai', 'middle', 'data-label-quality'), true);
 assert.equal(api.markComplete('ai', 'middle', 'data-source-coverage'), true);
+assert.equal(api.markComplete('ai', 'middle', 'output-verification'), true);
 assert.deepEqual(JSON.parse(storage.values.get('kv-ai-middle-progress')),
-  {'data-label-quality': true, 'data-source-coverage': true});
+  {'data-label-quality': true, 'data-source-coverage': true, 'output-verification': true});
 assert.equal(api.markComplete('computer', 'primary', '../robot'), false);
 
 storage = memoryStorage({
@@ -74,8 +75,9 @@ assert.deepEqual(JSON.parse(storage.values.get('kv-computer-middle-progress')), 
 assert.equal(storage.values.has('kv-ai-middle-progress'), false);
 assert.equal(api.markComplete('ai', 'middle', 'data-label-quality'), true);
 assert.equal(api.markComplete('ai', 'middle', 'data-source-coverage'), true);
+assert.equal(api.markComplete('ai', 'middle', 'output-verification'), true);
 assert.deepEqual(JSON.parse(storage.values.get('kv-ai-middle-progress')),
-  {'data-label-quality': true, 'data-source-coverage': true});
+  {'data-label-quality': true, 'data-source-coverage': true, 'output-verification': true});
 
 const denied = createProgress({
   getItem() { return null; },

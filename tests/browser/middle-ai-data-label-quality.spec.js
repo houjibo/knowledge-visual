@@ -42,7 +42,7 @@ test('暂不纳入存疑样例只从当前分组计数中排除', async ({page})
 
 test('初中目录、首页搜索和学段进度可以到达标签实验', async ({page}) => {
   await page.goto('/ai/middle/index.html');
-  await expect(page.locator('#stage-progress')).toHaveText('已完成 0/2 个主题');
+  await expect(page.locator('#stage-progress')).toHaveText('已完成 0/3 个主题');
   await expect(page.locator('[data-topic-slug="data-label-quality"]')).toContainText('数据标签侦察实验室');
   await page.goto('/');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
@@ -53,10 +53,10 @@ test('初中目录、首页搜索和学段进度可以到达标签实验', async
   await result.click();
   await page.getByRole('radio', {name: /按合成复核记录更正为/}).check();
   await page.goto('/ai/middle/index.html');
-  await expect(page.locator('#stage-progress')).toHaveText('本机已记录完成 1/2 个主题。');
+  await expect(page.locator('#stage-progress')).toHaveText('本机已记录完成 1/3 个主题。');
   await expect(page.locator('[data-topic-slug="data-label-quality"] [data-completion]')).toHaveText('✓ 已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/6');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/7');
 });
 
 test('旧计算机初中进度不会误计入人工智能初中', async ({page}) => {
@@ -67,7 +67,7 @@ test('旧计算机初中进度不会误计入人工智能初中', async ({page})
   await expect(page.locator('[data-subject="computer"] .sp-label')).toHaveText('已学 1/2');
   await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('尚未开始');
   await page.goto('/ai/middle/index.html');
-  await expect(page.locator('#stage-progress')).toHaveText('已完成 0/2 个主题');
+  await expect(page.locator('#stage-progress')).toHaveText('已完成 0/3 个主题');
   expect(await page.evaluate(() => localStorage.getItem('kv-ai-middle-progress'))).toBeNull();
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-computer-middle-progress'))))
     .toEqual({'binary-pixels': true});

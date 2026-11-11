@@ -95,5 +95,17 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.locator('#feature-color').press('ArrowRight');
   await expect(page.locator('#test-summary')).toContainText('预测正确 4/4');
   await expect(page.locator('#seen-warning')).toBeVisible();
+
+  const verificationUrl = new URL('ai/middle/output-verification.html', base);
+  verificationUrl.searchParams.set('verify', expectedRevision);
+  await page.goto(verificationUrl.href, {waitUntil: 'domcontentloaded'});
+  await expect(page).toHaveTitle('回答核验实验室 · 初中人工智能');
+  for (const [claim, value] of Object.entries({
+    size: 'supports', distance: 'contradicts', moons: 'supports', life: 'insufficient',
+  })) {
+    await page.locator(`input[name="claim-${claim}"][value="${value}"]`).check();
+  }
+  await page.getByRole('button', {name: '核对我的判断'}).click();
+  await expect(page.locator('#result-status')).toContainText('四条陈述都核验正确');
   expect(failures).toEqual([]);
 });
