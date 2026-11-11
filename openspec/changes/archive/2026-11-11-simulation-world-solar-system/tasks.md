@@ -13,5 +13,5 @@
 ## 3. 验证与交付
 
 - [x] 3.1 编写浏览器回归，覆盖加载/WebGL 降级、模型存在、速度暂停/调速、参考中心、视角重置、键盘、减少动态偏好与窄屏。
-- [ ] 3.2 运行静态、OpenSpec、全量浏览器、355+ 页冒烟和发布包子路径检查；必要时修复后重跑。
-- [ ] 3.3 推送变更，核对 GitHub Actions、Pages revision、资源与公网交互；更新差距证据并归档 OpenSpec change。
+- [x] 3.2 运行静态、OpenSpec、全量浏览器、357 页冒烟和发布包子路径检查；必要时修复后重跑。
+- [x] 3.3 推送变更，核对 GitHub Actions、Pages revision、资源与公网交互；更新差距证据并归档 OpenSpec change。
