@@ -35,10 +35,11 @@
   .tab {
     padding: 10px 18px; border-radius: 999px; background: var(--glass);
     cursor: pointer; transition: all .25s; border: 1px solid var(--border);
-    font-size: 14px; user-select: none;
+    font: inherit; font-size: 14px; color: inherit; user-select: none;
   }
   .tab.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 20px rgba(5,150,105,.4); }
   .tab:hover:not(.active) { background: rgba(255,255,255,0.12); }
+  .tab:focus-visible { outline: 3px solid #fbbf24; outline-offset: 3px; }
   .stage { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
   @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
   .canvas-wrap {
@@ -119,11 +120,11 @@
     <p>物质制备 · 性质验证 · 定量实验 · 实验设计</p>
   </header>
 
-  <div class="tabs">
-    <div class="tab active" data-mode="prep">🔥 物质制备</div>
-    <div class="tab" data-mode="property">🔍 性质验证</div>
-    <div class="tab" data-mode="quant">📏 定量实验</div>
-    <div class="tab" data-mode="design">🎨 实验设计</div>
+  <div class="tabs" role="tablist" aria-label="化学实验模式">
+    <button type="button" class="tab active" id="tab-prep" role="tab" aria-controls="panel" aria-selected="true" tabindex="0" data-mode="prep">🔥 物质制备</button>
+    <button type="button" class="tab" id="tab-property" role="tab" aria-controls="panel" aria-selected="false" tabindex="-1" data-mode="property">🔍 性质验证</button>
+    <button type="button" class="tab" id="tab-quant" role="tab" aria-controls="panel" aria-selected="false" tabindex="-1" data-mode="quant">📏 定量实验</button>
+    <button type="button" class="tab" id="tab-design" role="tab" aria-controls="panel" aria-selected="false" tabindex="-1" data-mode="design">🎨 实验设计</button>
   </div>
 
   <div class="stage">
@@ -131,7 +132,7 @@
       <canvas id="mainCanvas" width="650" height="480"></canvas>
       <div class="legend" id="legend"></div>
     </div>
-    <div class="panel" id="panel"></div>
+    <div class="panel" id="panel" role="tabpanel" aria-labelledby="tab-prep" tabindex="0"></div>
   </div>
 
   <footer>知识可视化 · 高中化学 · 化学实验</footer>
@@ -161,14 +162,34 @@ function bumpProgress(key) {
   }
 }
 
-// ============ 模式切换 ============
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    currentMode = tab.dataset.mode;
-    time = 0;
-    setupMode();
+// ============ 模式切换 ==========
+const modeTabs = Array.from(document.querySelectorAll('.tab'));
+function activateMode(tab, moveFocus = false) {
+  modeTabs.forEach(item => {
+    const active = item === tab;
+    item.classList.toggle('active', active);
+    item.setAttribute('aria-selected', String(active));
+    item.tabIndex = active ? 0 : -1;
+  });
+  currentMode = tab.dataset.mode;
+  panel.setAttribute('aria-labelledby', tab.id);
+  time = 0;
+  setupMode();
+  if (moveFocus) tab.focus();
+}
+
+modeTabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => activateMode(tab));
+  tab.addEventListener('keydown', event => {
+    let nextIndex;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % modeTabs.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + modeTabs.length) % modeTabs.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = modeTabs.length - 1;
+    else return;
+
+    event.preventDefault();
+    activateMode(modeTabs[nextIndex], true);
   });
 });
 
