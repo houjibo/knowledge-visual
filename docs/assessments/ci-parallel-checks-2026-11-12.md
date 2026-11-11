@@ -111,4 +111,8 @@ core 无条件执行静态、真实清单等价、开发站全页与完整发布
 
 本组实施、完整本地检查、三轮同清单实际执行和公开版本核验已完成，OpenSpec已归档；未来新增场景后的运行作为新负载继续观察。
 
+## 新负载的队列观察
+
+工业流水线提交 `d183397` 的 [Actions #258](https://github.com/houjibo/knowledge-visual/actions/runs/43095587329) 于20:21:50 UTC创建，到20:37:50仍queued且jobs为空。这16分钟不属于前三轮的工作阶段窗口，也没有实际执行结果。新增场景的本地清单为934+934=1868，指纹为`e31e660bd95f9baeae7b45a504331f90026a968661bb92cd33ee2232e1ad3716`，须作为新负载记录。此例说明工作阶段缩短不保证push到公开发布耗时；排队原因未确定，详见[工业场景发布记录](assembly-line-2026-11-12.md)。
+
 依据：[GitHub 工作流语法](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)、[needs 结果](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#needs-context)、[Playwright CLI](https://playwright.dev/docs/test-cli)。范围与任务见 [OpenSpec](../../openspec/changes/archive/2026-11-12-parallel-ci-browser-projects/README.md)。

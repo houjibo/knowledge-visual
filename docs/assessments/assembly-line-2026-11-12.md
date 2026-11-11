@@ -31,6 +31,10 @@
 
 - `CI=true npm run check` 完整通过：实际功能回归1866通过、原有2项移动专属测试在桌面跳过；开发站362页加载通过，发布子路径交互8项通过，发布包362页加载通过。新场景12项×桌面/移动共24项均通过；原太阳系与齿轮场景导航和功能亦通过。
 
-公开发布证据将在推送后记录。本地通过不代表GitHub Actions或公网已经通过。真实设备、屏幕阅读器、真实产线预测与学习者理解效果尚未全面验证。
+## 发布状态与排队异常
+
+功能提交 `d1833977827e106c7dec8cf10ecc7acf5eb20afe` 已推送，并触发 [Actions #258](https://github.com/houjibo/knowledge-visual/actions/runs/43095587329)。2026-11-11 UTC 20:37:50（本地11月12日04:37:50）以no-cache及新查询参数读取API，运行仍为queued、conclusion=null、attempt=1、jobs为空；相对20:21:50创建时间已排队16分钟，没有测试失败或任务执行证据，公开目录仍为上一版。
+
+[GitHub状态页](https://www.githubstatus.com/)同日记录20:22–20:26的Webhooks短暂异常。时间重叠尚不能证明本次排队原因；仓库其余近期运行均已成功结束。此次仅补充核查文档并推送一次，以新事件触发同一套完整门禁，不修改发布保护、功能清单或验证标准。后续以实际新运行、公开revision和新场景操作核实发布结果；本地通过不代表公网已完成。真实设备、屏幕阅读器、真实产线预测与学习者理解效果尚未全面验证。
 
 范围与任务：[OpenSpec proposal](../../openspec/changes/2026-11-12-industrial-assembly-line/proposal.md)、[任务](../../openspec/changes/2026-11-12-industrial-assembly-line/tasks.md)。
