@@ -126,6 +126,7 @@ def main():
         'ai/middle/index.html': ['data-label-quality.html', 'data-source-coverage.html'],
         'ai/high/index.html': ['classifier-lab.html', 'train-test-generalization.html'],
         'ai/uni/index.html': ['neuron-forward-pass.html'],
+        'simulation-world/index.html': ['solar-system.html'],
     }
     for name, expected_hrefs in subject_topics.items():
         hrefs = topic_hrefs.get(name, [])
@@ -171,7 +172,7 @@ def main():
         print('\n'.join(errors), file=sys.stderr)
         print(f'FAILED: {len(errors)} issue(s)', file=sys.stderr)
         return 1
-    print(f'OK: {pages} HTML pages, AGENTS.md links, math/physics/chemistry progress lists, split subject and compatibility routes checked')
+    print(f'OK: {pages} HTML pages, AGENTS.md links, math/physics/chemistry progress lists, split subject, simulation and compatibility routes checked')
     return 0
 
 

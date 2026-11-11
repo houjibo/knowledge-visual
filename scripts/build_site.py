@@ -9,7 +9,7 @@ import subprocess
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
-SITE_DIRS = {'assets', 'math', 'physics', 'chemistry', 'science', 'computer', 'ai', 'computer-ai'}
+SITE_DIRS = {'assets', 'math', 'physics', 'chemistry', 'science', 'computer', 'ai', 'computer-ai', 'simulation-world'}
 ROOT_FILES = {'index.html', 'favicon.ico'}
 EXTENSIONS = {'.html', '.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.woff', '.woff2'}
 
@@ -29,7 +29,8 @@ class References(HTMLParser):
 def is_site_file(name):
     path = Path(name)
     return (not any(part.startswith('.') for part in path.parts) and
-            (name in ROOT_FILES or (path.parts[0] in SITE_DIRS and path.suffix.lower() in EXTENSIONS)))
+            (name in ROOT_FILES or (path.parts[0] in SITE_DIRS and
+             (path.suffix.lower() in EXTENSIONS or path.name == 'LICENSE'))))
 
 
 def build(output):

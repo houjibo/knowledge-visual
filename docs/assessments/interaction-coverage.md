@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：324；已登记部分交互证据：178；尚未登记：146。
+主题总数：325；已登记部分交互证据：179；尚未登记：146。
 
 ## 已登记部分交互证据
 
@@ -459,6 +459,8 @@
 - [天气与水循环 · 小学科学互动可视化](../../science/weather-water-cycle.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
   - 温度边界与简化假设、动画暂停恢复及单道练习反馈；云雨生成非定量模型，未覆盖全部科学内容。 [water-cycle.spec.js](../../tests/browser/water-cycle.spec.js)
+- [太阳系模拟 · 模拟世界](../../simulation-world/solar-system.html)
+  - 桌面与移动视口检查分类搜索、无学段结果、Three.js 本地加载、模型说明、天体清单、速度暂停与调节、参考中心、重置、减少动态偏好、键盘控制、窄屏及 WebGL 不可用提示；测试运行结果与教学正确性需另行核验。 [simulation-world-solar-system.spec.js](../../tests/browser/simulation-world-solar-system.spec.js)
 
 ## 尚未登记交互证据
 

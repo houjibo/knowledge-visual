@@ -93,7 +93,7 @@ def build_inventory(root):
             'path': name,
             'title': ' '.join(''.join(page.title).split()),
             'kind': kind,
-            'subject': parts[0] if parts[0] in {'math', 'physics', 'chemistry', 'science', 'computer', 'ai'} else None,
+            'subject': parts[0] if parts[0] in {'math', 'physics', 'chemistry', 'science', 'computer', 'ai', 'simulation-world'} else None,
             'stage': stage if kind != 'compatibility' else None,
             'static_signals': page.signals,
             'static_reachability': 'reachable' if name in reachable else 'not-reached',

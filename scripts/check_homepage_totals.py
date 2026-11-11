@@ -9,7 +9,7 @@ import sys
 from build_topic_catalog import build_catalog
 
 ROOT = Path(__file__).resolve().parent.parent
-SUBJECTS = ('math', 'physics', 'chemistry', 'science', 'computer', 'ai')
+SUBJECTS = ('math', 'physics', 'chemistry', 'science', 'computer', 'ai', 'simulation-world')
 
 
 class Cards(HTMLParser):
@@ -23,11 +23,13 @@ class Cards(HTMLParser):
         attrs = dict(attrs)
         classes = attrs.get('class', '').split()
         if tag == 'a' and 'subject-card' in classes:
-            self.card = {'subject': None, 'total': None, 'badge': ''}
+            self.card = {'subject': attrs.get('data-subject-category'),
+                         'total': attrs.get('data-total'), 'badge': '', 'has_progress': False}
         elif self.card is not None:
             if tag == 'div' and 'subject-progress' in classes:
                 self.card['subject'] = attrs.get('data-subject')
                 self.card['total'] = attrs.get('data-total')
+                self.card['has_progress'] = True
             if tag == 'span' and 'subject-badge' in classes:
                 self.badge_open = True
 
@@ -58,8 +60,12 @@ def check(html, counts):
         if expected <= 0:
             errors.append(f'{subject}: no topics in catalog')
         if card['total'] != str(expected):
-            errors.append(f'{subject}: progress total {card["total"]!r}, catalog {expected}')
-        if not re.fullmatch(rf'\s*{expected}\s*个知识点\s*', card['badge']):
+            label = 'progress total' if card['has_progress'] else 'category total'
+            errors.append(f'{subject}: {label} {card["total"]!r}, catalog {expected}')
+        badge_unit = '模拟' if subject == 'simulation-world' else '知识点'
+        if card['has_progress'] == (subject == 'simulation-world'):
+            errors.append(f'{subject}: unexpected learning progress model')
+        if not re.fullmatch(rf'\s*{expected}\s*个{badge_unit}\s*', card['badge']):
             errors.append(f'{subject}: badge {card["badge"]!r}, catalog {expected}')
     for subject in SUBJECTS:
         if subject not in seen:

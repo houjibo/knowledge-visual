@@ -41,7 +41,7 @@ def build_catalog(root):
     root = root.resolve()
     inventory = build_inventory(root)
     pages = {p['path']: p for p in inventory['pages']
-             if p['kind'] == 'topic' and p['subject'] and p['stage']}
+             if p['kind'] == 'topic' and p['subject']}
     aliases = {path: set() for path in pages}
     for navigation in (p for p in inventory['pages'] if p['kind'] == 'navigation'):
         source = root / navigation['path']

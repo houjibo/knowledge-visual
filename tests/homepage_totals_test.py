@@ -12,20 +12,23 @@ spec.loader.exec_module(checker)
 
 def card(subject, total, badge=None):
     badge = total if badge is None else badge
+    if subject == 'simulation-world':
+        return (f'<a class="subject-card" data-subject-category="{subject}" data-total="{total}">'
+                f'<span class="subject-badge">{badge} 个模拟</span></a>')
     return (f'<a class="subject-card"><span class="subject-badge">{badge} 个知识点</span>'
             f'<div class="subject-progress" data-subject="{subject}" data-total="{total}"></div></a>')
 
 
 class HomepageTotalsTest(unittest.TestCase):
     def test_counts_and_badges_match_catalog(self):
-        counts = {'math': 2, 'physics': 3, 'chemistry': 4, 'science': 5, 'computer': 2, 'ai': 5}
+        counts = {'math': 2, 'physics': 3, 'chemistry': 4, 'science': 5, 'computer': 2, 'ai': 5, 'simulation-world': 1}
         html = ''.join(card(name, total) for name, total in counts.items())
         self.assertEqual(checker.check(html, counts), [])
         self.assertTrue(any('progress total' in e for e in checker.check(html.replace('data-total="2"', 'data-total="1"', 1), counts)))
         self.assertTrue(any('badge' in e for e in checker.check(html.replace('3 个知识点', '9 个知识点', 1), counts)))
 
     def test_missing_duplicate_and_empty_subjects_are_detected(self):
-        counts = {'math': 2, 'physics': 3, 'chemistry': 4, 'science': 0, 'computer': 2, 'ai': 2}
+        counts = {'math': 2, 'physics': 3, 'chemistry': 4, 'science': 0, 'computer': 2, 'ai': 2, 'simulation-world': 1}
         html = ''.join(card(name, total) for name, total in counts.items()) + card('math', 2)
         errors = checker.check(html, counts)
         self.assertTrue(any('duplicate' in e for e in errors))
