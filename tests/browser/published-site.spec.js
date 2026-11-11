@@ -97,6 +97,20 @@ test('发布包子路径的首页搜索和六学科学习交互', async ({page})
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-computer-primary-progress'))))
     .toEqual({'robot-algorithms': true, 'repeat-loops': true});
   await gotoPublished(page, base);
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('条件分支');
+  await page.locator('#site-results a[href="computer/primary/conditional-robot.html"]').click();
+  await expect(page).toHaveURL(new URL('computer/primary/conditional-robot.html', base).href);
+  await waitForPublishedDocument(page);
+  for (let i = 0; i < 6; i++) await page.locator('#step-button').click();
+  await expect(page.locator('#robot-grid')).toHaveAttribute('data-column', '5');
+  await expect(page.locator('#robot-grid')).toHaveAttribute('data-row', '1');
+  await expect(page.locator('#snapshot-condition')).toHaveAttribute('data-condition', 'false');
+  await expect(page.locator('#run-status')).toHaveClass(/success/);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-computer-primary-progress'))))
+    .toEqual({'robot-algorithms': true, 'repeat-loops': true, 'conditional-robot': true});
+  await gotoPublished(page, base);
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('分类边界');

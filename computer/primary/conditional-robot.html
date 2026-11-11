@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="编辑机器人条件规则，逐次观察判断前位置、真假、唯一选中分支和移动结果，理解 if 与 else。">
+  <title>条件分支机器人 · 小学计算机</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .shell { width: min(100% - 32px, 1120px); }
+    .hero { padding: 20px 28px; margin: 12px 0; }
+    .hero h1 { font-size: clamp(1.7rem, 4vw, 2.1rem); }
+    .hero p { max-width: 90ch; }
+    .workspace { padding: 18px; }
+    .workspace > h2 { margin-bottom: 12px; font-size: 1.2rem; }
+    .parameter-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .parameter-grid > *, .workspace-views > * { min-width: 0; }
+    .parameter-grid label { font-size: .88rem; }
+    .parameter-grid select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #8794a9; border-radius: 8px; padding: 7px; background: white; }
+    .workspace-hint { margin: 8px 0 12px; font-size: .86rem; color: #4d596d; }
+    .workspace-views { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, .95fr) minmax(0, 1.25fr); gap: 12px; align-items: start; }
+    .workspace-views h3 { margin: 0 0 8px; font-size: .98rem; }
+    .view-panel { min-width: 0; padding: 12px; border: 1px solid #ccd7e5; border-radius: 13px; background: #f8faff; }
+    .condition-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: min(100%, 240px); gap: 4px; margin: 9px auto; }
+    .condition-grid .robot-cell { position: relative; min-width: 0; font-size: 1.25rem; }
+    .robot-cell.current { outline: 3px solid #463995; outline-offset: -3px; }
+    .robot-cell.checked { border: 2px solid #925b12; background: #fff0cf; }
+    .robot-cell.wall.checked { background: #e8dcbe; }
+    .robot-cell.origin { border-style: dashed; border-color: #6c55a1; }
+    .cell-marker { position: absolute; top: 0; right: 1px; border-radius: 3px; padding: 0 2px; font-size: .54rem; line-height: 1.4; color: #6a3c00; background: #ffdd8c; }
+    .origin-marker { top: auto; right: auto; bottom: 0; left: 1px; color: #49336e; background: #e2d5f7; }
+    .map-note { margin: 5px 0 0; font-size: .75rem; color: #4d596d; }
+    .position-label { margin: 7px 0 0; font-size: .86rem; font-weight: 750; text-align: center; }
+    .rule-view { background: #f6f3fd; border-color: #d4cae9; }
+    #condition-description { margin: 0 0 9px; padding: 8px; border-radius: 8px; background: #e9e2f8; font-size: .82rem; font-weight: 700; color: #44316e; }
+    .branch-card { margin-top: 8px; border: 2px solid transparent; border-radius: 9px; padding: 9px; background: white; }
+    .branch-card[aria-current="step"] { border-color: #4e3a95; background: #eee7ff; }
+    .branch-tag { display: block; color: #514273; font-size: .76rem; }
+    .branch-card strong { display: block; margin-top: 2px; color: #322261; font-size: .94rem; }
+    .selected-label { display: inline-block; margin-top: 4px; color: #4a358d; font-size: .72rem; font-weight: 800; }
+    .branch-note { margin: 9px 0 0; font-size: .75rem; color: #5a5072; }
+    .snapshot-view { border-color: #c6d7e7; background: #f5faff; }
+    .snapshot-list { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 4px 8px; margin: 0; font-size: .78rem; line-height: 1.55; }
+    .snapshot-list dt { color: #56647a; }
+    .snapshot-list dd { min-width: 0; margin: 0; color: #263b55; overflow-wrap: anywhere; }
+    #snapshot-condition { font-weight: 800; }
+    .execution-zone { margin-top: 12px; padding-top: 12px; border-top: 1px solid #dbe2ef; }
+    .execution-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 18px; }
+    .execution-toolbar .button-row { gap: 8px; }
+    .execution-toolbar button { padding: .45rem .8rem; font-size: .9rem; }
+    .count-row { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; font-size: .78rem; color: #56647a; }
+    .count-row strong { margin-left: 3px; color: #332862; }
+    #run-status { margin: 10px 0 0; min-height: 2.7em; padding: 9px 12px; border-radius: 9px; background: #eff2fa; font-size: .86rem; }
+    #run-status.success { background: #eaf7ed; }
+    #run-status.error { background: #fff1ed; }
+    .progress-panel { padding-left: 12px; border-left: 4px solid #7663b4; }
+    details > summary { cursor: pointer; font-weight: 700; }
+    details > summary:focus-visible { outline: 3px solid #1459bf; outline-offset: 3px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 699px) {
+      .shell { width: min(100% - 24px, 1120px); }
+      .hero { padding: 20px; }
+      .workspace { padding: 16px; }
+      .parameter-grid, .workspace-views { grid-template-columns: minmax(0, 1fr); }
+      .parameter-grid { gap: 8px; }
+      .snapshot-list { grid-template-columns: 66px minmax(0, 1fr); }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body data-subject="computer" data-stage="primary">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机</a><span aria-hidden="true">›</span><a href="index.html">小学</a><span aria-hidden="true">›</span><span aria-current="page">条件分支机器人</span></nav>
+    <main id="main-content">
+      <header class="hero"><p class="eyebrow">小学 · 条件与分支</p><h1>🤖 条件分支机器人</h1><p>先判断一个条件，再只执行对应的一个分支。编辑规则，比较判断时的位置与动作后的新位置。</p></header>
+      <section class="panel workspace" aria-labelledby="workspace-title">
+        <h2 id="workspace-title">判断、分支和移动，一步看清</h2>
+        <div class="parameter-grid">
+          <div class="control"><label for="check-direction">检查方向</label><select id="check-direction"><option value="right" selected>右侧是否有障碍</option><option value="up">上方是否有障碍</option></select></div>
+          <div class="control"><label for="true-action">条件成立时的动作</label><select id="true-action"><option value="up" selected>向上</option><option value="right">向右</option><option value="down">向下</option><option value="left">向左</option></select></div>
+          <div class="control"><label for="false-action">条件不成立时的动作</label><select id="false-action"><option value="up">向上</option><option value="right" selected>向右</option><option value="down">向下</option><option value="left">向左</option></select></div>
+        </div>
+        <p class="workspace-hint">障碍包含墙与地图边界。方向按地图的上、右、下、左；每次点击都从当时的位置重新判断一次。</p>
+        <div class="workspace-views">
+          <section class="view-panel" aria-labelledby="map-title"><h3 id="map-title">当前机器人与上次检查格</h3><div id="robot-grid" class="condition-grid" role="img" data-column="1" data-row="3" aria-label="5 列 3 行地图。起点第 1 列第 3 行，目标第 5 列第 1 行。墙在第 3 列第 3 行、第 5 列第 2 行。机器人当前在起点，尚未判断。"></div><p id="position-status" class="position-label">当前位置：第 1 列，第 3 行</p><p class="map-note">🤖 当前机器人　🏁 目标　■ 墙<br>判：上次判断前位置　查：上次检查格</p><p class="map-note">机器人显示动作后的新位置；“判／查”保留上次判断时的信息。地图外检查见右侧快照。</p></section>
+          <section class="view-panel rule-view" aria-labelledby="rule-title"><h3 id="rule-title">一次 if / else</h3><p id="condition-description">如果右侧有障碍（墙或边界）</p><div id="if-branch" class="branch-card" data-branch="if" role="group" aria-label="条件成立分支"><span class="branch-tag">成立 true → if</span><strong id="if-action-label">执行：向上</strong><span class="selected-label" hidden>← 本次选中</span></div><div id="else-branch" class="branch-card" data-branch="else" role="group" aria-label="条件不成立分支"><span class="branch-tag">不成立 false → else</span><strong id="else-action-label">执行：向右</strong><span class="selected-label" hidden>← 本次选中</span></div><p class="branch-note">一次判断只选一个分支。条件不成立也能帮助机器人前进。</p></section>
+          <section id="last-snapshot" class="view-panel snapshot-view" aria-labelledby="snapshot-title"><h3 id="snapshot-title">上次判断与动作的同一快照</h3><dl class="snapshot-list"><dt>判断前</dt><dd id="snapshot-before">尚未判断</dd><dt>检查格</dt><dd id="snapshot-check">尚未判断</dd><dt>格子类型</dt><dd id="snapshot-kind">尚未判断</dd><dt>条件结果</dt><dd id="snapshot-condition">尚未判断</dd><dt>执行分支</dt><dd id="snapshot-branch">尚未判断</dd><dt>所选动作</dt><dd id="snapshot-action">尚未判断</dd><dt>动作目标</dt><dd id="snapshot-target">尚未判断</dd><dt>移动结果</dt><dd id="snapshot-movement">尚未判断</dd><dt>动作后</dt><dd id="snapshot-after">尚未判断</dd></dl></section>
+        </div>
+        <div class="execution-zone"><div class="execution-toolbar"><div class="button-row"><button id="step-button" type="button">判断并执行一次</button><button id="reset-button" class="secondary" type="button">回到起点</button><button id="example-button" class="secondary" type="button">恢复示例</button></div><p class="count-row"><span>判断<strong id="judgement-count">0</strong></span><span>成立<strong id="true-count">0</strong></span><span>不成立<strong id="false-count">0</strong></span><span>碰撞<strong id="collision-count">0</strong></span></p></div><p id="run-status" class="status" role="status" aria-live="polite" aria-atomic="true">当前探索尚未判断。每按一次，只判断一次并执行一个分支。</p></div>
+      </section>
+      <section class="panel" aria-labelledby="learning-title"><h2 id="learning-title">观察真假怎样选择动作</h2><p>目标在第 5 列第 1 行。用同一条未更改的规则，无碰撞地走到目标，并观察过“成立”和“不成立”两种结果，就完成本关。抵达目标后停止探索，最近一次判断会保留。</p><p>默认规则能绕过两面墙。也试试“检查上方，成立时向右，否则向上”。检查方向和动作方向是分别选择的：例如右侧有墙时，若成立动作仍选向右，机器人会碰墙留在原地，这次判断仍计数。</p><p class="note">修改规则会回到起点并清空本轮判断。“回到起点”保留参数，“恢复示例”恢复检查右侧、成立向上、不成立向右。每次点击执行一次完整 if / else，没有自动循环或动画。</p><div class="progress-panel"><p id="progress-status" class="note" role="status" aria-live="polite" aria-atomic="true">学习进度保存在当前浏览器。</p><button id="retry-save" class="secondary" type="button" hidden>重试保存</button></div><details><summary>条件分支的含义与示例范围</summary><p><a href="https://makecode.microbit.org/blocks/logic/if">Microsoft MakeCode if 官方说明</a>介绍：条件为真时执行 if 内的代码；条件为假时可执行 else 中的代码。本页用一项判断和两个方向动作展示这种选择。固定地图和完成规则是本站教学示例，不代表完整编程课程或真实机器人的感知系统。</p></details></section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回小学计算机</a>　·　<a href="repeat-loops.html">复习循环指令工坊</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script src="assets/condition-robot-model.js"></script>
+  <script src="assets/condition-robot.js"></script>
+</body>
+</html>

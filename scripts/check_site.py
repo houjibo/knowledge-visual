@@ -120,7 +120,7 @@ def main():
             elif int(matches[0]) != count:
                 errors.append(f'{subject}/{stage}: progress total {matches[0]}, topic cards {count}')
     subject_topics = {
-        'computer/primary/index.html': ['robot-algorithms.html', 'repeat-loops.html'],
+        'computer/primary/index.html': ['robot-algorithms.html', 'repeat-loops.html', 'conditional-robot.html'],
         'computer/middle/index.html': ['binary-pixels.html'],
         'ai/primary/index.html': ['feature-classification-lab.html'],
         'ai/middle/index.html': ['data-label-quality.html', 'data-source-coverage.html', 'output-verification.html', 'data-minimization.html'],
