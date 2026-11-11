@@ -10,7 +10,7 @@
 | [#259](https://github.com/houjibo/knowledge-visual/actions/runs/43097263476) | main / cce508d | queued、jobs为空，20:38:35创建 | 尚无测试执行或失败证据 |
 | [#260](https://github.com/houjibo/knowledge-visual/actions/runs/43100973643) | codex/primary-condition-branches / d8186ef | completed/success，21:21:07完成 | 功能1896通过/2跳过、core363/8/363通过；三个发布job按非main条件跳过 |
 
-前两次main运行沿用已有句柄持续观察；#259来自记录真实排队异常的两文件文档提交，之后没有再次触发main。#260是独立课程功能分支的实际交付，并发组与main不同；它能执行不能单独证明main锁的具体原因。
+截至表中核查时，前两次main运行沿用已有句柄持续观察；#259来自记录真实排队异常的两文件文档提交，之后没有再次触发main。#260是独立课程功能分支的实际交付，并发组与main不同；它能执行不能单独证明main锁的具体原因。
 
 ## 平台证据与结论边界
 
@@ -23,3 +23,5 @@
 本次分支质量完成后再次直接读取公开release-version.json，仍为`18ef7b479a213140ff3e62ad2c6e39886ddbd3d0`且site_files_modified:false，尚未满足新场景目标版本的验收条件。
 
 当前没有足以支持修改并发配置的仓库缺陷证据。保留串行发布、main头校验、来源核验和完整质量门禁，继续观察既有main运行。公开验收必须以目标revision、实际资源及场景操作为依据，不能把独立分支的质量成功或跳过发布当作上线。
+
+条件主题通过完整本地与独立分支远端质量检查后，按正常功能交付快速前进合入main，随后主分支按正常功能交付推送，沿用原质量门禁完成部署与公开验证。

@@ -34,7 +34,7 @@
 
 - `CI=true npm run check`完整通过：功能回归1896通过、原有2项移动专属测试在桌面跳过，开发站363页、发布包交互8项及发布包363页全部通过。
 
-本轮在`codex/primary-condition-branches`独立分支交付，公开主分支仍等待工业场景的GitHub队列；截至21:02:28 UTC，#258/#259仍queued、jobs均为0，公开revision仍为`18ef7b479a213140ff3e62ad2c6e39886ddbd3d0`。主分支集成及公开操作仍待核实，OpenSpec保持活跃，不把分支质量通过说成公开验收。真实设备、屏幕阅读器、完整编程课程覆盖及学习者理解效果仍未全面验证。
+本轮在`codex/primary-condition-branches`独立分支交付，公开主分支仍等待工业场景的GitHub队列；截至21:02:28 UTC，#258/#259仍queued、jobs均为0，公开revision仍为`18ef7b479a213140ff3e62ad2c6e39886ddbd3d0`。主分支已快速前进集成该功能，公开操作仍待核实，OpenSpec保持活跃，不把分支质量通过说成公开验收。真实设备、屏幕阅读器、完整编程课程覆盖及学习者理解效果仍未全面验证。
 
 范围：[OpenSpec提案](../../openspec/changes/2026-11-12-primary-condition-robot/proposal.md)、[设计](../../openspec/changes/2026-11-12-primary-condition-robot/design.md)、[任务](../../openspec/changes/2026-11-12-primary-condition-robot/tasks.md)。
 
@@ -48,4 +48,6 @@
 
 core、两matrix及checks四个检查job均成功；build-release、deploy、verify-deployment三个job按非main条件跳过，不能作为已发布证据。这些数字来自执行摘要，清单指纹另见前述收集结果。后续证据文档更新保持功能、测试清单和工作流与该提交一致。
 
-main #258/#259截至21:22:24仍queued且未创建job。官方故障及并发调查见[发布队列核查](release-backlog-2026-11-12.md)；条件分支的主分支集成与公开核验仍未完成。
+main #258/#259截至21:22:24仍queued且未创建job。官方故障及并发调查见[发布队列核查](release-backlog-2026-11-12.md)；条件分支已集成主分支，公开核验仍未完成。
+
+功能与证据提交d8186ef、bb44a5d已通过快速前进合入main。集成后的补充仅更新交付记录；页面、模型、控制器、浏览器测试和工作流与已验证的功能提交保持一致。
