@@ -6,4 +6,4 @@
 ## 2. Evidence and release
 
 - [x] 2.1 Register the new browser test and add its page scope to interaction evidence; verify the generated coverage index marks the page as partially tested.
-- [ ] 2.2 Run the page regression, full repository checks and strict OpenSpec validation; inspect local and published behavior, update the gap record, commit and push, then confirm CI and the deployed revision.
+- [x] 2.2 Run the page regression, full repository checks and strict OpenSpec validation; inspect local and published behavior, update the gap record, commit and push, then confirm CI and the deployed revision.

@@ -25,7 +25,7 @@
 - [神经元前向计算器 · 大学人工智能双输入单输出神经元示意图](../../ai/uni/neuron-forward-pass.html)
   - 桌面与移动浏览器验证两个独立学科入口、旧主题地址跳转、四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘操作、旧进度迁移及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [split-subjects-learning.spec.js](../../tests/browser/split-subjects-learning.spec.js)
 - [元素周期律 · 互动可视化](../../chemistry/high/02-periodic.html)
-  - 桌面与移动视口验证三个主题页签的 ARIA 关系、唯一 Tab 停靠点、左右方向键循环、Home/End、Enter/Space、指针选择、内容同步及 320px 无横向溢出；未核验周期表、趋势图和测验的全部化学内容。 [chemistry-periodic-tabs-accessibility.spec.js](../../tests/browser/chemistry-periodic-tabs-accessibility.spec.js)
+  - 桌面与移动视口验证三个主题页签的 ARIA 关系、唯一 Tab 停靠点、左右方向键循环、Home/End、Enter/Space、指针选择、内容同步及 320px 无横向溢出；真实设备、屏幕阅读器以及周期表、趋势图和测验的全部化学内容未验收。 [chemistry-periodic-tabs-accessibility.spec.js](../../tests/browser/chemistry-periodic-tabs-accessibility.spec.js)
 - [化学键与分子结构 · 互动可视化](../../chemistry/high/chemical-bond.html)
   - 模式和分子键盘选择、六题进度、存储失败、水与 BF₃ 键角及三种分子的化学偶极箭头；完整轨道与无障碍未验收。 [chemical-bond-learning.spec.js](../../tests/browser/chemical-bond-learning.spec.js)
 - [晶体结构 · 高中化学互动可视化](../../chemistry/high/crystal-structure.html)
