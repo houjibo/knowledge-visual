@@ -19,7 +19,7 @@
 
 2026-11-12 核查 [Actions #253](https://github.com/houjibo/knowledge-visual/actions/runs/43074410325) 的公开 job 元数据：checks 用时 15 分 32 秒，其中 `npm run check` 步骤 14 分 56 秒；构建 7 秒、部署 14 秒、部署后核验 40 秒。首个 job 创建至最终完成为 16 分 45 秒，不含顶层并发队列等待，因此不能将其表述为 push 到上线总耗时。浏览器安装两处共 46 秒，本轮主要开销是综合检查步骤。
 
-当前 [OpenSpec 切片](../../openspec/changes/2026-11-12-parallel-ci-browser-projects/README.md) 已在本地拆分 desktop/mobile 功能矩阵与 core 分步骤检查，保留稳定 checks 汇总及完整本地入口，并补清单多重集合、状态真值表和配置变异回归，完整本地检查已通过。真实新 Actions 与至少三轮性能观察仍待验证，详见[核查与性能记录](../assessments/ci-parallel-checks-2026-11-12.md)。
+当前 [OpenSpec 切片](../../openspec/changes/2026-11-12-parallel-ci-browser-projects/README.md) 已完成 desktop/mobile 功能矩阵与 core 分步骤检查，保留稳定 checks 汇总及完整本地入口，并补清单多重集合、状态真值表和配置变异回归。[Actions #255](https://github.com/houjibo/knowledge-visual/actions/runs/43088530584) 七个 job 全部成功，功能回归实际为1842通过/2跳过，开发站与发布包各361页及6项发布交互通过；公开 revision 匹配提交 `e0e3c4a`。首轮工作阶段窗口为8分40秒，对同功能清单 #254 的16分06秒单轮缩短46.2%，不含工作流排队。当前性能样本为1/3，三轮实验及长期提速目标保持未完成，详见[核查与性能记录](../assessments/ci-parallel-checks-2026-11-12.md)。
 
 验收应证明两项目 `--list` 的并集与原完整清单一致且没有新增跳过；全部子检查成功才能构建发布，失败、取消或意外跳过均阻止发布并保留项目对应诊断。继续保留单一发布器、两次 main 校验、提交来源核验、最小权限、部署后资源和公网交互检查，以及不同运行之间的发布/核验串行关系。至少记录三轮同等测试清单的各阶段时长，再判断是否达到关键路径缩短 25% 的实验目标；未达到则保留差距。
 
