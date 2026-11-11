@@ -17,9 +17,10 @@
   header h1 { font-size: 2.4em; background: linear-gradient(135deg,var(--positive),var(--negative)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
   header .sub { font-size: 1.05em; opacity: 0.75; }
   .tabs { display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; justify-content: center; }
-  .tab { padding: 11px 22px; background: var(--card); border: 1px solid var(--border); border-radius: 28px; cursor: pointer; transition: all .3s; font-size: .93em; }
+  .tab { display: inline-flex; align-items: center; justify-content: center; padding: 11px 22px; background: var(--card); color: var(--light); border: 1px solid var(--border); border-radius: 28px; cursor: pointer; transition: all .3s; font: inherit; font-size: .93em; line-height: 1.4; }
   .tab:hover { transform: translateY(-2px); border-color: var(--primary); }
   .tab.active { background: linear-gradient(135deg,var(--positive),var(--negative)); border-color: transparent; font-weight: 600; }
+  .tab:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
   .section { display: none; background: var(--card); border-radius: 20px; padding: 28px; border: 1px solid var(--border); animation: fadeIn .4s; }
   .section.active { display: block; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
@@ -49,6 +50,17 @@
   .score-bar { text-align: center; padding: 14px; background: rgba(0,210,255,0.08); border-radius: 12px; margin-top: 14px; font-size: 1.05em; }
   h3 { font-size: 1.2em; margin-bottom: 14px; color: var(--primary); }
   .eq { font-family: "Times New Roman", serif; font-style: italic; color: var(--electron); }
+  @media (max-width: 480px) {
+    .container { padding: 12px; }
+    header { padding: 24px 16px; }
+    header h1 { font-size: 1.8em; }
+    .tabs { gap: 8px; margin-bottom: 16px; }
+    .tab { padding: 10px 12px; }
+    .section { padding: 16px; }
+    .row { flex-direction: column; gap: 12px; }
+    .col { min-width: 0; }
+    .ctrl { padding: 14px; }
+  }
 </style>
 </head>
 <body>
@@ -58,15 +70,15 @@
   <div class="sub">原电池 · 电解池 · 金属腐蚀与防护 — 高中化学</div>
 </header>
 
-<div class="tabs">
-  <div class="tab active" data-tab="galvanic">🔋 原电池</div>
-  <div class="tab" data-tab="electrolysis">⚡ 电解池</div>
-  <div class="tab" data-tab="corrosion">🛡️ 腐蚀与防护</div>
-  <div class="tab" data-tab="quiz">📝 互动练习</div>
+<div class="tabs" role="tablist" aria-label="电化学主题" aria-orientation="horizontal">
+  <button class="tab active" id="tab-galvanic" type="button" role="tab" aria-controls="sec-galvanic" aria-selected="true" tabindex="0" data-tab="galvanic">🔋 原电池</button>
+  <button class="tab" id="tab-electrolysis" type="button" role="tab" aria-controls="sec-electrolysis" aria-selected="false" tabindex="-1" data-tab="electrolysis">⚡ 电解池</button>
+  <button class="tab" id="tab-corrosion" type="button" role="tab" aria-controls="sec-corrosion" aria-selected="false" tabindex="-1" data-tab="corrosion">🛡️ 腐蚀与防护</button>
+  <button class="tab" id="tab-quiz" type="button" role="tab" aria-controls="sec-quiz" aria-selected="false" tabindex="-1" data-tab="quiz">📝 互动练习</button>
 </div>
 
 <!-- 1. 原电池 -->
-<div class="section active" id="sec-galvanic">
+<div class="section active" id="sec-galvanic" role="tabpanel" tabindex="0" aria-labelledby="tab-galvanic">
   <h3>原电池工作原理</h3>
   <div class="row">
     <div class="col" style="flex:2">
@@ -98,7 +110,7 @@
 </div>
 
 <!-- 2. 电解池 -->
-<div class="section" id="sec-electrolysis">
+<div class="section" id="sec-electrolysis" role="tabpanel" tabindex="0" aria-labelledby="tab-electrolysis">
   <h3>电解池工作原理</h3>
   <div class="row">
     <div class="col" style="flex:2">
@@ -129,7 +141,7 @@
 </div>
 
 <!-- 3. 腐蚀与防护 -->
-<div class="section" id="sec-corrosion">
+<div class="section" id="sec-corrosion" role="tabpanel" tabindex="0" aria-labelledby="tab-corrosion">
   <h3>金属腐蚀与防护</h3>
   <div class="row">
     <div class="col" style="flex:2">
@@ -162,7 +174,7 @@
 </div>
 
 <!-- 4. 练习 -->
-<div class="section" id="sec-quiz">
+<div class="section" id="sec-quiz" role="tabpanel" tabindex="0" aria-labelledby="tab-quiz">
   <h3>电化学互动练习</h3>
   <div id="quizArea"></div>
   <div class="score-bar" id="quizScore">得分：0 / 0</div>
@@ -172,12 +184,38 @@
 <script src="assets/common.js"></script>
 <script>
 // Tab switching
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
-  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-  document.querySelectorAll('.section').forEach(x => x.classList.remove('active'));
-  t.classList.add('active');
-  document.getElementById('sec-' + t.dataset.tab).classList.add('active');
-}));
+const electrochemTabs = [...document.querySelectorAll('.tab')];
+const electrochemPanels = [...document.querySelectorAll('.section')];
+
+function activateElectrochemTab(tab, moveFocus = false) {
+  electrochemTabs.forEach(candidate => {
+    const selected = candidate === tab;
+    candidate.classList.toggle('active', selected);
+    candidate.setAttribute('aria-selected', String(selected));
+    candidate.tabIndex = selected ? 0 : -1;
+  });
+
+  electrochemPanels.forEach(panel => {
+    panel.classList.toggle('active', panel.id === tab.getAttribute('aria-controls'));
+  });
+
+  if (moveFocus) tab.focus();
+}
+
+electrochemTabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => activateElectrochemTab(tab));
+  tab.addEventListener('keydown', event => {
+    let nextIndex = index;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % electrochemTabs.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + electrochemTabs.length) % electrochemTabs.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = electrochemTabs.length - 1;
+    else return;
+
+    event.preventDefault();
+    activateElectrochemTab(electrochemTabs[nextIndex], true);
+  });
+});
 
 // ========== 1. 原电池 ==========
 const galvanic = {
