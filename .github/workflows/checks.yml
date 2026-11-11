@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  checks:
+  core-checks:
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
@@ -26,16 +26,66 @@ jobs:
         run: npm ci
       - name: Install Chromium and system dependencies
         run: npx playwright install --with-deps chromium
-      - name: Run static and browser checks
-        run: npm run check
+      - name: Run static checks
+        run: npm run check:static
+      - name: Verify browser project coverage
+        run: npm run check:browser-projects
+      - name: Run all-page browser smoke
+        run: npm run test:browser:smoke
+      - name: Run release artifact checks
+        run: npm run test:release
       - name: Save browser test diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: browser-test-results
+          name: core-test-results
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
+
+  browser-interactions:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [desktop, mobile]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install development dependencies
+        run: npm ci
+      - name: Install Chromium and system dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Run browser interaction checks
+        run: npm run test:browser -- --project=${{ matrix.project }}
+      - name: Save browser test diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-test-results-${{ matrix.project }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  checks:
+    runs-on: ubuntu-26.04
+    needs: [core-checks, browser-interactions]
+    if: ${{ always() }}
+    timeout-minutes: 2
+    steps:
+      - name: Require every quality job to succeed
+        env:
+          CORE_RESULT: ${{ needs.core-checks.result }}
+          BROWSER_RESULT: ${{ needs.browser-interactions.result }}
+        run: |
+          set -eu
+          printf 'core-checks=%s browser-interactions=%s\n' "$CORE_RESULT" "$BROWSER_RESULT"
+          test "$CORE_RESULT" = success
+          test "$BROWSER_RESULT" = success
 
   build-release:
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
