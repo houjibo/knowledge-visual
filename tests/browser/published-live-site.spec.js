@@ -107,5 +107,19 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   }
   await page.getByRole('button', {name: '核对我的判断'}).click();
   await expect(page.locator('#result-status')).toContainText('四条陈述都核验正确');
+
+  await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('个人信息');
+  await page.locator('#site-results a[href="ai/middle/data-minimization.html"]').click();
+  await expect(page).toHaveURL(/ai\/middle\/data-minimization\.html/);
+  await expect(page).toHaveTitle('信息最小化实验室 · 初中人工智能');
+  const dataFields = page.locator('#extra-fields input[type="checkbox"]');
+  for (const input of await dataFields.all()) await input.uncheck();
+  await expect(page.locator('#field-count')).toHaveText('当前计划收集 2 项：2 项用于推荐，0 项不会改变推荐结果。');
+  await expect(page.locator('#recommendation-output')).toHaveText('11–13 岁 · 图文探索读物《太阳系观察手册》');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-middle-progress'))['data-minimization']))
+    .toBe(true);
   expect(failures).toEqual([]);
 });

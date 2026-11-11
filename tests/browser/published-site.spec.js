@@ -138,6 +138,19 @@ test('发布包子路径的首页搜索和六学科学习交互', async ({page})
   await expect(page.locator('#coverage-total')).toHaveText('本演示集合已覆盖 4 / 4 个条件组合。');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-middle-progress'))))
     .toEqual({'data-label-quality': true, 'data-source-coverage': true});
+  await gotoPublished(page, base);
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('个人信息');
+  await page.locator('#site-results a[href="ai/middle/data-minimization.html"]').click();
+  await waitForPublishedDocument(page);
+  await expect(page.locator('#recommendation-output')).toHaveText('11–13 岁 · 图文探索读物《太阳系观察手册》');
+  const dataFields = page.locator('#extra-fields input[type="checkbox"]');
+  for (const input of await dataFields.all()) await input.uncheck();
+  await expect(page.locator('#field-count')).toHaveText('当前计划收集 2 项：2 项用于推荐，0 项不会改变推荐结果。');
+  await expect(page.locator('#recommendation-output')).toHaveText('11–13 岁 · 图文探索读物《太阳系观察手册》');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-middle-progress'))['data-minimization']))
+    .toBe(true);
   await page.goto(new URL('computer-ai/primary/robot-algorithms.html', base).href);
   await expect(page).toHaveURL(new URL('computer/primary/robot-algorithms.html', base).href);
   expect((await page.request.get(base + 'README.md')).status()).toBe(404);

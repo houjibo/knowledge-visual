@@ -55,7 +55,7 @@ test('空样本集合显示无覆盖且不生成推断', async ({page}) => {
 
 test('学段目录、首页查找和学习进度包含新主题', async ({page}) => {
   await page.goto('/ai/middle/index.html');
-  await expect(page.locator('#stage-progress')).toHaveText('已完成 0/3 个主题');
+  await expect(page.locator('#stage-progress')).toHaveText('已完成 0/4 个主题');
   await expect(page.locator('[data-topic-slug="data-source-coverage"]'))
     .toContainText('数据来源与覆盖实验室');
 
@@ -69,11 +69,11 @@ test('学段目录、首页查找和学习进度包含新主题', async ({page})
   await page.getByRole('button', {name: '明暗各取样，仍选 4 条'}).click();
 
   await page.goto('/ai/middle/index.html');
-  await expect(page.locator('#stage-progress')).toHaveText('本机已记录完成 1/3 个主题。');
+  await expect(page.locator('#stage-progress')).toHaveText('本机已记录完成 1/4 个主题。');
   await expect(page.locator('[data-topic-slug="data-source-coverage"] [data-completion]'))
     .toHaveText('✓ 已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/7');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/8');
 });
 
 test('进度存储被拒绝时覆盖实验仍可操作并如实提示', async ({page}) => {

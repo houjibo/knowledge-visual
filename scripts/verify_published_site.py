@@ -30,6 +30,7 @@ CHECKS = (
     ('ai/middle/data-label-quality.html', '<title>数据标签侦察实验室 · 初中人工智能</title>'),
     ('ai/middle/data-source-coverage.html', '<title>数据来源与覆盖实验室 · 初中人工智能</title>'),
     ('ai/middle/output-verification.html', '<title>回答核验实验室 · 初中人工智能</title>'),
+    ('ai/middle/data-minimization.html', '<title>信息最小化实验室 · 初中人工智能</title>'),
     ('computer/primary/robot-algorithms.html', '<title>指令小机器人 · 小学计算机</title>'),
     ('ai/high/classifier-lab.html', '<title>分类边界实验室 · 高中人工智能</title>'),
     ('ai/high/train-test-generalization.html', '<title>训练与测试集实验室 · 高中人工智能</title>'),

@@ -28,6 +28,7 @@ class ReleaseArtifactTest(unittest.TestCase):
                          'ai/middle/index.html', 'ai/middle/data-label-quality.html',
                          'ai/middle/data-source-coverage.html',
                          'ai/middle/output-verification.html',
+                         'ai/middle/data-minimization.html',
                          'ai/high/index.html', 'ai/high/classifier-lab.html',
                          'ai/high/train-test-generalization.html',
                          'simulation-world/index.html', 'simulation-world/solar-system.html',

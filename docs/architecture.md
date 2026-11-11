@@ -11,7 +11,7 @@
 - `index.html`：六个学科入口，以及不计入学科进度的模拟世界入口；首页提供动手体验入口并支持本地生成目录查找。
 - `simulation-world/`：不按学段或知识点进度组织的交互场景目录；首个主题为太阳系示意模型。Three.js 固定版本文件随 `assets/vendor/` 一起发布。
 - `computer/`：小学算法与初中数据表示两个已实现学段；课程地图见[计算机课程设计](plans/computer-curriculum.md)。
-- `ai/`：小学特征线索分类、初中数据标签质量、样本覆盖与固定回答核验、高中分类器与训练/测试评价、大学神经元已实现；课程地图见[人工智能课程设计](plans/ai-curriculum.md)。
+- `ai/`：小学特征线索分类、初中数据标签质量、样本覆盖、固定回答核验与信息最小化、高中分类器与训练/测试评价、大学神经元已实现；课程地图见[人工智能课程设计](plans/ai-curriculum.md)。
 - `computer-ai/`：旧学科入口与主题的兼容页面，旧书签会进入新学科页面或拆分后的学科选择页。
 - `assets/css/subject-learning.css` 和 `assets/js/subject-progress.js`：计算机与人工智能主题共用的样式和进度逻辑；旧 `kv-computer-ai-*` 记录会在读取时合并进新学科记录，且仍可备份。
 - `math/index.html` 是小学数学知识地图，支持基于现有名称、描述和 G1–G6 标签的本地查找；`math/topics/<主题>/index.html` 是主题页；其余学段通常是 `学科/学段/index.html` 和同目录主题 HTML。
