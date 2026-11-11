@@ -12,4 +12,4 @@
 
 - [x] 3.1 Add desktop, keyboard, 320px, no-external-request, result-dependency, and storage-failure browser coverage; run the dedicated spec and adjacent AI regressions.
 - [x] 3.2 Update static inventory, release allowlists/verifier, interaction evidence and curriculum; verify all static checks and strict OpenSpec validation.
-- [ ] 3.3 Run the complete repository check, build and inspect the release artifact, push the feature, then verify the published revision and live interaction before archiving this change.
+- [x] 3.3 Run the complete repository check, build and inspect the release artifact, push the feature, then verify the published revision and live interaction before archiving this change.
