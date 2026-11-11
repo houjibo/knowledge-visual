@@ -34,6 +34,18 @@
 
 - `CI=true npm run check`完整通过：功能回归1896通过、原有2项移动专属测试在桌面跳过，开发站363页、发布包交互8项及发布包363页全部通过。
 
-本轮在`codex/primary-condition-branches`独立分支交付，公开主分支仍等待工业场景的GitHub队列；截至21:02:28 UTC，#258/#259仍queued、jobs均为0，公开revision仍为`18ef7b479a213140ff3e62ad2c6e39886ddbd3d0`。新主题的远端检查、主分支集成及公开操作仍待核实，OpenSpec保持活跃，不把本地通过说成公开验收。真实设备、屏幕阅读器、完整编程课程覆盖及学习者理解效果仍未全面验证。
+本轮在`codex/primary-condition-branches`独立分支交付，公开主分支仍等待工业场景的GitHub队列；截至21:02:28 UTC，#258/#259仍queued、jobs均为0，公开revision仍为`18ef7b479a213140ff3e62ad2c6e39886ddbd3d0`。主分支集成及公开操作仍待核实，OpenSpec保持活跃，不把分支质量通过说成公开验收。真实设备、屏幕阅读器、完整编程课程覆盖及学习者理解效果仍未全面验证。
 
 范围：[OpenSpec提案](../../openspec/changes/2026-11-12-primary-condition-robot/proposal.md)、[设计](../../openspec/changes/2026-11-12-primary-condition-robot/design.md)、[任务](../../openspec/changes/2026-11-12-primary-condition-robot/tasks.md)。
+
+## 独立分支远端质量结果
+
+功能提交`d8186efc669050d7520d94570049c4bf1dc8c1c1`的[Actions #260](https://github.com/houjibo/knowledge-visual/actions/runs/43100973643)于2026-11-11 UTC 21:21:07完成并成功。实际执行注释：
+
+- [desktop](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130792029951/annotations)：947通过、原有2项跳过。
+- [mobile](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130792036536/annotations)：949通过。
+- [core](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130792047390/annotations)：开发站363页、发布路径8项、发布包363页均通过。
+
+core、两matrix及checks四个检查job均成功；build-release、deploy、verify-deployment三个job按非main条件跳过，不能作为已发布证据。这些数字来自执行摘要，清单指纹另见前述收集结果。后续证据文档更新保持功能、测试清单和工作流与该提交一致。
+
+main #258/#259截至21:22:24仍queued且未创建job。官方故障及并发调查见[发布队列核查](release-backlog-2026-11-12.md)；条件分支的主分支集成与公开核验仍未完成。
