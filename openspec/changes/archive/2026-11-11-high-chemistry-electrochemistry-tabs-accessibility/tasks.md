@@ -7,4 +7,4 @@
 
 - [x] 2.1 新增桌面与移动浏览器测试，覆盖四个面板、页签关系、键盘/指针/触屏切换、内容控制和 320px 无横向溢出。
 - [x] 2.2 更新交互证据并运行静态检查、严格 OpenSpec、完整浏览器及发布包检查。
-- [ ] 2.3 提交并推送变更，核对 GitHub Actions、Pages 发布 revision 和公网键盘交互后归档 OpenSpec。
+- [x] 2.3 提交并推送 `aa965c0`；GitHub Actions #245 的 checks、构建、部署和部署后核验全部成功，Pages revision 与提交 `aa965c00c0a98e4badb7d09490db45894f5c3d87` 一致；公网桌面/移动回归 6/6 通过。

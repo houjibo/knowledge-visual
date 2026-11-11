@@ -1,9 +1,9 @@
 # high-chemistry-electrochemistry-tabs-accessibility Specification
 
 ## Purpose
-确保高中化学电化学页面的四个主题可由键盘和辅助技术发现、切换和确认，同时保留指针操作及窄屏布局。
+确保高中化学电化学页面的四个主题入口可由键盘和辅助技术发现、切换与确认，同时保持内容面板、指针操作及窄屏布局的一致性，并方便不同设备的学习者访问。
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: 高中化学电化学主题页签可访问
 
