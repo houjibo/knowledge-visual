@@ -32,6 +32,7 @@ class ReleaseArtifactTest(unittest.TestCase):
                          'ai/high/index.html', 'ai/high/classifier-lab.html',
                          'ai/high/train-test-generalization.html',
                          'simulation-world/index.html', 'simulation-world/solar-system.html',
+                         'simulation-world/gear-transmission.html',
                          'assets/vendor/three-r128/three.min.js', 'assets/vendor/three-r128/OrbitControls.js',
                          'assets/vendor/three-r128/CSS2DRenderer.js', 'assets/vendor/three-r128/LICENSE',
                          'ai/uni/neuron-forward-pass.html', 'computer-ai/index.html',

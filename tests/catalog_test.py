@@ -30,8 +30,9 @@ class CatalogTest(unittest.TestCase):
                                       '<a href="train-test-generalization.html">训练集与测试集实验室</a>',
                 'ai/high/classifier-lab.html': '<title>分类边界实验室</title>',
                 'ai/high/train-test-generalization.html': '<title>训练与测试集实验室 · 高中人工智能</title>',
-                'simulation-world/index.html': '<title>模拟世界</title><a href="solar-system.html">太阳系模拟</a>',
+                'simulation-world/index.html': '<title>模拟世界</title><a href="solar-system.html">太阳系模拟</a><a href="gear-transmission.html">机械传动 · 工业应用</a>',
                 'simulation-world/solar-system.html': '<title>太阳系模拟 · 模拟世界</title>',
+                'simulation-world/gear-transmission.html': '<title>齿轮传动模拟 · 模拟世界</title>',
                 'computer-ai/index.html': '<title>旧学科</title><a href="../computer/index.html">计算机</a>',
             }
             for name, content in files.items():
@@ -42,7 +43,7 @@ class CatalogTest(unittest.TestCase):
             subprocess.run([sys.executable, str(SCRIPT), '--root', str(root), '--output', str(output)], check=True)
             data = output.read_text(encoding='utf-8').split('window.KV_TOPIC_CATALOG = ', 1)[1].rsplit(';', 1)[0]
             entries = json.loads(data)
-            self.assertEqual(len(entries), 7)  # identical titles must not merge
+            self.assertEqual(len(entries), 8)  # identical titles must not merge
             primary = next(x for x in entries if x['subject'] == 'math' and x['stage'] == 'primary')
             self.assertEqual(primary['title'], '10以内加减法')
             self.assertIn('加法 G1', primary['aliases'])
@@ -65,6 +66,10 @@ class CatalogTest(unittest.TestCase):
             self.assertEqual(solar_system['subject'], 'simulation-world')
             self.assertIsNone(solar_system['stage'])
             self.assertIn('太阳系模拟', solar_system['aliases'])
+            gear_transmission = next(x for x in entries if x['path'] == 'simulation-world/gear-transmission.html')
+            self.assertEqual(gear_transmission['subject'], 'simulation-world')
+            self.assertIsNone(gear_transmission['stage'])
+            self.assertIn('机械传动 · 工业应用', gear_transmission['aliases'])
             self.assertNotIn('computer-ai', {x['subject'] for x in entries})
             subprocess.run([sys.executable, str(SCRIPT), '--root', str(root), '--check', str(output)], check=True, capture_output=True)
             (root / 'math/index.html').write_text('<a href="topics/addition/">新名称</a>', encoding='utf-8')

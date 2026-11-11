@@ -20,6 +20,7 @@ CHECKS = (
     ('ai/index.html', '<title>人工智能 · 知识可视化学习站</title>'),
     ('simulation-world/index.html', '<title>模拟世界 · 知识可视化学习站</title>'),
     ('simulation-world/solar-system.html', '<title>太阳系模拟 · 模拟世界</title>'),
+    ('simulation-world/gear-transmission.html', '<title>齿轮传动模拟 · 模拟世界</title>'),
     ('assets/vendor/three-r128/three.min.js', 'THREE'),
     ('assets/vendor/three-r128/OrbitControls.js', 'OrbitControls'),
     ('assets/vendor/three-r128/CSS2DRenderer.js', 'CSS2DRenderer'),
