@@ -11,6 +11,7 @@ const pages = [
   '/ai/middle/data-source-coverage.html',
   '/ai/middle/output-verification.html',
   '/ai/middle/data-minimization.html',
+  '/computer/primary/repeat-loops.html',
 ];
 
 test('首页分别展示计算机和人工智能，旧学科入口可进入新目录', async ({page}) => {
@@ -120,7 +121,7 @@ test('高中分类边界重新计算逐点预测和评价指标', async ({page})
   await expect(page.locator('#accuracy-output')).toHaveText('—');
 });
 
-test('计算机与人工智能十个主题在 320px 下无页面级横向溢出', async ({page}) => {
+test('计算机与人工智能十一个主题在 320px 下无页面级横向溢出', async ({page}) => {
   await page.setViewportSize({width: 320, height: 760});
   for (const path of pages) {
     await page.goto(path);
@@ -142,7 +143,7 @@ test('旧进度合并进独立学科，新记录优先且旧键保留', async ({
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('kv-computer-primary-progress'))))
     .toEqual({'robot-algorithms': false});
   await page.goto('/computer/primary/index.html');
-  await expect(page.locator('#stage-progress')).toContainText('已完成 0/1');
+  await expect(page.locator('#stage-progress')).toContainText('已完成 0/2');
   expect(await page.evaluate(() => localStorage.getItem('kv-computer-ai-primary-progress')))
     .toBe('{"robot-algorithms":true}');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-high-progress'))))

@@ -82,6 +82,21 @@ test('发布包子路径的首页搜索和六学科学习交互', async ({page})
   await page.getByRole('button', {name: '运行指令'}).click();
   await expect(page.locator('#robot-status')).toContainText('抵达目标');
   await gotoPublished(page, base);
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('循环');
+  await page.locator('#site-results a[href="computer/primary/repeat-loops.html"]').click();
+  await expect(page).toHaveURL(new URL('computer/primary/repeat-loops.html', base).href);
+  await waitForPublishedDocument(page);
+  await page.locator('#repeat-count').selectOption('3');
+  for (let i = 0; i < 6; i++) await page.locator('#step-button').click();
+  await expect(page.locator('#execution-count')).toHaveText('6/6');
+  await expect(page.locator('#robot-grid')).toHaveAttribute('data-column', '4');
+  await expect(page.locator('#robot-grid')).toHaveAttribute('data-row', '2');
+  await expect(page.locator('#run-status')).toContainText('到达目标');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-computer-primary-progress'))))
+    .toEqual({'robot-algorithms': true, 'repeat-loops': true});
+  await gotoPublished(page, base);
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('分类边界');

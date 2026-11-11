@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：328；已登记部分交互证据：187；尚未登记：141。
+主题总数：329；已登记部分交互证据：188；尚未登记：141。
 
 ## 已登记部分交互证据
 
@@ -60,6 +60,8 @@
   - 综合练习逐题得分、重试及完成；未覆盖平衡和相图模拟。 [equilibrium-quiz.spec.js](../../tests/browser/equilibrium-quiz.spec.js)
 - [二进制像素工坊 · 初中计算机](../../computer/middle/binary-pixels.html)
   - 桌面与移动浏览器验证两个独立学科入口、旧主题地址跳转、四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘操作、旧进度迁移及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [split-subjects-learning.spec.js](../../tests/browser/split-subjects-learning.spec.js)
+- [循环指令工坊 · 小学计算机](../../computer/primary/repeat-loops.html)
+  - 桌面与移动模拟检查循环体/展开的逐步坐标与轮次、两/三/四次结果、碰墙边界、暂停恢复与编辑/离开清理、重置、失败重试及损坏存储、历史完成、320px/减少动态效果/键盘、发现进度和直接文件模式；真实设备、读屏器及真实学习效果尚未验收。 [primary-computer-repeat-loops.spec.js](../../tests/browser/primary-computer-repeat-loops.spec.js)
 - [指令小机器人 · 小学计算机](../../computer/primary/robot-algorithms.html)
   - 桌面与移动浏览器验证两个独立学科入口、旧主题地址跳转、四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘操作、旧进度迁移及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [split-subjects-learning.spec.js](../../tests/browser/split-subjects-learning.spec.js)
 - [复数 · 高中数学互动可视化](../../math/high/complex-numbers.html)

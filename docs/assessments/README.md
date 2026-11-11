@@ -1,6 +1,6 @@
 # 站点评估基线
 
-[页面清单](page-inventory.json) 于 2026-11-12 根据当前仓库重新生成：包含 360 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
+[页面清单](page-inventory.json) 于 2026-11-12 根据当前仓库重新生成：包含 361 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
 
 重新生成：`python3 scripts/inventory_pages.py --output docs/assessments/page-inventory.json`；运行 `python3 scripts/inventory_pages.py --check docs/assessments/page-inventory.json` 检查清单是否过期，运行 `python3 tests/inventory_test.py` 验证基本解析及导航行为。生成结果按路径稳定排序，无时间戳，可用版本差异检查变化。
 
@@ -28,3 +28,5 @@
 [交互风险线索](interaction-risks.md) 以静态 div 控件和内联 `while` 为线索，辅助选择下一项调查；它不判断实际可访问性或循环是否会终止。运行 `python3 scripts/interaction_risks.py --output docs/assessments/interaction-risks.md` 更新，`--check` 检查是否与当前文件一致；详情和漏报范围见报告。
 
 [非金属互动练习核查](nonmetals-quiz-2026-11-12.md)记录题设歧义、逐题计分和完成保存修复的知识依据、桌面/移动及异常存储证据。
+
+[小学循环指令工坊核查](repeat-loops-2026-11-12.md)记录循环/展开对应、路线结果、运行控制、异常存储、发现进度和同屏布局的验证。

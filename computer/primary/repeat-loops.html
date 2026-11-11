@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="编排两条方向指令和重复次数，逐步比较循环块与展开序列，理解确定次数的循环。">
+  <title>循环指令工坊 · 小学计算机</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .shell { width: min(100% - 32px, 1120px); }
+    .hero { margin: 12px 0; padding: 20px 28px; }
+    .hero h1 { font-size: clamp(1.7rem, 4vw, 2.1rem); }
+    .hero p { max-width: 90ch; }
+    .workspace { padding: 18px; }
+    .workspace > h2 { margin-bottom: 12px; font-size: 1.2rem; }
+    .parameter-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .parameter-grid label { font-size: .9rem; }
+    #loop-summary { margin: 8px 0 12px; font-size: .9rem; color: #4d596d; }
+    .workspace-views { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+    .workspace-views > * { min-width: 0; }
+    .workspace-views h3 { margin: 0 0 8px; font-size: 1rem; }
+    .map-view, .loop-box, .expanded-box { min-width: 0; border: 2px solid #c8c1e8; border-radius: 14px; padding: 12px; background: #f7f5ff; }
+    .map-view { border-color: #d0dbe9; background: #f8faff; }
+    .expanded-box { border-color: #c5d5e8; background: #f5f9ff; }
+    .program-list { display: grid; gap: 4px; margin: 0; padding-left: 1.6rem; font-size: .9rem; line-height: 1.4; }
+    .program-list li { padding: 4px 6px; border: 2px solid transparent; border-radius: 7px; background: white; overflow-wrap: anywhere; }
+    .program-list li[aria-current="step"] { border: 2px solid #43378f; background: #ece6ff; font-weight: 800; }
+    .current-label { display: inline-block; margin-left: .3rem; color: #3d3085; font-size: .72rem; }
+    .controls select { width: 100%; min-width: 0; min-height: 44px; padding: 7px; border: 1px solid #8794a9; border-radius: 8px; background: white; }
+    .robot-grid { width: min(100%, 200px); grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 7px auto; }
+    .robot-cell { min-width: 0; font-size: 1.25rem; }
+    .robot-cell.robot { outline: 3px solid #4b3e9c; outline-offset: -3px; }
+    .robot-cell.start { border-style: dashed; }
+    .map-legend { margin: 6px 0 0; font-size: .8rem; text-align: center; }
+    .position-text { margin: 5px 0 0; font-size: .9rem; font-weight: 700; text-align: center; }
+    .execution-zone { margin-top: 12px; padding-top: 12px; border-top: 1px solid #dbe2ef; }
+    .execution-zone .button-row { gap: 8px; }
+    .execution-zone button { padding: .45rem .85rem; }
+    .execution-stats { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin: 7px 0; font-size: .9rem; }
+    .execution-stats p { margin: 0; }
+    .run-feedback { margin: 0; padding: 9px 12px; border-radius: 10px; background: #f1f4fb; font-size: .92rem; }
+    .run-feedback.success { background: #eaf7ed; }
+    .run-feedback.error { background: #fff0ed; }
+    .execution-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem; }
+    #execution-count { font-size: 1.15rem; color: #292564; }
+    .progress-panel { border-left: 4px solid #7663b4; padding-left: 12px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    details > summary { cursor: pointer; font-weight: 700; }
+    details > summary:focus-visible { outline: 3px solid #1459bf; outline-offset: 3px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 699px) {
+      .shell { width: min(100% - 24px, 1120px); }
+      .hero { padding: 20px; }
+      .parameter-grid, .workspace-views { grid-template-columns: 1fr; }
+      .parameter-grid { gap: 8px; }
+      .workspace { padding: 16px; }
+      .robot-grid { width: min(100%, 220px); }
+    }
+  </style>
+</head>
+<body data-subject="computer" data-stage="primary">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机</a><span aria-hidden="true">›</span><a href="index.html">小学</a><span aria-hidden="true">›</span><span aria-current="page">循环指令工坊</span></nav>
+    <main id="main-content">
+      <header class="hero">
+        <p class="eyebrow">小学 · 算法与重复</p>
+        <h1>🔁 循环指令工坊</h1>
+        <p>把同一组指令重复几次，会走到哪里？编排每轮的两条方向指令，观察循环怎样展开，再检查整个程序的结果。</p>
+      </header>
+
+      <section class="panel workspace" aria-labelledby="program-title">
+        <h2 id="program-title">编排循环，对照地图与展开过程</h2>
+        <div class="controls parameter-grid">
+          <div class="control"><label for="repeat-count">重复次数</label><select id="repeat-count"><option value="1">1 次</option><option value="2" selected>2 次</option><option value="3">3 次</option><option value="4">4 次</option></select></div>
+          <div class="control"><label for="body-first">循环体第 1 条方向</label><select id="body-first"><option value="up">向上</option><option value="right" selected>向右</option><option value="down">向下</option><option value="left">向左</option></select></div>
+          <div class="control"><label for="body-second">循环体第 2 条方向</label><select id="body-second"><option value="up" selected>向上</option><option value="right">向右</option><option value="down">向下</option><option value="left">向左</option></select></div>
+        </div>
+        <p id="loop-summary"></p>
+        <div class="workspace-views">
+          <div class="map-view">
+            <h3 id="mission-title">地图：结束时停在目标格</h3>
+            <div id="robot-grid" class="robot-grid" role="img" data-column="1" data-row="5" aria-label="5 列 5 行地图；起点在第 1 列第 5 行，目标在第 4 列第 2 行；墙在第 1 列第 4 行和第 3 列第 5 行；机器人当前在第 1 列第 5 行"></div>
+            <p class="map-legend note">🤖 机器人　🏁 目标　■ 墙<br>虚线框是起点</p>
+            <p id="position-status" class="position-text">当前位置：第 1 列，第 5 行</p>
+          </div>
+          <div class="loop-box"><h3 id="loop-heading">重复 2 次</h3><ol id="loop-body" class="program-list" aria-label="每轮的两条方向指令"></ol></div>
+          <div class="expanded-box"><h3>展开后依次执行</h3><ol id="expanded-commands" class="program-list" aria-label="展开后的全部方向指令"></ol></div>
+        </div>
+        <div class="execution-zone" aria-labelledby="execution-title">
+          <h3 id="execution-title" class="sr-only">执行到哪里了？</h3>
+          <div class="button-row"><button type="button" id="step-button">执行下一条</button><button type="button" id="run-button">连续运行</button><button type="button" id="pause-button" class="secondary" disabled>暂停运行</button><button type="button" id="reset-button" class="secondary">回到起点</button><button type="button" id="example-button" class="secondary">恢复示例</button></div>
+          <div class="execution-stats"><p class="execution-summary"><span>已执行 / 总方向指令数：</span><strong id="execution-count">0/4</strong></p><p id="round-status">尚未执行；轮次 0/2，轮内位置 0/2。</p></div>
+          <p id="run-status" class="status run-feedback" role="status" aria-live="polite" aria-atomic="true">准备好了。先预测结果，再执行下一条。</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="reflection-title">
+        <h2 id="reflection-title">规则与观察提示</h2>
+        <p>从第 1 列第 5 行出发，目标在第 4 列第 2 行。每条方向指令移动一格；碰墙或越界会留在原地，但仍计入执行次数。所有指令执行完、最终停在目标且全程没有碰撞，才算完成；途中经过目标会继续执行。</p>
+        <p id="comparison-note" class="note"></p>
+        <p>试试重复 4 次：机器人经过目标时，程序是否已经结束？也可以交换两条方向指令，观察墙怎样影响路线。</p>
+        <p class="note">修改任一参数都会停止旧运行并回到起点。“回到起点”保留当前参数；“恢复示例”恢复向右、向上、重复 2 次。两者都保留已有完成记录。</p>
+        <p id="motion-note" class="note">页面打开后保持静止，你可以逐条执行，也可以主动开始连续运行。</p>
+        <div class="progress-panel"><p id="progress-status" class="note" role="status" aria-live="polite" aria-atomic="true">学习进度保存在当前浏览器。</p><button type="button" id="retry-save" class="secondary" hidden>重试保存</button></div>
+        <details><summary>循环含义与本模型边界</summary><p>这里的循环表示“按指定次数运行一段程序”。依据：<a href="https://makecode.microbit.org/blocks/loops/repeat">Microsoft MakeCode repeat 官方说明</a>。本页只演示两条方向指令、1–4 次重复和一张固定地图；每个动作按同样的规则执行，动画速度不能用来证明真实程序运行得更快。</p></details>
+      </section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回小学计算机</a>　·　<a href="robot-algorithms.html">复习指令小机器人</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script>
+  (() => {
+    'use strict';
+    const subject = 'computer', stage = 'primary', slug = 'repeat-loops';
+    const start = {x: 0, y: 4}, goal = {x: 3, y: 1};
+    const walls = new Set(['0,3', '2,4']);
+    const directions = {
+      up: {dx: 0, dy: -1, label: '向上'},
+      right: {dx: 1, dy: 0, label: '向右'},
+      down: {dx: 0, dy: 1, label: '向下'},
+      left: {dx: -1, dy: 0, label: '向左'}
+    };
+    const first = document.getElementById('body-first');
+    const second = document.getElementById('body-second');
+    const repeat = document.getElementById('repeat-count');
+    const grid = document.getElementById('robot-grid');
+    const loopBody = document.getElementById('loop-body');
+    const expanded = document.getElementById('expanded-commands');
+    const runStatus = document.getElementById('run-status');
+    const progressStatus = document.getElementById('progress-status');
+    const stepButton = document.getElementById('step-button');
+    const runButton = document.getElementById('run-button');
+    const pauseButton = document.getElementById('pause-button');
+    const retrySave = document.getElementById('retry-save');
+    const prior = SubjectProgress.read(subject, stage);
+    let historyCompleted = prior !== null && prior[slug] === true;
+    let position = {...start}, executed = 0, collisions = 0;
+    let timer = null, runToken = 0, successful = false;
+    let sessionCompleted = false, pendingSave = false;
+
+    function body() { return [first.value, second.value]; }
+    function program() { return Array.from({length: Number(repeat.value)}, () => body()).flat(); }
+
+    function stopTimer() {
+      runToken++;
+      if (timer !== null) window.clearInterval(timer);
+      timer = null;
+    }
+
+    function updateControls() {
+      const ended = executed >= program().length;
+      stepButton.disabled = timer !== null || ended;
+      runButton.disabled = timer !== null || ended;
+      pauseButton.disabled = timer === null;
+    }
+
+    function showStatus(message, state = '') {
+      runStatus.className = `status run-feedback${state ? ` ${state}` : ''}`;
+      runStatus.textContent = message;
+    }
+
+    function updateProgress() {
+      retrySave.hidden = !pendingSave;
+      if (pendingSave) {
+        progressStatus.textContent = `${historyCompleted ? '本机先前已记录完成；' : ''}本页先前已完成目标，但未能保存学习进度。本机存储不可用或记录异常；恢复后可重试保存，无需重新运行。已有记录不会被自动删除或覆盖修复。`;
+      } else if (historyCompleted) {
+        progressStatus.textContent = '已保存本机学习进度，本机已记录这个主题完成。回到起点、恢复示例或尝试其他程序都会保留已有完成记录。';
+      } else if (prior === null) {
+        progressStatus.textContent = '本机进度暂不可用；你仍可完成关卡。成功后会尝试保存，保存失败可重试；异常记录原文会保留。';
+      } else {
+        progressStatus.textContent = '学习进度只保存在当前浏览器。完整执行后停在目标且没有碰撞，才会记录这个主题完成。';
+      }
+    }
+
+    function saveCompletion() {
+      if (!sessionCompleted) return;
+      const saved = SubjectProgress.markComplete(subject, stage, slug);
+      pendingSave = !saved;
+      if (saved) historyCompleted = true;
+      updateProgress();
+      if (successful) {
+        showStatus(`程序执行完毕：成功到达目标，${executed} 条指令全部执行且没有碰撞。${saved ? '已保存本机学习进度，已在本机记录完成。' : '目标已完成，但未能保存学习进度，可重试保存。'}`, 'success');
+      }
+    }
+
+    function commandItem(direction, index, round) {
+      const item = document.createElement('li');
+      item.textContent = round ? `第 ${round} 轮：${directions[direction].label}` : directions[direction].label;
+      item.dataset[round ? 'step' : 'bodyIndex'] = String(index + 1);
+      const current = document.createElement('span');
+      current.className = 'current-label'; current.textContent = '← 刚执行'; current.hidden = true;
+      item.append(current);
+      return item;
+    }
+
+    function renderProgram() {
+      const repeats = Number(repeat.value), commands = body(), all = program();
+      document.getElementById('loop-heading').textContent = `重复 ${repeats} 次`;
+      document.getElementById('loop-summary').textContent = `重复 ${repeats} 次：每轮依次执行“${directions[commands[0]].label} → ${directions[commands[1]].label}”。循环体有 2 条方向指令，展开后总共执行 ${all.length} 条方向指令。`;
+      document.getElementById('comparison-note').textContent = `循环体写出“${directions[commands[0]].label}、${directions[commands[1]].label}”并指定重复 ${repeats} 次；展开列表逐条列出 ${all.length} 条方向指令。两种表示都实际执行 ${all.length} 条方向指令，书写方式改变不会自动减少执行步数或提高运行速度。`;
+      loopBody.replaceChildren(...commands.map((direction, index) => commandItem(direction, index, null)));
+      expanded.replaceChildren(...all.map((direction, index) => commandItem(direction, index, Math.floor(index / 2) + 1)));
+    }
+
+    function renderExecution() {
+      grid.replaceChildren();
+      for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) {
+        const cell = document.createElement('div');
+        cell.className = 'robot-cell'; cell.setAttribute('aria-hidden', 'true');
+        const isRobot = position.x === x && position.y === y;
+        const isGoal = goal.x === x && goal.y === y;
+        if (walls.has(`${x},${y}`)) cell.classList.add('wall');
+        if (isGoal) cell.classList.add('goal');
+        if (start.x === x && start.y === y) cell.classList.add('start');
+        if (isRobot) cell.classList.add('robot');
+        cell.textContent = isRobot ? '🤖' : isGoal ? '🏁' : walls.has(`${x},${y}`) ? '■' : '·';
+        grid.append(cell);
+      }
+      grid.dataset.column = String(position.x + 1);
+      grid.dataset.row = String(position.y + 1);
+      grid.setAttribute('aria-label', `5 列 5 行地图；起点在第 1 列第 5 行，目标在第 4 列第 2 行；墙在第 1 列第 4 行和第 3 列第 5 行；机器人当前在第 ${position.x + 1} 列第 ${position.y + 1} 行`);
+      document.getElementById('position-status').textContent = `当前位置：第 ${position.x + 1} 列，第 ${position.y + 1} 行`;
+      document.getElementById('execution-count').textContent = `${executed}/${program().length}`;
+      const round = executed ? Math.floor((executed - 1) / 2) + 1 : 0;
+      const bodyIndex = executed ? (executed - 1) % 2 + 1 : 0;
+      document.getElementById('round-status').textContent = executed
+        ? `刚执行第 ${round}/${repeat.value} 轮，轮内位置 ${bodyIndex}/2：${directions[body()[bodyIndex - 1]].label}。`
+        : `尚未执行；轮次 0/${repeat.value}，轮内位置 0/2。`;
+      loopBody.querySelectorAll('li').forEach(item => markCurrent(item, Number(item.dataset.bodyIndex) === bodyIndex));
+      expanded.querySelectorAll('li').forEach(item => markCurrent(item, Number(item.dataset.step) === executed));
+      updateControls();
+    }
+
+    function markCurrent(item, active) {
+      if (active) item.setAttribute('aria-current', 'step');
+      else item.removeAttribute('aria-current');
+      item.querySelector('.current-label').hidden = !active;
+    }
+
+    function finishProgram() {
+      stopTimer();
+      successful = position.x === goal.x && position.y === goal.y && collisions === 0;
+      if (successful) {
+        sessionCompleted = true;
+        saveCompletion();
+      } else {
+        const atGoal = position.x === goal.x && position.y === goal.y;
+        showStatus(`程序执行完毕：目标未完成。${atGoal ? '最终停在目标格，' : `最终在第 ${position.x + 1} 列第 ${position.y + 1} 行，尚未停在目标格，`}${collisions ? `过程中有 ${collisions} 次碰墙或越界。` : '全程没有碰撞。'}请调整程序后重试，也可以回到起点重新观察。`, 'error');
+      }
+      updateControls();
+    }
+
+    function executeOne() {
+      const all = program();
+      if (executed >= all.length) return;
+      const direction = directions[all[executed]];
+      const next = {x: position.x + direction.dx, y: position.y + direction.dy};
+      executed++;
+      let collision = '';
+      if (next.x < 0 || next.x >= 5 || next.y < 0 || next.y >= 5) collision = '遇到地图边界';
+      else if (walls.has(`${next.x},${next.y}`)) collision = '碰到墙';
+      if (collision) collisions++;
+      else position = next;
+      renderExecution();
+      if (executed === all.length) {
+        finishProgram();
+        return;
+      }
+      const round = Math.floor((executed - 1) / 2) + 1, bodyIndex = (executed - 1) % 2 + 1;
+      let message = `第 ${executed}/${all.length} 条：第 ${round} 轮、轮内第 ${bodyIndex} 条，${direction.label}。${collision ? `${collision}，机器人留在原地；这条指令仍计入执行次数。` : `机器人在第 ${position.x + 1} 列第 ${position.y + 1} 行。`}`;
+      if (position.x === goal.x && position.y === goal.y) message += ` 已经过目标，但还有 ${all.length - executed} 条待执行；完整执行后才判断结果。`;
+      showStatus(message, collision ? 'error' : '');
+    }
+
+    function resetExecution(message) {
+      stopTimer();
+      position = {...start}; executed = 0; collisions = 0; successful = false;
+      renderProgram(); renderExecution();
+      showStatus(message);
+      updateProgress();
+    }
+
+    stepButton.addEventListener('click', () => { if (timer === null) executeOne(); });
+    runButton.addEventListener('click', () => {
+      if (timer !== null || executed >= program().length) return;
+      const token = ++runToken;
+      timer = window.setInterval(() => { if (token === runToken) executeOne(); }, 500);
+      updateControls();
+      showStatus(`连续运行中，将从第 ${executed + 1} 条指令继续；你可以随时暂停。`);
+    });
+    pauseButton.addEventListener('click', () => {
+      if (timer === null) return;
+      stopTimer(); updateControls();
+      showStatus(`已暂停。已执行 ${executed}/${program().length} 条指令，机器人位置保持不变；继续时从第 ${executed + 1} 条开始。`);
+    });
+    [first, second, repeat].forEach(control => control.addEventListener('change', () => {
+      resetExecution('程序参数已修改，旧运行已停止并回到起点。请重新预测，再执行新的程序。');
+    }));
+    document.getElementById('reset-button').addEventListener('click', () => resetExecution('已回到起点，保留当前程序参数。可以重新逐条执行。'));
+    document.getElementById('example-button').addEventListener('click', () => {
+      first.value = 'right'; second.value = 'up'; repeat.value = '2';
+      resetExecution('已恢复示例：向右、向上，重复 2 次。请预测这 4 条指令的最终位置。');
+    });
+    retrySave.addEventListener('click', saveCompletion);
+    function pauseForDeparture() {
+      const wasRunning = timer !== null;
+      stopTimer(); updateControls();
+      if (wasRunning) showStatus('离开页面时连续运行已暂停。返回后可从下一条继续。');
+    }
+    window.addEventListener('pagehide', pauseForDeparture);
+    window.addEventListener('beforeunload', pauseForDeparture);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.getElementById('motion-note').textContent = '已检测到减少动态效果偏好。页面保持静止，建议用“执行下一条”按自己的节奏观察；连续运行由你主动开始，也可随时暂停。';
+    }
+    renderProgram(); renderExecution(); updateProgress();
+  })();
+  </script>
+</body>
+</html>

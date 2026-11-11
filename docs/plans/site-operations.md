@@ -1,6 +1,6 @@
 # 站点发布与专业化运营计划
 
-状态：目标与实施计划，非已发布承诺。基线核查：2026-11-08。项目首先是供不同年龄学习者动手探索的可视化学习站；工程化和 AI 辅助维护服务于内容准确、学习流畅和长期可用。
+状态：公开站已运行，后续按可验证切片建设。最近核查：2026-11-12。项目首先是供不同年龄学习者动手探索的可视化学习站；工程化和 AI 辅助维护服务于内容准确、学习流畅和长期可用。
 
 ## 目标
 
@@ -15,6 +15,16 @@
 截至 2026-11-10，计算机与人工智能页面已发布。归档提交 `34f9a56` 的 Actions [run #208](https://github.com/houjibo/knowledge-visual/actions/runs/42739511880) 检查和构建成功，但 Pages deployment 约 10 分钟后转为 error，工作流取消且部署后 job 被跳过；公网清单已匹配该提交，直接核验确认 6 个资源可访问。job 日志接口返回 403，具体平台原因未确认。后续提交 `9f22f6a` 将部署 job 上限增至 20 分钟，并由静态守卫验证超时和后置核验依赖；Actions [run #209](https://github.com/houjibo/knowledge-visual/actions/runs/42747644282) 的检查、构建、deploy 和部署后核验全部成功，deploy 用时约 32 秒，公网清单 revision 匹配且 `site_files_modified:false`。此次复验支持更有弹性的窗口配置，但单次成功不能证明 #208 的唯一原因已隔离；继续观察后续发布。相关[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-10-stabilize-pages-deploy-acknowledgement/proposal.md)。
 
 后续提交 `3742870` 的 Actions [run #211](https://github.com/houjibo/knowledge-visual/actions/runs/42756210604) 在 `checks` job 的 20 分钟上限处被取消，build、deploy 和部署后验证均跳过。GitHub 注释显示浏览器回归 1,646 项通过、2 项跳过，全站冒烟两轮各 339 项通过，发布包交互 6 项通过；本地 `npm run check` 完整通过。该证据说明测试结果已大部分产出，但工作流没有成功终态，不能据此称为 CI 通过。提交 `844cda0` 将 checks 上限提高到 30 分钟，并由静态守卫要求至少 25 分钟；Actions [run #212](https://github.com/houjibo/knowledge-visual/actions/runs/42759471240) 的 checks 在 13 分 22 秒完成，build-release、deploy 和部署后核验均成功，公网版本清单匹配且 `site_files_modified:false`。继续观测 CI 耗时，如果接近上限，应按新日志定位具体阻塞阶段。[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-10-stabilize-checks-job-timeout/proposal.md)。
+## 近期维护切片：缩短完整检查反馈
+
+2026-11-12 核查 [Actions #253](https://github.com/houjibo/knowledge-visual/actions/runs/43074410325) 的公开 job 元数据：checks 用时 15 分 32 秒，其中 `npm run check` 步骤 14 分 56 秒；构建 7 秒、部署 14 秒、部署后核验 40 秒。首个 job 创建至最终完成为 16 分 45 秒，不含顶层并发队列等待，因此不能将其表述为 push 到上线总耗时。浏览器安装两处共 46 秒，本轮主要开销是综合检查步骤。
+
+下一独立 OpenSpec 切片候选：将功能回归按 desktop/mobile 两个 job 并行，另一个 job 分步骤保留静态、开发站全页和完整发布包检查；保留稳定名称的 `checks` 汇总门禁及本地 `npm run check` 完整入口。本计划尚未改变当前流水线。
+
+验收应证明两项目 `--list` 的并集与原完整清单一致且没有新增跳过；全部子检查成功才能构建发布，失败、取消或意外跳过均阻止发布并保留项目对应诊断。继续保留单一发布器、两次 main 校验、提交来源核验、最小权限、部署后资源和公网交互检查，以及不同运行之间的发布/核验串行关系。至少记录三轮同等测试清单的各阶段时长，再判断是否达到关键路径缩短 25% 的实验目标；未达到则保留差距。
+
+依据：[GitHub 工作流矩阵与依赖语法](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)、[Playwright CLI 项目选择与清单](https://playwright.dev/docs/test-cli)。当前 `cancel-in-progress:false` 保留运行中的工作流，但默认只保留一个 pending，新提交可替换旧 pending；不能宣称每次 push 都会排队执行完。队列策略保持为另一个待测切片，见 [GitHub 并发控制](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)。
+
 ## 分阶段执行
 
 ### 1. 构建可发布的静态产物
@@ -36,7 +46,7 @@
 
 - 先选择并确认域名的所有权、续费责任和 DNS 管理方式；接入前核查成本和服务可用性。配置域名验证、DNS 和 HTTPS，确认旧项目站链接及外部深链的处理方式。
 - 当前进度按浏览器来源保存；首页支持导出主题完成记录并预览后合并导入，保留目标浏览器已有同名记录。挑战历史与最佳成绩未纳入；多键写入无法提供跨标签事务，回滚失败会明确提示。域名变更不会自动继承记录。
-- 首页已补充网站简介、图标及描述元信息；分享图片、站点地图和正式域名待公开地址确定后配置。继续以真实学习路径为依据设计首页的起点、搜索、学科与学段入口。
+- 首页已补充网站简介、图标及描述元信息，公开 Pages 地址已固定；分享图片和站点地图尚待补充，自有域名待确认。继续以真实学习路径为依据设计首页的起点、搜索、学科与学段入口。
 
 ### 4. 质量、维护与反馈
 
