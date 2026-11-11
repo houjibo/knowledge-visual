@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：327；已登记部分交互证据：185；尚未登记：142。
+主题总数：327；已登记部分交互证据：186；尚未登记：141。
 
 ## 已登记部分交互证据
 
@@ -41,6 +41,8 @@
 - [物质的量 · 高中化学互动可视化](../../chemistry/high/mole-concept.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
   - 物质的量图示比例、选项与测验部分场景；未覆盖全部计算及教学内容。 [mole-visualization.spec.js](../../tests/browser/mole-visualization.spec.js)、[physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
+- [非金属及其化合物 · 互动可视化](../../chemistry/high/nonmetals.html)
+  - 桌面与移动浏览器验证四个主题页签的语义、方向键/Home/End、Enter/Space、指针/触屏，氮/硫单选组、关系图文字替代、列表/摘要/反应详情同步及 320px 无溢出；未覆盖元素卡片、动态关系项和练习选项的键盘可用性、完整化学知识正确性、真实设备与屏幕阅读器。 [high-chemistry-nonmetals-tabs-accessibility.spec.js](../../tests/browser/high-chemistry-nonmetals-tabs-accessibility.spec.js)
 - [化学反应与能量 · 高中化学互动可视化](../../chemistry/high/reaction-energy.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [化学反应速率与平衡 - 高中化学可视化](../../chemistry/high/reaction-rate.html)
@@ -481,7 +483,6 @@
 - [金属及其化合物 - 高中化学互动可视化](../../chemistry/high/07-metals.html)
 - [烃的衍生物 - 醇酚醛羧酸酯](../../chemistry/high/10-derivatives.html)
 - [生命中的基础有机物 - 糖类·油脂·蛋白质](../../chemistry/high/11-biomolecules.html)
-- [非金属及其化合物 · 互动可视化](../../chemistry/high/nonmetals.html)
 - [有机化学基础 · 互动可视化](../../chemistry/high/organic.html)
 - [氧化还原反应 · 互动可视化](../../chemistry/high/redox.html)
 - [物质的世界 - 初中化学](../../chemistry/middle/01-matter.html)
