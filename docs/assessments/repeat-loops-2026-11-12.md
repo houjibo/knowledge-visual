@@ -21,6 +21,7 @@
 - 桌面 1280×720 验证最长八条场景经过目标时，地图、循环块、展开列表、操作与当前反馈同屏；320px 无横向溢出，键盘可选择三次并逐条完成。
 - 初版检查发现程序表示离地图/操作太远，已收拢为并排工作区。独立审查发现一处比较说明的模板插值遗漏，已修正。首轮专项 69/70 通过，唯一失败为本机桌面 Chromium 的原生 select 箭头模拟不改变选值；用选项首字符“3”进行实际键盘选择并以 Tab 继续后通过，后续新增跨标签页及同屏检查后共 74/74 通过。
 - 完整 `npm run check` 通过：严格 OpenSpec 248 项（247 份主规格和本轮活跃变更）、功能回归 1842 通过及 2 项仅限移动的案例在桌面配置跳过、开发站 361 页、发布包路径专项 6 项与发布包 361 页加载。
-- 本轮远端部署仍待推送后的 Actions、公网清单与页面交互核验，未把本地通过表述为公开发布通过。
+- 提交 `e312dbef4c7a0622be61841722e365c6d33c3c97` 的 [Actions #254](https://github.com/houjibo/knowledge-visual/actions/runs/43081918106) 检查、构建、部署与部署后核验全部成功。公开 `release-version.json` 直接读取匹配该 revision，`site_files_modified:false`。
+- 公网浏览器验证重复四次第六条到达目标时仍为 6/8，继续后第八条停在第 5 列第 1 行且目标未完成；改三次完整六条后到达目标并显示已保存。最初一次连接关闭、随后加载观察超时，复查同一标签后页面加载成功，未把观察超时误判为部署失败。
 
-当前行为契约和任务见 [OpenSpec 变更](../../openspec/changes/2026-11-12-primary-computer-repeat-loops/README.md)。
+当前行为契约和任务见 [OpenSpec 变更](../../openspec/changes/archive/2026-11-12-primary-computer-repeat-loops/README.md)。
