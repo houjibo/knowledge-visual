@@ -10,6 +10,9 @@
 - 用 AI 辅助分析与实施，以仓库文档、OpenSpec、自动测试和可复核结果保持知识与决策可追溯。
 
 ## 当前基线
+
+最近一次主分支自动发布为[Actions #262](https://github.com/houjibo/knowledge-visual/actions/runs/43103626270)，提交 `a18061841c2b1b58aae5fb052c5a7e51cf81645d` 的core、两matrix、checks、构建、部署与部署后核验七个job全部成功。实际功能回归1896通过/2跳过、开发站363页、发布路径8项、发布包363页通过；公网版本清单HTTP200、revision精确匹配且 `site_files_modified:false`。工业场景三资源HTTP200并与提交逐字节一致，工业批次44/20秒对照与条件六步及目录进度均已公开人工验收。此前main队列异常已不阻塞当前目标版本，历史时刻、平台事件与结论边界保留在[发布队列核查](../assessments/release-backlog-2026-11-12.md)中。
+
 仓库 `houjibo/knowledge-visual` 为公开项目，默认分支为 `main`。GitHub Pages 已启用，站点 `https://houjibo.github.io/knowledge-visual/` 的首次可验证发布来自 `08751e6`；[Actions run 42430059152](https://github.com/houjibo/knowledge-visual/actions/runs/42430059152) 的检查、构建、部署和部署后验收均成功，公网清单匹配该提交且标记站点文件未修改。首次自动部署使用的 Jekyll 模板没有版本清单，已移除；后续由通过全量质量门禁的 Static HTML 产物唯一发布。详细范围与限制见[发布记录](../assessments/site-release-2026-11-08.md)。独立域名、域名所有权、托管成本及反馈责任尚未确定。
 
 截至 2026-11-10，计算机与人工智能页面已发布。归档提交 `34f9a56` 的 Actions [run #208](https://github.com/houjibo/knowledge-visual/actions/runs/42739511880) 检查和构建成功，但 Pages deployment 约 10 分钟后转为 error，工作流取消且部署后 job 被跳过；公网清单已匹配该提交，直接核验确认 6 个资源可访问。job 日志接口返回 403，具体平台原因未确认。后续提交 `9f22f6a` 将部署 job 上限增至 20 分钟，并由静态守卫验证超时和后置核验依赖；Actions [run #209](https://github.com/houjibo/knowledge-visual/actions/runs/42747644282) 的检查、构建、deploy 和部署后核验全部成功，deploy 用时约 32 秒，公网清单 revision 匹配且 `site_files_modified:false`。此次复验支持更有弹性的窗口配置，但单次成功不能证明 #208 的唯一原因已隔离；继续观察后续发布。相关[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-10-stabilize-pages-deploy-acknowledgement/proposal.md)。

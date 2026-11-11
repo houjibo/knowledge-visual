@@ -33,8 +33,22 @@
 
 ## 发布状态与排队异常
 
-功能提交 `d1833977827e106c7dec8cf10ecc7acf5eb20afe` 已推送，并触发 [Actions #258](https://github.com/houjibo/knowledge-visual/actions/runs/43095587329)。2026-11-11 UTC 20:37:50（本地11月12日04:37:50）以no-cache及新查询参数读取API，运行仍为queued、conclusion=null、attempt=1、jobs为空；相对20:21:50创建时间已排队16分钟，没有测试失败或任务执行证据，公开目录仍为上一版。
+当前主分支已自动发布。[Actions #262](https://github.com/houjibo/knowledge-visual/actions/runs/43103626270) 对提交 `a18061841c2b1b58aae5fb052c5a7e51cf81645d` 的core、desktop、mobile、checks、构建、部署、部署后核验七个job全部成功，最后核验于2026-11-11 UTC 21:39:00完成。该版本同时包含条件分支主题，实际功能回归为[desktop 947通过/2跳过](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130801166425/annotations)、[mobile 949通过](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130801166540/annotations)，合计1896通过/2跳过；[core执行摘要](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130801167036/annotations)记录开发站363页、发布路径8项、发布包363页全部通过。这是集成后版本的执行数量，前述1866/362是工业场景初交时的本地范围。
 
-[GitHub状态页](https://www.githubstatus.com/)同日记录20:22–20:26的Webhooks短暂异常。时间重叠尚不能证明本次排队原因；仓库其余近期运行均已成功结束。此次仅补充核查文档并推送一次，以新事件触发同一套完整门禁，不修改发布保护、功能清单或验证标准。后续以实际新运行、公开revision和新场景操作核实发布结果；本地通过不代表公网已完成。真实设备、屏幕阅读器、真实产线预测与学习者理解效果尚未全面验证。
+已直接读取[公网版本清单](https://houjibo.github.io/knowledge-visual/release-version.json?verify=a18061841c2b1b58aae5fb052c5a7e51cf81645d)，HTTP200、revision精确匹配该提交且 `site_files_modified:false`。新场景三个资源均HTTP200，响应字节与该提交的 `git show` 内容逐一完全一致：
 
-范围与任务：[OpenSpec proposal](../../openspec/changes/2026-11-12-industrial-assembly-line/proposal.md)、[任务](../../openspec/changes/2026-11-12-industrial-assembly-line/tasks.md)。
+| 资源 | 字节数 | SHA-256 |
+| --- | ---: | --- |
+| `simulation-world/assembly-line.html` | 24768 | `51c78a64101312982d73f7914072db855abd17d7170faca0424262062648fe51` |
+| `simulation-world/assets/assembly-line-model.js` | 6593 | `232a38ba0a90a75ee58acf1cdee2bfc30abc34c26b08b55781998e9c6d33ca45` |
+| `simulation-world/assets/assembly-line.js` | 10844 | `5c528b12e778ef7e6613d67e84ec34de6b28777d239afb03dca61bf098e85290` |
+
+CUA公开人工验收已通过：从三卡模拟目录进入，默认2/5/2批次在第44模拟秒完成8件、首件第9秒；切换2/2/2批次在第20秒完成、首件第6秒。界面同时保留44秒与20秒及各自完整条件，显示节省24模拟秒，自动停止、成品8/8、在制品0；与自动化结果一致。已保存公开验收截图，变更完成后归档。
+
+### 历史排队快照
+
+功能提交 `d1833977827e106c7dec8cf10ecc7acf5eb20afe` 先推送并触发 [Actions #258](https://github.com/houjibo/knowledge-visual/actions/runs/43095587329)。2026-11-11 UTC 20:37:50（本地11月12日04:37:50）以no-cache及新查询参数读取API，运行当时为queued、conclusion=null、attempt=1、jobs为空；相对20:21:50创建时间已排队16分钟，没有测试失败或任务执行证据，当时公开目录仍为上一版。
+
+[GitHub状态页](https://www.githubstatus.com/)同日记录20:22–20:26的Webhooks短暂异常，时间重叠不能证明全部初始等待的原因；后续平台事件和恢复边界见[发布队列核查](release-backlog-2026-11-12.md)。当时补充核查文档并推送一次，以新事件触发同一套完整门禁；之后按正常功能交付集成条件主题，最终由 #262 完成自动发布。发布保护、功能清单验证和质量标准均保留，旧排队快照已不构成当前版本的发布阻塞。真实设备、屏幕阅读器、真实产线预测与学习者理解效果尚未全面验证。
+
+范围与任务：[OpenSpec proposal](../../openspec/changes/archive/2026-11-12-industrial-assembly-line/proposal.md)、[任务](../../openspec/changes/archive/2026-11-12-industrial-assembly-line/tasks.md)。

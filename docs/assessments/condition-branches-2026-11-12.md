@@ -34,9 +34,9 @@
 
 - `CI=true npm run check`完整通过：功能回归1896通过、原有2项移动专属测试在桌面跳过，开发站363页、发布包交互8项及发布包363页全部通过。
 
-本轮在`codex/primary-condition-branches`独立分支交付，公开主分支仍等待工业场景的GitHub队列；截至21:02:28 UTC，#258/#259仍queued、jobs均为0，公开revision仍为`18ef7b479a213140ff3e62ad2c6e39886ddbd3d0`。主分支已快速前进集成该功能，公开操作仍待核实，OpenSpec保持活跃，不把分支质量通过说成公开验收。真实设备、屏幕阅读器、完整编程课程覆盖及学习者理解效果仍未全面验证。
+本轮先在`codex/primary-condition-branches`独立分支交付。历史快照截至21:02:28 UTC，main #258/#259为queued、jobs均为0，公开revision为`18ef7b479a213140ff3e62ad2c6e39886ddbd3d0`；当时主分支公开更新受到队列阻塞。随后功能快速前进集成main，当前已由下述 #262 完成自动发布与版本核验。公开人工交互验收已通过，OpenSpec随证据归档。真实设备、屏幕阅读器、完整编程课程覆盖及学习者理解效果仍未全面验证。
 
-范围：[OpenSpec提案](../../openspec/changes/2026-11-12-primary-condition-robot/proposal.md)、[设计](../../openspec/changes/2026-11-12-primary-condition-robot/design.md)、[任务](../../openspec/changes/2026-11-12-primary-condition-robot/tasks.md)。
+范围：[OpenSpec提案](../../openspec/changes/archive/2026-11-12-primary-condition-robot/proposal.md)、[设计](../../openspec/changes/archive/2026-11-12-primary-condition-robot/design.md)、[任务](../../openspec/changes/archive/2026-11-12-primary-condition-robot/tasks.md)。
 
 ## 独立分支远端质量结果
 
@@ -48,6 +48,12 @@
 
 core、两matrix及checks四个检查job均成功；build-release、deploy、verify-deployment三个job按非main条件跳过，不能作为已发布证据。这些数字来自执行摘要，清单指纹另见前述收集结果。后续证据文档更新保持功能、测试清单和工作流与该提交一致。
 
-main #258/#259截至21:22:24仍queued且未创建job。官方故障及并发调查见[发布队列核查](release-backlog-2026-11-12.md)；条件分支已集成主分支，公开核验仍未完成。
+main #258/#259截至21:22:24的历史快照仍为queued且未创建job。官方故障及并发调查见[发布队列核查](release-backlog-2026-11-12.md)；该快照保留等待证据，当前发布状态以 #262 为准。
 
 功能与证据提交d8186ef、bb44a5d已通过快速前进合入main。集成后的补充仅更新交付记录；页面、模型、控制器、浏览器测试和工作流与已验证的功能提交保持一致。
+
+## 主分支自动发布与人工验收进度
+
+[Actions #262](https://github.com/houjibo/knowledge-visual/actions/runs/43103626270) 对主分支 `a18061841c2b1b58aae5fb052c5a7e51cf81645d` 的core、两matrix、checks、build-release、deploy、verify-deployment七个job全部成功，最后核验于21:39:00 UTC完成。实际执行注释为[desktop 947通过/2跳过](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130801166425/annotations)、[mobile 949通过](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130801166540/annotations)，合计1896通过/2跳过；[core](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130801167036/annotations)确认开发站363页、发布路径8项、发布包363页通过。
+
+已直接读取[公开版本清单](https://houjibo.github.io/knowledge-visual/release-version.json?verify=a18061841c2b1b58aae5fb052c5a7e51cf81645d)，HTTP200、revision匹配该提交且 `site_files_modified:false`。发布资源检查通过，工业场景三资源另有[逐字节核验](assembly-line-2026-11-12.md)。当前自动发布阻塞已解除。CUA从公开小学目录的第三卡进入，六次判断到达(5,1)，显示真2/假4/碰撞0、完成保存；最后快照从(4,1)检查(5,1)畅通，显示false/else/向右，保持旧位置判断。返回目录从原2/3变为3/3，三个主题徽章均保留；重新进入显示历史已完成而当前探索为起点0次。公开人工验收与自动化结果一致，已保存截图并归档变更。
