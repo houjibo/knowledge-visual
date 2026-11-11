@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：327；已登记部分交互证据：184；尚未登记：143。
+主题总数：327；已登记部分交互证据：185；尚未登记：142。
 
 ## 已登记部分交互证据
 
@@ -34,6 +34,8 @@
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [电化学 · 互动可视化](../../chemistry/high/electrochemistry.html)
   - 桌面与移动浏览器验证四个电化学主题的页签语义、选中状态与面板关联、左右方向键循环、Home/End、Enter/Space、点击/触屏、原有反应控制与练习答题及 320px 无横向溢出；真实设备、屏幕阅读器和完整化学教学内容未全面验收。 [high-chemistry-electrochemistry-tabs-accessibility.spec.js](../../tests/browser/high-chemistry-electrochemistry-tabs-accessibility.spec.js)
+- [水溶液中的离子平衡 - 高中化学可视化](../../chemistry/high/ion-equilibrium.html)
+  - 桌面与移动浏览器验证四个离子平衡主题的页签语义、选中状态与面板关联、左右方向键循环、Home/End、Enter/Space、点击/触屏、电离及 pH 滑块、盐类水解、滴定操作和每个面板在 320px 下无横向溢出；真实设备、屏幕阅读器和完整教学内容未全面验收。 [high-chemistry-ion-equilibrium-tabs-accessibility.spec.js](../../tests/browser/high-chemistry-ion-equilibrium-tabs-accessibility.spec.js)
 - [离子反应 · 高中化学互动可视化](../../chemistry/high/ionic-reactions.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [物质的量 · 高中化学互动可视化](../../chemistry/high/mole-concept.html)
@@ -479,7 +481,6 @@
 - [金属及其化合物 - 高中化学互动可视化](../../chemistry/high/07-metals.html)
 - [烃的衍生物 - 醇酚醛羧酸酯](../../chemistry/high/10-derivatives.html)
 - [生命中的基础有机物 - 糖类·油脂·蛋白质](../../chemistry/high/11-biomolecules.html)
-- [水溶液中的离子平衡 - 高中化学可视化](../../chemistry/high/ion-equilibrium.html)
 - [非金属及其化合物 · 互动可视化](../../chemistry/high/nonmetals.html)
 - [有机化学基础 · 互动可视化](../../chemistry/high/organic.html)
 - [氧化还原反应 · 互动可视化](../../chemistry/high/redox.html)
