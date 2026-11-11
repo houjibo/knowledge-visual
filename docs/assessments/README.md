@@ -1,6 +1,6 @@
 # 站点评估基线
 
-[页面清单](page-inventory.json) 于 2026-11-12 根据当前仓库重新生成：包含 361 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
+[页面清单](page-inventory.json) 于 2026-11-12 根据当前仓库重新生成：包含 362 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
 
 重新生成：`python3 scripts/inventory_pages.py --output docs/assessments/page-inventory.json`；运行 `python3 scripts/inventory_pages.py --check docs/assessments/page-inventory.json` 检查清单是否过期，运行 `python3 tests/inventory_test.py` 验证基本解析及导航行为。生成结果按路径稳定排序，无时间戳，可用版本差异检查变化。
 
@@ -32,3 +32,5 @@
 [小学循环指令工坊核查](repeat-loops-2026-11-12.md)记录循环/展开对应、路线结果、运行控制、异常存储、发现进度和同屏布局的验证。
 
 [并行质量检查核查](ci-parallel-checks-2026-11-12.md)记录测试清单等价、配置与汇总失败边界、真实运行状态和性能观察范围。
+
+[工业流水线模拟核查](assembly-line-2026-11-12.md)记录三工位模型、加工与排队边界、独立事件时间校验及发布验收。

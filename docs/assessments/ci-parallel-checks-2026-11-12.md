@@ -20,7 +20,7 @@ core 无条件执行静态、真实清单等价、开发站全页与完整发布
 - 独立审查曾确认发布链默认 shell、来源步骤自定义 shell、非部署 job 权限覆盖可被本轮初版守卫接受，已补拒绝与回归。固定结构守卫不是通用 YAML 解释器，也不证明 GitHub 的完整失败/取消调度已经实测。
 - 完整 `npm run check` 通过：严格 OpenSpec 249 项、真实清单等价、功能回归 1842 通过及原有两项移动专属测试在桌面跳过、开发站及发布包各 361 页、发布包交互专项 6 项。
 - 设置 `CI=true GITHUB_ACTIONS=true` 再运行真实清单预检仍为 922+922=1844，指纹一致，验证 JSON reporter 覆盖可与 CI 环境变量一起工作。
-- 新流水线 [Actions #255](https://github.com/houjibo/knowledge-visual/actions/runs/43088530584) 与 [#256](https://github.com/houjibo/knowledge-visual/actions/runs/43091507869) 已完成：两轮的 core、两个功能矩阵、汇总、构建、部署与后置核验均全部成功。本地脚本真值表仍不等于平台所有取消路径已实测。
+- 新流水线 [Actions #255](https://github.com/houjibo/knowledge-visual/actions/runs/43088530584)、[#256](https://github.com/houjibo/knowledge-visual/actions/runs/43091507869) 与 [#257](https://github.com/houjibo/knowledge-visual/actions/runs/43093586732) 已完成：三轮的 core、两个功能矩阵、汇总、构建、部署与后置核验均全部成功。本地脚本真值表仍不等于平台所有取消路径已实测。
 
 ## 首轮远端运行与发布证据
 
@@ -46,9 +46,15 @@ core 无条件执行静态、真实清单等价、开发站全页与完整发布
 
 公开执行注释为 [mobile 922通过](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130769465451/annotations)、[desktop 920通过/2跳过](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130769465509/annotations)，以及 [core 的开发站361页、发布交互6项、发布包361页通过](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130769465033/annotations)，与 #255 和串行基线的实际执行数量一致。已直接读取[公网版本清单](https://houjibo.github.io/knowledge-visual/release-version.json?verify=a7fc640019e78ee7f29569bfa47e60f51d3be2a1)，revision 匹配 `a7fc640019e78ee7f29569bfa47e60f51d3be2a1` 且 `site_files_modified:false`。
 
+## 第三轮远端运行与发布证据
+
+[#257 jobs API](https://api.github.com/repos/houjibo/knowledge-visual/actions/runs/43093586732/jobs?per_page=100) 已确认七个 job 均为 `completed/success`，源码 revision 均为 `18ef7b479a213140ff3e62ad2c6e39886ddbd3d0`。该提交只在 #256 之后更新两份 CI 文档；完整比较 `e0e3c4a..18ef7b4` 的提交对象也仅有四个文档差异，功能源码、package/锁文件、浏览器测试、项目配置与工作流均逐字未变。因此三轮使用同一 `bf589a466660b46b921e98e4ea95a44b26ee3f314be2237227ff547fdcfdf624` 清单指纹；身份确认来自源码比较与原清单证据，不只比较测试总数。
+
+公开实际执行注释分别为 [mobile 922通过](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130776619134/annotations)、[desktop 920通过/2跳过](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130776618855/annotations)，以及 [core 的开发站361页、发布交互6项、发布包361页通过](https://api.github.com/repos/houjibo/knowledge-visual/check-runs/130776618346/annotations)，均保持本组基线数量。已直接读取[公网版本清单](https://houjibo.github.io/knowledge-visual/release-version.json?verify=18ef7b479a213140ff3e62ad2c6e39886ddbd3d0)，revision 匹配 `18ef7b479a213140ff3e62ad2c6e39886ddbd3d0` 且 `site_files_modified:false`；部署后 revision、资源及公网交互步骤全部成功。
+
 ## 性能观察
 
-下表来自实际 job/step 的时间字段。“工作阶段窗口”是首个 job 创建至最后 job 完成，不含顶层并发等待，不能作为 push 到上线总时间。#254 与当前功能清单一致，可用作本轮串行基线；#253 少于当前课程用例，仅保留作历史诊断。
+下表来自实际 job/step 的时间字段。“工作阶段窗口”是首个 job 创建至最后 job 完成，不含顶层并发等待，不能作为 push 到上线总时间。#254 与本组 #255–#257 的功能清单一致，可用作本轮串行基线；#253 少于当前课程用例，仅保留作历史诊断。
 
 | 运行 | 结构 | checks | 综合检查步骤 | 构建 | 部署 | 后置核验 | 工作阶段窗口 |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -79,14 +85,30 @@ core 无条件执行静态、真实清单等价、开发站全页与完整发布
 | deploy | 20:02:00 | 20:02:13 | 13秒 | 头校验1秒、Pages 动作8秒 |
 | verify-deployment | 20:02:16 | 20:03:09 | 53秒 | 浏览器安装29秒、revision/资源4秒、公网交互10秒 |
 
+第 3 个样本为 #257，以下同为 2026-11-11 UTC：
+
+| job | 开始 | 完成 | 运行时长 | 主要步骤时长 |
+| --- | --- | --- | ---: | --- |
+| core-checks | 20:07:53 | 20:10:37 | 2分44秒 | 静态7秒、清单等价4秒、开发站全页61秒、完整发布包69秒 |
+| browser-interactions (mobile) | 20:07:53 | 20:14:41 | 6分48秒 | 功能回归379秒、浏览器安装17秒 |
+| browser-interactions (desktop) | 20:07:53 | 20:14:42 | 6分49秒 | 功能回归375秒、浏览器安装20秒 |
+| checks | 20:14:44 | 20:14:47 | 3秒 | 汇总 shell 1秒 |
+| build-release | 20:14:48 | 20:14:57 | 9秒 | 头校验0秒、配置1秒、构建0秒、来源校验0秒、上传2秒 |
+| deploy | 20:15:01 | 20:15:16 | 15秒 | 头校验1秒、Pages 动作8秒 |
+| verify-deployment | 20:15:18 | 20:16:06 | 48秒 | 浏览器安装17秒、revision/资源6秒、公网交互16秒 |
+
 步骤时间来自 API 的秒级时间字段，0秒表示同一秒内开始与完成；job 时长另含准备、检出、依赖及收尾，不等于表中主要步骤之和。
 
-| 可比工作阶段窗口 | #254 串行基线 | #255 并行样本 1 | #256 并行样本 2 | 单轮减少比例（#255 / #256） |
-| --- | ---: | ---: | ---: | ---: |
-| 首个质量 job 启动至 checks 完成 | 890秒（14分50秒） | 447秒（7分27秒） | 439秒（7分19秒） | 49.8% / 50.7% |
-| 首个 job 启动至最终核验完成 | 964秒（16分04秒） | 519秒（8分39秒） | 525秒（8分45秒） | 46.2% / 45.5% |
-| 首个 job 创建至最终核验完成 | 966秒（16分06秒） | 520秒（8分40秒） | 527秒（8分47秒） | 46.2% / 45.4% |
+| 可比工作阶段窗口 | #254 串行基线 | #255 样本1 | #256 样本2 | #257 样本3 | 并行三轮中位数 | 中位数减少比例 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 首个质量 job 启动至 checks 完成 | 890秒 | 447秒 | 439秒 | 414秒 | 439秒（7分19秒） | 50.7% |
+| 首个 job 启动至最终核验完成 | 964秒 | 519秒 | 525秒 | 493秒 | 519秒（8分39秒） | 46.2% |
+| 首个 job 创建至最终核验完成 | 966秒 | 520秒 | 527秒 | 495秒 | 520秒（8分40秒） | 46.2% |
 
-#255、#256 首个 job 分别创建于 19:34:55、19:54:22 UTC；以上窗口均不含顶层工作流并发等待。两次并行运行的功能清单指纹相同，runner 资源和网络情况仍可能影响时长。目前完成 **2/3 个并行样本**，25% 关键路径改善实验尚未验收。后续随实际交付记录各阶段时长与覆盖指纹，工作量变化时分组并说明可比范围；新增工业流水线改变测试清单后应作为另一负载，不能直接充当本组第3个同量样本。至少三轮充分可比证据后再判断目标，首次运行成功与性能目标分别记录。
+#255、#256、#257 首个 job 分别创建于 19:34:55、19:54:22、20:07:51 UTC；以上窗口均不含顶层工作流并发等待。三轮工作阶段窗口为8分40秒、8分47秒、8分15秒，相对串行 #254 分别减少46.2%、45.4%、48.8%，中位数为8分40秒，减少46.2%。质量反馈窗口的中位数减少50.7%。
 
-依据：[GitHub 工作流语法](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)、[needs 结果](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#needs-context)、[Playwright CLI](https://playwright.dev/docs/test-cli)。范围与任务见 [OpenSpec](../../openspec/changes/2026-11-12-parallel-ci-browser-projects/README.md)。
+本组已完成 **3/3 个同指纹并行样本**，且每轮完整检查、发布与实际执行数量均保持，25%关键路径改善实验在本组固定负载、#254一次串行基线与当前 runner 条件下达到目标。该观察不含队列等待，不能作为 push 到上线总时长或长期服务保证；平台完整取消调度仍只记录未故障注入的边界。后续实际交付继续记录时长与覆盖指纹，新增工业流水线改变测试清单后应作为另一负载单独分析。
+
+本组实施、完整本地检查、三轮同清单实际执行和公开版本核验已完成，OpenSpec已归档；未来新增场景后的运行作为新负载继续观察。
+
+依据：[GitHub 工作流语法](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)、[needs 结果](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#needs-context)、[Playwright CLI](https://playwright.dev/docs/test-cli)。范围与任务见 [OpenSpec](../../openspec/changes/archive/2026-11-12-parallel-ci-browser-projects/README.md)。

@@ -52,7 +52,7 @@ class PublishedVerifierTest(unittest.TestCase):
         self.manifest_path.write_text(json.dumps({**self.manifest, 'site_files_modified': False}))
 
     def test_clean_release_can_be_verified_under_subpath(self):
-        self.assertEqual(verifier.verify(self.base, self.sha, allow_http=True), 28)
+        self.assertEqual(verifier.verify(self.base, self.sha, allow_http=True), 31)
         result = subprocess.run(['python3', str(ROOT / 'scripts/verify_published_site.py'),
                                  '--base-url', self.base, '--expected-revision', self.sha,
                 '--allow-http-loopback', '--attempts', '1'], capture_output=True, text=True)
@@ -89,7 +89,7 @@ class PublishedVerifierTest(unittest.TestCase):
     def test_retries_transient_failures_and_stops_on_success(self):
         args = ['verify_published_site.py', '--base-url', self.base, '--expected-revision', self.sha,
                 '--allow-http-loopback', '--attempts', '2', '--delay-seconds', '0']
-        with patch('sys.argv', args), patch.object(verifier, 'verify', side_effect=[ValueError('not ready'), 26]) as verify:
+        with patch('sys.argv', args), patch.object(verifier, 'verify', side_effect=[ValueError('not ready'), 31]) as verify:
             self.assertEqual(verifier.main(), 0)
             self.assertEqual(verify.call_count, 2)
 

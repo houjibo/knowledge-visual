@@ -211,3 +211,29 @@ test('发布站各数学学段目录可加载进度脚本并显示完成标记',
   }
   expect(failures).toEqual([]);
 });
+
+test('发布站子路径可查找并完整运行工业流水线', async ({page}) => {
+  const failures = [];
+  page.on('pageerror', e => failures.push(e.message));
+  page.on('response', response => {
+    if (response.url().startsWith(base) && response.status() >= 400)
+      failures.push(`${response.status()} ${response.url()}`);
+  });
+  await page.clock.install();
+  await gotoPublished(page, base);
+  await page.getByRole('combobox', {name:'学科', exact:true}).selectOption('simulation-world');
+  await page.getByRole('searchbox', {name:'关键词'}).fill('流水线');
+  await page.locator('#site-results a[href="simulation-world/assembly-line.html"]').click();
+  await expect(page).toHaveURL(new URL('simulation-world/assembly-line.html', base).href);
+  await waitForPublishedDocument(page);
+  await page.locator('#balanced-preset').click();
+  await page.locator('#run-button').click();
+  await page.clock.runFor(10000);
+  await expect(page.locator('#elapsed-time')).toHaveText('20');
+  await expect(page.locator('#completed-count')).toHaveText('8/8');
+  await page.getByRole('link', {name:'返回模拟世界', exact:true}).click();
+  await waitForPublishedDocument(page);
+  await expect(page).toHaveURL(new URL('simulation-world/index.html', base).href);
+  await expect(page.locator('.topic-card')).toHaveCount(3);
+  expect(failures).toEqual([]);
+});

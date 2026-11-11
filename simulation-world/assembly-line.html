@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="调节切割、装配、质检的加工时间，逐秒观察8件零件的排队、并行加工与整批交付，比较瓶颈和均衡流水线。">
+  <title>工业流水线模拟 · 模拟世界</title>
+  <style>
+    :root { color-scheme: dark; --bg: #09111b; --panel: #111e2c; --panel-deep: #0b1622; --line: #2a3c50; --text: #f0f5fb; --muted: #a5b5c8; --cyan: #69e2ce; --blue: #8cc8ff; --amber: #ffca79; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 0; background: radial-gradient(ellipse at 10% 0, #193044 0, transparent 44%), radial-gradient(ellipse at 95% 12%, #16312f 0, transparent 38%), var(--bg); color: var(--text); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    button, select { font: inherit; }
+    a { color: var(--blue); }
+    :focus-visible { outline: 3px solid var(--amber); outline-offset: 4px; }
+    .skip-link { position: absolute; left: -9999px; top: 8px; z-index: 10; padding: 10px; background: #fff; color: #142132; }
+    .skip-link:focus { left: 12px; }
+    .page-shell { width: min(1180px, 100%); padding: 18px 24px 30px; margin: auto; }
+    .topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+    .topbar a { text-decoration: none; }
+    .topbar a:hover { text-decoration: underline; }
+    .technical-tag { letter-spacing: .08em; color: #9ed1cf; }
+    .hero { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: 22px 0 18px; }
+    .eyebrow { margin: 0 0 4px; color: var(--cyan); font-size: 11px; letter-spacing: .12em; font-weight: 750; }
+    h1 { margin: 0 0 6px; font-size: clamp(1.75rem, 4.5vw, 2.45rem); letter-spacing: -.02em; line-height: 1.2; }
+    .hero p:last-child { margin: 0; color: var(--muted); font-size: 13px; }
+    .hero-symbol { display: grid; place-items: center; flex: 0 0 74px; width: 74px; height: 74px; border: 1px solid #45645d; border-radius: 20px; color: var(--cyan); background: linear-gradient(145deg, #233e41, #14252c); box-shadow: inset 0 1px #ffffff0d; }
+    .hero-symbol svg { width: 44px; height: 44px; }
+    .panel { min-width: 0; border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(135deg, #142332eF, #0f1b28f5); box-shadow: 0 16px 44px #00000020; }
+    .workspace { padding: 18px; }
+    .section-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 10px; }
+    h2 { margin: 0; font-size: 15px; font-weight: 750; }
+    .section-heading p { margin: 0; font-size: 11px; color: var(--muted); }
+    .config-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .parameter { min-width: 0; padding: 9px 12px; border: 1px solid #304459; border-radius: 11px; background: #18293a; }
+    .parameter label { display: block; margin-bottom: 5px; color: #d0dce9; font-size: 12px; font-weight: 650; }
+    .parameter select { width: 100%; min-width: 0; min-height: 40px; border: 1px solid #496073; border-radius: 7px; padding: 6px 10px; background: #0d1c29; color: var(--text); cursor: pointer; }
+    .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 9px 14px; margin-top: 12px; }
+    .button-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    button { min-height: 42px; border: 1px solid #40566d; border-radius: 8px; padding: 7px 12px; background: #1a2b3c; color: var(--text); font-size: 12px; font-weight: 700; cursor: pointer; }
+    button.primary { border-color: #89f1df; background: var(--cyan); color: #082821; }
+    button.preset { color: #c6d9e9; background: #142434; }
+    button:hover:not(:disabled) { filter: brightness(1.16); }
+    button:disabled { opacity: .42; cursor: not-allowed; }
+    #simulation-status { margin: 10px 0 13px; color: #c3d6e7; font-size: 12px; min-height: 1.6em; }
+    #simulation-status[data-mode="complete"] { color: var(--cyan); }
+    .scene { min-width: 0; border-top: 1px solid var(--line); padding-top: 13px; }
+    .line-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+    .line-heading h2 { font-size: 13px; letter-spacing: .03em; }
+    .constraint-summary { font-size: 11px; color: var(--muted); }
+    #bottleneck-names { color: var(--amber); font-weight: 700; }
+    .pipeline { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+    .station { position: relative; min-width: 0; border: 1px solid #35506a; border-radius: 12px; padding: 12px; background: #101d2b; }
+    .station[data-bottleneck="true"] { border-color: #86663f; box-shadow: inset 0 2px #ffca7959; }
+    .station:not(:last-child)::after { content: ""; position: absolute; top: 52%; right: -15px; width: 8px; height: 8px; border-top: 2px solid #719b9f; border-right: 2px solid #719b9f; transform: rotate(45deg); }
+    .station-heading { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+    .station-index { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid #486178; border-radius: 7px; color: var(--blue); font: 700 11px ui-monospace, SFMono-Regular, monospace; }
+    .station h3 { margin: 0; font-size: 14px; }
+    .limit-badge { margin-left: auto; border: 1px solid #8c6a39; border-radius: 5px; padding: 1px 6px; color: var(--amber); background: #5b422c4d; font-size: 10px; }
+    .queue-title { display: flex; justify-content: space-between; gap: 7px; margin: 0 0 5px; color: var(--muted); font-size: 11px; }
+    .queue-title output { color: #e2edf8; font: 700 11px ui-monospace, SFMono-Regular, monospace; }
+    .part-list { display: flex; flex-wrap: wrap; gap: 5px; list-style: none; padding: 0; margin: 0; }
+    .queue-strip { min-height: 48px; align-content: flex-start; padding: 8px; border: 1px solid #24384d; border-radius: 8px; background: #091522; }
+    .part { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; min-width: 28px; min-height: 26px; padding: 2px 5px; border: 1px solid #7195b2; border-radius: 5px; background: linear-gradient(145deg, #41647d, #264054); color: #f3f8ff; font: 700 11px ui-monospace, SFMono-Regular, monospace; box-shadow: inset 0 1px #ffffff1a, 0 2px 3px #00000033; }
+    .queue-empty { margin: 3px 0; color: #8195ab; font-size: 11px; list-style: none; }
+    .machine { margin-top: 9px; border: 1px solid #344d64; border-radius: 9px; overflow: hidden; background: linear-gradient(180deg, #1e3348, #152738); }
+    .machine-view { position: relative; display: flex; align-items: center; justify-content: space-around; gap: 12px; height: 78px; padding: 7px 14px 13px; }
+    .machine-view::after { content: ""; position: absolute; right: 0; bottom: 0; left: 0; height: 10px; border-top: 1px solid #5c7385; background: repeating-linear-gradient(100deg, #111e2a 0 7px, #43596a 8px 11px, #111e2a 12px 18px); }
+    .machine-svg { width: 74px; height: 55px; flex: 0 0 auto; color: #8cbbd8; }
+    .workpiece-holder { display: grid; place-items: center; min-width: 76px; min-height: 42px; }
+    .workpiece-holder .part { min-width: 44px; min-height: 38px; border-color: #b7e2f6; background: linear-gradient(145deg, #75b5d3, #376c88); font-size: 14px; }
+    .idle-label { color: #9bafbf; font-size: 11px; }
+    .station-status { display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 7px 9px; background: #0c1926; color: #b7c9da; font-size: 11px; }
+    .station-state { color: #c5d7e7; }
+    .station[data-busy="true"] .station-state { color: var(--cyan); }
+    progress { display: block; width: 100%; height: 6px; border: 0; background: #0a1521; accent-color: var(--cyan); }
+    progress::-webkit-progress-bar { background: #0a1521; }
+    progress::-webkit-progress-value { background: var(--cyan); }
+    progress::-moz-progress-bar { background: var(--cyan); }
+    .finished-row { display: flex; align-items: center; gap: 16px; margin-top: 14px; padding: 10px 12px; border: 1px solid #355749; border-radius: 10px; background: #12332c40; }
+    .finished-label { flex: 0 0 auto; }
+    .finished-label h3 { margin: 0; font-size: 12px; color: #cce9de; }
+    .finished-label p { margin: 2px 0 0; font-size: 10px; color: var(--muted); }
+    #finished-items { flex: 1 1 auto; min-width: 0; min-height: 29px; align-items: center; }
+    #finished-items .part { border-color: #549f8b; background: linear-gradient(135deg, #285b4e, #193e35); color: #b9f9df; }
+    #completed-count { color: var(--cyan); font: 750 20px ui-monospace, SFMono-Regular, monospace; white-space: nowrap; }
+    .metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px; margin: 12px 0 0; }
+    .metric { min-width: 0; padding: 10px 11px; border: 1px solid #2a4054; border-radius: 9px; background: #101e2d; }
+    .metric dt { color: var(--muted); font-size: 10px; }
+    .metric dd { margin: 3px 0 0; color: var(--text); font: 750 21px/1.2 ui-monospace, SFMono-Regular, monospace; }
+    .metric dd span { margin-left: 3px; color: #9db1c4; font: 10px/1.3 -apple-system, BlinkMacSystemFont, sans-serif; }
+    .metric small { display: block; margin-top: 4px; color: #8197ae; font-size: 9px; }
+    .support-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 14px; margin-top: 14px; }
+    .support-panel { min-width: 0; padding: 17px; }
+    .support-panel h2 { margin-bottom: 7px; }
+    .small-note { margin: 0 0 12px; color: var(--muted); font-size: 11px; }
+    .comparison-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .run-record { min-width: 0; padding: 11px; border: 1px solid #334a60; border-radius: 9px; background: #0c1927; }
+    .run-record p { margin: 0; font-size: 11px; color: var(--muted); }
+    .run-record strong { display: block; margin: 3px 0; color: #dfebf5; font: 700 23px ui-monospace, SFMono-Regular, monospace; }
+    .run-record strong span { color: #9fb2c4; font: 11px sans-serif; }
+    .run-record .conditions { min-height: 2.9em; font-size: 10px; color: #a7bfd2; overflow-wrap: anywhere; }
+    #comparison-result { margin: 10px 0 0; color: var(--cyan); font-size: 12px; }
+    .rate-row { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 11px 0; padding-bottom: 10px; border-bottom: 1px solid #293e52; }
+    .rate-row strong { color: var(--blue); font: 700 23px ui-monospace, SFMono-Regular, monospace; }
+    .rate-row span { color: var(--muted); font-size: 11px; }
+    .support-panel ul { margin: 9px 0 0; padding-left: 18px; color: var(--muted); font-size: 11px; }
+    .notes { margin-top: 14px; padding: 15px 17px; }
+    summary { cursor: pointer; color: #d1e0ef; font-size: 12px; font-weight: 700; }
+    .notes p, .notes ol { color: var(--muted); font-size: 12px; line-height: 1.8; }
+    footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--muted); }
+    footer a { margin: 0 4px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 850px) { .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } .toolbar { flex-direction: column; } }
+    @media (max-width: 700px) {
+      .page-shell { padding: 14px; }
+      .hero { margin-top: 18px; }
+      .hero-symbol { display: none; }
+      .workspace { padding: 13px; }
+      .pipeline, .support-grid { grid-template-columns: minmax(0, 1fr); }
+      .pipeline { gap: 22px; }
+      .station:not(:last-child)::after { top: auto; right: calc(50% - 4px); bottom: -16px; transform: rotate(135deg); }
+      .station { padding: 12px; }
+      .queue-strip { min-height: 45px; }
+      .machine-view { height: 86px; }
+      .finished-row { flex-wrap: wrap; gap: 8px 12px; }
+      #finished-items { order: 3; flex-basis: 100%; }
+      #completed-count { margin-left: auto; }
+    }
+    @media (max-width: 420px) { .config-grid { grid-template-columns: minmax(0, 1fr); gap: 7px; } .parameter { padding: 8px 10px; } .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .comparison-grid { grid-template-columns: minmax(0, 1fr); } .technical-tag { display: none; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="page-shell">
+    <nav class="topbar" aria-label="导航"><a href="index.html">← 返回模拟世界</a><span class="technical-tag">8 件原料 / 3 个工位 / 可暂停逐步观察</span></nav>
+    <header class="hero"><div><p class="eyebrow">工业流程 · 排队与瓶颈</p><h1>工业流水线模拟</h1><p>调节加工节奏，观察零件怎样排队、并行流转。先跑装配瓶颈，再试均衡配置。</p></div><div class="hero-symbol" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 40V22l12-7v9l12-7v23H7Zm24 0V8h8l3 32H31M12 30h4m6 0h4m-14 5h4m6 0h4M6 40h37"/><path d="M34 5c0-3 5-2 5-5" opacity=".5"/></svg></div></header>
+    <main id="main-content">
+      <section class="panel workspace" aria-labelledby="controls-title">
+        <div class="section-heading"><h2 id="controls-title">设定每站的加工时间</h2><p>每推进 1 秒，所有已在加工的工位同时工作</p></div>
+        <div class="config-grid">
+          <div class="parameter"><label for="cut-time">01 · 切割加工时间（秒/件）</label><select id="cut-time"><option value="1">1 秒 / 件</option><option value="2" selected>2 秒 / 件</option><option value="3">3 秒 / 件</option><option value="4">4 秒 / 件</option><option value="5">5 秒 / 件</option><option value="6">6 秒 / 件</option></select></div>
+          <div class="parameter"><label for="assembly-time">02 · 装配加工时间（秒/件）</label><select id="assembly-time"><option value="1">1 秒 / 件</option><option value="2">2 秒 / 件</option><option value="3">3 秒 / 件</option><option value="4">4 秒 / 件</option><option value="5" selected>5 秒 / 件</option><option value="6">6 秒 / 件</option></select></div>
+          <div class="parameter"><label for="quality-time">03 · 质检加工时间（秒/件）</label><select id="quality-time"><option value="1">1 秒 / 件</option><option value="2" selected>2 秒 / 件</option><option value="3">3 秒 / 件</option><option value="4">4 秒 / 件</option><option value="5">5 秒 / 件</option><option value="6">6 秒 / 件</option></select></div>
+        </div>
+        <div class="toolbar"><div class="button-group"><button id="step-button" type="button">推进 1 秒</button><button id="run-button" type="button" class="primary">开始运行</button><button id="rerun-button" type="button">重跑当前条件</button></div><div class="button-group"><button id="balanced-preset" type="button" class="preset">均衡示例 2 / 2 / 2</button><button id="default-preset" type="button" class="preset">瓶颈示例 2 / 5 / 2</button></div></div>
+        <p id="simulation-status" role="status" aria-live="polite" aria-atomic="true" data-mode="paused">已暂停 · t=0；零件 #1 已进入切割，其余 7 件待投料。</p>
+
+        <div id="assembly-scene" class="scene" role="region" data-time="0" data-running="false" data-completed="0" data-pending="7" data-wip="1" aria-labelledby="scene-title">
+          <div class="line-heading"><h2 id="scene-title">切割 → 装配 → 质检</h2><span class="constraint-summary">本条件的限制工位：<strong id="bottleneck-names">装配</strong></span></div>
+          <div class="pipeline">
+            <article id="station-cut" class="station" data-station="0" data-busy="true" data-bottleneck="false" data-item-id="1" data-remaining="2">
+              <div class="station-heading"><span class="station-index" aria-hidden="true">01</span><h3>切割</h3><span class="limit-badge" hidden>限制工位</span></div>
+              <p class="queue-title"><span>待投料 · 不计入在制品</span><span><output id="pending-count">7</output> 件</span></p><ol id="input-queue" class="part-list queue-strip" aria-label="待投料零件，先进先出"></ol>
+              <div class="machine"><div class="machine-view"><svg class="machine-svg" viewBox="0 0 88 60" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 52V12h56v40M7 52h69M21 19h38v9H21zM40 28v10M30 38h20M30 42h20"/><path d="m35 42 5 8 5-8M63 18v26" stroke="#69e2ce"/></svg><div id="cut-workpiece" class="workpiece-holder"></div></div><progress id="cut-progress" max="2" value="0" aria-label="切割当前零件加工进度"></progress><div class="station-status"><span id="cut-state" class="station-state">加工中</span><span>剩余 <strong id="cut-remaining">2</strong> 秒</span></div></div>
+            </article>
+            <article id="station-assembly" class="station" data-station="1" data-busy="false" data-bottleneck="true" data-item-id="" data-remaining="0">
+              <div class="station-heading"><span class="station-index" aria-hidden="true">02</span><h3>装配</h3><span class="limit-badge">限制工位</span></div>
+              <p class="queue-title"><span>等待装配 · 先进先出</span><span><output id="assembly-queue-count">0</output> 件</span></p><ol id="assembly-queue" class="part-list queue-strip" aria-label="等待装配的零件，先进先出"></ol>
+              <div class="machine"><div class="machine-view"><svg class="machine-svg" viewBox="0 0 88 60" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 52h58M20 50V38l15-14 17 5 9-16 7 4-9 21-19-5-12 12v5"/><circle cx="36" cy="27" r="5"/><circle cx="55" cy="33" r="4"/><path d="m61 12 7-5 6 4-5 8M20 38h8" stroke="#69e2ce"/></svg><div id="assembly-workpiece" class="workpiece-holder"></div></div><progress id="assembly-progress" max="5" value="0" aria-label="装配当前零件加工进度"></progress><div class="station-status"><span id="assembly-state" class="station-state">等待来料</span><span>剩余 <strong id="assembly-remaining">0</strong> 秒</span></div></div>
+            </article>
+            <article id="station-quality" class="station" data-station="2" data-busy="false" data-bottleneck="false" data-item-id="" data-remaining="0">
+              <div class="station-heading"><span class="station-index" aria-hidden="true">03</span><h3>质检</h3><span class="limit-badge" hidden>限制工位</span></div>
+              <p class="queue-title"><span>等待质检 · 先进先出</span><span><output id="quality-queue-count">0</output> 件</span></p><ol id="quality-queue" class="part-list queue-strip" aria-label="等待质检的零件，先进先出"></ol>
+              <div class="machine"><div class="machine-view"><svg class="machine-svg" viewBox="0 0 88 60" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 52h62M20 51V13h45v38M27 19h31v21H27zM32 46h21"/><path d="m34 29 5 5 12-12M72 18v20" stroke="#69e2ce"/></svg><div id="quality-workpiece" class="workpiece-holder"></div></div><progress id="quality-progress" max="2" value="0" aria-label="质检当前零件加工进度"></progress><div class="station-status"><span id="quality-state" class="station-state">等待来料</span><span>剩余 <strong id="quality-remaining">0</strong> 秒</span></div></div>
+            </article>
+          </div>
+          <div class="finished-row"><div class="finished-label"><h3>成品区</h3><p>每件完成全部三道工序</p></div><ol id="finished-items" class="part-list" aria-label="完成质检的零件，按完成顺序排列"></ol><output id="completed-count" aria-label="已完成件数">0/8</output></div>
+          <dl class="metrics">
+            <div class="metric"><dt>已推进时间</dt><dd><output id="elapsed-time">0</output><span>模拟秒</span></dd><small>手动或每 500ms 推进 1 秒</small></div>
+            <div class="metric"><dt>在制品</dt><dd><output id="wip-count">1</output><span>件</span></dd><small>加工中 + 中间等待</small></div>
+            <div class="metric"><dt>中间等待</dt><dd><output id="queued-count">0</output><span>件</span></dd><small>本次最多 <output id="peak-queue">0</output> 件</small></div>
+            <div class="metric"><dt>持续供料理论产能</dt><dd><output id="theoretical-rate">12.0</output><span>件/分</span></dd><small>60 ÷ 最长加工时间</small></div>
+            <div class="metric"><dt>首件完成时间</dt><dd><output id="first-completion">—</output><span>模拟秒</span></dd><small>完成首件后显示</small></div>
+            <div class="metric"><dt>整批完成时间</dt><dd><output id="batch-duration">—</output><span>模拟秒</span></dd><small>8 件全部完成后显示</small></div>
+          </dl>
+        </div>
+      </section>
+
+      <div class="support-grid">
+        <section id="comparison-panel" class="panel support-panel" aria-labelledby="comparison-title"><h2 id="comparison-title">比较两次完整批次</h2><p class="small-note">只保留本页最近两次完整运行；改参数或未完成重跑不会覆盖，刷新后清空。</p><div class="comparison-grid"><div class="run-record"><p>较早完整批次</p><strong><output id="previous-completed-time">—</output> <span>秒</span></strong><p id="previous-completed-times" class="conditions">尚无完整记录</p></div><div class="run-record"><p>最近完整批次</p><strong><output id="last-completed-time">—</output> <span>秒</span></strong><p id="last-completed-times" class="conditions">尚无完整记录</p></div></div><p id="comparison-result" role="status" aria-live="polite">先完成瓶颈示例，再试均衡示例，观察整批交付时间的变化。</p></section>
+        <section class="panel support-panel" aria-labelledby="interpret-title"><h2 id="interpret-title">产能和整批用时，怎样读？</h2><div class="rate-row"><span>当前完整批次平均产出</span><strong><output id="batch-rate">—</output> <span>件/分</span></strong></div><ul><li>最长加工时间限制持续供料时的理论产能；并列最长的工位全部标出。</li><li>8 件批次包含启动与收尾，平均产出为 8 × 60 ÷ 整批秒数，通常不同于持续供料理论产能。</li><li>默认 2 / 5 / 2 秒时，装配前会出现等待。比较前可先预测：只加快切割，会改变最长加工时间吗？</li></ul></section>
+      </div>
+      <details class="panel notes"><summary>模型假设、逐秒规则与概念依据</summary><p>固定 8 件原料，按编号先进先出地经过切割、装配和质检。每个工位只有一台机器，加工时间固定为 1–6 个模拟秒。t=0 时首件已进入切割，其余仍待投料；待投料不计入在制品。模型不包含运输耗时、故障、返工或缓冲容量限制，也不代表真实工厂的预测或设备设计。</p><ol><li>推进 1 秒时，先同时减少所有已在加工零件的剩余时间。</li><li>这一秒完成的零件进入下一等待队列，或在质检完成后进入成品区。</li><li>空闲工位再按先进先出取件；新进入工位的零件从下一秒才开始消耗加工时间，不会同秒完成两道工序。</li></ol><p>在这些假设下，首件完成时间为三站加工时间之和，8 件整批用时为“三站时间之和 + 7 × 最长加工时间”。公式由本模型的加工顺序推导；没有把单站加工时间当作整批交付时间。</p><p>概念参考：<a href="https://www.lean.org/lexicon-terms/cycle-time/">Lean Enterprise Institute：Cycle Time</a> 区分加工与全流程时间；<a href="https://www.epa.gov/sustainability/environmental-professionals-guide-lean-and-six-sigma-appendix-c">US EPA：精益与六西格玛术语表</a>解释瓶颈、排队与在制品。本页是有限的推送式教学模型，不是拉动生产或真实工厂调度系统。</p><p id="motion-note">页面默认暂停。你可以逐秒观察；自动运行时，每 500ms 推进 1 个模拟秒。页面进入后台、离开页面、修改条件或开启减少动态效果时自动暂停。所有比较仅存于本页内存，不记录学科学习进度。</p></details>
+    </main>
+    <footer><a href="index.html">返回模拟世界</a> · <a href="gear-transmission.html">探索齿轮传动</a> · 互动模型用于观察关系</footer>
+  </div>
+  <script src="assets/assembly-line-model.js"></script>
+  <script src="assets/assembly-line.js"></script>
+</body>
+</html>

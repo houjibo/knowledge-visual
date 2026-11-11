@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：329；已登记部分交互证据：188；尚未登记：141。
+主题总数：330；已登记部分交互证据：189；尚未登记：141。
 
 ## 已登记部分交互证据
 
@@ -476,6 +476,8 @@
 - [天气与水循环 · 小学科学互动可视化](../../science/weather-water-cycle.html)
   - 测验重复计分、四题通关、刷新目录与写入失败；未覆盖整页探究和计算。 [science-quiz-topics.spec.js](../../tests/browser/science-quiz-topics.spec.js)
   - 温度边界与简化假设、动画暂停恢复及单道练习反馈；云雨生成非定量模型，未覆盖全部科学内容。 [water-cycle.spec.js](../../tests/browser/water-cycle.spec.js)
+- [工业流水线模拟 · 模拟世界](../../simulation-world/assembly-line.html)
+  - 桌面与移动视口验证工业场景查找、八件编号守恒、同步加工与排队、44秒/20秒对照、产能口径、参数和计时器隔离、键盘与减少动态、320px、file协议及无学科进度；真实设备、屏幕阅读器和真实产线适用性尚未全面验收。 [simulation-world-assembly-line.spec.js](../../tests/browser/simulation-world-assembly-line.spec.js)
 - [齿轮传动模拟 · 模拟世界](../../simulation-world/gear-transmission.html)
   - 桌面与移动视口验证目录/分类搜索与无学段进度、正反齿数比、转速/转矩/效率和功率边界、键盘暂停/启动与重置、减少动态效果、320px 布局及 2D 画布不可用降级；真实设备、屏幕阅读器和工程设计适用性尚未全面验收。 [simulation-world-gear-transmission.spec.js](../../tests/browser/simulation-world-gear-transmission.spec.js)
 - [太阳系模拟 · 模拟世界](../../simulation-world/solar-system.html)
