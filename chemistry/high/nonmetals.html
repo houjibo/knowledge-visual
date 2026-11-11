@@ -83,14 +83,22 @@
   .quiz { margin-top: 14px; padding: 14px; background: rgba(5,150,105,0.08); border-radius: 12px; border: 1px solid rgba(5,150,105,0.3); }
   .quiz-q { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
   .quiz-opts { display: grid; gap: 6px; }
-  .quiz-opt { padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all .2s; border: 1px solid transparent; }
-  .quiz-opt:hover { background: rgba(255,255,255,0.1); }
+  .quiz-opt { width: 100%; min-width: 0; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font: inherit; font-size: 13px; color: var(--light); text-align: left; overflow-wrap: anywhere; transition: all .2s; border: 1px solid transparent; }
+  .quiz-opt:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+  .quiz-opt:disabled { opacity: 1; cursor: default; }
+  .quiz-opt-label { display: block; margin-top: 4px; font-size: 12px; }
   .quiz-opt.correct { background: rgba(16,185,129,0.25); border-color: #10b981; }
   .quiz-opt.wrong { background: rgba(239,68,68,0.25); border-color: #ef4444; }
-  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; }
-  .quiz-nav { display: flex; gap: 8px; margin-top: 10px; }
-  .quiz-nav button { padding: 6px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; background: var(--primary); color: white; }
-  .quiz-nav button:disabled { opacity: 0.4; cursor: default; }
+  .quiz-feedback { margin-top: 8px; font-size: 13px; color: #fbbf24; min-height: 18px; line-height: 1.8; overflow-wrap: anywhere; }
+  .quiz-rule, .quiz-save-status { margin-top: 10px; font-size: 13px; color: #cbd5e1; line-height: 1.7; }
+  .quiz-rule { margin-bottom: 12px; }
+  .quiz-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .quiz-nav button, #quiz-save-retry { padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font: inherit; font-size: 13px; background: var(--primary); color: white; }
+  .quiz-nav button:disabled { opacity: 0.5; cursor: default; }
+  .quiz-opt:focus-visible, .quiz-nav button:focus-visible, #quiz-save-retry:focus-visible, .quiz-q:focus-visible, .quiz-result:focus-visible, .quiz-save-status:focus-visible { outline: 3px solid #fbbf24; outline-offset: 3px; }
+  .quiz-result { margin-top: 14px; padding: 12px; border: 1px solid var(--primary); border-radius: 10px; font-size: 14px; line-height: 1.8; }
+  .quiz-sources { margin-top: 12px; font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; }
+  .quiz-sources a { color: #93c5fd; }
   .transform-network { position: relative; }
   .transform-list { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
   .transform-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,255,255,0.04); border-radius: 10px; cursor: pointer; transition: all .2s; border: 1px solid transparent; }
@@ -298,20 +306,30 @@
   <!-- 模式4: 互动练习 -->
   <div class="stage hidden" id="stage-quiz" role="tabpanel" aria-labelledby="tab-quiz" tabindex="0">
     <div class="canvas-wrap">
-      <canvas id="canvas-quiz" width="600" height="450"></canvas>
+      <canvas id="canvas-quiz" width="600" height="450" aria-hidden="true"></canvas>
     </div>
     <div class="panel">
       <div class="quiz" id="quiz-container">
-        <div class="quiz-q" id="quiz-question">加载中...</div>
-        <div class="quiz-opts" id="quiz-options"></div>
-        <div class="quiz-feedback" id="quiz-feedback"></div>
+        <p class="quiz-rule">每题记录首次选择，作答后才能前进。答完五题并点击“完成”后，至少答对三题可记录完成；修改答案请重新练习。</p>
+        <div class="quiz-q" id="quiz-question" tabindex="-1">加载中...</div>
+        <div class="quiz-opts" id="quiz-options" role="group" aria-labelledby="quiz-question"></div>
+        <div class="quiz-feedback" id="quiz-feedback" role="status" aria-live="polite" aria-atomic="true"></div>
         <div class="quiz-nav">
-          <button id="quiz-prev" disabled>上一题</button>
-          <button id="quiz-next">下一题</button>
+          <button type="button" id="quiz-prev" disabled>上一题</button>
+          <button type="button" id="quiz-next" disabled>下一题</button>
+          <button type="button" id="quiz-restart" disabled>重新练习</button>
         </div>
         <div style="margin-top:10px;font-size:13px;color:#94a3b8">
-          进度: <span id="quiz-progress">1/5</span> | 
-          得分: <span id="quiz-score">0</span>
+          题号: <span id="quiz-progress">1/5</span> |
+          已答: <span id="quiz-answered">0/5</span> |
+          本轮得分: <span id="quiz-score">0</span>/5
+        </div>
+        <div class="quiz-result" id="quiz-result" role="status" tabindex="-1" hidden></div>
+        <p class="quiz-save-status" id="quiz-save-status" role="status" tabindex="-1" hidden></p>
+        <button type="button" id="quiz-save-retry" hidden>重试保存</button>
+        <div class="quiz-sources" id="quiz-sources" hidden>
+          第五题知识依据：<a href="https://openstax.org/books/chemistry-2e/pages/14-1-bronsted-lowry-acids-and-bases" target="_blank" rel="noopener noreferrer">OpenStax：碳酸氢根的酸碱行为</a>；
+          <a href="https://demolab.chem.wisc.edu/acids-and-bases-amphoteric-properties-of-aluminum-hydroxide/" target="_blank" rel="noopener noreferrer">UW–Madison：氢氧化铝的两性</a>。
         </div>
       </div>
     </div>
@@ -438,10 +456,10 @@ const quizData = [
     explain: '4NH₃ + 5O₂ →(催化剂/△) 4NO + 6H₂O，这是工业制硝酸的第一步。'
   },
   {
-    q: '下列物质中，既能与酸又能与碱反应的是？',
+    q: '下列物质中，既能与足量稀盐酸反应放出 CO₂，又能与 NaOH 溶液反应生成 Na₂CO₃ 的是？',
     opts: ['Na₂CO₃', 'Al(OH)₃', 'SiO₂', 'NaHCO₃'],
     ans: 3,
-    explain: 'NaHCO₃是弱酸的酸式盐：与酸反应生成CO₂，与碱反应生成正盐。'
+    explain: 'NaHCO₃ 符合两个指定产物条件：NaHCO₃ + HCl → NaCl + CO₂↑ + H₂O；NaHCO₃ + NaOH → Na₂CO₃ + H₂O。Al(OH)₃ 也能与强酸、强碱反应，但与盐酸反应不放出 CO₂，与 NaOH 反应也不生成 Na₂CO₃。'
   }
 ];
 
@@ -452,8 +470,10 @@ let expStep = 0;
 let transformSeries = 'nitrogen';
 let selectedTransform = -1;
 let quizIndex = 0;
-let quizScore = 0;
-let quizAnswered = false;
+let quizSelections = Array(quizData.length).fill(null);
+let quizFinished = false;
+let quizSaveState = 'idle';
+let nonmetalsHasSavedRecord = hasPersistedNonmetalsCompletion();
 
 // ============ Canvas 绘制 ============
 const canvasE = document.getElementById('canvas-elements');
@@ -1068,59 +1088,145 @@ function updateReactionDetail() {
 }
 
 // 练习
-function loadQuiz() {
+function getQuizScore() {
+  return quizSelections.reduce((score, choice, index) => score + (choice === quizData[index].ans ? 1 : 0), 0);
+}
+
+function getQuizAnsweredCount() {
+  return quizSelections.filter(choice => choice !== null).length;
+}
+
+function loadQuiz(focusQuestion = false) {
   const q = quizData[quizIndex];
-  document.getElementById('quiz-question').textContent = q.q;
-  document.getElementById('quiz-options').innerHTML = q.opts.map((opt, i) => `
-    <div class="quiz-opt" data-index="${i}">${opt}</div>
-  `).join('');
-  document.getElementById('quiz-feedback').textContent = '';
+  const choice = quizSelections[quizIndex];
+  const answered = choice !== null;
+  const question = document.getElementById('quiz-question');
+  question.textContent = `第 ${quizIndex + 1} 题：${q.q}`;
+  document.getElementById('quiz-options').innerHTML = q.opts.map((opt, i) => {
+    const correct = answered && i === q.ans;
+    const selected = answered && i === choice;
+    const label = selected ? (correct ? '你的选择 · 正确答案' : '你的选择 · 回答错误') : (correct ? '正确答案' : '');
+    const stateClass = correct ? ' correct' : (selected ? ' wrong' : '');
+    return `<button type="button" class="quiz-opt${stateClass}" data-index="${i}"${answered ? ' disabled' : ''}>${opt}${label ? `<span class="quiz-opt-label">${label}</span>` : ''}</button>`;
+  }).join('');
+  document.getElementById('quiz-feedback').textContent = answered
+    ? `${choice === q.ans ? '回答正确。' : '回答错误。'}你的选择：${q.opts[choice]}；正确答案：${q.opts[q.ans]}。${q.explain}`
+    : '';
   document.getElementById('quiz-progress').textContent = `${quizIndex + 1}/${quizData.length}`;
-  quizAnswered = false;
-  
+  document.getElementById('quiz-answered').textContent = `${getQuizAnsweredCount()}/${quizData.length}`;
+  document.getElementById('quiz-score').textContent = getQuizScore();
+  document.getElementById('quiz-sources').hidden = quizIndex !== 4 || !answered;
+
   document.querySelectorAll('.quiz-opt').forEach(opt => {
     opt.addEventListener('click', () => {
-      if (quizAnswered) return;
-      quizAnswered = true;
-      const idx = parseInt(opt.dataset.index);
-      const correct = idx === q.ans;
-      
-      if (correct) {
-        opt.classList.add('correct');
-        quizScore++;
-        nonmetalsBumpCorrect(quizIndex);
-      } else {
-        opt.classList.add('wrong');
-        document.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
-      }
-      
-      document.getElementById('quiz-feedback').textContent = q.explain;
-      document.getElementById('quiz-score').textContent = quizScore;
+      if (quizFinished || quizSelections[quizIndex] !== null) return;
+      quizSelections[quizIndex] = Number(opt.dataset.index);
+      loadQuiz();
+      // 答案按钮已锁定，将焦点送到下一步，便于连续键盘作答。
+      document.getElementById('quiz-next').focus();
     });
   });
-  
+
   document.getElementById('quiz-prev').disabled = quizIndex === 0;
-  document.getElementById('quiz-next').textContent = quizIndex === quizData.length - 1 ? '完成' : '下一题';
+  const lastQuestion = quizIndex === quizData.length - 1;
+  const next = document.getElementById('quiz-next');
+  next.disabled = !answered || (lastQuestion && quizFinished);
+  next.textContent = lastQuestion ? (quizFinished ? '已完成本轮' : '完成') : '下一题';
+  document.getElementById('quiz-restart').disabled = getQuizAnsweredCount() === 0 && !quizFinished;
+  renderQuizResult();
+  if (focusQuestion) question.focus();
+}
+
+function renderQuizResult() {
+  const result = document.getElementById('quiz-result');
+  const saveStatus = document.getElementById('quiz-save-status');
+  const retry = document.getElementById('quiz-save-retry');
+  result.hidden = !quizFinished;
+  saveStatus.hidden = !quizFinished;
+  retry.hidden = !quizFinished || quizSaveState !== 'failed';
+  if (!quizFinished) {
+    result.textContent = '';
+    saveStatus.textContent = '';
+    return;
+  }
+
+  const score = getQuizScore();
+  if (score >= 3) {
+    result.textContent = `本轮得分 ${score}/${quizData.length}，已达标（至少 3/5）。可以回看本轮答案，或重新练习。`;
+    saveStatus.textContent = quizSaveState === 'saved'
+      ? '完成记录已保存到本机。'
+      : '本轮已达标，进度未保存。请恢复本机存储后重试保存；本轮答案和成绩仍保留。';
+  } else {
+    result.textContent = `本轮得分 ${score}/${quizData.length}，未达标；至少答对三题可记录完成。可以回看答案后重新练习。`;
+    saveStatus.textContent = `本轮未新增完成记录。${nonmetalsHasSavedRecord ? '此前已保存的完成记录仍保留。' : ''}`;
+  }
+}
+
+function saveQuizCompletion() {
+  if (!quizFinished || getQuizAnsweredCount() !== quizData.length || getQuizScore() < 3) return;
+  let saved = false;
+  try {
+    // markDone 的返回值才表示此次写入成功；isDone 也可能读到未落盘的内存记录。
+    saved = typeof PageProgress !== 'undefined' && PageProgress.markDone('nonmetals') === true;
+  } catch (error) {
+    saved = false;
+  }
+  quizSaveState = saved ? 'saved' : 'failed';
+  if (saved) nonmetalsHasSavedRecord = true;
+  updateNonmetalsDoneMark();
+  renderQuizResult();
 }
 
 document.getElementById('quiz-prev').addEventListener('click', () => {
   if (quizIndex > 0) {
     quizIndex--;
-    loadQuiz();
+    loadQuiz(true);
   }
 });
 
 document.getElementById('quiz-next').addEventListener('click', () => {
+  if (quizSelections[quizIndex] === null) return;
   if (quizIndex < quizData.length - 1) {
     quizIndex++;
+    loadQuiz(true);
+  } else if (!quizFinished && getQuizAnsweredCount() === quizData.length) {
+    quizFinished = true;
+    if (getQuizScore() >= 3) saveQuizCompletion();
     loadQuiz();
-  } else {
-    // 完成
-    document.getElementById('quiz-question').textContent = `练习完成！得分: ${quizScore}/${quizData.length}`;
-    document.getElementById('quiz-options').innerHTML = '';
-    document.getElementById('quiz-feedback').textContent = quizScore >= 4 ? '🎉 太棒了！掌握得很好！' : '继续加油，多复习知识点！';
+    document.getElementById('quiz-result').focus();
   }
 });
+
+document.getElementById('quiz-restart').addEventListener('click', () => {
+  quizSelections = Array(quizData.length).fill(null);
+  quizIndex = 0;
+  quizFinished = false;
+  quizSaveState = 'idle';
+  updateNonmetalsDoneMark();
+  loadQuiz(true);
+});
+
+document.getElementById('quiz-save-retry').addEventListener('click', () => {
+  if (quizSaveState !== 'failed') return;
+  saveQuizCompletion();
+  if (quizSaveState === 'saved') document.getElementById('quiz-save-status').focus();
+});
+
+function hasPersistedNonmetalsCompletion() {
+  try {
+    const raw = localStorage.getItem('kv-chemistry-high-progress');
+    const data = raw === null ? {} : JSON.parse(raw);
+    return !!data && typeof data === 'object' && !Array.isArray(data) && !!data.nonmetals;
+  } catch (error) {
+    return false;
+  }
+}
+
+function updateNonmetalsDoneMark() {
+  document.getElementById('done-mark').textContent = nonmetalsHasSavedRecord
+    ? (quizSaveState === 'saved' ? '✓ 已完成（已保存）' : '✓ 已完成（已有本机记录）')
+    : (quizSaveState === 'failed' ? '本轮达标，进度未保存' : '');
+}
 
 // ============ 动画循环 ============
 function animate() {
@@ -1137,24 +1243,8 @@ function animate() {
 // 初始化
 updateTransformList();
 loadQuiz();
+updateNonmetalsDoneMark();
 animate();
-
-// ============ 进度追踪（r100） ============
-let nonmetalsCorrectSet = new Set();
-function nonmetalsBumpCorrect(idx) {
-  nonmetalsCorrectSet.add(idx);
-  if (nonmetalsCorrectSet.size >= Math.ceil(quizData.length * 0.6) && typeof PageProgress !== 'undefined') {
-    if (!PageProgress.isDone('nonmetals')) {
-      PageProgress.markDone('nonmetals');
-      const dm = document.getElementById('done-mark');
-      if (dm) dm.textContent = '✓ 已完成';
-    }
-  }
-}
-if (typeof PageProgress !== 'undefined' && PageProgress.isDone('nonmetals')) {
-  const dm = document.getElementById('done-mark');
-  if (dm) dm.textContent = '✓ 已完成';
-}
 </script>
   <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="高中化学"></script>
 </body>

@@ -43,6 +43,7 @@
   - 物质的量图示比例、选项与测验部分场景；未覆盖全部计算及教学内容。 [mole-visualization.spec.js](../../tests/browser/mole-visualization.spec.js)、[physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
 - [非金属及其化合物 · 互动可视化](../../chemistry/high/nonmetals.html)
   - 桌面与移动浏览器验证四个主题页签的语义、方向键/Home/End、Enter/Space、指针/触屏，氮/硫单选组、关系图文字替代、列表/摘要/反应详情同步及 320px 无溢出；未覆盖元素卡片、动态关系项和练习选项的键盘可用性、完整化学知识正确性、真实设备与屏幕阅读器。 [high-chemistry-nonmetals-tabs-accessibility.spec.js](../../tests/browser/high-chemistry-nonmetals-tabs-accessibility.spec.js)
+  - 桌面与移动视口验证第五题指定产物及唯一答案、首次选择锁定、返回与切换保留、完整回合 0/5、2/5、3/5、5/5 判定、回看重做、存储失败恢复与损坏原文、320px 和直接文件模式；元素卡片、转化项键盘、动画及整页教学准确性尚未全面验收。 [nonmetals-quiz-reliability.spec.js](../../tests/browser/nonmetals-quiz-reliability.spec.js)
 - [化学反应与能量 · 高中化学互动可视化](../../chemistry/high/reaction-energy.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [化学反应速率与平衡 - 高中化学可视化](../../chemistry/high/reaction-rate.html)
