@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：327；已登记部分交互证据：181；尚未登记：146。
+主题总数：327；已登记部分交互证据：182；尚未登记：145。
 
 ## 已登记部分交互证据
 
@@ -24,6 +24,8 @@
   - 桌面与移动浏览器检查颜色/形状多数规则、并列不确定、测试标签揭示、看过样例后的比较提示、键盘、进度存储拒绝、首页搜索和 320px；样例是固定合成示意，真实模型训练、真实图像、真实设备和整页屏幕阅读器未验收。 [primary-ai-feature-classification.spec.js](../../tests/browser/primary-ai-feature-classification.spec.js)
 - [神经元前向计算器 · 大学人工智能双输入单输出神经元示意图](../../ai/uni/neuron-forward-pass.html)
   - 桌面与移动浏览器验证两个独立学科入口、旧主题地址跳转、四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘操作、旧进度迁移及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [split-subjects-learning.spec.js](../../tests/browser/split-subjects-learning.spec.js)
+- [元素周期律 · 互动可视化](../../chemistry/high/02-periodic.html)
+  - 桌面与移动视口验证三个主题页签的 ARIA 关系、唯一 Tab 停靠点、左右方向键循环、Home/End、Enter/Space、指针选择、内容同步及 320px 无横向溢出；未核验周期表、趋势图和测验的全部化学内容。 [chemistry-periodic-tabs-accessibility.spec.js](../../tests/browser/chemistry-periodic-tabs-accessibility.spec.js)
 - [化学键与分子结构 · 互动可视化](../../chemistry/high/chemical-bond.html)
   - 模式和分子键盘选择、六题进度、存储失败、水与 BF₃ 键角及三种分子的化学偶极箭头；完整轨道与无障碍未验收。 [chemical-bond-learning.spec.js](../../tests/browser/chemical-bond-learning.spec.js)
 - [晶体结构 · 高中化学互动可视化](../../chemistry/high/crystal-structure.html)
@@ -470,7 +472,6 @@
 
 这些主题可能只有加载检查，或现有测试尚未归档到本索引；应逐项核查，不将其视为已验收。
 
-- [元素周期律 · 互动可视化](../../chemistry/high/02-periodic.html)
 - [金属及其化合物 - 高中化学互动可视化](../../chemistry/high/07-metals.html)
 - [烃的衍生物 - 醇酚醛羧酸酯](../../chemistry/high/10-derivatives.html)
 - [生命中的基础有机物 - 糖类·油脂·蛋白质](../../chemistry/high/11-biomolecules.html)

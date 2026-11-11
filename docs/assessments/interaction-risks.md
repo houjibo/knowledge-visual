@@ -4,13 +4,12 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：76；含内联 while 的页面：23。同一页面可能出现在两类中。
+含候选 div 控件的页面：75；含内联 while 的页面：23。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
 ## 候选 div 控件
 
-- [chemistry/high/02-periodic.html](../../chemistry/high/02-periodic.html)：105 行（tab）、106 行（tab）、107 行（tab）
 - [chemistry/high/12-experiment.html](../../chemistry/high/12-experiment.html)：123 行（tab）、124 行（tab）、125 行（tab）、126 行（tab）
 - [chemistry/high/electrochemistry.html](../../chemistry/high/electrochemistry.html)：62 行（tab）、63 行（tab）、64 行（tab）、65 行（tab）
 - [chemistry/high/ion-equilibrium.html](../../chemistry/high/ion-equilibrium.html)：79 行（tab）、80 行（tab）、81 行（tab）、82 行（tab）

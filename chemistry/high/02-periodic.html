@@ -13,9 +13,10 @@ header{text-align:center;margin-bottom:24px}
 header h1{font-size:2rem;background:linear-gradient(90deg,var(--p),var(--a),var(--pu));-webkit-background-clip:text;color:transparent;margin-bottom:6px}
 header p{color:var(--mt);font-size:14px}
 .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap}
-.tab{padding:10px 18px;border-radius:999px;background:rgba(255,255,255,.06);cursor:pointer;transition:all .25s;border:1px solid var(--bd);font-size:14px;user-select:none}
+.tab{appearance:none;padding:10px 18px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--tx);font:inherit;font-size:14px;line-height:1.4;text-align:center;cursor:pointer;transition:all .25s;border:1px solid var(--bd);user-select:none}
 .tab.active{background:var(--p);border-color:var(--p);box-shadow:0 4px 20px rgba(16,185,129,.4)}
 .tab:hover:not(.active){background:rgba(255,255,255,.12)}
+.tab:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}
 .section{display:none}.section.active{display:block}
 .panel{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;backdrop-filter:blur(10px);margin-bottom:16px}
 .panel h3{font-size:1rem;margin-bottom:10px;color:var(--a)}
@@ -101,14 +102,14 @@ canvas{width:100%;height:auto;display:block;border-radius:10px}
 <p>周期表结构 · 元素性质递变 · 规律预测</p>
 </header>
 
-<div class="tabs">
-<div class="tab active" onclick="switchTab(0)">📊 周期表结构</div>
-<div class="tab" onclick="switchTab(1)">📈 性质递变</div>
-<div class="tab" onclick="switchTab(2)">🎯 规律预测</div>
+<div class="tabs" role="tablist" aria-label="元素周期律主题" aria-orientation="horizontal">
+<button type="button" class="tab active" id="tab0" role="tab" aria-selected="true" aria-controls="sec0" tabindex="0" onclick="switchTab(0)">📊 周期表结构</button>
+<button type="button" class="tab" id="tab1" role="tab" aria-selected="false" aria-controls="sec1" tabindex="-1" onclick="switchTab(1)">📈 性质递变</button>
+<button type="button" class="tab" id="tab2" role="tab" aria-selected="false" aria-controls="sec2" tabindex="-1" onclick="switchTab(2)">🎯 规律预测</button>
 </div>
 
 <!-- Tab 0: 周期表结构 -->
-<div class="section active" id="sec0">
+<div class="section active" id="sec0" role="tabpanel" aria-labelledby="tab0" tabindex="0">
 <div class="panel">
 <h3>🔍 点击元素查看详情 · 观察周期表结构</h3>
 <div class="controls">
@@ -150,7 +151,7 @@ canvas{width:100%;height:auto;display:block;border-radius:10px}
 </div>
 
 <!-- Tab 1: 性质递变 -->
-<div class="section" id="sec1">
+<div class="section" id="sec1" role="tabpanel" aria-labelledby="tab1" tabindex="0" hidden>
 <div class="trend-chart">
 <h4>📈 元素性质随原子序数的变化规律</h4>
 <div class="trend-controls">
@@ -178,7 +179,7 @@ canvas{width:100%;height:auto;display:block;border-radius:10px}
 </div>
 
 <!-- Tab 2: 规律预测 -->
-<div class="section" id="sec2">
+<div class="section" id="sec2" role="tabpanel" aria-labelledby="tab2" tabindex="0" hidden>
 <div class="quiz-card">
 <h4>🎯 元素性质预测挑战</h4>
 <p style="color:#94a3b8;font-size:13px;margin-bottom:12px">根据元素在周期表中的位置，预测其性质</p>
@@ -209,10 +210,37 @@ canvas{width:100%;height:auto;display:block;border-radius:10px}
 <script>
 /* ===== Tab Switching ===== */
 function switchTab(i){
-  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));
-  document.querySelectorAll('.section').forEach((s,j)=>s.classList.toggle('active',j===i));
+  const tabs = [...document.querySelectorAll('.tabs .tab')];
+  const sections = [...document.querySelectorAll('.section')];
+  if (!tabs[i] || !sections[i]) return;
+  tabs.forEach((tab,j)=>{
+    const selected = j === i;
+    tab.classList.toggle('active',selected);
+    tab.setAttribute('aria-selected',String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  });
+  sections.forEach((section,j)=>{
+    const selected = j === i;
+    section.classList.toggle('active',selected);
+    section.hidden = !selected;
+  });
   if(i===1)drawTrend();
 }
+
+document.querySelectorAll('.tabs .tab').forEach((tab,index)=>{
+  tab.addEventListener('keydown',event=>{
+    const tabs=[...document.querySelectorAll('.tabs .tab')];
+    let nextIndex;
+    if(event.key==='ArrowRight')nextIndex=(index+1)%tabs.length;
+    else if(event.key==='ArrowLeft')nextIndex=(index-1+tabs.length)%tabs.length;
+    else if(event.key==='Home')nextIndex=0;
+    else if(event.key==='End')nextIndex=tabs.length-1;
+    else return;
+    event.preventDefault();
+    switchTab(nextIndex);
+    tabs[nextIndex].focus();
+  });
+});
 
 /* ===== Periodic Table Data ===== */
 const elements=[
