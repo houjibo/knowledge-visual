@@ -24,6 +24,7 @@
 - 首轮专项 26 通过、4 失败：测试用程序聚焦后直接断言 `:focus-visible`，未进入键盘模态；另对完成徽标断言过于精确，漏了“已保存”说明。改为实际 Tab 导航验证焦点，并断言完成与保存语义后，30/30 通过。
 - 完整 `npm run check` 通过：严格 OpenSpec 247 项（含本轮活跃变更）、交互回归 1812 通过与 2 项按配置跳过、开发站 360 页加载、发布包路径专项 6 项与发布包 360 页加载。
 - 独立审查另以 `file://` 验证 `getItem` 完全拒绝时，3/5 仍可完成但显示未保存；重做为 0/5 后无虚假完成徽标，原文为 null，无脚本错误。
-- 本轮公开部署尚待推送后的 Actions 与公网功能核验，未将本地通过表述为公开发布通过。
+- 提交 `a8da2b2a396454376955dfcb36012b0c8f56db1b` 的 [Actions #253](https://github.com/houjibo/knowledge-visual/actions/runs/43074410325) 检查、构建、部署和部署后核验全部成功。浏览器直接读取公开 `release-version.json`，revision 与提交一致，`site_files_modified:false`。
+- 公网浏览器实测第一题答对后前进/返回仍为 1 分且选项锁定；随后完成五题得到 5/5，第五题指定产物、配平解释与来源可读，完成状态显示已保存。终端独立验证曾两次连接重置，未将其当作站点功能失败；最终以成功的 Actions 和实际公网页面/清单为证。
 
-当前契约与任务见 [OpenSpec 变更](../../openspec/changes/2026-11-12-nonmetals-quiz-reliability/README.md)。
+当前契约与任务见 [OpenSpec 变更](../../openspec/changes/archive/2026-11-12-nonmetals-quiz-reliability/README.md)。
