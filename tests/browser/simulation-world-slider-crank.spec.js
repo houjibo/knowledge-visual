@@ -40,6 +40,26 @@ async function setRange(page, selector, value) {
   await expect(page.locator(selector)).toHaveValue(String(value));
 }
 
+async function startWithFractionalPhase(page) {
+  const samples = [];
+  // A fixed observation time can land on an integer angle at some rAF cadences and speeds.
+  // Vary only the preparation's start offset; never retry the edit or its precision assertions.
+  for (const offset of [7, 11, 5, 13]) {
+    await setRange(page, '#crank-angle', 13);
+    await page.clock.runFor(offset);
+    const startedAt = await page.evaluate(() => performance.now());
+    await page.locator('#start-motion').click();
+    await expect(page.locator('#mechanism-svg')).toHaveAttribute('data-running', 'true');
+    await page.clock.runFor(37);
+    const angle = await phase(page);
+    expect(Number.isFinite(angle)).toBe(true);
+    expect(phaseDistance(angle, 13)).toBeGreaterThan(0.001);
+    samples.push({offset, startedAt, angle});
+    if (Math.abs(angle - Math.round(angle)) > 0.001) return angle;
+  }
+  throw new Error(`Could not prepare a fractional running phase within four start offsets: ${JSON.stringify(samples)}`);
+}
+
 async function geometry(page, radius, rodLength, expectedX) {
   const actual = await page.locator('#mechanism-svg').evaluate(svg => {
     const line = id => {
@@ -260,10 +280,7 @@ test('每类参数编辑、角度、预设、步进与重置都暂停，不会�
   ];
   for (const [name, edit, expectedPhase] of edits) {
     await test.step(name, async () => {
-      await setRange(page, '#crank-angle', 13);
-      await page.locator('#start-motion').click();
-      await page.clock.runFor(37);
-      const before = await phase(page);
+      const before = await startWithFractionalPhase(page);
       // The running phase must really be fractional: reading back the 1° slider would lose it.
       expect(Math.abs(before - Math.round(before))).toBeGreaterThan(0.001);
       await edit();

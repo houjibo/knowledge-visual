@@ -10,7 +10,7 @@ r20..60、l100..200mm的30种组合均满足l>r，图形同一比例；只改l�
 
 ## 验收计划与状态
 
-本地实现及验收已完成，公开部署尚待核实。范围见[提案](../../openspec/changes/2026-11-12-slider-crank-simulation/proposal.md)、[设计](../../openspec/changes/2026-11-12-slider-crank-simulation/design.md)及[任务](../../openspec/changes/2026-11-12-slider-crank-simulation/tasks.md)。
+本地实现及验收已完成；首次发布在CI因测试准备假设失败而未执行，修正后重新提交核验。范围见[提案](../../openspec/changes/2026-11-12-slider-crank-simulation/proposal.md)、[设计](../../openspec/changes/2026-11-12-slider-crank-simulation/design.md)及[任务](../../openspec/changes/2026-11-12-slider-crank-simulation/tasks.md)。
 
 - 模型独立解析基准及30组几何闭环、范围、对称与时间推进。
 - 浏览器真实SVG端点/两杆长度和滑块位置、角度与位移、控制及动画边界、减少动态、键盘和320px。
@@ -29,3 +29,11 @@ r20..60、l100..200mm的30种组合均满足l>r，图形同一比例；只改l�
 - 本地4173人工验收：r60/l100/90°位移80mm，180°位移120mm；90°改长连杆200后位移69.21mm，行程仍120mm。播放、暂停与当前状态一致；极端180°标签分离，已保存 `/tmp/knowledge-visual-slider-crank-local.png`。
 
 公开Actions、revision、资源及操作证据待提交推送后补齐。
+
+## 首次CI失败与测试准备修正
+
+[Actions #265](https://github.com/houjibo/knowledge-visual/actions/runs/43129304961) 对 `ea971e3bfd4168e1c9ff6c04872675f487ceef86`：core364/12/364全部通过、desktop974通过/2跳过；mobile975通过/1失败。唯一失败发生在“每类参数编辑”的步进子步骤、实际edit之前：测试假定播放37ms后相位一定非整数，CI实际恰整数（距整数0）。聚合失败，构建、部署及部署后核验均跳过，不能声称该提交已上线。
+
+修正仅涉及测试准备：最多四个7/11/5/13ms的启动偏移，实际观察到小数角度才进入唯一一次edit，无法准备时明确失败并附时间/相位；真实精度1e-7、运行/按钮状态及337ms静止断言原样保留，没有产品断言重试或跳过。固定延时不保证小数，Playwright Clock使用全局帧网格，此准备改变起播相位而非篡改结果。
+
+定点重复20次全部通过（10.5s，日志 `/tmp/kv-slider-crank-phase-stress.log`），随后新场景24项全部通过（4.6s），完整静态检查与清单预检exit0。用例仍976+976=1952，因新增准备helper改变源码行号，清单指纹变为 `926c9f86b9536d227235fbde662c9d66bfcea374223922d1198f4f615256d5fc`；前述cf211是本地完整检查时的旧测试位置。产品源码和发布资源未变，下一次实际CI/公开核验仍待完成。
