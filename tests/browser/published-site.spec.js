@@ -384,3 +384,33 @@ test('发布包子路径可发现并完成大学计算机栈与队列', async ({
   await expect(page.locator('#stage-progress')).toContainText('1/1');
   expect(errors).toEqual([]);
 });
+
+test('发布包子路径可搜索并操作初中质量与密度', async ({page}) => {
+  const failures = [];
+  page.on('pageerror', error => failures.push(error.message));
+  page.on('response', response => {
+    if (response.url().startsWith(base) && response.status() >= 400)
+      failures.push(`${response.status()} ${response.url()}`);
+  });
+  await gotoPublished(page, base);
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('physics');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('质量与密度');
+  await page.locator('#site-results a[href="physics/middle/mass-density.html"]').click();
+  await waitForPublishedDocument(page);
+  await expect(page).toHaveTitle('质量与密度 · 初中物理互动可视化');
+  await page.getByRole('button', {name: /密度计算/}).focus();
+  await page.keyboard.press('Enter');
+  await page.locator('#densityMass').evaluate(input => {
+    input.value = '54'; input.dispatchEvent(new Event('input', {bubbles: true}));
+  });
+  await page.locator('#densityVol').evaluate(input => {
+    input.value = '20'; input.dispatchEvent(new Event('input', {bubbles: true}));
+  });
+  await page.locator('#referenceMaterial').selectOption('aluminum');
+  await expect(page.locator('#drOut')).toHaveText('2.70');
+  await expect(page.locator('#materialComparison')).toContainText('在显示精度内相同');
+  await page.getByRole('button', {name: /^B\. 铝/}).click();
+  await expect(page.locator('#quizFeedback')).toContainText('完成记录已保存在本机');
+  expect(failures).toEqual([]);
+});

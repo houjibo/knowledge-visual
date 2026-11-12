@@ -224,3 +224,32 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await expect(page.locator('#action-status')).toContainText('队列取出 A');
   expect(failures).toEqual([]);
 });
+
+test('公网质量与密度的参考比较和键盘练习可用', async ({page}) => {
+  expect(baseValue, '发布验收需指定 KV_PUBLISHED_BASE_URL').toBeTruthy();
+  expect(expectedRevision, '发布验收需指定 GITHUB_SHA').toMatch(/^[a-f0-9]{40}$/);
+  const url = new URL('physics/middle/mass-density.html', baseValue);
+  url.searchParams.set('verify', expectedRevision);
+  const failures = [];
+  page.on('pageerror', error => failures.push(error.message));
+  page.on('response', response => {
+    if (response.url().startsWith(new URL(baseValue).href) && response.status() >= 400)
+      failures.push(`${response.status()} ${response.url()}`);
+  });
+  await page.goto(url.href, {waitUntil: 'domcontentloaded', timeout: 30000});
+  await expect(page).toHaveTitle('质量与密度 · 初中物理互动可视化');
+  await page.getByRole('button', {name: /密度计算/}).focus();
+  await page.keyboard.press('Enter');
+  await page.locator('#densityMass').evaluate(input => {
+    input.value = '50'; input.dispatchEvent(new Event('input', {bubbles: true}));
+  });
+  await page.locator('#densityVol').evaluate(input => {
+    input.value = '20'; input.dispatchEvent(new Event('input', {bubbles: true}));
+  });
+  await page.locator('#referenceMaterial').selectOption('glass');
+  await expect(page.locator('#materialComparison')).toContainText('低 0.10 g/cm³');
+  await page.getByRole('button', {name: /^B\. 铝/}).focus();
+  await page.keyboard.press('Space');
+  await expect(page.locator('#quizFeedback')).toContainText('已保存在本机');
+  expect(failures).toEqual([]);
+});

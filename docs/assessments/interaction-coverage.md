@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：339；已登记部分交互证据：198；尚未登记：141。
+主题总数：339；已登记部分交互证据：199；尚未登记：140。
 
 ## 已登记部分交互证据
 
@@ -401,6 +401,8 @@
 - [内能 · 初中物理互动可视化](../../physics/middle/internal-energy.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
   - 温升与温度计绘制、零时火焰、理想气体速度比例、暂停与测验回归；真实扩散及全部内容未全面验收。 [internal-energy-model.spec.js](../../tests/browser/internal-energy-model.spec.js)
+- [质量与密度 · 初中物理互动可视化](../../physics/middle/mass-density.html)
+  - 桌面与移动视口检查原生章节和练习键盘操作、320px、密度参考差值与高值、质量刻度、立方体体积比例和完整图示、保存拒绝/损坏数据重试、画布不可用及file直开；真实设备、整页屏幕阅读器与材料鉴定未验收。 [middle-mass-density-learning-reliability.spec.js](../../tests/browser/middle-mass-density-learning-reliability.spec.js)
 - [机械运动 · 初中物理互动可视化](../../physics/middle/motion.html)
   - 模式、时钟、调速、三车对比与平均速度的部分场景；测验及教学内容尚未全面核验。 [motion-controls.spec.js](../../tests/browser/motion-controls.spec.js)、[motion-simulation.spec.js](../../tests/browser/motion-simulation.spec.js)、[motion-real-clock.spec.js](../../tests/browser/motion-real-clock.spec.js)、[uniform-comparison.spec.js](../../tests/browser/uniform-comparison.spec.js)、[motion-average-speed.spec.js](../../tests/browser/motion-average-speed.spec.js)、[start-here.spec.js](../../tests/browser/start-here.spec.js)
 - [欧姆定律 · 初中物理互动可视化](../../physics/middle/ohms-law.html)
@@ -630,7 +632,6 @@
 - [力 · 初中物理互动可视化](../../physics/middle/force.html)
 - [透镜及其应用 · 初中物理互动可视化](../../physics/middle/lens.html)
 - [光现象 - 初中物理互动可视化](../../physics/middle/light.html)
-- [质量与密度 · 初中物理互动可视化](../../physics/middle/mass-density.html)
 - [运动和力 · 初中物理互动可视化](../../physics/middle/motion-force.html)
 - [物态变化 · 初中物理互动可视化](../../physics/middle/state-change.html)
 - [刚体力学 - 大学物理互动可视化](../../physics/uni/02-rigid-body.html)
