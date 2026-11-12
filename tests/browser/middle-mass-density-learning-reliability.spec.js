@@ -9,6 +9,22 @@ async function setRange(page, id, value) {
   }, value);
 }
 
+async function completeInitialBalance(page) {
+  await page.getByRole('button', {name: /天平使用/}).click();
+  await expect(page.locator('#targetMass')).toHaveText('未知');
+  await setRange(page, '#riderSlider', 0);
+  await page.getByRole('button', {name: '调平空载天平'}).click();
+  await page.getByRole('button', {name: '将未知物放左盘'}).click();
+  await page.getByRole('button', {name: /^\+20 g/}).click();
+  await page.getByRole('button', {name: /^\+5 g/}).click();
+  await setRange(page, '#riderSlider', 4);
+  await expect(page.locator('#balanceStatus')).toContainText('横梁平衡');
+  await page.getByRole('spinbutton', {name: '平衡后读数 (g)'}).fill('25.4');
+  await page.getByRole('button', {name: '核对读数'}).click();
+  await expect(page.locator('#balanceReadFeedback')).toContainText('读数正确');
+  await expect(page.locator('#targetMass')).toHaveText('25.4');
+}
+
 test('三个章节和参数可用键盘操作，320px 没有横向溢出', async ({page}, testInfo) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -62,7 +78,123 @@ test('密度以数值比较参考值，重叠与高值都不推断材质', async
   await expect(page.locator('#materialComparison')).not.toContainText('超重物质');
 });
 
-test('练习可改错，一次答对后本机记录不重复写入', async ({page}) => {
+test('空载归零、调平、放物与误读均可用键盘修正，未知质量不提前揭晓', async ({page}) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(() => {
+    window.balanceCanvasLabels = [];
+    const original = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function(value, ...args) {
+      if (this.canvas.id === 'mainCanvas') window.balanceCanvasLabels.push(String(value));
+      return original.call(this, value, ...args);
+    };
+  });
+  await page.setViewportSize({width: 320, height: 700});
+  await page.goto('/physics/middle/mass-density.html');
+  await page.getByRole('button', {name: /天平使用/}).focus();
+  await page.keyboard.press('Enter');
+  const rider = page.getByRole('slider', {name: '游码位置'});
+  const reading = page.getByRole('spinbutton', {name: '平衡后读数 (g)'});
+  const calibrate = page.getByRole('button', {name: '调平空载天平'});
+  const place = page.getByRole('button', {name: '将未知物放左盘'});
+  const newObject = page.getByRole('button', {name: '🔄 换一个未知物'});
+  await expect(page.locator('#targetMass')).toHaveText('未知');
+  await expect(newObject).toBeDisabled();
+  await expect(page.getByRole('button', {name: /^\+20 g/})).toBeDisabled();
+  await expect(reading).toBeDisabled();
+  await calibrate.click();
+  await expect(page.locator('#balanceStatus')).toContainText('先把游码移到0 g');
+  await rider.focus();
+  await page.keyboard.press('Home');
+  await expect(rider).toHaveValue('0');
+  await calibrate.focus();
+  await page.keyboard.press('Enter');
+  await expect(place).toBeEnabled();
+  await expect(newObject).toBeEnabled();
+  await place.focus();
+  await page.keyboard.press('Space');
+  await page.getByRole('button', {name: /^\+50 g/}).click();
+  await expect(page.locator('#balanceStatus')).toContainText('右盘偏重');
+  await expect(page.locator('#targetMass')).toHaveText('未知');
+  await page.getByRole('button', {name: '取下上枚砝码'}).click();
+  await expect(page.locator('#balanceStatus')).toContainText('右盘偏轻');
+  await page.getByRole('button', {name: /^\+20 g/}).click();
+  await page.getByRole('button', {name: /^\+5 g/}).click();
+  await setRange(page, '#riderSlider', 4);
+  await expect(page.locator('#balanceStatus')).toContainText('横梁平衡');
+  await expect(page.locator('#targetMass')).toHaveText('未知');
+  expect(await page.evaluate(() => window.balanceCanvasLabels)).not.toContain('25.4g');
+  await setRange(page, '#riderSlider', 5);
+  await expect(reading).toBeDisabled();
+  await expect(page.locator('#balanceStatus')).toContainText('右盘偏重');
+  await setRange(page, '#riderSlider', 4);
+  await expect(reading).toBeEnabled();
+  await reading.fill('25.3');
+  await page.getByRole('button', {name: '核对读数'}).click();
+  await expect(page.locator('#balanceReadFeedback')).toContainText('读数不符');
+  await expect(page.locator('#targetMass')).toHaveText('未知');
+  await reading.fill('25.4');
+  await page.getByRole('button', {name: '核对读数'}).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#targetMass')).toHaveText('25.4');
+  expect(await page.evaluate(() => window.balanceCanvasLabels)).toContain('25.4g');
+  await expect(page.locator('#completionStatus')).toContainText('密度练习（待完成）');
+  expect(await page.evaluate(() => localStorage.getItem('kv-physics-middle-progress'))).toBeNull();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  expect(errors).toEqual([]);
+});
+
+test('八个未知物均可用有限砝码和0.1 g游码精确称量', async ({page}) => {
+  const cases = [
+    [12.5, [10], 25], [25.4, [20, 5], 4], [37.8, [20, 10, 5], 28],
+    [48.2, [20, 20, 5], 32], [63.5, [50, 10], 35], [85.0, [50, 20, 10, 5], 0],
+    [107.3, [100, 5], 23], [152.6, [100, 50], 26],
+  ];
+  await page.goto('/physics/middle/mass-density.html');
+  await page.getByRole('button', {name: /天平使用/}).click();
+  await setRange(page, '#riderSlider', 0);
+  await page.getByRole('button', {name: '调平空载天平'}).click();
+  let previousMass = 25.4;
+  for (let index = 0; index < cases.length; index++) {
+    const [mass, weights, rider] = cases[index];
+    const otherTargets = cases.map(([candidate]) => candidate).filter(candidate => candidate !== previousMass);
+    const slot = otherTargets.indexOf(mass);
+    expect(slot).toBeGreaterThanOrEqual(0);
+    await page.evaluate(({slot, length}) => { Math.random = () => (slot + 0.5) / length; }, {slot, length: otherTargets.length});
+    await page.getByRole('button', {name: '🔄 换一个未知物'}).click();
+    await expect(page.locator('#targetMass')).toHaveText('未知');
+    await page.getByRole('button', {name: '将未知物放左盘'}).click();
+    for (const weight of weights) await page.getByRole('button', {name: new RegExp('^\\+' + weight + ' g')}).click();
+    if (index === 3) await expect(page.getByRole('button', {name: /^\+20 g/})).toBeDisabled();
+    await setRange(page, '#riderSlider', rider);
+    await expect(page.locator('#balanceStatus')).toContainText('横梁平衡');
+    await page.getByRole('spinbutton', {name: '平衡后读数 (g)'}).fill(mass.toFixed(1));
+    await page.getByRole('button', {name: '核对读数'}).click();
+    await expect(page.locator('#targetMass')).toHaveText(mass.toFixed(1));
+    previousMass = mass;
+  }
+  await expect(page.locator('#completionStatus')).toContainText('密度练习（待完成）');
+  expect(await page.evaluate(() => localStorage.getItem('kv-physics-middle-progress'))).toBeNull();
+});
+
+test('先称量再答密度题才保存，既有旧记录保持原值', async ({page}) => {
+  await page.goto('/physics/middle/mass-density.html');
+  await completeInitialBalance(page);
+  await expect(page.locator('#completionStatus')).toContainText('密度练习（待完成）');
+  await page.getByRole('button', {name: /密度计算/}).click();
+  await page.getByRole('button', {name: /^B\. 铝/}).click();
+  await expect(page.locator('#completionStatus')).toContainText('完成记录已保存在本机');
+  const recorded = await page.evaluate(() => localStorage.getItem('kv-physics-middle-progress'));
+  await page.evaluate(() => localStorage.setItem('kv-physics-middle-progress', JSON.stringify({'mass-density': 12345})));
+  await page.reload();
+  await expect(page.locator('#completionStatus')).toContainText('可能按旧规则保存');
+  await page.getByRole('button', {name: /密度计算/}).click();
+  await page.getByRole('button', {name: /^B\. 铝/}).click();
+  expect(await page.evaluate(() => localStorage.getItem('kv-physics-middle-progress'))).toBe(JSON.stringify({'mass-density': 12345}));
+  expect(recorded).not.toBeNull();
+});
+
+test('练习可改错，单题不记整页，称量读数后才保存且不重复写入', async ({page}) => {
   await page.goto('/physics/middle/mass-density.html');
   await page.getByRole('button', {name: /密度计算/}).click();
   const iron = page.getByRole('button', {name: /^A\. 铁/});
@@ -73,15 +205,20 @@ test('练习可改错，一次答对后本机记录不重复写入', async ({pag
   await expect(aluminum).toBeEnabled();
   await aluminum.focus();
   await page.keyboard.press('Space');
-  await expect(page.locator('#quizFeedback')).toContainText('完成记录已保存在本机');
+  await expect(page.locator('#quizFeedback')).toContainText('答对了');
+  await expect(page.locator('#completionStatus')).toContainText('称量未知物并正确读数（待完成）');
+  expect(await page.evaluate(() => localStorage.getItem('kv-physics-middle-progress'))).toBeNull();
   for (const option of await page.locator('.quiz-opt').all()) await expect(option).toBeDisabled();
+  await completeInitialBalance(page);
+  await expect(page.locator('#completionStatus')).toContainText('完成记录已保存在本机');
   const stored = await page.evaluate(() => localStorage.getItem('kv-physics-middle-progress'));
   expect(JSON.parse(stored)['mass-density']).toBeTruthy();
 
   await page.reload();
+  await expect(page.locator('#completionStatus')).toContainText('本机已有完成记录');
   await page.getByRole('button', {name: /密度计算/}).click();
   await page.getByRole('button', {name: /^B\. 铝/}).click();
-  await expect(page.locator('#quizFeedback')).toContainText('本机已有完成记录');
+  await expect(page.locator('#completionStatus')).toContainText('可能按旧规则保存');
   expect(await page.evaluate(() => localStorage.getItem('kv-physics-middle-progress'))).toBe(stored);
 });
 
@@ -97,13 +234,14 @@ test('存储拒绝时保留答对资格，主动重试后才宣告保存', async
   await page.goto('/physics/middle/mass-density.html');
   await page.getByRole('button', {name: /密度计算/}).click();
   await page.getByRole('button', {name: /^B\. 铝/}).click();
-  await expect(page.locator('#quizFeedback')).toContainText('未保存，可重试');
+  await completeInitialBalance(page);
+  await expect(page.locator('#completionStatus')).toContainText('未保存；可重试');
   await expect(page.getByRole('button', {name: '重试保存完成记录'})).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('kv-physics-middle-progress'))).toBeNull();
 
   await page.evaluate(() => { window.blockDensityProgress = false; });
   await page.getByRole('button', {name: '重试保存完成记录'}).click();
-  await expect(page.locator('#quizFeedback')).toContainText('完成记录已保存在本机');
+  await expect(page.locator('#completionStatus')).toContainText('完成记录已保存在本机');
   await expect(page.getByRole('button', {name: '重试保存完成记录'})).toBeHidden();
   expect(JSON.parse(await page.evaluate(() => localStorage.getItem('kv-physics-middle-progress')))['mass-density']).toBeTruthy();
 });
@@ -114,11 +252,12 @@ test('损坏的历史进度原文不被覆盖，修复存储后可重试', async
   await page.reload();
   await page.getByRole('button', {name: /密度计算/}).click();
   await page.getByRole('button', {name: /^B\. 铝/}).click();
-  await expect(page.locator('#quizFeedback')).toContainText('未保存');
+  await completeInitialBalance(page);
+  await expect(page.locator('#completionStatus')).toContainText('未保存');
   expect(await page.evaluate(() => localStorage.getItem('kv-physics-middle-progress'))).toBe('{broken');
   await page.evaluate(() => localStorage.removeItem('kv-physics-middle-progress'));
   await page.getByRole('button', {name: '重试保存完成记录'}).click();
-  await expect(page.locator('#quizFeedback')).toContainText('已保存在本机');
+  await expect(page.locator('#completionStatus')).toContainText('已保存在本机');
 });
 
 test('画布刻度与全部对照行在可见画布内，高密度扩大横轴', async ({page}) => {
@@ -178,6 +317,8 @@ test('画布不可用时仍可计算、答题和读取结果', async ({page}) =>
   await expect(page.locator('#drOut')).toHaveText('2.50');
   await page.getByRole('button', {name: /^B\. 铝/}).click();
   await expect(page.locator('#quizFeedback')).toContainText('答对了');
+  await completeInitialBalance(page);
+  await expect(page.locator('#completionStatus')).toContainText('完成记录已保存在本机');
   expect(errors).toEqual([]);
 });
 
@@ -195,5 +336,7 @@ test('直接打开静态文件仍可完成密度比较与键盘练习', async ({
   await page.getByRole('button', {name: /^B\. 铝/}).focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#quizFeedback')).toContainText('答对了');
+  await completeInitialBalance(page);
+  await expect(page.locator('#completionStatus')).toContainText('已保存在本机');
   expect(external).toEqual([]);
 });

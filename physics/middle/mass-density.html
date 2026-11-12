@@ -26,7 +26,7 @@
   .tab { padding: 12px 24px; border-radius: 999px; background: rgba(255,255,255,0.08); color: var(--light); cursor: pointer; transition: all .25s; border: 2px solid rgba(255,255,255,0.1); font-family: inherit; font-size: 15px; font-weight: 500; user-select: none; }
   .tab.active { background: var(--primary); border-color: var(--primary); color: #052e20; box-shadow: 0 4px 24px rgba(16,185,129,.4); }
   .tab:hover:not(.active) { background: rgba(255,255,255,0.15); }
-  .tab:focus-visible, .quiz-opt:focus-visible, .quiz-save:focus-visible, .slider-row input:focus-visible, .slider-row select:focus-visible { outline: 3px solid #fbbf24; outline-offset: 3px; }
+  .tab:focus-visible, .quiz-opt:focus-visible, .quiz-save:focus-visible, .balance-ctrl button:focus-visible, .balance-setup button:focus-visible, .balance-read button:focus-visible, .balance-read input:focus-visible, #newBalanceTargetButton:focus-visible, .slider-row input:focus-visible, .slider-row select:focus-visible { outline: 3px solid #fbbf24; outline-offset: 3px; }
 
   .stage { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
   @media (max-width: 960px) { .stage { grid-template-columns: 1fr; } }
@@ -86,10 +86,18 @@
   .quiz-opt:disabled { cursor: default; opacity: 0.8; }
   .quiz-save { margin-top: 10px; padding: 10px 14px; border: 1px solid var(--primary); border-radius: 8px; background: rgba(16,185,129,0.15); color: #6ee7b7; cursor: pointer; }
 
+  .completion-wrap { max-width: 900px; margin: -8px auto 18px; text-align: center; }
+  .completion-wrap .status-bar { margin-top: 0; border: 1px solid rgba(16,185,129,.35); }
+
   .balance-ctrl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
-  .balance-ctrl button { padding: 10px; border-radius: 10px; border: 2px solid rgba(139,92,246,0.4); background: rgba(139,92,246,0.1); color: #c4b5fd; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .2s; }
+  .balance-ctrl button, .balance-setup button, .balance-read button { padding: 10px; border-radius: 10px; border: 2px solid rgba(139,92,246,0.4); background: rgba(139,92,246,0.1); color: #c4b5fd; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .2s; }
   .balance-ctrl button:hover { background: rgba(139,92,246,0.25); }
   .balance-ctrl button:active { transform: scale(0.96); }
+  .balance-ctrl button:disabled, .balance-setup button:disabled, .balance-read button:disabled { opacity: .55; cursor: default; }
+  .balance-setup { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+  .balance-read { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+  .balance-read label { color: #cbd5e1; }
+  .balance-read input { min-width: 0; flex: 1 1 115px; padding: 10px; border-radius: 8px; border: 1px solid #94a3b8; background: #1e293b; color: var(--light); font: inherit; }
 
   .status-bar { margin-top: 12px; padding: 10px 14px; background: rgba(255,255,255,0.05); border-radius: 10px; font-size: 13px; color: #cbd5e1; text-align: center; }
   .status-bar .ok { color: #6ee7b7; font-weight: 600; }
@@ -110,6 +118,10 @@
     <button type="button" class="tab active" data-tab="concept" aria-controls="panel-concept" aria-expanded="true">📖 质量概念</button>
     <button type="button" class="tab" data-tab="balance" aria-controls="panel-balance" aria-expanded="false">⚖️ 天平使用</button>
     <button type="button" class="tab" data-tab="density" aria-controls="panel-density" aria-expanded="false">🧪 密度计算</button>
+  </div>
+  <div class="completion-wrap">
+    <p class="status-bar" id="completionStatus" role="status">完成要求：称量未知物并读数，再答对密度练习；顺序不限。</p>
+    <button type="button" class="quiz-save" id="retrySaveButton" hidden>重试保存完成记录</button>
   </div>
 
   <div class="stage">
@@ -175,53 +187,65 @@
         <div class="concept-box">
           <b>使用步骤：</b><br>
           ① <span class="hl4">放</span>：将天平放在<span class="hl">水平台面</span>上<br>
-          ② <span class="hl4">移</span>将游码移至<span class="hl">零刻度线</span><br>
+          ② <span class="hl4">移</span>：将游码移至<span class="hl">零刻度线</span><br>
           ③ <span class="hl4">调</span>：调节<span class="hl">平衡螺母</span>，使指针指在分度盘中央<br>
           ④ <span class="hl4">称</span>：左物右码，用镊子加减砝码<br>
           ⑤ <span class="hl4">读</span>：物体质量 = 砝码质量 + 游码示数
         </div>
 
         <h3 style="margin-top:16px">🎮 互动：模拟天平称量</h3>
-        <p style="font-size:13px;color:#94a3b8;margin:8px 0">点击按钮添加砝码，使天平平衡</p>
+        <p style="font-size:13px;color:#cbd5e1;margin:8px 0">先将空载天平游码移到0 g并调平，再放入未知物。右盘可用砝码：100 g×1、50 g×1、20 g×2、10 g×1、5 g×1；游码范围0–5 g，每格0.1 g。本页省略螺母旋向和实物误差。</p>
 
         <div class="data-display">
           <div class="data-item mass">
-            <div class="label">目标质量</div>
-            <div class="value" id="targetMass">25.4</div>
-            <div class="unit">g</div>
+            <div class="label">待测物质量</div>
+            <div class="value" id="targetMass">未知</div>
+            <div class="unit" id="targetMassUnit"></div>
           </div>
           <div class="data-item vol">
-            <div class="label">已加砝码</div>
+            <div class="label">右盘砝码</div>
             <div class="value" id="addedMass">0</div>
             <div class="unit">g</div>
           </div>
           <div class="data-item density">
-            <div class="label">游码</div>
-            <div class="value" id="riderVal">0.0</div>
+            <div class="label">游码读数</div>
+            <div class="value" id="riderVal">1.0</div>
             <div class="unit">g</div>
           </div>
         </div>
 
+        <div class="balance-setup">
+          <button type="button" id="calibrateButton">调平空载天平</button>
+          <button type="button" id="placeObjectButton" disabled>将未知物放左盘</button>
+        </div>
         <div class="balance-ctrl">
-          <button onclick="addWeight(100)">+100g</button>
-          <button onclick="addWeight(50)">+50g</button>
-          <button onclick="addWeight(20)">+20g</button>
-          <button onclick="addWeight(10)">+10g</button>
-          <button onclick="addWeight(5)">+5g</button>
-          <button onclick="removeWeight()">← 取下</button>
+          <button type="button" data-weight="100" disabled>+100 g</button>
+          <button type="button" data-weight="50" disabled>+50 g</button>
+          <button type="button" data-weight="20" disabled>+20 g（剩2枚）</button>
+          <button type="button" data-weight="10" disabled>+10 g</button>
+          <button type="button" data-weight="5" disabled>+5 g</button>
+          <button type="button" id="removeWeightButton" disabled>取下上枚砝码</button>
         </div>
 
         <div class="slider-row" style="margin-top:14px">
           <label for="riderSlider">游码位置</label>
-          <input type="range" id="riderSlider" min="0" max="50" step="1" value="0" />
-          <span class="val" id="riderSliderVal">0.0g</span>
+          <input type="range" id="riderSlider" min="0" max="50" step="1" value="10" aria-valuetext="1.0克" />
+          <span class="val" id="riderSliderVal">1.0 g</span>
         </div>
 
         <div class="status-bar" id="balanceStatus" role="status">
-          请添加砝码，使天平平衡 🎯
+          先将空载天平的游码移回0 g，再调平。
         </div>
 
-        <button onclick="newBalanceTarget()" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;background:var(--balance);border:none;color:white;cursor:pointer;font-size:14px;font-weight:600">🔄 换一个目标</button>
+        <div class="balance-read">
+          <label for="balanceReading">平衡后读数 (g)</label>
+          <input type="number" id="balanceReading" min="0" max="210" step="0.1" inputmode="decimal" disabled />
+          <button type="button" id="checkBalanceReading" disabled>核对读数</button>
+        </div>
+        <p class="status-bar" id="balanceReadFeedback" role="status">右盘砝码总质量加游码刻度，才是待测物质量。</p>
+
+        <button type="button" id="newBalanceTargetButton" disabled style="margin-top:10px;width:100%;padding:10px;border-radius:10px;background:var(--balance);border:none;color:white;cursor:pointer;font-size:14px;font-weight:600">🔄 换一个未知物</button>
+        <p style="font-size:12px;color:#cbd5e1;line-height:1.6;margin-top:10px">操作顺序依据：<a href="https://jyj.fuzhou.gov.cn/zfxxgkzl/gkml/ywgz/zdjy/202503/P020250320376488239559.pdf" style="color:#93c5fd">福州市教育局初中物理实验技能考查方案</a>。这里是教学示意，不是实物测量。</p>
       </div>
 
       <!-- 密度计算 -->
@@ -311,7 +335,6 @@
             <button type="button" class="quiz-opt" onclick="checkQuiz(this, false)">D. 铅（ρ≈11.3）</button>
           </div>
           <div class="status-bar" id="quizFeedback" role="status">先算密度，再从四个参考值中选择。</div>
-          <button type="button" class="quiz-save" id="retrySaveButton" hidden>重试保存完成记录</button>
         </div>
       </div>
     </div>
@@ -327,27 +350,42 @@ if (!ctx) {
   document.getElementById('canvasFallback').hidden = false;
 }
 
-// ===== 进度追踪：答对与本机保存分开确认 =====
+// ===== 进度追踪：两项本次学习证据与本机保存分开确认 =====
 let densityQuizSolved = false;
+let balanceEvidence = false;
 let progressSaved = typeof PageProgress !== 'undefined' && PageProgress.isDone('mass-density');
-function saveDensityProgress() {
-  const feedback = document.getElementById('quizFeedback');
+const hadPriorRecord = progressSaved;
+function updateCompletionStatus() {
+  const status = document.getElementById('completionStatus');
   const retry = document.getElementById('retrySaveButton');
   if (progressSaved) {
-    feedback.textContent = '答对了：54 ÷ 20 = 2.7 g/cm³，与铝的参考值最接近。本机已有完成记录。';
+    status.textContent = hadPriorRecord
+      ? '本机已有完成记录（可能按旧规则保存）；本次称量' + (balanceEvidence ? '已完成' : '待完成') + '，密度练习' + (densityQuizSolved ? '已答对' : '待完成') + '。'
+      : '本次称量读数和密度练习均已通过，完成记录已保存在本机。';
     retry.hidden = true;
+  } else if (balanceEvidence && densityQuizSolved) {
+    status.textContent = '两项均已通过，但本机完成记录未保存；可重试。';
+    retry.hidden = false;
+  } else {
+    status.textContent = '完成要求：称量未知物并正确读数' + (balanceEvidence ? '（已通过）' : '（待完成）') + '；答对密度练习' + (densityQuizSolved ? '（已通过）' : '（待完成）') + '。两项顺序不限。';
+    retry.hidden = true;
+  }
+}
+function saveDensityProgress() {
+  if (progressSaved) {
+    updateCompletionStatus();
+    return;
+  }
+  if (!balanceEvidence || !densityQuizSolved) {
+    updateCompletionStatus();
     return;
   }
   const saved = typeof PageProgress !== 'undefined' && PageProgress.markDone('mass-density');
   if (saved) {
     progressSaved = true;
-    feedback.textContent = '答对了：54 ÷ 20 = 2.7 g/cm³，与铝的参考值最接近。完成记录已保存在本机。';
-    retry.hidden = true;
     showMassDensityToast('🎉 「质量与密度」本机完成记录已保存');
-  } else {
-    feedback.textContent = '答对了：54 ÷ 20 = 2.7 g/cm³，与铝的参考值最接近；但本机记录未保存，可重试。';
-    retry.hidden = false;
   }
+  updateCompletionStatus();
 }
 document.getElementById('retrySaveButton').addEventListener('click', saveDensityProgress);
 function showMassDensityToast(msg) {
@@ -400,63 +438,147 @@ objectSlider.addEventListener('input', () => {
 // === BALANCE TAB ===
 let targetMass = 25.4;
 let addedWeights = [];
-let riderPos = 0;
+let riderPos = 1;
+let balanceCalibrated = false;
+let objectPlaced = false;
+let currentTargetReadCorrect = false;
+const weightStock = {100: 1, 50: 1, 20: 2, 10: 1, 5: 1};
+const riderSlider = document.getElementById('riderSlider');
+const balanceReading = document.getElementById('balanceReading');
+const balanceReadFeedback = document.getElementById('balanceReadFeedback');
+const balanceStatus = document.getElementById('balanceStatus');
 
-const weights = [100, 50, 20, 10, 5];
+function totalWeight() { return addedWeights.reduce((sum, weight) => sum + weight, 0); }
+function isBalanceLevel() {
+  return balanceCalibrated && objectPlaced && Math.abs(totalWeight() + riderPos - targetMass) < 0.05;
+}
+
+document.getElementById('calibrateButton').addEventListener('click', () => {
+  if (balanceCalibrated) return;
+  if (riderPos !== 0) {
+    balanceStatus.textContent = '空载调平前，先把游码移到0 g。';
+    return;
+  }
+  balanceCalibrated = true;
+  updateBalanceUI();
+  draw();
+});
+document.getElementById('placeObjectButton').addEventListener('click', () => {
+  if (!balanceCalibrated || objectPlaced) return;
+  objectPlaced = true;
+  updateBalanceUI();
+  draw();
+});
+document.querySelectorAll('[data-weight]').forEach(button => {
+  button.addEventListener('click', () => addWeight(Number(button.dataset.weight)));
+});
+document.getElementById('removeWeightButton').addEventListener('click', removeWeight);
+document.getElementById('newBalanceTargetButton').addEventListener('click', newBalanceTarget);
+document.getElementById('checkBalanceReading').addEventListener('click', checkBalanceReading);
 
 function newBalanceTarget() {
+  if (!balanceCalibrated) return;
   const targets = [12.5, 25.4, 37.8, 48.2, 63.5, 85.0, 107.3, 152.6];
-  targetMass = targets[Math.floor(Math.random() * targets.length)];
+  const otherTargets = targets.filter(mass => mass !== targetMass);
+  targetMass = otherTargets[Math.floor(Math.random() * otherTargets.length)];
   addedWeights = [];
   riderPos = 0;
-  document.getElementById('riderSlider').value = 0;
+  objectPlaced = false;
+  currentTargetReadCorrect = false;
+  riderSlider.value = 0;
+  balanceReading.value = '';
+  balanceReadFeedback.textContent = '右盘砝码总质量加游码刻度，才是待测物质量。';
   updateBalanceUI();
   draw();
 }
 
 function addWeight(w) {
-  const total = addedWeights.reduce((a, b) => a + b, 0);
-  if (total + w > targetMass + 5) {
-    document.getElementById('balanceStatus').innerHTML = '<span class="warn">⚠️ 超过太多了！试试更小的砝码</span>';
+  if (!objectPlaced || currentTargetReadCorrect) return;
+  if (!weightStock[w] || addedWeights.filter(weight => weight === w).length >= weightStock[w]) {
+    balanceStatus.textContent = '这种砝码已用完；可取下上枚砝码再调整。';
     return;
   }
   addedWeights.push(w);
+  balanceReading.value = '';
+  balanceReadFeedback.textContent = '右盘砝码总质量加游码刻度，才是待测物质量。';
   updateBalanceUI();
   draw();
 }
 
 function removeWeight() {
-  if (addedWeights.length === 0) return;
+  if (!objectPlaced || currentTargetReadCorrect || addedWeights.length === 0) return;
   addedWeights.pop();
+  balanceReading.value = '';
+  balanceReadFeedback.textContent = '右盘砝码总质量加游码刻度，才是待测物质量。';
   updateBalanceUI();
   draw();
 }
 
-document.getElementById('riderSlider').addEventListener('input', (e) => {
+riderSlider.addEventListener('input', (e) => {
   riderPos = parseFloat(e.target.value) / 10;
-  document.getElementById('riderSliderVal').textContent = riderPos.toFixed(1) + 'g';
+  balanceReading.value = '';
+  balanceReadFeedback.textContent = '右盘砝码总质量加游码刻度，才是待测物质量。';
   updateBalanceUI();
   draw();
 });
 
 function updateBalanceUI() {
-  const total = addedWeights.reduce((a, b) => a + b, 0);
-  document.getElementById('targetMass').textContent = targetMass.toFixed(1);
+  const total = totalWeight();
+  document.getElementById('targetMass').textContent = currentTargetReadCorrect ? targetMass.toFixed(1) : '未知';
+  document.getElementById('targetMassUnit').textContent = currentTargetReadCorrect ? 'g' : '';
   document.getElementById('addedMass').textContent = total;
   document.getElementById('riderVal').textContent = riderPos.toFixed(1);
-
+  document.getElementById('riderSliderVal').textContent = riderPos.toFixed(1) + ' g';
+  riderSlider.setAttribute('aria-valuetext', riderPos.toFixed(1) + '克');
+  riderSlider.disabled = balanceCalibrated && (!objectPlaced || currentTargetReadCorrect);
+  document.getElementById('calibrateButton').disabled = balanceCalibrated;
+  document.getElementById('placeObjectButton').disabled = !balanceCalibrated || objectPlaced;
+  document.getElementById('newBalanceTargetButton').disabled = !balanceCalibrated;
+  document.getElementById('removeWeightButton').disabled = !objectPlaced || currentTargetReadCorrect || addedWeights.length === 0;
+  document.querySelectorAll('[data-weight]').forEach(button => {
+    const weight = Number(button.dataset.weight);
+    const remaining = weightStock[weight] - addedWeights.filter(item => item === weight).length;
+    button.disabled = !objectPlaced || currentTargetReadCorrect || remaining === 0;
+    button.textContent = '+' + weight + ' g' + (weightStock[weight] > 1 ? '（剩' + remaining + '枚）' : '');
+  });
+  const level = isBalanceLevel();
+  balanceReading.disabled = !level || currentTargetReadCorrect;
+  document.getElementById('checkBalanceReading').disabled = !level || currentTargetReadCorrect;
   const measured = total + riderPos;
-  const diff = Math.abs(measured - targetMass);
-
-  if (diff < 0.05) {
-    document.getElementById('balanceStatus').innerHTML = '<span class="ok">✅ 完美平衡！物体质量 = ' + targetMass.toFixed(1) + 'g</span>';
-  } else if (diff < 1) {
-    document.getElementById('balanceStatus').innerHTML = '<span class="warn">🔶 接近了！差 ' + diff.toFixed(1) + 'g，调整游码试试</span>';
+  if (!balanceCalibrated) {
+    balanceStatus.textContent = riderPos === 0 ? '游码已归零；现在调平空载天平。' : '先将空载天平的游码移回0 g，再调平。';
+  } else if (!objectPlaced) {
+    balanceStatus.textContent = '空载天平已调平；请把未知物放在左盘。';
+  } else if (currentTargetReadCorrect) {
+    balanceStatus.textContent = '测量完成：右盘砝码 ' + total + ' g + 游码 ' + riderPos.toFixed(1) + ' g = ' + targetMass.toFixed(1) + ' g。';
+  } else if (level) {
+    balanceStatus.textContent = '横梁平衡；请把右盘砝码与游码刻度相加，填写测量读数。';
   } else if (measured < targetMass) {
-    document.getElementById('balanceStatus').innerHTML = '还需要添加 ' + (targetMass - measured).toFixed(1) + 'g';
+    balanceStatus.textContent = '右盘偏轻；先由大到小试砝码，再用游码细调。';
   } else {
-    document.getElementById('balanceStatus').innerHTML = '<span class="warn">⚠️ 多了 ' + (measured - targetMass).toFixed(1) + 'g，取下一些砝码</span>';
+    balanceStatus.textContent = '右盘偏重；取下砝码或把游码向0 g移动。';
   }
+}
+
+function checkBalanceReading() {
+  if (!isBalanceLevel() || currentTargetReadCorrect) return;
+  const raw = balanceReading.value.trim();
+  const reading = Number(raw);
+  if (!raw || !Number.isFinite(reading) || Math.abs(reading * 10 - Math.round(reading * 10)) > 0.000001) {
+    balanceReadFeedback.textContent = '请按0.1 g刻度填写一个有效读数。';
+    return;
+  }
+  const measured = totalWeight() + riderPos;
+  if (Math.abs(reading - measured) >= 0.05) {
+    balanceReadFeedback.textContent = '读数不符：右盘砝码为 ' + totalWeight() + ' g，游码为 ' + riderPos.toFixed(1) + ' g；请把两者相加。';
+    return;
+  }
+  currentTargetReadCorrect = true;
+  balanceEvidence = true;
+  balanceReadFeedback.textContent = '读数正确：' + totalWeight() + ' g + ' + riderPos.toFixed(1) + ' g = ' + targetMass.toFixed(1) + ' g。';
+  updateBalanceUI();
+  draw();
+  saveDensityProgress();
 }
 
 // === DENSITY TAB ===
@@ -511,6 +633,7 @@ function checkQuiz(el, correct) {
   } else {
     densityQuizSolved = true;
     document.querySelectorAll('.quiz-opt').forEach(o => { o.disabled = true; });
+    document.getElementById('quizFeedback').textContent = '答对了：54 ÷ 20 = 2.7 g/cm³，与铝的参考值最接近。';
     saveDensityProgress();
   }
 }
@@ -659,11 +782,11 @@ function drawBalance() {
   ctx.fill();
 
   // Calculate tilt
-  const total = addedWeights.reduce((a, b) => a + b, 0);
+  const total = totalWeight();
   const measured = total + riderPos;
   const diff = measured - targetMass;
   const maxTilt = 15;
-  const tilt = Math.max(-maxTilt, Math.min(maxTilt, diff * 2));
+  const tilt = !balanceCalibrated ? -7 : !objectPlaced ? 0 : Math.max(-maxTilt, Math.min(maxTilt, diff * 2));
 
   // Beam
   ctx.save();
@@ -689,10 +812,12 @@ function drawBalance() {
   // Object on left pan
   ctx.font = '28px serif';
   ctx.textAlign = 'center';
-  ctx.fillText('📦', -160, 10);
-  ctx.font = '12px -apple-system';
-  ctx.fillStyle = '#fbbf24';
-  ctx.fillText('?', -160, -10);
+  if (objectPlaced) {
+    ctx.fillText('📦', -160, 10);
+    ctx.font = '12px -apple-system';
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillText(currentTargetReadCorrect ? targetMass.toFixed(1) + 'g' : '?', -160, -10);
+  }
 
   // Right pan (weights)
   ctx.fillStyle = 'rgba(139,92,246,0.2)';
@@ -704,7 +829,7 @@ function drawBalance() {
   ctx.stroke();
 
   // Weights on right pan
-  if (addedWeights.length > 0) {
+  if (objectPlaced && addedWeights.length > 0) {
     ctx.font = '14px monospace';
     ctx.fillStyle = '#c4b5fd';
     ctx.fillText(addedWeights.join('+') + 'g', 160, 5);
@@ -733,7 +858,7 @@ function drawBalance() {
   ctx.fillRect(200, 420, 320, 12);
   const riderX = 200 + (riderPos / 5) * 320;
   ctx.fillStyle = '#f59e0b';
-  ctx.fillRect(riderX - 3, 418, 6, 16);
+  ctx.fillRect(riderX, 418, 6, 16);
   ctx.font = '11px monospace';
   ctx.fillStyle = '#94a3b8';
   ctx.textAlign = 'left';
@@ -744,16 +869,10 @@ function drawBalance() {
   ctx.fillText('游码', 360, 460);
 
   // Status
-  const statusDiff = Math.abs(measured - targetMass);
-  if (statusDiff < 0.05) {
-    ctx.font = 'bold 18px -apple-system';
-    ctx.fillStyle = '#6ee7b7';
-    ctx.fillText('✅ 平衡！', cx, 80);
-  } else {
-    ctx.font = '16px -apple-system';
-    ctx.fillStyle = '#fbbf24';
-    ctx.fillText('目标: ' + targetMass.toFixed(1) + 'g', cx, 80);
-  }
+  ctx.font = 'bold 18px -apple-system';
+  ctx.fillStyle = '#fbbf24';
+  const canvasStatus = !balanceCalibrated ? '空载未调平' : !objectPlaced ? '空载平衡，待放物' : isBalanceLevel() ? '横梁平衡' : measured < targetMass ? '右盘偏轻' : '右盘偏重';
+  ctx.fillText(canvasStatus, cx, 80);
 }
 
 function drawDensity() {
@@ -875,6 +994,7 @@ function drawDensity() {
 // Initialize
 updateDensity();
 updateBalanceUI();
+updateCompletionStatus();
 draw();
 </script>
   <script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="初中物理"></script>

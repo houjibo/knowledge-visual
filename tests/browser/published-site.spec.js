@@ -411,6 +411,21 @@ test('发布包子路径可搜索并操作初中质量与密度', async ({page})
   await expect(page.locator('#drOut')).toHaveText('2.70');
   await expect(page.locator('#materialComparison')).toContainText('在显示精度内相同');
   await page.getByRole('button', {name: /^B\. 铝/}).click();
-  await expect(page.locator('#quizFeedback')).toContainText('完成记录已保存在本机');
+  await expect(page.locator('#completionStatus')).toContainText('称量未知物并正确读数（待完成）');
+  await page.getByRole('button', {name: /天平使用/}).click();
+  await page.locator('#riderSlider').evaluate(input => {
+    input.value = '0'; input.dispatchEvent(new Event('input', {bubbles: true}));
+  });
+  await page.getByRole('button', {name: '调平空载天平'}).click();
+  await page.getByRole('button', {name: '将未知物放左盘'}).click();
+  await page.getByRole('button', {name: /^\+20 g/}).click();
+  await page.getByRole('button', {name: /^\+5 g/}).click();
+  await page.locator('#riderSlider').evaluate(input => {
+    input.value = '4'; input.dispatchEvent(new Event('input', {bubbles: true}));
+  });
+  await expect(page.locator('#balanceStatus')).toContainText('横梁平衡');
+  await page.getByRole('spinbutton', {name: '平衡后读数 (g)'}).fill('25.4');
+  await page.getByRole('button', {name: '核对读数'}).click();
+  await expect(page.locator('#completionStatus')).toContainText('完成记录已保存在本机');
   expect(failures).toEqual([]);
 });
