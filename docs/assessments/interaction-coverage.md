@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：343；已登记部分交互证据：202；尚未登记：141。
+主题总数：343；已登记部分交互证据：203；尚未登记：140。
 
 ## 已登记部分交互证据
 
@@ -88,6 +88,8 @@
   - 桌面与移动视口验证轨迹随参数与曲线切换、键盘模式、逐题锁定和存储失败重试；真实设备与整页无障碍尚未全面验收。 [conic-learning-interaction-reliability.spec.js](../../tests/browser/conic-learning-interaction-reliability.spec.js)
   - 桌面与移动视口验证纵向椭圆、圆与双曲线的文字和画布焦点坐标；其他曲线互动、轨迹模式与实机尚未全面验收。 [conic-section-focus-accuracy.spec.js](../../tests/browser/conic-section-focus-accuracy.spec.js)
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
+- [计数原理 - 高中数学互动可视化](../../math/high/counting.html)
+  - 桌面与移动视口核对互斥分类求和、连续分步求积、2–4组路线枚举与高亮、五个键盘页签、排列组合及杨辉三角选择、八题首次答案计分与保存重试、普通演示改参、320px和无画布、file直开及发布子路径；真实屏幕阅读器和学习理解仍待核查。 [high-counting-principles-reliability.spec.js](../../tests/browser/high-counting-principles-reliability.spec.js)
 - [导数 · 概念、运算与应用互动可视化](../../math/high/derivative.html)
   - 桌面与移动视口覆盖逐题锁定、模式切换、1/6 未通过、4/6 通过及存储失败重试；真实设备及整页无障碍尚未全面验收。 [derivative-quiz-completion-reliability.spec.js](../../tests/browser/derivative-quiz-completion-reliability.spec.js)
   - 桌面与移动视口核对二次、三次、正弦和对数函数局部极值，以及画布增减色带；其他教学内容与整页无障碍尚未全面验收。 [derivative-extrema-and-monotonicity.spec.js](../../tests/browser/derivative-extrema-and-monotonicity.spec.js)
@@ -544,7 +546,6 @@
 - [量子化学基础 · 大学化学互动可视化](../../chemistry/uni/quantum-chemistry.html)
 - [立体化学 · 手性与对映异构 · 大学化学互动可视化](../../chemistry/uni/stereochemistry.html)
 - [化学热力学 · 大学化学互动可视化](../../chemistry/uni/thermodynamics.html)
-- [计数原理 - 高中数学互动可视化](../../math/high/counting.html)
 - [指数与对数 - 高中数学可视化](../../math/high/exponential-log.html)
 - [直线与圆 - 高中数学](../../math/high/line-circle.html)
 - [数列 - 高中数学](../../math/high/sequence.html)

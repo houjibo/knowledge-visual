@@ -374,3 +374,33 @@ test('公网高中有机化学键盘主题、六碳骨架与命名进度可用',
   await expect(page.locator('#organic-progress')).toContainText('已保存在本机');
   expect(failures).toEqual([]);
 });
+
+test('公网高中计数原理分类与分步、键盘页签和完成记录可用', async ({page}) => {
+  expect(baseValue, '发布验收需指定 KV_PUBLISHED_BASE_URL').toBeTruthy();
+  expect(expectedRevision, '发布验收需指定 GITHUB_SHA').toMatch(/^[a-f0-9]{40}$/);
+  const url = new URL('math/high/counting.html', baseValue);
+  url.searchParams.set('verify', expectedRevision);
+  const failures = [];
+  page.on('pageerror', error => failures.push(error.message));
+  page.on('response', response => {
+    if (response.url().startsWith(new URL(baseValue).href) && response.status() >= 400)
+      failures.push(`${response.status()} ${response.url()}`);
+  });
+  await page.goto(url.href, {waitUntil: 'domcontentloaded', timeout: 30000});
+  await expect(page.locator('#pathResult')).toHaveText('分类相加：2 + 3 = 5 条路线');
+  await page.locator('#countMode').selectOption('product');
+  await expect(page.locator('#pathResult')).toHaveText('分步相乘：2 × 3 = 6 条路线');
+  await page.getByRole('button', {name: /列出全部路线/}).click();
+  await expect(page.locator('#pathList button')).toHaveCount(6);
+  const tabs = page.getByRole('tablist', {name: '计数原理主题'}).getByRole('tab');
+  await tabs.first().focus();
+  await tabs.first().press('End');
+  await expect(tabs.last()).toBeFocused();
+  for (const [index, answer] of [1, 1, 2, 1, 1, 1, 2, 0].entries()) {
+    if (index > 0) await page.locator('#nextQuizButton').click();
+    await page.locator('#quizArea .quiz-option').nth(index < 5 ? answer : (answer + 1) % 4).click();
+  }
+  await expect(page.locator('#quizFeedback')).toContainText('本轮得分 5/8');
+  await expect(page.locator('#quizSaveStatus')).toContainText('已保存在本机');
+  expect(failures).toEqual([]);
+});
