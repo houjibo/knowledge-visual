@@ -213,11 +213,14 @@ test('file 直开无需运行时联网且不写学科进度', async ({page}) => 
 
 test('构建后的项目子路径中模型、控制器与返回链接可用', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网专项已覆盖发布路径');
+  // This case builds and serves the full release artifact inside the test.
+  test.setTimeout(60_000);
   const server = await startReleaseServer();
   try {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(server.base + 'simulation-world/robot-arm.html');
+    const response = await page.goto(server.base + 'simulation-world/robot-arm.html', {waitUntil: 'domcontentloaded'});
+    expect(response.status()).toBe(200);
     await page.locator('#target-far').click();
     await page.locator('#prediction-select').selectOption('unreachable');
     await page.locator('#check-prediction').click();
