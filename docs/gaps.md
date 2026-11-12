@@ -1,10 +1,10 @@
 # 项目差距与后续方向
 
-最后核查：2026-11-12；模拟世界皮带与带轮的本地和公网页面已验收，[Actions #282](https://github.com/houjibo/knowledge-visual/actions/runs/43193035702) 全部成功，公开版本与 `39cf6d5` 一致。此前高中查找策略、二维机械臂等场景也已按各自记录归档。剩余知识与交互差距继续逐步核查。
+最后核查：2026-11-12；初中质量与密度的本地和公网页面已验收，[Actions #43248791663](https://github.com/houjibo/knowledge-visual/actions/runs/43248791663) 七项成功，公开版本与 `4bfa70a` 一致。此前模拟世界皮带与带轮等场景已按各自记录归档。剩余知识与交互差距继续逐步核查。
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
-| 高 | 初中“质量与密度”原有章节/练习仅能鼠标操作，密度计算用重叠区间猜单一材料，质量图把10 t误标为10000 t且密度末行越界；答对后未确认完成记录是否写入。本轮按[当前 OpenSpec](../openspec/changes/2026-11-12-middle-mass-density-learning-reliability/proposal.md)修复原生键盘入口、参考值差异、图示和保存重试；桌面/移动专项16项及完整本地门禁通过（2096项功能、开发与发布各373页、20项发布交互），见[核查记录](assessments/middle-mass-density-2026-11-12.md)。 | 完成Actions和公网操作；另立变更核查天平模型及“一题即完成”的学习门槛，保留真实设备和屏幕阅读器差距。 |
+| 高 | 初中“质量与密度”原有章节/练习仅能鼠标操作，密度计算用重叠区间猜单一材料，质量图把10 t误标为10000 t且密度末行越界；答对后未确认完成记录是否写入。本轮按[归档 OpenSpec](../openspec/changes/archive/2026-11-12-middle-mass-density-learning-reliability/proposal.md)修复原生键盘入口、参考值差异、图示和保存重试；桌面/移动专项16项、完整本地门禁及 [Actions #43248791663](https://github.com/houjibo/knowledge-visual/actions/runs/43248791663) 七项通过，公网版本和计算、改答、完成反馈已核对，见[核查记录](assessments/middle-mass-density-2026-11-12.md)。 | 本次已验收归档；另立变更核查天平模型及“一题即完成”的学习门槛，保留真实设备和屏幕阅读器差距。 |
 | 中 | 模拟世界原缺柔性带连接、开口与交叉旋向及打滑边界的可操作对照。现按[归档 OpenSpec](../openspec/changes/archive/2026-11-12-belt-pulley-simulation/proposal.md)新增皮带与带轮：轮径/输入转速、两项预测、无打滑结果、步进/播放以及打滑后实际速度未知；纯模型720组条件与公切线几何、桌面/移动专项12项及完整本地门禁通过（2080项功能、373页开发与发布加载）。[Actions #282](https://github.com/houjibo/knowledge-visual/actions/runs/43193035702) 全部成功，公网版本和开口/交叉交互已核对，见[核查记录](assessments/belt-pulley-2026-11-12.md)。 | 本次已验收归档；后续通过真实学习者及实机验证概念理解与操作体验。 |
 | 中 | 模拟世界原有串行工业流水线，缺分流后独立队列的直观对照。现按[归档 OpenSpec](../openspec/changes/archive/2026-11-12-warehouse-sorting-simulation/proposal.md)新增仓储分拣：固定12件按A/A/B标记到达，预测首个排队口，对照两口处理时间、等待峰值和整批完成；纯模型48组参数、桌面/移动专项14项、本地完整门禁与 [Actions #279](https://github.com/houjibo/knowledge-visual/actions/runs/43182047067) 七个任务通过，公网版本和A/B两种积压交互已核对，见[核查记录](assessments/warehouse-sort-2026-11-12.md)。 | 本次已验收归档；后续通过真实学习者反馈判断分流概念与模型边界是否易懂。 |
 | 高 | 大学计算机原无入口，学习者不能在本站对照基础数据结构的取出规则。现以[归档 OpenSpec](../openspec/changes/archive/2026-11-12-university-stack-queue-lab/proposal.md)新增栈与队列：同一到达流、两侧逐步预测、交错加入、独立进度、搜索与发布路径。本地完整检查与就绪修复提交 `cc281fc` 的 [Actions #277](https://github.com/houjibo/knowledge-visual/actions/runs/43172473775) 七个 job 成功，公开版本及两轮实际交互已验收，见[记录](assessments/stack-queue-2026-11-12.md)。 | 本次已归档；后续仍需复杂度、其他数据结构、系统及网络课程，以及真实学习者验证。 |

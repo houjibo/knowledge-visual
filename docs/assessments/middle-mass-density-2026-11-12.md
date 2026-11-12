@@ -1,6 +1,6 @@
 # 初中质量与密度核查
 
-状态：本地完整检查完成，公开发布待核对。范围由[当前 OpenSpec 变更](../../openspec/changes/2026-11-12-middle-mass-density-learning-reliability/proposal.md)界定。
+状态：本地与公网验收完成，[Actions #43248791663](https://github.com/houjibo/knowledge-visual/actions/runs/43248791663) 七个任务通过。范围由[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-12-middle-mass-density-learning-reliability/proposal.md)界定。
 
 ## 复现与知识依据
 
@@ -15,7 +15,9 @@
 - `CI=true npx playwright test tests/browser/middle-mass-density-learning-reliability.spec.js`：桌面与移动共16项通过，覆盖320px、键盘、50/20与高值、体积立方根图示、错误后正确、历史记录/拒绝存储、画布不可用、`file://`直开。发布包子路径专项2项通过，能从首页搜索进入并完成比较与练习。
 - `npm run check:static` 通过，含严格 OpenSpec 261 项；静态页面清单保持373页，交互风险报告中该页的七个 div 候选已消除，发布资源核验增加本页并覆盖62个资源。
 - `CI=true npm run check` 完整通过：功能浏览器2096项通过/6项按配置跳过，开发站373页加载、发布包子路径20项交互及发布包373页加载通过。
+- 首次推送 `9380b6e` 的桌面矩阵仅在仓储分拣发布包测试遇到60秒超时，阻止了部署。该用例在返回导航开始后即关闭临时服务器，存在等待未结束请求的风险。修复提交 `4bfa70a` 在导航完成并关闭页面后清理服务器连接；新增未完成HTTP请求的关闭回归。本地发布包相关61项、发布包交互20项、373页加载及该故障用例连续10次通过；随后 Actions 七个任务全部成功。
+- 公网 [发布清单](https://houjibo.github.io/knowledge-visual/release-version.json) 的 `revision` 为 `4bfa70a4c53bea91d731606b5bb264ccf5ebb1d6`，`site_files_modified` 为 `false`。在[公网页面](https://houjibo.github.io/knowledge-visual/physics/middle/mass-density.html)实测50 g / 20 cm³得到2.50 g/cm³，选择常见玻璃显示参考2.60与差值0.10；先选铁后选铝可改答，正确后出现本机完成记录已保存。本地页面也已打开检查。
 
-## 尚待核对与后续差距
+## 后续差距
 
-Actions 和公网实际操作待完成。历史完成记录仍沿用“答对一题即记录主题完成”的既有门槛；这不能证明学习者已理解质量概念或天平称量。应另立变更设计更完整的完成证据，先核查天平模型和题目适龄性。真实设备、整页屏幕阅读器及真实材料鉴定也不在本轮自动化结论内。
+历史完成记录仍沿用“答对一题即记录主题完成”的既有门槛；这不能证明学习者已理解质量概念或天平称量。应另立变更设计更完整的完成证据，先核查天平模型和题目适龄性。真实设备、整页屏幕阅读器及真实材料鉴定也不在本轮自动化结论内。
