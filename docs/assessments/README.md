@@ -1,6 +1,6 @@
 # 站点评估基线
 
-[页面清单](page-inventory.json) 于 2026-11-13 根据当前仓库重新生成：包含 376 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
+[页面清单](page-inventory.json) 于 2026-11-13 根据当前仓库重新生成：包含 377 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
 
 重新生成：`python3 scripts/inventory_pages.py --output docs/assessments/page-inventory.json`；运行 `python3 scripts/inventory_pages.py --check docs/assessments/page-inventory.json` 检查清单是否过期，运行 `python3 tests/inventory_test.py` 验证基本解析及导航行为。生成结果按路径稳定排序，无时间戳，可用版本差异检查变化。
 
@@ -66,3 +66,7 @@
 [质量与密度天平称量核查](mass-density-balance-2026-11-13.md)记录未知物称量、读数和双任务完成规则的模型边界与验证状态。
 
 [凸轮送料与工厂节拍核查](cam-factory-2026-11-13.md)记录机械运动相位、送料时间窗口、有限批次和模型边界。
+
+[高中有机化学图文与键盘学习核查](organic-2026-11-13.md)记录主题键盘入口、分子图示和完成保存反馈的修复与验证。
+
+[共享传动轴工坊核查](line-shaft-workshop-2026-11-13.md)记录双机理想传动、预测、图示、无障碍控制和发布验收。

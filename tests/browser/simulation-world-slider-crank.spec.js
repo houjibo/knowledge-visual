@@ -138,15 +138,15 @@ async function trackProgress(page) {
 test('首页分类搜索和模拟目录可发现曲柄场景且不显示学段进度', async ({page}) => {
   await page.goto(process.env.KV_PUBLISHED_BASE_URL || '/');
   const category = page.locator('[data-subject-category="simulation-world"]');
-  await expect(category).toHaveAttribute('data-total', '8');
-  await expect(category.locator('.subject-badge')).toHaveText('8 个模拟');
+  await expect(category).toHaveAttribute('data-total', '9');
+  await expect(category.locator('.subject-badge')).toHaveText('9 个模拟');
   await expect(category.locator('.subject-progress')).toHaveCount(0);
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name: '关键词'}).fill('曲柄');
   await page.locator('#site-results a[href="simulation-world/slider-crank.html"]').click();
   await expect(page.getByRole('heading', {name: /曲柄滑块模拟/})).toBeVisible();
   await page.getByRole('navigation', {name: '导航', exact: true}).getByRole('link', {name: '返回模拟世界', exact: true}).click();
-  await expect(page.locator('.topic-card')).toHaveCount(8);
+  await expect(page.locator('.topic-card')).toHaveCount(9);
   await page.locator('.topic-card[href="slider-crank.html"]').click();
   await expect(page.locator('#mechanism-svg')).toBeVisible();
 });

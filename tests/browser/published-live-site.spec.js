@@ -173,7 +173,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-middle-progress'))['data-minimization']))
     .toBe(true);
   await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
-  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('8 个模拟');
+  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('9 个模拟');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name: '关键词'}).fill('机械臂');
   await page.locator('#site-results a[href="simulation-world/robot-arm.html"]').click();
@@ -237,6 +237,31 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.locator('#remove-button').click();
   await expect(page.locator('#action-status')).toContainText('栈取出 C');
   await expect(page.locator('#action-status')).toContainText('队列取出 A');
+  expect(failures).toEqual([]);
+});
+
+test('公网共享传动轴工坊可预测两台机器并单步观察', async ({page}) => {
+  expect(baseValue, '发布验收需指定 KV_PUBLISHED_BASE_URL').toBeTruthy();
+  const failures = [];
+  page.on('pageerror', error => failures.push(error.message));
+  await page.goto(new URL('', baseValue).href, {waitUntil: 'domcontentloaded'});
+  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('9 个模拟');
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('传动轴');
+  await page.locator('#site-results a[href="simulation-world/line-shaft-workshop.html"]').click();
+  await expect(page).toHaveTitle('共享传动轴工坊模拟 · 模拟世界');
+  await page.locator('#preset-two').click();
+  await page.locator('#b-prediction').selectOption('slower');
+  await page.locator('#reveal-button').click();
+  await expect(page.locator('#prediction-feedback')).toContainText('预测正确');
+  await expect(page.locator('#machine-a-speed')).toHaveText('60 rpm');
+  await expect(page.locator('#machine-b-speed')).toHaveText('30 rpm');
+  await page.locator('#step-button').click();
+  await expect(page.locator('#machine-b-rotor')).toHaveAttribute('transform', 'translate(650 328) rotate(45)');
+  await page.locator('#preset-small').click();
+  await page.locator('#b-prediction').selectOption('faster');
+  await page.locator('#reveal-button').click();
+  await expect(page.locator('#machine-b-speed')).toHaveText('120 rpm');
   expect(failures).toEqual([]);
 });
 

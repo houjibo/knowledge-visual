@@ -248,7 +248,7 @@ test('发布站子路径可查找并完整运行工业流水线', async ({page})
   await page.getByRole('link', {name:'返回模拟世界', exact:true}).click();
   await waitForPublishedDocument(page);
   await expect(page).toHaveURL(new URL('simulation-world/index.html', base).href);
-  await expect(page.locator('.topic-card')).toHaveCount(8);
+  await expect(page.locator('.topic-card')).toHaveCount(9);
   expect(failures).toEqual([]);
 });
 
@@ -287,7 +287,7 @@ test('发布包子路径可发现和操作曲柄滑块模拟', async ({page}) =>
   page.on('pageerror', error => errors.push(error.message));
   page.on('response', response => { if (response.url().startsWith(base) && response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
   await gotoPublished(page, base);
-  await expect(page.locator('[data-subject-category="simulation-world"]')).toHaveAttribute('data-total', '8');
+  await expect(page.locator('[data-subject-category="simulation-world"]')).toHaveAttribute('data-total', '9');
   await page.getByRole('combobox', {name:'学科', exact:true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name:'关键词'}).fill('曲柄');
   await page.locator('#site-results a[href="simulation-world/slider-crank.html"]').click();
@@ -307,7 +307,7 @@ test('发布包子路径可发现和操作曲柄滑块模拟', async ({page}) =>
   await expect.poll(async () => parseFloat(await page.locator('#angle-value').innerText())).toBe(105);
   await page.getByRole('navigation', {name:'导航'}).getByRole('link', {name:'返回模拟世界', exact:true}).click();
   await expect(page).toHaveURL(new URL('simulation-world/index.html', base).href);
-  await expect(page.locator('.topic-card')).toHaveCount(8);
+  await expect(page.locator('.topic-card')).toHaveCount(9);
   expect(errors).toEqual([]);
 });
 
