@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="调节凸轮转速和高位停歇角，先预测送料窗口，再逐步观察机械运动与有限工件批次。">
+  <title>凸轮送料与工厂节拍模拟 · 模拟世界</title>
+  <style>
+    :root { color-scheme: light; --ink: #132331; --muted: #4d6170; --paper: #f3f5ef; --panel: #fffef9; --line: #c7d3d3; --teal: #126e75; --teal-dark: #075158; --amber: #bf5b16; --yellow: #ffdc80; --blue: #dcebf0; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: radial-gradient(circle at 88% 0, #dfebe8, transparent 35%), linear-gradient(145deg, #f3f5ef, #e8efec); color: var(--ink); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    button, select { font: inherit; }
+    a { color: #075b70; }
+    :focus-visible { outline: 3px solid #9d4400; outline-offset: 3px; }
+    .skip-link { position: absolute; top: -100px; left: 12px; z-index: 5; padding: 9px 14px; background: #fff; }
+    .skip-link:focus { top: 12px; }
+    .shell { width: min(1200px, 100%); margin: auto; padding: 22px clamp(12px, 3vw, 32px) 42px; }
+    .crumbs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
+    .crumbs a:last-of-type { margin-left: auto; }
+    .hero { margin: 25px 0 22px; padding: clamp(22px, 4vw, 40px); border-radius: 22px; background: #123f48; color: #fff; box-shadow: 0 16px 36px #11363e22; }
+    .eyebrow { color: #b7ede4; font-size: 12px; font-weight: 800; letter-spacing: .12em; }
+    h1 { margin: 7px 0 11px; font-size: clamp(2rem, 5vw, 3.3rem); line-height: 1.18; }
+    h2 { margin: 0 0 8px; font-size: 1.22rem; line-height: 1.35; }
+    h3 { margin: 0 0 7px; font-size: 1.02rem; }
+    p { margin: 8px 0; }
+    .hero p { max-width: 720px; color: #e3f4f0; }
+    .flow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
+    .flow span { border: 1px solid #79adab; border-radius: 999px; padding: 5px 12px; font-size: 13px; background: #ffffff16; }
+    .layout { display: grid; grid-template-columns: minmax(275px, .68fr) minmax(0, 1.32fr); gap: 16px; align-items: start; }
+    .panel { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: 0 8px 28px #193b3f0c; }
+    .panel + .panel, .layout + .panel { margin-top: 16px; }
+    .layout .panel + .panel { margin-top: 0; }
+    .hint { color: var(--muted); font-size: 13px; }
+    .field { margin-top: 17px; }
+    label { display: block; margin-bottom: 5px; font-weight: 700; }
+    select { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid #718e95; border-radius: 10px; background: #fff; color: var(--ink); }
+    .preset-row, .action-row { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; }
+    button { min-height: 42px; padding: 8px 13px; border: 1px solid #7b999d; border-radius: 10px; background: #eaf2ef; color: #103d43; cursor: pointer; font-weight: 650; }
+    button:hover:not(:disabled) { background: #d2e9e1; }
+    button.primary { background: var(--teal); border-color: var(--teal); color: #fff; }
+    button.primary:hover:not(:disabled) { background: var(--teal-dark); }
+    button:disabled { opacity: .48; cursor: not-allowed; }
+    .scene-frame { margin-top: 13px; overflow: hidden; border: 1px solid #6d8588; border-radius: 14px; background: #15313b; }
+    #cam-scene { display: block; width: 100%; height: auto; }
+    .scene-caption { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 12px; color: var(--muted); font-size: 13px; }
+    .scene-caption strong { color: var(--ink); }
+    .scene-caption span { flex: 1 1 180px; }
+    .prediction-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: end; }
+    .prediction-grid .field { margin-top: 0; }
+    .status { min-height: 26px; margin-top: 12px; font-weight: 700; color: #07575e; }
+    .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 15px 0; }
+    .metric { min-width: 0; border: 1px solid #bdd0cf; background: #eff6f3; border-radius: 12px; padding: 13px; }
+    .metric dt { color: #52666a; font-size: 12px; }
+    .metric dd { margin: 6px 0 0; font-size: clamp(1.08rem, 2vw, 1.48rem); font-weight: 800; overflow-wrap: anywhere; }
+    .callout { border-left: 4px solid var(--amber); border-radius: 4px 11px 11px 4px; background: #fff3dc; padding: 10px 14px; }
+    details { border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; background: #f5f8f5; }
+    summary { cursor: pointer; font-weight: 750; }
+    details p, details li { color: var(--muted); }
+    footer { margin-top: 24px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 640px) { .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .prediction-grid { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 370px) { .panel { padding: 15px; } .shell { padding: 12px 12px 30px; } .flow span { font-size: 12px; } }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="crumbs" aria-label="导航"><a href="../index.html">首页</a><span aria-hidden="true">›</span><a href="index.html">模拟世界</a><span aria-hidden="true">›</span><span aria-current="page">凸轮送料与工厂节拍</span><a href="index.html">返回模拟世界</a></nav>
+    <header class="hero">
+      <span class="eyebrow">机械化生产 · 运动与停歇</span>
+      <h1>凸轮送料与工厂节拍</h1>
+      <p>一根轴不停转动，从动件却可以在高处停住一段时间。改变转速和停歇角，先判断这段时间够不够送料，再逐步观察六件工件的有限演示。</p>
+      <div class="flow" aria-label="观察顺序"><span>① 转动</span><span>② 从动件上升</span><span>③ 高位停歇与送料</span><span>④ 下降并进入下一圈</span></div>
+    </header>
+    <main id="main-content">
+      <div class="layout">
+        <section class="panel" aria-labelledby="conditions-heading">
+          <h2 id="conditions-heading">1 · 设定机械节拍</h2>
+          <p class="hint">每转有一次高位停歇机会。这里的“送料时间”是教学设定，不是某台机器的实测值。</p>
+          <div class="field"><label for="cam-rpm">凸轮转速</label><select id="cam-rpm" disabled><option value="20">20 rpm</option><option value="30" selected>30 rpm</option><option value="40">40 rpm</option><option value="60">60 rpm</option></select></div>
+          <div class="field"><label for="high-dwell">高位停歇角</label><select id="high-dwell" disabled><option value="60">60°</option><option value="90" selected>90°</option><option value="120">120°</option><option value="150">150°</option></select></div>
+          <div class="field"><label for="feed-seconds">送料动作需要</label><select id="feed-seconds" disabled><option value="0.3">0.3 s</option><option value="0.4" selected>0.4 s</option><option value="0.5">0.5 s</option><option value="0.8">0.8 s</option></select></div>
+          <p class="hint">上升和下降各固定90°；延长高位停歇会缩短低位停歇。</p>
+          <div class="preset-row" aria-label="对照条件"><button id="preset-start" type="button" disabled>① 初始条件</button><button id="preset-fast" type="button" disabled>② 加快转速</button><button id="preset-long" type="button" disabled>③ 延长停歇</button></div>
+        </section>
+        <section class="panel" aria-labelledby="scene-heading">
+          <h2 id="scene-heading">凸轮相位与工件</h2>
+          <p class="hint">左侧旋转盘是相位标记，右上图是从动件一整转的归一化高度；两者不表示真实凸轮加工轮廓。</p>
+          <div class="scene-frame">
+            <svg id="cam-scene" viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="凸轮静止在零度，六件工件待处理。">
+              <defs><pattern id="scene-grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M 32 0 L 0 0 0 32" fill="none" stroke="#294955" stroke-width="1"/></pattern></defs>
+              <rect width="960" height="500" fill="#15313b"/><rect width="960" height="500" fill="url(#scene-grid)"/>
+              <text x="42" y="46" fill="#c4e6e3" font-size="19" font-weight="700">相位盘与从动件</text>
+              <line x1="255" y1="80" x2="255" y2="370" stroke="#789ca4" stroke-width="2" stroke-dasharray="6 8"/>
+              <rect x="177" y="68" width="156" height="170" rx="10" fill="none" stroke="#7da0a6" stroke-width="4"/>
+              <g id="follower" transform="translate(0 0)"><rect x="240" y="108" width="30" height="112" rx="8" fill="#b7e6db"/><rect x="200" y="97" width="110" height="22" rx="7" fill="#ffdb8d"/><rect x="228" y="211" width="54" height="14" rx="6" fill="#b7e6db"/></g>
+              <circle cx="255" cy="314" r="85" fill="#28596a" stroke="#b7d5d4" stroke-width="6"/>
+              <path id="high-arc" d="" fill="none" stroke="#ffcb72" stroke-width="13" stroke-linecap="round"/>
+              <g id="cam-rotor" transform="rotate(0 255 314)"><line x1="255" y1="314" x2="255" y2="248" stroke="#ffdb8d" stroke-width="9" stroke-linecap="round"/><circle cx="255" cy="314" r="12" fill="#eaf6f0"/><circle cx="255" cy="248" r="8" fill="#ffdb8d"/></g>
+              <text x="255" y="433" fill="#ddf0ed" text-anchor="middle" font-size="18">旋转一圈 = 一个送料窗口</text>
+              <text x="500" y="46" fill="#c4e6e3" font-size="19" font-weight="700">从动件高度 / 1 转</text>
+              <line x1="510" y1="96" x2="908" y2="96" stroke="#6c939a" stroke-dasharray="6 7"/>
+              <line x1="510" y1="260" x2="908" y2="260" stroke="#6c939a"/>
+              <path id="height-curve" fill="none" stroke="#8de1d6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+              <line id="phase-cursor" x1="510" x2="510" y1="78" y2="270" stroke="#ffd485" stroke-width="4"/>
+              <text x="510" y="290" fill="#d6e9e7" font-size="16">0°</text><text x="905" y="290" fill="#d6e9e7" font-size="16" text-anchor="end">360°</text>
+              <text x="510" y="342" fill="#c4e6e3" font-size="19" font-weight="700">六件工件 · 每圈最多一件</text>
+              <g id="part-tokens"></g>
+              <text id="svg-phase-label" x="510" y="461" fill="#f7e0ad" font-size="18">0° · 上升前</text>
+            </svg>
+          </div>
+          <div class="scene-caption"><span><strong>当前相位：</strong><span id="phase-copy">0° · 上升</span></span><span><strong>从动件：</strong><span id="height-copy">最低位</span></span><span><strong>工件：</strong><span id="batch-copy">0 / 6 完成</span></span></div>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="prediction-heading">
+        <h2 id="prediction-heading">2 · 先预测送料窗口</h2>
+        <div class="prediction-grid"><div class="field"><label for="window-prediction">本轮高位停歇够完成送料吗？</label><select id="window-prediction" disabled><option value="">先选择</option><option value="enough">够</option><option value="short">不够</option></select></div><p class="hint">比较：高位停歇角占一整转的比例 × 每转秒数，与送料动作时间相比。</p></div>
+        <div class="action-row"><button id="reveal-button" class="primary" type="button" disabled>揭晓时间关系</button><button id="step-button" type="button" disabled>前进45°</button><button id="cycle-button" type="button" disabled>前进一整圈</button><button id="play-button" type="button" disabled>连续演示</button><button id="pause-button" type="button" disabled>暂停</button><button id="reset-button" type="button" disabled>回到0°</button></div>
+        <p id="prediction-feedback" class="status" role="status">交互初始化中…</p>
+        <p id="runtime-status" class="hint" role="status">示意初始暂停。揭晓后可单步或主动播放。</p>
+      </section>
+
+      <section class="panel" aria-labelledby="result-heading">
+        <h2 id="result-heading">3 · 对照节拍</h2>
+        <dl class="metric-grid"><div class="metric"><dt>每转耗时</dt><dd id="cycle-seconds">—</dd></div><div class="metric"><dt>高位停歇</dt><dd id="dwell-seconds">—</dd></div><div class="metric"><dt>送料需要</dt><dd id="feed-time">0.4 s</dd></div><div class="metric"><dt>模型内窗口</dt><dd id="window-result">待预测</dd></div></dl>
+        <p id="result-explanation" class="callout">可以先用30 rpm、90°与0.4 s预测，再尝试60 rpm，最后把停歇角延至150°。</p>
+      </section>
+
+      <section class="panel" aria-labelledby="notes-heading"><h2 id="notes-heading">模型说明与依据</h2><details><summary>哪些关系真实，哪些是教学简化？</summary>
+        <p>凸轮通过接触带动从动件运动，可用于自动机械；高位停歇是从动件保持在高处的一段相位。本页规定上升与下降各90°，按余弦曲线平滑改变归一化高度。每转秒数为60÷rpm，高位停歇秒数为停歇角÷360°再乘每转秒数。</p>
+        <p>“送料够不够”只比较这两个设定时间；六件工件每转最多处理一件是抽象规则。旋转盘是相位图，不是可制造的凸轮外形；未模拟接触力、惯性、材料、实际送料机构、故障、安全联锁或真实产能。不能据此设置或操作工业设备。</p>
+        <ul><li><a href="https://archive.nptel.ac.in/content/storage2/courses/112103174/module4/lec3/1.html">NPTEL · 凸轮与从动件</a></li><li><a href="https://archive.nptel.ac.in/content/storage2/courses/112103174/module4/lec5/3.html">NPTEL · 停歇与自动传输</a></li></ul>
+      </details></section>
+    </main>
+    <footer><a href="index.html">← 返回模拟世界</a> · 本场景不计入学科完成进度</footer>
+  </div>
+  <script src="assets/cam-factory-model.js"></script>
+  <script src="assets/cam-factory.js"></script>
+</body>
+</html>

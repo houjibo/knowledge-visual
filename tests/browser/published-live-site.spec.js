@@ -173,7 +173,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-middle-progress'))['data-minimization']))
     .toBe(true);
   await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
-  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('7 个模拟');
+  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('8 个模拟');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name: '关键词'}).fill('机械臂');
   await page.locator('#site-results a[href="simulation-world/robot-arm.html"]').click();
@@ -209,6 +209,21 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await expect(page.locator('#ideal-output')).toHaveText('120.0 rpm');
   await page.locator('#step-button').click();
   await expect(page.locator('#driven-rotor')).toHaveAttribute('transform', /rotate\(-180\.0\)/);
+  await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('凸轮');
+  await page.locator('#site-results a[href="simulation-world/cam-factory.html"]').click();
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page).toHaveTitle('凸轮送料与工厂节拍模拟 · 模拟世界');
+  await page.locator('#window-prediction').selectOption('enough');
+  await page.locator('#reveal-button').click();
+  await expect(page.locator('#dwell-seconds')).toHaveText('0.50 s');
+  await page.locator('#cycle-button').click();
+  await expect(page.locator('#batch-copy')).toContainText('1 / 6 完成');
+  await page.locator('#preset-fast').click();
+  await page.locator('#window-prediction').selectOption('short');
+  await page.locator('#reveal-button').click();
+  await expect(page.locator('#window-result')).toHaveText('窗口不足');
   await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('uni');

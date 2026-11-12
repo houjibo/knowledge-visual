@@ -45,15 +45,15 @@ async function geometry(page, l1, l2) {
 test('机械臂在目录与分类搜索可发现且没有学科进度', async ({page}) => {
   await page.goto(process.env.KV_PUBLISHED_BASE_URL || '/');
   const category = page.locator('[data-subject-category="simulation-world"]');
-  await expect(category).toHaveAttribute('data-total', '7');
-  await expect(category.locator('.subject-badge')).toHaveText('7 个模拟');
+  await expect(category).toHaveAttribute('data-total', '8');
+  await expect(category.locator('.subject-badge')).toHaveText('8 个模拟');
   await expect(category.locator('.subject-progress')).toHaveCount(0);
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name: '关键词'}).fill('机械臂');
   await page.locator('#site-results a[href="simulation-world/robot-arm.html"]').click();
   await expect(page.getByRole('heading', {name: '二维机械臂模拟'})).toBeVisible();
   await page.getByRole('navigation', {name: '导航'}).getByRole('link', {name: '返回模拟世界'}).click();
-  await expect(page.locator('.topic-card')).toHaveCount(7);
+  await expect(page.locator('.topic-card')).toHaveCount(8);
   await page.locator('.topic-card[href="robot-arm.html"]').click();
   await expect(page.locator('#arm-svg')).toBeVisible();
 });

@@ -1,10 +1,11 @@
 # 项目差距与后续方向
 
-最后核查：2026-11-13；初中质量与密度上一轮已公开验收，本轮天平称量与双任务完成规则通过本地专项，完整门禁与公网验收继续进行。此前模拟世界皮带与带轮等场景已按各自记录归档。剩余知识与交互差距继续逐步核查。
+最后核查：2026-11-13；初中质量与密度天平称量与双任务完成规则已通过主分支Actions及公网实际操作。模拟世界的凸轮送料场景正在本地验证；剩余知识与交互差距继续逐步核查。
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
-| 高 | 初中“质量与密度”天平原先泄露25.4 g目标、跳过归零调平放物，且仅凭密度单题便记录整页完成。本轮按[OpenSpec](../openspec/changes/2026-11-13-middle-mass-density-balance-evidence/proposal.md)增加未知物有限砝码称量、平衡后独立读数与两任务顺序不限的保存规则；本地专项22项及发布子路径2项通过，见[核查记录](assessments/mass-density-balance-2026-11-13.md)。 | 完成全量门禁、Actions与公网验证后归档；真实天平、课堂效果及整页屏幕阅读器另查。 |
+| 中 | 模拟世界已有机械传动和独立的工业流水线，却没有把机构的停歇运动与工序时间窗口联系起来。本轮按[OpenSpec](../openspec/changes/2026-11-13-cam-follower-factory-timing/proposal.md)新增凸轮送料与工厂节拍，用转速、停歇角、送料时间的预测和六件有限批次展示机械化生产的抽象节拍；纯模型64组条件通过，见[核查记录](assessments/cam-factory-2026-11-13.md)。 | 补桌面/移动、静态发布和公网页面验收；真实设备与课堂理解另查。 |
+| 高 | 初中“质量与密度”天平原先泄露25.4 g目标、跳过归零调平放物，且仅凭密度单题便记录整页完成。现按[归档 OpenSpec](../openspec/changes/archive/2026-11-13-middle-mass-density-balance-evidence/proposal.md)增加未知物有限砝码称量、平衡后独立读数与两任务顺序不限的保存规则；本地专项22项、主分支[Actions #43263125786](https://github.com/houjibo/knowledge-visual/actions/runs/43263125786)七项及公网操作通过，见[核查记录](assessments/mass-density-balance-2026-11-13.md)。 | 已验收归档；真实天平、课堂效果及整页屏幕阅读器另查。 |
 | 高 | 初中“质量与密度”原有章节/练习仅能鼠标操作，密度计算用重叠区间猜单一材料，质量图把10 t误标为10000 t且密度末行越界；答对后未确认完成记录是否写入。本轮按[归档 OpenSpec](../openspec/changes/archive/2026-11-12-middle-mass-density-learning-reliability/proposal.md)修复原生键盘入口、参考值差异、图示和保存重试；桌面/移动专项16项、完整本地门禁及 [Actions #43248791663](https://github.com/houjibo/knowledge-visual/actions/runs/43248791663) 七项通过，公网版本和计算、改答、完成反馈已核对，见[核查记录](assessments/middle-mass-density-2026-11-12.md)。 | 本次已验收归档；另立变更核查天平模型及“一题即完成”的学习门槛，保留真实设备和屏幕阅读器差距。 |
 | 中 | 模拟世界原缺柔性带连接、开口与交叉旋向及打滑边界的可操作对照。现按[归档 OpenSpec](../openspec/changes/archive/2026-11-12-belt-pulley-simulation/proposal.md)新增皮带与带轮：轮径/输入转速、两项预测、无打滑结果、步进/播放以及打滑后实际速度未知；纯模型720组条件与公切线几何、桌面/移动专项12项及完整本地门禁通过（2080项功能、373页开发与发布加载）。[Actions #282](https://github.com/houjibo/knowledge-visual/actions/runs/43193035702) 全部成功，公网版本和开口/交叉交互已核对，见[核查记录](assessments/belt-pulley-2026-11-12.md)。 | 本次已验收归档；后续通过真实学习者及实机验证概念理解与操作体验。 |
 | 中 | 模拟世界原有串行工业流水线，缺分流后独立队列的直观对照。现按[归档 OpenSpec](../openspec/changes/archive/2026-11-12-warehouse-sorting-simulation/proposal.md)新增仓储分拣：固定12件按A/A/B标记到达，预测首个排队口，对照两口处理时间、等待峰值和整批完成；纯模型48组参数、桌面/移动专项14项、本地完整门禁与 [Actions #279](https://github.com/houjibo/knowledge-visual/actions/runs/43182047067) 七个任务通过，公网版本和A/B两种积压交互已核对，见[核查记录](assessments/warehouse-sort-2026-11-12.md)。 | 本次已验收归档；后续通过真实学习者反馈判断分流概念与模型边界是否易懂。 |

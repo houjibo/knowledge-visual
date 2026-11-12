@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：339；已登记部分交互证据：199；尚未登记：140。
+主题总数：340；已登记部分交互证据：200；尚未登记：140。
 
 ## 已登记部分交互证据
 
@@ -493,6 +493,8 @@
   - 桌面与移动视口验证工业场景查找、八件编号守恒、同步加工与排队、44秒/20秒对照、产能口径、参数和计时器隔离、键盘与减少动态、320px、file协议及无学科进度；真实设备、屏幕阅读器和真实产线适用性尚未全面验收。 [simulation-world-assembly-line.spec.js](../../tests/browser/simulation-world-assembly-line.spec.js)
 - [皮带与带轮模拟 · 模拟世界](../../simulation-world/belt-pulley.html)
   - 桌面与移动视口检查目录搜索、无打滑轮径比及快慢旋向预测、开口/交叉带路、90度步进、打滑边界、计时器与动态偏好暂停、file直开、320px键盘及发布子路径；真实设备、屏幕阅读器与工程适用性未验收。 [simulation-world-belt-pulley.spec.js](../../tests/browser/simulation-world-belt-pulley.spec.js)
+- [凸轮送料与工厂节拍模拟 · 模拟世界](../../simulation-world/cam-factory.html)
+  - 桌面与移动视口检查分类搜索、预测前隐藏结论、凸轮四段相位与从动件高度、转速和停歇角对照、六件有限批次、参数变化和减少动态暂停、320px键盘、file直开及发布子路径；真实设备、工程产能、屏幕阅读器与学习效果未验收。 [simulation-world-cam-factory.spec.js](../../tests/browser/simulation-world-cam-factory.spec.js)
 - [齿轮传动模拟 · 模拟世界](../../simulation-world/gear-transmission.html)
   - 桌面与移动视口验证目录/分类搜索与无学段进度、正反齿数比、转速/转矩/效率和功率边界、键盘暂停/启动与重置、减少动态效果、320px 布局及 2D 画布不可用降级；真实设备、屏幕阅读器和工程设计适用性尚未全面验收。 [simulation-world-gear-transmission.spec.js](../../tests/browser/simulation-world-gear-transmission.spec.js)
 - [二维机械臂模拟 · 模拟世界](../../simulation-world/robot-arm.html)
