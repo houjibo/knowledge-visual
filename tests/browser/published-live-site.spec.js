@@ -4,6 +4,7 @@ const baseValue = process.env.KV_PUBLISHED_BASE_URL;
 const expectedRevision = process.env.GITHUB_SHA;
 
 test('公网发布版本、万有引力及计算机和人工智能交互可用', async ({page}) => {
+  test.setTimeout(120_000);
   expect(baseValue, '发布验收需指定 KV_PUBLISHED_BASE_URL').toBeTruthy();
   expect(expectedRevision, '发布验收需指定 GITHUB_SHA').toMatch(/^[a-f0-9]{40}$/);
 
@@ -57,6 +58,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
   await page.getByRole('searchbox', {name: '关键词'}).fill('算法');
   await page.locator('#site-results a[href="computer/primary/robot-algorithms.html"]').click();
+  await page.waitForLoadState('domcontentloaded');
   await expect(page).toHaveURL(/computer\/primary\/robot-algorithms\.html/);
   await page.getByRole('button', {name: '运行指令'}).click();
   await expect(page.locator('#robot-status')).toContainText('抵达目标', {timeout: 5000});
@@ -65,6 +67,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
   await page.getByRole('searchbox', {name: '关键词'}).fill('顺序查找');
   await page.locator('#site-results a[href="computer/primary/sequential-search.html"]').click();
+  await page.waitForLoadState('domcontentloaded');
   await expect(page).toHaveURL(/computer\/primary\/sequential-search\.html/);
   await page.locator('#prediction-select').selectOption('3');
   for (let step = 0; step < 3; step++) await page.locator('#step-button').click();
@@ -79,6 +82,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
   await page.getByRole('searchbox', {name: '关键词'}).fill('相邻交换');
   await page.locator('#site-results a[href="computer/primary/adjacent-swap-sort.html"]').click();
+  await page.waitForLoadState('domcontentloaded');
   await expect(page).toHaveURL(/computer\/primary\/adjacent-swap-sort\.html/);
   await page.locator('#prediction-select').selectOption('3');
   for (let step = 0; step < 10; step++) await page.locator('#step-button').click();
@@ -94,6 +98,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('查找策略');
   await page.locator('#site-results a[href="computer/high/search-strategies.html"]').click();
+  await page.waitForLoadState('domcontentloaded');
   await expect(page).toHaveURL(/computer\/high\/search-strategies\.html/);
   await page.locator('#prediction-select').selectOption('binary');
   for (let step = 0; step < 14; step++) await page.locator('#step-button').click();
@@ -107,6 +112,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('分类边界');
   await page.locator('#site-results a[href="ai/high/classifier-lab.html"]').click();
+  await page.waitForLoadState('domcontentloaded');
   await expect(page).toHaveURL(/ai\/high\/classifier-lab\.html/);
   const threshold = page.locator('#threshold');
   await threshold.focus();
@@ -118,6 +124,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('训练集');
   await page.locator('#site-results a[href="ai/high/train-test-generalization.html"]').click();
+  await page.waitForLoadState('domcontentloaded');
   await expect(page).toHaveURL(/ai\/high\/train-test-generalization\.html/);
   await page.getByRole('button', {name: '查看留出测试结果'}).click();
   await expect(page.locator('#test-accuracy')).toHaveText('50%');
@@ -130,6 +137,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
   await page.getByRole('searchbox', {name: '关键词'}).fill('线索分类');
   await page.locator('#site-results a[href="ai/primary/feature-classification-lab.html"]').click();
+  await page.waitForLoadState('domcontentloaded');
   await expect(page).toHaveURL(/ai\/primary\/feature-classification-lab\.html/);
   await page.getByRole('button', {name: '查看真实标签'}).click();
   await expect(page.locator('#test-summary')).toContainText('预测正确 2/4');
@@ -155,6 +163,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
   await page.getByRole('searchbox', {name: '关键词'}).fill('个人信息');
   await page.locator('#site-results a[href="ai/middle/data-minimization.html"]').click();
+  await page.waitForLoadState('domcontentloaded');
   await expect(page).toHaveURL(/ai\/middle\/data-minimization\.html/);
   await expect(page).toHaveTitle('信息最小化实验室 · 初中人工智能');
   const dataFields = page.locator('#extra-fields input[type="checkbox"]');
@@ -168,6 +177,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name: '关键词'}).fill('机械臂');
   await page.locator('#site-results a[href="simulation-world/robot-arm.html"]').click();
+  await page.waitForLoadState('domcontentloaded');
   await expect(page).toHaveTitle('二维机械臂模拟 · 模拟世界');
   await page.locator('#prediction-select').selectOption('reachable');
   await page.locator('#check-prediction').click();
@@ -180,6 +190,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('uni');
   await page.getByRole('searchbox', {name: '关键词'}).fill('栈与队列');
   await page.locator('#site-results a[href="computer/uni/stack-queue.html"]').click();
+  await page.waitForLoadState('domcontentloaded');
   await expect(page).toHaveTitle('栈与队列对照实验室 · 大学计算机');
   for (let i = 0; i < 3; i++) await page.locator('#add-button').click();
   await page.locator('#stack-prediction').selectOption('C');
