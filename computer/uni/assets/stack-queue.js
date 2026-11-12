@@ -62,6 +62,9 @@
       ? `队首到队尾：${state.queue.join(' → ')}；队首 ${state.queue[0]}`
       : '队列为空。';
     $('add-button').disabled = state.nextIndex >= Model.TOKENS.length;
+    $('reset-button').disabled = false;
+    $('stack-prediction').disabled = false;
+    $('queue-prediction').disabled = false;
     $('add-button').textContent = state.nextIndex < Model.TOKENS.length
       ? `同时加入 ${Model.TOKENS[state.nextIndex]}` : '六件已全部加入';
     $('remove-button').disabled = !state.stack.length;
@@ -127,5 +130,6 @@
   $('retry-save').addEventListener('click', saveCompletion);
   window.addEventListener('pageshow', renderProgress);
   window.addEventListener('storage', renderProgress);
+  announce('依次加入至少三件，预测后取出。');
   render();
 })();

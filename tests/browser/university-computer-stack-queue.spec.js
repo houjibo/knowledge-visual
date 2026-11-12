@@ -88,6 +88,24 @@ test('six-item boundary and reset keep the finite model honest', async ({page}) 
   await expect(page.locator('#history li')).toHaveCount(0);
 });
 
+test('visible controls wait until the local controller has attached', async ({page}) => {
+  test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网专项不延迟脚本');
+  await page.route('**/computer/uni/assets/stack-queue.js', async route => {
+    await new Promise(resolve => setTimeout(resolve, 900));
+    await route.continue();
+  });
+  await page.goto(topic, {waitUntil: 'commit'});
+  await expect(page.locator('#add-button')).toBeDisabled();
+  await expect(page.locator('#reset-button')).toBeDisabled();
+  await expect(page.locator('#stack-prediction')).toBeDisabled();
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('#add-button')).toBeEnabled();
+  await expect(page.locator('#reset-button')).toBeEnabled();
+  await expect(page.locator('#stack-prediction')).toBeEnabled();
+  await add(page, 3);
+  await expect(page.locator('#stack-summary')).toContainText('A → B → C；栈顶 C');
+});
+
 test('storage failure preserves earned completion and retry succeeds', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '不修改公网存储原型');
   await page.addInitScript(k => {
