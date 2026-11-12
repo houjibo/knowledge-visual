@@ -10,7 +10,7 @@ r20..60、l100..200mm的30种组合均满足l>r，图形同一比例；只改l�
 
 ## 验收计划与状态
 
-本地实现及验收已完成；首次发布在CI因测试准备假设失败而未执行，修正后重新提交核验。范围见[提案](../../openspec/changes/2026-11-12-slider-crank-simulation/proposal.md)、[设计](../../openspec/changes/2026-11-12-slider-crank-simulation/design.md)及[任务](../../openspec/changes/2026-11-12-slider-crank-simulation/tasks.md)。
+本地、CI和公开验收均已完成，变更已归档；首次CI失败及修正过程保留如下。范围见[提案](../../openspec/changes/archive/2026-11-12-slider-crank-simulation/proposal.md)、[设计](../../openspec/changes/archive/2026-11-12-slider-crank-simulation/design.md)及[任务](../../openspec/changes/archive/2026-11-12-slider-crank-simulation/tasks.md)。
 
 - 模型独立解析基准及30组几何闭环、范围、对称与时间推进。
 - 浏览器真实SVG端点/两杆长度和滑块位置、角度与位移、控制及动画边界、减少动态、键盘和320px。
@@ -28,7 +28,7 @@ r20..60、l100..200mm的30种组合均满足l>r，图形同一比例；只改l�
 - `CI=true npm run check` 完整exit0（日志 `/tmp/kv-slider-crank-full-check.log`）：静态364 HTML、1480 Markdown/1025链接、严格OpenSpec253项；清单desktop976+mobile976=1952，指纹 `cf211140d31eb7dbe48783c10004f0dbbc5315c0a789801a2ae40c03383bb337`。实际1950通过、2既有桌面跳过；开发全页364通过、发布交互12通过、发布全页364通过。发布资源契约为38项。
 - 本地4173人工验收：r60/l100/90°位移80mm，180°位移120mm；90°改长连杆200后位移69.21mm，行程仍120mm。播放、暂停与当前状态一致；极端180°标签分离，已保存 `/tmp/knowledge-visual-slider-crank-local.png`。
 
-公开Actions、revision、资源及操作证据待提交推送后补齐。
+公开Actions、revision、资源及操作证据见后文“公开发布与手工验收”。
 
 ## 首次CI失败与测试准备修正
 
@@ -36,4 +36,14 @@ r20..60、l100..200mm的30种组合均满足l>r，图形同一比例；只改l�
 
 修正仅涉及测试准备：最多四个7/11/5/13ms的启动偏移，实际观察到小数角度才进入唯一一次edit，无法准备时明确失败并附时间/相位；真实精度1e-7、运行/按钮状态及337ms静止断言原样保留，没有产品断言重试或跳过。固定延时不保证小数，Playwright Clock使用全局帧网格，此准备改变起播相位而非篡改结果。
 
-定点重复20次全部通过（10.5s，日志 `/tmp/kv-slider-crank-phase-stress.log`），随后新场景24项全部通过（4.6s），完整静态检查与清单预检exit0。用例仍976+976=1952，因新增准备helper改变源码行号，清单指纹变为 `926c9f86b9536d227235fbde662c9d66bfcea374223922d1198f4f615256d5fc`；前述cf211是本地完整检查时的旧测试位置。产品源码和发布资源未变，下一次实际CI/公开核验仍待完成。
+定点重复20次全部通过（10.5s，日志 `/tmp/kv-slider-crank-phase-stress.log`），随后新场景24项全部通过（4.6s），完整静态检查与清单预检exit0。用例仍976+976=1952，因新增准备helper改变源码行号，清单指纹变为 `926c9f86b9536d227235fbde662c9d66bfcea374223922d1198f4f615256d5fc`；前述cf211是本地完整检查时的旧测试位置。产品源码和发布资源未变，后续#266实际CI及公开核验结果见下节。
+
+## 公开发布与手工验收
+
+[Actions #266](https://github.com/houjibo/knowledge-visual/actions/runs/43131562854) 对 `a3c62c98df37fb53976090bcc9f9844086cf5b05` 七个job全部成功、attempt1，最后核验于2026-11-12 UTC 01:10:39完成。真实注释为desktop974通过/2既有跳过、mobile976通过，合计1950通过/2跳过，core364/12/364通过。
+
+[公网版本](https://houjibo.github.io/knowledge-visual/release-version.json?verify=a3c62c98df37fb53976090bcc9f9844086cf5b05) revision精确匹配该提交，site_files_modified=false；独立38项资源核验exit0。曲柄HTML20030字节、模型2753字节、控制器8416字节，HTTP200且均与提交对象逐字节一致。
+
+公开CUA人工操作通过：r60/l100/90°位移80mm；步进到105°位移94.04mm且暂停；播放时仅给运行说明，暂停按钮恢复；90°切长连杆200后位移69.21mm、行程120mm保持。顶部返回进入四卡模拟目录，再从新卡重新进入默认暂停页成功；公开页与本地4173已保留供验收。截图 `/tmp/knowledge-visual-slider-crank-public.png`。
+
+第二位独立审查者核验准备helper未重试产品断言，四次累计启动偏移7/55/97/147ms；按Playwright Clock的16ms全局帧网格对六档rpm及整数/分数起始tick核对，最坏第四次才能获得小数相位，因此保留四个准备偏移。此数学审查与实际20次定点、24项专项及#266全量通过共同构成证据。
