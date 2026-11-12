@@ -128,9 +128,9 @@
     stepIndex = 0;
     const answer = path ? path.firstHop : 'none';
     predictedCorrectly = prediction === answer;
-    const answerText = answer === 'none' ? '无法到达 D' : `先到 ${answer}`;
     const ruleText = rule === 'cost' ? '按指定代价之和' : '按经过的连线数';
-    report(`${predictedCorrectly ? '预测正确。' : '这次预测未对。'}${ruleText}，模型会${answerText}。${path ? '请逐跳观察到 D。' : '已确认本图中没有可达路径。'}`, predictedCorrectly ? 'success' : 'error');
+    const conclusion = path ? `模型会先到 ${answer}。请逐跳观察到 D。` : '本图中没有可达路径，D 无法送达。';
+    report(`${predictedCorrectly ? '预测正确。' : '这次预测未对。'}${ruleText}，${conclusion}`, predictedCorrectly ? 'success' : 'error');
     renderResult();
     if (!path) awardIfEligible();
   });

@@ -71,6 +71,7 @@ test('changing rule and broken links resets the old route; unreachable is never 
   await page.locator('#scenario').selectOption('exits');
   await reveal(page, 'exits', 'cost', 'none');
   await expect(page.locator('#path-result')).toHaveText('D 不可达');
+  await expect(page.locator('#prediction-status')).toContainText('本图中没有可达路径，D 无法送达');
   await expect(page.locator('#step-button')).toBeDisabled();
   await expect(page.locator('#step-status')).toContainText('无法从 S 到达 D');
   await expect(page.locator('#challenge-exits-cost')).toContainText('本轮已完成');
