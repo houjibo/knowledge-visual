@@ -1,6 +1,6 @@
 # 凸轮送料与工厂节拍模拟核查
 
-状态：本地与发布包验证通过，Actions和公网页面待核查。范围由 [OpenSpec 变更](../../openspec/changes/2026-11-13-cam-follower-factory-timing/proposal.md)界定。
+状态：本地、发布包、主分支 Actions 与公网页面验收通过，变更已归档。范围由[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-13-cam-follower-factory-timing/proposal.md)界定。
 
 ## 学习问题与依据
 
@@ -19,5 +19,7 @@
 - `node tests/cam-factory-model.test.js`：4项通过；64组参数的窗口时间由独立角速度公式核对，检查四段连续边界、六圈批次和非法输入。
 - `CI=true npx playwright test tests/browser/simulation-world-cam-factory.spec.js --reporter=dot`：桌面与移动共10项通过，覆盖分类搜索、预测门槛、图文同步、两种时间边界、六件上限、参数变化与减少动态、320px按钮键盘和`file://`。后续窄屏视觉检查发现原整图文字过小，增加机构/曲线局部放大视角并回归两个视角和文字状态。浏览器原生下拉框的选择用Playwright选择事件核对，未以自动化键盘按键证明其系统弹出菜单行为。
 - 发布包子路径专项 2/2 通过，可从首页搜索进入、完成默认预测与一圈步进，再换高速条件看到窗口不足。本地手动打开的页面完成相同步骤，SVG工件与文字均从0件更新为1件。
-- `CI=true npm run check` 完整通过：严格OpenSpec 263项、功能浏览器2112项通过/6项按配置跳过、开发站374页加载、发布包22项交互及发布包374页加载通过。之后仅将结果说明中四舍五入的等号改为约等号、连续播放角度显示改为向下取整，并以专项及静态检查复核。
-- Actions与公网操作在发布后补记。
+- `CI=true npm run check` 完整通过：严格OpenSpec 263项、功能浏览器2112项通过/6项按配置跳过、开发站374页加载、发布包22项交互及发布包374页加载通过。之后将结果说明中四舍五入的等号改为约等号、连续播放角度显示改为向下取整，并以专项及静态检查复核。
+- 窄屏局部放大视角补丁提交 `35b51818e583907377e5f699390075a00033f3ec` 的 [Actions #43270630163](https://github.com/houjibo/knowledge-visual/actions/runs/43270630163) 七项全部成功；公开清单 revision 匹配，`site_files_modified:false`。公网移动端专项执行4项通过、1项按配置跳过，覆盖目录发现、预测与时间判断、窄屏视角和单步工件。
+- [公网场景](https://houjibo.github.io/knowledge-visual/simulation-world/cam-factory.html)实测：30 rpm、90°、0.4 s 的停歇窗口为0.50 s，步进一圈完成1件；加快到60 rpm 后窗口为0.25 s，步进一圈完成0件。公网最终页面已显示“完整图示”初始视角及移动端视角控件。320px下机构和曲线/工件两个局部视角经截图核对，无横向溢出。
+- 本轮未用真实设备或学习者测试判断模型迁移、屏幕阅读器全页体验和工业适用性；后续另立变更核查。
