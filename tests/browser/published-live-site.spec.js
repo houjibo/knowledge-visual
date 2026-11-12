@@ -163,5 +163,17 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   await expect(page.locator('#recommendation-output')).toHaveText('11–13 岁 · 图文探索读物《太阳系观察手册》');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-middle-progress'))['data-minimization']))
     .toBe(true);
+  await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
+  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('5 个模拟');
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('机械臂');
+  await page.locator('#site-results a[href="simulation-world/robot-arm.html"]').click();
+  await expect(page).toHaveTitle('二维机械臂模拟 · 模拟世界');
+  await page.locator('#prediction-select').selectOption('reachable');
+  await page.locator('#check-prediction').click();
+  await page.locator('#show-pose').click();
+  expect(Number(await page.locator('#tip-distance').textContent())).toBeLessThan(1);
+  await page.locator('#flip-pose').click();
+  await expect(page.locator('#action-status')).toContainText('肘向二');
   expect(failures).toEqual([]);
 });

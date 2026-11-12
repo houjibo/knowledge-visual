@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="调节二维机械臂的两个关节和杆长，预测目标是否可达，观察末端坐标与两种肘向。">
+  <title>二维机械臂模拟 · 模拟世界</title>
+  <style>
+    :root { color-scheme: dark; --bg: #0b1422; --panel: #142236; --line: #314760; --text: #eef5ff; --muted: #acbfd3; --cyan: #74e4d8; --amber: #ffd18e; --violet: #c4b3ff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--text); background: radial-gradient(ellipse at 8% 0, #204050 0, transparent 42%), radial-gradient(ellipse at 96% 15%, #302849 0, transparent 40%), var(--bg); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    button, input, select { font: inherit; }
+    a { color: #abdfff; }
+    :focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+    .skip-link { position: absolute; top: 8px; left: -9999px; z-index: 10; padding: 10px; color: #162233; background: #fff; }
+    .skip-link:focus { left: 12px; }
+    .shell { width: min(1160px, 100%); margin: auto; padding: 18px 22px 32px; }
+    .topbar { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 12px; }
+    .topbar a { text-decoration: none; }
+    .hero { margin: 22px 0 18px; }
+    .eyebrow { margin: 0 0 4px; color: var(--cyan); font-size: 11px; font-weight: 750; letter-spacing: .1em; }
+    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; }
+    .hero p:last-child { max-width: 70ch; margin: 0; color: var(--muted); }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr); gap: 14px; align-items: start; }
+    .panel { min-width: 0; border: 1px solid var(--line); border-radius: 16px; padding: 17px; background: linear-gradient(145deg, #182a3f, var(--panel)); box-shadow: 0 16px 35px #0002; }
+    h2 { margin: 0 0 9px; font-size: 17px; }
+    h3 { margin: 0 0 7px; font-size: 14px; }
+    .hint, .note { margin: 0 0 10px; color: var(--muted); font-size: 12px; }
+    #arm-svg { display: block; width: 100%; height: auto; border: 1px solid #35516a; border-radius: 12px; background: #0b192a; touch-action: none; cursor: crosshair; }
+    #arm-svg text { fill: #d4e6f5; font: 700 11px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; paint-order: stroke; stroke: #0b192a; stroke-width: 3px; stroke-linejoin: round; }
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 15px; margin: 10px 0; color: #c6d9eb; font-size: 11px; }
+    .legend i { display: inline-block; width: 16px; height: 4px; margin-right: 5px; vertical-align: middle; border-radius: 3px; background: var(--cyan); }
+    .legend .second { background: var(--amber); }
+    .legend .target { background: var(--violet); }
+    .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+    .metric { min-width: 0; padding: 9px; border: 1px solid #36516a; border-radius: 9px; background: #102035; }
+    .metric dt { color: var(--muted); font-size: 10px; }
+    .metric dd { margin: 4px 0 0; color: var(--cyan); font: 750 clamp(.9rem, 2vw, 1.15rem)/1.35 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+    .controls { display: grid; gap: 10px; }
+    .control { min-width: 0; padding: 10px 11px; border: 1px solid #344d67; border-radius: 10px; background: #12253a; }
+    .control-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 3px 8px; }
+    label { color: #dce9f7; font-size: 12px; font-weight: 650; }
+    output { color: var(--cyan); font-weight: 750; }
+    input[type="range"] { display: block; width: 100%; min-width: 0; height: 25px; margin: 3px 0 0; accent-color: var(--cyan); cursor: pointer; }
+    .range-ends { display: flex; justify-content: space-between; color: #98b1c9; font-size: 10px; }
+    .target-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .target-fields label { display: grid; gap: 4px; }
+    input[type="number"], select { width: 100%; min-width: 0; min-height: 42px; border: 1px solid #6b829a; border-radius: 8px; padding: 8px 9px; color: var(--text); background: #0d1e30; }
+    .buttons { display: flex; flex-wrap: wrap; gap: 7px; }
+    button { min-height: 40px; border: 1px solid #647e98; border-radius: 8px; padding: 7px 11px; color: var(--text); background: #213952; font-size: 12px; font-weight: 750; cursor: pointer; }
+    button.primary { color: #082d2a; border-color: #a7f5eb; background: var(--cyan); }
+    button:hover:not(:disabled) { filter: brightness(1.14); }
+    button:disabled { opacity: .46; cursor: not-allowed; }
+    .target-area { border-top: 1px solid #314b63; padding-top: 10px; }
+    .target-area .buttons { margin: 8px 0; }
+    .prediction { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; align-items: end; }
+    .prediction label { display: grid; gap: 4px; }
+    .status { min-height: 2.6em; margin: 6px 0 0; color: #e3d2a4; font-size: 12px; }
+    .status[data-result="correct"] { color: #93f4d5; }
+    .status[data-result="wrong"] { color: #ffcd9d; }
+    .learning { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+    .learning article { border: 1px solid var(--line); border-radius: 11px; padding: 13px; background: #132338; }
+    .learning p { margin: 0; color: var(--muted); font-size: 12px; }
+    .notes { margin-top: 14px; color: var(--muted); font-size: 12px; }
+    .notes p { margin: 0 0 8px; }
+    details { border-top: 1px solid #304760; padding-top: 8px; }
+    summary { color: var(--text); font-weight: 750; cursor: pointer; }
+    .equation { padding: 10px; border-left: 3px solid var(--cyan); border-radius: 5px; background: #0b1b2d; overflow-wrap: anywhere; }
+    footer { margin-top: 20px; color: var(--muted); font-size: 12px; text-align: center; }
+    @media (max-width: 850px) { .workspace { grid-template-columns: minmax(0, 1fr); } .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } .controls > h2, .target-area { grid-column: 1 / -1; } }
+    @media (max-width: 540px) { .shell { padding: 14px; } .panel { padding: 12px; } .controls, .learning { grid-template-columns: minmax(0, 1fr); } .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .topbar span { display: none; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar" aria-label="导航"><a href="index.html">← 返回模拟世界</a><span>机械臂 · 二维理想两关节</span></nav>
+    <header class="hero"><p class="eyebrow">机械 · 工业化场景</p><h1>二维机械臂模拟</h1><p>两段杆、两个关节，末端能到哪里？先调角度观察，再选一个目标，预测是否可达并检验。图中可直接移动目标，也可用数字框和预设。</p></header>
+    <main id="main-content">
+      <div class="workspace">
+        <section class="panel" aria-labelledby="scene-title">
+          <h2 id="scene-title">机械臂与可达范围</h2>
+          <p class="hint">浅蓝环带为当前杆长的完整可达区域；内圈和外圈之间的点可到达。坐标以基座 O 为原点，单位 mm。</p>
+          <svg id="arm-svg" viewBox="0 0 440 440" role="img" aria-label="二维机械臂、目标与可达范围图" aria-describedby="arm-description model-note" data-tip-x="0" data-tip-y="0" data-target-x="120" data-target-y="40">
+            <desc id="arm-description">两段连杆从基座 O 连接到肘点 A 和末端 B。目标 T 位于(120,40)毫米。</desc>
+            <defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#456078" stroke-width=".4" opacity=".35"/></pattern></defs>
+            <rect width="440" height="440" fill="url(#grid)"/>
+            <circle id="outer-disc" cx="220" cy="220" r="150" fill="#58cfcc" fill-opacity=".11" stroke="#74e4d8" stroke-opacity=".72" stroke-width="1.5" stroke-dasharray="5 4"/>
+            <circle id="inner-hole" cx="220" cy="220" r="30" fill="#0b192a" stroke="#ffcf8d" stroke-opacity=".8" stroke-width="1.5" stroke-dasharray="4 4"/>
+            <path d="M20 220H420M220 20V420" stroke="#6d8298" stroke-width="1" stroke-dasharray="4 5"/>
+            <text x="405" y="212">+x</text><text x="227" y="30">+y</text>
+            <line id="first-link" x1="220" y1="220" x2="294" y2="168" stroke="#74e4d8" stroke-width="9" stroke-linecap="round"/>
+            <line id="second-link" x1="294" y1="168" x2="343" y2="203" stroke="#ffd18e" stroke-width="7" stroke-linecap="round"/>
+            <circle cx="220" cy="220" r="8" fill="#f2f7ff" stroke="#6899ad" stroke-width="3"/>
+            <circle id="elbow-joint" cx="294" cy="168" r="7" fill="#f3f7fd" stroke="#4e978f" stroke-width="3"/>
+            <circle id="tip-joint" cx="343" cy="203" r="8" fill="#fff8e8" stroke="#c78e45" stroke-width="3"/>
+            <circle id="target-ring" cx="340" cy="180" r="11" fill="#c4b3ff" fill-opacity=".15" stroke="#c4b3ff" stroke-width="2"/>
+            <path id="target-cross" d="M333 180H347M340 173V187" stroke="#c4b3ff" stroke-width="2"/>
+            <text x="229" y="237">O</text><text id="elbow-label" x="305" y="159">A</text><text id="tip-label" x="355" y="194">B</text><text id="target-label" x="357" y="172">T</text>
+          </svg>
+          <div class="legend"><span><i></i>OA · 第一杆</span><span><i class="second"></i>AB · 第二杆</span><span><i class="target"></i>T · 目标</span></div>
+          <dl class="metrics">
+            <div class="metric"><dt>肘点 A (mm)</dt><dd id="elbow-position">—</dd></div>
+            <div class="metric"><dt>末端 B (mm)</dt><dd id="tip-position">—</dd></div>
+            <div class="metric"><dt>B 距目标 (mm)</dt><dd id="tip-distance">—</dd></div>
+            <div class="metric"><dt>内边界 |L1−L2|</dt><dd id="inner-radius">—</dd></div>
+            <div class="metric"><dt>外边界 L1+L2</dt><dd id="outer-radius">—</dd></div>
+            <div class="metric"><dt>目标距基座</dt><dd id="target-radius">—</dd></div>
+          </dl>
+        </section>
+        <section class="panel controls" aria-labelledby="controls-title">
+          <h2 id="controls-title">改变关节与目标</h2>
+          <div class="control"><div class="control-head"><label for="first-length">第一杆 L1</label><output id="first-length-value" for="first-length">90 mm</output></div><input id="first-length" type="range" min="60" max="110" step="10" value="90"><div class="range-ends"><span>60 mm</span><span>110 mm</span></div></div>
+          <div class="control"><div class="control-head"><label for="second-length">第二杆 L2</label><output id="second-length-value" for="second-length">60 mm</output></div><input id="second-length" type="range" min="40" max="90" step="10" value="60"><div class="range-ends"><span>40 mm</span><span>90 mm</span></div></div>
+          <div class="control"><div class="control-head"><label for="shoulder-angle">肩角 θ1</label><output id="shoulder-value" for="shoulder-angle">35°</output></div><input id="shoulder-angle" type="range" min="-180" max="180" step="0.1" value="35"><div class="range-ends"><span>−180°</span><span>180°</span></div></div>
+          <div class="control"><div class="control-head"><label for="elbow-angle">肘角 θ2 · 相对第一杆</label><output id="elbow-value" for="elbow-angle">−70°</output></div><input id="elbow-angle" type="range" min="-180" max="180" step="0.1" value="-70"><div class="range-ends"><span>−180°</span><span>180°</span></div></div>
+          <div class="target-area">
+            <h3>选择拾放目标 T</h3>
+            <p class="note">点按或拖动图中的目标，也可输入坐标。改动杆长或目标会清除上次预测。</p>
+            <div class="target-fields"><label for="target-x">目标 x (mm)<input id="target-x" type="number" min="-200" max="200" step="1" value="120"></label><label for="target-y">目标 y (mm)<input id="target-y" type="number" min="-200" max="200" step="1" value="40"></label></div>
+            <div class="buttons"><button id="target-near" type="button">示例：120, 40</button><button id="target-far" type="button">远点：180, 0</button><button id="target-inner" type="button">近点：0, 10</button></div>
+            <div class="prediction"><label for="prediction-select">先预测目标是否可达<select id="prediction-select"><option value="">选择判断</option><option value="reachable">可达</option><option value="unreachable">不可达</option></select></label><button id="check-prediction" class="primary" type="button">检验预测</button></div>
+            <p id="prediction-status" class="status" role="status" aria-live="polite" data-result="idle">选择目标和判断，再检验。</p>
+            <div class="buttons"><button id="show-pose" type="button" disabled>转到目标 · 肘向一</button><button id="flip-pose" type="button" disabled>切换另一肘向</button><button id="reset-arm" type="button">恢复默认</button></div>
+            <p id="action-status" class="status" role="status" aria-live="polite">拖动角度滑块，观察末端如何移动。</p>
+          </div>
+        </section>
+      </div>
+      <div class="learning">
+        <article><h3>① 同一肘点，不同末端</h3><p>固定肩角，只调肘角。肘点 A 不变，末端 B 以 A 为圆心移动。</p></article>
+        <article><h3>② 长度决定可达环带</h3><p>两杆伸直时最远为 L1+L2；向内折叠时最近为 |L1−L2|。目标在这两个半径之间才可达。</p></article>
+        <article><h3>③ 一个目标，两种肘向</h3><p>对环带内部的同一目标，肘部通常可以朝两侧弯。切换肘向，比较角度与末端。</p></article>
+      </div>
+      <section class="panel notes"><p id="model-note">这是两段刚性杆、两个关节均可整圈转动的二维运动学示意；没有关节限位、碰撞、负载、速度、抓取精度或安全控制。可达仅表示几何上存在姿态，不代表真实工厂机械臂可以执行。坐标与长度单位为 mm；求解角度取 0.1°，末端可能有小于 1 mm 的显示误差。</p><details><summary>公式、假设与资料</summary><p class="equation">A = (L1 cosθ1, L1 sinθ1)<br>B = A + (L2 cos(θ1+θ2), L2 sin(θ1+θ2))<br>|L1−L2| ≤ |OT| ≤ L1+L2</p><p>“转到目标”用余弦定理求一个肘向；切换按钮改用另一符号。内外边界上两种肘向会重合，因此不提供无意义的切换。以上边界依赖两个关节都允许完整转动；真实关节限位会缩小区域。</p><p>依据：<a href="https://ocw.mit.edu/courses/2-086-numerical-computation-for-mechanical-engineers-fall-2012/3a6ea77d5d5d63905832eb9a597293db_MIT2_086F12_pset5.pdf">MIT OCW 两连杆正向运动学</a>；<a href="https://modernrobotics.northwestern.edu/nu-gm-book-resource/inverse-kinematics-of-open-chains/">Modern Robotics 平面 2R 逆向运动学与工作空间</a>。本模拟不记录学科进度。</p></details></section>
+    </main>
+    <footer><a href="index.html">模拟世界目录</a> · <a href="slider-crank.html">曲柄滑块</a> · <a href="assembly-line.html">工业流水线</a></footer>
+  </div>
+  <script src="assets/robot-arm-model.js"></script>
+  <script src="assets/robot-arm.js"></script>
+</body>
+</html>

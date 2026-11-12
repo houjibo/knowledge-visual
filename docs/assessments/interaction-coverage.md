@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：335；已登记部分交互证据：194；尚未登记：141。
+主题总数：336；已登记部分交互证据：195；尚未登记：141。
 
 ## 已登记部分交互证据
 
@@ -489,6 +489,8 @@
   - 桌面与移动视口验证工业场景查找、八件编号守恒、同步加工与排队、44秒/20秒对照、产能口径、参数和计时器隔离、键盘与减少动态、320px、file协议及无学科进度；真实设备、屏幕阅读器和真实产线适用性尚未全面验收。 [simulation-world-assembly-line.spec.js](../../tests/browser/simulation-world-assembly-line.spec.js)
 - [齿轮传动模拟 · 模拟世界](../../simulation-world/gear-transmission.html)
   - 桌面与移动视口验证目录/分类搜索与无学段进度、正反齿数比、转速/转矩/效率和功率边界、键盘暂停/启动与重置、减少动态效果、320px 布局及 2D 画布不可用降级；真实设备、屏幕阅读器和工程设计适用性尚未全面验收。 [simulation-world-gear-transmission.spec.js](../../tests/browser/simulation-world-gear-transmission.spec.js)
+- [二维机械臂模拟 · 模拟世界](../../simulation-world/robot-arm.html)
+  - 验证理想两连杆真实SVG杆长与端点、内外可达边界、预测纠错、双肘向、目标指针与数字输入、键盘、320px、file无外部资源、无学科进度、目录搜索与子路径；真实设备、屏幕阅读器、学习者效果和工业执行能力未验证。 [simulation-world-robot-arm.spec.js](../../tests/browser/simulation-world-robot-arm.spec.js)
 - [曲柄滑块模拟 · 模拟世界](../../simulation-world/slider-crank.html)
   - 验证共线刚性曲柄滑块的真实SVG端点长度、角度/位移/行程、按时间播放/暂停/15°步进、参数/预设/重置、隐藏及减少动态保护、键盘、320px、file无外部资源、无学科进度和目录发现；真实设备、屏幕阅读器、学习者效果和受力/设备预测未验证。 [simulation-world-slider-crank.spec.js](../../tests/browser/simulation-world-slider-crank.spec.js)
 - [太阳系模拟 · 模拟世界](../../simulation-world/solar-system.html)
