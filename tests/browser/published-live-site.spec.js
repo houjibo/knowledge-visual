@@ -316,3 +316,36 @@ test('公网高中人工智能阈值比较和完成记录可用', async ({page})
   await expect(page.locator('#progress-status')).toContainText('本机已记录完成分类阈值主题');
   expect(failures).toEqual([]);
 });
+
+test('公网高中有机化学键盘主题、六碳骨架与命名进度可用', async ({page}) => {
+  expect(baseValue, '发布验收需指定 KV_PUBLISHED_BASE_URL').toBeTruthy();
+  expect(expectedRevision, '发布验收需指定 GITHUB_SHA').toMatch(/^[a-f0-9]{40}$/);
+  const url = new URL('chemistry/high/organic.html', baseValue);
+  url.searchParams.set('verify', expectedRevision);
+  const failures = [];
+  page.on('pageerror', error => failures.push(error.message));
+  page.on('response', response => {
+    if (response.url().startsWith(new URL(baseValue).href) && response.status() >= 400)
+      failures.push(`${response.status()} ${response.url()}`);
+  });
+  await page.goto(url.href, {waitUntil: 'domcontentloaded', timeout: 30000});
+  const tabs = page.getByRole('tablist', {name: '有机化学学习主题'}).getByRole('tab');
+  await expect(tabs).toHaveCount(4);
+  await page.keyboard.press('Tab');
+  await expect(tabs.nth(0)).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(tabs.nth(1)).toBeFocused();
+  await page.locator('.mode-btn[data-f="C₆H₁₄"]').click();
+  const card = page.locator('#isoGrid button').nth(3);
+  await card.click();
+  await expect(card).toBeFocused();
+  await expect(page.locator('#isoDetail')).toContainText('2,2-二甲基丁烷');
+  await expect(page.locator('#mainCanvas')).toHaveAttribute('aria-label', /C₆H₁₄.*2,2-二甲基丁烷/);
+  await tabs.nth(2).click();
+  for (const [index, answer] of ['丁烷', '异丁烷', '丙烯', '乙炔', '2-丁烯'].entries()) {
+    await page.locator('#namingOpts').getByRole('button', {name: answer, exact: true}).click();
+    if (index < 4) await page.locator('#namingNext').click();
+  }
+  await expect(page.locator('#organic-progress')).toContainText('已保存在本机');
+  expect(failures).toEqual([]);
+});

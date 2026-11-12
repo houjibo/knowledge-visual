@@ -79,6 +79,7 @@ CHECKS = (
     ('ai/high/threshold-errors.html', '<title>分类阈值与误报漏报实验室 · 高中人工智能</title>'),
     ('ai/high/assets/threshold-errors-model.js', 'root.ThresholdErrorsModel'),
     ('ai/high/assets/threshold-errors.js', 'window.ThresholdErrorsModel'),
+    ('chemistry/high/organic.html', 'role="tablist" aria-label="有机化学学习主题"'),
     ('computer-ai/primary/robot-algorithms.html', 'url=../../computer/primary/robot-algorithms.html'),
     ('computer-ai/high/classifier-lab.html', 'url=../../ai/high/classifier-lab.html'),
 )

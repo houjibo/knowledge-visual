@@ -4,6 +4,7 @@
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
+| 高 | 高中[有机化学基础](../chemistry/high/organic.html)四个主题和内层选择原用点击式 `div`，真实 Tab 跳过主题；甲烷、三张 C₆H₁₄ 支链图与文字式不一致，命名达标后还忽略本机写入失败。本轮按[OpenSpec](../openspec/changes/high-organic-learning-reliability/proposal.md)修复页签、原生控件、碳骨架与保存反馈；桌面/移动专项 18 项及完整本地门禁通过，见[核查记录](assessments/organic-2026-11-13.md)。 | 完成 Actions 与公网操作后归档；沸点、反应条件、真实屏幕阅读器和学习理解另审。 |
 | 高 | 高中人工智能分类边界和训练/测试主题原主要报告准确率，缺阈值改变后的误报、漏报、精确率与召回率对照。按[归档 OpenSpec](../openspec/changes/archive/2026-11-13-high-ai-threshold-errors-lab/proposal.md)新增 12 件虚构工件的先预测、四格矩阵和两个有限目标选择；纯模型 13 个阈值独立核对，桌面/移动专项 16 项及完整门禁通过（功能2,146项、开发与发布包各376页加载），[Actions #43300092226](https://github.com/houjibo/knowledge-visual/actions/runs/43300092226)七项及公网实际操作通过，见[核查记录](assessments/threshold-errors-2026-11-13.md)。 | 已验收归档；现实模型评价、实机和学习理解另查。 |
 | 高 | 初中计算机原只有二进制像素主题，课程图中的网络路径没有操作入口。已按[归档 OpenSpec](../openspec/changes/archive/2026-11-13-middle-computer-network-path-lab/proposal.md)新增固定图的路径预测与逐跳观察，区分最少跳数、最小指定代价、断线改道和不可达；纯模型128种条件、桌面/移动专项、完整门禁及公网四项实际操作通过（2,130项功能、375页开发与发布加载），见[核查记录](assessments/network-paths-2026-11-13.md)。 | 持续审查真实网络协议的教学衔接、实机和学习理解；按证据另立变更。 |
 | 中 | 模拟世界已有机械传动和独立的工业流水线，现按[归档 OpenSpec](../openspec/changes/archive/2026-11-13-cam-follower-factory-timing/proposal.md)新增凸轮送料与工厂节拍，把机构停歇运动与工序时间窗口联系起来。转速、停歇角、送料时间的预测和六件有限批次展示机械化生产的抽象节拍；纯模型64组条件、本地完整门禁、[Actions #43270630163](https://github.com/houjibo/knowledge-visual/actions/runs/43270630163)七项和公网页面操作通过，见[核查记录](assessments/cam-factory-2026-11-13.md)。 | 已验收归档；真实设备、课堂理解与全页屏幕阅读器另查。 |

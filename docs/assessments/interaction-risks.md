@@ -4,13 +4,12 @@
 > 仅扫描仓库内 HTML 的静态 div 标签和内联脚本；以下是调查线索，不能证明存在缺陷或功能已验收。
 > div 可能已有键盘处理；while 可能有确定终止条件。脚本字符串、注释可能产生误报；外部脚本、其他标签及 for 循环未覆盖。
 
-含候选 div 控件的页面：70；含内联 while 的页面：23。同一页面可能出现在两类中。
+含候选 div 控件的页面：69；含内联 while 的页面：23。同一页面可能出现在两类中。
 
 核查时先确认控件是否响应键盘，或循环是否有有限候选与退出条件；复现后再按问题解决工作流建立变更。
 
 ## 候选 div 控件
 
-- [chemistry/high/organic.html](../../chemistry/high/organic.html)：103 行（tab）、104 行（tab）、105 行（tab）、106 行（tab）
 - [chemistry/high/reaction-rate.html](../../chemistry/high/reaction-rate.html)：105 行（tab）、106 行（tab）、107 行（tab）、108 行（tab）、109 行（tab）
 - [chemistry/high/redox.html](../../chemistry/high/redox.html)：100 行（tab）、101 行（tab）、102 行（tab）、103 行（tab）、104 行（tab）
 - [chemistry/uni/04-structure.html](../../chemistry/uni/04-structure.html)：92 行（tab）、93 行（tab）、94 行（tab）、121 行（mode-btn）、122 行（mode-btn）、123 行（mode-btn）、124 行（mode-btn）、125 行（mode-btn）、126 行（mode-btn）、127 行（mode-btn）、166 行（mode-btn）、167 行（mode-btn）、168 行（mode-btn）、169 行（mode-btn）、202 行（mode-btn）、203 行（mode-btn）、204 行（mode-btn）、205 行（mode-btn）
