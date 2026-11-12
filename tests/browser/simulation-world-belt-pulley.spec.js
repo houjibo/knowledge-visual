@@ -76,9 +76,11 @@ test('打滑后保留理想参考，却不捏造实际输出', async ({page}) =>
   await expect(page.locator('#direction-output')).toHaveText('需要观察');
   await expect(page.locator('#step-button')).toBeDisabled();
   await expect(page.locator('#run-button')).toBeDisabled();
+  await expect(page.locator('#runtime-status')).toContainText('观察到打滑，理想运动示意已停止');
   await expect(page.locator('#boundary-message')).toContainText('不假定打滑率');
   await page.locator('#slip-observed').uncheck();
   await expect(page.locator('#actual-output')).toHaveText('30.0 rpm');
+  await expect(page.locator('#runtime-status')).toContainText('已返回无打滑理想条件');
   await expect(page.locator('#step-button')).toBeEnabled();
   await page.locator('#driven-diameter').selectOption('80');
   await expect(page.locator('#ideal-output')).toHaveText('—');

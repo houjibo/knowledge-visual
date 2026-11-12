@@ -84,10 +84,9 @@
     if (frameHandle !== null) window.cancelAnimationFrame(frameHandle);
     frameHandle = null;
     previousFrame = null;
-    const wasRunning = running;
     running = false;
     updateButtons();
-    if (reason && (wasRunning || reason === 'slip')) byId('runtime-status').textContent = reason;
+    if (reason) byId('runtime-status').textContent = reason;
   }
 
   function resetReveal() {
