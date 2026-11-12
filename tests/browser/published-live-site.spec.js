@@ -282,3 +282,37 @@ test('公网质量与密度的参考比较和键盘练习可用', async ({page})
   await expect(page.locator('#completionStatus')).toContainText('完成记录已保存在本机');
   expect(failures).toEqual([]);
 });
+
+test('公网高中人工智能阈值比较和完成记录可用', async ({page}) => {
+  expect(baseValue, '发布验收需指定 KV_PUBLISHED_BASE_URL').toBeTruthy();
+  expect(expectedRevision, '发布验收需指定 GITHUB_SHA').toMatch(/^[a-f0-9]{40}$/);
+  const url = new URL('ai/high/threshold-errors.html', baseValue);
+  url.searchParams.set('verify', expectedRevision);
+  const failures = [];
+  page.on('pageerror', error => failures.push(error.message));
+  page.on('response', response => {
+    if (response.url().startsWith(new URL(baseValue).href) && response.status() >= 400)
+      failures.push(`${response.status()} ${response.url()}`);
+  });
+
+  await page.goto(url.href, {waitUntil: 'domcontentloaded', timeout: 30000});
+  await expect(page).toHaveTitle('分类阈值与误报漏报实验室 · 高中人工智能');
+  await page.locator('#fp-prediction').selectOption('up');
+  await page.locator('#fn-prediction').selectOption('down');
+  await page.locator('#reveal-button').click();
+  for (const [id, value] of Object.entries({
+    'tp-count': '3', 'fp-count': '1', 'fn-count': '3', 'tn-count': '5',
+    'precision-value': '75%', 'recall-value': '50%',
+  })) await expect(page.locator(`#${id}`)).toHaveText(value);
+
+  await page.locator('#preset-low').click();
+  for (const [id, value] of Object.entries({
+    'tp-count': '5', 'fp-count': '4', 'fn-count': '1', 'tn-count': '2',
+    'precision-value': '55.6%', 'recall-value': '83.3%',
+  })) await expect(page.locator(`#${id}`)).toHaveText(value);
+  await page.locator('#low-miss-choice').selectOption('4');
+  await page.locator('#low-alarm-choice').selectOption('9');
+  await page.locator('#check-choices').click();
+  await expect(page.locator('#progress-status')).toContainText('本机已记录完成分类阈值主题');
+  expect(failures).toEqual([]);
+});

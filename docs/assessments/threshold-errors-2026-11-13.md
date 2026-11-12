@@ -1,6 +1,6 @@
 # 高中人工智能分类阈值与误报漏报核查
 
-状态：固定模型、桌面与移动专项、完整本地门禁及发布包已通过；主分支 Actions 和公网实际操作待核查。范围由[本轮 OpenSpec 变更](../../openspec/changes/high-ai-threshold-errors-lab/proposal.md)界定。
+状态：固定模型、桌面与移动专项、完整本地门禁、主分支 Actions 和公网实际操作均已通过；变更已归档。范围由[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-13-high-ai-threshold-errors-lab/proposal.md)界定。
 
 ## 学习问题与依据
 
@@ -17,4 +17,6 @@
 
 - `node --test tests/threshold-errors-model.test.js`：3项通过，独立逐件计算核对13个整数阈值的四类结果、分母零及非法输入。
 - `CI=true npx playwright test tests/browser/high-ai-threshold-errors.spec.js --reporter=dot`：桌面/移动共16项通过，覆盖揭晓前隐藏、9/4/13三种阈值、图文矩阵同步、错误预测和错误应用、完成门槛、损坏/拒绝存储与重试、首页搜索和目录数量、320px键盘、脚本延迟就绪、文件直开和发布子路径。
-- `CI=true npm run check` 完整通过：严格 OpenSpec 264项，功能浏览器2,146项通过/6项按配置跳过，开发站376页加载、发布包22项交互与376页加载通过。真实设备、完整屏幕阅读器和学习者理解尚未验证；Actions 和公网验收在推送后补记。
+- `CI=true npm run check` 完整通过：严格 OpenSpec 264项，功能浏览器2,146项通过/6项按配置跳过，开发站376页加载、发布包22项交互与376页加载通过。
+- 主分支提交 `43b0f6d59bcd443500e35cb10abb20794c97c571` 的 [Actions #43300092226](https://github.com/houjibo/knowledge-visual/actions/runs/43300092226) 七项任务全部成功。公网 `release-version.json` 的 `revision` 与该提交相同，`site_files_modified:false`；新页面返回 HTTP 200。后续发布的自动验收已加入预测、9/4 两组矩阵、指标与本机完成记录检查，针对该公网版本单独运行通过。
+- 在公网页面实际选择“误报增加、漏报减少”后，阈值9显示 3/1/3/5、75%/50%；切换阈值4后显示 5/4/1/2、55.6%/83.3%。为少漏报选4、少误报选9，页面显示“本机已记录完成分类阈值主题”。本地同一路径操作也通过。真实设备、完整屏幕阅读器和学习者理解尚未验证。

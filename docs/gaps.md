@@ -1,10 +1,10 @@
 # 项目差距与后续方向
 
-最后核查：2026-11-13；初中质量与密度天平、模拟世界凸轮送料及初中计算机网络路径已完成公开验收；高中人工智能分类阈值与误报漏报主题正在本地验收，其余差距继续逐步核查。
+最后核查：2026-11-13；初中质量与密度天平、模拟世界凸轮送料、初中计算机网络路径及高中人工智能分类阈值主题已完成公开验收，其余差距继续逐步核查。
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
-| 高 | 高中人工智能分类边界和训练/测试主题主要报告准确率，阈值改变后的误报、漏报、精确率与召回率没有可操作对照。按[本轮 OpenSpec](../openspec/changes/high-ai-threshold-errors-lab/proposal.md)新增 12 件虚构工件的先预测、四格矩阵和两个有限目标选择；纯模型 13 个阈值独立核对，桌面/移动专项 16 项及完整门禁通过（功能2,146项、开发与发布包各376页加载），见[核查记录](assessments/threshold-errors-2026-11-13.md)。 | 完成 Actions 与公网交互验收后归档；现实模型评价、实机和学习理解另查。 |
+| 高 | 高中人工智能分类边界和训练/测试主题原主要报告准确率，缺阈值改变后的误报、漏报、精确率与召回率对照。按[归档 OpenSpec](../openspec/changes/archive/2026-11-13-high-ai-threshold-errors-lab/proposal.md)新增 12 件虚构工件的先预测、四格矩阵和两个有限目标选择；纯模型 13 个阈值独立核对，桌面/移动专项 16 项及完整门禁通过（功能2,146项、开发与发布包各376页加载），[Actions #43300092226](https://github.com/houjibo/knowledge-visual/actions/runs/43300092226)七项及公网实际操作通过，见[核查记录](assessments/threshold-errors-2026-11-13.md)。 | 已验收归档；现实模型评价、实机和学习理解另查。 |
 | 高 | 初中计算机原只有二进制像素主题，课程图中的网络路径没有操作入口。已按[归档 OpenSpec](../openspec/changes/archive/2026-11-13-middle-computer-network-path-lab/proposal.md)新增固定图的路径预测与逐跳观察，区分最少跳数、最小指定代价、断线改道和不可达；纯模型128种条件、桌面/移动专项、完整门禁及公网四项实际操作通过（2,130项功能、375页开发与发布加载），见[核查记录](assessments/network-paths-2026-11-13.md)。 | 持续审查真实网络协议的教学衔接、实机和学习理解；按证据另立变更。 |
 | 中 | 模拟世界已有机械传动和独立的工业流水线，现按[归档 OpenSpec](../openspec/changes/archive/2026-11-13-cam-follower-factory-timing/proposal.md)新增凸轮送料与工厂节拍，把机构停歇运动与工序时间窗口联系起来。转速、停歇角、送料时间的预测和六件有限批次展示机械化生产的抽象节拍；纯模型64组条件、本地完整门禁、[Actions #43270630163](https://github.com/houjibo/knowledge-visual/actions/runs/43270630163)七项和公网页面操作通过，见[核查记录](assessments/cam-factory-2026-11-13.md)。 | 已验收归档；真实设备、课堂理解与全页屏幕阅读器另查。 |
 | 高 | 初中“质量与密度”天平原先泄露25.4 g目标、跳过归零调平放物，且仅凭密度单题便记录整页完成。现按[归档 OpenSpec](../openspec/changes/archive/2026-11-13-middle-mass-density-balance-evidence/proposal.md)增加未知物有限砝码称量、平衡后独立读数与两任务顺序不限的保存规则；本地专项22项、主分支[Actions #43263125786](https://github.com/houjibo/knowledge-visual/actions/runs/43263125786)七项及公网操作通过，见[核查记录](assessments/mass-density-balance-2026-11-13.md)。 | 已验收归档；真实天平、课堂效果及整页屏幕阅读器另查。 |

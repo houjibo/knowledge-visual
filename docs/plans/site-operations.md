@@ -1,6 +1,6 @@
 # 站点发布与专业化运营计划
 
-状态：公开站已运行，后续按可验证切片建设。最近核查：2026-11-12。项目首先是供不同年龄学习者动手探索的可视化学习站；工程化和 AI 辅助维护服务于内容准确、学习流畅和长期可用。
+状态：公开站已运行，后续按可验证切片建设。最近核查：2026-11-13。项目首先是供不同年龄学习者动手探索的可视化学习站；工程化和 AI 辅助维护服务于内容准确、学习流畅和长期可用。
 
 ## 目标
 
@@ -11,7 +11,7 @@
 
 ## 当前基线
 
-最近一次主分支功能自动发布为[Actions #43161774216](https://github.com/houjibo/knowledge-visual/actions/runs/43161774216)，提交 `6eae989639a5841d3edc1d28e2b66810eae4316e` 的 core、桌面/移动 matrix、checks、构建、部署与部署后核验七个 job 全部成功。本地静态检查和2033项功能回归通过、5项按配置跳过，开发站369页加载通过；发布路径12项和发布包369页加载通过。首次发布路径运行发现旧测试仍预期4个模拟，更新为5个后专项复跑通过，未改变主题功能。公网版本清单匹配该提交且 `site_files_modified:false`；机械臂目录、页面和两个脚本逐字节一致，公开预测、两种肘向及末端读数已人工核验。详情见[二维机械臂核查](../assessments/robot-arm-2026-11-12.md)与[高中查找核查](../assessments/high-search-strategies-2026-11-12.md)。此前 main 队列异常的历史与结论边界保留在[发布队列核查](../assessments/release-backlog-2026-11-12.md)中。
+最近一次新增主题资源验收为[Actions #43300092226](https://github.com/houjibo/knowledge-visual/actions/runs/43300092226)：提交 `43b0f6d59bcd443500e35cb10abb20794c97c571` 的 core、桌面/移动、checks、构建、部署和部署后核验七个 job 全部成功。公网版本清单匹配且 `site_files_modified:false`，高中人工智能阈值主题的预测、两组矩阵与完成记录已实际核验，详见[阈值主题核查](../assessments/threshold-errors-2026-11-13.md)。模拟世界已有八个公开场景，最近的凸轮送料节拍见[机械化场景核查](../assessments/cam-factory-2026-11-13.md)。此前 main 队列异常的历史与结论边界保留在[发布队列核查](../assessments/release-backlog-2026-11-12.md)中。
 
 仓库 `houjibo/knowledge-visual` 为公开项目，默认分支为 `main`。GitHub Pages 已启用，站点 `https://houjibo.github.io/knowledge-visual/` 的首次可验证发布来自 `08751e6`；[Actions run 42430059152](https://github.com/houjibo/knowledge-visual/actions/runs/42430059152) 的检查、构建、部署和部署后验收均成功，公网清单匹配该提交且标记站点文件未修改。首次自动部署使用的 Jekyll 模板没有版本清单，已移除；后续由通过全量质量门禁的 Static HTML 产物唯一发布。详细范围与限制见[发布记录](../assessments/site-release-2026-11-08.md)。独立域名、域名所有权、托管成本及反馈责任尚未确定。
 
