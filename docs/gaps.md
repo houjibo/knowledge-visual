@@ -4,7 +4,7 @@
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
-| 中 | 模拟世界已有齿轮、曲柄滑块和工业流水线，但缺两个关节共同决定末端位置的场景。本轮新增二维机械臂：杆长/关节角、可达环带、目标预测与两种肘向。纯模型五项及模拟世界桌面/移动联合回归90项通过；见[场景规划](plans/simulation-world-curriculum.md)、[核查记录](assessments/robot-arm-2026-11-12.md)及[当前变更](../openspec/changes/2026-11-12-planar-robot-arm-simulation/proposal.md)。 | 完成完整门禁、Actions和公网操作后归档；真实学习效果与设备限制仍需单独核查。 |
+| 中 | 模拟世界已有齿轮、曲柄滑块和工业流水线，但缺两个关节共同决定末端位置的场景。本轮新增二维机械臂：杆长/关节角、可达环带、目标预测与两种肘向。纯模型五项、模拟世界桌面/移动联合回归90项及完整本地门禁通过（2033项功能、369页发布包）；见[场景规划](plans/simulation-world-curriculum.md)、[核查记录](assessments/robot-arm-2026-11-12.md)及[当前变更](../openspec/changes/2026-11-12-planar-robot-arm-simulation/proposal.md)。 | 完成Actions和公网操作后归档；真实学习效果与设备限制仍需单独核查。 |
 | 高 | 计算机高中、大学原无学段入口；小学已有顺序查找与排序，但缺两种查找策略、规模与有序前提的对照。本轮建立高中目录和查找策略实验室：7/15项有序与乱序、逐步候选范围和比较次数、首位/靠后/未出现预测及乱序前提问答。模型、桌面/移动专项和完整本地门禁通过，清单 368 页；见[核查记录](assessments/high-search-strategies-2026-11-12.md)与[当前变更](../openspec/changes/2026-11-12-high-search-strategies/proposal.md)。 | 完成主分支 Actions 与公网操作后归档；大学计算机课程和高中系统/网络仍须另立变更。 |
 | 中 | 小学计算机顺序查找后缺少逐对排序主题。本轮新增五张卡片相邻比较、第一轮交换数预测、轮末已就位区域和无交换早停，要求无序与有序两类正确完整练习。纯模型覆盖 120 种排列；桌面/移动专项 21 通过/1 跳过，Actions #270 与公网操作通过。见[核查记录](assessments/adjacent-swap-sort-2026-11-12.md)与[归档变更](../openspec/changes/archive/2026-11-12-primary-adjacent-swap-sort/proposal.md)。 | 已归档；下一步调查简单编码、个人信息与安全体验，并收集真实学习反馈。 |
 | 中 | 小学计算机顺序、循环与条件之后缺少逐项查找的可视化训练。本轮新增固定五张卡片、三组顺序、先预测比较次数再单步/连续查找，命中早停、未命中完整检查；正确完成两类预测才记录进度。完整本地检查与 Actions #268 七个 job 成功；计算机目录 5 主题、小学 4 主题，清单 365 页，公网版本与操作验收通过。见[核查记录](assessments/sequential-search-2026-11-12.md)与[归档变更](../openspec/changes/archive/2026-11-12-primary-sequential-search/proposal.md)。 | 已归档；下一步核查真实学习理解及排序、编码与安全体验的课程缺口。 |
