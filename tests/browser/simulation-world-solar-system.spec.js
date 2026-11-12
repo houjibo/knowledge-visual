@@ -4,7 +4,7 @@ test('首页分类与无学段搜索可发现太阳系模拟', async ({page}) =>
   await page.goto('/');
   const card = page.locator('a.subject-card[data-subject-category="simulation-world"]');
   await expect(card).toHaveAttribute('href', 'simulation-world/index.html');
-  await expect(card.locator('.subject-badge')).toHaveText('6 个模拟');
+  await expect(card.locator('.subject-badge')).toHaveText('7 个模拟');
   await expect(card.locator('.subject-progress')).toHaveCount(0);
 
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');

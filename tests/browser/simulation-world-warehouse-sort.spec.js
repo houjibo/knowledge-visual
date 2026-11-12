@@ -19,18 +19,18 @@ async function finish(page) {
   throw new Error('finite sorting batch did not complete');
 }
 
-test('第六个模拟可从分类与搜索发现且无学科进度', async ({page}) => {
+test('仓储分拣可从分类与搜索发现且无学科进度', async ({page}) => {
   await page.goto(process.env.KV_PUBLISHED_BASE_URL || '/');
   const category = page.locator('[data-subject-category="simulation-world"]');
-  await expect(category).toHaveAttribute('data-total', '6');
-  await expect(category.locator('.subject-badge')).toHaveText('6 个模拟');
+  await expect(category).toHaveAttribute('data-total', '7');
+  await expect(category.locator('.subject-badge')).toHaveText('7 个模拟');
   await expect(category.locator('.subject-progress')).toHaveCount(0);
   await page.getByRole('combobox', {name:'学科', exact:true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name:'关键词'}).fill('分拣');
   await page.locator('#site-results a[href="simulation-world/warehouse-sort.html"]').click();
   await expect(page.getByRole('heading', {name:'仓储分拣模拟'})).toBeVisible();
   await page.getByRole('navigation', {name:'导航'}).getByRole('link', {name:'返回模拟世界'}).click();
-  await expect(page.locator('.topic-card')).toHaveCount(6);
+  await expect(page.locator('.topic-card')).toHaveCount(7);
 });
 
 test('默认先预测A口，逐秒看见等待而B口空闲', async ({page}) => {

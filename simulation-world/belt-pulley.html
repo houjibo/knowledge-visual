@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="预测带轮直径和开口或交叉皮带如何改变转速与方向，逐步观察理想传动，并辨认打滑时模型的边界。">
+  <title>皮带与带轮模拟 · 模拟世界</title>
+  <style>
+    :root { color-scheme: dark; --bg: #0a1722; --panel: #142738; --line: #355267; --text: #edf8ff; --muted: #b1c8d3; --mint: #90ead2; --gold: #ffd083; --blue: #a8c6ff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--text); background: radial-gradient(ellipse at 5% 0, #204548 0, transparent 42%), radial-gradient(ellipse at 90% 5%, #253b59 0, transparent 45%), var(--bg); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    button, select, input { font: inherit; }
+    a { color: #b9e7ff; }
+    :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+    .skip-link { position: absolute; top: -100px; left: 12px; z-index: 5; padding: 10px 14px; background: #fff; color: #10202a; }
+    .skip-link:focus { top: 12px; }
+    .shell { width: min(1180px, 100%); margin: auto; padding: 20px clamp(12px, 3vw, 28px) 40px; }
+    .crumbs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; color: var(--muted); font-size: 13px; }
+    .crumbs a:last-of-type { margin-left: auto; }
+    .eyebrow { color: var(--mint); font-size: 12px; font-weight: 700; letter-spacing: .1em; }
+    h1 { margin: 6px 0 8px; font-size: clamp(2rem, 5vw, 3rem); line-height: 1.2; }
+    h2 { margin: 0 0 8px; font-size: 1.18rem; }
+    h3 { margin: 0 0 8px; font-size: 1rem; }
+    p { margin: 8px 0; }
+    .hero { max-width: 830px; margin-bottom: 24px; }
+    .hero p:last-child, .muted { color: var(--muted); }
+    .layout { display: grid; grid-template-columns: minmax(300px, .77fr) minmax(0, 1.23fr); align-items: start; gap: 16px; }
+    .panel { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 18px; background: rgba(20, 39, 56, .94); box-shadow: 0 18px 45px rgba(0,0,0,.13); }
+    .panel + .panel, .layout + .panel { margin-top: 16px; }
+    .layout .panel + .panel { margin-top: 0; }
+    .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; margin-top: 18px; }
+    .field { min-width: 0; }
+    label { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; }
+    select { width: 100%; min-height: 43px; padding: 8px 10px; border: 1px solid #66849a; border-radius: 9px; background: #102130; color: var(--text); }
+    select:disabled, button:disabled { opacity: .52; cursor: not-allowed; }
+    .presets, .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    button { min-height: 42px; padding: 8px 12px; border: 1px solid #638495; border-radius: 9px; background: #1b3d50; color: var(--text); cursor: pointer; }
+    button:hover:not(:disabled) { background: #28566d; }
+    button.primary { border-color: var(--mint); background: #9ef3df; color: #082c2d; font-weight: 800; }
+    button.primary:hover:not(:disabled) { background: #c3ffec; }
+    .scene-wrap { overflow: hidden; border: 1px solid #395a6b; border-radius: 14px; background: #0b1927; }
+    #belt-scene { display: block; width: 100%; height: auto; }
+    #belt-shadow { stroke: #07101a; stroke-width: 23; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    #belt-path { stroke: var(--gold); stroke-width: 10; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .wheel-disc { fill: #173746; stroke-width: 5; }
+    #driver-disc { stroke: var(--mint); }
+    #driven-disc { stroke: var(--blue); }
+    .spokes { fill: none; stroke: #d6ecf2; stroke-width: 5; stroke-linecap: round; }
+    .wheel-hub { fill: #d7ebef; }
+    #driver-marker { fill: var(--mint); }
+    #driven-marker { fill: var(--blue); }
+    .scene-caption { display: flex; gap: 9px 18px; flex-wrap: wrap; margin: 12px 0 0; color: var(--muted); font-size: 13px; }
+    .scene-caption strong { color: var(--text); }
+    .scene-caption span { flex: 1 1 180px; }
+    .instruction { color: var(--muted); font-size: 13px; }
+    .feedback { min-height: 30px; margin-top: 12px; color: var(--mint); font-weight: 650; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0 0; }
+    .metric { min-width: 0; padding: 13px; border: 1px solid #365569; border-radius: 11px; background: #0f2332; }
+    .metric dt { color: var(--muted); font-size: 12px; }
+    .metric dd { margin: 5px 0 0; font-size: clamp(1.04rem, 2.5vw, 1.43rem); font-weight: 800; overflow-wrap: anywhere; }
+    .formula { margin: 15px 0 0; padding: 11px 13px; border-left: 3px solid var(--mint); border-radius: 4px 9px 9px 4px; background: #123c40; }
+    .boundary { margin-top: 18px; padding: 13px 14px; border: 1px solid #917a54; border-radius: 11px; background: #302b23; }
+    .boundary label { display: flex; align-items: center; gap: 9px; margin: 0; font-size: 14px; cursor: pointer; }
+    .boundary input { width: 19px; height: 19px; accent-color: var(--gold); flex: none; }
+    .boundary p { margin: 7px 0 0 28px; color: #f1dcc1; font-size: 13px; }
+    details { padding: 13px 16px; border: 1px solid var(--line); border-radius: 12px; background: #102534; }
+    summary { cursor: pointer; font-weight: 750; }
+    details p, details li { color: var(--muted); }
+    footer { margin: 24px 0 0; color: var(--muted); font-size: 13px; }
+    @media (max-width: 840px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 560px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 370px) { .field-grid { grid-template-columns: minmax(0, 1fr); } .panel { padding: 14px; } .shell { padding: 12px 12px 30px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="crumbs" aria-label="导航"><a href="../index.html">首页</a><span aria-hidden="true">›</span><a href="index.html">模拟世界</a><span aria-hidden="true">›</span><span aria-current="page">皮带与带轮</span><a href="index.html">返回模拟世界</a></nav>
+    <header class="hero">
+      <span class="eyebrow">机械传动 · 柔性连接</span>
+      <h1>皮带与带轮模拟</h1>
+      <p>两根轴之间用皮带传递转动。先预测轮径和连接方式会怎样改变从动轮，再让两个轮子动起来；最后观察打滑为何使理想计算不再够用。</p>
+    </header>
+    <main id="main-content">
+      <div class="layout">
+        <section class="panel" aria-labelledby="settings-heading">
+          <h2 id="settings-heading">1 · 设定传动条件</h2>
+          <p class="instruction">直径均指皮带接触处的有效直径。输入轮始终顺时针转动。</p>
+          <div class="field-grid">
+            <div class="field"><label for="driver-diameter">主动轮直径</label><select id="driver-diameter" disabled><option value="60">60 mm</option><option value="80" selected>80 mm</option><option value="100">100 mm</option><option value="120">120 mm</option><option value="140">140 mm</option><option value="160">160 mm</option></select></div>
+            <div class="field"><label for="driven-diameter">从动轮直径</label><select id="driven-diameter" disabled><option value="60">60 mm</option><option value="80">80 mm</option><option value="100">100 mm</option><option value="120">120 mm</option><option value="140">140 mm</option><option value="160" selected>160 mm</option></select></div>
+            <div class="field"><label for="input-rpm">主动轮转速</label><select id="input-rpm" disabled><option value="30">30 rpm</option><option value="40">40 rpm</option><option value="50">50 rpm</option><option value="60" selected>60 rpm</option><option value="70">70 rpm</option><option value="80">80 rpm</option><option value="90">90 rpm</option><option value="100">100 rpm</option><option value="110">110 rpm</option><option value="120">120 rpm</option></select></div>
+            <div class="field"><label for="layout-select">皮带连接</label><select id="layout-select" disabled><option value="open" selected>开口连接</option><option value="crossed">交叉连接</option></select></div>
+          </div>
+          <div class="presets" aria-label="示例条件"><button type="button" id="preset-reduction" disabled>减速示例</button><button type="button" id="preset-speedup" disabled>加速示例</button><button type="button" id="preset-equal" disabled>等速示例</button><button type="button" id="preset-crossed" disabled>交叉示例</button></div>
+        </section>
+        <section class="panel" aria-labelledby="scene-heading">
+          <h2 id="scene-heading">两轮与皮带</h2>
+          <div class="scene-wrap">
+            <svg id="belt-scene" viewBox="0 0 960 440" role="img" aria-label="主动轮与从动轮由开口皮带相连；静止示意，等待预测。" xmlns="http://www.w3.org/2000/svg">
+              <rect x="0" y="0" width="960" height="440" fill="#0b1927"/>
+              <line x1="70" x2="890" y1="220" y2="220" stroke="#28485a" stroke-width="2" stroke-dasharray="6 10"/>
+              <path id="belt-shadow" d=""/>
+              <path id="belt-path" d=""/>
+              <g id="driver-rotor" transform="translate(250 220)"><circle id="driver-disc" class="wheel-disc" r="57.6"/><path id="driver-spokes" class="spokes"/><circle class="wheel-hub" r="9"/><circle id="driver-marker" cx="0" cy="-42" r="8"/></g>
+              <g id="driven-rotor" transform="translate(710 220)"><circle id="driven-disc" class="wheel-disc" r="115.2"/><path id="driven-spokes" class="spokes"/><circle class="wheel-hub" r="9"/><circle id="driven-marker" cx="0" cy="-84" r="8"/></g>
+              <text x="250" y="402" text-anchor="middle" fill="#90ead2" font-size="21" font-weight="700">主动轮 · 顺时针 ↻</text>
+              <text id="driven-svg-label" x="710" y="402" text-anchor="middle" fill="#a8c6ff" font-size="21" font-weight="700">从动轮 · 等待预测</text>
+            </svg>
+          </div>
+          <div class="scene-caption"><span><strong>主动轮</strong> <span id="driver-caption">80 mm · 60 rpm</span></span><span><strong>从动轮</strong> <span id="driven-caption">160 mm · 待揭晓</span></span></div>
+          <p id="scene-text" class="instruction">开口皮带连接两轮。图形是平面运动学示意，轮间距离不代表实机设计值。</p>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="prediction-heading">
+        <h2 id="prediction-heading">2 · 先预测，再揭晓</h2>
+        <p class="instruction">把主动轮与从动轮相比，再想想开口或交叉连接会怎样改变旋向。</p>
+        <div class="field-grid">
+          <div class="field"><label for="speed-prediction">从动轮转得更快、更慢还是一样？</label><select id="speed-prediction" disabled><option value="">先选择</option><option value="faster">更快</option><option value="slower">更慢</option><option value="same">一样快</option></select></div>
+          <div class="field"><label for="direction-prediction">从动轮的旋向呢？</label><select id="direction-prediction" disabled><option value="">先选择</option><option value="same">同向</option><option value="opposite">反向</option></select></div>
+        </div>
+        <div class="actions"><button id="reveal-button" class="primary" type="button" disabled>揭晓理想结果</button><button id="step-button" type="button" disabled>主动轮前进 90°</button><button id="run-button" type="button" disabled>连续演示</button><button id="pause-button" type="button" disabled>暂停</button></div>
+        <p id="prediction-feedback" class="feedback" role="status">交互初始化中…</p>
+        <p id="runtime-status" class="instruction" role="status">运动示意初始暂停。揭晓后可单步或主动播放。</p>
+      </section>
+
+      <section class="panel" aria-labelledby="result-heading">
+        <h2 id="result-heading">3 · 对照数值与模型边界</h2>
+        <dl class="metrics">
+          <div class="metric"><dt>无打滑参考转速</dt><dd id="ideal-output">—</dd></div>
+          <div class="metric"><dt>实际输出转速</dt><dd id="actual-output">—</dd></div>
+          <div class="metric"><dt>从动轮方向</dt><dd id="direction-output">—</dd></div>
+          <div class="metric"><dt>理想带速</dt><dd id="belt-speed">—</dd></div>
+        </dl>
+        <p id="formula-text" class="formula">揭晓后查看：两轮边缘与皮带不打滑时，线速度相等。</p>
+        <div class="boundary"><label for="slip-observed"><input id="slip-observed" type="checkbox" disabled>观察到皮带打滑</label><p id="boundary-message">先完成理想条件预测，再切换这一观察。这里只识别模型失效，不设定任意“打滑率”。</p></div>
+      </section>
+
+      <section class="panel" aria-labelledby="notes-heading">
+        <h2 id="notes-heading">模型说明与依据</h2>
+        <details><summary>这个示意能说明什么，不能说明什么？</summary>
+          <p>模型假设皮带不可伸长、与两轮接触处无打滑，输入轮恒速顺时针转动。轮缘线速度相等，因此从动轮转速与主动/从动直径比成正比。开口连接同向，交叉连接反向。</p>
+          <p>交叉处是二维投影，真实皮带需要空间错层；轮间距、颜色和厚度仅用于观察。未计算摩擦、张力、带的弹性、功率、转矩、磨损或寿命。打滑后不能凭轮径比预测实际输出转速；这个演示不可用于设备设计、选型或故障诊断。</p>
+          <ul><li><a href="https://ocw.mit.edu/courses/2-72-elements-of-mechanical-design-spring-2009/83d81a6f63d1c6f0fb775c08b207bc51_MIT2_72s09_lec12.pdf">MIT OCW · 皮带传动运动学</a></li><li><a href="https://archive.nptel.ac.in/content/storage2/courses/112105125/pdf/mod13les1.pdf">IIT Kharagpur / NPTEL · 开口与交叉皮带</a></li><li><a href="https://mechanicsmap.psu.edu/websites/12_rigid_body_kinematics/12-3_belt_and_gear_driven_systems/belt_and_gear_driven_systems.html">Penn State · 无打滑轮缘速度</a></li></ul>
+        </details>
+      </section>
+    </main>
+    <footer><a href="index.html">← 返回模拟世界</a> · 互动模型用于学习关系，结果不代表实机测量</footer>
+  </div>
+  <script src="assets/belt-pulley-model.js"></script>
+  <script src="assets/belt-pulley.js"></script>
+</body>
+</html>

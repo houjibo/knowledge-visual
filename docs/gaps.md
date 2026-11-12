@@ -4,6 +4,7 @@
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
+| 中 | 模拟世界已有齿轮速度/转矩示意，却缺柔性带连接、开口与交叉旋向及打滑边界的可操作对照。本轮按[当前 OpenSpec](../openspec/changes/2026-11-12-belt-pulley-simulation/proposal.md)新增皮带与带轮：轮径/输入转速、两项预测、无打滑结果、步进/播放以及打滑后实际速度未知；纯模型720组条件与公切线几何、桌面/移动专项12项及完整本地门禁通过（2080项功能、373页开发与发布加载），见[核查记录](assessments/belt-pulley-2026-11-12.md)。 | 完成公开发布和实际操作；真实学习者理解仍需后续验证。 |
 | 中 | 模拟世界原有串行工业流水线，缺分流后独立队列的直观对照。现按[归档 OpenSpec](../openspec/changes/archive/2026-11-12-warehouse-sorting-simulation/proposal.md)新增仓储分拣：固定12件按A/A/B标记到达，预测首个排队口，对照两口处理时间、等待峰值和整批完成；纯模型48组参数、桌面/移动专项14项、本地完整门禁与 [Actions #279](https://github.com/houjibo/knowledge-visual/actions/runs/43182047067) 七个任务通过，公网版本和A/B两种积压交互已核对，见[核查记录](assessments/warehouse-sort-2026-11-12.md)。 | 本次已验收归档；后续通过真实学习者反馈判断分流概念与模型边界是否易懂。 |
 | 高 | 大学计算机原无入口，学习者不能在本站对照基础数据结构的取出规则。现以[归档 OpenSpec](../openspec/changes/archive/2026-11-12-university-stack-queue-lab/proposal.md)新增栈与队列：同一到达流、两侧逐步预测、交错加入、独立进度、搜索与发布路径。本地完整检查与就绪修复提交 `cc281fc` 的 [Actions #277](https://github.com/houjibo/knowledge-visual/actions/runs/43172473775) 七个 job 成功，公开版本及两轮实际交互已验收，见[记录](assessments/stack-queue-2026-11-12.md)。 | 本次已归档；后续仍需复杂度、其他数据结构、系统及网络课程，以及真实学习者验证。 |
 | 中 | 模拟世界已有齿轮、曲柄滑块和工业流水线，但缺两个关节共同决定末端位置的场景。本轮新增二维机械臂：杆长/关节角、可达环带、目标预测与两种肘向。纯模型五项、模拟世界桌面/移动联合回归90项及完整本地门禁通过（2033项功能、369页发布包）；见[场景规划](plans/simulation-world-curriculum.md)、[核查记录](assessments/robot-arm-2026-11-12.md)及[归档变更](../openspec/changes/archive/2026-11-12-planar-robot-arm-simulation/proposal.md)。Actions #43161774216 七个任务成功，公开revision与四个资源字节匹配，双肘向操作验收通过。 | 已归档；真实学习效果与设备限制仍需单独核查。 |
