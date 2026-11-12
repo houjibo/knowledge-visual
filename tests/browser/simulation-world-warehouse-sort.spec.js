@@ -150,6 +150,10 @@ test('发布包子路径中的模型与控制器均可加载', async ({page}) =>
     await expect(page.locator('#prediction-status')).toContainText('预测正确');
     await page.getByRole('navigation', {name:'导航'}).getByRole('link', {name:'返回模拟世界'}).click();
     await expect(page).toHaveURL(server.base + 'simulation-world/index.html');
+    await page.waitForLoadState('domcontentloaded');
     expect(failed).toEqual([]);
-  } finally { await server.close(); }
+  } finally {
+    try { await page.close(); }
+    finally { await server.close(); }
+  }
 });

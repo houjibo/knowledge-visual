@@ -27,11 +27,19 @@ async function startReleaseServer() {
     await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
     const origin = `http://127.0.0.1:${server.address().port}`;
     return {base: `${origin}/knowledge-visual/`, origin, async close() {
-      await new Promise(resolve => server.close(resolve));
-      fs.rmSync(temporary, {recursive: true, force: true});
+      try {
+        await new Promise(resolve => {
+          server.close(resolve);
+          // A browser can still hold a request while test teardown waits for close().
+          server.closeAllConnections();
+        });
+      } finally { fs.rmSync(temporary, {recursive: true, force: true}); }
     }};
   } catch (error) {
-    if (server && server.listening) await new Promise(resolve => server.close(resolve));
+    if (server && server.listening) await new Promise(resolve => {
+      server.close(resolve);
+      server.closeAllConnections();
+    });
     fs.rmSync(temporary, {recursive: true, force: true});
     throw error;
   }
