@@ -1,6 +1,6 @@
 ## Context
 
-已有[皮带与带轮模拟](../../../simulation-world/belt-pulley.html)聚焦一对带轮，[工业流水线](../../../simulation-world/assembly-line.html)聚焦串行工位。[美国国家公园管理局 Springfield Armory 说明](https://home.nps.gov/spar/learn/historyculture/steam-power.htm)记录中央蒸汽动力通过轴和皮带传给个别机器；[史密森尼传动轴藏品说明](https://www.si.edu/object/counter-shaft-and-belt-shifter%3Anmah_845995)记录单一动力源经主轴、皮带和副轴驱动多台机器。页面只取这一结构为历史背景，不复原某一工厂。[MIT OCW 皮带传动讲义第 10 页](https://ocw.mit.edu/courses/2-72-elements-of-mechanical-design-spring-2009/83d81a6f63d1c6f0fb775c08b207bc51_MIT2_72s09_lec12.pdf)给出无打滑时带速与两轮直径/角速度的关系。
+已有[皮带与带轮模拟](../../../../simulation-world/belt-pulley.html)聚焦一对带轮，[工业流水线](../../../../simulation-world/assembly-line.html)聚焦串行工位。[美国国家公园管理局 Springfield Armory 说明](https://home.nps.gov/spar/learn/historyculture/steam-power.htm)记录中央蒸汽动力通过轴和皮带传给个别机器；[史密森尼传动轴藏品说明](https://www.si.edu/object/counter-shaft-and-belt-shifter%3Anmah_845995)记录单一动力源经主轴、皮带和副轴驱动多台机器。页面只取这一结构为历史背景，不复原某一工厂。[MIT OCW 皮带传动讲义第 10 页](https://ocw.mit.edu/courses/2-72-elements-of-mechanical-design-spring-2009/83d81a6f63d1c6f0fb775c08b207bc51_MIT2_72s09_lec12.pdf)给出无打滑时带速与两轮直径/角速度的关系。
 
 ## Decisions
 
