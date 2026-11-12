@@ -11,7 +11,7 @@
 
 ## 当前基线
 
-最近一次主分支功能自动发布为[Actions #268](https://github.com/houjibo/knowledge-visual/actions/runs/43142605258)，提交 `cc98c7f54fdb4700bde5a3d7227f0fed03bc02b5` 的 core、桌面/移动 matrix、checks、构建、部署与部署后核验七个 job 全部成功。本地完整检查功能回归 1969 通过/3 项按配置跳过，开发站 365 页、发布交互 12 项、发布包 365 页通过；公网版本清单 HTTP 200、revision 精确匹配且 `site_files_modified:false`。新增顺序查找三资源逐字节一致，公开两轮预测与本机保存已人工核验；详情见[顺序查找核查](../assessments/sequential-search-2026-11-12.md)。此前 main 队列异常的历史与结论边界保留在[发布队列核查](../assessments/release-backlog-2026-11-12.md)中。
+最近一次主分支功能自动发布为[Actions #270](https://github.com/houjibo/knowledge-visual/actions/runs/43150775041)，提交 `02ab6d46ba80436f661666ac2a067a83086e717d` 的 core、桌面/移动 matrix、checks、构建、部署与部署后核验七个 job 全部成功。本地完整检查功能回归 1990 通过/4 项按配置跳过，开发站 366 页、发布交互 12 项、发布包 366 页通过；公网版本清单 HTTP 200、revision 精确匹配且 `site_files_modified:false`。新增排序三资源逐字节一致，公开无序/有序两轮预测与本机保存已人工核验；详情见[相邻交换排序核查](../assessments/adjacent-swap-sort-2026-11-12.md)。此前 main 队列异常的历史与结论边界保留在[发布队列核查](../assessments/release-backlog-2026-11-12.md)中。
 
 仓库 `houjibo/knowledge-visual` 为公开项目，默认分支为 `main`。GitHub Pages 已启用，站点 `https://houjibo.github.io/knowledge-visual/` 的首次可验证发布来自 `08751e6`；[Actions run 42430059152](https://github.com/houjibo/knowledge-visual/actions/runs/42430059152) 的检查、构建、部署和部署后验收均成功，公网清单匹配该提交且标记站点文件未修改。首次自动部署使用的 Jekyll 模板没有版本清单，已移除；后续由通过全量质量门禁的 Static HTML 产物唯一发布。详细范围与限制见[发布记录](../assessments/site-release-2026-11-08.md)。独立域名、域名所有权、托管成本及反馈责任尚未确定。
 
