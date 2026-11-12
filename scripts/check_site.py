@@ -126,7 +126,7 @@ def main():
         'computer/uni/index.html': ['stack-queue.html'],
         'ai/primary/index.html': ['feature-classification-lab.html'],
         'ai/middle/index.html': ['data-label-quality.html', 'data-source-coverage.html', 'output-verification.html', 'data-minimization.html'],
-        'ai/high/index.html': ['classifier-lab.html', 'train-test-generalization.html'],
+        'ai/high/index.html': ['classifier-lab.html', 'train-test-generalization.html', 'threshold-errors.html'],
         'ai/uni/index.html': ['neuron-forward-pass.html'],
         'simulation-world/index.html': ['solar-system.html', 'gear-transmission.html', 'belt-pulley.html', 'slider-crank.html', 'robot-arm.html', 'assembly-line.html', 'warehouse-sort.html', 'cam-factory.html'],
     }

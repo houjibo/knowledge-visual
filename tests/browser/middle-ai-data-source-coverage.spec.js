@@ -73,7 +73,7 @@ test('学段目录、首页查找和学习进度包含新主题', async ({page})
   await expect(page.locator('[data-topic-slug="data-source-coverage"] [data-completion]'))
     .toHaveText('✓ 已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/8');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/9');
 });
 
 test('进度存储被拒绝时覆盖实验仍可操作并如实提示', async ({page}) => {

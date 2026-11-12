@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="用虚构工件分值调节分类阈值，观察误报、漏报、精确率与召回率。">
+  <title>分类阈值与误报漏报实验室 · 高中人工智能</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .threshold-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .8fr); gap: 18px; align-items: start; }
+    .threshold-layout > * { min-width: 0; }
+    .threshold-field { display: grid; gap: 6px; margin: 12px 0; }
+    .threshold-field select, .threshold-field input { width: 100%; min-width: 0; }
+    .threshold-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .score-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 6px; }
+    .score-list li { display: grid; grid-template-columns: 5.5em minmax(0, 1fr) minmax(8em, auto); align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid #d8e2eb; border-radius: 8px; background: #fff; }
+    .score-list .score-track { height: 14px; border-radius: 999px; background: #e8edf5; overflow: hidden; }
+    .score-list .score-fill { display: block; height: 100%; background: #5b6c87; }
+    .score-list .outcome-tp .score-fill { background: #157854; }
+    .score-list .outcome-fp .score-fill { background: #bd642c; }
+    .score-list .outcome-fn .score-fill { background: #b63842; }
+    .score-list .outcome-tn .score-fill { background: #47629a; }
+    .score-list .score-result { text-align: right; font-size: .9rem; overflow-wrap: anywhere; }
+    .threshold-matrix { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    .threshold-matrix th, .threshold-matrix td { border: 1px solid #cfdbe7; padding: 8px; text-align: center; }
+    .threshold-matrix th { background: #edf3f8; }
+    .threshold-matrix td strong { display: block; font-size: 1.35rem; }
+    .threshold-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+    .threshold-metrics > div { padding: 12px; background: #f0f5f6; border-radius: 9px; }
+    .threshold-metrics strong { display: block; font-size: 1.4rem; }
+    .threshold-metrics small { display: block; overflow-wrap: anywhere; }
+    .threshold-caution { border-left: 4px solid #a3611a; background: #fff7e7; padding: 10px 12px; }
+    @media (max-width: 750px) { .threshold-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 380px) {
+      .score-list li { grid-template-columns: 4.3em minmax(0, 1fr); }
+      .score-list .score-result { grid-column: 1 / -1; text-align: left; }
+      .threshold-matrix th, .threshold-matrix td { padding: 5px 3px; font-size: .9rem; }
+    }
+  </style>
+</head>
+<body data-subject="ai" data-stage="high">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">人工智能</a><span aria-hidden="true">›</span><a href="index.html">高中</a><span aria-hidden="true">›</span><span aria-current="page">分类阈值与误报漏报</span></nav>
+    <main id="main-content">
+      <header class="hero"><p class="eyebrow">高中人工智能 · 模型评价</p><h1>分类阈值与误报漏报实验室</h1><p>同一批虚构工件，降低“需复检”的分值门槛会怎样改变误报和漏报？先预测，再用逐件图示和四格结果核对。</p></header>
+      <section class="panel" aria-labelledby="predict-heading">
+        <h2 id="predict-heading">1 · 先预测阈值变化</h2>
+        <p>给 12 件工件指定 1–12 的教学分值。分值 ≥ 阈值时标“需复检”，否则“放行”。分值越高只表示本例更容易被标记，不是缺陷概率。现在比较阈值从 <strong>9 降到 4</strong>。</p>
+        <div class="threshold-layout">
+          <div>
+            <p class="note">误报：正常工件却被标“需复检”。漏报：有缺陷工件却被“放行”。参考标签在揭晓前隐藏。</p>
+            <div class="threshold-field"><label for="fp-prediction">误报数量会怎样？</label><select id="fp-prediction" disabled><option value="">请选择</option><option value="up">增加</option><option value="down">减少</option><option value="same">不变</option></select></div>
+            <div class="threshold-field"><label for="fn-prediction">漏报数量会怎样？</label><select id="fn-prediction" disabled><option value="">请选择</option><option value="up">增加</option><option value="down">减少</option><option value="same">不变</option></select></div>
+            <div class="threshold-actions"><button type="button" id="reveal-button" disabled>核对预测并揭晓</button><button type="button" id="reset-prediction" class="secondary" disabled>重新预测</button></div>
+            <p id="prediction-feedback" class="status" role="status" aria-live="polite" aria-atomic="true">选择两个方向后才能揭晓。</p>
+          </div>
+          <div><h3>分值条</h3><p class="note">每条的长度表示教学分值；颜色和文字结果在揭晓后出现。</p><ol id="score-list" class="score-list" aria-label="十二件虚构工件的分值和分类结果"><li>正在加载分值…</li></ol></div>
+        </div>
+      </section>
+      <section class="panel" id="results-panel" aria-labelledby="results-heading" hidden>
+        <h2 id="results-heading">2 · 调节并对照分类结果</h2>
+        <label for="threshold">当前阈值：<output id="threshold-value" for="threshold">9</output></label>
+        <input id="threshold" type="range" min="1" max="13" step="1" value="9" disabled aria-describedby="threshold-description">
+        <p id="threshold-description" class="note">可用键盘方向键逐级调整；13 表示没有工件被标“需复检”。</p>
+        <div class="threshold-actions"><button type="button" id="preset-high" disabled>查看阈值 9</button><button type="button" id="preset-low" disabled>查看阈值 4</button></div>
+        <p id="comparison-feedback" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
+        <div class="threshold-layout">
+          <div>
+            <h3>四格结果：每件只落入一格</h3>
+            <table class="threshold-matrix"><caption>预测决定行，参考标签决定列</caption><thead><tr><th scope="col">预测＼参考</th><th scope="col">有缺陷</th><th scope="col">正常</th></tr></thead><tbody><tr><th scope="row">需复检</th><td>真正例 TP<strong id="tp-count">—</strong></td><td>误报 FP<strong id="fp-count">—</strong></td></tr><tr><th scope="row">放行</th><td>漏报 FN<strong id="fn-count">—</strong></td><td>真负例 TN<strong id="tn-count">—</strong></td></tr></tbody></table>
+          </div>
+          <div>
+            <h3>两个不同的问题</h3>
+            <div class="threshold-metrics"><div><span>精确率</span><strong id="precision-value">—</strong><small id="precision-formula"></small></div><div><span>召回率</span><strong id="recall-value">—</strong><small id="recall-formula"></small></div></div>
+            <p class="note">精确率：标为“需复检”的工件中，实际有缺陷的比例。召回率：所有有缺陷工件中，被标“需复检”的比例。</p>
+            <p id="result-summary" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+      </section>
+      <section class="panel" id="application-panel" aria-labelledby="application-heading" hidden>
+        <h2 id="application-heading">3 · 按目标解释取舍</h2>
+        <p>只比较本页两个预置阈值。请先实际查看 9 和 4，再分别选择；现实场景不能仅凭这 12 件工件决定阈值。</p>
+        <div class="threshold-layout">
+          <div class="threshold-field"><label for="low-miss-choice">本例若优先少漏报，应选哪个预置？</label><select id="low-miss-choice"><option value="">请选择</option><option value="4">阈值 4</option><option value="9">阈值 9</option></select></div>
+          <div class="threshold-field"><label for="low-alarm-choice">本例若优先少误报，应选哪个预置？</label><select id="low-alarm-choice"><option value="">请选择</option><option value="4">阈值 4</option><option value="9">阈值 9</option></select></div>
+        </div>
+        <div class="threshold-actions"><button type="button" id="check-choices">核对两个目标</button><button type="button" id="retry-save" class="secondary" hidden>重试保存本机进度</button></div>
+        <p id="application-feedback" class="status" role="status" aria-live="polite" aria-atomic="true">先查看两个预置阈值。</p>
+        <p id="progress-status" class="note" role="status" aria-live="polite">学习进度保存在当前浏览器。</p>
+      </section>
+      <section class="panel"><h2>模型边界与依据</h2><p class="threshold-caution">这里的工件、分值和“参考标签”全部是本站构造的教学数据；没有训练检测模型，也没有真实质检记录。分值不表示概率，改变阈值不改变工件本身。误报、漏报的代价和合适阈值须结合现实任务、数据分布和独立验证判断。</p><p>指标与四格名称依据 <a href="https://developers.google.com/machine-learning/crash-course/classification/thresholding">Google 机器学习课程：阈值与混淆矩阵</a>及<a href="https://developers.google.com/machine-learning/crash-course/classification/accuracy-precision-recall">精确率和召回率</a>；本页数据和情境由本站设计。</p></section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回高中人工智能</a>　·　<a href="train-test-generalization.html">对照训练与测试集</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script src="assets/threshold-errors-model.js"></script>
+  <script src="assets/threshold-errors.js"></script>
+</body>
+</html>

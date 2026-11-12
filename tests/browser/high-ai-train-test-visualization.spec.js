@@ -56,7 +56,7 @@ test('测试结果可见但人工智能进度存储被拒绝时不阻断实验',
 
 test('高中人工智能目录能直达训练与测试集实验室并显示独立进度', async ({page}) => {
   await page.goto('/ai/high/index.html');
-  await expect(page.locator('#stage-progress')).toContainText('已完成 0/2');
+  await expect(page.locator('#stage-progress')).toContainText('已完成 0/3');
   await page.goto('/');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
@@ -68,7 +68,7 @@ test('高中人工智能目录能直达训练与测试集实验室并显示独�
   await expect(page).toHaveURL(/ai\/high\/train-test-generalization\.html$/);
   await page.getByRole('button', {name: '查看留出测试结果'}).click();
   await page.goto('/ai/high/index.html');
-  await expect(page.locator('#stage-progress')).toContainText('本机已记录完成 1/2');
+  await expect(page.locator('#stage-progress')).toContainText('本机已记录完成 1/3');
   await expect(page.locator('[data-topic-slug="train-test-generalization"] [data-completion]'))
     .toHaveText('✓ 已完成');
 });

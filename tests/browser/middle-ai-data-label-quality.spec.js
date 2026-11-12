@@ -56,7 +56,7 @@ test('初中目录、首页搜索和学段进度可以到达标签实验', async
   await expect(page.locator('#stage-progress')).toHaveText('本机已记录完成 1/4 个主题。');
   await expect(page.locator('[data-topic-slug="data-label-quality"] [data-completion]')).toHaveText('✓ 已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/8');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/9');
 });
 
 test('旧计算机初中进度不会误计入人工智能初中', async ({page}) => {
