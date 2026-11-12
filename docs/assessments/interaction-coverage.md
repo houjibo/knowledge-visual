@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：337；已登记部分交互证据：196；尚未登记：141。
+主题总数：338；已登记部分交互证据：197；尚未登记：141。
 
 ## 已登记部分交互证据
 
@@ -497,6 +497,8 @@
   - 验证共线刚性曲柄滑块的真实SVG端点长度、角度/位移/行程、按时间播放/暂停/15°步进、参数/预设/重置、隐藏及减少动态保护、键盘、320px、file无外部资源、无学科进度和目录发现；真实设备、屏幕阅读器、学习者效果和受力/设备预测未验证。 [simulation-world-slider-crank.spec.js](../../tests/browser/simulation-world-slider-crank.spec.js)
 - [太阳系模拟 · 模拟世界](../../simulation-world/solar-system.html)
   - 桌面与移动视口检查分类搜索、无学段结果、Three.js 本地加载、模型说明、天体清单、速度暂停与调节、参考中心、重置、减少动态偏好、键盘控制、窄屏及 WebGL 不可用提示；测试运行结果与教学正确性需另行核验。 [simulation-world-solar-system.spec.js](../../tests/browser/simulation-world-solar-system.spec.js)
+- [仓储分拣模拟 · 模拟世界](../../simulation-world/warehouse-sort.html)
+  - 桌面与移动视口检查分类搜索、A/B/无等待预测、固定12件逐秒分流、两次完整运行对照、参数及动态偏好暂停、file直开、320px键盘操作和发布子路径；真实设备、屏幕阅读器及实际仓储参数未验收。 [simulation-world-warehouse-sort.spec.js](../../tests/browser/simulation-world-warehouse-sort.spec.js)
 
 ## 尚未登记交互证据
 

@@ -128,7 +128,7 @@ def main():
         'ai/middle/index.html': ['data-label-quality.html', 'data-source-coverage.html', 'output-verification.html', 'data-minimization.html'],
         'ai/high/index.html': ['classifier-lab.html', 'train-test-generalization.html'],
         'ai/uni/index.html': ['neuron-forward-pass.html'],
-        'simulation-world/index.html': ['solar-system.html', 'gear-transmission.html', 'slider-crank.html', 'robot-arm.html', 'assembly-line.html'],
+        'simulation-world/index.html': ['solar-system.html', 'gear-transmission.html', 'slider-crank.html', 'robot-arm.html', 'assembly-line.html', 'warehouse-sort.html'],
     }
     for name, expected_hrefs in subject_topics.items():
         hrefs = topic_hrefs.get(name, [])

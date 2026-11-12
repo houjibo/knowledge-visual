@@ -1,6 +1,6 @@
 # 站点评估基线
 
-[页面清单](page-inventory.json) 于 2026-11-12 根据当前仓库重新生成：包含 371 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
+[页面清单](page-inventory.json) 于 2026-11-12 根据当前仓库重新生成：包含 372 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
 
 重新生成：`python3 scripts/inventory_pages.py --output docs/assessments/page-inventory.json`；运行 `python3 scripts/inventory_pages.py --check docs/assessments/page-inventory.json` 检查清单是否过期，运行 `python3 tests/inventory_test.py` 验证基本解析及导航行为。生成结果按路径稳定排序，无时间戳，可用版本差异检查变化。
 
@@ -52,3 +52,5 @@
 [曲柄滑块模拟核查](slider-crank-2026-11-12.md)记录旋转/往复学习问题、几何与运动边界及本轮实际验收状态。
 
 [二维机械臂模拟核查](robot-arm-2026-11-12.md)记录两关节运动学、可达环带、目标预测、两种肘向与本轮验证状态。
+
+[仓储分拣模拟核查](warehouse-sort-2026-11-12.md)记录并行支路的有限事件模型、排队预测、两轮对照与发布验收。

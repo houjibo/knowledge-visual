@@ -173,7 +173,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-middle-progress'))['data-minimization']))
     .toBe(true);
   await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
-  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('5 个模拟');
+  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('6 个模拟');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name: '关键词'}).fill('机械臂');
   await page.locator('#site-results a[href="simulation-world/robot-arm.html"]').click();
@@ -185,6 +185,17 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   expect(Number(await page.locator('#tip-distance').textContent())).toBeLessThan(1);
   await page.locator('#flip-pose').click();
   await expect(page.locator('#action-status')).toContainText('肘向二');
+  await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('分拣');
+  await page.locator('#site-results a[href="simulation-world/warehouse-sort.html"]').click();
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page).toHaveTitle('仓储分拣模拟 · 模拟世界');
+  await page.locator('#preset-b').click();
+  await page.locator('#prediction-select').selectOption('B');
+  for (let second = 0; second <= 5; second++) await page.locator('#step-button').click();
+  await expect(page.locator('#first-queue')).toHaveText('B 口');
+  await expect(page.locator('#prediction-status')).toContainText('预测正确');
   await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('uni');

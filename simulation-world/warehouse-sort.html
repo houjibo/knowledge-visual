@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="逐秒观察固定12件包裹分流到两条独立队列，预测哪一个分拣口先排队，并比较改变处理时间后的批次结果。">
+  <title>仓储分拣模拟 · 模拟世界</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0b1420; --panel:#142335; --deep:#0d1b2a; --line:#38516a; --text:#f2f7fc; --muted:#b6c8d8; --cyan:#81ead5; --blue:#a4cbff; --amber:#ffd08a; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-width:0; color:var(--text); background:radial-gradient(circle at 5% 0,#193e4c 0,transparent 38%),radial-gradient(circle at 100% 0,#27334c 0,transparent 33%),var(--bg); font:15px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; }
+    a { color:var(--blue); }
+    button,select { font:inherit; }
+    :focus-visible { outline:3px solid var(--amber); outline-offset:3px; }
+    .skip-link { position:absolute; left:-9999px; top:8px; padding:9px 12px; background:#fff; color:#102033; z-index:5; }
+    .skip-link:focus { left:10px; }
+    .shell { width:min(1120px,100%); margin:auto; padding:18px 22px 36px; }
+    .topbar { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px 16px; color:var(--muted); font-size:13px; }
+    .topbar a { text-decoration:none; }
+    .hero { margin:24px 0 20px; }
+    .eyebrow { margin:0 0 4px; color:var(--cyan); font-size:12px; font-weight:750; letter-spacing:.1em; }
+    h1 { margin:0 0 8px; font-size:clamp(1.85rem,5vw,2.6rem); line-height:1.2; }
+    .hero p:last-child { margin:0; max-width:75ch; color:var(--muted); }
+    .panel { min-width:0; margin:14px 0; padding:18px; border:1px solid var(--line); border-radius:17px; background:linear-gradient(145deg,#17293c,#112031); box-shadow:0 13px 30px #0002; }
+    .panel h2 { margin:0 0 10px; font-size:1.05rem; }
+    .section-lead { margin:0 0 13px; color:var(--muted); }
+    .settings { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .field { min-width:0; }
+    .field label { display:block; margin:0 0 5px; font-size:13px; font-weight:650; }
+    select { width:100%; min-width:0; min-height:42px; border:1px solid #63829b; border-radius:8px; padding:7px 9px; background:#0d1c2b; color:var(--text); }
+    select:disabled { opacity:.55; }
+    .presets,.controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    button { min-height:42px; border:1px solid #63829b; border-radius:8px; padding:8px 12px; background:#20384d; color:var(--text); cursor:pointer; font-weight:650; }
+    button.primary { border-color:var(--cyan); background:var(--cyan); color:#092a2a; }
+    button:hover:not(:disabled) { filter:brightness(1.15); }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    .prediction-row { display:grid; grid-template-columns:minmax(0,280px) minmax(0,1fr); align-items:end; gap:14px; }
+    #prediction-status { min-height:42px; margin:0; padding:8px 10px; border:1px solid #405a71; border-radius:8px; background:var(--deep); color:var(--amber); }
+    #simulation-status { min-height:1.6em; margin:12px 0 0; color:var(--cyan); }
+    .scene-head { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:5px 14px; }
+    .scene-head p { margin:0; color:var(--muted); font-size:13px; }
+    .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:12px 0 16px; }
+    .metric { min-width:0; padding:9px 11px; border:1px solid #39546b; border-radius:9px; background:#102033; }
+    .metric dt { color:var(--muted); font-size:12px; }
+    .metric dd { margin:2px 0 0; font:750 1.3rem/1.2 ui-monospace,SFMono-Regular,monospace; overflow-wrap:anywhere; }
+    .inbound { padding:12px; border:1px dashed #66849b; border-radius:12px; background:#0e2030; }
+    .inbound h3,.lane h3 { margin:0 0 5px; font-size:1rem; }
+    .inbound p { margin:0 0 8px; color:var(--muted); font-size:13px; }
+    .parcel-list { display:flex; flex-wrap:wrap; gap:6px; min-height:36px; list-style:none; padding:0; margin:0; align-items:center; }
+    .parcel { display:inline-flex; align-items:center; justify-content:center; min-width:44px; padding:5px 7px; border:1px solid #8db1c9; border-radius:6px; background:#29445c; color:#fff; font:700 13px ui-monospace,SFMono-Regular,monospace; }
+    .parcel[data-route="A"] { border-color:#75e2d1; background:#205d5d; }
+    .parcel[data-route="B"] { border-color:#abc7ff; background:#354f84; }
+    .empty { color:var(--muted); font-size:13px; }
+    .split { display:flex; justify-content:center; gap:24px; padding:3px 0; color:var(--amber); font-weight:700; }
+    .lanes { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .lane { min-width:0; padding:14px; border:1px solid #59728a; border-radius:12px; background:#0d1c2c; }
+    .lane[data-route="A"] { border-top:4px solid #73dece; }
+    .lane[data-route="B"] { border-top:4px solid #9dbdff; }
+    .lane p { margin:8px 0 4px; color:var(--muted); font-size:13px; }
+    .lane .active { min-height:35px; padding:6px 8px; border:1px solid #395269; border-radius:7px; color:var(--text); background:#152a3c; }
+    progress { display:block; width:100%; height:9px; margin:8px 0; accent-color:var(--cyan); }
+    .lane-summary { display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px; font-size:13px; }
+    .lane-summary strong { color:var(--amber); }
+    .event { margin:12px 0 0; padding:10px 11px; border-left:3px solid var(--cyan); background:#0c1b29; color:#d7e5ef; }
+    .comparison { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .record { padding:12px; border:1px solid #39546b; border-radius:10px; background:#0d1d2b; }
+    .record strong { display:block; margin-bottom:4px; color:var(--cyan); }
+    .record p { margin:0; color:var(--muted); font-size:13px; }
+    #comparison-result { margin:11px 0 0; color:var(--amber); }
+    .notes p,.notes li { color:var(--muted); }
+    .notes ul { margin:8px 0 0; padding-left:21px; }
+    footer { margin-top:20px; color:var(--muted); font-size:13px; }
+    @media(max-width:680px) { .settings,.lanes,.comparison,.prediction-row { grid-template-columns:minmax(0,1fr); } .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media(max-width:360px) { .shell { padding:13px 10px 26px; } .panel { padding:13px; } .presets button,.controls button { flex:1 1 120px; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar" aria-label="导航"><span><a href="../index.html">首页</a> › <a href="index.html">模拟世界</a> › 仓储分拣</span><a href="index.html">返回模拟世界</a></nav>
+    <main id="main-content">
+      <header class="hero">
+        <p class="eyebrow">工业流程 · 并行分拣</p>
+        <h1>仓储分拣模拟</h1>
+        <p>一条传送带依次送来12件包裹。它们按固定标记进入A或B分拣口。先预测哪一口会出现等待，再逐秒观察：一侧排队时，另一侧可能仍有空闲。</p>
+      </header>
+      <section class="panel" aria-labelledby="settings-title">
+        <h2 id="settings-title">设置到达与处理时间</h2>
+        <p class="section-lead">包裹顺序固定为 A、A、B 重复四次。所有时间都是模拟秒，改条件会重新开始本轮。</p>
+        <div class="settings">
+          <div class="field"><label for="arrival-interval">每隔几秒到达一件</label><select id="arrival-interval" disabled><option value="1">1 秒</option><option value="2">2 秒</option><option value="3">3 秒</option></select></div>
+          <div class="field"><label for="service-a">A 口处理一件用时</label><select id="service-a" disabled><option value="1">1 秒</option><option value="2">2 秒</option><option value="3" selected>3 秒</option><option value="4">4 秒</option></select></div>
+          <div class="field"><label for="service-b">B 口处理一件用时</label><select id="service-b" disabled><option value="1" selected>1 秒</option><option value="2">2 秒</option><option value="3">3 秒</option><option value="4">4 秒</option></select></div>
+        </div>
+        <div class="presets" aria-label="示例条件">
+          <button type="button" id="preset-a" disabled>A 口受压示例</button>
+          <button type="button" id="preset-b" disabled>B 口受压示例</button>
+          <button type="button" id="preset-clear" disabled>两口不排队示例</button>
+        </div>
+      </section>
+      <section class="panel" aria-labelledby="prediction-title">
+        <h2 id="prediction-title">先预测，再观察</h2>
+        <div class="prediction-row">
+          <div class="field"><label for="prediction-select">哪一口会先出现等待？</label><select id="prediction-select" disabled><option value="">先选择预测</option><option value="A">A 口</option><option value="B">B 口</option><option value="none">两口都不排队</option></select></div>
+          <p id="prediction-status" role="status">请选择预测，再开始模拟。</p>
+        </div>
+        <div class="controls">
+          <button type="button" class="primary" id="step-button" disabled>前进 1 秒</button>
+          <button type="button" id="run-button" disabled>连续运行</button>
+          <button type="button" id="pause-button" disabled>暂停</button>
+          <button type="button" id="reset-button" disabled>重跑当前条件</button>
+        </div>
+        <p id="simulation-status" role="status">正在准备本地模拟…</p>
+        <noscript><p>此模拟需要启用 JavaScript；页面说明和导航仍可阅读。</p></noscript>
+      </section>
+      <section class="panel" aria-labelledby="scene-title">
+        <div class="scene-head"><h2 id="scene-title">传送带与两条分拣支路</h2><p>每一步先完成到期处理，再接收包裹，最后让空闲分拣口开工。</p></div>
+        <dl class="metrics">
+          <div class="metric"><dt>模拟时刻</dt><dd id="clock">未开始</dd></div>
+          <div class="metric"><dt>已到达</dt><dd id="arrived-count">0 / 12</dd></div>
+          <div class="metric"><dt>已完成</dt><dd id="completed-count">0 / 12</dd></div>
+          <div class="metric"><dt>首个排队口</dt><dd id="first-queue">待观察</dd></div>
+        </dl>
+        <div class="inbound"><h3>入口传送带 · 待到达</h3><p id="next-parcel">下一件：P1 → A 口</p><ol class="parcel-list" id="incoming-items" aria-label="尚未到达的包裹"></ol></div>
+        <div class="split" aria-hidden="true"><span>↙ A 口</span><span>B 口 ↘</span></div>
+        <div class="lanes">
+          <section class="lane" data-route="A" aria-labelledby="a-title"><h3 id="a-title">A 口 · 独立队列</h3><p>正在处理</p><div class="active" id="a-active">空闲</div><progress id="a-progress" max="1" value="0" aria-label="A 口处理进度"></progress><p>等待中的包裹</p><ol class="parcel-list" id="a-queue" aria-label="A 口等待队列"></ol><div class="lane-summary"><span>完成 <strong id="a-done">0</strong> 件</span><span>最大等待 <strong id="a-peak">0</strong> 件</span></div></section>
+          <section class="lane" data-route="B" aria-labelledby="b-title"><h3 id="b-title">B 口 · 独立队列</h3><p>正在处理</p><div class="active" id="b-active">空闲</div><progress id="b-progress" max="1" value="0" aria-label="B 口处理进度"></progress><p>等待中的包裹</p><ol class="parcel-list" id="b-queue" aria-label="B 口等待队列"></ol><div class="lane-summary"><span>完成 <strong id="b-done">0</strong> 件</span><span>最大等待 <strong id="b-peak">0</strong> 件</span></div></section>
+        </div>
+        <p class="event" id="event-summary">尚未到达任何包裹。</p>
+      </section>
+      <section class="panel" aria-labelledby="comparison-title"><h2 id="comparison-title">比较两次完整运行</h2><p class="section-lead">先跑完一个条件，再改分拣时间跑完另一轮。未完成的运行不会覆盖记录，刷新页面会清空对照。</p><div class="comparison"><div class="record" id="comparison-old"><strong>前一次完整运行</strong><p>尚无记录。</p></div><div class="record" id="comparison-new"><strong>最近一次完整运行</strong><p>尚无记录。</p></div></div><p id="comparison-result">完成两轮后可比较整批时间与两口等待峰值。</p></section>
+      <section class="panel notes" aria-labelledby="notes-title"><h2 id="notes-title">怎样理解这个模型</h2><ul><li>12件包裹按固定的A、A、B标记到达，每口一次只处理一件，等待队列按到达顺序服务；不模拟运输、分拣错误、故障或有限缓冲。</li><li>结果是有限、确定性批次的逐秒推演。整批完成时间和最大等待件数不能直接预测真实仓库的产能，也不等于随机排队系统的稳态指标。</li><li>概念参考 <a href="https://ocw.mit.edu/courses/1-225j-transportation-flow-systems-fall-2002/55cc67c8b32d96052f72a4a7ead51393_lec8queues.pdf">MIT OpenCourseWare 排队术语</a>与 <a href="https://archive.nptel.ac.in/content/storage2/courses/105101008/585_Queuing/point6/point.html">NPTEL 独立并行队列</a>；具体固定序列和事件规则由本站定义。</li></ul></section>
+    </main>
+    <footer><a href="index.html">← 返回模拟世界</a></footer>
+  </div>
+  <script src="assets/warehouse-sort-model.js"></script>
+  <script src="assets/warehouse-sort.js"></script>
+</body>
+</html>
