@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   const stagesBySubject = {
-    computer: new Set(['primary', 'middle', 'high']),
+    computer: new Set(['primary', 'middle', 'high', 'uni']),
     ai: new Set(['primary', 'middle', 'high', 'uni'])
   };
   const legacyStagesBySubject = {

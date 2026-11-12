@@ -278,7 +278,7 @@ test('桌面操作区同时呈现地图、两种程序表示和当前执行反�
 test('首页、学科和小学目录可发现循环，进度计数按目录更新', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现路径由发布包和公网专项验证');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '7');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '8');
   await page.locator('.subject-card[href="computer/index.html"]').click();
   await page.locator('a[href="primary/index.html"]').click();
   await expect(page.locator('#stage-progress')).toContainText('0/5');
@@ -289,7 +289,7 @@ test('首页、学科和小学目录可发现循环，进度计数按目录更�
   await expect(page.locator('#stage-progress')).toContainText('1/5');
   await expect(page.locator('[data-topic-slug="repeat-loops"] [data-completion]')).toContainText('已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/7');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/8');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
   await page.getByRole('searchbox', {name: '关键词'}).fill('循环');

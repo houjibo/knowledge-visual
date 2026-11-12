@@ -310,3 +310,30 @@ test('发布包子路径可发现和操作曲柄滑块模拟', async ({page}) =>
   await expect(page.locator('.topic-card')).toHaveCount(5);
   expect(errors).toEqual([]);
 });
+
+test('发布包子路径可发现并完成大学计算机栈与队列', async ({page}) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('response', response => {
+    if (response.url().startsWith(base) && response.status() >= 400)
+      errors.push(`${response.status()} ${response.url()}`);
+  });
+  await gotoPublished(page, base);
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('uni');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('栈与队列');
+  await page.locator('#site-results a[href="computer/uni/stack-queue.html"]').click();
+  await waitForPublishedDocument(page);
+  for (let i = 0; i < 3; i++) await page.locator('#add-button').click();
+  await page.locator('#stack-prediction').selectOption('C');
+  await page.locator('#queue-prediction').selectOption('A');
+  await page.locator('#remove-button').click();
+  await page.locator('#add-button').click();
+  await page.locator('#stack-prediction').selectOption('D');
+  await page.locator('#queue-prediction').selectOption('B');
+  await page.locator('#remove-button').click();
+  await expect(page.locator('#progress-status')).toContainText('本机已记录完成');
+  await page.locator('.footer-nav a[href="index.html"]').click();
+  await expect(page.locator('#stage-progress')).toContainText('1/1');
+  expect(errors).toEqual([]);
+});

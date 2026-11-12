@@ -11,6 +11,7 @@ test('导出只包含学科完成记录，保留原始数据', async ({page}) =>
     localStorage.setItem('kv-science-progress', '{broken');
     localStorage.setItem('kv-computer-primary-progress', '{"robot-algorithms":true}');
     localStorage.setItem('kv-computer-high-progress', '{"search-strategies":true}');
+    localStorage.setItem('kv-computer-uni-progress', '{"stack-queue":true}');
     localStorage.setItem('kv-ai-high-progress', '{"classifier-lab":true}');
     localStorage.setItem('kv-computer-ai-primary-progress', '{"robot-algorithms":true}');
     localStorage.setItem('private-data', 'secret');
@@ -25,10 +26,11 @@ test('导出只包含学科完成记录，保留原始数据', async ({page}) =>
   expect(contents.records['kv-science-progress']).toBe('{broken');
   expect(contents.records['kv-computer-primary-progress']).toBe('{"robot-algorithms":true}');
   expect(contents.records['kv-computer-high-progress']).toBe('{"search-strategies":true}');
+  expect(contents.records['kv-computer-uni-progress']).toBe('{"stack-queue":true}');
   expect(contents.records['kv-ai-high-progress']).toBe('{"classifier-lab":true}');
   expect(contents.records['kv-computer-ai-primary-progress']).toBe('{"robot-algorithms":true}');
   expect(contents.records['private-data']).toBeUndefined();
-  await expect(page.locator('#progress-backup-status')).toContainText('已导出 6 类');
+  await expect(page.locator('#progress-backup-status')).toContainText('已导出 7 类');
 });
 
 test('预览后合并并保留本机同名和清除标记', async ({page}) => {
@@ -52,6 +54,7 @@ test('新旧计算机和人工智能进度键都可导入备份', async ({page})
   await upload(page, backup({
     'kv-computer-middle-progress': JSON.stringify({'binary-pixels': true}),
     'kv-computer-high-progress': JSON.stringify({'search-strategies': true}),
+    'kv-computer-uni-progress': JSON.stringify({'stack-queue': true}),
     'kv-ai-uni-progress': JSON.stringify({'neuron-forward-pass': true}),
     'kv-computer-ai-high-progress': JSON.stringify({'classifier-lab': true}),
   }));
@@ -61,7 +64,9 @@ test('新旧计算机和人工智能进度键都可导入备份', async ({page})
     .toEqual({'binary-pixels': true});
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-computer-high-progress'))))
     .toEqual({'search-strategies': true});
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 2/7');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 3/8');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-computer-uni-progress'))))
+    .toEqual({'stack-queue': true});
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-uni-progress'))))
     .toEqual({'neuron-forward-pass': true});
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-computer-ai-high-progress'))))

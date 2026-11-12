@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：336；已登记部分交互证据：195；尚未登记：141。
+主题总数：337；已登记部分交互证据：196；尚未登记：141。
 
 ## 已登记部分交互证据
 
@@ -73,6 +73,8 @@
   - 桌面与移动浏览器验证两个独立学科入口、旧主题地址跳转、四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘操作、旧进度迁移及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [split-subjects-learning.spec.js](../../tests/browser/split-subjects-learning.spec.js)
 - [顺序查找实验室 · 小学计算机](../../computer/primary/sequential-search.html)
   - 桌面与移动模拟视口验证逐张比较、命中早停和未找到完整扫描、预测与两类完成、连续/暂停、参数重置、异常存储、键盘320px、减少动态、file及发布子路径；真实设备与真实学习者效果仍需后续核验。 [primary-computer-sequential-search.spec.js](../../tests/browser/primary-computer-sequential-search.spec.js)
+- [栈与队列对照实验室 · 大学计算机](../../computer/uni/stack-queue.html)
+  - 桌面与移动视口核对同一到达流的栈/队列取出、两轮正确预测、边界、重置、异常存储、键盘、320px、file直开与发布子路径；真实学习者、屏幕阅读器和设备矩阵仍需核查。 [university-computer-stack-queue.spec.js](../../tests/browser/university-computer-stack-queue.spec.js)
 - [复数 · 高中数学互动可视化](../../math/high/complex-numbers.html)
   - 桌面与移动视口检查旋转缩放滑块交互、中间轨迹坐标、跨越 ±π 的旋转方向、零复数辐角说明及共轭标签坐标；复数题库、整页无障碍与真实设备尚未全面验收。 [complex-rotation-visual-accuracy.spec.js](../../tests/browser/complex-rotation-visual-accuracy.spec.js)
   - 桌面与移动视口验证十题答案、错答反馈、Enter／空格、掌握状态回看、题组边界及保存失败重试；真实设备、屏幕阅读器和整页无障碍尚未全面验收。 [complex-number-practice-reliability.spec.js](../../tests/browser/complex-number-practice-reliability.spec.js)

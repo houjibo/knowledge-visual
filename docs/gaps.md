@@ -4,6 +4,7 @@
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
+| 高 | 大学计算机原无入口，学习者不能在本站对照基础数据结构的取出规则。本轮以[当前 OpenSpec](../openspec/changes/2026-11-12-university-stack-queue-lab/proposal.md)新增栈与队列：同一到达流、两侧逐步预测、交错加入、独立进度、搜索与发布路径。核查见[记录](assessments/stack-queue-2026-11-12.md)。 | 待完整本地检查、Actions 与公网操作验收后归档；后续仍需复杂度、其他数据结构、系统及网络课程。 |
 | 中 | 模拟世界已有齿轮、曲柄滑块和工业流水线，但缺两个关节共同决定末端位置的场景。本轮新增二维机械臂：杆长/关节角、可达环带、目标预测与两种肘向。纯模型五项、模拟世界桌面/移动联合回归90项及完整本地门禁通过（2033项功能、369页发布包）；见[场景规划](plans/simulation-world-curriculum.md)、[核查记录](assessments/robot-arm-2026-11-12.md)及[归档变更](../openspec/changes/archive/2026-11-12-planar-robot-arm-simulation/proposal.md)。Actions #43161774216 七个任务成功，公开revision与四个资源字节匹配，双肘向操作验收通过。 | 已归档；真实学习效果与设备限制仍需单独核查。 |
 | 高 | 计算机高中、大学原无学段入口；小学已有顺序查找与排序，但缺两种查找策略、规模与有序前提的对照。本轮建立高中目录和查找策略实验室：7/15项有序与乱序、逐步候选范围和比较次数、首位/靠后/未出现预测及乱序前提问答。模型、桌面/移动专项、完整本地门禁与主分支 Actions #43158911720、公开资源及操作均通过；见[核查记录](assessments/high-search-strategies-2026-11-12.md)与[归档变更](../openspec/changes/archive/2026-11-12-high-search-strategies/proposal.md)。 | 已归档；大学计算机课程和高中系统/网络仍须另立变更。 |
 | 中 | 小学计算机顺序查找后缺少逐对排序主题。本轮新增五张卡片相邻比较、第一轮交换数预测、轮末已就位区域和无交换早停，要求无序与有序两类正确完整练习。纯模型覆盖 120 种排列；桌面/移动专项 21 通过/1 跳过，Actions #270 与公网操作通过。见[核查记录](assessments/adjacent-swap-sort-2026-11-12.md)与[归档变更](../openspec/changes/archive/2026-11-12-primary-adjacent-swap-sort/proposal.md)。 | 已归档；下一步调查简单编码、个人信息与安全体验，并收集真实学习反馈。 |

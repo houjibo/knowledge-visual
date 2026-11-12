@@ -175,5 +175,17 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   expect(Number(await page.locator('#tip-distance').textContent())).toBeLessThan(1);
   await page.locator('#flip-pose').click();
   await expect(page.locator('#action-status')).toContainText('肘向二');
+  await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('uni');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('栈与队列');
+  await page.locator('#site-results a[href="computer/uni/stack-queue.html"]').click();
+  await expect(page).toHaveTitle('栈与队列对照实验室 · 大学计算机');
+  for (let i = 0; i < 3; i++) await page.locator('#add-button').click();
+  await page.locator('#stack-prediction').selectOption('C');
+  await page.locator('#queue-prediction').selectOption('A');
+  await page.locator('#remove-button').click();
+  await expect(page.locator('#action-status')).toContainText('栈取出 C');
+  await expect(page.locator('#action-status')).toContainText('队列取出 A');
   expect(failures).toEqual([]);
 });
