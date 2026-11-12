@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="比较最少跳数和最小指定代价，预测网络路径并逐跳观察数据包能否到达。">
+  <title>数据包路径实验室 · 初中计算机</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .shell { width: min(100% - 32px, 1050px); }
+    .hero { background: linear-gradient(135deg, #143a60, #1c6b77); }
+    .hero .eyebrow { color: #c5f2ed; }
+    .hero p { color: #e5f9f5; }
+    .panel { margin: 14px 0; }
+    .setup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .setup-grid label, .prediction-control { display: grid; gap: 5px; font-weight: 700; }
+    select { min-height: 44px; width: 100%; padding: 7px 10px; border: 1px solid #72869b; border-radius: 9px; background: white; color: #1d2940; }
+    .map-wrap { margin-top: 15px; border: 1px solid #c9dae4; border-radius: 14px; background: #eef6f8; overflow: hidden; }
+    .network-map { display: block; width: 100%; height: auto; }
+    .link line { stroke: #71879a; stroke-width: 5; stroke-linecap: round; }
+    .link text { font: 700 20px system-ui, sans-serif; fill: #1d3446; paint-order: stroke; stroke: #eef6f8; stroke-width: 7px; stroke-linejoin: round; text-anchor: middle; }
+    .link.route line { stroke: #007d83; stroke-width: 8; }
+    .link.traversed line { stroke: #bf631e; stroke-width: 9; }
+    .link.disabled line { stroke: #a53e3e; stroke-dasharray: 10 9; opacity: .55; }
+    .link.disabled text { fill: #8b3434; text-decoration: line-through; }
+    .node circle { fill: #fff; stroke: #31506b; stroke-width: 5; }
+    .node text { font: 800 24px system-ui, sans-serif; fill: #1e3552; text-anchor: middle; dominant-baseline: middle; }
+    .node.current circle { fill: #fff1ca; stroke: #bf631e; }
+    .packet-ring { fill: none; stroke: #bf631e; stroke-width: 4; stroke-dasharray: 7 5; }
+    .map-caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 5px 14px; padding: 9px 13px; background: #fff; font-size: .9rem; }
+    .map-caption strong { color: #174b63; }
+    .button-row { margin-top: 12px; }
+    .button-row button { min-height: 44px; }
+    .feedback { margin: 12px 0 0; padding: 11px 13px; border-radius: 9px; background: #eaf1f7; }
+    .feedback.success { background: #e3f5eb; }
+    .feedback.error { background: #fff1e8; }
+    .result-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+    .result-grid div { min-width: 0; padding: 11px; border-radius: 10px; background: #eef4f8; }
+    .result-grid dt { color: #475c6d; font-size: .9rem; }
+    .result-grid dd { margin: 3px 0 0; font-weight: 800; overflow-wrap: anywhere; }
+    .challenge-list { padding-left: 1.4rem; }
+    .challenge-list li { margin: 6px 0; }
+    .challenge-list span { font-weight: 800; color: #185c68; }
+    details > summary { cursor: pointer; font-weight: 700; }
+    details > summary:focus-visible { outline: 3px solid #1459bf; outline-offset: 3px; }
+    @media (max-width: 640px) { .setup-grid { grid-template-columns: 1fr; } .result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .result-grid div:first-child { grid-column: 1 / -1; } }
+    @media (max-width: 360px) { .shell { width: min(100% - 20px, 1050px); } .panel, .hero { padding: 16px; } .map-caption { font-size: .8rem; } }
+  </style>
+</head>
+<body data-subject="computer" data-stage="middle">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机</a><span aria-hidden="true">›</span><a href="index.html">初中</a><span aria-hidden="true">›</span><span aria-current="page">数据包路径实验室</span></nav>
+    <main id="main-content">
+      <header class="hero"><p class="eyebrow">初中计算机 · 网络路径</p><h1>数据包路径实验室</h1><p>同一张网络图，经过的连线少，不一定意味着指定总代价低。改变线路状态与选路规则，先预测第一跳，再看数据包标记一步步走到哪里。</p></header>
+      <section class="panel" aria-labelledby="setup-title">
+        <h2 id="setup-title">1 · 设定线路与规则</h2>
+        <p>图中 S 是起点，D 是终点，A/B/C 是中间节点。连线上的数字是本页指定的无量纲代价，连线都可双向使用。</p>
+        <div class="setup-grid">
+          <label for="scenario">线路条件<select id="scenario" disabled><option value="normal">全部连通</option><option value="bc">断开 B—C</option><option value="bc-ac">断开 B—C 和 A—C</option><option value="exits">断开 A—D 和 C—D</option></select></label>
+          <label for="route-rule">选择规则<select id="route-rule" disabled><option value="cost">最小指定总代价</option><option value="hops">最少跳数</option></select></label>
+        </div>
+        <div class="map-wrap"><svg id="network-map" class="network-map" viewBox="0 0 530 390" role="img" aria-label="教学网络图，起点 S、终点 D，六条连线，尚未揭晓路径">
+          <g class="link" data-edge="SA"><line x1="55" y1="210" x2="200" y2="80"></line><text x="122" y="128">3</text></g>
+          <g class="link" data-edge="AD"><line x1="200" y1="80" x2="475" y2="210"></line><text x="342" y="105">5</text></g>
+          <g class="link" data-edge="SB"><line x1="55" y1="210" x2="200" y2="345"></line><text x="121" y="295">1</text></g>
+          <g class="link" data-edge="BC"><line x1="200" y1="345" x2="355" y2="315"></line><text x="278" y="366">1</text></g>
+          <g class="link" data-edge="CD"><line x1="355" y1="315" x2="475" y2="210"></line><text x="432" y="285">2</text></g>
+          <g class="link" data-edge="AC"><line x1="200" y1="80" x2="355" y2="315"></line><text x="295" y="187">2</text></g>
+          <g class="node" data-node="S"><circle cx="55" cy="210" r="28"></circle><text x="55" y="211">S</text></g>
+          <g class="node" data-node="A"><circle cx="200" cy="80" r="28"></circle><text x="200" y="81">A</text></g>
+          <g class="node" data-node="B"><circle cx="200" cy="345" r="28"></circle><text x="200" y="346">B</text></g>
+          <g class="node" data-node="C"><circle cx="355" cy="315" r="28"></circle><text x="355" y="316">C</text></g>
+          <g class="node" data-node="D"><circle cx="475" cy="210" r="28"></circle><text x="475" y="211">D</text></g>
+          <circle id="packet-ring" class="packet-ring" cx="55" cy="210" r="38"></circle>
+        </svg><div class="map-caption"><span><strong>绿色实线</strong>：揭晓路径；<strong>橙色</strong>：已走过</span><span><strong>红色虚线</strong>：断开；文字也会说明</span></div></div>
+        <p id="links-status" class="note">当前六条连线可用。</p>
+      </section>
+      <section class="panel" aria-labelledby="predict-title">
+        <h2 id="predict-title">2 · 先预测第一跳</h2><p>从 S 出发，在所选规则和线路条件下，会先到 A、先到 B，还是无法到达 D？</p>
+        <label class="prediction-control" for="first-hop-prediction">我的预测<select id="first-hop-prediction" disabled><option value="">请选择</option><option value="A">先到 A</option><option value="B">先到 B</option><option value="none">无法到达 D</option></select></label>
+        <div class="button-row"><button type="button" id="reveal-button" disabled>核对预测并揭晓</button><button type="button" class="secondary" id="reset-button" disabled>重新预测本条件</button></div>
+        <p id="prediction-status" class="feedback" role="status" aria-live="polite">选择预测后才能揭晓。</p>
+      </section>
+      <section class="panel" aria-labelledby="trace-title">
+        <h2 id="trace-title">3 · 沿路径逐跳观察</h2><p>揭晓后每次只前进一条连线。修改线路或规则会从 S 重新开始本次预测。</p>
+        <dl class="result-grid"><div><dt>所选路径</dt><dd id="path-result">尚未揭晓</dd></div><div><dt>指定总代价</dt><dd id="cost-result">—</dd></div><div><dt>跳数</dt><dd id="hops-result">—</dd></div></dl>
+        <div class="button-row"><button type="button" id="step-button" disabled>前进一跳</button></div><p id="step-status" class="feedback" role="status" aria-live="polite">数据包标记停在 S，等待预测。</p>
+      </section>
+      <section class="panel" aria-labelledby="challenge-title"><h2 id="challenge-title">完成四项对照</h2><p>每项需正确预测；有可达路径的三项还要逐跳走到 D。历史完成记录不会代替本轮操作。</p><ol class="challenge-list"><li><span id="challenge-normal-cost">○ 待完成</span> · 全部连通，最小总代价</li><li><span id="challenge-normal-hops">○ 待完成</span> · 全部连通，最少跳数</li><li><span id="challenge-bc-cost">○ 待完成</span> · B—C 断开，最小总代价</li><li><span id="challenge-exits-cost">○ 待完成</span> · 两条出口断开，确认不可达</li></ol><p id="progress-status" role="status" aria-live="polite">正在读取本机进度…</p><button type="button" id="retry-save" class="secondary" hidden>重试保存完成记录</button></section>
+      <section class="panel"><details><summary>模型边界与依据</summary><p>本页假设每次已知完整拓扑且断线立即生效，只比较固定图的最少跳数或指定代价之和。代价不表示实测时间、带宽或价格；图中标记并非真实发包。真实路由还涉及路由表、协议、收敛、拥塞、丢包和多条等价路径，不能据本页推断真实互联网选路或送达保证。</p><p><a href="https://www.rfc-editor.org/rfc/rfc1812.html">RFC 1812 第5.2.1节</a>说明路由器转发时确定下一跳；<a href="https://www.rfc-editor.org/rfc/rfc2328.html">RFC 2328 第16.1节</a>提供一种累加连线代价求路径的协议例子。外链仅在主动打开时访问。</p></details></section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回初中计算机</a>　·　<a href="binary-pixels.html">对照二进制像素工坊</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script src="assets/network-path-model.js"></script>
+  <script src="assets/network-paths.js"></script>
+</body>
+</html>

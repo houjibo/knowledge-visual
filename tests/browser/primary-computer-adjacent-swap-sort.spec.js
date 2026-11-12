@@ -160,7 +160,7 @@ test('write rejection does not claim saving and can recover later', async ({page
 test('home search and stage progress include the sorting topic', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现由发布后浏览器验收');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '8');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '9');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
   await page.getByRole('searchbox', {name: '关键词'}).fill('相邻交换');
@@ -174,7 +174,7 @@ test('home search and stage progress include the sorting topic', async ({page}) 
   await expect(page.locator('#stage-progress')).toContainText('1/5');
   await expect(page.locator('[data-topic-slug="adjacent-swap-sort"] [data-completion]')).toContainText('已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/8');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/9');
 });
 
 test('320px keyboard and reduced motion preserve manual comparison', async ({page}) => {

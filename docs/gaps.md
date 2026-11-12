@@ -1,9 +1,10 @@
 # 项目差距与后续方向
 
-最后核查：2026-11-13；初中质量与密度天平称量与双任务完成规则、模拟世界凸轮送料场景已通过主分支 Actions 及公网实际操作；剩余知识与交互差距继续逐步核查。
+最后核查：2026-11-13；初中质量与密度天平、模拟世界凸轮送料已完成公开验收；初中计算机网络路径缺口已立项并在本地验证，其余知识与交互差距继续逐步核查。
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
+| 高 | 初中计算机原只有二进制像素主题，课程图中的网络路径没有操作入口。本轮按[OpenSpec](../openspec/changes/middle-computer-network-path-lab/proposal.md)新增固定图的路径预测与逐跳观察，区分最少跳数、最小指定代价、断线改道和不可达；纯模型128种条件、桌面/移动专项及完整本地门禁通过（2,130项功能、375页开发与发布加载），见[核查记录](assessments/network-paths-2026-11-13.md)。 | 补公开发布与操作验收；真实网络协议、实机和学习理解另立变更。 |
 | 中 | 模拟世界已有机械传动和独立的工业流水线，现按[归档 OpenSpec](../openspec/changes/archive/2026-11-13-cam-follower-factory-timing/proposal.md)新增凸轮送料与工厂节拍，把机构停歇运动与工序时间窗口联系起来。转速、停歇角、送料时间的预测和六件有限批次展示机械化生产的抽象节拍；纯模型64组条件、本地完整门禁、[Actions #43270630163](https://github.com/houjibo/knowledge-visual/actions/runs/43270630163)七项和公网页面操作通过，见[核查记录](assessments/cam-factory-2026-11-13.md)。 | 已验收归档；真实设备、课堂理解与全页屏幕阅读器另查。 |
 | 高 | 初中“质量与密度”天平原先泄露25.4 g目标、跳过归零调平放物，且仅凭密度单题便记录整页完成。现按[归档 OpenSpec](../openspec/changes/archive/2026-11-13-middle-mass-density-balance-evidence/proposal.md)增加未知物有限砝码称量、平衡后独立读数与两任务顺序不限的保存规则；本地专项22项、主分支[Actions #43263125786](https://github.com/houjibo/knowledge-visual/actions/runs/43263125786)七项及公网操作通过，见[核查记录](assessments/mass-density-balance-2026-11-13.md)。 | 已验收归档；真实天平、课堂效果及整页屏幕阅读器另查。 |
 | 高 | 初中“质量与密度”原有章节/练习仅能鼠标操作，密度计算用重叠区间猜单一材料，质量图把10 t误标为10000 t且密度末行越界；答对后未确认完成记录是否写入。本轮按[归档 OpenSpec](../openspec/changes/archive/2026-11-12-middle-mass-density-learning-reliability/proposal.md)修复原生键盘入口、参考值差异、图示和保存重试；桌面/移动专项16项、完整本地门禁及 [Actions #43248791663](https://github.com/houjibo/knowledge-visual/actions/runs/43248791663) 七项通过，公网版本和计算、改答、完成反馈已核对，见[核查记录](assessments/middle-mass-density-2026-11-12.md)。 | 本次已验收归档；另立变更核查天平模型及“一题即完成”的学习门槛，保留真实设备和屏幕阅读器差距。 |

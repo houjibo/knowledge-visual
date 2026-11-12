@@ -1,19 +1,20 @@
 const {test, expect} = require('@playwright/test');
 
-const pages = [
-  '/computer/primary/robot-algorithms.html',
-  '/computer/middle/binary-pixels.html',
-  '/ai/high/classifier-lab.html',
-  '/ai/high/train-test-generalization.html',
-  '/ai/uni/neuron-forward-pass.html',
-  '/ai/primary/feature-classification-lab.html',
-  '/ai/middle/data-label-quality.html',
-  '/ai/middle/data-source-coverage.html',
-  '/ai/middle/output-verification.html',
-  '/ai/middle/data-minimization.html',
-  '/computer/primary/repeat-loops.html',
-  '/computer/primary/conditional-robot.html',
-];
+const pages = {
+  robot: '/computer/primary/robot-algorithms.html',
+  binary: '/computer/middle/binary-pixels.html',
+  classifier: '/ai/high/classifier-lab.html',
+  trainTest: '/ai/high/train-test-generalization.html',
+  neuron: '/ai/uni/neuron-forward-pass.html',
+  feature: '/ai/primary/feature-classification-lab.html',
+  label: '/ai/middle/data-label-quality.html',
+  source: '/ai/middle/data-source-coverage.html',
+  verification: '/ai/middle/output-verification.html',
+  minimization: '/ai/middle/data-minimization.html',
+  loops: '/computer/primary/repeat-loops.html',
+  conditions: '/computer/primary/conditional-robot.html',
+  network: '/computer/middle/network-paths.html',
+};
 
 test('首页分别展示计算机和人工智能，旧学科入口可进入新目录', async ({page}) => {
   await page.goto('/');
@@ -36,7 +37,7 @@ test('旧主题书签重定向到各自的新学科地址', async ({page}) => {
 });
 
 test('小学机器人算法可单步检查墙面并运行到目标', async ({page}) => {
-  await page.goto(pages[0]);
+  await page.goto(pages.robot);
   const commands = page.locator('#command-list select');
   await commands.nth(0).selectOption('right');
   await commands.nth(1).selectOption('up');
@@ -55,7 +56,7 @@ test('小学机器人算法可单步检查墙面并运行到目标', async ({pag
 });
 
 test('初中二进制位权、像素亮度、错答反馈与完成记录一致', async ({page}) => {
-  await page.goto(pages[1]);
+  await page.goto(pages.binary);
   await page.getByRole('button', {name: '检查编码'}).click();
   await expect(page.locator('#binary-feedback')).toContainText('目标是 170');
   await page.locator('#bit-7').focus();
@@ -74,7 +75,7 @@ test('初中二进制位权、像素亮度、错答反馈与完成记录一致',
 
 test('初中存储损坏时交互继续可用且不覆盖原数据', async ({page}) => {
   await page.addInitScript(() => localStorage.setItem('kv-computer-middle-progress', '{broken'));
-  await page.goto(pages[1]);
+  await page.goto(pages.binary);
   await expect(page.locator('#progress-status')).toContainText('进度暂不可用');
   for (const id of ['bit-7', 'bit-5', 'bit-3', 'bit-1']) await page.locator(`#${id}`).check();
   await page.getByRole('button', {name: '检查编码'}).click();
@@ -91,7 +92,7 @@ test('进度存储被拒绝时大学神经元仍能完成计算', async ({page})
       return original.call(this, key, value);
     };
   });
-  await page.goto(pages[4]);
+  await page.goto(pages.neuron);
   await page.getByRole('button', {name: '计算神经元输出'}).click();
   await expect(page.locator('#z-output')).toHaveText('0.80');
   await expect(page.locator('#activation-output')).toHaveText('0.6900');
@@ -105,7 +106,7 @@ test('进度存储被拒绝时大学神经元仍能完成计算', async ({page})
 });
 
 test('高中分类边界重新计算逐点预测和评价指标', async ({page}) => {
-  await page.goto(pages[2]);
+  await page.goto(pages.classifier);
   const threshold = page.locator('#threshold');
   await threshold.focus();
   for (let i = 0; i < 4; i++) await threshold.press('ArrowLeft');
@@ -122,9 +123,9 @@ test('高中分类边界重新计算逐点预测和评价指标', async ({page})
   await expect(page.locator('#accuracy-output')).toHaveText('—');
 });
 
-test('计算机与人工智能十二个主题在 320px 下无页面级横向溢出', async ({page}) => {
+test('计算机与人工智能十三个主题在 320px 下无页面级横向溢出', async ({page}) => {
   await page.setViewportSize({width: 320, height: 760});
-  for (const path of pages) {
+  for (const path of Object.values(pages)) {
     await page.goto(path);
     const sizes = await page.evaluate(() => ({document: document.documentElement.scrollWidth, viewport: innerWidth}));
     expect(sizes.document, path).toBeLessThanOrEqual(sizes.viewport);
