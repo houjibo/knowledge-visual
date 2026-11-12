@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="在 7 和 15 项数据中逐步比较顺序查找与二分查找，观察有序前提、候选区间和比较次数。">
+  <title>查找策略对照实验室 · 高中计算机</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .shell { width: min(100% - 32px, 1120px); }
+    .hero { margin: 12px 0 16px; padding: 22px 28px; }
+    .hero h1 { font-size: clamp(1.7rem, 4vw, 2.15rem); }
+    .panel { margin: 14px 0; }
+    .settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .settings label, .question label { display: grid; gap: 5px; min-width: 0; font-weight: 700; }
+    select { width: 100%; min-height: 44px; padding: 6px 8px; border: 1px solid #8291a8; border-radius: 8px; background: white; }
+    .button-row { gap: 8px; margin-top: 12px; }
+    .button-row button, .question button { padding: .5rem .8rem; font-size: .9rem; }
+    .workspace { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .workspace > * { min-width: 0; }
+    .strategy { padding: 15px; border: 1px solid #d6dfed; border-radius: 12px; background: #f8faff; }
+    .strategy h3 { margin: 0 0 8px; }
+    .strategy p { margin: 7px 0; }
+    .data-list { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; margin: 10px 0; padding: 0; list-style: none; }
+    .data-card { min-width: 0; padding: 5px 1px; border: 2px solid #c9d4e3; border-radius: 8px; background: white; text-align: center; }
+    .data-card span { display: block; font-size: .62rem; color: #45546b; }
+    .data-card strong { display: block; font-size: 1.12rem; color: #342873; }
+    .data-card em { display: block; min-height: 1.2em; font-size: .61rem; font-style: normal; font-weight: 700; }
+    .data-card[data-state="next"] { border-color: #49399b; background: #ede9ff; }
+    .data-card[data-state="checked"] { border-color: #8a6844; background: #fbf1df; }
+    .data-card[data-state="excluded"] { border-color: #aab5c2; background: #e9edf3; }
+    .data-card[data-state="found"] { border-color: #25734e; background: #e7f7ec; }
+    .data-card[data-last="true"] { outline: 2px solid #e59024; outline-offset: 1px; }
+    .trace { max-height: 290px; overflow: auto; margin: 6px 0 0; padding-left: 1.35rem; }
+    .trace li { margin: 5px 0; }
+    .meter { height: 13px; border-radius: 10px; background: #e2e7f2; overflow: hidden; }
+    .meter span { display: block; height: 100%; width: 0; background: #5140a0; transition: width .2s; }
+    #binary-meter span { background: #198178; }
+    .status-box { min-height: 2.6em; margin-top: 11px; padding: 10px 12px; border-radius: 9px; background: #eef2fb; }
+    .status-box.success { background: #e7f7ec; }
+    .status-box.error { background: #fff0e8; }
+    .question { padding: 14px; border-left: 4px solid #7452a1; background: #f7f5fc; }
+    .question button { margin-top: 9px; }
+    .challenge-list { margin: 8px 0; padding-left: 1.4rem; }
+    .challenge-list li { margin: 4px 0; }
+    .progress-panel { border-left: 4px solid #7663b4; padding-left: 12px; }
+    details > summary { cursor: pointer; font-weight: 700; }
+    details > summary:focus-visible { outline: 3px solid #1459bf; outline-offset: 3px; }
+    [hidden] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) { .meter span { transition: none; } }
+    @media (max-width: 800px) { .workspace { grid-template-columns: 1fr; } }
+    @media (max-width: 520px) { .settings { grid-template-columns: 1fr; } .hero { padding: 20px; } .data-list { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+    @media (max-width: 360px) { .shell { width: min(100% - 20px, 1120px); } .panel { padding: 14px; } .data-list { gap: 3px; } .data-card span, .data-card em { font-size: .57rem; } }
+  </style>
+</head>
+<body data-subject="computer" data-stage="high">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机</a><span aria-hidden="true">›</span><a href="index.html">高中</a><span aria-hidden="true">›</span><span aria-current="page">查找策略对照实验室</span></nav>
+    <main id="main-content">
+      <header class="hero"><p class="eyebrow">高中计算机 · 算法与效率</p><h1>查找策略对照实验室</h1><p>相同数据、相同目标，两种查找各走一步。顺序查找从左往右；二分查找先看中间，再按比较结果排除不可能的一半。</p></header>
+      <section class="panel" aria-labelledby="settings-title"><h2 id="settings-title">设计一次查找</h2>
+        <div class="settings">
+          <label for="size-select">数据项数量<select id="size-select"><option value="15">15 项</option><option value="7">7 项</option></select></label>
+          <label for="order-select">数据顺序<select id="order-select"><option value="sorted">已按从小到大排列</option><option value="shuffled">乱序排列</option></select></label>
+          <label for="target-select">查找目标<select id="target-select"><option value="near">靠后：14</option><option value="front">首位：1</option><option value="missing">未出现：16</option></select></label>
+          <label for="prediction-select">预测比较次数较少的是<select id="prediction-select"><option value="">先作预测</option><option value="linear">顺序查找</option><option value="binary">二分查找</option><option value="tie">一样多</option></select></label>
+        </div>
+        <p id="setting-note" class="note">两侧只统计与数据项的比较，不计排序准备和设备运行时间。预测在两侧结束后揭晓。</p>
+        <div class="button-row"><button type="button" id="step-button">两侧各查一步</button><button type="button" id="play-button" class="secondary">连续查找</button><button type="button" id="pause-button" class="secondary" disabled>暂停</button><button type="button" id="reset-button" class="secondary">重新查找</button><button type="button" id="example-button" class="secondary">恢复示例</button></div>
+        <p id="run-status" class="status-box" role="status" aria-live="polite">先预测，再逐步比较。</p>
+      </section>
+      <section class="panel" aria-labelledby="workspace-title"><h2 id="workspace-title">观察两个策略</h2>
+        <div class="workspace">
+          <section class="strategy" aria-labelledby="linear-title"><h3 id="linear-title">顺序查找</h3><p>从第 1 项开始，逐项向右检查。</p><ol id="linear-cards" class="data-list" aria-label="顺序查找中的数据项"></ol><p>已比较 <strong id="linear-count">0</strong> 次 · <span id="linear-next">下一项：第 1 项</span></p><div id="linear-meter" class="meter" aria-hidden="true"><span></span></div><ol id="linear-trace" class="trace"><li>还没有比较。</li></ol></section>
+          <section class="strategy" aria-labelledby="binary-title"><h3 id="binary-title">二分查找</h3><p>仅在有序数据中，检查当前候选区间的中间项。</p><ol id="binary-cards" class="data-list" aria-label="二分查找中的数据项"></ol><p>已比较 <strong id="binary-count">0</strong> 次 · <span id="binary-next">候选：第 1–15 项</span></p><div id="binary-meter" class="meter" aria-hidden="true"><span></span></div><ol id="binary-trace" class="trace"><li>还没有比较。</li></ol></section>
+        </div>
+        <p id="prediction-status" class="status-box" aria-live="polite">两侧查找完成后揭晓预测。</p>
+        <p id="scale-summary" class="note">完成 7 项和 15 项的“未出现”实验后，可对照两种规模的实际次数。</p>
+      </section>
+      <section class="panel question" id="prerequisite-panel" hidden aria-labelledby="prerequisite-title"><h2 id="prerequisite-title">乱序时为什么不能直接二分？</h2><p>先观察乱序卡片仍可顺序查找，而二分区域不会假装得出结果。</p><label for="prerequisite-select">选择原因<select id="prerequisite-select"><option value="">请选择</option><option value="size">二分查找必须恰好有 15 项</option><option value="sorted">数据没有按用于比较的顺序排列，不能可靠地排除半边</option><option value="slower">二分查找在任何输入上都比顺序查找慢</option></select></label><button type="button" id="check-prerequisite">核对原因</button><p id="prerequisite-status" class="status-box" role="status" aria-live="polite">选择后核对，可更正答案。</p></section>
+      <section class="panel" aria-labelledby="challenge-title"><h2 id="challenge-title">完成对照挑战</h2><p>四组有序输入须各自预测正确并运行到两侧终点；再用乱序输入正确解释二分的前提。已经完成的组别会在本页会话内保留。</p><ul id="challenge-list" class="challenge-list"></ul><p id="progress-status" class="progress-panel">正在读取本机学习进度…</p><button type="button" id="retry-save" class="secondary" hidden>重试保存完成记录</button></section>
+      <section class="panel"><details><summary>模型边界与资料</summary><p>本页只比较访问数据项的次数。二分查找需要有序序列；若原数据乱序，为一次查找先排序还要额外付出准备成本。7 项与 15 项只是固定示例，不能凭某一次结果推断所有目标的速度；两种查找在最坏情况下分别随 n 与 log n 增长。规则参照 <a href="https://ocw.mit.edu/courses/6-100l-introduction-to-cs-and-programming-using-python-fall-2022/mit6_100l_f22_lec24.pdf">MIT OCW 6.100L 讲义</a>与 <a href="https://opendsa-server.cs.vt.edu/ODSA/Books/cnu/cpsc270/fall-2017/TR8-915_TR130-245/html/BinarySearch.html">Virginia Tech OpenDSA</a>。外链仅在主动打开时访问。</p></details></section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回高中计算机</a>　·　<a href="../primary/sequential-search.html">复习顺序查找</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script src="assets/search-strategies-model.js"></script>
+  <script src="assets/search-strategies.js"></script>
+</body>
+</html>

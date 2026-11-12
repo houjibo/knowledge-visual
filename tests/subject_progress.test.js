@@ -26,8 +26,10 @@ assert.equal(api.markComplete('computer', 'primary', 'robot-algorithms'), true);
 assert.deepEqual(JSON.parse(storage.values.get('kv-computer-primary-progress')), {'robot-algorithms': true});
 assert.equal(api.markComplete('ai', 'primary', 'feature-classification-lab'), true);
 assert.deepEqual(JSON.parse(storage.values.get('kv-ai-primary-progress')), {'feature-classification-lab': true});
-assert.deepEqual(events, ['kv-progress-changed', 'kv-progress-changed']);
-assert.equal(api.markComplete('computer', 'high', 'classifier-lab'), false);
+assert.equal(api.markComplete('computer', 'high', 'search-strategies'), true);
+assert.deepEqual(JSON.parse(storage.values.get('kv-computer-high-progress')), {'search-strategies': true});
+assert.deepEqual(events, ['kv-progress-changed', 'kv-progress-changed', 'kv-progress-changed']);
+assert.equal(api.markComplete('computer', 'uni', 'search-strategies'), false);
 assert.equal(api.markComplete('ai', 'middle', 'data-label-quality'), true);
 assert.equal(api.markComplete('ai', 'middle', 'data-source-coverage'), true);
 assert.equal(api.markComplete('ai', 'middle', 'output-verification'), true);
@@ -53,6 +55,8 @@ storage = memoryStorage({'kv-computer-ai-high-progress': JSON.stringify({'classi
 api = createProgress(storage).api;
 assert.deepEqual({...api.read('ai', 'high')}, {'classifier-lab': true});
 assert.deepEqual(JSON.parse(storage.values.get('kv-ai-high-progress')), {'classifier-lab': true});
+assert.deepEqual({...api.read('computer', 'high')}, {});
+assert.equal(storage.values.has('kv-computer-high-progress'), false);
 assert.equal(storage.values.has('kv-computer-ai-high-progress'), true);
 
 storage = memoryStorage({

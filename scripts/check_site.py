@@ -122,6 +122,7 @@ def main():
     subject_topics = {
         'computer/primary/index.html': ['robot-algorithms.html', 'repeat-loops.html', 'conditional-robot.html', 'sequential-search.html', 'adjacent-swap-sort.html'],
         'computer/middle/index.html': ['binary-pixels.html'],
+        'computer/high/index.html': ['search-strategies.html'],
         'ai/primary/index.html': ['feature-classification-lab.html'],
         'ai/middle/index.html': ['data-label-quality.html', 'data-source-coverage.html', 'output-verification.html', 'data-minimization.html'],
         'ai/high/index.html': ['classifier-lab.html', 'train-test-generalization.html'],

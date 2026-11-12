@@ -5,7 +5,7 @@
     'kv-physics-middle-progress', 'kv-physics-high-progress', 'kv-physics-uni-progress',
     'kv-chemistry-middle-progress', 'kv-chemistry-high-progress', 'kv-chemistry-uni-progress',
     'kv-science-progress',
-    'kv-computer-primary-progress', 'kv-computer-middle-progress',
+    'kv-computer-primary-progress', 'kv-computer-middle-progress', 'kv-computer-high-progress',
     'kv-ai-high-progress', 'kv-ai-uni-progress',
     'kv-computer-ai-primary-progress', 'kv-computer-ai-middle-progress',
     'kv-computer-ai-high-progress', 'kv-computer-ai-uni-progress'
