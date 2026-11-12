@@ -248,7 +248,7 @@ test('发布站子路径可查找并完整运行工业流水线', async ({page})
   await page.getByRole('link', {name:'返回模拟世界', exact:true}).click();
   await waitForPublishedDocument(page);
   await expect(page).toHaveURL(new URL('simulation-world/index.html', base).href);
-  await expect(page.locator('.topic-card')).toHaveCount(3);
+  await expect(page.locator('.topic-card')).toHaveCount(4);
   expect(failures).toEqual([]);
 });
 
@@ -280,4 +280,33 @@ test('发布站非金属元素与转化可键盘选择且文字说明同步', as
   await expect(page.locator('#reaction-detail')).toContainText('S + O₂ → SO₂');
   expect(await page.evaluate(()=>localStorage.getItem('kv-chemistry-high-progress'))).toBe(raw);
   expect(failures).toEqual([]);
+});
+
+test('发布包子路径可发现和操作曲柄滑块模拟', async ({page}) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('response', response => { if (response.url().startsWith(base) && response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
+  await gotoPublished(page, base);
+  await expect(page.locator('[data-subject-category="simulation-world"]')).toHaveAttribute('data-total', '4');
+  await page.getByRole('combobox', {name:'学科', exact:true}).selectOption('simulation-world');
+  await page.getByRole('searchbox', {name:'关键词'}).fill('曲柄');
+  await page.locator('#site-results a[href="simulation-world/slider-crank.html"]').click();
+  await waitForPublishedDocument(page);
+  await expect(page.getByRole('heading', {name:'曲柄滑块模拟', exact:true})).toBeVisible();
+  await page.locator('#crank-radius').press('End');
+  await page.locator('#rod-length').press('Home');
+  await page.locator('#crank-angle').evaluate(input => { input.value = '90'; input.dispatchEvent(new Event('input', {bubbles:true})); });
+  await expect.poll(async () => parseFloat(await page.locator('#displacement-value').innerText())).toBeCloseTo(80, 1);
+  await expect.poll(async () => parseFloat(await page.locator('#stroke-value').innerText())).toBe(120);
+  const geometry = await page.locator('#mechanism-svg').evaluate(svg => {
+    const line = svg.querySelector('#connecting-rod');
+    return Math.hypot(Number(line.getAttribute('x2'))-Number(line.getAttribute('x1')), Number(line.getAttribute('y2'))-Number(line.getAttribute('y1')));
+  });
+  expect(geometry).toBeCloseTo(100, 3);
+  await page.locator('#step-motion').click();
+  await expect.poll(async () => parseFloat(await page.locator('#angle-value').innerText())).toBe(105);
+  await page.getByRole('navigation', {name:'导航'}).getByRole('link', {name:'返回模拟世界', exact:true}).click();
+  await expect(page).toHaveURL(new URL('simulation-world/index.html', base).href);
+  await expect(page.locator('.topic-card')).toHaveCount(4);
+  expect(errors).toEqual([]);
 });

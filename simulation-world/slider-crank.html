@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="调节曲柄半径、连杆长度、角度与转速，观察旋转如何变成滑块往复运动，区分单程行程与整圈往返路程。">
+  <title>曲柄滑块模拟 · 模拟世界</title>
+  <style>
+    :root { color-scheme: dark; --bg: #0a111e; --panel: #141f31; --line: #304157; --text: #eef5ff; --muted: #a5b6cb; --cyan: #69e3d2; --amber: #ffc579; --violet: #baadff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 0; color: var(--text); background: radial-gradient(ellipse at 12% 0, #1c3545 0, transparent 42%), radial-gradient(ellipse at 95% 20%, #2b2542 0, transparent 46%), var(--bg); font: 15px/1.65 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    button, input { font: inherit; }
+    a { color: #a6d8ff; }
+    :focus-visible { outline: 3px solid var(--amber); outline-offset: 4px; }
+    .skip-link { position: absolute; top: 8px; left: -9999px; z-index: 10; padding: 10px; color: #142032; background: white; }
+    .skip-link:focus { left: 12px; }
+    .page-shell { width: min(1180px, 100%); padding: 18px 24px 30px; margin: auto; }
+    .topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; }
+    .topbar a { text-decoration: none; }
+    .topbar a:hover { text-decoration: underline; }
+    .technical-tag { color: #a4c5d8; letter-spacing: .06em; }
+    .hero { display: flex; align-items: center; justify-content: space-between; gap: 22px; margin: 22px 0 20px; }
+    .eyebrow { margin: 0 0 4px; color: var(--cyan); font-size: 11px; font-weight: 750; letter-spacing: .12em; }
+    h1 { margin: 0 0 7px; font-size: clamp(1.8rem, 4.5vw, 2.5rem); line-height: 1.2; letter-spacing: -.02em; }
+    .hero p:last-child { margin: 0; color: var(--muted); font-size: 13px; }
+    .hero-badge { display: grid; place-items: center; flex: 0 0 76px; height: 76px; border: 1px solid #52636e; border-radius: 20px; background: linear-gradient(135deg, #25404a, #29273f); color: var(--cyan); box-shadow: inset 0 1px #ffffff12; }
+    .hero-badge svg { width: 52px; height: 52px; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr); gap: 15px; align-items: start; }
+    .panel { min-width: 0; border: 1px solid var(--line); border-radius: 17px; padding: 17px; background: linear-gradient(145deg, #172537eF, #111b2bf5); box-shadow: 0 16px 44px #00000020; }
+    .section-heading { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin-bottom: 10px; }
+    h2 { margin: 0; font-size: 15px; font-weight: 750; }
+    .section-heading span { color: var(--muted); font-size: 10px; }
+    #mechanism-svg { display: block; width: 100%; height: auto; border: 1px solid #2b4057; border-radius: 12px; background: #0b1525; }
+    .diagram-text { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; fill: #b5c8dc; }
+    .joint-label { font-size: 10px; font-weight: 750; paint-order: stroke; stroke: #0b1525; stroke-width: 3px; stroke-linejoin: round; }
+    .dimension-label { font-size: 7px; fill: #afc2d7; paint-order: stroke; stroke: #0b1525; stroke-width: 2px; }
+    .link-label { font-size: 10px; font-weight: 750; paint-order: stroke; stroke: #0b1525; stroke-width: 3px; }
+    .figure-legend { display: flex; flex-wrap: wrap; gap: 5px 15px; margin: 9px 0 11px; color: #c7d5e5; font-size: 11px; }
+    .figure-legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-line { display: inline-block; width: 17px; height: 4px; border-radius: 4px; background: var(--cyan); }
+    .legend-line.rod { background: var(--amber); }
+    .legend-line.slider { height: 10px; width: 13px; border-radius: 3px; background: var(--violet); }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
+    .metric { min-width: 0; border: 1px solid #2c4259; border-radius: 9px; padding: 9px; background: #0f1d2e; }
+    .metric dt { color: var(--muted); font-size: 10px; }
+    .metric dd { margin: 4px 0 0; font: 750 clamp(1rem, 2vw, 1.3rem)/1.25 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); }
+    .metric dd span { margin-left: 3px; color: #99aec6; font: 10px sans-serif; }
+    .metric.displacement dd { color: var(--cyan); }
+    .metric small { display: block; margin-top: 3px; color: #8da3bc; font-size: 9px; }
+    .controls { display: grid; gap: 10px; }
+    .control { min-width: 0; padding: 10px 11px; border: 1px solid #30475e; border-radius: 10px; background: #142338; }
+    .control-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 5px 10px; margin-bottom: 5px; }
+    .control label { color: #d6e2f0; font-size: 12px; font-weight: 650; }
+    .control output { color: var(--cyan); font: 750 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .control .unit { color: #b1c5d9; font-size: 11px; }
+    input[type="range"] { display: block; width: 100%; min-width: 0; height: 22px; margin: 0; accent-color: var(--cyan); cursor: pointer; }
+    .range-ends { display: flex; justify-content: space-between; margin-top: 1px; color: #88a0b9; font-size: 9px; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 7px; }
+    button { min-height: 42px; border: 1px solid #4b617a; border-radius: 8px; padding: 8px 11px; color: var(--text); background: #20344b; font-size: 12px; font-weight: 750; cursor: pointer; }
+    button.primary { color: #082d28; border-color: #9cf2e4; background: var(--cyan); }
+    button.secondary { color: #c9dbed; background: #15263b; }
+    button:hover:not(:disabled) { filter: brightness(1.15); }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    .preset-row { padding-top: 9px; border-top: 1px solid #2f4359; }
+    .preset-row p { margin: 0 0 6px; color: var(--muted); font-size: 10px; }
+    .preset-row button { min-height: 36px; font-size: 11px; }
+    #motion-status { min-height: 3.1em; margin: 11px 0 0; color: #c5d9ec; font-size: 12px; }
+    #motion-status[data-running="true"] { color: var(--cyan); }
+    .learning-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 15px; }
+    .learning-card { min-width: 0; padding: 14px; border: 1px solid #31465c; border-radius: 12px; background: #122135; }
+    .learning-card h3 { margin: 0 0 5px; color: #d5e5f4; font-size: 13px; }
+    .learning-card p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.8; }
+    .learning-card strong { color: var(--amber); }
+    .notes { margin-top: 15px; }
+    #model-note { margin: 0; color: #aebfd2; font-size: 12px; line-height: 1.8; }
+    details { margin-top: 11px; border-top: 1px solid #2e4257; padding-top: 10px; }
+    summary { cursor: pointer; font-size: 12px; font-weight: 750; color: #d4e2f1; }
+    details p { margin: 9px 0 0; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+    .equation { padding: 10px; border-left: 2px solid var(--cyan); border-radius: 4px 8px 8px 4px; background: #0d1c2e; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    footer { margin-top: 20px; text-align: center; color: #94a9c1; font-size: 11px; }
+    footer a { margin: 0 4px; }
+    @media (max-width: 850px) { .workspace { grid-template-columns: minmax(0, 1fr); } .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } .controls-heading, .control-actions { grid-column: 1 / -1; } }
+    @media (max-width: 540px) { .page-shell { padding: 14px; } .hero { margin-top: 18px; } .hero-badge, .technical-tag { display: none; } .panel { padding: 12px; } .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .controls, .learning-strip { grid-template-columns: minmax(0, 1fr); } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="page-shell">
+    <nav class="topbar" aria-label="导航"><a href="index.html">返回模拟世界</a><span class="technical-tag">旋转 → 往复 / 共线导轨 / 理想刚性机构</span></nav>
+    <header class="hero"><div><p class="eyebrow">机械运动 · 连接与约束</p><h1>曲柄滑块模拟</h1><p>曲柄转一圈，滑块往返一次。改变半径与连杆长度，观察圆周运动怎样变成直线往复。</p></div><div class="hero-badge" aria-hidden="true"><svg viewBox="0 0 60 60" fill="none" stroke-width="2"><circle cx="17" cy="31" r="12" stroke="#69e3d2" stroke-dasharray="3 3"/><path d="m17 31 8-9 23 9" stroke="#ffc579" stroke-width="4" stroke-linecap="round"/><rect x="44" y="25" width="10" height="12" rx="2" fill="#baadff"/><path d="M35 22h23M35 40h23" stroke="#88a0ba"/><circle cx="17" cy="31" r="3" fill="#eaf4ff"/></svg></div></header>
+    <main id="main-content">
+      <div class="workspace">
+        <section class="panel" aria-labelledby="scene-heading"><div class="section-heading"><h2 id="scene-heading">转动与滑动，共用同一组几何</h2><span>铰点距离同一比例 · 尺寸单位 mm</span></div>
+          <svg id="mechanism-svg" viewBox="0 0 380 240" role="img" aria-label="曲柄、连杆与滑块运动示意" aria-describedby="mechanism-description model-note" data-angle="0" data-radius="40" data-rod-length="140" data-running="false">
+            <desc id="mechanism-description">固定铰点 O，曲柄端 A，滑块铰点 B 沿水平导轨运动。当前暂停，角度 0 度。</desc>
+            <defs><pattern id="mechanism-grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10 0H0V10" fill="none" stroke="#55708a" stroke-width=".35" opacity=".15"/></pattern><linearGradient id="slider-surface" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c7bcff"/><stop offset="1" stop-color="#8273be"/></linearGradient><marker id="dimension-arrow" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="m1 1 6 3-6 3" fill="none" stroke="#8ca7c1" stroke-width="1"/></marker></defs>
+            <rect width="380" height="240" fill="url(#mechanism-grid)"/>
+            <text id="theta-label" x="18" y="23" class="diagram-text" font-size="11" font-weight="700" fill="#ffc579">θ = 0.00°</text><text x="18" y="37" class="diagram-text" font-size="6.5">数学角度逆时针增加 · O 为固定铰点</text>
+            <path d="M15 120H365M80 48V187" stroke="#526b85" stroke-width=".65" stroke-dasharray="3 3" opacity=".7"/><text x="361" y="115" class="diagram-text" font-size="7">x</text>
+            <rect x="110" y="101" width="250" height="38" rx="5" fill="#142237" stroke="#38506a"/>
+            <path d="M113 104H357M113 136H357" stroke="#6d829a" stroke-width="2"/><path d="M113 108H357M113 132H357" stroke="#293f58" stroke-width="1"/>
+            <circle id="crank-orbit" cx="80" cy="120" r="40" fill="#69e3d208" stroke="#69e3d2" stroke-opacity=".3" stroke-width=".8" stroke-dasharray="3 3"/>
+            <path d="m62 145 18-25 18 25Z" fill="#2b425a" stroke="#57718a"/><rect x="57" y="145" width="46" height="5" rx="1.5" fill="#698198"/><path d="m60 154 5-4m4 4 5-4m4 4 5-4m4 4 5-4m4 4 5-4" stroke="#3b536c" stroke-width="1"/>
+            <line id="inner-stop" x1="180" y1="96" x2="180" y2="143" stroke="#93a8c0" stroke-opacity=".6" stroke-width=".8" stroke-dasharray="2 2"/><line id="outer-stop" x1="260" y1="96" x2="260" y2="143" stroke="#93a8c0" stroke-opacity=".6" stroke-width=".8" stroke-dasharray="2 2"/>
+            <text id="inner-stop-label" x="180" y="91" text-anchor="middle" class="dimension-label">内止点</text><text id="outer-stop-label" x="260" y="91" text-anchor="middle" class="dimension-label">外止点</text>
+            <rect id="slider-block" x="247" y="105" width="26" height="30" rx="4" fill="url(#slider-surface)" stroke="#e2d9ff" stroke-width="1"/><path id="slider-groove" d="M251 109V131M269 109V131" stroke="#594d8a" stroke-width="1" opacity=".7"/>
+            <line id="crank-arm" x1="80" y1="120" x2="120" y2="120" stroke="#69e3d2" stroke-width="6.5" stroke-linecap="round"/><line id="connecting-rod" x1="120" y1="120" x2="260" y2="120" stroke="#ffc579" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="80" cy="120" r="4.2" fill="#eaf4ff" stroke="#48677e" stroke-width="1.5"/><circle id="crank-pin" cx="120" cy="120" r="4.1" fill="#f6f2d9" stroke="#8d7347" stroke-width="1.4"/><circle id="slider-pin" cx="260" cy="120" r="4.1" fill="#fcf9ff" stroke="#665b9d" stroke-width="1.4"/>
+            <path id="angle-arc" d="" fill="none" stroke="#ffcf82" stroke-width="1.2"/>
+            <text x="68" y="166" class="diagram-text joint-label">O</text><text id="crank-pin-label" x="126" y="113" class="diagram-text joint-label">A</text><text id="slider-pin-label" x="275" y="125" class="diagram-text joint-label">B</text>
+            <text id="radius-label" x="96" y="108" text-anchor="middle" class="link-label" fill="#69e3d2">r = 40</text><line id="rod-label-leader" x1="190" y1="60" x2="190" y2="120" stroke="#829bb2" stroke-width=".6" stroke-dasharray="2 2" opacity=".7"/><text id="rod-label" x="190" y="54" text-anchor="middle" class="link-label" fill="#ffc579">l = 140</text>
+            <path id="stroke-extensions" d="M180 145V204M260 145V204" stroke="#6d88a4" stroke-width=".6" stroke-dasharray="2 2"/><line id="stroke-dimension" x1="180" y1="198" x2="260" y2="198" stroke="#9db5ce" stroke-width=".8" marker-start="url(#dimension-arrow)" marker-end="url(#dimension-arrow)"/><text id="stroke-label" x="220" y="214" text-anchor="middle" class="dimension-label">一程 80 mm</text>
+          </svg>
+          <div class="figure-legend"><span><i class="legend-line"></i>OA · 曲柄 r</span><span><i class="legend-line rod"></i>AB · 刚性连杆 l</span><span><i class="legend-line slider"></i>B · 滑块沿导轨往复</span></div>
+          <dl class="metrics"><div class="metric"><dt>滑块位置 x · 距 O</dt><dd><output id="position-value" aria-live="off">180.00</output><span>mm</span></dd><small>沿水平轴向右为正</small></div><div class="metric displacement"><dt>从外止点向内的位移 s</dt><dd><output id="displacement-value" aria-live="off">0.00</output><span>mm</span></dd><small>外止点 s = 0</small></div><div class="metric"><dt>一程行程 · 2r</dt><dd><output id="stroke-value" aria-live="off">80</output><span>mm</span></dd><small>两个止点之间的距离</small></div><div class="metric"><dt>整圈往返路程 · 4r</dt><dd><output id="travel-value" aria-live="off">160</output><span>mm</span></dd><small>去一程，再回一程</small></div></dl>
+        </section>
+
+        <section class="panel controls" aria-labelledby="controls-heading"><div class="section-heading controls-heading"><h2 id="controls-heading">亲手改变机构</h2><span>改动会先暂停</span></div>
+          <div class="control"><div class="control-head"><label for="crank-radius">曲柄半径 r</label><span><output id="radius-control-value" for="crank-radius" aria-live="off">40</output> <span class="unit">mm</span></span></div><input id="crank-radius" type="range" min="20" max="60" step="10" value="40"><div class="range-ends" aria-hidden="true"><span>20 mm</span><span>60 mm</span></div></div>
+          <div class="control"><div class="control-head"><label for="rod-length">连杆长度 l</label><span><output id="rod-control-value" for="rod-length" aria-live="off">140</output> <span class="unit">mm</span></span></div><input id="rod-length" type="range" min="100" max="200" step="20" value="140"><div class="range-ends" aria-hidden="true"><span>100 mm</span><span>200 mm</span></div></div>
+          <div class="control"><div class="control-head"><label for="input-rpm">曲柄转速</label><span><output id="rpm-control-value" for="input-rpm" aria-live="off">30</output> <span class="unit">rpm</span></span></div><input id="input-rpm" type="range" min="10" max="60" step="10" value="30"><div class="range-ends" aria-hidden="true"><span>10 rpm</span><span>60 rpm</span></div></div>
+          <div class="control"><div class="control-head"><label for="crank-angle">手动曲柄角度 θ</label><span><output id="angle-value" for="crank-angle" aria-live="off">0.00</output> <span class="unit">°</span></span></div><input id="crank-angle" type="range" min="0" max="360" step="1" value="0"><div class="range-ends" aria-hidden="true"><span>0° · 外止点</span><span>手动 1°</span><span>360° · 等位 0°</span></div></div>
+          <div class="control-actions"><div class="button-row"><button id="start-motion" class="primary" type="button">开始运动</button><button id="pause-motion" type="button" disabled>暂停运动</button><button id="step-motion" type="button">步进 15°</button><button id="reset-motion" class="secondary" type="button">恢复默认</button></div><div class="preset-row"><p>只改连杆长度，保留半径、角度与转速：</p><div class="button-row"><button id="preset-short-rod" class="secondary" type="button">短连杆 100 mm</button><button id="preset-long-rod" class="secondary" type="button">长连杆 200 mm</button></div></div><p id="motion-status" role="status" aria-live="polite" aria-atomic="true" data-running="false">已暂停。拖动角度或步进 15°，观察曲柄转动怎样带动滑块。</p></div>
+        </section>
+      </div>
+      <div class="learning-strip"><section class="learning-card"><h3>① 先看半径与行程</h3><p>保持连杆不变，增大 r。一程行程始终是 <strong>2r</strong>；曲柄整圈带来一次往返，路程是 <strong>4r</strong>。</p></section><section class="learning-card"><h3>② 同角度比较连杆</h3><p>将角度停在 90°，切换长、短连杆。中间位置会变化，但同一半径的行程不会改变。</p></section><section class="learning-card"><h3>③ 匀速转动 ≠ 匀速滑动</h3><p>每次步进相同 15°，滑块移动距离通常不同。转速改变运动快慢，不改变既定机构的几何轨迹。</p></section></div>
+      <section class="panel notes"><p id="model-note">这是共线、无偏置、理想刚性平面机构的运动学示意。铰点距离按同一比例绘制，构件外形仅作示意；不模拟燃烧、受力、摩擦、负载或设备安全评价。方向角逆时针增加，滑块始终位于水平导轨上。</p><details><summary>几何约束、时间与来源</summary><p>令固定铰点 O 为原点，A = (r cosθ, r sinθ)，滑块 B = (x, 0)。刚性连杆满足 |AB| = l；选择 B 位于 A 右侧的装配分支，得到：</p><p class="equation">x = r cosθ + √(l² − r² sin²θ)<br>s = r + l − x；一程 = 2r；整圈往返 = 4r</p><p>转速以 rpm 表示，播放按实际帧时间推进 Δθ = 6 × rpm × Δt（度）。隐藏页面、离开页面或运动偏好改变时暂停，返回后由你主动开始；没有后台补播。0° 与 360° 是同一位置。读数按显示精度舍入，机构铰点使用同一模型的完整数值。</p><p>机构类别与应用参考：<a href="https://www.cs.cmu.edu/~rapidproto/mechanisms/examples.html">CMU《Introduction to Mechanisms》机构示例</a>及<a href="https://www.cs.cmu.edu/~rapidproto/mechanisms/chpt5.html">平面连杆 §5.2.6</a>。教材展示旋转／平移转换与送料应用；上述位置公式由本页列出的闭环几何推导。本模型不是快回机构或真实发动机仿真，不记录学科学习进度。</p></details></section>
+    </main>
+    <footer><a href="index.html">模拟世界目录</a> · <a href="gear-transmission.html">齿轮传动</a> · <a href="assembly-line.html">工业流水线</a></footer>
+  </div>
+  <script src="assets/slider-crank-model.js"></script>
+  <script src="assets/slider-crank.js"></script>
+</body>
+</html>

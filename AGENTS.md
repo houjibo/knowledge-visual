@@ -6,6 +6,7 @@
 - [逐页面静态盘点](docs/assessments/README.md)
 - [可视化学习站演进计划](docs/plans/visual-learning-roadmap.md)
 - [计算机与人工智能课程设计](docs/plans/computer-ai-curriculum.md)
+- [模拟世界场景设计](docs/plans/simulation-world-curriculum.md)
 - [站点发布与专业化运营计划](docs/plans/site-operations.md)
 - [需求交付工作流](docs/workflows/requirement-delivery.md)
 - [持续重构工作流](docs/workflows/continuous-refactoring.md)

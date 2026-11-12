@@ -4,8 +4,8 @@ test('首页与模拟目录可发现齿轮场景，分类不带学段进度', as
   await page.goto('/');
   const category = page.locator('a.subject-card[data-subject-category="simulation-world"]');
   await expect(category).toHaveAttribute('href', 'simulation-world/index.html');
-  await expect(category).toHaveAttribute('data-total', '3');
-  await expect(category.locator('.subject-badge')).toHaveText('3 个模拟');
+  await expect(category).toHaveAttribute('data-total', '4');
+  await expect(category.locator('.subject-badge')).toHaveText('4 个模拟');
   await expect(category.locator('.subject-progress')).toHaveCount(0);
 
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
@@ -19,7 +19,7 @@ test('首页与模拟目录可发现齿轮场景，分类不带学段进度', as
 
   await page.goto('/simulation-world/index.html');
   await expect(page.getByRole('heading', {name: '模拟世界'})).toBeVisible();
-  await expect(page.locator('.topic-card')).toHaveCount(3);
+  await expect(page.locator('.topic-card')).toHaveCount(4);
   await expect(page.locator('.topic-card[href="gear-transmission.html"]')).toContainText('机械传动 · 工业应用');
   await expect(page.locator('.topic-card[href="gear-transmission.html"]')).toHaveAttribute('href', 'gear-transmission.html');
 });
