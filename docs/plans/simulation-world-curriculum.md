@@ -12,13 +12,13 @@
 | 曲柄滑块 | 如何把旋转变成往复？ | 半径/连杆/转速、手动角度与步进 | 已公开，模型/交互/发布验收通过 |
 | 皮带与带轮 | 轮径怎样影响速度？何时理想模型失效？ | 轮径、交叉/开口、理想无滑动对照 | 候选，需先核验模型与学习价值 |
 | 仓储分拣 | 输送和分拣能力怎样影响积压？ | 到达间隔、分流规则、有限批次 | 候选，先与现有流水线区分问题 |
-| 二维机械臂 | 两个关节怎样共同决定末端位置？ | 关节角、杆长、可达环带、目标预测与双肘向 | 本地验收通过，待公开验收 |
+| 二维机械臂 | 两个关节怎样共同决定末端位置？ | 关节角、杆长、可达环带、目标预测与双肘向 | 已公开，本地与公网页面验收通过 |
 
 ## 本轮二维机械臂
 
 新增[二维机械臂模拟](../../simulation-world/robot-arm.html)。固定基座和两段理想刚性杆，肩角与相对肘角决定末端位置；两关节整圈可转时，目标到基座的距离必须位于两杆长度之差与长度之和之间。学习者先摆动关节，再选择或放置目标、预测可达性，最后用两种肘向检验同一个内部目标。数字坐标与原生滑块提供键盘操作，SVG指针只是另一种入口。
 
-模型依据见[MIT OCW 两连杆正向运动学](https://ocw.mit.edu/courses/2-086-numerical-computation-for-mechanical-engineers-fall-2012/3a6ea77d5d5d63905832eb9a597293db_MIT2_086F12_pset5.pdf)与[Modern Robotics 2R 逆向运动学和工作空间](https://modernrobotics.northwestern.edu/nu-gm-book-resource/inverse-kinematics-of-open-chains/)；简化假设和验收范围见[变更设计](../../openspec/changes/2026-11-12-planar-robot-arm-simulation/design.md)。几何可达不代表真实工业操作可执行。
+模型依据见[MIT OCW 两连杆正向运动学](https://ocw.mit.edu/courses/2-086-numerical-computation-for-mechanical-engineers-fall-2012/3a6ea77d5d5d63905832eb9a597293db_MIT2_086F12_pset5.pdf)与[Modern Robotics 2R 逆向运动学和工作空间](https://modernrobotics.northwestern.edu/nu-gm-book-resource/inverse-kinematics-of-open-chains/)；简化假设和验收范围见[变更设计](../../openspec/changes/archive/2026-11-12-planar-robot-arm-simulation/design.md)。几何可达不代表真实工业操作可执行。
 
 ## 已公开：曲柄滑块
 
