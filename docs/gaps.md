@@ -1,9 +1,10 @@
 # 项目差距与后续方向
 
-最后核查：2026-11-12；顺序查找功能提交 `cc98c7f54fdb4700bde5a3d7227f0fed03bc02b5` 的 [Actions #268](https://github.com/houjibo/knowledge-visual/actions/runs/43142605258) 七个 job 全部成功。本地完整检查功能 1969 通过/3 项按配置跳过、开发与发布包各 365 页、发布交互 12 项通过；公网 revision 精确匹配且 `site_files_modified=false`，新三资源逐字节一致，公开两轮预测与本机保存已人工验收。变更已归档，剩余知识与交互差距继续逐步核查。
+最后核查：2026-11-12；顺序查找已完成公开验收并归档。小学计算机下一项差距是无法逐对观察排序中的交换、就位与早停；相邻交换排序实验室的完整本地检查已通过（功能 1990 通过/4 跳过，开发站及发布包各 366 页），公开发布待执行。上一功能提交 `cc98c7f54fdb4700bde5a3d7227f0fed03bc02b5` 的 [Actions #268](https://github.com/houjibo/knowledge-visual/actions/runs/43142605258) 七个 job 成功，公开 revision 匹配。剩余知识与交互差距继续逐步核查。
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
+| 中 | 小学计算机顺序查找后缺少逐对排序主题。本轮新增五张卡片相邻比较、第一轮交换数预测、轮末已就位区域和无交换早停，要求无序与有序两类正确完整练习。纯模型覆盖 120 种排列；桌面/移动专项 21 通过/1 跳过。见[核查记录](assessments/adjacent-swap-sort-2026-11-12.md)与[当前变更](../openspec/changes/2026-11-12-primary-adjacent-swap-sort/proposal.md)。 | 完整门禁、主分支 Actions、公开 revision 与实际公网操作通过后归档；之后调查简单编码、个人信息与安全体验。 |
 | 中 | 小学计算机顺序、循环与条件之后缺少逐项查找的可视化训练。本轮新增固定五张卡片、三组顺序、先预测比较次数再单步/连续查找，命中早停、未命中完整检查；正确完成两类预测才记录进度。完整本地检查与 Actions #268 七个 job 成功；计算机目录 5 主题、小学 4 主题，清单 365 页，公网版本与操作验收通过。见[核查记录](assessments/sequential-search-2026-11-12.md)与[归档变更](../openspec/changes/archive/2026-11-12-primary-sequential-search/proposal.md)。 | 已归档；下一步核查真实学习理解及排序、编码与安全体验的课程缺口。 |
 | 中 | 高中非金属8元素卡片与两系列12条反应已补齐命名单选组、真实键盘/触屏、稳定焦点、初始未选及图文同步；六边摘要与真实数据一致，碳/氧示例窄改经RSC核验。专项60项通过，完整功能1926通过/2既有跳过、363页开发及发布加载和10项发布交互通过。Actions #264七job成功，公网revision匹配a46b933、HTML逐字节一致，公开操作验收通过。见[核查记录](assessments/nonmetals-selection-2026-11-12.md)与[归档变更](../openspec/changes/archive/2026-11-12-nonmetals-selection-accessibility/proposal.md)。 | 收集真实学习反馈，继续核验尚未全面科学认证的反应条件和整页辅助技术体验。 |
 | 高 | 高中化学非金属练习已复现同题往返重复加分、第五题 Al(OH)₃ / NaHCO₃ 多解却单选及选项无法键盘操作。现已收窄题设、逐题保存首次选择，完整五题主动结束后按 3/5 保存，支持回看、重做和保存失败重试。专项含原页签回归共 30/30 通过；完整 `npm run check` 通过，含严格 OpenSpec 247 项、交互回归 1812 通过与 2 项跳过、开发站和发布包各 360 页加载。提交 `a8da2b2` 的 Actions #253 及公网浏览器核验成功，公开清单 revision 匹配，已归档。见[核查与知识依据](assessments/nonmetals-quiz-2026-11-12.md)、[当前 OpenSpec](../openspec/changes/archive/2026-11-12-nonmetals-quiz-reliability/proposal.md)。 | 本轮已归档；遗留元素卡片和转化项现进入上方独立变更，保留五题首次选择、完整回合和保存契约作为回归。 |

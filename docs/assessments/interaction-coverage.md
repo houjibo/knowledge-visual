@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：333；已登记部分交互证据：192；尚未登记：141。
+主题总数：334；已登记部分交互证据：193；尚未登记：141。
 
 ## 已登记部分交互证据
 
@@ -61,6 +61,8 @@
   - 综合练习逐题得分、重试及完成；未覆盖平衡和相图模拟。 [equilibrium-quiz.spec.js](../../tests/browser/equilibrium-quiz.spec.js)
 - [二进制像素工坊 · 初中计算机](../../computer/middle/binary-pixels.html)
   - 桌面与移动浏览器验证两个独立学科入口、旧主题地址跳转、四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘操作、旧进度迁移及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [split-subjects-learning.spec.js](../../tests/browser/split-subjects-learning.spec.js)
+- [相邻交换排序实验室 · 小学计算机](../../computer/primary/adjacent-swap-sort.html)
+  - 桌面与移动模拟视口验证五数相邻交换、第一轮预测、轮次与已就位区域、无交换早停、两类完成、连续/暂停、异常存储、搜索与进度、320px键盘、减少动态、file及发布子路径；真实设备、屏幕阅读器和真实学习者效果仍需后续核验。 [primary-computer-adjacent-swap-sort.spec.js](../../tests/browser/primary-computer-adjacent-swap-sort.spec.js)
 - [条件分支机器人 · 小学计算机](../../computer/primary/conditional-robot.html)
   - 桌面/移动检查条件真假、旧位置快照、唯一分支、两条有效规则、墙与边界、参数重置、真实保存及异常存储/先前资格、无自动循环、键盘/320px/减少动态、同屏比较、发现与file协议；真实设备、屏幕阅读器及学习者效果尚未全面验收。 [primary-computer-condition-branches.spec.js](../../tests/browser/primary-computer-condition-branches.spec.js)
 - [循环指令工坊 · 小学计算机](../../computer/primary/repeat-loops.html)

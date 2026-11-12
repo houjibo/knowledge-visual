@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="预测第一轮交换次数，逐对比较五张卡片，观察相邻交换、每轮已就位的卡片和无交换时提前结束。">
+  <title>相邻交换排序实验室 · 小学计算机</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .shell { width: min(100% - 32px, 1080px); }
+    .hero { margin: 12px 0 16px; padding: 22px 28px; }
+    .hero h1 { font-size: clamp(1.75rem, 4vw, 2.15rem); }
+    .hero p { max-width: 88ch; }
+    .panel { margin: 14px 0; }
+    .settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .settings label { display: grid; gap: 5px; min-width: 0; font-weight: 700; }
+    .settings select { width: 100%; min-height: 44px; padding: 6px 8px; border: 1px solid #8794a9; border-radius: 8px; background: white; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 14px; }
+    .workspace > * { min-width: 0; }
+    .subpanel { padding: 14px; border: 1px solid #d6dfed; border-radius: 12px; background: #f8faff; }
+    .subpanel h3 { margin: 0 0 8px; font-size: 1rem; }
+    .sort-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; margin: 10px 0; padding: 0; list-style: none; }
+    .sort-card { min-width: 0; padding: 8px 3px; border: 2px solid #c9d5e6; border-radius: 10px; background: white; text-align: center; }
+    .sort-card .ordinal { display: block; font-size: .75rem; color: #49576d; }
+    .sort-card strong { display: block; font-size: clamp(1.25rem, 4vw, 1.7rem); color: #332872; }
+    .sort-card .card-result { display: block; min-height: 1.25em; font-size: .69rem; font-weight: 800; }
+    .sort-card[data-state="active"] { border-color: #463995; background: #eeeafe; }
+    .sort-card[data-state="settled"] { border-color: #28754e; background: #e8f8ee; }
+    .sort-card[data-state="recent"] { border-color: #b7803a; background: #fff4df; }
+    .count-strip { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0; }
+    .count-strip strong { color: #30216d; }
+    #run-status, #prediction-status { min-height: 2.8em; margin: 10px 0 0; padding: 9px 12px; border-radius: 9px; background: #eef2fb; }
+    #run-status.success, #prediction-status.success { background: #e8f7eb; }
+    #prediction-status.error { background: #fff2e8; }
+    .trace, .pass-list { margin: 0; padding-left: 1.4rem; }
+    .trace li, .pass-list li { margin: 3px 0; }
+    .trace { max-height: 300px; overflow: auto; }
+    .button-row { gap: 8px; margin-top: 12px; }
+    .button-row button { padding: .48rem .8rem; font-size: .9rem; }
+    .challenge-progress { font-weight: 700; }
+    .progress-panel { border-left: 4px solid #7663b4; padding-left: 12px; }
+    details > summary { cursor: pointer; font-weight: 700; }
+    details > summary:focus-visible { outline: 3px solid #1459bf; outline-offset: 3px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 650px) { .workspace { grid-template-columns: 1fr; } .hero { padding: 20px; } }
+    @media (max-width: 450px) { .settings { grid-template-columns: 1fr; } }
+    @media (max-width: 360px) { .shell { width: min(100% - 20px, 1080px); } .panel { padding: 14px; } .sort-cards { gap: 4px; } .sort-card { padding: 6px 1px; } .sort-card .ordinal { font-size: .66rem; } .sort-card .card-result { font-size: .6rem; } }
+  </style>
+</head>
+<body data-subject="computer" data-stage="primary">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机</a><span aria-hidden="true">›</span><a href="index.html">小学</a><span aria-hidden="true">›</span><span aria-current="page">相邻交换排序实验室</span></nav>
+    <main id="main-content">
+      <header class="hero"><p class="eyebrow">小学计算机 · 排序算法</p><h1>相邻交换排序实验室</h1><p>每次只看相邻两张卡片：左边较大就交换。走完一轮，右边会有一张确定就位；整轮都没交换，就已经排好了。</p></header>
+      <section class="panel" aria-labelledby="settings-title"><h2 id="settings-title">设置一轮排序</h2>
+        <div class="settings">
+          <label for="preset-select">起始卡片<select id="preset-select"><option value="mixed">示例：4、2、5、1、3</option><option value="sorted">另一组：1、2、3、4、5</option><option value="reversed">再换一组：5、4、3、2、1</option></select></label>
+          <label for="prediction-select">预测第一轮要交换几次<select id="prediction-select"><option value="">先选择次数</option><option value="0">0 次</option><option value="1">1 次</option><option value="2">2 次</option><option value="3">3 次</option><option value="4">4 次</option></select></label>
+        </div>
+        <p class="note">从左到右比较四对卡片，预测只计算第一轮。开始后预测会锁定，第一轮结束才揭晓；更换起始卡片会重新开始。</p>
+        <div class="button-row"><button type="button" id="step-button">比较下一对</button><button type="button" id="play-button" class="secondary">连续排序</button><button type="button" id="pause-button" class="secondary" disabled>暂停</button><button type="button" id="reset-button" class="secondary">重新排序</button><button type="button" id="example-button" class="secondary">恢复示例</button></div>
+      </section>
+      <section class="panel" aria-labelledby="experiment-title"><h2 id="experiment-title">观察排序过程</h2>
+        <div class="workspace"><div class="subpanel"><h3>五张卡片</h3><ol id="card-list" class="sort-cards" aria-label="当前排序中的五张数字卡片"></ol>
+          <p class="count-strip"><span id="pass-label">第 1 轮</span><span>已比较 <strong id="comparison-count">0</strong> 次</span><span>已交换 <strong id="swap-count">0</strong> 次</span><span>已就位 <strong id="settled-count">0</strong> 张</span></p>
+          <p id="next-label">下一对：第 1、2 张</p><p id="run-status" class="status" role="status" aria-live="polite">尚未开始；先预测第一轮交换次数。</p>
+        </div><div class="subpanel"><h3>逐步记录</h3><ol id="trace-list" class="trace"><li>还没有比较任何卡片。</li></ol><p id="prediction-status" class="status" aria-live="polite">第一轮结束后再揭晓预测结果。</p></div></div>
+        <div class="subpanel" style="margin-top:12px"><h3>每轮完成</h3><ol id="pass-list" class="pass-list"><li>尚未完成一轮。</li></ol></div>
+      </section>
+      <section class="panel" aria-labelledby="challenge-title"><h2 id="challenge-title">完成两类排序</h2><p>分别正确预测一组原本无序、一组原本有序的第一轮交换次数，并把两组都运行到终点，即可记录本机学习进度。</p><p id="challenge-progress" class="challenge-progress" role="status" aria-live="polite">原本无序：待完成 · 原本有序：待完成</p><p id="progress-status" class="progress-panel">正在读取本机学习进度…</p><button type="button" id="retry-save" class="secondary" hidden>重试保存完成记录</button></section>
+      <section class="panel"><details><summary>模型边界与资料</summary><p>这里用五张互不相同的卡片演示冒泡排序：每次比较相邻两张，左数较大才交换；一轮无交换即可结束。它不比较其他排序方法的速度。规则参照 <a href="https://ocw.mit.edu/courses/6-100l-introduction-to-cs-and-programming-using-python-fall-2022/mit6_100l_f22_lec24.pdf">MIT OCW 排序讲义</a>与 <a href="https://opendsa-server.cs.vt.edu/ODSA/Books/pubbook/odsa-all/fall-2019/Public_Instance/html/BubbleSort.html">Virginia Tech OpenDSA</a>。页面使用固定示例；外链只在主动打开时访问。</p></details></section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回小学计算机</a>　·　<a href="sequential-search.html">复习顺序查找</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script src="assets/adjacent-swap-sort-model.js"></script>
+  <script src="assets/adjacent-swap-sort.js"></script>
+</body>
+</html>

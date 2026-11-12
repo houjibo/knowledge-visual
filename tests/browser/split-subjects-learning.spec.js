@@ -144,7 +144,7 @@ test('旧进度合并进独立学科，新记录优先且旧键保留', async ({
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('kv-computer-primary-progress'))))
     .toEqual({'robot-algorithms': false});
   await page.goto('/computer/primary/index.html');
-  await expect(page.locator('#stage-progress')).toContainText('已完成 0/4');
+  await expect(page.locator('#stage-progress')).toContainText('已完成 0/5');
   expect(await page.evaluate(() => localStorage.getItem('kv-computer-ai-primary-progress')))
     .toBe('{"robot-algorithms":true}');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-high-progress'))))

@@ -147,7 +147,7 @@ test('write rejection does not claim completion and can be retried after reset',
 test('home search, stage directory and actual progress include the new topic', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现由发布后浏览器专项核验');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '5');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '6');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('primary');
   await page.getByRole('searchbox', {name: '关键词'}).fill('顺序查找');
@@ -158,10 +158,10 @@ test('home search, stage directory and actual progress include the new topic', a
   await page.locator('#prediction-select').selectOption('5');
   await compare(page, 5);
   await page.locator('.footer-nav a[href="index.html"]').click();
-  await expect(page.locator('#stage-progress')).toContainText('1/4');
+  await expect(page.locator('#stage-progress')).toContainText('1/5');
   await expect(page.locator('[data-topic-slug="sequential-search"] [data-completion]')).toContainText('已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/5');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/6');
 });
 
 test('320px keyboard and reduced motion still allow a readable manual search', async ({page}) => {
