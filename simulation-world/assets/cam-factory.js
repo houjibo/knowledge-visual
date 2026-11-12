@@ -17,7 +17,9 @@
   };
   const scene = byId('cam-scene');
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const compact = window.matchMedia('(max-width: 640px)');
   const phaseNames = {'rise': '上升', 'high-dwell': '高位停歇', 'fall': '下降', 'low-dwell': '低位停歇'};
+  let sceneView = 'mechanism';
   let revealed = false;
   let running = false;
   let totalDegrees = 0;
@@ -75,6 +77,15 @@
     }
   }
 
+  function updateSceneView() {
+    const viewBox = compact.matches
+      ? sceneView === 'mechanism' ? '0 0 460 500' : '480 0 450 500'
+      : '0 0 960 500';
+    scene.setAttribute('viewBox', viewBox);
+    byId('view-mechanism').setAttribute('aria-pressed', String(sceneView === 'mechanism'));
+    byId('view-chart').setAttribute('aria-pressed', String(sceneView === 'chart'));
+  }
+
   function render() {
     const values = config();
     const state = Model.at(values, totalDegrees);
@@ -92,7 +103,9 @@
     byId('height-copy').textContent = `归一化高度 ${Math.round(state.height * 100)}%`;
     byId('batch-copy').textContent = `${state.completedCount} / ${Model.batchSize} 完成（已转${state.attemptedCycles}圈）`;
     byId('feed-time').textContent = `${values.feedSeconds.toFixed(1)} s`;
-    scene.setAttribute('aria-label', `凸轮已转${state.attemptedCycles}圈，当前${phaseText}，从动件归一化高度${Math.round(state.height * 100)}%，${state.completedCount}件工件完成，剩余${state.remainingCount}件。旋转盘仅表示相位。`);
+    updateSceneView();
+    const viewText = compact.matches ? sceneView === 'mechanism' ? '当前显示机构视角。' : '当前显示曲线与工件视角。' : '当前显示完整图示。';
+    scene.setAttribute('aria-label', `${viewText}凸轮已转${state.attemptedCycles}圈，当前${phaseText}，从动件归一化高度${Math.round(state.height * 100)}%，${state.completedCount}件工件完成，剩余${state.remainingCount}件。旋转盘仅表示相位。`);
     if (revealed) {
       byId('cycle-seconds').textContent = `${state.cycleSeconds.toFixed(2)} s`;
       byId('dwell-seconds').textContent = `${state.dwellSeconds.toFixed(2)} s`;
@@ -197,6 +210,10 @@
     if (motion.matches) pause('已启用减少动态；请用步进观察。');
     else updateButtons();
   });
+  compact.addEventListener('change', render);
+  for (const [name, view] of [['view-mechanism', 'mechanism'], ['view-chart', 'chart']]) {
+    byId(name).addEventListener('click', () => { sceneView = view; render(); });
+  }
 
   for (const control of [controls.rpm, controls.dwell, controls.feed, controls.prediction,
     controls.start, controls.fast, controls.long]) control.disabled = false;

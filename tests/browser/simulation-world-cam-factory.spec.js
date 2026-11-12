@@ -24,6 +24,10 @@ test('先预测再揭晓，角度、从动件高度和六件工件保持一致',
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(topic);
+  const narrow = page.viewportSize().width <= 640;
+  await expect(page.locator('#cam-scene')).toHaveAttribute('viewBox', narrow ? '0 0 460 500' : '0 0 960 500');
+  if (narrow) await expect(page.locator('#view-chart')).toBeVisible();
+  else await expect(page.locator('#view-chart')).toBeHidden();
   await expect(page.locator('#cycle-seconds')).toHaveText('—');
   await expect(page.locator('#dwell-seconds')).toHaveText('—');
   await expect(page.locator('#reveal-button')).toBeDisabled();
@@ -99,6 +103,13 @@ test('320px和file直开仍可用键盘完成预测与单步', async ({page}) =>
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网专项已覆盖发布子路径');
   await page.setViewportSize({width: 320, height: 720});
   await page.goto(pathToFileURL(resolve(__dirname, '../../simulation-world/cam-factory.html')).href);
+  await expect(page.locator('#view-mechanism')).toBeVisible();
+  await expect(page.locator('#cam-scene')).toHaveAttribute('viewBox', '0 0 460 500');
+  await page.locator('#view-chart').click();
+  await expect(page.locator('#cam-scene')).toHaveAttribute('viewBox', '480 0 450 500');
+  await expect(page.locator('#view-chart')).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('#view-mechanism').click();
+  await expect(page.locator('#cam-scene')).toHaveAttribute('viewBox', '0 0 460 500');
   await page.locator('#window-prediction').selectOption('enough');
   await page.locator('#window-prediction').focus();
   await expect(page.locator('#window-prediction')).toHaveValue('enough');

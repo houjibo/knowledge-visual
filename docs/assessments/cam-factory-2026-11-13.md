@@ -17,7 +17,7 @@
 ## 验证记录
 
 - `node tests/cam-factory-model.test.js`：4项通过；64组参数的窗口时间由独立角速度公式核对，检查四段连续边界、六圈批次和非法输入。
-- `CI=true npx playwright test tests/browser/simulation-world-cam-factory.spec.js --reporter=dot`：桌面与移动共10项通过，覆盖分类搜索、预测门槛、图文同步、两种时间边界、六件上限、参数变化与减少动态、320px按钮键盘和`file://`。浏览器原生下拉框的选择用Playwright选择事件核对，未以自动化键盘按键证明其系统弹出菜单行为。
+- `CI=true npx playwright test tests/browser/simulation-world-cam-factory.spec.js --reporter=dot`：桌面与移动共10项通过，覆盖分类搜索、预测门槛、图文同步、两种时间边界、六件上限、参数变化与减少动态、320px按钮键盘和`file://`。后续窄屏视觉检查发现原整图文字过小，增加机构/曲线局部放大视角并回归两个视角和文字状态。浏览器原生下拉框的选择用Playwright选择事件核对，未以自动化键盘按键证明其系统弹出菜单行为。
 - 发布包子路径专项 2/2 通过，可从首页搜索进入、完成默认预测与一圈步进，再换高速条件看到窗口不足。本地手动打开的页面完成相同步骤，SVG工件与文字均从0件更新为1件。
 - `CI=true npm run check` 完整通过：严格OpenSpec 263项、功能浏览器2112项通过/6项按配置跳过、开发站374页加载、发布包22项交互及发布包374页加载通过。之后仅将结果说明中四舍五入的等号改为约等号、连续播放角度显示改为向下取整，并以专项及静态检查复核。
 - Actions与公网操作在发布后补记。
