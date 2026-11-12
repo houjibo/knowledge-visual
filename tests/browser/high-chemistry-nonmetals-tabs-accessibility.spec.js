@@ -77,6 +77,7 @@ test('氮硫单选组、关系图、转化列表和摘要保持同一系列', as
   await expect(options.nth(0)).toHaveAttribute('aria-checked', 'true');
   await expect(options.nth(0)).toHaveAttribute('tabindex', '0');
   await expect(page.locator('#transform-summary-title')).toHaveText('氮及其化合物转化');
+  await expect(page.locator('#transform-summary')).toHaveText('N₂ → NH₃\nNH₃ → NO\nNO → NO₂\nNO₂ → HNO₃\nHNO₃ → NO₂\nN₂ → NO');
   await expect(page.locator('#canvas-transforms')).toHaveAttribute('aria-label', /氮及其化合物转化关系图.*N₂.*NH₃/);
   await expect(page.locator('#transform-list .transform-item')).toHaveCount(6);
 
@@ -90,8 +91,8 @@ test('氮硫单选组、关系图、转化列表和摘要保持同一系列', as
   await expect(options.nth(1)).toHaveAttribute('aria-checked', 'true');
   await expect(options.nth(1)).toHaveAttribute('tabindex', '0');
   await expect(page.locator('#transform-summary-title')).toHaveText('硫及其化合物转化');
-  await expect(page.locator('#reaction-detail')).toContainText('点击左侧转化查看反应详情');
-  await expect(page.locator('#transform-summary')).toContainText('S → SO₂ → SO₃ → H₂SO₄');
+  await expect(page.locator('#reaction-detail')).toHaveText('尚未选择转化。聚焦一项后按 Enter 或空格查看详情。');
+  await expect(page.locator('#transform-summary')).toHaveText('S → SO₂\nSO₂ → SO₃\nSO₃ → H₂SO₄\nH₂SO₄ → SO₂\nSO₂ → H₂SO₃\nS → H₂S');
   await expect(page.locator('#transform-summary')).not.toContainText('N₂');
   await expect(page.locator('#canvas-transforms')).toHaveAttribute('aria-label', /硫及其化合物转化关系图.*S.*SO₂.*SO₃/);
   await expect(page.locator('#canvas-transforms')).not.toHaveAttribute('aria-label', /N₂|NH₃/);
@@ -105,7 +106,8 @@ test('氮硫单选组、关系图、转化列表和摘要保持同一系列', as
   await page.keyboard.press('ArrowLeft');
   await expect(options.nth(0)).toHaveAttribute('aria-checked', 'true');
   await expect(page.locator('#transform-summary-title')).toHaveText('氮及其化合物转化');
-  await expect(page.locator('#reaction-detail')).toContainText('点击左侧转化查看反应详情');
+  await expect(page.locator('#transform-summary')).toHaveText('N₂ → NH₃\nNH₃ → NO\nNO → NO₂\nNO₂ → HNO₃\nHNO₃ → NO₂\nN₂ → NO');
+  await expect(page.locator('#reaction-detail')).toHaveText('尚未选择转化。聚焦一项后按 Enter 或空格查看详情。');
 
   if (testInfo.project.name === 'mobile') await options.nth(1).tap();
   else await options.nth(1).click();

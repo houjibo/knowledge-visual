@@ -15,6 +15,7 @@ CHECKS = (
     ('math/topics/addition/index.html', '<title>10以内加减法</title>'),
     ('physics/middle/motion.html', '<title>机械运动 · 初中物理互动可视化</title>'),
     ('chemistry/high/mole-concept.html', '<title>物质的量 · 高中化学互动可视化</title>'),
+    ('chemistry/high/nonmetals.html', '<title>非金属及其化合物 · 互动可视化</title>'),
     ('science/sink-float.html', '<title>沉与浮 · 小学科学互动可视化</title>'),
     ('computer/index.html', '<title>计算机 · 知识可视化学习站</title>'),
     ('ai/index.html', '<title>人工智能 · 知识可视化学习站</title>'),

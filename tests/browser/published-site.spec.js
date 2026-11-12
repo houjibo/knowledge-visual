@@ -251,3 +251,33 @@ test('发布站子路径可查找并完整运行工业流水线', async ({page})
   await expect(page.locator('.topic-card')).toHaveCount(3);
   expect(failures).toEqual([]);
 });
+
+test('发布站非金属元素与转化可键盘选择且文字说明同步', async ({page}) => {
+  const failures=[];
+  page.on('pageerror',error=>failures.push(error.message));
+  page.on('response',response=>{
+    if(response.url().startsWith(base)&&response.status()>=400) failures.push(`${response.status()} ${response.url()}`);
+  });
+  await gotoPublished(page,new URL('chemistry/high/nonmetals.html',base).href);
+  const raw=await page.evaluate(()=>localStorage.getItem('kv-chemistry-high-progress'));
+  await page.locator('#stage-elements').press('Tab');
+  await expect(page.locator('.element-card[data-element="cl"]')).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.element-card[data-element="s"]')).toHaveAttribute('aria-checked','true');
+  await expect(page.locator('#element-info .title')).toContainText('硫');
+  await expect(page.locator('#canvas-elements')).toHaveAttribute('aria-label',/硫.*16.*2-8-6/);
+  await page.locator('#tab-transforms').click();
+  await page.locator('#series-nitrogen').press('Tab');
+  await expect(page.locator('#transform-list .transform-item').first()).toBeFocused();
+  await expect(page.locator('#transform-list [aria-checked="true"]')).toHaveCount(0);
+  await page.keyboard.press('End');
+  await expect(page.locator('#reaction-detail')).toContainText('N₂ + O₂ ⇌ 2NO');
+  await expect(page.locator('#canvas-transforms')).toHaveAttribute('aria-label',/放电/);
+  await page.locator('#series-sulfur').click();
+  await expect(page.locator('#reaction-detail')).toContainText('尚未选择');
+  await page.locator('#series-sulfur').press('Tab');
+  await page.keyboard.press('Space');
+  await expect(page.locator('#reaction-detail')).toContainText('S + O₂ → SO₂');
+  expect(await page.evaluate(()=>localStorage.getItem('kv-chemistry-high-progress'))).toBe(raw);
+  expect(failures).toEqual([]);
+});
