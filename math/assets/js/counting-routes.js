@@ -104,6 +104,9 @@
 
   function showPath(path, selectedButton) {
     drawBase(path);
+    const scroller = document.getElementById('treeScroll');
+    const choice = path[Math.floor(path.length / 2)];
+    scroller.scrollLeft = Math.max(0, choice.x - scroller.clientWidth / 2);
     document.querySelectorAll('#pathList .path-item').forEach(button => {
       const chosen = button === selectedButton;
       button.classList.toggle('active', chosen);

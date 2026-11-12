@@ -186,6 +186,10 @@ test('320px 无画布与减少动态下仍可读、可操作且改参取消旧�
   await page.locator('#countMode').selectOption('product');
   await page.getByRole('button', {name: /列出全部路线/}).click();
   await expect(page.locator('#pathList button')).toHaveCount(6);
+  await page.getByRole('button', {name: /重置/}).first().click();
+  await page.getByRole('button', {name: /列出全部路线/}).click();
+  await page.locator('#pathList button').last().click();
+  expect(await page.locator('#treeScroll').evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
   await page.getByRole('tab', {name: /排列/}).click();
   await page.getByRole('button', {name: /自动演示/}).click();
   await expect(page.locator('#permSlots .filled')).toHaveCount(3);
