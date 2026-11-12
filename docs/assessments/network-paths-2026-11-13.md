@@ -1,6 +1,6 @@
 # 初中数据包路径实验室核查
 
-状态：本地模型、桌面和移动专项、完整门禁与发布包通过；主分支 Actions 与公网实际操作待核查。范围由[本轮 OpenSpec 变更](../../openspec/changes/middle-computer-network-path-lab/proposal.md)界定。
+状态：本地模型、桌面和移动专项、完整门禁、主分支 Actions 与公网实际操作已通过。范围由[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-13-middle-computer-network-path-lab/proposal.md)界定。
 
 ## 学习问题与依据
 
@@ -21,4 +21,7 @@
 - `CI=true npx playwright test tests/browser/middle-computer-network-paths.spec.js --reporter=dot`：最终桌面与移动共18项通过，覆盖揭晓门槛及揭晓后控件锁定、错误预测、规则切换、断线和不可达、SVG逐跳同步、四项完成、存储拒绝与损坏、首页搜索及进度、320px键盘、减少动态偏好、延迟脚本就绪、直接文件与发布子路径。
 - 320px截图核对图上节点、连线数字和路径高亮可读且页面没有横向溢出。本地静态服务已打开并核对页面初始状态；真实设备、完整屏幕阅读器和学习者理解仍待验证。
 - 首次完整门禁在2,134项浏览器用例中为2,124项通过、6项跳过、4项失败；四项都来自新增窄屏页面时移动旧测试位置数组，令神经元和分类器用例错误打开别的页面。已改为具名路径，相关专项复测36项通过。
-- 修复后 `CI=true npm run check` 完整通过：严格 OpenSpec 263项、功能浏览器2,130项通过/6项按配置跳过、开发站375页加载、发布包22项交互及375页加载通过。Actions 与公网核查在推送后补记。
+- 修复后 `CI=true npm run check` 完整通过：严格 OpenSpec 263项、功能浏览器2,130项通过/6项按配置跳过、开发站375页加载、发布包22项交互及375页加载通过。
+- 首次功能提交 `195e0340f78268c291a2280a9d3f14be87ad1e72` 的[主分支 Actions](https://github.com/houjibo/knowledge-visual/actions/runs/43284432612)全部七个 job 成功；公网 `release-version.json` 的 revision 与该提交完全一致，`site_files_modified:false`。
+- 在公网实际操作四项对照：正常最小代价 S→B→C→D（代价4、3跳），正常最少跳数 S→A→D（代价8、2跳），B—C 断开后最小代价 S→A→C→D（代价7、3跳），以及两条出口断开时 D 不可达；各项分别正确预测，可达项逐跳抵达，最终显示本机已记录完成。
+- 不可达反馈的措辞修订于 `561c9398b5b8cb695e19efee6a2fa6a93325784d`；对应桌面与移动专项18项通过，[主分支 Actions](https://github.com/houjibo/knowledge-visual/actions/runs/43286520927)七个 job 全部成功。公网发布清单 revision 精确匹配且 `site_files_modified:false`；刷新公网页面后实际选择两条出口断开、预测不可达并揭晓，确认显示“本图中没有可达路径，D 无法送达。”。
