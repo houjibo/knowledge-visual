@@ -25,7 +25,7 @@
 
 ## 验证状态
 
-本地开发与验证已完成，公开部署尚待核验。已记录浏览器问题复现、静态根因及 [OpenSpec 提案](../../openspec/changes/2026-11-12-nonmetals-selection-accessibility/proposal.md)、[设计](../../openspec/changes/2026-11-12-nonmetals-selection-accessibility/design.md)和[任务](../../openspec/changes/2026-11-12-nonmetals-selection-accessibility/tasks.md)。本记录不把规格、代码落盘或测试存在当作已经通过。
+本地与公开验收已完成，变更已归档。已记录浏览器问题复现、静态根因及 [OpenSpec 提案](../../openspec/changes/archive/2026-11-12-nonmetals-selection-accessibility/proposal.md)、[设计](../../openspec/changes/archive/2026-11-12-nonmetals-selection-accessibility/design.md)和[任务](../../openspec/changes/archive/2026-11-12-nonmetals-selection-accessibility/tasks.md)。本记录不把规格、代码落盘或测试存在当作已经通过。
 
 独立源码审查未发现阻断：具体反应选择原位更新，实际切换系列先处理旧节点焦点再重建；三类重复选择幂等，初始未选与主题返回保留一致。ARIA 说明在选择事件更新，绘制循环不改状态说明；十二条反应方程、练习题库及计分和保存函数未改。此结论来自静态阅读，不能代替运行时焦点、布局或屏幕阅读器检查。
 
@@ -44,4 +44,4 @@
 - 对照属性、方程与条件、画布替代及实际绘制文本/电子数量；等待下一绘制帧，避免仅以标签替代绘图核验。
 - 320px 下全部元素及两系列全部反应；减少动态、禁用2D上下文、无外部请求的 `file://` 路径与发布子路径。
 - 保留[旧页签和系列回归](../../tests/browser/high-chemistry-nonmetals-tabs-accessibility.spec.js)及[练习可靠性回归](../../tests/browser/nonmetals-quiz-reliability.spec.js)，核对探索前后答案、得分、已答数、历史进度原文与异常存储行为不变。
-- 发布子路径选择与原文进度保护通过。实际Actions、公开revision和公开操作尚待提交推送后核实。
+- 发布子路径选择与原文进度保护通过。[Actions #264](https://github.com/houjibo/knowledge-visual/actions/runs/43125023621) 对提交 `a46b933ae1daa80a3af4ad60f3cc311bc241770b` 七个job全部成功，desktop962通过/2既有跳过、mobile964通过，core363/10/363通过；公网revision精确匹配且modified=false，HTML63344字节与提交逐字节一致。公开人工Tab/方向键选硫、End选氮放电反应、重复当前系列保留、跨硫系列及空格选择均通过，选中态/焦点/方程条件及画布替代同步。
