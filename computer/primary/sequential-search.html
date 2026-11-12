@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="先预测比较次数，再逐张查找数字卡片，观察找到时提前停止以及未找到时完整检查。">
+  <title>顺序查找实验室 · 小学计算机</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .shell { width: min(100% - 32px, 1080px); }
+    .hero { margin: 12px 0 16px; padding: 22px 28px; }
+    .hero h1 { font-size: clamp(1.75rem, 4vw, 2.15rem); }
+    .hero p { max-width: 88ch; }
+    .panel { margin: 14px 0; }
+    .settings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .settings label { display: grid; gap: 5px; min-width: 0; font-weight: 700; }
+    .settings select { width: 100%; min-height: 44px; padding: 6px 8px; border: 1px solid #8794a9; border-radius: 8px; background: white; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; }
+    .workspace > * { min-width: 0; }
+    .subpanel { padding: 14px; border: 1px solid #d6dfed; border-radius: 12px; background: #f8faff; }
+    .subpanel h3 { margin: 0 0 8px; font-size: 1rem; }
+    .search-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; margin: 10px 0; padding: 0; list-style: none; }
+    .search-card { min-width: 0; padding: 8px 3px; border: 2px solid #c9d5e6; border-radius: 10px; background: white; text-align: center; }
+    .search-card .ordinal { display: block; font-size: .75rem; color: #49576d; }
+    .search-card strong { display: block; font-size: clamp(1.25rem, 4vw, 1.7rem); color: #332872; }
+    .search-card .card-result { display: block; min-height: 1.25em; font-size: .69rem; font-weight: 800; }
+    .search-card[data-state="next"] { border-color: #463995; background: #eeeafe; }
+    .search-card[data-state="miss"] { border-color: #b7803a; background: #fff4df; }
+    .search-card[data-state="found"] { border-color: #28754e; background: #e8f8ee; }
+    .count-strip { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0; }
+    .count-strip strong { color: #30216d; }
+    .trace { margin: 0; padding-left: 1.4rem; }
+    .trace li { margin: 3px 0; }
+    #run-status, #prediction-status { min-height: 2.8em; margin: 10px 0 0; padding: 9px 12px; border-radius: 9px; background: #eef2fb; }
+    #run-status.success, #prediction-status.success { background: #e8f7eb; }
+    #prediction-status.error { background: #fff2e8; }
+    .button-row { gap: 8px; margin-top: 12px; }
+    .button-row button { padding: .48rem .8rem; font-size: .9rem; }
+    .challenge-progress { font-weight: 700; }
+    .progress-panel { border-left: 4px solid #7663b4; padding-left: 12px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 650px) { .workspace, .settings { grid-template-columns: 1fr; } .hero { padding: 20px; } }
+    @media (min-width: 450px) and (max-width: 650px) { .settings { grid-template-columns: repeat(2, minmax(0, 1fr)); } .settings label:last-child { grid-column: 1 / -1; } }
+    @media (max-width: 360px) { .shell { width: min(100% - 20px, 1080px); } .panel { padding: 14px; } .search-cards { gap: 4px; } .search-card { padding: 6px 1px; } .search-card .ordinal { font-size: .66rem; } .search-card .card-result { font-size: .6rem; } }
+  </style>
+</head>
+<body data-subject="computer" data-stage="primary">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机</a><span aria-hidden="true">›</span><a href="index.html">小学</a><span aria-hidden="true">›</span><span aria-current="page">顺序查找实验室</span></nav>
+    <main id="main-content">
+      <header class="hero"><p class="eyebrow">小学计算机 · 查找算法</p><h1>顺序查找实验室</h1><p>从第一张开始，一张一张与目标比较。先猜要看几张，再亲自执行：找到就停止；全部看完还没有，才说“未找到”。</p></header>
+      <section class="panel" aria-labelledby="settings-title">
+        <h2 id="settings-title">设置一轮查找</h2>
+        <div class="settings">
+          <label for="preset-select">卡片顺序<select id="preset-select"><option value="standard">示例：4、2、7、1、5</option><option value="reversed">另一组：5、1、7、2、4</option><option value="shifted">再换一组：2、7、4、5、1</option></select></label>
+          <label for="target-select">要找的数字<select id="target-select"><option value="7">7</option><option value="4">4</option><option value="2">2</option><option value="1">1</option><option value="5">5</option><option value="9">9</option></select></label>
+          <label for="prediction-select">你预测要比较几次<select id="prediction-select"><option value="">先选择次数</option><option value="1">1 次</option><option value="2">2 次</option><option value="3">3 次</option><option value="4">4 次</option><option value="5">5 次</option></select></label>
+        </div>
+        <p class="note">目标也可能不在卡片中。先选预测，再点“比较下一张”或“连续查找”。开始后预测会锁定；更换卡片顺序或目标会重新开始这一轮。</p>
+        <div class="button-row"><button type="button" id="step-button">比较下一张</button><button type="button" id="play-button" class="secondary">连续查找</button><button type="button" id="pause-button" class="secondary" disabled>暂停</button><button type="button" id="reset-button" class="secondary">重新查找</button><button type="button" id="example-button" class="secondary">恢复示例</button></div>
+      </section>
+      <section class="panel" aria-labelledby="experiment-title"><h2 id="experiment-title">观察比较过程</h2>
+        <div class="workspace"><div class="subpanel"><h3>五张卡片</h3><ol id="card-list" class="search-cards" aria-label="按查找顺序排列的五张数字卡片"></ol><p class="count-strip"><span>已比较 <strong id="comparison-count">0</strong> 次</span><span id="next-label">下一张：第 1 张</span></p><p id="run-status" class="status" role="status" aria-live="polite">尚未开始；先预测比较次数。</p></div>
+          <div class="subpanel"><h3>逐步记录</h3><ol id="trace-list" class="trace"><li>还没有比较任何卡片。</li></ol><p id="prediction-status" class="status" aria-live="polite">执行结束后再揭晓预测结果。</p></div></div>
+      </section>
+      <section class="panel" aria-labelledby="challenge-title"><h2 id="challenge-title">完成两类预测</h2><p>分别做对一轮“找得到”和一轮“找不到”的比较次数预测，即可记录本机学习进度。</p><p id="challenge-progress" class="challenge-progress" role="status" aria-live="polite">找到：待完成 · 未找到：待完成</p><p id="progress-status" class="progress-panel">正在读取本机学习进度…</p><button type="button" id="retry-save" class="secondary" hidden>重试保存完成记录</button></section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回小学计算机</a>　·　<a href="../middle/index.html">探索初中计算机</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script src="assets/sequential-search-model.js"></script>
+  <script src="assets/sequential-search.js"></script>
+</body>
+</html>
