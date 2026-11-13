@@ -18,7 +18,7 @@ test('首页只计入当前学段中有效且完成的记录', async ({page}) =>
   await expect(page.locator('[data-subject="physics"] .sp-label')).toHaveText('已学 2/55');
   await expect(page.locator('[data-subject="chemistry"] .sp-label')).toHaveText('已学 1/46');
   await expect(page.locator('[data-subject="science"] .sp-label')).toHaveText('已学 1/17');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toHaveText('已学 2/9');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toHaveText('已学 2/10');
   await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/9');
   expect(await page.evaluate(() => localStorage.getItem('kv-ai-middle-progress'))).toBeNull();
 });

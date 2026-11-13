@@ -121,7 +121,7 @@ def main():
                 errors.append(f'{subject}/{stage}: progress total {matches[0]}, topic cards {count}')
     subject_topics = {
         'computer/primary/index.html': ['robot-algorithms.html', 'repeat-loops.html', 'conditional-robot.html', 'sequential-search.html', 'adjacent-swap-sort.html'],
-        'computer/middle/index.html': ['binary-pixels.html', 'network-paths.html'],
+        'computer/middle/index.html': ['binary-pixels.html', 'message-transfer.html', 'network-paths.html'],
         'computer/high/index.html': ['search-strategies.html'],
         'computer/uni/index.html': ['stack-queue.html'],
         'ai/primary/index.html': ['feature-classification-lab.html'],

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="把文字编码为 UTF-8 字节，逐块传送，观察乱序、缺块和重发怎样影响接收端还原。">
+  <title>消息传输实验室 · 初中计算机</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .hero { background: linear-gradient(135deg, #174668, #167870); }
+    .hero .eyebrow { color: #d2f8ee; }
+    .hero p { color: #f1fffc; }
+    .setup { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .setup label, .prediction { display: grid; gap: 6px; font-weight: 700; }
+    select { width: 100%; min-height: 44px; padding: 8px; border: 1px solid #74879b; border-radius: 9px; background: white; color: #1d2940; }
+    .flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 12px 0; }
+    .flow-box { min-width: 0; padding: 14px; border: 1px solid #cbdde5; border-radius: 13px; background: #f3fafb; }
+    .flow-box h3 { margin: 0 0 7px; font-size: 1rem; }
+    .flow-box p { margin: 0; overflow-wrap: anywhere; }
+    .hex { font: 700 .92rem/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+    .blocks { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
+    .blocks li { min-width: 76px; max-width: 100%; padding: 7px 9px; border: 1px solid #7e9bac; border-radius: 8px; background: #fff; overflow-wrap: anywhere; }
+    .blocks li.received { border: 2px solid #12745b; background: #e3f6ee; }
+    .blocks li.missing { border-style: dashed; background: #f8f8fa; }
+    .blocks strong, .blocks small { display: block; }
+    .feedback { margin: 10px 0; padding: 10px 12px; border-radius: 9px; background: #e9f1f7; }
+    .feedback.success { background: #e0f4e9; }
+    .feedback.error { background: #fff0e8; }
+    .challenge-list { padding-left: 1.4rem; }
+    .challenge-list li { margin: 5px 0; }
+    .challenge-list span { font-weight: 800; }
+    .footer-nav { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+    details > summary { cursor: pointer; font-weight: 700; }
+    @media (max-width: 700px) { .flow { grid-template-columns: 1fr; } }
+    @media (max-width: 520px) { .setup { grid-template-columns: 1fr; } }
+    @media (max-width: 360px) { .shell { width: min(100% - 20px, 960px); } .panel, .hero { padding: 16px; } }
+  </style>
+</head>
+<body data-subject="computer" data-stage="middle">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机</a><span aria-hidden="true">›</span><a href="index.html">初中</a><span aria-hidden="true">›</span><span aria-current="page">消息传输实验室</span></nav>
+    <main id="main-content">
+      <header class="hero"><p class="eyebrow">初中计算机 · 编码、传送与呈现</p><h1>消息传输实验室</h1><p>给一段短文字编码、编号、逐块送达，再观察接收端何时能按序还原。你可以让数据块乱序到达，或让第 2 块暂时丢失并重发。</p></header>
+      <section class="panel" aria-labelledby="setup-title"><h2 id="setup-title">1 · 选择消息和到达条件</h2><p>本页使用浏览器的真实 UTF-8 编码：英文字符与汉字可能占用不同数量的字节。为了看清顺序，每块最多放 2 字节，块号为本实验自定规则。</p><div class="setup"><label for="message">发送文字<select id="message" disabled><option value="ascii">AI!</option><option value="chinese">你好</option></select></label><label for="mode">到达条件<select id="mode" disabled><option value="ordered">按编号到达</option><option value="reversed">倒序到达</option><option value="missing">第 2 块暂未到达</option></select></label></div><div class="flow"><div class="flow-box"><h3>① 原文</h3><p id="sender-text">等待加载</p></div><div class="flow-box"><h3>② UTF-8 字节</h3><p id="sender-bytes" class="hex">等待加载</p></div><div class="flow-box"><h3>③ 教学数据块</h3><ol id="sender-blocks" class="blocks" aria-label="发送端编号数据块"></ol></div></div></section>
+      <section class="panel" aria-labelledby="predict-title"><h2 id="predict-title">2 · 先预测</h2><p>按当前条件，全部预定数据块送过后，接收端能否立即还原完整原文？“缺块”条件下可随后主动重发。</p><label class="prediction" for="prediction">我的预测<select id="prediction" disabled><option value="">请选择</option><option value="yes">能立即还原</option><option value="no">暂时不能还原</option></select></label><div class="button-row"><button id="reveal-button" type="button" disabled>核对预测，开始传送</button><button id="reset-button" type="button" class="secondary" disabled>重新预测本条件</button></div><p id="prediction-status" class="feedback" role="status" aria-live="polite">选择预测后才能传送。</p></section>
+      <section class="panel" aria-labelledby="receive-title"><h2 id="receive-title">3 · 逐块观察接收端</h2><p>每点一次只送达一块；接收端按编号摆放。只有全部字节齐全时才解码，不能单独把半个汉字字节显示成汉字。</p><div class="button-row"><button id="step-button" type="button" disabled>送达下一块</button><button id="retry-button" type="button" class="secondary" disabled>重发第 2 块</button></div><p id="step-status" class="feedback" role="status" aria-live="polite">尚未开始传送。</p><div class="flow"><div class="flow-box"><h3>到达顺序</h3><ol id="arrival-list" class="blocks" aria-label="实际到达顺序"></ol></div><div class="flow-box"><h3>按编号重组</h3><ol id="receiver-slots" class="blocks" aria-label="接收端编号位置"></ol></div><div class="flow-box"><h3>④ 呈现文字</h3><p id="receiver-text">等待完整字节</p></div></div></section>
+      <section class="panel" aria-labelledby="challenge-title"><h2 id="challenge-title">完成三种到达条件</h2><p>每项需先正确预测，再手动送达全部预定块；缺块项还需重发。历史记录不会代替本轮操作。</p><ol class="challenge-list"><li><span id="challenge-ordered">○ 待完成</span> · 按序到达</li><li><span id="challenge-reversed">○ 待完成</span> · 乱序到达，按编号重组</li><li><span id="challenge-missing">○ 待完成</span> · 缺块后重发</li></ol><p id="progress-status" role="status" aria-live="polite">正在读取本机进度…</p><button id="retry-save" type="button" class="secondary" hidden>重试保存完成记录</button></section>
+      <section class="panel"><details><summary>模型边界与依据</summary><p>文字与字节使用真实 UTF-8 编解码；“每块 2 字节、从 1 编号、已知总块数、第 2 块丢失、按按钮重发”是本页人为设定的教学规则，不是 IP 包或 TCP 报文的格式，也没有模拟确认、超时、拥塞与路由。实际网络可能使用不同传输方式，不能推断所有通信都会可靠重传。</p><p><a href="https://www.rfc-editor.org/rfc/rfc3629.html">RFC 3629</a>定义 UTF-8 字节表示；<a href="https://www.rfc-editor.org/rfc/rfc9293.html">RFC 9293</a>描述 TCP 的序号、分段与重传。外链仅在主动打开时访问。</p></details></section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回初中计算机</a><a href="network-paths.html">继续比较网络路径</a><a href="binary-pixels.html">回看二进制表示</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script src="assets/message-transfer-model.js"></script>
+  <script src="assets/message-transfer.js"></script>
+</body>
+</html>

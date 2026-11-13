@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：344；已登记部分交互证据：204；尚未登记：140。
+主题总数：345；已登记部分交互证据：205；尚未登记：140。
 
 ## 已登记部分交互证据
 
@@ -65,6 +65,8 @@
   - 桌面与移动模拟视口验证7/15项顺序与二分逐步比较、候选排除、首位与靠后反转、未找到规模对照、乱序阻止、四组预测与前提完成、计时器、异常存储、搜索和高中进度、320px键盘、减少动态、file及发布子路径；真实设备、屏幕阅读器和学习者效果仍待核验。 [high-computer-search-strategies.spec.js](../../tests/browser/high-computer-search-strategies.spec.js)
 - [二进制像素工坊 · 初中计算机](../../computer/middle/binary-pixels.html)
   - 桌面与移动浏览器验证两个独立学科入口、旧主题地址跳转、四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘操作、旧进度迁移及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [split-subjects-learning.spec.js](../../tests/browser/split-subjects-learning.spec.js)
+- [消息传输实验室 · 初中计算机](../../computer/middle/message-transfer.html)
+  - 桌面与移动视口核对真实 UTF-8 字节、按序与乱序送达、缺块重发、预测和逐块完成门槛、进度保存失败重试、320px 键盘、file 直开及发布子路径；真实网络通信、实机和学习者理解仍待核查。 [middle-computer-message-transfer.spec.js](../../tests/browser/middle-computer-message-transfer.spec.js)
 - [数据包路径实验室 · 初中计算机](../../computer/middle/network-paths.html)
   - 桌面与移动视口核对最少跳数与最小指定代价、断线改道和不可达、预测门槛、逐跳图文同步、四项完成与本机保存、拒绝/损坏存储、搜索与初中进度、320px键盘、file直开及发布子路径；真实设备、完整屏幕阅读器和学习效果仍待核查。 [middle-computer-network-paths.spec.js](../../tests/browser/middle-computer-network-paths.spec.js)
 - [相邻交换排序实验室 · 小学计算机](../../computer/primary/adjacent-swap-sort.html)
