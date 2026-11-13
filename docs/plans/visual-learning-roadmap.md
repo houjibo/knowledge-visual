@@ -29,7 +29,7 @@
 
 - 保持 `math/`、`physics/`、`chemistry/`、`science/`、`computer/` 和 `ai/` 为学科目录；`simulation-world/` 独立组织模拟场景，不继承学段和学科进度；旧 `computer-ai/` 地址保留兼容页。
 - 计算机和人工智能后续课程分别以[计算机课程设计](computer-curriculum.md)和[人工智能课程设计](ai-curriculum.md)为地图；每次按 OpenSpec change 小步加入具体主题。
-- 六学科四阶段的课程范围与来源采用[全站课程差距矩阵](curriculum-gap-map.md)和[来源登记](curriculum-sources.md)追踪；页面数量只表明供给规模，正式覆盖率须由逐条课程要求和验证证据计算。
+- 六学科四阶段的课程范围与来源采用[全站课程差距矩阵](curriculum-gap-map.md)和[来源登记](curriculum-sources.md)追踪；初中信息科技已有[第一份逐项对照](../assessments/middle-information-technology-crosswalk-2026-11-13.md)。页面数量只表明供给规模，正式覆盖率须由逐条课程要求和验证证据计算。
 - 评估统一主题元数据：至少覆盖稳定标识、标题、学科、学段、页面路径；别名、目标、先修关系和交互类型按证据扩展。先在一个学科试用并验证离线加载、路径一致性和维护成本，再决定是否推广或生成目录；不要同时维护多份无校验的真相。
 - 把可复用但确实一致的交互、样式和进度能力逐步抽到就近的 `assets/`；在行为刻画和引用分析之后合并，避免破坏自包含页面或 `file://`。
 - `docs/` 存放长期设计、约束、工作流和路线图；`openspec/specs/` 是已归档行为契约，`openspec/changes/` 是单个增量及历史；`scripts/` 放静态检查，`tests/` 放测试。新增入口在 [AGENTS.md](../../AGENTS.md) 只加索引。
