@@ -1,6 +1,6 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
-### Requirement: 模拟世界目录提供独立的场景入口
+### Requirement: 单缸蒸汽机可从模拟世界发现
 
 系统 MUST 在模拟世界目录、首页数量与分类搜索中登记第十个“单缸蒸汽机动力路径”场景；场景 MUST 无学段并且 MUST NOT 参与学科完成进度。
 

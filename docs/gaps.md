@@ -1,11 +1,11 @@
 # 项目差距与后续方向
 
-最后核查：2026-11-13；高中有机化学、模拟世界共享传动轴工坊、初中质量与密度天平、凸轮送料、初中计算机网络路径及高中人工智能分类阈值已完成公开验收，其余差距继续逐步核查。
+最后核查：2026-11-13；单缸蒸汽机动力路径及近期学科、机械场景已完成公开验收，其余差距继续逐步核查。
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
 | 高 | 六学科四阶段已有 334 个学科主题页，但没有把课程标准的逐条要求映射到页面和验证证据；页面数量无法回答全局覆盖率。[首轮课程矩阵](plans/curriculum-gap-map.md)显示 19 个适用格均有内容，其中 5 格仅 1–2 页；教育部基础教育标准、AI 指南及大学参考见[来源登记](plans/curriculum-sources.md)。 | 按[OpenSpec 提案](../openspec/changes/curriculum-source-gap-baseline/proposal.md)先拆解标准、选定教材目录版本，建立可计算分母与已验证/部分/缺失/未映射状态，再以独立小变更补真正缺口。 |
-| 中 | 模拟世界已有共享传动轴，却缺蒸汽如何形成转轴运动的可操作解释。按[当前 OpenSpec](../openspec/changes/steam-engine-power-cycle/proposal.md)新增理想双作用气缸动力路径：预测左右进汽、观察活塞杆/十字头/连杆/飞轮及 15/30 rpm 周期；教学模型不计算压力或功率。 | 完成桌面/移动、完整门禁、Actions 和公网操作验收后归档；真实学习者与设备边界另审。 |
+| 中 | 模拟世界的单缸蒸汽机动力路径已按[归档 OpenSpec](../openspec/changes/archive/2026-11-13-steam-engine-power-cycle/proposal.md)公开：先预测左右进汽，再观察活塞杆、十字头、连杆、飞轮和 15/30 rpm 周期；教学模型不计算压力或功率。桌面/移动专项、完整门禁、[Actions #43339735691](https://github.com/houjibo/knowledge-visual/actions/runs/43339735691) 七项及公网实际操作通过，见[核查记录](assessments/steam-engine-2026-11-13.md)。 | 已验收归档；真实学习者、实机和整页屏幕阅读器另审。 |
 | 高 | 高中[计数原理](../math/high/counting.html)原五主题入口、排列球、组合元素和杨辉三角数值不能键盘操作；路径图混淆“类”和“步”，只呈现乘法且提示不存在的节点点击；练习反馈被隐藏、达标后无论存储成功与否均称完成。本轮按[归档 OpenSpec 变更](../openspec/changes/archive/2026-11-13-high-counting-principles-reliability/proposal.md)修正分类/分步对照、路线图文、键盘与真实保存反馈；专项16/16、完整本地门禁、[Actions #43323932863](https://github.com/houjibo/knowledge-visual/actions/runs/43323932863)七项和公网实际操作均通过，见[核查记录](assessments/high-counting-2026-11-13.md)。 | 已公开验收归档；真实学习理解与屏幕阅读器另查。 |
 | 高 | 高中[有机化学基础](../chemistry/high/organic.html)四个主题和内层选择原用点击式 `div`，真实 Tab 跳过主题；甲烷、三张 C₆H₁₄ 支链图与文字式不一致，命名达标后还忽略本机写入失败。本轮按[OpenSpec](../openspec/changes/archive/2026-11-13-high-organic-learning-reliability/proposal.md)修复页签、原生控件、碳骨架与保存反馈；桌面/移动专项 18 项及完整本地门禁通过，[Actions #43310372546](https://github.com/houjibo/knowledge-visual/actions/runs/43310372546)七项及公网实际操作通过，见[核查记录](assessments/organic-2026-11-13.md)。 | 已公开验收归档；沸点、反应条件、真实屏幕阅读器和学习理解另审。 |
 | 中 | 模拟世界原有单对带轮、机械臂与工业流水线，缺一台中央动力机经共享主轴驱动多台机器的可操作场景。按[归档 OpenSpec](../openspec/changes/archive/2026-11-13-shared-line-shaft-workshop/proposal.md)新增双机支路接合、轮径速比预测与 0.25 s 单步；桌面/移动专项 12 项、完整本地门禁、[Actions #43315202080](https://github.com/houjibo/knowledge-visual/actions/runs/43315202080)七项及公网实际操作通过，见[核查记录](assessments/line-shaft-workshop-2026-11-13.md)。 | 已验收归档；真实负载、产能、屏幕阅读器和学习者理解另查。 |

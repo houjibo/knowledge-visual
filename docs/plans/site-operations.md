@@ -11,7 +11,7 @@
 
 ## 当前基线
 
-最近一次新增主题资源验收为[Actions #43300092226](https://github.com/houjibo/knowledge-visual/actions/runs/43300092226)：提交 `43b0f6d59bcd443500e35cb10abb20794c97c571` 的 core、桌面/移动、checks、构建、部署和部署后核验七个 job 全部成功。公网版本清单匹配且 `site_files_modified:false`，高中人工智能阈值主题的预测、两组矩阵与完成记录已实际核验，详见[阈值主题核查](../assessments/threshold-errors-2026-11-13.md)。模拟世界已有八个公开场景，最近的凸轮送料节拍见[机械化场景核查](../assessments/cam-factory-2026-11-13.md)。此前 main 队列异常的历史与结论边界保留在[发布队列核查](../assessments/release-backlog-2026-11-12.md)中。
+最近一次新增场景验收为[Actions #43339735691](https://github.com/houjibo/knowledge-visual/actions/runs/43339735691)：提交 `69dcea01b5fc081849f4fe99b9912781d5559ec5` 的 core、桌面、移动、汇总、构建、部署和部署后核验七项成功；公网版本清单匹配且 `site_files_modified:false`。模拟世界已有十个公开场景，单缸蒸汽机动力路径的预测和半圈换向已在公网实际操作，见[核查记录](../assessments/steam-engine-2026-11-13.md)。课程范围另按[首轮差距矩阵](curriculum-gap-map.md)持续核查；此前 main 队列异常的历史与结论边界保留在[发布队列核查](../assessments/release-backlog-2026-11-12.md)中。
 
 仓库 `houjibo/knowledge-visual` 为公开项目，默认分支为 `main`。GitHub Pages 已启用，站点 `https://houjibo.github.io/knowledge-visual/` 的首次可验证发布来自 `08751e6`；[Actions run 42430059152](https://github.com/houjibo/knowledge-visual/actions/runs/42430059152) 的检查、构建、部署和部署后验收均成功，公网清单匹配该提交且标记站点文件未修改。首次自动部署使用的 Jekyll 模板没有版本清单，已移除；后续由通过全量质量门禁的 Static HTML 产物唯一发布。详细范围与限制见[发布记录](../assessments/site-release-2026-11-08.md)。独立域名、域名所有权、托管成本及反馈责任尚未确定。
 
