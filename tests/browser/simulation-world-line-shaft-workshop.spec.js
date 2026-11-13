@@ -7,18 +7,18 @@ const topic = process.env.KV_PUBLISHED_BASE_URL
   ? new URL('simulation-world/line-shaft-workshop.html', process.env.KV_PUBLISHED_BASE_URL.replace(/\/?$/, '/')).href
   : '/simulation-world/line-shaft-workshop.html';
 
-test('首页、搜索和模拟世界目录可进入第九个无学段场景', async ({page}) => {
+test('首页、搜索和模拟世界目录可进入共享传动轴场景', async ({page}) => {
   await page.goto(process.env.KV_PUBLISHED_BASE_URL || '/');
   const category = page.locator('[data-subject-category="simulation-world"]');
-  await expect(category).toHaveAttribute('data-total', '9');
-  await expect(category.locator('.subject-badge')).toHaveText('9 个模拟');
+  await expect(category).toHaveAttribute('data-total', '10');
+  await expect(category.locator('.subject-badge')).toHaveText('10 个模拟');
   await expect(category.locator('.subject-progress')).toHaveCount(0);
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name: '关键词'}).fill('传动轴');
   await page.locator('#site-results a[href="simulation-world/line-shaft-workshop.html"]').click();
   await expect(page).toHaveTitle('共享传动轴工坊模拟 · 模拟世界');
   await page.getByRole('navigation', {name: '导航'}).getByRole('link', {name: '返回模拟世界'}).click();
-  await expect(page.locator('.topic-card')).toHaveCount(9);
+  await expect(page.locator('.topic-card')).toHaveCount(10);
 });
 
 test('先预测后揭晓，主轴、双机读数和真实 SVG 角度一致', async ({page}) => {
@@ -96,7 +96,7 @@ test('键盘和 320px 视角可完成预测、单步与返回目录', async ({pa
   await expect(page.locator('#angle-readout')).toContainText('机器 B 180°');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await page.getByRole('navigation', {name: '导航'}).getByRole('link', {name: '返回模拟世界'}).click();
-  await expect(page.locator('.topic-card')).toHaveCount(9);
+  await expect(page.locator('.topic-card')).toHaveCount(10);
 });
 
 test('播放、暂停、减少动态与页面隐藏不会自动恢复', async ({page}) => {

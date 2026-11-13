@@ -52,7 +52,7 @@ class PublishedVerifierTest(unittest.TestCase):
         self.manifest_path.write_text(json.dumps({**self.manifest, 'site_files_modified': False}))
 
     def test_clean_release_can_be_verified_under_subpath(self):
-        self.assertEqual(verifier.verify(self.base, self.sha, allow_http=True), 75)
+        self.assertEqual(verifier.verify(self.base, self.sha, allow_http=True), 78)
         result = subprocess.run(['python3', str(ROOT / 'scripts/verify_published_site.py'),
                                  '--base-url', self.base, '--expected-revision', self.sha,
                 '--allow-http-loopback', '--attempts', '1'], capture_output=True, text=True)

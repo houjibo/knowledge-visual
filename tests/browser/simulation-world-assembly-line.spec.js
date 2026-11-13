@@ -22,14 +22,14 @@ test('首页和分类提供工业场景且没有学段进度', async ({page}) =>
   const base = process.env.KV_PUBLISHED_BASE_URL || '/';
   await page.goto(base);
   const category = page.locator('[data-subject-category="simulation-world"]');
-  await expect(category).toHaveAttribute('data-total', '9');
+  await expect(category).toHaveAttribute('data-total', '10');
   await expect(category.locator('.subject-progress')).toHaveCount(0);
   await page.getByRole('combobox', {name:'学科', exact:true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name:'关键词'}).fill('流水线');
   await page.locator('#site-results a[href="simulation-world/assembly-line.html"]').click();
   await expect(page.getByRole('heading', {name:/工业流水线模拟/})).toBeVisible();
   await page.getByRole('link', {name:'返回模拟世界', exact:true}).click();
-  await expect(page.locator('.topic-card')).toHaveCount(9);
+  await expect(page.locator('.topic-card')).toHaveCount(10);
 });
 
 test('默认暂停且八件编号唯一，单步能观察队列和同秒转站', async ({page}) => {

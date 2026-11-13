@@ -9,15 +9,15 @@ const topic = process.env.KV_PUBLISHED_BASE_URL
 test('模拟世界分类可搜索凸轮送料，目录保留无学段场景', async ({page}) => {
   await page.goto(process.env.KV_PUBLISHED_BASE_URL || '/');
   const card = page.locator('[data-subject-category="simulation-world"]');
-  await expect(card).toHaveAttribute('data-total', '9');
-  await expect(card.locator('.subject-badge')).toHaveText('9 个模拟');
+  await expect(card).toHaveAttribute('data-total', '10');
+  await expect(card.locator('.subject-badge')).toHaveText('10 个模拟');
   await expect(card.locator('.subject-progress')).toHaveCount(0);
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name: '关键词'}).fill('凸轮');
   await page.locator('#site-results a[href="simulation-world/cam-factory.html"]').click();
   await expect(page.getByRole('heading', {name: '凸轮送料与工厂节拍'})).toBeVisible();
   await page.getByRole('navigation', {name: '导航'}).getByRole('link', {name: '返回模拟世界'}).click();
-  await expect(page.locator('.topic-card')).toHaveCount(9);
+  await expect(page.locator('.topic-card')).toHaveCount(10);
 });
 
 test('先预测再揭晓，角度、从动件高度和六件工件保持一致', async ({page}) => {

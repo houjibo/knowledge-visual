@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="预测蒸汽进入哪侧气缸，逐步观察活塞、十字头、曲柄和飞轮怎样把往复运动转为工厂转轴的旋转。">
+  <title>单缸蒸汽机动力路径模拟 · 模拟世界</title>
+  <style>
+    :root { color-scheme:light; --ink:#172c37; --muted:#526873; --paper:#f1f5f2; --panel:#fffefa; --line:#c5d4d2; --deep:#123b48; --teal:#086e70; --orange:#a85420; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; color:var(--ink); background:radial-gradient(circle at 5% 0,#dfeee9,transparent 35%),linear-gradient(145deg,#f3f6f2,#e9f0ef); font:15px/1.58 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; }
+    button, select, input { font:inherit; }
+    a { color:#075f73; }
+    :focus-visible { outline:3px solid #ba6a26; outline-offset:3px; }
+    .skip-link { position:absolute; top:-100px; left:12px; z-index:5; padding:9px 14px; background:white; }
+    .skip-link:focus { top:12px; }
+    .shell { width:min(1190px,100%); margin:auto; padding:20px clamp(12px,3vw,32px) 42px; }
+    .crumbs { display:flex; gap:8px; flex-wrap:wrap; align-items:center; color:var(--muted); font-size:13px; }
+    .crumbs a:last-of-type { margin-left:auto; }
+    .hero { margin:24px 0 17px; padding:clamp(24px,4vw,42px); border-radius:22px; background:linear-gradient(128deg,#153b49,#0c5961); color:white; box-shadow:0 18px 40px #143a4228; }
+    .eyebrow { margin:0; color:#bce8dc; font-size:12px; font-weight:800; letter-spacing:.14em; }
+    h1 { margin:8px 0 12px; font-size:clamp(2rem,5vw,3.1rem); line-height:1.18; }
+    h2 { margin:0 0 9px; font-size:1.25rem; line-height:1.35; }
+    h3 { margin:0 0 8px; font-size:1rem; }
+    p { margin:7px 0; }
+    .hero p { max-width:720px; color:#e4f3ef; }
+    .chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:19px; }
+    .chips span { border:1px solid #8abeb9; border-radius:999px; padding:4px 11px; font-size:13px; background:#ffffff16; }
+    .layout { display:grid; grid-template-columns:minmax(280px,.72fr) minmax(0,1.28fr); gap:16px; align-items:start; }
+    .panel { min-width:0; padding:20px; border:1px solid var(--line); border-radius:18px; background:var(--panel); box-shadow:0 8px 26px #17363b0c; }
+    .layout + .panel, .panel + .panel { margin-top:16px; }
+    .layout .panel + .panel { margin-top:0; }
+    .hint { color:var(--muted); font-size:13px; }
+    .field { margin:15px 0; }
+    label { display:block; font-weight:700; margin-bottom:5px; }
+    select, input[type=range] { width:100%; }
+    select { min-height:43px; padding:8px 12px; border:1px solid #a9c1bf; border-radius:10px; color:var(--ink); background:white; }
+    input[type=range] { accent-color:#0b7374; min-height:32px; }
+    .field-note { display:block; margin-top:4px; color:var(--muted); font-size:13px; }
+    button { min-height:43px; border:1px solid #95afb1; border-radius:10px; padding:8px 13px; background:#eef6f3; color:#163e45; font-weight:700; cursor:pointer; }
+    button:hover:not(:disabled) { background:#d9ebe7; }
+    button:disabled, select:disabled, input:disabled { opacity:.56; cursor:not-allowed; }
+    button.primary { background:#096c70; color:white; border-color:#096c70; }
+    button.primary:hover:not(:disabled) { background:#07555a; }
+    .controls { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 9px; }
+    .status { border-radius:12px; padding:11px 13px; background:#eaf4f0; border-left:4px solid #0c7272; font-weight:650; min-height:48px; }
+    .scene-wrap { width:100%; overflow-x:auto; border-radius:14px; background:#142f3a; border:1px solid #31555e; }
+    svg { display:block; width:100%; min-width:690px; height:auto; }
+    .scene-caption { color:var(--muted); font-size:13px; }
+    .metric-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:14px 0; }
+    .metric { border-radius:12px; background:#edf5f3; padding:11px 12px; min-width:0; }
+    dt { color:var(--muted); font-size:12px; }
+    dd { margin:3px 0 0; font-size:1.13rem; font-weight:800; overflow-wrap:anywhere; }
+    .callout { background:#fff2e7; border-left:4px solid #bd6b2d; padding:12px 15px; border-radius:10px; }
+    details { border:1px solid var(--line); border-radius:12px; padding:12px 15px; background:#f8fbf8; }
+    summary { cursor:pointer; font-weight:750; }
+    ul { padding-left:21px; }
+    footer { margin-top:22px; font-size:13px; color:var(--muted); }
+    @media (max-width:800px) { .layout { grid-template-columns:1fr; } .layout .panel + .panel { margin-top:0; } }
+    @media (max-width:520px) { .panel { padding:15px; } .metric-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .controls button { flex:1 1 43%; } }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="crumbs" aria-label="导航"><a href="../index.html">首页</a><span aria-hidden="true">›</span><a href="index.html">模拟世界</a><span aria-hidden="true">›</span><span aria-current="page">单缸蒸汽机</span><a href="line-shaft-workshop.html">下一站：共享传动轴工坊 →</a></nav>
+    <main id="main-content">
+      <header class="hero">
+        <p class="eyebrow">工业化动力 · 先预测再观察</p>
+        <h1>单缸蒸汽机动力路径</h1>
+        <p>蒸汽进入气缸一侧，推动活塞往复；活塞杆、十字头和连杆把运动传给曲柄与转轴。改变曲轴角度，看看进汽侧何时切换。</p>
+        <div class="chips"><span>左右交替进汽</span><span>45° 单步</span><span>两圈演示</span><span>无学段进度</span></div>
+      </header>
+      <div class="layout">
+        <section class="panel" aria-labelledby="controls-heading">
+          <h2 id="controls-heading">1 · 设定与预测</h2>
+          <p>观察曲轴起始角，再判断蒸汽进入活塞哪一侧。揭晓之前，图中的管路不显示答案。</p>
+          <div class="field"><label for="rpm-select">示意转速</label><select id="rpm-select" data-interactive disabled><option value="15">15 rpm</option><option value="30">30 rpm</option></select><span id="period-note" class="field-note">一圈需要 —</span></div>
+          <div class="field"><label for="angle-input">起始曲轴角度：<output id="angle-output" for="angle-input">0°</output></label><input id="angle-input" type="range" min="0" max="345" step="15" value="0" data-interactive disabled><span class="field-note">方向：从 0° 顺时针增加；0°、180° 是活塞换向点。</span></div>
+          <div class="field"><label for="intake-prediction">此刻哪一侧进汽？</label><select id="intake-prediction" data-interactive disabled><option value="">先选择</option><option value="left">活塞左侧</option><option value="right">活塞右侧</option></select></div>
+          <div class="controls"><button id="reveal-button" class="primary" type="button" data-interactive disabled>揭晓进汽侧</button><button id="step-button" type="button" data-interactive disabled>前进 45°</button><button id="play-button" type="button" data-interactive disabled>连续演示</button><button id="pause-button" type="button" data-interactive disabled>暂停</button><button id="reset-button" type="button" data-interactive disabled>回到起始角</button></div>
+          <p id="prediction-feedback" class="status" role="status">交互脚本未加载，当前为静态示意。</p>
+          <p id="runtime-status" class="hint" role="status">揭晓后可以单步或主动播放；动画初始暂停。</p>
+        </section>
+        <section class="panel" aria-labelledby="scene-heading">
+          <h2 id="scene-heading">2 · 观察动力路径</h2>
+          <div class="scene-wrap" tabindex="0" aria-label="蒸汽机图示，可横向滚动">
+            <svg id="engine-scene" viewBox="0 0 850 400" role="img" aria-label="蒸汽机静态示意：左侧热源、中央气缸活塞、右侧十字头连杆和飞轮">
+              <defs><marker id="flow-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#ffd894"/></marker></defs>
+              <rect width="850" height="400" fill="#142f3a"/>
+              <g fill="#cae5e3" font-family="sans-serif" font-size="16" font-weight="700"><text x="70" y="45" text-anchor="middle">热源 / 蒸汽</text><text x="225" y="45" text-anchor="middle">双作用气缸</text><text x="470" y="45" text-anchor="middle">十字头</text><text x="670" y="45" text-anchor="middle">曲柄 / 飞轮</text></g>
+              <rect x="25" y="150" width="82" height="125" rx="14" fill="#48606a" stroke="#b7d4d2" stroke-width="4"/><path d="M50 248 Q38 229 53 213 Q52 230 65 219 Q72 210 66 196 Q93 223 84 243 Q76 258 50 248" fill="#eea25c"/><text x="66" y="305" text-anchor="middle" fill="#d7e9e5" font-size="14">加热示意</text>
+              <path id="left-pipe" d="M107 172 H150 V165" fill="none" stroke="#729096" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+              <path id="right-pipe" d="M107 198 V94 H350 V165" fill="none" stroke="#729096" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="140" y="165" width="220" height="100" rx="5" fill="#294b54" stroke="#bad5d4" stroke-width="7"/>
+              <rect id="left-chamber" x="144" y="169" width="12" height="92" fill="#b0784a" opacity=".3"/>
+              <rect id="right-chamber" x="180" y="169" width="175" height="92" fill="#b0784a" opacity=".3"/>
+              <line x1="360" y1="215" x2="550" y2="215" stroke="#9bb4b9" stroke-width="4" stroke-dasharray="9 7"/>
+              <line id="piston-rod" x1="165" y1="215" x2="405" y2="215" stroke="#cbd6d4" stroke-width="12" stroke-linecap="round"/>
+              <rect id="piston" x="156" y="173" width="18" height="84" rx="3" fill="#f4dfbd" stroke="#c79352" stroke-width="3"/>
+              <line id="connecting-rod" x1="405" y1="215" x2="605" y2="215" stroke="#e4a768" stroke-width="13" stroke-linecap="round"/>
+              <circle id="crosshead" cx="405" cy="215" r="16" fill="#f5d293" stroke="#a66537" stroke-width="4"/>
+              <circle cx="670" cy="215" r="87" fill="none" stroke="#9bb9b8" stroke-width="17"/>
+              <line id="crank-arm" x1="670" y1="215" x2="605" y2="215" stroke="#c8a575" stroke-width="13" stroke-linecap="round"/>
+              <circle cx="670" cy="215" r="16" fill="#f4e6c5"/><circle id="crank-pin" cx="605" cy="215" r="11" fill="#ffe1a5" stroke="#8e6034" stroke-width="3"/>
+              <path d="M760 215 H826" stroke="#b9d7d2" stroke-width="12"/><text x="790" y="190" text-anchor="middle" fill="#dbefeb" font-size="15">转轴输出</text>
+              <g fill="#d5e9e5" font-family="sans-serif" font-size="14"><text x="160" y="340">进汽/排汽</text><text x="400" y="340">活塞杆 → 十字头 → 连杆</text><text x="650" y="340">旋转输出</text></g>
+              <text id="flow-label" x="225" y="133" text-anchor="middle" fill="#ffe5b7" font-size="15" font-weight="700">先预测进汽侧</text>
+            </svg>
+          </div>
+          <p class="scene-caption">示意图可在框内横向滚动；形状和颜色只帮助观察，读数与文字解释在下方。</p>
+        </section>
+      </div>
+      <section class="panel" aria-labelledby="results-heading">
+        <h2 id="results-heading">3 · 对照读数与解释</h2>
+        <dl class="metric-grid"><div class="metric"><dt>当前曲轴角</dt><dd id="angle-readout">0°</dd></div><div class="metric"><dt>进汽侧</dt><dd id="intake-readout">待预测</dd></div><div class="metric"><dt>活塞行程位置</dt><dd id="displacement-readout">待揭晓</dd></div><div class="metric"><dt>已演示时间</dt><dd id="elapsed-readout">0.00 s</dd></div></dl>
+        <p id="phase-explanation" class="callout">先选择进汽侧；揭晓后，观察蒸汽作用于活塞、连杆带动飞轮的方向。</p>
+        <p class="hint">比较：15 rpm 一圈 4 s，30 rpm 一圈 2 s。转速改变时，相同角度的活塞位置不变。</p>
+      </section>
+      <section class="panel" aria-labelledby="limits-heading">
+        <h2 id="limits-heading">历史背景与模型边界</h2>
+        <details><summary>这台示意机说明了什么？没有模拟什么？</summary>
+          <p>旋转式蒸汽机把热源产生的蒸汽引向气缸，活塞的往复运动经过活塞杆、十字头和连杆使曲柄转动，转轴可再把运动传给工厂机器。这是动力路径示意，不复原某一台历史机器。可继续查看<a href="line-shaft-workshop.html">共享传动轴工坊</a>，观察转轴运动如何分配给多台机器。</p>
+          <p>本模型把左右进汽切换固定在曲轴 0° 和 180°，转速由教学时钟直接设定。死点处活塞瞬时停止并换向；“下一半圈向右/向左”说的是随后的运动。图中加热、进汽和排汽管路只是概念符号。</p>
+          <p>未计算蒸汽压力/流量、膨胀、冷凝、热效率、功率、飞轮惯性、真实阀门提前角、密封结构、负载和机械损失。图中的尺寸是绘图单位，不是设备尺寸；本页不能用于真实蒸汽机设计或操作。</p>
+          <ul><li><a href="https://www.asme.org/about-asme/engineering-history/landmarks/111-boulton-watt-rotative-steam-engine">ASME · Boulton & Watt 旋转蒸汽机史料</a></li><li><a href="https://www.asme.org/getmedia/464cbbcc-e6db-47c1-a469-e4e0d88f3b41/35.pdf">ASME · Hacienda La Esperanza 蒸汽机与糖厂</a></li></ul>
+        </details>
+      </section>
+    </main>
+    <footer><a href="index.html">← 返回模拟世界</a> · 本场景不计入学科完成进度</footer>
+  </div>
+  <script src="assets/steam-engine-model.js"></script>
+  <script src="assets/steam-engine.js"></script>
+</body>
+</html>

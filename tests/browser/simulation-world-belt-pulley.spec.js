@@ -15,15 +15,15 @@ async function predict(page, speed, direction) {
 test('第七个无学段模拟可从首页分类搜索和目录找到', async ({page}) => {
   await page.goto(process.env.KV_PUBLISHED_BASE_URL || '/');
   const category = page.locator('[data-subject-category="simulation-world"]');
-  await expect(category).toHaveAttribute('data-total', '9');
-  await expect(category.locator('.subject-badge')).toHaveText('9 个模拟');
+  await expect(category).toHaveAttribute('data-total', '10');
+  await expect(category.locator('.subject-badge')).toHaveText('10 个模拟');
   await expect(category.locator('.subject-progress')).toHaveCount(0);
   await page.getByRole('combobox', {name:'学科', exact:true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name:'关键词'}).fill('皮带');
   await page.locator('#site-results a[href="simulation-world/belt-pulley.html"]').click();
   await expect(page.getByRole('heading', {name:'皮带与带轮模拟'})).toBeVisible();
   await page.getByRole('navigation', {name:'导航'}).getByRole('link', {name:'返回模拟世界'}).click();
-  await expect(page.locator('.topic-card')).toHaveCount(9);
+  await expect(page.locator('.topic-card')).toHaveCount(10);
   await expect(page.locator('.topic-card[href="belt-pulley.html"]')).toContainText('柔性连接');
 });
 

@@ -173,7 +173,7 @@ test('公网发布版本、万有引力及计算机和人工智能交互可用',
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-middle-progress'))['data-minimization']))
     .toBe(true);
   await page.goto(new URL('', base).href, {waitUntil: 'domcontentloaded'});
-  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('9 个模拟');
+  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('10 个模拟');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name: '关键词'}).fill('机械臂');
   await page.locator('#site-results a[href="simulation-world/robot-arm.html"]').click();
@@ -245,7 +245,7 @@ test('公网共享传动轴工坊可预测两台机器并单步观察', async ({
   const failures = [];
   page.on('pageerror', error => failures.push(error.message));
   await page.goto(new URL('', baseValue).href, {waitUntil: 'domcontentloaded'});
-  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('9 个模拟');
+  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('10 个模拟');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
   await page.getByRole('searchbox', {name: '关键词'}).fill('传动轴');
   await page.locator('#site-results a[href="simulation-world/line-shaft-workshop.html"]').click();
@@ -262,6 +262,27 @@ test('公网共享传动轴工坊可预测两台机器并单步观察', async ({
   await page.locator('#b-prediction').selectOption('faster');
   await page.locator('#reveal-button').click();
   await expect(page.locator('#machine-b-speed')).toHaveText('120 rpm');
+  expect(failures).toEqual([]);
+});
+
+test('公网单缸蒸汽机可预测进汽并观察活塞和曲柄', async ({page}) => {
+  expect(baseValue, '发布验收需指定 KV_PUBLISHED_BASE_URL').toBeTruthy();
+  expect(expectedRevision, '发布验收需指定 GITHUB_SHA').toMatch(/^[a-f0-9]{40}$/);
+  const failures = [];
+  page.on('pageerror', error => failures.push(error.message));
+  await page.goto(new URL('', baseValue).href, {waitUntil: 'domcontentloaded'});
+  await expect(page.locator('[data-subject-category="simulation-world"] .subject-badge')).toHaveText('10 个模拟');
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('simulation-world');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('蒸汽机');
+  await page.locator('#site-results a[href="simulation-world/steam-engine.html"]').click();
+  await expect(page).toHaveTitle('单缸蒸汽机动力路径模拟 · 模拟世界');
+  await page.locator('#intake-prediction').selectOption('left');
+  await page.locator('#reveal-button').click();
+  await expect(page.locator('#prediction-feedback')).toContainText('预测正确');
+  await expect(page.locator('#piston')).toHaveAttribute('x', '156');
+  for (let i = 0; i < 4; i++) await page.locator('#step-button').click();
+  await expect(page.locator('#intake-readout')).toHaveText('右侧');
+  await expect(page.locator('#piston')).toHaveAttribute('x', '286');
   expect(failures).toEqual([]);
 });
 

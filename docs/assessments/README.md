@@ -1,6 +1,6 @@
 # 站点评估基线
 
-[页面清单](page-inventory.json) 于 2026-11-13 根据当前仓库重新生成：包含 377 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
+[页面清单](page-inventory.json) 于 2026-11-13 根据当前仓库重新生成：包含 378 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
 
 重新生成：`python3 scripts/inventory_pages.py --output docs/assessments/page-inventory.json`；运行 `python3 scripts/inventory_pages.py --check docs/assessments/page-inventory.json` 检查清单是否过期，运行 `python3 tests/inventory_test.py` 验证基本解析及导航行为。生成结果按路径稳定排序，无时间戳，可用版本差异检查变化。
 
@@ -72,3 +72,5 @@
 [高中计数原理分类与分步核查](high-counting-2026-11-13.md)记录加法/乘法条件、路线图文、排列组合键盘操作和完成保存反馈的修复与公开验收。
 
 [共享传动轴工坊核查](line-shaft-workshop-2026-11-13.md)记录双机理想传动、预测、图示、无障碍控制和发布验收。
+
+[单缸蒸汽机动力路径核查](steam-engine-2026-11-13.md)记录理想双作用气缸、几何、交互和发布验收状态。
