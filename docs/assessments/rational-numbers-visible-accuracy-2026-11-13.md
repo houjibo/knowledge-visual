@@ -2,7 +2,7 @@
 
 日期：2026-11-13。依据[教育部义务教育数学课程标准（2022 年版）](https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220510531636118932.pdf)第四学段“数与式／有理数”和[五条要求的首轮映射](middle-math-rational-crosswalk-2026-11-13.md)。行为契约见[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-13-middle-rational-numbers-visible-accuracy/proposal.md)。
 
-此处课程映射是 2022 版历史快照；[2025 版标准](../plans/compulsory-2025-standard-version-audit.md)尚待逐条重核，页面交互验收结论仍按当时测试记录保留。
+此处课程映射是 2022 版历史快照；[2025 版有理数五条内容要求复核](middle-ce25-content-recheck-2026-11-13.md)已确认保守状态可沿用。页面交互验收结论按当时测试记录保留。
 
 ## 已改行为及教学边界
 

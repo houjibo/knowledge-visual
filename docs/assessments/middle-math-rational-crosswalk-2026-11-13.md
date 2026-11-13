@@ -2,7 +2,7 @@
 
 核查日期：2026-11-13。[教育部数学课程标准（2022 年版）](https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220510531636118932.pdf)第四学段“数与式／有理数”列出五条内容要求；按站内[有理数页面](../../math/middle/rational-numbers.html)当前代码逐项检查，结果见[机器可核的对照表](../plans/curriculum-crosswalks/middle-math-rational-numbers.json)。这是**五条内容要求的页面审计**，不含对应学业要求、全册教材目录或其他初中数学内容，不能据此计算学段或全站覆盖率。
 
-**版本状态：历史快照。**[2025 年日常修订版](../plans/compulsory-2025-standard-version-audit.md)已定位；下表只说明 `CE22` 五条与本站当时页面的对应关系。须先比对新旧原文，再更新现行条款数、要求 ID 与覆盖状态。
+**版本状态：历史快照。**[2025 年日常修订版复核](middle-ce25-content-recheck-2026-11-13.md)已另建 `CE25` 清单；下表只说明 `CE22` 五条与本站当时页面的对应关系，不能与现行清单相加。新版五条学习要求经比对未变，页面审计的保守状态已在限定范围内复核。
 
 | 要求 | 当前状态 | 主要证据缺口 |
 | --- | --- | --- |
@@ -14,4 +14,4 @@
 
 首轮汇总：`0 已验证 + 3 部分 + 2 缺失 = 5 条`。章节示例采用[人教版七上已见章次](../plans/pep-middle-math-grade7-up-audit.md)定位；第一、二章不等同于上述五条标准要求，旧版章节号不得用于当前教材映射。
 
-已按[归档 OpenSpec](../../openspec/changes/archive/2026-11-13-middle-rational-numbers-visible-accuracy/proposal.md)修正页面中温度、绝对值和计算器的可见错误，详见[页面核查记录](rational-numbers-visible-accuracy-2026-11-13.md)。下一批先比对 `CE22→CE25`，再针对新版确认的乘方、数轴比较与情境列式需求发起小变更。每项提升状态前须检查内容解释、实际操作反馈与浏览器验证；只修复页面错误不自动把课标要求判为“已验证”。
+已按[归档 OpenSpec](../../openspec/changes/archive/2026-11-13-middle-rational-numbers-visible-accuracy/proposal.md)修正页面中温度、绝对值和计算器的可见错误，详见[页面核查记录](rational-numbers-visible-accuracy-2026-11-13.md)。下一批针对乘方、数轴比较与情境列式需求发起小变更，并补学业要求。每项提升状态前须检查内容解释、实际操作反馈与浏览器验证；只修复页面错误不自动把课标要求判为“已验证”。

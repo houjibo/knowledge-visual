@@ -116,7 +116,7 @@
 
 ## 课程依据
 
-- [义务教育信息科技课程标准 2025 年日常修订版](compulsory-2025-standard-version-audit.md)现为待重核的课程来源；[教育部 2022 年原件](https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220420582361024968.pdf)只作历史对照，原定的数据、算法、网络、信息处理和安全方向须逐条复核。
+- [义务教育信息科技课程标准 2025 年日常修订版](compulsory-2025-standard-version-audit.md)是现行课程来源；[第四学段三个模块 19 条内容要求](../assessments/middle-ce25-content-recheck-2026-11-13.md)已复核，[教育部 2022 年原件](https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220420582361024968.pdf)保留作历史对照，其他学段与学业质量仍须逐条核。
 - CSTA PK-12 计算机科学标准提供算法、编程、数据、系统、安全、人本设计与伦理等 K–12 参考。[CSTA](https://csteachers.org/pk12standards/about/)
 - Microsoft MakeCode 的 [repeat 官方说明](https://makecode.microbit.org/blocks/loops/repeat)将该结构定义为按指定次数运行一段程序；2026-11-12 已核验该定义及重复四次的示例，作为循环指令工坊中“重复次数与程序片段”对应关系的依据。页面说明不替代本站关卡、年龄适配和学习效果的验证。
 - Microsoft MakeCode 的 [if 官方说明](https://makecode.microbit.org/blocks/logic/if)说明条件为真时执行 `if` 中的代码，条件相反时可执行 `else`；2026-11-12 已核验，作为条件分支主题的语义依据。地图、完成门槛和适龄性由本站独立设计并验证，不是该资料的认证结论。

@@ -2,7 +2,7 @@
 
 核查日期：2026-11-13。范围：[消息传输实验室](../../computer/middle/message-transfer.html)、[纯模型](../../computer/middle/assets/message-transfer-model.js)、[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-13-middle-computer-message-transfer/proposal.md)。对应课程映射 `CE22-IT-L4-INET-04` 仍为**部分覆盖**，见[逐项对照](middle-information-technology-crosswalk-2026-11-13.md)。
 
-此处课程映射是 2022 版历史快照；[2025 版标准](../plans/compulsory-2025-standard-version-audit.md)尚待逐条重核，页面交互验收结论仍按当时测试记录保留。
+此处课程映射是 2022 版历史快照；[2025 版三个模块的内容要求复核](middle-ce25-content-recheck-2026-11-13.md)确认 `CE25-IT-L4-INET-04` 仍为部分覆盖。页面交互验收结论按当时测试记录保留。
 
 ## 内容与模型
 
