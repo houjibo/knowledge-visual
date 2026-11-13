@@ -1,6 +1,6 @@
 # 初中传感与控制实验室核查
 
-核查日期：2026-11-14。范围为[传感与控制实验室](../../computer/middle/iot-sensor-feedback.html)、[纯模型](../../computer/middle/assets/iot-sensor-feedback-model.js)及[OpenSpec 变更](../../openspec/changes/middle-iot-sensor-feedback/proposal.md)。课程来源是[义务教育信息科技课程标准 2025 年日常修订版](https://fxzx.qpedu.cn/wcm.files/upload/CMSfxzx/202603/202603180409032.pdf)第四学段物联网实践与探索内容要求（2）—（4）及同模块学业要求（印刷页 37—38）；2022 版[教育部原件](https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220420582361024968.pdf)作历史对照。物联网组成参考[NIST SP 800-183](https://csrc.nist.gov/pubs/sp/800/183/final)与[W3C Web of Things Architecture 1.1](https://www.w3.org/TR/wot-architecture11/)。
+核查日期：2026-11-14。范围为[传感与控制实验室](../../computer/middle/iot-sensor-feedback.html)、[纯模型](../../computer/middle/assets/iot-sensor-feedback-model.js)及[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-14-middle-iot-sensor-feedback/proposal.md)。课程来源是[义务教育信息科技课程标准 2025 年日常修订版](https://fxzx.qpedu.cn/wcm.files/upload/CMSfxzx/202603/202603180409032.pdf)第四学段物联网实践与探索内容要求（2）—（4）及同模块学业要求（印刷页 37—38）；2022 版[教育部原件](https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220420582361024968.pdf)作历史对照。物联网组成参考[NIST SP 800-183](https://csrc.nist.gov/pubs/sp/800/183/final)与[W3C Web of Things Architecture 1.1](https://www.w3.org/TR/wot-architecture11/)。
 
 ## 学习任务和证据
 
@@ -12,5 +12,6 @@
 
 - 纯模型校验两轮反馈、消息丢失的反事实、阈值与范围边界，3/3 通过。
 - 专项浏览器 14/14（桌面和移动各 7 项）检查完整四环、三场景完成门槛、错误预测、存储失败重试、搜索及目录计数、320px、键盘、直接文件和发布子路径；受首页分母影响的相邻回归与专项共 228 通过、4 项按原配置跳过。
-- 完整 `npm run check` 通过：功能回归 2,244 通过、6 项按配置跳过；开发站 380 页加载、发布包关键流程 22 项及发布包 380 页加载全部通过。公开发布结果在变更 tasks 中追加。
+- 完整 `npm run check` 通过：功能回归 2,244 通过、6 项按配置跳过；开发站 380 页加载、发布包关键流程 22 项及发布包 380 页加载全部通过。
+- 提交 `777c24a1ac283c83d6948174a602660ba34ec1d2` 的 [Actions #320](https://github.com/houjibo/knowledge-visual/actions/runs/43468680684) 七项成功；[公网版本清单](https://houjibo.github.io/knowledge-visual/release-version.json?verify=777c24a) 的 revision 精确匹配、`site_files_modified=false`。公网专项实际操作 4 项通过、3 项按配置跳过；[本地页](http://127.0.0.1:4173/computer/middle/iot-sensor-feedback.html)与[公网页](https://houjibo.github.io/knowledge-visual/computer/middle/iot-sensor-feedback.html?verify=777c24a)已同时打开供验收。
 - 未验证真实传感器、设备连接、实时网络、实物实验规程、屏幕阅读器完整朗读或真实学习者对物联网的理解。后续需按适用地区教材与课标先补设备搭建、数据汇集和固定规则与 AI 的区别。
