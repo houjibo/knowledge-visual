@@ -142,6 +142,7 @@
   - 固定随机数验证球数组成变更清空、单次及多次抽样、频率点、刻度、键盘滑块和移动视口滚动；题目内容及完整无障碍未全面核验。 [probability-experiment.spec.js](../../tests/browser/probability-experiment.spec.js)
 - [有理数 - 初中数学七年级](../../math/middle/rational-numbers.html)
   - 桌面与移动视口检查-50至100°C示例/滑块/刻度、键盘入口、绝对值界限、负数及零的四则运算、除零与近似反馈、三题预测和不同探索完成门槛、本机写入失败重试、320px与file直开；真实学习者、屏幕阅读器及全部课标要求另核。 [middle-rational-numbers-visible-accuracy.spec.js](../../tests/browser/middle-rational-numbers-visible-accuracy.spec.js)
+  - 桌面与移动视口检查七个有限乘方案例的精确结果、因数个数、括号内外负号、分数两步预测、错答重试、主动展开、切换清理、320px、键盘按钮与file直开；自由构造、真实学习者理解和整页屏幕阅读器仍待核。 [middle-rational-powers-explorer.spec.js](../../tests/browser/middle-rational-powers-explorer.spec.js)
 - [20以内进位加法与退位减法](../../math/topics/20-within-addition-subtraction/index.html)
   - 固定随机边界、凑十破十的正确反馈和重复计分、十关完成及重启；未覆盖整页视觉内容。 [carry-borrow-practice.spec.js](../../tests/browser/carry-borrow-practice.spec.js)
 - [24时计时法](../../math/topics/24h-time/index.html)
