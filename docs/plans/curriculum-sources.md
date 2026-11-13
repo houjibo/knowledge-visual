@@ -1,0 +1,26 @@
+# 课程标准与教材来源登记
+
+核查日期：2026-11-13。用于[全站课程差距矩阵](curriculum-gap-map.md)和[OpenSpec 提案](../../openspec/changes/curriculum-source-gap-baseline/proposal.md)。只索引公开的官方文件、经批准的教材目录和课程提供方页面，不保存或转载教科书正文。站点不是教育部或出版社认证课程。
+
+## 来源层级与版本
+
+| ID | 适用范围 | 已查到的来源 | 在本站的用途与边界 |
+| --- | --- | --- | --- |
+| CE22 | 小学、初中 | [教育部《义务教育课程方案和课程标准（2022年版）》通知及分科附件](https://www.moe.gov.cn/srcsite/A26/s8001/202204/t20220420_619921.html)，其中已核对[数学标准修订稿 PDF](https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220510531636118932.pdf)、[化学标准 PDF](https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020230605524875861384.pdf)、[信息科技标准 PDF](https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220420582361024968.pdf)；通知列出科学与物理标准 | 数学覆盖一至九年级；科学主要小学，物理和化学主要初中；信息科技面向三至八年级。须按分科原文和学段要求逐条拆分，不能把目录页标题当作完成证据。 |
+| HS20 | 高中 | [教育部《普通高中课程方案和各学科课程标准（2017年版2020年修订）》通知](https://www.moe.gov.cn/srcsite/A26/s8001/202006/t20200603_462199.html)；人民教育出版社提供的[分科标准入口](https://www.pep.com.cn/xw/zt/rjwy/gzkb2020/)及[数学](https://www.pep.com.cn/xw/zt/rjwy/gzkb2020/202205/P020220517519489596282.pdf)、[物理](https://www.pep.com.cn/xw/zt/rjwy/gzkb2020/202205/P020220517520664858048.pdf)、[化学](https://www.pep.com.cn/xw/zt/rjwy/gzkb2020/202205/P020220517517668288401.pdf) PDF | 将必修与选择性必修分开；本站首轮以必修为共同基线。信息技术中的“人工智能初步”不等于独立高中 AI 学科的全部内容。 |
+| AI25 | 小学、初中、高中 AI | [教育部基础教育教学指导委员会《中小学人工智能通识教育指南（2025年版）》由中国教育学会刊载](https://www.cse.edu.cn/index/detail.html?category=31&id=4240)，以及[教育部的学段部署](https://www.moe.gov.cn/jyb_xwfb/gzdt_gzdt/s5987/202412/t20241202_1165500.html) | AI 是本站独立导航类目；基础教育的国家课程仍需和 CE22 信息科技、HS20 信息技术区分。指南的小学体验、初中原理/应用、高中系统/创新分层用于学习目标，不把本站类目称为全国独立必修学科。 |
+| BOOK-CE | 小学、初中教材版本 | [教育部 2024 年义务教育国家课程教学用书目录（按 2022 标准修订）](https://www.moe.gov.cn/srcsite/A26/s8001/202408/W020240805496325238752.pdf)；[教材选用管理办法](https://www.moe.gov.cn/srcsite/A26/moe_714/202303/t20230320_1437577.html) | 目录说明哪些版本/册次获准使用，不提供每册章节目标。正式逐章比对须记录地区、六三/五四学制、出版社、册次和版本；尚未选定站点统一教材版本。 |
+| BOOK-HS | 高中教材版本 | [教育部 2023 年中小学教学用书目录通知](https://www.moe.gov.cn/srcsite/A26/s8001/202305/t20230506_1058493.html)说明依 2017 标准修订的高中必修、选择性必修教材目录及并行过渡；[人教社高中教材介绍](https://www.pep.com.cn/xw/zt/rjwy/rjsd11tgzjksjs/) | 目录是版本清单，不等于教材正文或本站已采用的章次。先按国家标准建主线，再选一版公开目录作为章节索引；数学 A/B 等版本不能混算。 |
+| UNI-M | 大学数学参考 | MIT OpenCourseWare [单变量微积分大纲](https://ocw.mit.edu/courses/18-01sc-single-variable-calculus-fall-2010/pages/syllabus/)、[线性代数大纲](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/pages/syllabus/) | 代表课程，不是全国统一大学数学大纲；需再界定本站大学数学的基础/拓展轨。 |
+| UNI-P | 大学物理参考 | MIT OpenCourseWare [经典力学大纲](https://ocw.mit.edu/courses/8-01sc-classical-mechanics-fall-2016/pages/syllabus/)及其[开放教材目录](https://ocw.mit.edu/courses/8-01sc-classical-mechanics-fall-2016/pages/online-textbook/) | 仅作为大学物理基础课程的一条参考，电磁、热学和近代物理须另补课程来源。 |
+| UNI-C | 大学化学参考 | MIT OpenCourseWare [化学科学原理大纲](https://ocw.mit.edu/courses/5-111sc-principles-of-chemical-science-fall-2014/pages/syllabus/) | 含原子、键、热力学、平衡、氧化还原与动力学的基础课程参考；本站大学化学还有拓展主题，须补对应来源。 |
+| UNI-CS | 大学计算机与 AI 参考 | [ACM／IEEE-CS／AAAI CS2023](https://csed.acm.org/)及[知识领域列表](https://csed.acm.org/knowledge-areas/) | 专业课程建议而非某校必修清单；计算机按软件、系统、数据、网络、安全等领域盘点；AI 同时参考其人工智能知识领域，并与计算机重叠单元建立一次映射、多入口说明。 |
+
+教育部[本科专业类教学质量国家标准的官方答复](https://www.moe.gov.cn/jyb_xxgk/xxgk_jyta/jyta_gaojiaosi/202201/t20220106_592704.html)说明该标准给出各专业类核心课程体系建议。大学四类课程在未取得具体版本、专业培养方案或公开课程大纲前只能用代表课程做范围定义；不把 MIT 或 CS2023 当作中国所有高校的共同必修要求。
+
+## 下一轮来源核对
+
+1. 从 CE22 和 HS20 的**原始标准内容要求与学业质量**提取稳定编号；分清必修、选择性必修、选修，不直接按教材一章算一条学习目标。
+2. 按教育部教材目录选定一套可公开引用的出版社/版本/册次目录，核查本站既有主题是否跨版混用。书籍正文和插图只链接合法页面，不在仓库复制。
+3. 为大学数学、物理、化学补多个基础与拓展课程大纲，并记录课程年份；为 AI 用 2025 指南和 CS2023 分别构建中小学/大学映射。
+4. 定期检查来源是否更新、链接是否仍可访问；来源变动时保留旧版本和重新映射任务。

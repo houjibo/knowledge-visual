@@ -29,6 +29,7 @@
 
 - 保持 `math/`、`physics/`、`chemistry/`、`science/`、`computer/` 和 `ai/` 为学科目录；`simulation-world/` 独立组织模拟场景，不继承学段和学科进度；旧 `computer-ai/` 地址保留兼容页。
 - 计算机和人工智能后续课程分别以[计算机课程设计](computer-curriculum.md)和[人工智能课程设计](ai-curriculum.md)为地图；每次按 OpenSpec change 小步加入具体主题。
+- 六学科四阶段的课程范围与来源采用[全站课程差距矩阵](curriculum-gap-map.md)和[来源登记](curriculum-sources.md)追踪；页面数量只表明供给规模，正式覆盖率须由逐条课程要求和验证证据计算。
 - 评估统一主题元数据：至少覆盖稳定标识、标题、学科、学段、页面路径；别名、目标、先修关系和交互类型按证据扩展。先在一个学科试用并验证离线加载、路径一致性和维护成本，再决定是否推广或生成目录；不要同时维护多份无校验的真相。
 - 把可复用但确实一致的交互、样式和进度能力逐步抽到就近的 `assets/`；在行为刻画和引用分析之后合并，避免破坏自包含页面或 `file://`。
 - `docs/` 存放长期设计、约束、工作流和路线图；`openspec/specs/` 是已归档行为契约，`openspec/changes/` 是单个增量及历史；`scripts/` 放静态检查，`tests/` 放测试。新增入口在 [AGENTS.md](../../AGENTS.md) 只加索引。
@@ -109,6 +110,8 @@
 4. 每完成切片更新本计划中的阶段状态和差距；当用户需求或证据改变时重新排序。定期清理过期假设，保持 AGENTS.md 为索引。
 
 ## 当前队列
+
+**优先新增：**按[课程来源与全站差距矩阵](curriculum-gap-map.md)完成六学科四阶段的逐条标准映射和教材版本选择；先校准高中数学与初中计算机，再按差距和学习价值发起独立小变更。页面数不作为正式覆盖率。
 
 1. [初中质量与密度](../assessments/middle-mass-density-2026-11-12.md)的键盘、参考密度、图示和保存反馈，以及[天平称量与双任务门槛](../assessments/mass-density-balance-2026-11-13.md)，均已通过主分支Actions和公网验收；后续以真实学习者反馈决定下一步教学改进。
 2. 根据 [逐主题交互证据](../assessments/interaction-coverage.md)、[交互风险线索](../assessments/interaction-risks.md) 和 [差距台账](../gaps.md) 优先处理尚未覆盖的关键学习操作与可能阻塞的随机生成；近期已完成[高中有机化学的主题键盘入口、图文一致和保存反馈](../assessments/organic-2026-11-13.md)，并新增[共享传动轴工坊](../assessments/line-shaft-workshop-2026-11-13.md)。本轮[高中计数原理的分类/分步图文、键盘与完成反馈](../assessments/high-counting-2026-11-13.md)已通过本地、Actions 与公网验收；后续继续按证据选择仍阻碍学习的主题。已登记部分证据不等于主题已完整验收。
