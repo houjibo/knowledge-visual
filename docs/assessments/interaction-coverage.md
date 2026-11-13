@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：345；已登记部分交互证据：205；尚未登记：140。
+主题总数：345；已登记部分交互证据：206；尚未登记：139。
 
 ## 已登记部分交互证据
 
@@ -140,6 +140,8 @@
 - [概率初步 · 初中数学互动可视化](../../math/middle/probability-intro.html)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
   - 固定随机数验证球数组成变更清空、单次及多次抽样、频率点、刻度、键盘滑块和移动视口滚动；题目内容及完整无障碍未全面核验。 [probability-experiment.spec.js](../../tests/browser/probability-experiment.spec.js)
+- [有理数 - 初中数学七年级](../../math/middle/rational-numbers.html)
+  - 桌面与移动视口检查-50至100°C示例/滑块/刻度、键盘入口、绝对值界限、负数及零的四则运算、除零与近似反馈、三题预测和不同探索完成门槛、本机写入失败重试、320px与file直开；真实学习者、屏幕阅读器及全部课标要求另核。 [middle-rational-numbers-visible-accuracy.spec.js](../../tests/browser/middle-rational-numbers-visible-accuracy.spec.js)
 - [20以内进位加法与退位减法](../../math/topics/20-within-addition-subtraction/index.html)
   - 固定随机边界、凑十破十的正确反馈和重复计分、十关完成及重启；未覆盖整页视觉内容。 [carry-borrow-practice.spec.js](../../tests/browser/carry-borrow-practice.spec.js)
 - [24时计时法](../../math/topics/24h-time/index.html)
@@ -574,7 +576,6 @@
 - [一元二次方程 - 初中数学九年级](../../math/middle/quadratic-equation.html)
 - [二次函数 - 初中数学九年级](../../math/middle/quadratic-function.html)
 - [二次根式 - 初中数学九年级](../../math/middle/quadratic-radicals.html)
-- [有理数 - 初中数学七年级](../../math/middle/rational-numbers.html)
 - [实数 - 初中数学七年级](../../math/middle/real-numbers.html)
 - [旋转 - 初中数学九年级](../../math/middle/rotation.html)
 - [相似 - 初中数学九年级](../../math/middle/similarity.html)
