@@ -16,6 +16,9 @@ def check_crosswalk(path: Path) -> None:
     assert data.get("id") and data.get("scope") and data.get("source_version"), path
     assert data.get("source_url", "").startswith("https://"), path
     assert data.get("review_date") and data.get("review_level"), path
+    assert data.get("baseline_status") in {"current", "historical"}, f"{path}: invalid baseline_status"
+    if data["baseline_status"] == "historical":
+        assert data.get("successor_source_id"), f"{path}: historical map needs successor_source_id"
     requirements = data.get("requirements")
     assert isinstance(requirements, list) and requirements, f"{path}: empty requirements"
     seen = set()
@@ -42,7 +45,7 @@ def check_crosswalk(path: Path) -> None:
             assert (ROOT / target).is_file(), f"{identifier}: missing evidence {item}"
     expected = {key: counts[key] for key in STATUSES}
     assert data.get("summary") == expected, f"{path}: summary {data.get('summary')} != {expected}"
-    print(f"{path.relative_to(ROOT)}: {len(requirements)} requirements, "
+    print(f"{path.relative_to(ROOT)} ({data['baseline_status']}): {len(requirements)} requirements, "
           f"{counts['verified']} verified, {counts['partial']} partial, {counts['missing']} missing")
 
 

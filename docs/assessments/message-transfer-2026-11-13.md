@@ -2,6 +2,8 @@
 
 核查日期：2026-11-13。范围：[消息传输实验室](../../computer/middle/message-transfer.html)、[纯模型](../../computer/middle/assets/message-transfer-model.js)、[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-13-middle-computer-message-transfer/proposal.md)。对应课程映射 `CE22-IT-L4-INET-04` 仍为**部分覆盖**，见[逐项对照](middle-information-technology-crosswalk-2026-11-13.md)。
 
+此处课程映射是 2022 版历史快照；[2025 版标准](../plans/compulsory-2025-standard-version-audit.md)尚待逐条重核，页面交互验收结论仍按当时测试记录保留。
+
 ## 内容与模型
 
 - 页面用浏览器 `TextEncoder` 和 `TextDecoder` 实际编码、还原 UTF-8；`AI!` 对应 `41 49 21`，“你好”对应 `E4 BD A0 E5 A5 BD`。汉字的字节跨越本页 2 字节教学块，接收端必须等完整有序字节齐备才解码。
