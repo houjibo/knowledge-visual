@@ -273,7 +273,7 @@ test('桌面能在同一操作区比较地图、规则与最近判断快照', as
 test('首页、小学目录及搜索可发现分支主题并汇总实际完成', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现由发布子路径回归核查');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total','10');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total','11');
   await page.locator('.subject-card[href="computer/index.html"]').click();
   await page.locator('a[href="primary/index.html"]').click();
   await expect(page.locator('#stage-progress')).toContainText('0/5');
@@ -283,7 +283,7 @@ test('首页、小学目录及搜索可发现分支主题并汇总实际完成',
   await expect(page.locator('#stage-progress')).toContainText('1/5');
   await expect(page.locator('[data-topic-slug="conditional-robot"] [data-completion]')).toContainText('已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/10');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/11');
   await page.getByRole('combobox',{name:'学科',exact:true}).selectOption('computer');
   await page.getByRole('combobox',{name:'学段',exact:true}).selectOption('primary');
   await page.getByRole('searchbox',{name:'关键词'}).fill('条件分支');

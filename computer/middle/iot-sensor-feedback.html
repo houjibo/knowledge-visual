@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="逐步观察虚构湿度传感器、消息、控制命令和水泵反馈，理解物联网的数据链。">
+  <title>传感与控制实验室 · 初中计算机</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .hero { background: linear-gradient(135deg, #174668, #167870); }
+    .hero .eyebrow { color: #d2f8ee; }
+    .hero p { color: #f1fffc; }
+    .setup { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .setup label, .prediction { display: grid; gap: 6px; font-weight: 700; }
+    select, input[type="number"] { width: 100%; min-height: 44px; padding: 8px; border: 1px solid #74879b; border-radius: 9px; background: white; color: #1d2940; font: inherit; }
+    .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+    .flow-box { min-width: 0; padding: 13px; border: 1px solid #cbdde5; border-radius: 12px; background: #f4f9fb; }
+    .flow-box.revealed { border-color: #13735c; background: #e6f5ed; }
+    .flow-box h3 { margin: 0 0 6px; font-size: 1rem; }
+    .flow-box p { margin: 0; overflow-wrap: anywhere; }
+    .reading { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .reading strong { font-size: 1.6rem; }
+    progress { width: min(260px, 100%); height: 18px; accent-color: #167870; }
+    .feedback { margin: 10px 0; padding: 10px 12px; border-radius: 9px; background: #e9f1f7; }
+    .feedback.success { background: #e0f4e9; }
+    .feedback.error { background: #fff0e8; }
+    .challenge-list { padding-left: 1.4rem; }
+    .challenge-list li { margin: 5px 0; }
+    .challenge-list span { font-weight: 800; }
+    .footer-nav { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+    details > summary { cursor: pointer; font-weight: 700; }
+    @media (max-width: 760px) { .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 520px) { .setup, .flow { grid-template-columns: 1fr; } }
+    @media (max-width: 360px) { .shell { width: min(100% - 20px, 960px); } .panel, .hero { padding: 16px; } }
+  </style>
+</head>
+<body data-subject="computer" data-stage="middle">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机</a><span aria-hidden="true">›</span><a href="index.html">初中</a><span aria-hidden="true">›</span><span aria-current="page">传感与控制实验室</span></nav>
+    <main id="main-content">
+      <header class="hero"><p class="eyebrow">初中计算机 · 互联智能设计</p><h1>传感与控制实验室</h1><p>从传感器读数出发，沿着消息传送、控制决策和水泵动作走一轮，再看动作如何改变下一轮读数。</p></header>
+      <section class="panel" aria-labelledby="rules-title"><h2 id="rules-title">1 · 认识这套教学规则</h2><p>这里的“湿度指数”是虚构的 0–100 数值，不是实际土壤湿度单位。消息送达时，读数<strong>低于 40</strong> 则水泵开，读数<strong>达到 40</strong> 则关；消息丢失时，这个模型<strong>继续执行上一命令</strong>。每轮水泵开，下一轮指数加 20；关则减 5，数值限制在 0–100。这些变化是人为设定，不能用于真实灌溉或设备安全控制。</p><label for="scenario">选择场景<select id="scenario" disabled><option value="dry">干燥后的两轮反馈</option><option value="wet">湿润时停止水泵</option><option value="lost">消息丢失与旧命令</option></select></label><p id="round-status" class="feedback" role="status" aria-live="polite">正在准备场景…</p><div class="reading"><strong id="reading-value">—</strong><span>本轮已知湿度指数</span><progress id="reading-gauge" max="100" value="0" aria-label="本轮湿度指数"></progress></div><p id="prior-command">上一轮命令：—</p><p id="delivery-hint">本轮消息：—</p></section>
+      <section class="panel" aria-labelledby="predict-title"><h2 id="predict-title">2 · 先预测本轮结果</h2><p>按已知读数、上一命令和消息状态，预测控制器最终执行的水泵命令，以及动作后的下一轮指数。先提交预测，才能逐步揭示。</p><div class="setup"><label for="pump-prediction">水泵会怎样？<select id="pump-prediction" disabled><option value="">请选择</option><option value="on">开</option><option value="off">关</option></select></label><label for="next-prediction">下一轮湿度指数<input id="next-prediction" type="number" inputmode="numeric" min="0" max="100" step="1" placeholder="0–100 的整数" disabled></label></div><div class="button-row"><button id="start-button" type="button" disabled>提交预测，开始观察</button><button id="reset-button" type="button" class="secondary" disabled>重新挑战本场景</button></div><p id="prediction-status" class="feedback" role="status" aria-live="polite">等待预测。</p></section>
+      <section class="panel" aria-labelledby="observe-title"><h2 id="observe-title">3 · 逐环观察</h2><p>每次点击只揭示一环。传感器读出当前指数；网关传送或丢失消息；控制器决定命令；水泵作用后形成下一轮指数。</p><div class="button-row"><button id="step-button" type="button" disabled>观察下一环</button><button id="next-button" type="button" class="secondary" disabled hidden>进入下一轮</button></div><p id="step-status" class="feedback" role="status" aria-live="polite">尚未提交预测。</p><div class="flow" aria-label="传感与控制四个环节"><div id="phase-sensor" class="flow-box"><h3>① 传感器</h3><p>尚未揭示</p></div><div id="phase-gateway" class="flow-box"><h3>② 网关消息</h3><p>尚未揭示</p></div><div id="phase-controller" class="flow-box"><h3>③ 控制器</h3><p>尚未揭示</p></div><div id="phase-environment" class="flow-box"><h3>④ 水泵与环境</h3><p>尚未揭示</p></div></div></section>
+      <section class="panel" aria-labelledby="challenge-title"><h2 id="challenge-title">完成三个场景</h2><p>每个场景都要在本轮正确预测并观察到底；干燥场景需完成两轮。历史记录不会代替本轮挑战。</p><ol class="challenge-list"><li><span id="challenge-dry">○ 待完成</span> · 干燥后的两轮反馈</li><li><span id="challenge-wet">○ 待完成</span> · 湿润时停止水泵</li><li><span id="challenge-lost">○ 待完成</span> · 消息丢失与旧命令</li></ol><p id="progress-status" role="status" aria-live="polite">正在读取本机进度…</p><button id="retry-save" type="button" class="secondary" hidden>重试保存完成记录</button></section>
+      <section class="panel"><details><summary>模型边界与依据</summary><p>本页只模拟一段有限的物联网反馈链。指数、阈值、每轮加减 20/5、消息丢失后保留旧命令均为透明的教学设定；真实传感器有误差，网络与控制系统需要按具体场景设计失效处理。本页没有接入实物传感器、网关或水泵，也没有模拟真实土壤动力学。</p><p><a href="https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220420582361024968.pdf">教育部《义务教育信息科技课程标准（2022 年版）》</a>第四学段“互联智能设计”；<a href="https://csrc.nist.gov/pubs/sp/800/183/final">NIST SP 800-183</a>与<a href="https://www.w3.org/TR/wot-architecture11/">W3C Web of Things Architecture 1.1</a>说明物联网的感知、通信与执行组成。外链仅在主动打开时访问。</p></details></section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回初中计算机</a><a href="network-paths.html">回看网络路径</a><a href="message-transfer.html">回看消息传输</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script src="assets/iot-sensor-feedback-model.js"></script>
+  <script src="assets/iot-sensor-feedback.js"></script>
+</body>
+</html>
