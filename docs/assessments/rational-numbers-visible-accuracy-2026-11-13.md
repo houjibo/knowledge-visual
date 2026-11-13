@@ -1,6 +1,6 @@
 # 初中有理数页面可见准确性核查
 
-日期：2026-11-13。依据[教育部义务教育数学课程标准（2022 年版）](https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220510531636118932.pdf)第四学段“数与式／有理数”和[五条要求的首轮映射](middle-math-rational-crosswalk-2026-11-13.md)。行为契约见[OpenSpec 变更](../../openspec/changes/middle-rational-numbers-visible-accuracy/proposal.md)。
+日期：2026-11-13。依据[教育部义务教育数学课程标准（2022 年版）](https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220510531636118932.pdf)第四学段“数与式／有理数”和[五条要求的首轮映射](middle-math-rational-crosswalk-2026-11-13.md)。行为契约见[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-13-middle-rational-numbers-visible-accuracy/proposal.md)。
 
 ## 已改行为及教学边界
 
@@ -14,6 +14,7 @@
 - 纯模型：`node tests/rational-number-model.test.js`，3 项通过；覆盖带符号整数、括号、优先级、11×11 加乘与非零除法、零的符号、近似和非法输入。
 - 桌面/移动专项：`npx playwright test tests/browser/middle-rational-numbers-visible-accuracy.spec.js --project=desktop --project=mobile`，8 项通过；检查键盘温度示例、刻度同步、绝对值越界、运算错误与结果、重复探索不计数、预测错答、保存拒绝及恢复、320px 和 `file://` 直接打开。320px 温度与运算页面截图已目视检查。
 - 完整 `npm run check` 通过：功能浏览器 2,224 项通过、6 项按配置跳过；开发和发布包各 379 页加载，发布包 22 项关键流程通过。严格 OpenSpec 检查包含本变更。
-- 待发布后补记 Actions、公开版本及公网页面操作。真实课堂理解、实机和整页屏幕阅读器未验收。
+- 主分支提交 `aba3530` 的 [Actions #43391282613](https://github.com/houjibo/knowledge-visual/actions/runs/43391282613) 七项作业全部成功；公开 `release-version.json` 的修订号为 `aba353055459834306606ac3336a70514c92d03f`。
+- 公网专项：`KV_PUBLISHED_BASE_URL=https://houjibo.github.io/knowledge-visual/ npx playwright test tests/browser/middle-rational-numbers-visible-accuracy.spec.js --project=desktop --project=mobile --workers=2`，温度/绝对值与运算器的桌面、移动操作 4 项通过；本机存储注入和 `file://` 的 4 项按测试配置跳过，已在本地专项验证。公网与本地页面均已打开供验收。真实课堂理解、实机和整页屏幕阅读器未验收。
 
 后续仍需数轴大小比较、不同数的相反数判断、乘方意义、运算律和实际问题列式；这些保持[课程对照](../plans/curriculum-crosswalks/middle-math-rational-numbers.json)的部分或缺失状态。

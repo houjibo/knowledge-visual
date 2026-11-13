@@ -12,4 +12,4 @@
 
 首轮汇总：`0 已验证 + 3 部分 + 2 缺失 = 5 条`。章节示例采用[人教版七上已见章次](../plans/pep-middle-math-grade7-up-audit.md)定位；第一、二章不等同于上述五条标准要求，旧版章节号不得用于当前教材映射。
 
-已按[独立 OpenSpec](../../openspec/changes/middle-rational-numbers-visible-accuracy/proposal.md)修正页面中温度、绝对值和计算器的可见错误，详见[页面核查记录](rational-numbers-visible-accuracy-2026-11-13.md)。下一批针对乘方、数轴比较与情境列式发起小变更。每项提升状态前须检查内容解释、实际操作反馈与浏览器验证；只修复页面错误不自动把课标要求判为“已验证”。
+已按[归档 OpenSpec](../../openspec/changes/archive/2026-11-13-middle-rational-numbers-visible-accuracy/proposal.md)修正页面中温度、绝对值和计算器的可见错误，详见[页面核查记录](rational-numbers-visible-accuracy-2026-11-13.md)。下一批针对乘方、数轴比较与情境列式发起小变更。每项提升状态前须检查内容解释、实际操作反馈与浏览器验证；只修复页面错误不自动把课标要求判为“已验证”。
