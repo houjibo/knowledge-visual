@@ -83,6 +83,7 @@
 
 ## 课程依据
 
+- 初中 AI 导航与[CE25 信息科技第四学段“人工智能与智慧社会”模块](../assessments/middle-information-technology-ce25-academic-themes-2026-11-13.md)共享课程来源；内容要求和学业要求分维度映射，站内四页只覆盖数据、有限规则与责任判断的局部，不据导航拆分重复计数。
 - 教育部关于加强中小学人工智能教育的部署提出按学段开展体验、理解应用和项目实践。[教育部官网](https://www.moe.gov.cn/jyb_xwfb/gzdt_gzdt/s5987/202412/t20241202_1165500.html)
 - 教育部《“人工智能+教育”行动计划》用于跟踪人工智能教育政策演进，内容应随指南更新复核。[教育部官网](https://www.moe.gov.cn/srcsite/A16/s3342/202604/t20260410_1433240.html)
 - UNESCO 学生 AI 能力框架涵盖人本思维、伦理、AI 技术与应用及 AI 系统设计。[UNESCO](https://www.unesco.org/en/articles/ai-competency-framework-students?hub=84624)

@@ -82,7 +82,10 @@ def check_crosswalk(path: Path) -> None:
             raise AssertionError(f"{identifier}: academic requirement needs diagnostic checks")
     expected = expected_counts(counts)
     assert data.get("summary") == expected, f"{path}: summary {data.get('summary')} != {expected}"
-    label = "source paragraph" if dimension == "academic-requirement" else "content requirements"
+    if dimension == "academic-requirement":
+        label = "source paragraph" if len(requirements) == 1 else "source paragraphs"
+    else:
+        label = "content requirements"
     print(f"{path.relative_to(ROOT)} ({data['baseline_status']}): {len(requirements)} {label}, "
           f"{counts['verified']} verified, {counts['partial']} partial, {counts['missing']} missing")
 
