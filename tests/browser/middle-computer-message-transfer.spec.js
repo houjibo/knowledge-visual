@@ -99,17 +99,17 @@ test('all conditions save only after successful work, including retry after stor
 test('home search, middle directory and home progress include the new topic', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现由发布后验收');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '13');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '14');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
   await page.getByRole('searchbox', {name: '关键词'}).fill('消息传输');
   await page.locator('#site-results a[href="computer/middle/message-transfer.html"]').click();
   await finish(page);
   await page.locator('.footer-nav a[href="index.html"]').click();
-  await expect(page.locator('#stage-progress')).toContainText('1/6');
+  await expect(page.locator('#stage-progress')).toContainText('1/7');
   await expect(page.locator('[data-topic-slug="message-transfer"] [data-completion]')).toContainText('已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/13');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/14');
 });
 
 test('controls stay disabled until the lesson controller is ready', async ({page}) => {
