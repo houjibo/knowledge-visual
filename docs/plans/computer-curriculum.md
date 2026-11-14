@@ -1,6 +1,6 @@
 # 计算机课程设计
 
-状态：持续建设。小学顺序、循环、条件分支、顺序查找、相邻交换排序与初中二进制表示、消息传输、数据包路径、传感与控制实验室已公开验收；高中查找策略对照与大学栈与队列对照已按[归档 OpenSpec](../../openspec/changes/archive/2026-11-12-university-stack-queue-lab/proposal.md)公开验收。各主题实现和验收状态以 [OpenSpec 变更](../../openspec/changes/)及[差距台账](../gaps.md)为准。
+状态：持续建设。小学顺序、循环、条件分支、顺序查找、相邻交换排序与初中二进制表示、消息传输、数据包路径、网页编辑与模拟发布、传感与控制实验室已公开验收；高中查找策略对照与大学栈与队列对照已按[归档 OpenSpec](../../openspec/changes/archive/2026-11-12-university-stack-queue-lab/proposal.md)公开验收。各主题实现和验收状态以 [OpenSpec 变更](../../openspec/changes/)及[差距台账](../gaps.md)为准。
 
 ## 目标与边界
 

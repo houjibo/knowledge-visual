@@ -1,6 +1,6 @@
 # 初中网页编辑与发布：局部学习证据
 
-核查日期：2026-11-14。[义务教育信息科技课程标准日常修订版（2022 年版 2025 年修订）](https://fxzx.qpedu.cn/wcm.files/upload/CMSfxzx/202603/202603180409032.pdf)第四学段“互联网应用与创新”内容要求第（3）条（印刷页 35）涉及常用网络应用的数据构成、网页编辑与发布；同页学业要求涉及创建网络文档。已对扫描原页目视复核，不以 OCR 或旧版教材目录替代来源。变更契约见[OpenSpec](../../openspec/changes/middle-webpage-publishing-lab/proposal.md)。义务教育信息科技的具体地方教材版本尚未选定；本页不声称对应某个人教版章节。
+核查日期：2026-11-14。[义务教育信息科技课程标准日常修订版（2022 年版 2025 年修订）](https://fxzx.qpedu.cn/wcm.files/upload/CMSfxzx/202603/202603180409032.pdf)第四学段“互联网应用与创新”内容要求第（3）条（印刷页 35）涉及常用网络应用的数据构成、网页编辑与发布；同页学业要求涉及创建网络文档。已对扫描原页目视复核，不以 OCR 或旧版教材目录替代来源。变更契约见[归档 OpenSpec](../../openspec/changes/archive/2026-11-14-middle-webpage-publishing-lab/proposal.md)。义务教育信息科技的具体地方教材版本尚未选定；本页不声称对应某个人教版章节。
 
 ## 可观察的学习任务
 
@@ -16,6 +16,8 @@
 
 - `node tests/webpage-publishing-model.test.js`：字段修整、空值和长度、白名单链接、脚本形文本、不可变快照及版本差异通过。
 - `npx playwright test tests/browser/middle-webpage-publishing.spec.js --project=desktop --project=mobile`：12/12 通过，覆盖预览与快照时序、错误反馈、无脚本注入、概念判断、保存失败重试、目录和查找、320px、键盘、文件直开及发布子路径。发布包测试起初因新页面尚未加入 Git 跟踪而失败，暂存站点文件后重测通过；这也验证了发布构建只收集已跟踪文件。
-- 完整 `npm run check` 通过：静态、课程映射和严格 OpenSpec 校验；功能浏览器 2,272 项通过、6 项按配置跳过，开发站 383 页、发布包关键流程 22 项及发布包 383 页加载通过。本机浏览器和 320px 截图已目视检查，页面无横向溢出；窄屏说明由“左/右”改为不依赖布局位置的“草稿/已发布视图”。公网发布待核。
+- 完整 `npm run check` 通过：静态、课程映射和严格 OpenSpec 校验；功能浏览器 2,272 项通过、6 项按配置跳过，开发站 383 页、发布包关键流程 22 项及发布包 383 页加载通过。本机浏览器和 320px 截图已目视检查，页面无横向溢出；窄屏说明由“左/右”改为不依赖布局位置的“草稿/已发布视图”。
+- [Actions 功能提交运行](https://github.com/houjibo/knowledge-visual/actions/runs/43555426274)七项工作全部成功，包括构建、部署和发布验证；公网 `release-version.json` 指向提交 `8df20cce9303669d390fa6737dbf121c7fa61586`，且 `site_files_modified: false`。
+- 公网桌面／移动专项 `KV_PUBLISHED_BASE_URL=https://houjibo.github.io/knowledge-visual/ npx playwright test tests/browser/middle-webpage-publishing.spec.js --project=desktop --project=mobile`：6 项通过、6 项本地专用条件跳过；已打开[公网交互页](https://houjibo.github.io/knowledge-visual/computer/middle/webpage-publishing.html)与[本地交互页](http://127.0.0.1:4173/computer/middle/webpage-publishing.html)供验收。
 
 真实学习者的迁移理解、全页屏幕阅读器体验、实际网页文件生成与公开发布尚未验证。
