@@ -122,12 +122,35 @@ def check_canonical_subsets() -> None:
     assert sum("derived_from" in row for row in rows) == 7, "canonical subset count changed"
 
 
+def check_high_information_technology_baseline() -> None:
+    path = MAPS / "high-information-technology-hs25.json"
+    assert path.is_file(), f"missing HS25 information technology map: {path}"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["id"] == "HS25-IT-BAS" and data["baseline_status"] == "current", path
+    assert len(data.get("source_sha256", "")) == 64, f"{path}: source checksum missing"
+    assert data.get("source_host_status") and data.get("version_confirmation_url", "").startswith("https://"), path
+    assert data.get("comparison_source_url", "").startswith("https://"), path
+    rows = data["requirements"]
+    assert len(rows) == 15, "HS25 two mandatory modules must contain 15 numbered items"
+    assert Counter(row["module"] for row in rows) == {
+        "必修1／数据与计算": 7,
+        "必修2／信息系统与社会": 8,
+    }, "HS25 mandatory module counts changed"
+    expected_ids = {f"HS25-IT-BAS-M{module}-{index:02d}"
+                    for module, count in ((1, 7), (2, 8))
+                    for index in range(1, count + 1)}
+    assert {row["id"] for row in rows} == expected_ids, "HS25 numbered source items changed"
+    assert all(row.get("course_requirement") == "mandatory" for row in rows), path
+    assert all(isinstance(row.get("related_hs20_items"), list) for row in rows), path
+
+
 def main() -> None:
     paths = sorted(MAPS.glob("*.json"))
     assert paths, f"No curriculum crosswalks in {MAPS}"
     for path in paths:
         check_crosswalk(path)
     check_canonical_subsets()
+    check_high_information_technology_baseline()
 
 
 if __name__ == "__main__":
