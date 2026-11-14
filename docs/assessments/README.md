@@ -71,6 +71,8 @@
 
 [高中集合语言转换练习核查](high-math-set-language-conversion-2026-11-14.md)记录自然、符号与 Venn 图三轮预测、分项反馈和 HS25 局部证据边界。
 
+[高中集合可变全集与补集工作台核查](high-math-variable-universe-complement-2026-11-14.md)记录可编辑 U、A、空集边界与补集预测的数学和交互证据。
+
 [初中数学 2025 版学业要求与学业质量边界](middle-math-ce25-academic-quality-2026-11-13.md)核对有理数的一段学业要求和第四学段质量描述，区分官方条目与站内诊断点。
 
 [高中人工智能分类阈值核查](threshold-errors-2026-11-13.md)记录虚构分值、误报漏报、精确率召回率及完成门槛的模型与验收状态。
