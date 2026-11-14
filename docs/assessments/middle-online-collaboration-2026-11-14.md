@@ -16,5 +16,7 @@
 
 - `node tests/online-collaboration-model.test.js`：5 项通过，独立预期覆盖两种手动递送顺序、共享一步传播、断线重连不自动更新、错误及非法操作、结论边界。
 - `npx playwright test tests/browser/middle-online-collaboration.spec.js --project=desktop --project=mobile`：14/14 通过，覆盖版本流、先预测再观察、错误重做、结论门槛、进度保存失败重试、搜索与目录、加载就绪、320px、键盘、直接文件与发布子路径。
-- 完整 `npm run check` 通过：静态检查、严格 OpenSpec 校验及课程映射通过；功能浏览器 2,312 项通过、6 项按既有条件跳过；开发站 384 页、发布包关键流程 22 项及发布包 384 页加载通过。本地实验页已打开并目视检查桌面布局；窄屏无横向溢出由浏览器断言验证。
-- Actions 与公网实际操作待功能提交部署后补充；对应[OpenSpec 变更](../../openspec/changes/online-collaboration-sync-lab/proposal.md)。
+- 功能提交 `342986b` 的完整 `npm run check` 通过：静态检查、严格 OpenSpec 校验及课程映射通过；功能浏览器 2,312 项通过、6 项按既有条件跳过；开发站 384 页、发布包关键流程 22 项及发布包 384 页加载通过。文案修复提交 `6e1e216` 后，纯模型、桌面／移动专项 14/14 与静态检查再次通过，Actions #338 对修复版完成全量门禁。本地实验页已打开并目视检查桌面布局；窄屏无横向溢出由浏览器断言验证。
+- [Actions #337 功能提交](https://github.com/houjibo/knowledge-visual/actions/runs/43584669523)和[Actions #338 文案修复](https://github.com/houjibo/knowledge-visual/actions/runs/43586023414)的六个工作节点全部成功，包括检查、构建、部署及部署后验证。最终公网 `release-version.json` 指向 `6e1e216cc0a636b1d9407e9a2c61e2f1e9521dc7`，`site_files_modified:false`。
+- 公网桌面／移动专项：8 项通过、6 项按本地专用条件跳过。已打开[公网实验页](https://houjibo.github.io/knowledge-visual/computer/middle/online-collaboration.html)与[本地实验页](http://127.0.0.1:4173/computer/middle/online-collaboration.html)。公网实际操作发现重连后的旧反馈仍声称“断线者保留旧版”，由修复提交 `6e1e216` 改为按连接状态描述；重载后确认首次同步 B=2、C=1，重连 C 仍为 1，下一次同步 C=2 且反馈说明已重连。
+- 对应[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-14-online-collaboration-sync-lab/proposal.md)。
