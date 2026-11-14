@@ -32,8 +32,11 @@ async function completeDisconnected(page) {
   await page.locator('#scenario').selectOption('disconnected');
   await page.locator('#edit-button').click();
   await step(page, 2, 1);
+  await expect(page.locator('#step-feedback')).toContainText('C 仍断线，保留旧版');
   await page.locator('#reconnect-button').click();
   await step(page, 2, 2);
+  await expect(page.locator('#step-feedback')).toContainText('C 已重连，本步取得新版');
+  await expect(page.locator('#step-feedback')).not.toContainText('仍断线');
 }
 
 async function completeAll(page) {

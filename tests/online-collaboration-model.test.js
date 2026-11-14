@@ -42,6 +42,7 @@ test('disconnected peer stays old through reconnection and updates on a later sy
   assert.equal(first.status, 'correct');
   assert.deepEqual(first.delivered, ['b']);
   assert.deepEqual(first.next.versions, {a: 2, b: 2, c: 1});
+  assert.match(first.feedback, /C 仍断线，保留旧版/);
   assert.throws(() => Model.advance(first.next, null), /重连/);
   const reconnected = Model.reconnectC(first.next);
   assert.equal(reconnected.connected.c, true);
@@ -51,6 +52,8 @@ test('disconnected peer stays old through reconnection and updates on a later sy
   assert.equal(second.status, 'correct');
   assert.deepEqual(second.delivered, ['c']);
   assert.deepEqual(second.next.versions, {a: 2, b: 2, c: 2});
+  assert.match(second.feedback, /C 已重连，本步取得新版/);
+  assert.doesNotMatch(second.feedback, /仍断线/);
   assert.equal(second.next.steps, 2);
 });
 

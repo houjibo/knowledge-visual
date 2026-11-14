@@ -80,7 +80,9 @@
     const delivered = ['b', 'c'].filter(peer => state.versions[peer] !== next.versions[peer]);
     const reason = state.scenario === 'offline'
       ? `本步把 A 的新版手动递送给 ${manualTarget.toUpperCase()}；其他副本不会自动变化。`
-      : `本步模拟共享服务向已连接且尚未更新的 ${delivered.map(peer => peer.toUpperCase()).join('、')} 提供版本 2；断线者保留旧版。`;
+      : `本步模拟共享服务向已连接且尚未更新的 ${delivered.map(peer => peer.toUpperCase()).join('、')} 提供版本 2。${state.scenario === 'disconnected'
+        ? state.connected.c ? 'C 已重连，本步取得新版。' : 'C 仍断线，保留旧版。'
+        : ''}`;
     const result = `B 为版本 ${next.versions.b}，C 为版本 ${next.versions.c}。${reason}`;
     return {status: correctB && correctC ? 'correct' : 'wrong', correctB, correctC,
       expected: {b: next.versions.b, c: next.versions.c}, next, delivered,
