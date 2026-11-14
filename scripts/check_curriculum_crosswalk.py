@@ -90,11 +90,44 @@ def check_crosswalk(path: Path) -> None:
           f"{counts['verified']} verified, {counts['partial']} partial, {counts['missing']} missing")
 
 
+def check_canonical_subsets() -> None:
+    canonical_path = MAPS / "middle-math-number-expressions-ce25.json"
+    assert canonical_path.is_file(), f"missing canonical map: {canonical_path}"
+    canonical = json.loads(canonical_path.read_text(encoding="utf-8"))
+    assert canonical["id"] == "CE25-MATH-L4-NEX", canonical_path
+    rows = canonical["requirements"]
+    assert len(rows) == 22, "CE25 fourth-stage number and expressions must have 22 numbered items"
+    assert Counter(row["module"] for row in rows) == {
+        "数与式／有理数": 5,
+        "数与式／实数": 8,
+        "数与式／代数式": 9,
+    }, "CE25 fourth-stage number and expressions section counts changed"
+    by_id = {row["id"]: row for row in rows}
+    assert len(by_id) == len(rows), "duplicate canonical requirement ID"
+    expected_ids = {f"CE25-MATH-L4-NEX-{group}-{index:02d}"
+                    for group, count in (("RAT", 5), ("REAL", 8), ("ALG", 9))
+                    for index in range(1, count + 1)}
+    assert set(by_id) == expected_ids, "canonical numbered source items changed"
+    subset_names = ("middle-math-rational-numbers-ce25.json",
+                    "middle-math-scientific-approximation-ce25.json")
+    assert canonical.get("subset_maps") == list(subset_names), "canonical subset list changed"
+    for name in subset_names:
+        subset = json.loads((MAPS / name).read_text(encoding="utf-8"))
+        assert subset.get("subset_of") == canonical_path.name, f"{name}: missing subset_of"
+        for row in subset["requirements"]:
+            canonical_row = by_id[row["canonical_requirement_id"]]
+            assert canonical_row.get("derived_from") == row["id"], f"{row['id']}: reciprocal link mismatch"
+            for key in ("module", "source_locator", "objective", "status", "evidence", "gap", "next_step"):
+                assert canonical_row[key] == row[key], f"{row['id']}: {key} drifted from canonical map"
+    assert sum("derived_from" in row for row in rows) == 7, "canonical subset count changed"
+
+
 def main() -> None:
     paths = sorted(MAPS.glob("*.json"))
     assert paths, f"No curriculum crosswalks in {MAPS}"
     for path in paths:
         check_crosswalk(path)
+    check_canonical_subsets()
 
 
 if __name__ == "__main__":

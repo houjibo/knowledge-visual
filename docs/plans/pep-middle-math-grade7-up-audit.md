@@ -1,6 +1,6 @@
 # 人教版初中数学七年级上册：首轮章次来源核查
 
-核查日期：2026-11-13。本页是[课程来源登记](curriculum-sources.md)中 `BOOK-CE` 的首册样本，服务于[全站课程差距计划](curriculum-gap-map.md)。课程目标以 `CE25` 数学标准为准；[有理数五条内容要求](../assessments/middle-ce25-content-recheck-2026-11-13.md)与[一段学业要求](../assessments/middle-math-ce25-academic-quality-2026-11-13.md)已重核，其他条款仍待核。教材章次只用于定位和组织核查。本站并非教材目录、出版方或地方实际选书记录。
+核查日期：2026-11-13；课程映射状态更新于 2026-11-15。本页是[课程来源登记](curriculum-sources.md)中 `BOOK-CE` 的首册样本，服务于[全站课程差距计划](curriculum-gap-map.md)。课程目标以 `CE25` 数学标准为准；[“数与式”22 条内容要求](curriculum-crosswalks/middle-math-number-expressions-ce25.json)及[有理数一段学业要求](../assessments/middle-math-ce25-academic-quality-2026-11-13.md)已分维度核查，第四学段其他条款仍待核。教材章次只用于定位和组织核查。本站并非教材目录、出版方或地方实际选书记录。
 
 ## 版本和证据边界
 
@@ -32,7 +32,7 @@
 
 1. **完整目录证据**：以已核 ISBN 继续查出版社本册公开目录或可核的官方教学资源目录；补全部小节及其来源。每条注明来源与核查日期。若仍只有精品课名单和整套编排表，保持“完整节目录待核”，不补猜测小节。
 2. **六册依次核对**：按七上、七下、八上、八下、九上、九下建立相同记录；逐册确认是否同属 2024 审定系列。以后扩展至其他学科和阶段。省级选用只在确定地区后记录。
-3. **按课标审校六个候选页**：有理数五条 `CE22→CE25` 内容要求和对应一段学业要求已核；[近似数与科学记数法两条](curriculum-crosswalks/middle-math-scientific-approximation-ce25.json)另按 `CE25` 原分组记录为部分。继续比对第四学段其余数学内容要求与学业要求，逐项写学习目标、页面位置、操作与反馈证据，分“已验证／部分／缺失／未映射／不适用”。重点拆开有理数概念与运算、代数式与整式的加减，避免旧版章号或站内诊断点影响官方分母。
+3. **按课标审校六个候选页**：[“数与式”22 条内容要求](curriculum-crosswalks/middle-math-number-expressions-ce25.json)已经完成编号与页面证据首轮核查，已有有理数五条及[近似数与科学记数法两条](curriculum-crosswalks/middle-math-scientific-approximation-ce25.json)作为子集，不重复计数。继续比对第四学段其余数学内容要求与学业要求，逐项写学习目标、页面位置、操作与反馈证据，分“已验证／部分／缺失／未映射／不适用”。重点拆开有理数概念与运算、代数式与整式的加减，避免旧版章号或站内诊断点影响官方分母。
 4. **形成开发队列**：把有来源条目和明确学习任务的缺项写入单页 OpenSpec，再小步实现、功能测试、推送及公网核验；章名相似本身不构成新增主题或已覆盖的理由。
 
 对应执行项见[OpenSpec tasks](../../openspec/changes/curriculum-source-gap-baseline/tasks.md)的 `1.3`、`2.2` 和 `2.10`。
