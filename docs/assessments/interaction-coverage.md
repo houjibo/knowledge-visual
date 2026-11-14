@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：356；已登记部分交互证据：219；尚未登记：137。
+主题总数：357；已登记部分交互证据：220；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -61,6 +61,8 @@
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [化学平衡 · 大学化学互动可视化](../../chemistry/uni/equilibrium.html)
   - 综合练习逐题得分、重试及完成；未覆盖平衡和相图模拟。 [equilibrium-quiz.spec.js](../../tests/browser/equilibrium-quiz.spec.js)
+- [数据编码与分析工作台 · 高中计算机](../../computer/high/data-workbench.html)
+  - 桌面与移动模拟视口验证UTF-8三符号逐字节预测、虚构记录的单位/缺失/重复处理、可编辑柱形图和均值/限定报告、首页搜索与进度、异常存储、320px键盘、减少动态、file直开及发布子路径；真实设备、屏幕阅读器和学习者效果待核验。 [high-data-workbench.spec.js](../../tests/browser/high-data-workbench.spec.js)
 - [查找策略对照实验室 · 高中计算机](../../computer/high/search-strategies.html)
   - 桌面与移动模拟视口验证7/15项顺序与二分逐步比较、候选排除、首位与靠后反转、未找到规模对照、乱序阻止、四组预测与前提完成、计时器、异常存储、搜索和高中进度、320px键盘、减少动态、file及发布子路径；真实设备、屏幕阅读器和学习者效果仍待核验。 [high-computer-search-strategies.spec.js](../../tests/browser/high-computer-search-strategies.spec.js)
 - [二进制像素工坊 · 初中计算机](../../computer/middle/binary-pixels.html)

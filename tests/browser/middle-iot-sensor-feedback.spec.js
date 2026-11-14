@@ -117,7 +117,7 @@ test('all scenes save after correct work and retry when storage is denied', asyn
 test('home search, counts and middle directory discover the scene', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现由发布后验收');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '14');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '15');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
   await page.getByRole('searchbox', {name: '关键词'}).fill('传感与控制');
@@ -127,7 +127,7 @@ test('home search, counts and middle directory discover the scene', async ({page
   await expect(page.locator('#stage-progress')).toContainText('1/7');
   await expect(page.locator('[data-topic-slug="iot-sensor-feedback"] [data-completion]')).toContainText('已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/14');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/15');
 });
 
 test('controls stay disabled until the lesson controller loads', async ({page}) => {

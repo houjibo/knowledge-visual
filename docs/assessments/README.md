@@ -1,6 +1,6 @@
 # 站点评估基线
 
-[页面清单](page-inventory.json) 于 2026-11-15 根据当前仓库重新生成：包含 390 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
+[页面清单](page-inventory.json) 于 2026-11-15 根据当前仓库重新生成：包含 391 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
 
 重新生成：`python3 scripts/inventory_pages.py --output docs/assessments/page-inventory.json`；运行 `python3 scripts/inventory_pages.py --check docs/assessments/page-inventory.json` 检查清单是否过期，运行 `python3 tests/inventory_test.py` 验证基本解析及导航行为。生成结果按路径稳定排序，无时间戳，可用版本差异检查变化。
 
@@ -76,6 +76,8 @@
 [高中数学 HS25 集合试点核查](high-math-sets-hs25-2026-11-14.md)记录 2020→2025 的 7 条内容要求对照、人教 A 版章级示例、页面局部证据和剩余学习任务。
 
 [高中信息科技 HS25 两必修模块核查](high-information-technology-hs25-2026-11-15.md)记录 2025 原文镜像、2020 版对照、15 条编号内容要求的页面证据与中图人教版两册教材边界。
+
+[高中数据编码与分析工作台核查](high-data-workbench-2026-11-15.md)记录 UTF-8 预测、虚构记录整理与图表报告任务，以及 HS25 1.1/1.2 的局部证据。
 
 [高中集合语言转换练习核查](high-math-set-language-conversion-2026-11-14.md)记录自然、符号与 Venn 图三轮预测、分项反馈和 HS25 局部证据边界。
 

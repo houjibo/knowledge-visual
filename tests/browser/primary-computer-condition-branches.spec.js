@@ -283,7 +283,7 @@ test('首页、小学目录及搜索可发现分支主题并汇总实际完成',
   await expect(page.locator('#stage-progress')).toContainText('1/5');
   await expect(page.locator('[data-topic-slug="conditional-robot"] [data-completion]')).toContainText('已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/14');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/15');
   await page.getByRole('combobox',{name:'学科',exact:true}).selectOption('computer');
   await page.getByRole('combobox',{name:'学段',exact:true}).selectOption('primary');
   await page.getByRole('searchbox',{name:'关键词'}).fill('条件分支');
