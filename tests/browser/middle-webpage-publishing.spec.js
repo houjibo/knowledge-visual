@@ -95,14 +95,14 @@ test('storage rejection does not claim saved completion and retry updates the di
   await expect(page.locator('#progress-status')).toContainText('本机已记录完成');
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)), progressKey)).toEqual({'webpage-publishing': true});
   await page.goto('/computer/middle/index.html');
-  await expect(page.locator('#stage-progress')).toContainText('1/5');
+  await expect(page.locator('#stage-progress')).toContainText('1/6');
   await expect(page.locator('[data-topic-slug="webpage-publishing"] [data-completion]')).toContainText('已完成');
 });
 
 test('home search and counts expose the new middle computer topic', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现由发布后验收');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '12');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '13');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
   await page.getByRole('searchbox', {name: '关键词'}).fill('网页编辑与发布');

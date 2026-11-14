@@ -64,7 +64,7 @@ test('新旧计算机和人工智能进度键都可导入备份', async ({page})
     .toEqual({'binary-pixels': true});
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-computer-high-progress'))))
     .toEqual({'search-strategies': true});
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 3/12');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 3/13');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-computer-uni-progress'))))
     .toEqual({'stack-queue': true});
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('kv-ai-uni-progress'))))
