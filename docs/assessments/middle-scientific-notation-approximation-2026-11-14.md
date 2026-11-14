@@ -1,6 +1,6 @@
 # 初中科学记数法与近似数：局部学习证据
 
-核查日期：2026-11-14。依据为[义务教育数学课程标准 2025 年日常修订版](https://fxzx.qpedu.cn/wcm.files/upload/CMSfxzx/202603/202603180320047.pdf)第四学段“数与式”内容要求：印刷页 54—55 的“实数”第⑦项涉及近似数和近似计算，印刷页 55 的“代数式”第④项涉及整数指数幂与科学记数法。[人教版现行七上课例](../plans/pep-middle-math-2025-lesson-source-audit.md)把两者列于第二章 `2.3`，仅作教材编排线索。变更契约见[OpenSpec](../../openspec/changes/middle-scientific-notation-approximation/proposal.md)。
+核查日期：2026-11-14。依据为[义务教育数学课程标准 2025 年日常修订版](https://fxzx.qpedu.cn/wcm.files/upload/CMSfxzx/202603/202603180320047.pdf)第四学段“数与式”内容要求：印刷页 54—55 的“实数”第⑦项涉及近似数和近似计算，印刷页 55 的“代数式”第④项涉及整数指数幂与科学记数法。[人教版现行七上课例](../plans/pep-middle-math-2025-lesson-source-audit.md)把两者列于第二章 `2.3`，仅作教材编排线索。变更契约见[已归档的 OpenSpec](../../openspec/changes/archive/2026-11-14-middle-scientific-notation-approximation/proposal.md)。
 
 ## 学习任务与可核验边界
 
@@ -17,6 +17,6 @@
 - `node tests/scientific-approx-model.test.js` 检查精确等值、非规范、正负指数、半值进位、目标位数及无效输入。
 - `npx playwright test tests/browser/middle-scientific-notation-approximation.spec.js --project=desktop --project=mobile`：8/8 通过，含错误重试、示例不计进度、存储失败重试、目录和搜索、320px、键盘、文件直开与发布子路径。
 - 完整 `npm run check` 通过：静态/课程映射/OpenSpec 严格校验及项目矩阵预检；功能浏览器 2,252 项通过、6 项按配置跳过，开发站 381 页、发布包关键流程 22 项和发布包 381 页加载通过。桌面与 320px 已目视检查；原首页示例曾显示两道练习答案，已改成不同数字，并在改动后重跑专项。
-- 主分支 Actions、公网版本和公开学习路径待本次推送后核对；不把本地门禁视为公网已验收。
+- 小步提交 `e92f27d` 已推送；[主分支 Actions](https://github.com/houjibo/knowledge-visual/actions/runs/43542523635) 七个作业全部成功，公开发布清单修订号与该提交一致。[公开学习页](https://houjibo.github.io/knowledge-visual/math/middle/scientific-notation-approximation.html)可访问，公网桌面/移动专项 6 项通过、2 项按本地存储故障场景配置跳过；[本地服务](http://127.0.0.1:4173/math/middle/scientific-notation-approximation.html)保持开放供实时验收。
 
 未覆盖真实学习者理解、完整屏幕阅读器朗读、实际测量误差及教材完整版小节目录。
