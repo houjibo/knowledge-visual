@@ -28,4 +28,4 @@
 3. 在不收集学生真实信息的边界内补生成式 AI 结果判断、人机交互方案比较，联系 AI25 指南与新版 1.6、2.6；实践应用和真实学习者迁移另验。
 4. 持续找政府或课程教材研究所可稳定访问的标准原文附件，复核镜像；逐册查教科书版本和省级选用；再拆学业要求、三级质量及选择性必修，不提前报高中整科覆盖率。
 
-本轮仅建立来源与静态页面证据基线，未对高中教学效果作实证验证。验证命令、OpenSpec 与公开发布证据见对应变更记录。
+本轮仅建立来源与静态页面证据基线，未对高中教学效果作实证验证。`python3 scripts/check_curriculum_crosswalk.py`、`npm run check:static` 和严格 OpenSpec 校验通过；[GitHub Actions run #43650433583](https://github.com/houjibo/knowledge-visual/actions/runs/43650433583) 的核心检查、桌面/移动端浏览器矩阵、构建、部署及部署后验收均成功。公开 `release-version.json` 与 `cd38c25afa96e1a88ac5f0b60f9ae1a69b239860` 一致，独立验证脚本复核 84 个公开资源。本地和公开首页均返回 200 并在浏览器打开；本轮未新增教学页面或修改其交互。变更已[归档](../../openspec/changes/archive/2026-11-15-high-information-technology-hs25-baseline/proposal.md)。
