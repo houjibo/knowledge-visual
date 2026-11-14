@@ -123,6 +123,7 @@
   - 桌面与移动视口验证键盘作答、切换保留、2/5 未通过、3/5 通过及保存失败重试；实机及其他题目内容尚未全面验收。 [sets-quiz-completion-reliability.spec.js](../../tests/browser/sets-quiz-completion-reliability.spec.js)
   - 桌面与移动视口验证子集动画全部离散阶段的元素归属和键盘归属判断；真实设备、其他集合图及练习尚未全面验收。 [sets-subset-example-consistency.spec.js](../../tests/browser/sets-subset-example-consistency.spec.js)
   - 桌面与移动视口检查交集画布像素、四种运算、键盘元素状态及 Venn 切换；其他集合图、练习和真实设备尚未全面验收。 [sets-visual-operations-reliability.spec.js](../../tests/browser/sets-visual-operations-reliability.spec.js)
+  - 桌面与移动验证自然、符号、Venn 三轮的成员预测和目标表达、分项错误反馈、双圆区域几何、键盘、320px、直接文件及发布子路径；有限选项、真实学习者与完整屏幕阅读器仍待核。 [sets-language-conversion.spec.js](../../tests/browser/sets-language-conversion.spec.js)
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
 - [平面直角坐标系 · 初中数学互动可视化](../../math/middle/coordinate-plane.html)
   - 滑块、鼠标和触摸的坐标同步，原点及第二象限、原点对称画布位置，测验回看计分、刷新和存储失败；其他对称方式与完整无障碍未全面验收。 [coordinate-plane.spec.js](../../tests/browser/coordinate-plane.spec.js)

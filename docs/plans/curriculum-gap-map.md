@@ -33,7 +33,7 @@
 | --- | --- | --- | ---: | --- |
 | 小学数学 | CE25、CE22 对照、BOOK-CE | 人教版第十二套 | 124 | 按 2025 版的 1–2、3–4、5–6 年级要求拆分数与代数、图形与几何、统计与概率、综合实践；核查重复页与数学建模活动。 |
 | 初中数学 | CE25、CE22 对照、BOOK-CE | 人教版第十二套 | 30 | [六册编排索引](pep-middle-math-series-structure.md)据人教社原图记录 34 章与 12 个实践活动；[七上样本](pep-middle-math-grade7-up-audit.md)核到该册版次、ISBN 和六章，完整小节目录仍待核。[CE25 有理数五条内容要求](curriculum-crosswalks/middle-math-rational-numbers-ce25.json)为 0 已验证、5 部分、0 缺失；[近似数与科学记数法两条要求](curriculum-crosswalks/middle-math-scientific-approximation-ce25.json)分别为部分，不能并入有理数分母；[一段学业要求](curriculum-crosswalks/middle-math-rational-numbers-ce25-academic.json)为部分，七个站内诊断点 6 部分、1 缺失；第四学段质量描述只作[阶段视角](../assessments/middle-math-ce25-academic-quality-2026-11-13.md)。其余初中主题仍待核。 |
-| 高中数学 | HS25、HS20 对照、BOOK-HS | 人教版第十一套 A 版 | 19 | [必修“集合”7 条](curriculum-crosswalks/high-math-sets-hs25.json)已逐项映射，0 已验证、7 部分；[对照记录](../assessments/high-math-sets-hs25-2026-11-14.md)标明学业要求用语变化。继续核预备知识其他单元、函数、几何代数、概率统计、建模/探究与教材完整节目录。 |
+| 高中数学 | HS25、HS20 对照、BOOK-HS | 人教版第十一套 A 版 | 19 | [必修“集合”7 条](curriculum-crosswalks/high-math-sets-hs25.json)已逐项映射，0 已验证、7 部分；[版本对照](../assessments/high-math-sets-hs25-2026-11-14.md)标明学业要求用语变化，[三轮语言转换练习](../assessments/high-math-set-language-conversion-2026-11-14.md)补充局部操作证据。继续核预备知识其他单元、函数、几何代数、概率统计、建模/探究与教材完整节目录。 |
 | 大学数学 | UNI-M | MIT OCW 基础轨 | 27 | 以微积分与线性代数为基础轨，先核对积分应用、矩阵四个基本子空间、正交投影、特征值；拓展主题另列来源。 |
 | 初中物理 | CE25、CE22 对照、BOOK-CE | 人教版第十二套 | 20 | 从 2025 版将运动、力、能量、物质与实验探究分别映射；先核对测量误差和从数据得结论的操作。 |
 | 高中物理 | HS25、HS20 对照、BOOK-HS | 人教版第十一套 | 16 | 先核对 2025 版条款变化，再分必修/选择性必修映射力学、电磁、波与近代物理；核对实验模型、证据和单位。 |
