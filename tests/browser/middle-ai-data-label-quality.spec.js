@@ -64,7 +64,7 @@ test('旧计算机初中进度不会误计入人工智能初中', async ({page})
     localStorage.setItem('kv-computer-ai-middle-progress', JSON.stringify({'binary-pixels': true}));
   });
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toHaveText('已学 1/11');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toHaveText('已学 1/12');
   await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('尚未开始');
   await page.goto('/ai/middle/index.html');
   await expect(page.locator('#stage-progress')).toHaveText('已完成 0/4 个主题');

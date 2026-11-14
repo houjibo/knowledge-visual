@@ -1,6 +1,6 @@
 # 站点评估基线
 
-[页面清单](page-inventory.json) 于 2026-11-14 根据当前仓库重新生成：包含 382 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
+[页面清单](page-inventory.json) 于 2026-11-14 根据当前仓库重新生成：包含 383 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
 
 重新生成：`python3 scripts/inventory_pages.py --output docs/assessments/page-inventory.json`；运行 `python3 scripts/inventory_pages.py --check docs/assessments/page-inventory.json` 检查清单是否过期，运行 `python3 tests/inventory_test.py` 验证基本解析及导航行为。生成结果按路径稳定排序，无时间戳，可用版本差异检查变化。
 
@@ -64,6 +64,8 @@
 [初中有理数乘方意义核查](middle-rational-powers-2026-11-13.md)记录七个有限案例、两步预测、精确展开、现行 CE25 部分覆盖和发布验收范围。
 
 [初中有理数情境列式核查](middle-rational-context-problems-2026-11-14.md)记录四个有限情境、列式到解释的三步学习、精确小数与课程映射边界。
+
+[初中网页编辑与发布核查](middle-webpage-publishing-2026-11-14.md)记录网页数据编辑、草稿与模拟发布快照、真实托管边界及 CE25 局部映射。
 
 [初中数学 2025 版学业要求与学业质量边界](middle-math-ce25-academic-quality-2026-11-13.md)核对有理数的一段学业要求和第四学段质量描述，区分官方条目与站内诊断点。
 

@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：348；已登记部分交互证据：209；尚未登记：139。
+主题总数：349；已登记部分交互证据：210；尚未登记：139。
 
 ## 已登记部分交互证据
 
@@ -71,6 +71,8 @@
   - 桌面与移动视口核对真实 UTF-8 字节、按序与乱序送达、缺块重发、预测和逐块完成门槛、进度保存失败重试、320px 键盘、file 直开及发布子路径；真实网络通信、实机和学习者理解仍待核查。 [middle-computer-message-transfer.spec.js](../../tests/browser/middle-computer-message-transfer.spec.js)
 - [数据包路径实验室 · 初中计算机](../../computer/middle/network-paths.html)
   - 桌面与移动视口核对最少跳数与最小指定代价、断线改道和不可达、预测门槛、逐跳图文同步、四项完成与本机保存、拒绝/损坏存储、搜索与初中进度、320px键盘、file直开及发布子路径；真实设备、完整屏幕阅读器和学习效果仍待核查。 [middle-computer-network-paths.spec.js](../../tests/browser/middle-computer-network-paths.spec.js)
+- [网页编辑与发布实验室 · 初中计算机](../../computer/middle/webpage-publishing.html)
+  - 桌面与移动视口核对结构化字段、草稿预览、模拟版本快照、理解检查和进度保存失败重试；包含 320px、键盘、file 直开及发布子路径。真实托管、公开发布和学习者迁移尚未验证。 [middle-webpage-publishing.spec.js](../../tests/browser/middle-webpage-publishing.spec.js)
 - [相邻交换排序实验室 · 小学计算机](../../computer/primary/adjacent-swap-sort.html)
   - 桌面与移动模拟视口验证五数相邻交换、第一轮预测、轮次与已就位区域、无交换早停、两类完成、连续/暂停、异常存储、搜索与进度、320px键盘、减少动态、file及发布子路径；真实设备、屏幕阅读器和真实学习者效果仍需后续核验。 [primary-computer-adjacent-swap-sort.spec.js](../../tests/browser/primary-computer-adjacent-swap-sort.spec.js)
 - [条件分支机器人 · 小学计算机](../../computer/primary/conditional-robot.html)

@@ -139,7 +139,7 @@ test('corrupt university record is neither overwritten nor reported as saved', a
 test('home search, university directory and progress count include the topic', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现由发布后验收');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '11');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '12');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('uni');
   await page.getByRole('searchbox', {name: '关键词'}).fill('栈与队列');
@@ -149,7 +149,7 @@ test('home search, university directory and progress count include the topic', a
   await expect(page.locator('#stage-progress')).toContainText('1/1');
   await expect(page.locator('[data-completion]')).toContainText('已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/11');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/12');
 });
 
 test('keyboard at 320px and reduced motion can complete the comparison', async ({page}) => {
