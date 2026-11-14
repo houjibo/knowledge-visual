@@ -254,6 +254,7 @@
             display: block;
             margin: 0 auto;
             cursor: crosshair;
+            max-width: 100%;
         }
 
         .number-input-row {
@@ -458,6 +459,21 @@
             font-size: 1.2em;
             color: #0f3460;
         }
+
+        #numberInputFeedback { min-height: 1.5em; margin-top: 12px; color: #0f3460; text-align: center; }
+
+        @media (max-width: 520px) {
+            body { padding: 10px; }
+            .header { padding: 20px 12px; }
+            .header h1 { font-size: 2em; }
+            .tabs { flex-wrap: wrap; }
+            .tab { flex: 1 1 50%; padding: 12px 6px; }
+            .content { padding: 16px; }
+            .square-canvas-wrap, .square-controls, .decimal-display, .pattern-finder { min-width: 0; width: 100%; }
+            #squareCanvas { max-width: 100%; height: auto; }
+            .decimal-display { padding: 16px; }
+            .numberline-container { padding: 14px; }
+        }
     </style>
 </head>
 <body>
@@ -485,18 +501,18 @@
                     </div>
                     <div class="square-controls">
                         <div class="area-slider-group">
-                            <label>正方形面积: <span id="areaValue" class="math-expr">4</span></label>
+                            <label for="areaSlider">正方形面积: <span id="areaValue" class="math-expr">4</span></label>
                             <input type="range" class="area-slider" id="areaSlider" min="1" max="25" step="0.1" value="4">
                         </div>
                         <div class="calc-result">
-                            <div class="formula">边长 = √面积 = <span id="sideValue" class="math-expr">2</span></div>
+                            <div class="formula">边长 = √面积 <span id="sideRelation">=</span> <span id="sideValue" class="math-expr">2</span></div>
                             <div class="explanation" id="sideExplanation">
                                 面积 = 4，边长 = √4 = 2，是有理数。
                             </div>
                         </div>
                         <div class="highlight-box" id="sqrt2Box" style="display:none;">
                             <strong>✨ 发现无理数！</strong><br>
-                            当面积 = 2 时，边长 = √2 = 1.41421356...<br>
+                            当面积 = 2 时，边长 = √2 ≈ 1.41421356<br>
                             √2 是无限不循环小数，无法表示为分数，这就是<strong>无理数</strong>！
                         </div>
                     </div>
@@ -561,14 +577,15 @@
 
             <!-- Tab 2: 实数与数轴 -->
             <div class="tab-content">
-                <p class="info-text">在数轴上标出各种实数，理解实数的分类。输入一个数，看看它在数轴上的位置！</p>
+                <p class="info-text">在数轴上标出各种实数，理解实数的分类。可输入整数、小数、分数、平方根（如 √4、√1.44）及 π/e 的简单变换（如 π/2、e-1）；范围为 −5 到 5。</p>
                 
                 <div class="numberline-container">
                     <canvas id="numberLineCanvas" width="1000" height="180"></canvas>
                     <div class="number-input-row">
-                        <input type="text" id="numberInput" placeholder="输入数值，如 √2">
+                        <input type="text" id="numberInput" aria-label="要标在数轴上的数" placeholder="如 √2、√4、π/2、1/2">
                         <button class="plot-btn" id="plotBtn">标在数轴上</button>
                     </div>
+                    <p id="numberInputFeedback" role="status" aria-live="polite"></p>
                     <div class="plotted-numbers" id="plottedNumbers"></div>
                 </div>
 
@@ -607,6 +624,7 @@
         </div>
     </div>
 
+    <script src="assets/real-number-model.js"></script>
     <script>
         // ===== Tab 切换 =====
         document.querySelectorAll('.tab').forEach(tab => {
@@ -615,6 +633,7 @@
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 tab.classList.add('active');
                 document.querySelectorAll('.tab-content')[tab.dataset.tab].classList.add('active');
+                if (tab.dataset.tab === '2') drawNumberLine();
             });
         });
 
@@ -624,8 +643,10 @@
         const areaSlider = document.getElementById('areaSlider');
         const areaValue = document.getElementById('areaValue');
         const sideValue = document.getElementById('sideValue');
+        const sideRelation = document.getElementById('sideRelation');
         const sideExplanation = document.getElementById('sideExplanation');
         const sqrt2Box = document.getElementById('sqrt2Box');
+        const realModel = window.KVRealNumberModel;
 
         function drawSquare(area) {
             const ctx = squareCtx;
@@ -657,7 +678,8 @@
             ctx.fillStyle = '#333';
             ctx.font = 'bold 16px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(`边长 = ${side.toFixed(4).replace(/\.?0+$/, '')}`, w / 2, y - 15);
+            const rootKind = realModel.squareArea(String(area)).kind;
+            ctx.fillText(`边长 ${rootKind === 'rational' ? '=' : '≈'} ${Number(side.toFixed(4))}`, w / 2, y - 15);
 
             // 标注面积
             ctx.fillStyle = 'white';
@@ -667,7 +689,7 @@
             }
 
             // 对角线（当面积为2时显示）
-            if (Math.abs(area - 2) < 0.2) {
+            if (area === 2) {
                 ctx.setLineDash([5, 5]);
                 ctx.strokeStyle = '#ff9800';
                 ctx.lineWidth = 2;
@@ -680,26 +702,25 @@
         }
 
         function updateSquare() {
-            const area = parseFloat(areaSlider.value);
-            const side = Math.sqrt(area);
-            
-            areaValue.textContent = area.toFixed(1).replace(/\.?0+$/, '');
-            sideValue.textContent = side.toFixed(6).replace(/0+$/, '').replace(/\.$/, '') || '0';
+            const result = realModel.squareArea(areaSlider.value);
+            const area = result.area;
+            const side = result.value;
+            const areaLabel = String(area);
+            const sideLabel = String(Number(side.toFixed(6)));
+
+            areaValue.textContent = areaLabel;
+            sideValue.textContent = sideLabel;
+            sideRelation.textContent = result.kind === 'rational' ? '=' : '≈';
             
             drawSquare(area);
 
             // 解释文字
-            if (Math.abs(area - 2) < 0.3) {
+            if (result.isSqrtTwo) {
                 sqrt2Box.style.display = 'block';
-                sideExplanation.innerHTML = `面积 = 2，边长 = √2 ≈ 1.41421356...<br>这是一个<strong>无理数</strong>！`;
+                sideExplanation.textContent = '面积 = 2，边长 = √2 ≈ 1.414214，是无理数。';
             } else {
                 sqrt2Box.style.display = 'none';
-                const sideNum = Math.sqrt(area);
-                if (Number.isInteger(sideNum) || Math.abs(sideNum - Math.round(sideNum * 100) / 100) < 0.001) {
-                    sideExplanation.innerHTML = `面积 = ${area.toFixed(1).replace(/\.?0+$/, '')}，边长 = √${area.toFixed(1).replace(/\.?0+$/, '')} = ${sideNum.toFixed(4).replace(/\.?0+$/, '')}，是有理数。`;
-                } else {
-                    sideExplanation.innerHTML = `面积 = ${area.toFixed(1).replace(/\.?0+$/, '')}，边长 = √${area.toFixed(1).replace(/\.?0+$/, '')} ≈ ${sideNum.toFixed(6).replace(/0+$/, '')}。`;
-                }
+                sideExplanation.textContent = `面积 = ${areaLabel}，边长 = √${areaLabel} ${result.kind === 'rational' ? '=' : '≈'} ${sideLabel}，是${result.kind === 'rational' ? '有理数' : '无理数'}。`;
             }
         }
 
@@ -759,17 +780,22 @@
         const numberInput = document.getElementById('numberInput');
         const plotBtn = document.getElementById('plotBtn');
         const plottedNumbers = document.getElementById('plottedNumbers');
+        const numberInputFeedback = document.getElementById('numberInputFeedback');
 
         let plottedPoints = [];
         const nlRange = { min: -5, max: 5 };
 
         function drawNumberLine() {
             const ctx = nlCtx;
-            const w = nlCanvas.width;
+            const container = nlCanvas.parentElement;
+            const style = getComputedStyle(container);
+            const available = container.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+            const w = Math.max(180, Math.floor(available));
+            if (nlCanvas.width !== w) nlCanvas.width = w;
             const h = nlCanvas.height;
             ctx.clearRect(0, 0, w, h);
 
-            const padding = 50;
+            const padding = Math.min(50, Math.max(18, w * 0.08));
             const lineY = h / 2;
             const lineLen = w - padding * 2;
 
@@ -795,7 +821,7 @@
             ctx.textAlign = 'center';
             ctx.fillStyle = '#666';
             
-            for (let i = nlRange.min; i <= nlRange.max; i++) {
+            for (let i = nlRange.min; i <= nlRange.max; i += w < 500 ? 2 : 1) {
                 const x = padding + (i - nlRange.min) / (nlRange.max - nlRange.min) * lineLen;
                 ctx.beginPath();
                 ctx.moveTo(x, lineY - 8);
@@ -831,58 +857,35 @@
                     // 标签
                     ctx.fillStyle = pt.color;
                     ctx.font = 'bold 13px sans-serif';
-                    ctx.fillText(pt.label, x, lineY - 38);
+                    if (w >= 500) ctx.fillText(pt.label, x, lineY - 38);
                 }
             });
+            nlCanvas.setAttribute('aria-label', `从 −5 到 5 的数轴；${plottedPoints.map(pt => `${pt.label} 约在 ${Number(pt.value.toFixed(3))}`).join('；')}`);
         }
 
-        function parseNumber(str) {
-            str = str.trim().toLowerCase();
-            if (str === 'π' || str === 'pi') return { value: Math.PI, label: 'π' };
-            if (str === 'e') return { value: Math.E, label: 'e' };
-            // 处理复合表达式: π/2, π*2, e-1, e+1 等
-            if ((str.includes('π') || str.includes('pi')) && /[\/\*\+\-]/.test(str)) {
-                const expr = str.replace(/π|pi/g, '(' + Math.PI + ')');
-                try { const val = Function('"use strict";return (' + expr + ')')(); if (!isNaN(val) && isFinite(val)) return { value: val, label: str }; } catch(e) {}
-            }
-            if (str.includes('e') && /[\/\*\+\-]/.test(str)) {
-                const expr = str.replace(/(?<![a-z])e(?![a-z])/g, '(' + Math.E + ')');
-                try { const val = Function('"use strict";return (' + expr + ')')(); if (!isNaN(val) && isFinite(val)) return { value: val, label: str }; } catch(e) {}
-            }
-            if (str.startsWith('√') || str.startsWith('sqrt')) {
-                const num = parseFloat(str.replace(/[√sqrt()]/g, ''));
-                if (!isNaN(num)) return { value: Math.sqrt(num), label: str };
-            }
-            const val = parseFloat(str);
-            if (!isNaN(val)) return { value: val, label: str };
-            return null;
-        }
-
-        function classifyNumber(val, label) {
-            if (Number.isInteger(val) && val >= 0) {
-                document.getElementById('naturalBox').innerHTML += `<span class="classify-item">${label}</span>`;
-            }
-            if (Number.isInteger(val)) {
-                document.getElementById('integerBox').innerHTML += `<span class="classify-item">${label}</span>`;
-            }
-            // 根据标签判断：含√、π、e标记的为无理数，其余为有理数
-            if (!label.includes('√') && label !== 'π' && label !== 'e') {
-                document.getElementById('rationalBox').innerHTML += `<span class="classify-item">${label}</span>`;
-            } else {
-                document.getElementById('irrationalBox').innerHTML += `<span class="classify-item">${label}</span>`;
-            }
+        function classifyNumber(result) {
+            const boxes = [];
+            if (result.isNatural) boxes.push('naturalBox');
+            if (result.isInteger) boxes.push('integerBox');
+            boxes.push(result.kind === 'rational' ? 'rationalBox' : 'irrationalBox');
+            boxes.forEach(id => {
+                const item = document.createElement('span');
+                item.className = 'classify-item';
+                item.textContent = result.label;
+                document.getElementById(id).appendChild(item);
+            });
         }
 
         const colors = ['#e91e63', '#9c27b0', '#3f51b5', '#009688', '#ff5722', '#795548'];
         let colorIdx = 0;
 
         plotBtn.addEventListener('click', () => {
-            const result = parseNumber(numberInput.value);
+            const result = realModel.parseNumber(numberInput.value);
             if (result && result.value >= nlRange.min && result.value <= nlRange.max) {
                 const color = colors[colorIdx % colors.length];
                 colorIdx++;
                 plottedPoints.push({ ...result, color });
-                classifyNumber(result.value, result.label);
+                classifyNumber(result);
                 drawNumberLine();
                 
                 const tag = document.createElement('span');
@@ -892,23 +895,37 @@
                 plottedNumbers.appendChild(tag);
                 
                 numberInput.value = '';
+                numberInputFeedback.textContent = `${result.label} 已标在数轴上，属于${result.kind === 'rational' ? '有理数' : '无理数'}。`;
             } else {
-                alert('请输入 -5 到 5 之间的有效数值！');
+                numberInputFeedback.textContent = result
+                    ? '数值超出 −5 到 5 的数轴范围，请换一个数。'
+                    : '格式不支持。可输入整数、小数、分数、√a 或 π/e 的简单变换，分母不能为零。';
             }
+        });
+        numberInput.addEventListener('keydown', event => {
+            if (event.key === 'Enter') plotBtn.click();
         });
 
         // 预设一些数
         const presets = ['√2', 'π/2', '-3', '0.5', 'e-1'];
         presets.forEach(p => {
-            const r = parseNumber(p);
+            const r = realModel.parseNumber(p);
             if (r && r.value >= nlRange.min && r.value <= nlRange.max) {
                 const color = colors[colorIdx % colors.length];
                 colorIdx++;
                 plottedPoints.push({ ...r, color });
+                const tag = document.createElement('span');
+                tag.className = 'plotted-tag';
+                tag.textContent = `${r.label}（示例）`;
+                tag.style.borderLeft = `4px solid ${color}`;
+                plottedNumbers.appendChild(tag);
             }
         });
 
         drawNumberLine();
+        window.addEventListener('resize', () => {
+            if (document.querySelectorAll('.tab-content')[2].classList.contains('active')) drawNumberLine();
+        });
 
         // ===== Tab 3: 互动练习 =====
         const quizQuestions = [

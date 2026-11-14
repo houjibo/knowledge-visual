@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：352；已登记部分交互证据：213；尚未登记：139。
+主题总数：352；已登记部分交互证据：215；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -151,6 +151,8 @@
 - [概率初步 · 初中数学互动可视化](../../math/middle/probability-intro.html)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
   - 固定随机数验证球数组成变更清空、单次及多次抽样、频率点、刻度、键盘滑块和移动视口滚动；题目内容及完整无障碍未全面核验。 [probability-experiment.spec.js](../../tests/browser/probability-experiment.spec.js)
+- [二次根式 - 初中数学八年级](../../math/middle/quadratic-radicals.html)
+  - 桌面与移动视口验证 √4、4/2、√1.44、√1.3、π/2、e-1 的数轴分类与位置、非法和超界输入、面积滑块特例及约等号、二次根式面积和零的说明、320px 键盘与文件直开；立方根、完整根式题库、真实学习者及整页屏幕阅读器仍待核。 [middle-real-number-accuracy.spec.js](../../tests/browser/middle-real-number-accuracy.spec.js)
 - [有理数情境列式 · 初中数学](../../math/middle/rational-context-problems.html)
   - 桌面与移动视口检查四个有限情境的列式、正负和小数结果、单位方向解释、数轴分步揭晓、示例不计完成、存储失败重试、目录进度、320px键盘与file直开；开放建模、真实学习者和完整屏幕阅读器另核。 [middle-rational-context-problems.spec.js](../../tests/browser/middle-rational-context-problems.spec.js)
 - [有理数 - 初中数学七年级](../../math/middle/rational-numbers.html)
@@ -158,6 +160,8 @@
   - 桌面与移动视口检查七个有限乘方案例的精确结果、因数个数、括号内外负号、分数两步预测、错答重试、主动展开、切换清理、320px、键盘按钮与file直开；自由构造、真实学习者理解和整页屏幕阅读器仍待核。 [middle-rational-powers-explorer.spec.js](../../tests/browser/middle-rational-powers-explorer.spec.js)
 - [数轴比较实验室 · 初中数学](../../math/middle/rational-order-number-line.html)
   - 桌面与移动视口验证六组整数／小数／分数的精确四分单位定位、负数与跨零比较、异写同值、错误修正、三类完成、示例不计数、存储失败重试、目录进度、320px键盘及file直开；开放构造、真实学习者和完整屏幕阅读器另核。 [middle-rational-order-number-line.spec.js](../../tests/browser/middle-rational-order-number-line.spec.js)
+- [实数 - 初中数学七年级](../../math/middle/real-numbers.html)
+  - 桌面与移动视口验证 √4、4/2、√1.44、√1.3、π/2、e-1 的数轴分类与位置、非法和超界输入、面积滑块特例及约等号、二次根式面积和零的说明、320px 键盘与文件直开；立方根、完整根式题库、真实学习者及整页屏幕阅读器仍待核。 [middle-real-number-accuracy.spec.js](../../tests/browser/middle-real-number-accuracy.spec.js)
 - [科学记数法与近似数 · 初中数学](../../math/middle/scientific-notation-approximation.html)
   - 桌面与移动视口检查科学记数法的等值/规范分判、正负指数逐位展开、指定精度舍入与半值进位、示例不计完成、存储失败重试、目录和搜索、320px键盘、file直开及发布子路径；真实学习者、整页屏幕阅读器和完整课标目标另核。 [middle-scientific-notation-approximation.spec.js](../../tests/browser/middle-scientific-notation-approximation.spec.js)
 - [20以内进位加法与退位减法](../../math/topics/20-within-addition-subtraction/index.html)
@@ -593,8 +597,6 @@
 - [勾股定理 - 互动可视化](../../math/middle/pythagorean-theorem.html)
 - [一元二次方程 - 初中数学九年级](../../math/middle/quadratic-equation.html)
 - [二次函数 - 初中数学九年级](../../math/middle/quadratic-function.html)
-- [二次根式 - 初中数学九年级](../../math/middle/quadratic-radicals.html)
-- [实数 - 初中数学七年级](../../math/middle/real-numbers.html)
 - [旋转 - 初中数学九年级](../../math/middle/rotation.html)
 - [相似 - 初中数学九年级](../../math/middle/similarity.html)
 - [三角形与全等 - 初中数学八年级](../../math/middle/triangle-congruence.html)
