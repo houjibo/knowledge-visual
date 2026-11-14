@@ -22,7 +22,7 @@ test('数学新进度按学段区分同名主题并在刷新后保留', async ({
   await page.evaluate(() => PageProgress.markDone('derivative'));
   expect(await page.evaluate(() => PageProgress.count())).toBe(2);
   await page.goto('/');
-  await expect(page.locator('[data-subject="math"] .sp-label')).toContainText('已学 2/199');
+  await expect(page.locator('[data-subject="math"] .sp-label')).toContainText('已学 2/200');
 });
 
 test('旧记录保留：无冲突可读，同名记录不猜测学段', async ({page}) => {
@@ -32,7 +32,7 @@ test('旧记录保留：无冲突可读，同名记录不猜测学段', async ({
   await page.goto('/math/index.html');
   await expect(page.locator('#mathLegacyWarning')).toBeVisible();
   await expect(page.locator('#mathLegacyWarning')).toContainText('导数');
-  await expect(page.locator('#stageProgress')).toContainText('初中 ✓ 1/29');
+  await expect(page.locator('#stageProgress')).toContainText('初中 ✓ 1/30');
   await expect(page.locator('#stageProgress')).toContainText('高中 尚未开始');
   await expect(page.locator('#stageProgress')).toContainText('大学 尚未开始');
   await page.goto('/math/middle/index.html');

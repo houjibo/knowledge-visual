@@ -4,7 +4,7 @@
 
 | 试点 | 2022→2025 内容要求核查 | 本站当前页审计结果 | 仍未完成的范围 |
 | --- | --- | --- | --- |
-| 第四学段数学“有理数” | 两版印刷页 54 均为五条；逐条学习要求相同。 | 初次复核为 0 已验证、3 部分、2 缺失；随后[乘方探索](middle-rational-powers-2026-11-13.md)把第三条提升到部分，[现行 CE25 内容清单](../plans/curriculum-crosswalks/middle-math-rational-numbers-ce25.json)为 0 已验证、4 部分、1 缺失。[原页面审计](middle-math-rational-crosswalk-2026-11-13.md)保留历史状态。 | 对应[一段学业要求与阶段质量视角](middle-math-ce25-academic-quality-2026-11-13.md)已另核；数学其余主题、小学与初中完整标准和人教版逐册节目录仍待核。 |
+| 第四学段数学“有理数” | 两版印刷页 54 均为五条；逐条学习要求相同。 | 初次复核为 0 已验证、3 部分、2 缺失；随后[乘方探索](middle-rational-powers-2026-11-13.md)把第三条提升到部分，当时为 0 已验证、4 部分、1 缺失。[情境列式补充核查](middle-rational-context-problems-2026-11-14.md)再把第五条提升到部分；现行数见[CE25 内容清单](../plans/curriculum-crosswalks/middle-math-rational-numbers-ce25.json)。[原页面审计](middle-math-rational-crosswalk-2026-11-13.md)保留历史状态。 | 对应[一段学业要求与阶段质量视角](middle-math-ce25-academic-quality-2026-11-13.md)已另核；数学其余主题、小学与初中完整标准和人教版逐册节目录仍待核。 |
 | 第四学段信息科技三个模块 | 两版互联网应用与创新 7 条、物联网实践与探索 6 条、人工智能与智慧社会 6 条，学习意图和拆分粒度保持一致。2025 版印刷页 40 的 AI 第 6 条调整了自主可控技术的语序，仍指向智慧社会安全。 | [CE25 内容清单](../plans/curriculum-crosswalks/middle-information-technology-ce25.json)：0 已验证、4 部分、15 缺失；沿用[原页面审计](middle-information-technology-crosswalk-2026-11-13.md)的内容及交互证据。 | [三个模块的学业要求与跨学科场景](middle-information-technology-ce25-academic-themes-2026-11-13.md)已另核；完整第四学段质量映射、小学学段、教材版本与完整课标其他变化仍待核。 |
 
 `CE22` 两份 JSON 保留为历史快照，`CE25` 两份 JSON 作为**上述 24 条内容要求的现行试点**。两版标准的其余条款、例子和教学提示可能有变化；本轮没有据此认定整个学段或全站完成。任何新增页面或状态提升仍需核查学习目标、解释、操作反馈和浏览器行为。

@@ -30,7 +30,7 @@ assert.deepEqual(stageProgress('chemistry/index.html', {
 }), ['尚未开始', '✓ 2/16 已完成 · 13%', '✓ 1/17 已完成 · 6%']);
 
 function homepage(store) {
-  const totals = {math: '199', physics: '55', chemistry: '46', science: '17'};
+  const totals = {math: '200', physics: '55', chemistry: '46', science: '17'};
   const cards = Object.keys(totals).map(subject => {
     const children = {'.sp-label': {}, '.sp-pct': {}, '.sp-fill': {style: {}}};
     return {children, getAttribute: key => key === 'data-subject' ? subject : totals[subject],

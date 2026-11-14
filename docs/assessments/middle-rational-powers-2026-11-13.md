@@ -16,4 +16,4 @@
 - 提交 `45a6292` 已推送，主分支 [Actions #316](https://github.com/houjibo/knowledge-visual/actions/runs/43438793735) 的 core、桌面、移动、汇总、构建、部署和部署后核验七项均成功；公开 `release-version.json` 指向 `45a6292fcff691746fb2a48a12096f3fb34b3cb8`。
 - 公网专项：`KV_PUBLISHED_BASE_URL=https://houjibo.github.io/knowledge-visual/ npx playwright test tests/browser/middle-rational-powers-explorer.spec.js --project=desktop --project=mobile --workers=2`，6/6 通过。还在真实公网浏览器手动选择 `(−2)²`、依次预测 `2 次` 与 `4`，观察到 `−2 × −2 = 4`；本地和公网页面均已打开供验收。
 
-[CE25 有理数五条现行映射](../plans/curriculum-crosswalks/middle-math-rational-numbers-ce25.json)现在为 0 已验证、4 部分、1 缺失；第三条从缺失升为部分。第四条仍为部分，三步内混合运算和运算律未补；第五条情境列式仍缺。完整学段分母、学业要求和学业质量仍待建立，不能据这五条计算全站覆盖率。
+本次乘方更新后，CE25 有理数五条内容要求当时为 0 已验证、4 部分、1 缺失；第三条从缺失升为部分。第四条仍为部分，三步内混合运算和运算律未补；第五条情境列式当时仍缺，后续[补充核查](middle-rational-context-problems-2026-11-14.md)已使其成为部分。现行状态见[CE25 内容映射](../plans/curriculum-crosswalks/middle-math-rational-numbers-ce25.json)。完整学段分母、学业要求和学业质量仍待建立，不能据这五条计算全站覆盖率。

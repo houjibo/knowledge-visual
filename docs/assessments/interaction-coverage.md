@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：347；已登记部分交互证据：208；尚未登记：139。
+主题总数：348；已登记部分交互证据：209；尚未登记：139。
 
 ## 已登记部分交互证据
 
@@ -142,6 +142,8 @@
 - [概率初步 · 初中数学互动可视化](../../math/middle/probability-intro.html)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
   - 固定随机数验证球数组成变更清空、单次及多次抽样、频率点、刻度、键盘滑块和移动视口滚动；题目内容及完整无障碍未全面核验。 [probability-experiment.spec.js](../../tests/browser/probability-experiment.spec.js)
+- [有理数情境列式 · 初中数学](../../math/middle/rational-context-problems.html)
+  - 桌面与移动视口检查四个有限情境的列式、正负和小数结果、单位方向解释、数轴分步揭晓、示例不计完成、存储失败重试、目录进度、320px键盘与file直开；开放建模、真实学习者和完整屏幕阅读器另核。 [middle-rational-context-problems.spec.js](../../tests/browser/middle-rational-context-problems.spec.js)
 - [有理数 - 初中数学七年级](../../math/middle/rational-numbers.html)
   - 桌面与移动视口检查-50至100°C示例/滑块/刻度、键盘入口、绝对值界限、负数及零的四则运算、除零与近似反馈、三题预测和不同探索完成门槛、本机写入失败重试、320px与file直开；真实学习者、屏幕阅读器及全部课标要求另核。 [middle-rational-numbers-visible-accuracy.spec.js](../../tests/browser/middle-rational-numbers-visible-accuracy.spec.js)
   - 桌面与移动视口检查七个有限乘方案例的精确结果、因数个数、括号内外负号、分数两步预测、错答重试、主动展开、切换清理、320px、键盘按钮与file直开；自由构造、真实学习者理解和整页屏幕阅读器仍待核。 [middle-rational-powers-explorer.spec.js](../../tests/browser/middle-rational-powers-explorer.spec.js)
