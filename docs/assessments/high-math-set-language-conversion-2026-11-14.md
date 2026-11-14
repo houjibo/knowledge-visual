@@ -24,6 +24,8 @@ HS25 集合内容要求总数维持 **7 条：0 已验证、7 部分**。本次�
 - `npx playwright test tests/browser/sets-language-conversion.spec.js`：桌面与移动共 8 项通过；核查错误反馈、三轮锁定与重做、Venn 区域几何、键盘、320px、`file://` 和发布包子路径。
 - 五组既有集合页浏览器回归连同新增练习共 24 项通过；`npm run check:static` 通过，页面盘点仍为 383 页。
 - `npm run check` 完整通过：静态与严格 OpenSpec 检查通过；功能矩阵桌面、移动共 2,280 通过、6 项按条件跳过；全站 383 页加载通过；发布包关键路径 22 项及 383 页加载均通过。既有集合五题及目录进度包含在功能矩阵中。
-- GitHub Actions、公网版本及操作：待本次提交和发布核查后记录。
+- [Actions #43562963012](https://github.com/houjibo/knowledge-visual/actions/runs/43562963012)：core、桌面、移动、checks 汇总、构建、部署与公网校验 7 项全部成功；`release-version.json` 返回 `6c221a22198bea53e172b6a8d930dcb8878a7537`。应用内浏览器打开[公开集合页](https://houjibo.github.io/knowledge-visual/math/high/sets.html?verify=6c221a2)，依次选 `{2,4}` 与符号条件、`{3,6}` 与自然描述、Venn 交集 `{2,4}`，观察到三轮完成和重做按钮。
+- 本机独立 Playwright 直连 GitHub Pages 的 6 个公网用例均在 `page.goto` 阶段遇到 `net::ERR_CONNECTION_RESET`（另外 2 项按本地专用条件跳过）；这些失败发生在页面加载前，不计为公网交互通过证据。上述应用内浏览器实际操作和 Actions 公网校验分别提供了可用性证据，外网自动重跑仍待网络稳定后复核。
+- 归档后再次运行 `npm run check:static`，含 Markdown 链接、规范目的与 `openspec validate --all --strict`，均通过。
 
-契约见[OpenSpec 变更](../../openspec/changes/sets-language-conversion-lab/proposal.md)。
+契约见[OpenSpec 归档变更](../../openspec/changes/archive/2026-11-14-sets-language-conversion-lab/proposal.md)。
