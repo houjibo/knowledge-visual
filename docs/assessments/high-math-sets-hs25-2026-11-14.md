@@ -20,12 +20,13 @@
 
 ## 页面证据与交付次序
 
-[集合页](../../math/high/sets.html)提供成员选择、列举法和描述法示例、Venn 关系切换、子集动画、有限集合交并差运算、固定全集的补集图与五题练习；[浏览器回归](../../tests/browser/sets-visual-operations-reliability.spec.js)核对交集图和部分键盘运算。[三轮语言转换练习](high-math-set-language-conversion-2026-11-14.md)加入自然、符号和图形语言的预测及反馈，[可变全集与补集工作台](high-math-variable-universe-complement-2026-11-14.md)加入 U/A 构造和空集判断。页面操作仍只支持 7 条的**局部**证据：数字样本有限，缺少开放情境解释、迁移及真实学习者理解证据。故 7 条仍均记“部分”，未将展示或测试通过写成“已验证掌握”。
+[集合页](../../math/high/sets.html)提供成员选择、列举法和描述法示例、Venn 关系切换、子集动画、有限集合交并差运算、固定全集的补集图与五题练习；[浏览器回归](../../tests/browser/sets-visual-operations-reliability.spec.js)核对交集图和部分键盘运算。[三轮语言转换练习](high-math-set-language-conversion-2026-11-14.md)加入自然、符号和图形语言的预测及反馈，[可变全集与补集工作台](high-math-variable-universe-complement-2026-11-14.md)加入 U/A 构造和空集判断，[关系与交并预测工作台](high-math-set-relations-operations-2026-11-14.md)加入双集合、双向见证、先预测后解释和动态双圆图。页面操作仍只支持 7 条的**局部**证据：数字样本有限，缺少开放情境解释、迁移及真实学习者理解证据。故 7 条仍均记“部分”，未将展示或测试通过写成“已验证掌握”。
 
-下一项独立页面变更优先补子集、相等和交并的构造解释（04、05）；01、02、03、06、07 还需真实情境与自由解释。每项按 OpenSpec 小步实施和验证；真实学习者理解仍须单独观察。
+下一项页面变更应优先核对非数字对象、列举子集和学习者自主解释；01、02、03、06、07 还需真实情境与迁移。每项按 OpenSpec 小步实施和验证；真实学习者理解仍须单独观察。
 
 ## 本次核查
 
 - `python3 scripts/check_curriculum_crosswalk.py`：新映射 7 条、0 已验证、7 部分、0 缺失，与登记汇总一致。
 - `npm run check:static`：通过，含 383 页站点结构、Markdown 链接、OpenSpec 严格校验与课程映射校验。
 - `npx playwright test tests/browser/sets-visual-operations-reliability.spec.js`：桌面与移动共 4 项通过，核查交集图高亮和键盘元素选择后的集合运算。此测试不验证学习者对全部 7 条要求的掌握。
+- `node tests/set-relations-operations-model.test.js`：4 项通过，含 4096 组 A/B 穷举；七组集合页回归 42 项通过。`npm run check` 全部门禁通过，功能矩阵 2298 通过／6 项按条件跳过、开发与发布包均 383 页加载。四区可见说明加入后专项 10 项再次通过。证据详见[关系与交并核查](high-math-set-relations-operations-2026-11-14.md)。

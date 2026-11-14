@@ -125,6 +125,7 @@
   - 桌面与移动视口检查交集画布像素、四种运算、键盘元素状态及 Venn 切换；其他集合图、练习和真实设备尚未全面验收。 [sets-visual-operations-reliability.spec.js](../../tests/browser/sets-visual-operations-reliability.spec.js)
   - 桌面与移动验证自然、符号、Venn 三轮的成员预测和目标表达、分项错误反馈、双圆区域几何、键盘、320px、直接文件及发布子路径；有限选项、真实学习者与完整屏幕阅读器仍待核。 [sets-language-conversion.spec.js](../../tests/browser/sets-language-conversion.spec.js)
   - 桌面与移动验证可编辑 U/A、补集预测、A=U 与 A=∅、错误反馈、U 收缩、SVG 数字位置、320px 键盘、直接文件与发布子路径；真实情境、实机与完整屏幕阅读器待核。 [sets-variable-universe-complement.spec.js](../../tests/browser/sets-variable-universe-complement.spec.js)
+  - 桌面与移动验证可构造 A/B、关系与双向见证、交并预测及分项反馈、四区 SVG 几何、空集、320px 键盘、直接文件与发布子路径；开放集合、实机与完整屏幕阅读器待核。 [sets-relations-operations-prediction.spec.js](../../tests/browser/sets-relations-operations-prediction.spec.js)
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
 - [平面直角坐标系 · 初中数学互动可视化](../../math/middle/coordinate-plane.html)
   - 滑块、鼠标和触摸的坐标同步，原点及第二象限、原点对称画布位置，测验回看计分、刷新和存储失败；其他对称方式与完整无障碍未全面验收。 [coordinate-plane.spec.js](../../tests/browser/coordinate-plane.spec.js)
