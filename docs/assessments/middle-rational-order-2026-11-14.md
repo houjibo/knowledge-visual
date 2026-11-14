@@ -2,6 +2,8 @@
 
 核查日期：2026-11-14。依据[义务教育数学课程标准日常修订版（2022 年版 2025 年修订）](https://fxzx.qpedu.cn/jhzx/kcjs/kcbz/511597.htm)第四学段“数与式／有理数”内容要求第①条（印刷页 54）：理解负数和有理数的意义，用数轴表示、比较有理数。本轮遵照用户所选人教版作章次示例；[人教版七上编排样本](../plans/pep-middle-math-grade7-up-audit.md)只定位有关章节，具体任务为本站自编，不复制教材题目或插图。
 
+变更契约见[归档 OpenSpec](../../openspec/changes/archive/2026-11-14-middle-rational-order-number-line/proposal.md)。
+
 ## 学习任务与边界
 
 - [数轴比较实验室](../../math/middle/rational-order-number-line.html)有六组固定数对。学习者先移动 A/B 两个点到 −4 至 4 的同一数轴，每次最小移动 1/4；位置核对正确后才选择 `<`、`=`、`>` 和“左／重合／右”解释。错误反馈允许修正。
@@ -17,6 +19,7 @@
 - `node tests/rational-order-model.test.js`：六组精确点位与大小、异写同值、区间边界和非法输入通过。
 - `npx playwright test tests/browser/middle-rational-order-number-line.spec.js --project=desktop --project=mobile`：本地 8/8 通过，覆盖负数错误重试、同值点、三类完成、目录徽章、揭示不计数、存储失败重试、320px 键盘和直接文件打开。
 - 完整 `npm run check` 通过：静态与严格 OpenSpec 校验、功能浏览器 2334 项通过／6 项按配置跳过、开发站 386 页加载、发布包关键流程 22 项及发布包 386 页加载均通过。桌面页面首屏已目视检查；320px 由浏览器断言检查不溢出，未进行真实设备目视验收。
-- GitHub Actions 与公网专项状态将在发布核验后补记。
+- 功能提交 `525fbd447a1c1dff948092707bd6d5acab37a5b5` 的 [GitHub Actions #43610247896](https://github.com/houjibo/knowledge-visual/actions/runs/43610247896) 七个作业均成功，包含部署后验证。公网 `release-version.json` 的 revision 与提交一致，`site_files_modified: false`；公网主题页、模型、初中目录及搜索目录与提交资源逐字节相同。
+- 公网桌面／移动专项 `KV_PUBLISHED_BASE_URL=https://houjibo.github.io/knowledge-visual/ npx playwright test tests/browser/middle-rational-order-number-line.spec.js --project=desktop --project=mobile`：4 项通过、4 项本机专用条件跳过。已同时打开[本地页面](http://127.0.0.1:4173/math/middle/rational-order-number-line.html)和[公网页面](https://houjibo.github.io/knowledge-visual/math/middle/rational-order-number-line.html?verify=525fbd4)供验收。
 
 真实设备、完整屏幕阅读器和真实学习者开放作答尚未验收。
