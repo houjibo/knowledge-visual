@@ -12,7 +12,8 @@
 
 - `node tests/square-cube-roots-model.test.js`：核对 `1..10` 的平方与立方、对应负整数立方根、零和负数平方根，以及越界输入、错误答案与理由。
 - `CI=true npx playwright test tests/browser/middle-square-cube-roots.spec.js --project=desktop --project=mobile --reporter=line`：12/12 通过。覆盖图文与层数同步、错误修正、六类门槛和目录徽章、首页检索、320px、键盘、`file://`、存储失败重试。本地静态服务页面 HTTP 200，并目视检查了桌面和 320px 全页截图。
-- `npm run check:static` 与浏览器矩阵覆盖预检通过。首次全量功能矩阵中 2,356 项通过、6 项跳过，另 8 项因旧断言写死数学 202／初中 32 而失败；修正为实际 203／33 后，受影响的三个测试文件桌面／移动共 44 项通过。开发站全部 388 个 HTML 加载通过；发布包 22 项路径交互及全部 388 个 HTML 加载通过。主分支完整 CI 和公网版本仍待提交后核对。
+- `npm run check:static` 与浏览器矩阵覆盖预检通过。首次全量功能矩阵中 2,356 项通过、6 项跳过，另 8 项因旧断言写死数学 202／初中 32 而失败；修正为实际 203／33 后，受影响的三个测试文件桌面／移动共 44 项通过。开发站全部 388 个 HTML 加载通过；发布包 22 项路径交互及全部 388 个 HTML 加载通过。
+- 功能提交 `95dbe67` 已推送；[主分支 Actions](https://github.com/houjibo/knowledge-visual/actions/runs/43636292745)七个作业全部成功。公开 `release-version.json` 的 revision 为 `95dbe67305a875ccd41898549d6db1977bb6cc23`，`site_files_modified:false`；[公网页面](https://houjibo.github.io/knowledge-visual/math/middle/square-cube-roots.html) HTTP 200，HTML 与数学模型和提交逐字节一致。公网桌面／移动专项 8 项通过，另 4 项本地文件直开及存储故障注入按条件跳过。[本地页面](http://127.0.0.1:4173/math/middle/square-cube-roots.html)与公网标签保持打开。
 
 有限案例、模拟视口或静态清单不等同于真实学习者掌握。
 
