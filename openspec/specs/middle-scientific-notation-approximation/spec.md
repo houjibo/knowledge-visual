@@ -1,7 +1,7 @@
 # middle-scientific-notation-approximation Specification
 
 ## Purpose
-TBD - created by archiving change middle-scientific-notation-approximation. Update Purpose after archive.
+定义初中科学记数法与近似数主题的交互、反馈、完成门槛和静态发布要求，使学习者能够检验规范表示与指定精度的舍入结果。
 
 ## Requirements
 
