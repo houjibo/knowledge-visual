@@ -7,7 +7,7 @@
 | 课标分组 | 编号条目 | 已验证 | 部分 | 缺失 | 主要页面证据与边界 |
 | --- | ---: | ---: | ---: | ---: | --- |
 | 有理数 | 5 | 0 | 5 | 0 | [原有逐项核查](middle-math-rational-crosswalk-2026-11-13.md)及近期乘方、情境列式、数轴比较任务；混合运算与运算律仍未形成完整学习任务。 |
-| 实数 | 8 | 0 | 8 | 0 | [实数](../../math/middle/real-numbers.html)、[二次根式](../../math/middle/quadratic-radicals.html)、[近似数](../../math/middle/scientific-notation-approximation.html)含局部示例；立方根、开方逆运算、计算器和估计理由明显不足。 |
+| 实数 | 8 | 0 | 8 | 0 | [实数](../../math/middle/real-numbers.html)、[二次根式](../../math/middle/quadratic-radicals.html)、[近似数](../../math/middle/scientific-notation-approximation.html)含局部示例；[开方实验室](middle-square-cube-roots-2026-11-15.md)已补有限立方根、逆运算和本页计算器，实体计算器、非完全幂与估计理由仍不足。 |
 | 代数式 | 9 | 0 | 9 | 0 | [整式](../../math/middle/integral-expressions.html)、[乘法与因式分解](../../math/middle/polynomial-operations.html)、[分式](../../math/middle/fractions.html)有示例或有限练习；[代数推理实验室](../../math/middle/algebraic-reasoning.html)已补第⑨条的预测、位值／面积拆解和一般依据，仍缺开放证明与迁移。 |
 
 ## 核查中发现的优先问题
@@ -22,4 +22,4 @@
 
 [人教社第十二套六册编排表](../plans/pep-middle-math-series-structure.md)可把这些要求定位到七上第 1—4 章、七下第 8 章、八上第 16—18 章和八下第 19 章等候选章次。它是教材组织线索，不改变上述 22 条课标分母，也不能证明教材小节全部核齐；七上仅有[首册版次和局部课例核查](../plans/pep-middle-math-grade7-up-audit.md)，其余分册的现行版次与节目录继续核查。
 
-按小步交付排序：实数分类及平方根说明、代数推理预测／操作／解释任务已完成局部补充；下一步扩展立方根和开方、混合运算及运算律、公式几何证明与分式取值边界。每个页面行为变更另立 OpenSpec，完成本地和公网验证后回填逐项映射。第四学段尚有“方程与不等式”“函数”以及其他领域与学业要求、学业质量未拆解，故 **22 不是初中数学总分母，更不是全站覆盖率**。
+按小步交付排序：实数分类及平方根说明、代数推理预测／操作／解释任务已完成局部补充；下一步扩展非完全幂估计与实体计算器、混合运算及运算律、公式几何证明与分式取值边界。每个页面行为变更另立 OpenSpec，完成本地和公网验证后回填逐项映射。第四学段尚有“方程与不等式”“函数”以及其他领域与学业要求、学业质量未拆解，故 **22 不是初中数学总分母，更不是全站覆盖率**。
