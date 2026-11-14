@@ -16,4 +16,5 @@
 
 - 纯模型 5 项通过；专项浏览器测试 14 项通过（桌面、移动各 7 项），覆盖四状态反事实、错误后重选、保存失败重试、键盘与 320px、`file://` 和发布子路径。
 - `npm run check` 通过：主浏览器测试 2326 通过、6 跳过；全页面烟测 385 通过；发布包测试 22 项与 385 页加载均通过。初中目录及首页计数由静态和浏览器检查覆盖；本地页面首屏、时间线、选择区和结论区已目视核对。
-- Actions、公网页面和版本验证待本轮推送后记录；对应[OpenSpec 变更](../../openspec/changes/middle-online-learning-modes/proposal.md)。
+- [Actions #43600082718](https://github.com/houjibo/knowledge-visual/actions/runs/43600082718) 中核心、桌面、移动、发布及部署验证全部成功；公开 `release-version.json` 指向 `058d1b3` 且 `site_files_modified=false`，页面返回 200，并在站点浏览器中确认任务、时间线、选择控件与目录路径。
+- 公网专项交互 8 项通过、6 项按本地专属场景跳过；对应[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-14-middle-online-learning-modes/proposal.md)。
