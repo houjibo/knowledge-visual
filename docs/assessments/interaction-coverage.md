@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：355；已登记部分交互证据：218；尚未登记：137。
+主题总数：356；已登记部分交互证据：219；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -166,6 +166,8 @@
   - 桌面与移动视口验证六组整数／小数／分数的精确四分单位定位、负数与跨零比较、异写同值、错误修正、三类完成、示例不计数、存储失败重试、目录进度、320px键盘及file直开；开放构造、真实学习者和完整屏幕阅读器另核。 [middle-rational-order-number-line.spec.js](../../tests/browser/middle-rational-order-number-line.spec.js)
 - [实数 - 初中数学七年级](../../math/middle/real-numbers.html)
   - 桌面与移动视口验证 √4、4/2、√1.44、√1.3、π/2、e-1 的数轴分类与位置、非法和超界输入、面积滑块特例及约等号、二次根式面积和零的说明、320px 键盘与文件直开；立方根、完整根式题库、真实学习者及整页屏幕阅读器仍待核。 [middle-real-number-accuracy.spec.js](../../tests/browser/middle-real-number-accuracy.spec.js)
+- [实数对称与距离实验室 · 初中数学](../../math/middle/real-symmetry-distance.html)
+  - 桌面与移动视口验证正负√2、π、e、有理数与零的数轴定位、反射、绝对值和距离理由；错误修正、示例不计、四类独立进度、目录搜索、320px 键盘、文件直开、存储失败重试及发布子路径；任意实数、真实学习者、实机及整页屏幕阅读器仍待核。 [middle-real-symmetry-distance.spec.js](../../tests/browser/middle-real-symmetry-distance.spec.js)
 - [科学记数法与近似数 · 初中数学](../../math/middle/scientific-notation-approximation.html)
   - 桌面与移动视口检查科学记数法的等值/规范分判、正负指数逐位展开、指定精度舍入与半值进位、示例不计完成、存储失败重试、目录和搜索、320px键盘、file直开及发布子路径；真实学习者、整页屏幕阅读器和完整课标目标另核。 [middle-scientific-notation-approximation.spec.js](../../tests/browser/middle-scientific-notation-approximation.spec.js)
 - [平方与立方开方实验室 · 初中数学](../../math/middle/square-cube-roots.html)

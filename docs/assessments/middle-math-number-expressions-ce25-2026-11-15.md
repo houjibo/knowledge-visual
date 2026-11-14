@@ -7,7 +7,7 @@
 | 课标分组 | 编号条目 | 已验证 | 部分 | 缺失 | 主要页面证据与边界 |
 | --- | ---: | ---: | ---: | ---: | --- |
 | 有理数 | 5 | 0 | 5 | 0 | [原有逐项核查](middle-math-rational-crosswalk-2026-11-13.md)及近期乘方、情境列式、数轴比较任务；混合运算与运算律仍未形成完整学习任务。 |
-| 实数 | 8 | 0 | 8 | 0 | [实数](../../math/middle/real-numbers.html)、[二次根式](../../math/middle/quadratic-radicals.html)、[近似数](../../math/middle/scientific-notation-approximation.html)含局部示例；[开方实验室](middle-square-cube-roots-2026-11-15.md)已补有限立方根、逆运算和本页计算器，[无理数夹逼实验室](middle-irrational-root-bounds-2026-11-15.md)新增有限非完全平方数的有理界与比较理由；实体计算器、其他无理数和迁移仍不足。 |
+| 实数 | 8 | 0 | 8 | 0 | [实数](../../math/middle/real-numbers.html)、[二次根式](../../math/middle/quadratic-radicals.html)、[近似数](../../math/middle/scientific-notation-approximation.html)含局部示例；[开方实验室](middle-square-cube-roots-2026-11-15.md)已补有限立方根、逆运算和本页计算器，[无理数夹逼实验室](middle-irrational-root-bounds-2026-11-15.md)新增有限非完全平方数的有理界与比较理由；[实数对称与距离实验室](middle-real-symmetry-distance-2026-11-15.md)补正负无理数、非零有理数和零的数轴反射与距离任务；实体计算器、其他无理数和迁移仍不足。 |
 | 代数式 | 9 | 0 | 9 | 0 | [整式](../../math/middle/integral-expressions.html)、[乘法与因式分解](../../math/middle/polynomial-operations.html)、[分式](../../math/middle/fractions.html)有示例或有限练习；[代数推理实验室](../../math/middle/algebraic-reasoning.html)已补第⑨条的预测、位值／面积拆解和一般依据，仍缺开放证明与迁移。 |
 
 ## 核查中发现的优先问题
