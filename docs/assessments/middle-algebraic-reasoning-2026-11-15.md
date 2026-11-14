@@ -12,6 +12,7 @@
 
 - `node tests/algebraic-reasoning-model.test.js`：遍历全部 9000 个四位数和 9 个末位为 5 的两位数，核对位值恒等式、各位和同余、四块面积恒等式及错误分支。
 - `npx playwright test tests/browser/middle-algebraic-reasoning.spec.js --project=desktop --project=mobile`：10/10 通过，覆盖分步反馈、结构图、四类完成、示例不计、目录徽章、320px、键盘、存储失败重试和直接文件打开。
-- `npm run check`：静态与 OpenSpec 严格校验通过，全量浏览器 2352 通过、6 项按既有配置跳过，开发站 387/387 页加载、发布包关键路径 22/22 与页面 387/387 加载通过。Actions 与公网专项结果在小步推送后回填。
+- `npm run check`：静态与 OpenSpec 严格校验通过，全量浏览器 2352 通过、6 项按既有配置跳过，开发站 387/387 页加载、发布包关键路径 22/22 与页面 387/387 加载通过。
+- 功能提交 `6d9c80b` 已推送；[主分支 Actions](https://github.com/houjibo/knowledge-visual/actions/runs/43630352171)的七个作业全部成功。公开清单 revision 为 `6d9c80baa240aca52102c05da0de4fbf72c5c643` 且 `site_files_modified:false`；[公网页面](https://houjibo.github.io/knowledge-visual/math/middle/algebraic-reasoning.html) HTTP 200，页面与数学模型文件逐字节匹配提交。公网桌面／移动专项 6/6 通过，另 4 项文件直开和存储故障场景按本地专用条件跳过；[本地页面](http://127.0.0.1:4173/math/middle/algebraic-reasoning.html)与公网验收标签均保持打开。
 
 [CE25 “数与式”逐项映射](../plans/curriculum-crosswalks/middle-math-number-expressions-ce25.json)的代数式⑨由**缺失**调整为**部分**，22 条清单相应为 0 已验证、22 部分、0 缺失。有限选择和四类完成只证明本站给出了可观察的局部任务，不证明学习者能自由书写证明、对陌生规律迁移或达到全部学业质量。下一步需要开放解释的课堂作答证据，此外初中数学其他主题的完整标准与人教版六册小节仍待核。
