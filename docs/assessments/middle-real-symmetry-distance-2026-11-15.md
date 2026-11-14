@@ -13,5 +13,7 @@
 - `node tests/real-symmetry-model.test.js`：10 案例数值与符号、近似与精确定位、零、非法输入、距离输出均通过。
 - `CI=true npx playwright test tests/browser/middle-real-symmetry-distance.spec.js --project=desktop --project=mobile --reporter=line`：14/14 通过。涵盖错误修正、负 π、零示例不计、四类进度、目录/搜索、320px 键盘和切题、文件直开及存储失败重试。
 - 桌面与 320px 全页画面已检查；为使手机拖动滑块时仍能观察数轴，窄屏将数轴置于控件前并在作答时保持可见。无横向溢出。
-- `npm run check` 完整通过：功能浏览器测试 2390 通过、6 跳过，开发态全页面 390 通过，发布包交互 22 通过，发布包全页面 390 通过；静态与纯模型检查也通过。Actions 与公网专项在发布后补充。
-- 这是有限样例，不代表任意实数自由输入、所有表达式等价变换、开放论证、真实学习者迁移或整页辅助技术验收。[CE25 实数③逐项映射](../plans/curriculum-crosswalks/middle-math-number-expressions-ce25.json)继续标为“部分”。
+- `npm run check` 完整通过：功能浏览器测试 2390 通过、6 跳过，开发态全页面 390 通过，发布包交互 22 通过，发布包全页面 390 通过；静态与纯模型检查也通过。
+- 功能提交 `5497a7f` 的 [Actions 七项任务](https://github.com/houjibo/knowledge-visual/actions/runs/43646352759)全部成功；公网 `release-version.json` 对应完整提交且 `site_files_modified=false`。公网桌面/移动专项 10 通过、4 项按本机文件与存储条件跳过；页面、模型、共用实数模型、初中目录、检索目录和首页共六个资源与提交逐字节相同。
+- `±3/2`、`0` 与 `√0` 同时为[CE25 有理数②逐项映射](../plans/curriculum-crosswalks/middle-math-rational-numbers-ce25.json)提供有限证据；它与[实数③逐项映射](../plans/curriculum-crosswalks/middle-math-number-expressions-ce25.json)均继续标为“部分”。这些样例不代表任意实数自由输入、所有表达式等价变换、开放论证、真实学习者迁移或整页辅助技术验收。
+- 本次需求、设计和任务见[已归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-15-middle-real-symmetry-distance/proposal.md)，当前契约见[主规格](../../openspec/specs/middle-real-symmetry-distance/spec.md)。
