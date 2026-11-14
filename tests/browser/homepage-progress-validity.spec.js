@@ -13,7 +13,7 @@ test('首页只计入当前学段中有效且完成的记录', async ({page}) =>
     localStorage.setItem('kv-computer-ai-high-progress', JSON.stringify({'classifier-lab': true}));
   });
   await page.goto('/');
-  await expect(page.locator('[data-subject="math"] .sp-label')).toContainText('已学 2/198');
+  await expect(page.locator('[data-subject="math"] .sp-label')).toContainText('已学 2/199');
   await expect(page.locator('[data-subject="math"] .sp-label')).toContainText('学段不明旧记录');
   await expect(page.locator('[data-subject="physics"] .sp-label')).toHaveText('已学 2/55');
   await expect(page.locator('[data-subject="chemistry"] .sp-label')).toHaveText('已学 1/46');

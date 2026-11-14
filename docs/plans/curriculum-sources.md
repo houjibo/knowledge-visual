@@ -32,6 +32,8 @@
 
 教育部[2025 年“基础教育精品课”名单](https://www.moe.gov.cn/jyb_xxgk/s5743/s5744/A06/202604/W020260414399735360525.xlsx)又提供人教版初中数学七上、七下、八上的局部章节目标签；[源行核查](pep-middle-math-2025-lesson-source-audit.md)只把它作为辅助交叉证据。入选课例、教材完整目录与课标要求继续分别计数。
 
+对 CE25 数学第四学段“实数”第⑦项与“代数式”第④项，已建立[近似数与科学记数法的两条局部映射](curriculum-crosswalks/middle-math-scientific-approximation-ce25.json)；它们和“有理数”五条分别计数。新增[学习页](../../math/middle/scientific-notation-approximation.html)给出有限交互证据，不代表整数指数幂性质、计算器操作或完整第四学段已达成。
+
 [教育部等五部门 2026 年“人工智能+教育”行动计划](https://www.moe.gov.cn/srcsite/A16/s3342/202604/t20260410_1433240.html)要求持续完善中小学 AI 通识指南并推动学段课程目标建设，因此 AI25 须定期复核；该行动计划本身不提供可直接逐条计数的教材章节。
 
 ## 下一轮来源核对
