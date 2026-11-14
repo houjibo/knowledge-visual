@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：354；已登记部分交互证据：217；尚未登记：137。
+主题总数：355；已登记部分交互证据：218；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -146,6 +146,8 @@
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
 - [相交线与平行线 · 初中数学互动可视化](../../math/middle/intersecting-parallel-lines.html)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
+- [无理数夹逼实验室 · 初中数学](../../math/middle/irrational-root-bounds.html)
+  - 桌面与移动视口验证自选非完全平方数、正方形与数轴同步、整数/十分位夹逼、错误修正、平方比较理由、手动计算器输入、三组独立进度、目录搜索、320px 键盘、文件直开、存储失败重试及发布子路径；其他无理数、真实学习者、实体计算器、实机及整页屏幕阅读器仍待核。 [middle-irrational-root-bounds.spec.js](../../tests/browser/middle-irrational-root-bounds.spec.js)
 - [一元一次方程 - 初中数学七年级](../../math/middle/linear-equation.html)
   - 初中、高中、大学目录的跨标签徽章、存储异常及同名主题隔离；不代表全部主题的完成条件已核验。 [math-stage-directory-progress.spec.js](../../tests/browser/math-stage-directory-progress.spec.js)、[math-progress.spec.js](../../tests/browser/math-progress.spec.js)
 - [二元一次方程组 · 初中数学互动可视化](../../math/middle/linear-equations-2var.html)

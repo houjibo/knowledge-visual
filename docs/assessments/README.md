@@ -1,6 +1,6 @@
 # 站点评估基线
 
-[页面清单](page-inventory.json) 于 2026-11-15 根据当前仓库重新生成：包含 388 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
+[页面清单](page-inventory.json) 于 2026-11-15 根据当前仓库重新生成：包含 389 个 HTML 文件。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
 
 重新生成：`python3 scripts/inventory_pages.py --output docs/assessments/page-inventory.json`；运行 `python3 scripts/inventory_pages.py --check docs/assessments/page-inventory.json` 检查清单是否过期，运行 `python3 tests/inventory_test.py` 验证基本解析及导航行为。生成结果按路径稳定排序，无时间戳，可用版本差异检查变化。
 
@@ -110,3 +110,5 @@
 [单缸蒸汽机动力路径核查](steam-engine-2026-11-13.md)记录理想双作用气缸、几何、交互和发布验收状态。
 
 [初中平方与立方开方实验室核查](middle-square-cube-roots-2026-11-15.md)记录 CE25 实数④⑤、六类预测—回代—验算任务、数值边界与本地/公开验证证据。
+
+[初中无理数夹逼实验室核查](middle-irrational-root-bounds-2026-11-15.md)记录 CE25 实数⑥的整数与十分位有理界、自选非完全平方整数、平方比较理由、专项验证与剩余边界。
