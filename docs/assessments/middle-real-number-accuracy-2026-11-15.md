@@ -1,6 +1,6 @@
 # 实数分类与二次根式文字准确性核查
 
-核查日期：2026-11-15。课程位置见[CE25 第四学段“数与式”完整映射](../plans/curriculum-crosswalks/middle-math-number-expressions-ce25.json)的实数①、②、④、⑧；[现行数学课程标准](https://fxzx.qpedu.cn/jhzx/kcjs/kcbz/511597.htm)与[人教社第十二套初中数学六册编排表](../plans/pep-middle-math-series-structure.md)分别用于目标和教材章次，不互作分母。
+核查日期：2026-11-15。[归档 OpenSpec](../../openspec/changes/archive/2026-11-15-middle-real-number-accuracy/proposal.md)记录本次行为边界。课程位置见[CE25 第四学段“数与式”完整映射](../plans/curriculum-crosswalks/middle-math-number-expressions-ce25.json)的实数①、②、④、⑧；[现行数学课程标准](https://fxzx.qpedu.cn/jhzx/kcjs/kcbz/511597.htm)与[人教社第十二套初中数学六册编排表](../plans/pep-middle-math-series-structure.md)分别用于目标和教材章次，不互作分母。
 
 ## 修复的可见问题
 
@@ -18,6 +18,7 @@
 
 - `node tests/real-number-model.test.js`：12 个有代表性的输入、9 个非法输入及 241 个面积档位对照独立整数平方数判定，已通过。
 - `npx playwright test tests/browser/middle-real-number-accuracy.spec.js`：桌面、移动各四个场景，共 8/8 通过；覆盖数轴分类、非法输入、面积变化、根式说明、320px 与文件直开。
-- `npm run check` 已通过：静态、OpenSpec、2342 项浏览器功能通过（6 项按条件跳过）、386 页全站加载、22 项本地发布功能与 386 页发布包加载。最终面积滑块键盘与窄屏断言又单独复跑，8/8 通过。CI 和公网状态以提交后的核查为准。
+- `npm run check` 已通过：静态、OpenSpec、2342 项浏览器功能通过（6 项按条件跳过）、386 页全站加载、22 项本地发布功能与 386 页发布包加载。最终面积滑块键盘与窄屏断言又单独复跑，8/8 通过。
+- [Actions #43622497993](https://github.com/houjibo/knowledge-visual/actions/runs/43622497993) 的核心、桌面、移动、汇总、构建、部署和公网验证均成功。公网版本标记为 `5d96d3d8534da340d5b96d79c336444abc9f1d72`；公网专项 6/6 通过，另 2 项仅在本机测试；实数页、模型脚本与二次根式页与提交逐字节相同。本地与公网浏览器均实际检查了纠正后的分类或平方根反馈。
 
 本轮只修正几个已有学习示例的准确性。数轴比较尚无先预测后核验任务，立方根、完整根式运算题库与真实学习者理解仍待核；上述四条 CE25 要求保持“部分”，不提升为“已验证”。
