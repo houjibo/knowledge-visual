@@ -12,4 +12,8 @@
 
 - `node tests/irrational-root-bounds-model.test.js`：遍历 90 个合法 `n`，逐一核对整数和十分位两级严格界、候选平方比较、计算器近似值与非法输入。判分不依赖浮点近似。
 - `CI=true npx playwright test tests/browser/middle-irrational-root-bounds.spec.js --project=desktop --project=mobile --reporter=line`：12/12 通过。覆盖 √2 和 √50 的错误修正、目标数轴点在计算前隐藏／计算后显示、三段进度、目录和搜索、320px、键盘、直接文件打开与存储失败重试。初轮发现 SVG `hidden` 属性未移除，已修复并复跑通过。
-- `npm run check` 完整本地门禁通过：功能浏览器 2376 通过、6 个既有条件跳过，开发站全页 389 通过，发布包交互 22 通过，发布包全页 389 通过；静态、课程映射与严格 OpenSpec 均通过。桌面与 320px 全页画面复核了自适应比例尺及无横向溢出。公网提交验收在后续记录中补充。有限非完全平方整数的平方根仍不能代表 π、任意无理数的范围估计、实体计算器操作、实机及真实学习者迁移。CE25 实数⑥在[逐项映射](../plans/curriculum-crosswalks/middle-math-number-expressions-ce25.json)中继续标“部分”。
+- `npm run check` 完整本地门禁通过：功能浏览器 2376 通过、6 个既有条件跳过，开发站全页 389 通过，发布包交互 22 通过，发布包全页 389 通过；静态、课程映射与严格 OpenSpec 均通过。桌面与 320px 全页画面复核了自适应比例尺及无横向溢出。
+- 功能提交 `7984cbcbe2dc61586e93d84d998a594153c60caa` 的 [Actions #43640998819](https://github.com/houjibo/knowledge-visual/actions/runs/43640998819) 七个作业全部成功。公网 `release-version.json` 的 revision 匹配提交且 `site_files_modified=false`；主题 HTML、模型 JS、初中目录与搜索索引均与本地提交逐字节相同。公网桌面／移动专项 8 项通过，4 项文件直开和本机存储专用场景按条件跳过；[公网主题页](https://houjibo.github.io/knowledge-visual/math/middle/irrational-root-bounds.html?verify=7984cbc)已打开核对加载与可见内容。
+- 有限非完全平方整数的平方根仍不能代表 π、任意无理数的范围估计、实体计算器操作、实机及真实学习者迁移。CE25 实数⑥在[逐项映射](../plans/curriculum-crosswalks/middle-math-number-expressions-ce25.json)中继续标“部分”。
+
+[本轮 OpenSpec 变更](../../openspec/changes/archive/2026-11-15-middle-irrational-root-bounds/proposal.md)已归档，后续扩展另起变更。
