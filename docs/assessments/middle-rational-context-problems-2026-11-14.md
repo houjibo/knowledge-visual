@@ -1,6 +1,6 @@
 # 初中有理数情境列式：局部学习证据
 
-核查日期：2026-11-14。[义务教育数学课程标准日常修订版（2022 年版 2025 年修订）](https://fxzx.qpedu.cn/jhzx/kcjs/kcbz/511597.htm)第四学段“数与式／有理数”内容要求第⑤条（印刷页 54）要求运用有理数运算解决简单问题。[七上人教版章次样本](../plans/pep-middle-math-grade7-up-audit.md)只提供第二章“有理数的运算”的编排线索；具体题目是本站虚构教学任务，不抄录教材。变更契约见[OpenSpec](../../openspec/changes/middle-rational-context-problems/proposal.md)。
+核查日期：2026-11-14。[义务教育数学课程标准日常修订版（2022 年版 2025 年修订）](https://fxzx.qpedu.cn/jhzx/kcjs/kcbz/511597.htm)第四学段“数与式／有理数”内容要求第⑤条（印刷页 54）要求运用有理数运算解决简单问题。[七上人教版章次样本](../plans/pep-middle-math-grade7-up-audit.md)只提供第二章“有理数的运算”的编排线索；具体题目是本站虚构教学任务，不抄录教材。变更契约见[归档 OpenSpec](../../openspec/changes/archive/2026-11-14-middle-rational-context-problems/proposal.md)。
 
 ## 学习任务与边界
 
@@ -16,6 +16,8 @@
 
 - `node tests/rational-context-model.test.js`：正负与小数求和、零、列式反馈、符号错误、非法输入和解释反馈通过。
 - `npx playwright test tests/browser/middle-rational-context-problems.spec.js --project=desktop --project=mobile`：8/8 通过；覆盖分步数轴、错答重试、独立完成和目录进度、示例不计完成、存储失败重试、320px、键盘及文件直开。
-- 完整 `npm run check` 通过：静态、课程映射和严格 OpenSpec 校验；功能浏览器 2,260 项通过、6 项按配置跳过，开发站 382 页、发布包关键流程 22 项及发布包 382 页加载通过。桌面与 320px 已目视检查；初版解释选项会提前泄露末值，已改为结果正确后才显示并加入回归断言。发布后仍须核公网资源与交互。
+- 完整 `npm run check` 通过：静态、课程映射和严格 OpenSpec 校验；功能浏览器 2,260 项通过、6 项按配置跳过，开发站 382 页、发布包关键流程 22 项及发布包 382 页加载通过。桌面与 320px 已目视检查；初版解释选项会提前泄露末值，已改为结果正确后才显示并加入回归断言。
+- [Actions 功能提交运行](https://github.com/houjibo/knowledge-visual/actions/runs/43550076642)七项工作全部成功，包括构建、部署和发布验证；公网 `release-version.json` 指向提交 `a033c716dcfd7dd4928358243e82bc15be275409`，且 `site_files_modified: false`。
+- 公网桌面／移动专项 `KV_PUBLISHED_BASE_URL=https://houjibo.github.io/knowledge-visual/ npx playwright test tests/browser/middle-rational-context-problems.spec.js --project=desktop --project=mobile`：4 项通过、4 项本地专用条件跳过；已打开[公网交互页](https://houjibo.github.io/knowledge-visual/math/middle/rational-context-problems.html)与[本地交互页](http://127.0.0.1:4173/math/middle/rational-context-problems.html)供验收。
 
 尚未验证真实学习者的开放建模能力、完整屏幕阅读器朗读或真实测量数据。后续应增加由学习者自行表达数量关系的问题，并检查错误策略与迁移。
