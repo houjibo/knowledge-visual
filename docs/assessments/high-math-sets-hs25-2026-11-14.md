@@ -30,3 +30,4 @@
 - `npm run check:static`：通过，含 383 页站点结构、Markdown 链接、OpenSpec 严格校验与课程映射校验。
 - `npx playwright test tests/browser/sets-visual-operations-reliability.spec.js`：桌面与移动共 4 项通过，核查交集图高亮和键盘元素选择后的集合运算。此测试不验证学习者对全部 7 条要求的掌握。
 - `node tests/set-relations-operations-model.test.js`：4 项通过，含 4096 组 A/B 穷举；七组集合页回归 42 项通过。`npm run check` 全部门禁通过，功能矩阵 2298 通过／6 项按条件跳过、开发与发布包均 383 页加载。四区可见说明加入后专项 10 项再次通过。证据详见[关系与交并核查](high-math-set-relations-operations-2026-11-14.md)。
+- 功能提交的 [Actions](https://github.com/houjibo/knowledge-visual/actions/runs/43572470439) 成功，公开版本 revision 与提交一致；公网实际核对真子集、并集与空交集。该操作证明发布链路和有限样本可用，不证明真实学习者掌握。

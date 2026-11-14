@@ -17,6 +17,7 @@
 - `node tests/set-relations-operations-model.test.js`：4 项通过，含 4096 组构造、双向见证、交并结果和无效输入。
 - `npx playwright test tests/browser/sets-relations-operations-prediction.spec.js`：桌面与移动共 10 项通过；覆盖关系、几何位置、漏选多选、空集、320px、键盘、直接文件和发布子路径。
 - 七组集合页回归含新增场景共 42 项通过；`npm run check` 全部通过：静态与严格 OpenSpec、全量功能测试 2298 通过／6 项按条件跳过、开发站 383 页加载、发布包关键路径 22 项及发布包 383 页加载。补充可见四区文字后，新场景 10 项再次通过。
-- Actions 与公网实际操作的结果在发布后补记。
+- 功能提交 `d7bc38ddce6f5583fdcf8fd582167cdcbc3b9401` 的 [Actions 运行](https://github.com/houjibo/knowledge-visual/actions/runs/43572470439)显示成功；公开 `release-version.json` 返回相同 revision，`site_files_modified:false`。应用内浏览器在[公网集合页](https://houjibo.github.io/knowledge-visual/math/high/sets.html?verify=d7bc38d)实际完成 A⊊B 与两侧见证、并集 `{1,2,3,4}` 以及不相交情境的空交集核对；可见区域文字、反馈与操作一致。本地预览也完成真子集和交集 `{1,2}` 核对。
+- OpenSpec 归档后 `npm run check:static` 再次通过，含规范目的、Markdown 链接、课程映射和 383 页站点清单。
 
-契约见[OpenSpec 变更](../../openspec/changes/set-relations-operations-prediction/proposal.md)。
+契约见[OpenSpec 归档变更](../../openspec/changes/archive/2026-11-14-set-relations-operations-prediction/proposal.md)。
