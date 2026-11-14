@@ -24,6 +24,7 @@
 - `node tests/set-complement-model.test.js`：4 项通过，含 728 组 U/A 构造及错误输入。
 - 新增浏览器场景桌面、移动共 8 项通过；验证对比、A=U、A=∅、缺项/多选/空集判断反馈、U 收缩、320px 键盘、SVG 位置、`file://` 与发布子路径。
 - 六组集合页浏览器回归含新场景共 32 项通过；`npm run check` 完整通过：静态及严格 OpenSpec 检查、功能矩阵 2,288 通过／6 项按条件跳过、开发站 383 页加载、发布包关键路径 22 项及发布包 383 页加载均通过。
-- Actions、公网版本与实际操作：待本次提交发布后记录。
+- [Actions #43568015998](https://github.com/houjibo/knowledge-visual/actions/runs/43568015998) 的核心、桌面、移动、汇总、构建、部署与公网校验七项全部成功；`release-version.json` 返回 `05ec43f1013dc6e393db361d796163afd1af19fb`，`site_files_modified:false`。应用内浏览器在[公开集合页](https://houjibo.github.io/knowledge-visual/math/high/sets.html?verify=05ec43f)实际完成原 U `{1,3}`、扩大 U `{1,3,5,6}`、A=U 时 `∅`、A=∅ 时 `{1,2,3,4}` 四种预测，反馈与图示说明一致。
+- OpenSpec 归档后再次运行 `npm run check:static`，含规范目的、Markdown 链接、课程映射与严格校验，均通过。
 
-契约见[OpenSpec 变更](../../openspec/changes/variable-universe-complement-lab/proposal.md)。
+契约见[OpenSpec 归档变更](../../openspec/changes/archive/2026-11-14-variable-universe-complement-lab/proposal.md)。
