@@ -32,7 +32,7 @@
 | 学科阶段 | 来源 ID | 教材／大纲示例 | 当前页 | 首批要核对的目标与候选切片 |
 | --- | --- | --- | ---: | --- |
 | 小学数学 | CE25、CE22 对照、BOOK-CE | 人教版第十二套 | 124 | 按 2025 版的 1–2、3–4、5–6 年级要求拆分数与代数、图形与几何、统计与概率、综合实践；核查重复页与数学建模活动。 |
-| 初中数学 | CE25、CE22 对照、BOOK-CE | 人教版第十二套 | 30 | [六册编排索引](pep-middle-math-series-structure.md)据人教社原图记录 34 章与 12 个实践活动；[七上样本](pep-middle-math-grade7-up-audit.md)核到该册版次、ISBN 和六章，完整小节目录仍待核。[CE25 有理数五条内容要求](curriculum-crosswalks/middle-math-rational-numbers-ce25.json)为 0 已验证、5 部分、0 缺失；[近似数与科学记数法两条要求](curriculum-crosswalks/middle-math-scientific-approximation-ce25.json)分别为部分，不能并入有理数分母；[一段学业要求](curriculum-crosswalks/middle-math-rational-numbers-ce25-academic.json)为部分，七个站内诊断点 6 部分、1 缺失；第四学段质量描述只作[阶段视角](../assessments/middle-math-ce25-academic-quality-2026-11-13.md)。其余初中主题仍待核。 |
+| 初中数学 | CE25、CE22 对照、BOOK-CE | 人教版第十二套 | 30 | [六册编排索引](pep-middle-math-series-structure.md)据人教社原图记录 34 章与 12 个实践活动；[七上样本](pep-middle-math-grade7-up-audit.md)核到该册版次、ISBN 和六章；[地方分册核查](pep-volume-edition-source-audit.md)再核到七下、八上、八下的版月样本，九上仅有平台新编线索，六册完整小节目录仍待核。[CE25 有理数五条内容要求](curriculum-crosswalks/middle-math-rational-numbers-ce25.json)为 0 已验证、5 部分、0 缺失；[近似数与科学记数法两条要求](curriculum-crosswalks/middle-math-scientific-approximation-ce25.json)分别为部分，不能并入有理数分母；[一段学业要求](curriculum-crosswalks/middle-math-rational-numbers-ce25-academic.json)为部分，七个站内诊断点 6 部分、1 缺失；第四学段质量描述只作[阶段视角](../assessments/middle-math-ce25-academic-quality-2026-11-13.md)。其余初中主题仍待核。 |
 | 高中数学 | HS25、HS20 对照、BOOK-HS | 人教版第十一套 A 版 | 19 | [必修“集合”7 条](curriculum-crosswalks/high-math-sets-hs25.json)已逐项映射，0 已验证、7 部分；[版本对照](../assessments/high-math-sets-hs25-2026-11-14.md)标明学业要求用语变化，[三轮语言转换练习](../assessments/high-math-set-language-conversion-2026-11-14.md)、[可变全集补集工作台](../assessments/high-math-variable-universe-complement-2026-11-14.md)和[双集合关系/交并预测](../assessments/high-math-set-relations-operations-2026-11-14.md)补充局部操作证据。继续核预备知识其他单元、函数、几何代数、概率统计、建模/探究与教材完整节目录。 |
 | 大学数学 | UNI-M | MIT OCW 基础轨 | 27 | 以微积分与线性代数为基础轨，先核对积分应用、矩阵四个基本子空间、正交投影、特征值；拓展主题另列来源。 |
 | 初中物理 | CE25、CE22 对照、BOOK-CE | 人教版第十二套 | 20 | 从 2025 版将运动、力、能量、物质与实验探究分别映射；先核对测量误差和从数据得结论的操作。 |
@@ -53,6 +53,8 @@
 
 模拟世界目前有 10 个场景，按场景问题、模型假设、操作、反馈和发布证据追踪；它没有统一“国家课程单元”分母，不纳入上述 341 个学科主题页或课程覆盖率。机械/工业化的下一步以[场景规划](simulation-world-curriculum.md)单独排序。
 
+**教材来源准备度另计**：[分册版次核查](pep-volume-edition-source-audit.md)给初中数学六册中的四册取得地方公开的精确版月样本，九上只核到 2026 年平台新编目录线索，九下待当期证据；初中物理与化学各两册取得地方版月样本。完整小节目录和按课标逐条映射均未因此自动完成，不能将 `4/6` 当作课程覆盖率。
+
 ## 已拆解试点的计数边界
 
 | 来源维度 | 官方来源单位 | 当前映射 | 是否可与其他行相加 |
@@ -71,7 +73,7 @@
 
 ## 分批执行计划
 
-1. **P0：来源可追溯（当前）**。登记 CE25（CE22 作历史对照）、HS25（HS20 作历史对照）、AI25、教材目录与大学参考；为 24 格标适用性，生成本页页面基线。[义务教育](compulsory-2025-standard-version-audit.md)与[高中](high-school-2025-standard-version-audit.md)的 2025 版来源核查均发现逐条迁移任务。已选六三学制、人教版现行审定教材为适用学科的章次示例；[初中数学六册编排表](pep-middle-math-series-structure.md)已核到 34 章与 12 个实践活动的出版方索引，[七上样本](pep-middle-math-grade7-up-audit.md)已核到该册 ISBN 并隔离旧版目录；[2025 年部级课例核查](pep-middle-math-2025-lesson-source-audit.md)补充七上、七下、八上的局部章节目线索，但不替代目录。完整节目录与其余五册逐册版次仍须核对。验收：每格都有来源和边界，`341 + 10` 可由清单复算。
+1. **P0：来源可追溯（当前）**。登记 CE25（CE22 作历史对照）、HS25（HS20 作历史对照）、AI25、教材目录与大学参考；为 24 格标适用性，生成本页页面基线。[义务教育](compulsory-2025-standard-version-audit.md)与[高中](high-school-2025-standard-version-audit.md)的 2025 版来源核查均发现逐条迁移任务。已选六三学制、人教版现行审定教材为适用学科的章次示例；[初中数学六册编排表](pep-middle-math-series-structure.md)已核到 34 章与 12 个实践活动的出版方索引，[七上样本](pep-middle-math-grade7-up-audit.md)已核到该册 ISBN 并隔离旧版目录；[2025 年部级课例核查](pep-middle-math-2025-lesson-source-audit.md)补充七上、七下、八上的局部章节目线索，但不替代目录。[地方分册核查](pep-volume-edition-source-audit.md)已补七下、八上、八下数学及初中物理、化学的版月样本；完整节目录和九上、九下数学精确纸书版次仍须核对。验收：每格都有来源和边界，`341 + 10` 可由清单复算。
 2. **P1：建立可计算分母**。先选高中数学和初中信息科技作为两种粒度试点：高中数学“集合”7条已核，其他范围仍须对照 2025 修订原文与 2020 版差异；初中须按 2025 修订原文与 2022 版逐条比对，再从现行标准的内容要求、学业要求与阶段学业质量提取稳定来源单位、学习目标、必修性和来源位置，把本站主题、练习与核查证据逐条连上。初中信息科技三模块 19 条、初中数学有理数 5 条及实数/代数式 2 条内容要求已有局部 [CE25 试点](../assessments/middle-ce25-content-recheck-2026-11-13.md)；有理数一段与信息科技三段学业要求已另核。信息科技跨学科主题的五个场景已有来源核查，实施边界和两科完整阶段学业质量、完整教材节目录、高中数学其余范围及其余数学要求仍待核查。出版方 34 章的索引不充当此分母。通过复核后依次完成其余适用格；大学先定义基础轨。验收：每个**来源维度**的 `已验证+部分+缺失+未映射+不适用` 与该维度已拆解的来源单位数一致，诊断点与来源条目不相加，尚未拆解的范围单列；全局覆盖率只有在适用范围均已拆解且“未映射”为零并明确跨维度聚合规则时才发布。
 3. **P2：按价值补齐**。优先审查四个稀疏格及真正缺失的基础先修，再审已有大页的教学准确性与交互；每个新主题独立 OpenSpec、小步提交、桌面/移动/键盘/320px/file/子路径/公网核查。每批结束更新矩阵和总数，不把发布成功当课程要求自动通过。
 4. **P3：向学习者呈现**。映射经审校后，再评估公开的可交互课程地图：学科/阶段/主题筛选、学习路径、来源说明与未覆盖提示。先验证一科，再决定是否推广；内部“缺口”状态与学习者的完成进度保持分离。
