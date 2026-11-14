@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：352；已登记部分交互证据：215；尚未登记：137。
+主题总数：353；已登记部分交互证据：216；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -131,6 +131,8 @@
   - 桌面与移动验证可编辑 U/A、补集预测、A=U 与 A=∅、错误反馈、U 收缩、SVG 数字位置、320px 键盘、直接文件与发布子路径；真实情境、实机与完整屏幕阅读器待核。 [sets-variable-universe-complement.spec.js](../../tests/browser/sets-variable-universe-complement.spec.js)
   - 桌面与移动验证可构造 A/B、关系与双向见证、交并预测及分项反馈、四区 SVG 几何、空集、320px 键盘、直接文件与发布子路径；开放集合、实机与完整屏幕阅读器待核。 [sets-relations-operations-prediction.spec.js](../../tests/browser/sets-relations-operations-prediction.spec.js)
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
+- [代数推理实验室 · 初中数学](../../math/middle/algebraic-reasoning.html)
+  - 桌面与移动视口验证例 66 的四位数整除和末位 5 平方两条推理链：构造、预测、位值或按比例面积图、错误修正、一般式理由、四类独立完成、示例不计、存储失败重试、目录进度、320px 键盘、文件直开与发布子路径；开放证明、真实学习者、实机及完整屏幕阅读器仍待核。 [middle-algebraic-reasoning.spec.js](../../tests/browser/middle-algebraic-reasoning.spec.js)
 - [平面直角坐标系 · 初中数学互动可视化](../../math/middle/coordinate-plane.html)
   - 滑块、鼠标和触摸的坐标同步，原点及第二象限、原点对称画布位置，测验回看计分、刷新和存储失败；其他对称方式与完整无障碍未全面验收。 [coordinate-plane.spec.js](../../tests/browser/coordinate-plane.spec.js)
   - 八页测验模式键盘操作、回看计分、重测、错误反馈及学段进度刷新；初高中各一页文件协议和存储失败。未全面验证探索操作、题目知识和无障碍。 [math-shared-quiz.spec.js](../../tests/browser/math-shared-quiz.spec.js)
