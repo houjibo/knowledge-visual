@@ -1,6 +1,6 @@
 # 高中小型网络组装与带宽实验室核查
 
-核查日期：2026-11-15。主题：[小型网络组装与带宽实验室](../../computer/high/network-assembly.html)；OpenSpec：[变更提案](../../openspec/changes/high-network-assembly-workbench/proposal.md)。课程映射为[普通高中信息科技 HS25 必修 2 内容要求 2.3](../plans/curriculum-crosswalks/high-information-technology-hs25.json)。完成本地模型后，该 15 项试点分母为 0 已验证、10 部分、5 缺失；本主题只算部分证据。
+核查日期：2026-11-15。主题：[小型网络组装与带宽实验室](../../computer/high/network-assembly.html)；OpenSpec：[已归档变更](../../openspec/changes/archive/2026-11-15-high-network-assembly-workbench/proposal.md)。课程映射为[普通高中信息科技 HS25 必修 2 内容要求 2.3](../plans/curriculum-crosswalks/high-information-technology-hs25.json)。完成本地模型后，该 15 项试点分母为 0 已验证、10 部分、5 缺失；本主题只算部分证据。
 
 ## 教材示例定位
 
@@ -21,4 +21,6 @@
 
 [纯模型测试](../../tests/network-assembly-model.test.js)覆盖断链、各终端可达、活动流计数、共享容量、瓶颈、传输时间、速率变化和无效参数。[桌面与移动浏览器专项](../../tests/browser/high-network-assembly.spec.js)覆盖断链修复、预测门槛、两种接入结果、带宽变更失效、完成保存、损坏进度重试、320px 键盘、文件直开与仓库子路径。真实学习者、实体设备、屏幕阅读器整页检查和实地网络性能仍未核验。
 
-本地验证：模型单测 6/6；网络主题桌面/移动专项 12/12；部署后公开站点专项对着本地服务运行 1/1；`npm run check` 全部通过，包含桌面/移动完整交互矩阵（8 项条件跳过）和 393 个发布包页面加载检查；`npx openspec validate --all --strict` 为 291 项通过、0 项失败。GitHub Actions Pages 部署、公开 revision 核对和真实公网交互专项仍待推送后记录。
+本地验证：模型单测 6/6；网络主题桌面/移动专项 12/12；部署后公开站点专项对着本地服务运行 1/1；`npm run check` 全部通过，包含桌面/移动完整交互矩阵（8 项条件跳过）和 393 个发布包页面加载检查；`npm run check:static` 通过，`npx openspec validate --all --strict` 为 291 项通过、0 项失败。
+
+发布验证：提交 [`742cf383111e5bae2c7fbfa401da8257adf714ba`](https://github.com/houjibo/knowledge-visual/commit/742cf383111e5bae2c7fbfa401da8257adf714ba) 的 [GitHub Actions #364](https://github.com/houjibo/knowledge-visual/actions/runs/43668874471) 中 core checks、桌面/移动浏览器矩阵、构建、Pages 部署和 verify-deployment 全部通过。线上 `release-version.json` 报告相同 revision 且 `site_files_modified` 为 `false`；新增公网网络交互专项 1/1 通过。验收时本地 `http://127.0.0.1:4173/computer/high/network-assembly.html` 与公网 `https://houjibo.github.io/knowledge-visual/computer/high/network-assembly.html` 均已打开。真实网络器材课堂实践仍未完成。
