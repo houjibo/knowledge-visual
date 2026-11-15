@@ -14,7 +14,7 @@
 | --- | --- | --- | --- |
 | 小学 | 指令、顺序、重复、条件、数据与安全体验 | **指令小机器人**：顺序执行网格指令；**循环指令工坊**：对照循环块与展开序列逐轮执行；**条件分支机器人**：先判断障碍条件，再执行真假分支中的一个动作；**顺序查找实验室**：逐张比较并预测次数；**相邻交换排序实验室**：逐对比较并观察交换与就位 | 简单编码、个人信息与安全 |
 | 初中 | 互联网应用、物联网、人工智能与网络安全；二进制表示是先修 | **二进制像素工坊**：切换 8 位，观察位权与像素强度；**消息传输实验室**：真实 UTF-8 字节、教学分块、乱序重组和缺块重发（已公开验收）；**数据包路径实验室**：比较最少跳数和最小指定代价、断线与不可达（已公开验收）；**网页编辑与发布实验室**：结构化字段、草稿预览和本页模拟发布快照（[核查](../assessments/middle-webpage-publishing-2026-11-14.md)）；**资料共享与同步实验室**：独立副本和共享服务的有限版本传播（[核查](../assessments/middle-online-collaboration-2026-11-14.md)）；**交流方式选择实验室**：按地点、网络与共同时间判断同步、异步和当面交流（[核查](../assessments/middle-online-learning-modes-2026-11-14.md)）；**传感与控制实验室**：虚构读数的消息传送、阈值命令和反馈（已公开验收） | 真实在线参与、网页托管与网络数据分析、协议层次、身份验证与备份、真实物联设备搭建、数据汇集及 AI 关系；按[CE25 学业要求与跨学科场景核查](../assessments/middle-information-technology-ce25-academic-themes-2026-11-13.md)排序 |
-| 高中 | [HS25 信息科技两必修模块](curriculum-crosswalks/high-information-technology-hs25.json)：数据与计算、信息系统与社会 | **查找策略对照实验室**：观察候选区间、比较次数和有序前提（已公开验收）；**数据编码与分析工作台**：预测 UTF-8 字节、整理虚构数据并作有限报告（[核查记录](../assessments/high-data-workbench-2026-11-15.md)）；**图书借阅信息系统工作台**：配置虚构库存、上限、连接与权限，预测请求轨迹并分析错误放行（[核查记录](../assessments/high-information-system-2026-11-15.md)）。 | 真实数据采集与大数据挖掘、算法流程图/伪代码构造、真实信息系统搭建、网络与安全措施；真实器材和平台实践另验。当前 15 条局部映射为 9 部分、6 缺失。 |
+| 高中 | [HS25 信息科技两必修模块](curriculum-crosswalks/high-information-technology-hs25.json)：数据与计算、信息系统与社会 | **查找策略对照实验室**：观察候选区间、比较次数和有序前提（已公开验收）；**数据编码与分析工作台**：预测 UTF-8 字节、整理虚构数据并作有限报告（[核查记录](../assessments/high-data-workbench-2026-11-15.md)）；**图书借阅信息系统工作台**：配置虚构库存、上限、连接与权限，预测请求轨迹并分析错误放行（[核查记录](../assessments/high-information-system-2026-11-15.md)）；**小型网络组装与带宽实验室**：连通虚构设备路径，预测并发瓶颈并比较 Wi-Fi/有线教学模型（[核查记录](../assessments/high-network-assembly-2026-11-15.md)）。 | 真实数据采集与大数据挖掘、算法流程图/伪代码构造、真实系统搭建、网络器材组网实测与安全措施；真实器材和平台实践另验。当前 15 条局部映射为 10 部分、5 缺失。 |
 | 大学 | 算法、系统、网络与计算理论 | **栈与队列对照实验室**：相同到达流下预测栈顶和队首的取出，观察交错加入后的状态（已公开验收） | 复杂度与其他数据结构、操作系统、网络安全、分布式系统 |
 
 ## 近期交付顺序
@@ -26,7 +26,7 @@
 3. 当前核查确认顺序和循环页没有可编辑的布尔判断；独立新增“条件分支机器人”，按[归档 OpenSpec](../../openspec/changes/archive/2026-11-12-primary-condition-robot/proposal.md)验证单次判断快照、两种分支、完成记录及发布路径。该选题依据课程与代码差距，不假称已获得学习者反馈。
 4. 条件主题已公开验收并归档；本轮依据课程图及功能核查补齐“顺序查找实验室”，按[归档 OpenSpec](../../openspec/changes/archive/2026-11-12-primary-sequential-search/proposal.md)验证逐项比较、两类正确预测、目录计数、发布路径。该选题不假称已获得学习者反馈。
 5. 顺序查找之后依据功能和内容核查补“相邻交换排序实验室”，按[归档 OpenSpec](../../openspec/changes/archive/2026-11-12-primary-adjacent-swap-sort/proposal.md)验证交换、轮次、早停、进度和发布路径。后续再调查编码或安全体验；已有切片不表示小学计算机课程已完整覆盖。
-6. 高中计算机原无主题；先用“查找策略对照实验室”衔接小学查找与排序，按[归档 OpenSpec](../../openspec/changes/archive/2026-11-12-high-search-strategies/proposal.md)核对有序前提、同步逐步过程、两种规模、目录进度和公开发布。大学计算机、网络安全、数据结构与小学编码仍是后续差距。
+6. 高中计算机最初为空；已逐步补查找策略、数据编码与分析、信息系统和网络组装。网络实验按[归档 OpenSpec](../../openspec/changes/high-network-assembly-workbench/proposal.md)核对连通路径、共享链路瓶颈、有线/Wi-Fi 对照和发布路径；目前只提供课标 2.3 的部分证据，真实组网实测仍待安排。大学计算机、网络安全、数据结构与小学编码仍是后续差距。
 7. 本轮选择大学计算机空白中的数据结构起点：用同一到达流对照栈与队列，要求两次正确预测之间有新物件加入；范围、模型边界与发布证据见[归档变更](../../openspec/changes/archive/2026-11-12-university-stack-queue-lab/proposal.md)及[核查记录](../assessments/stack-queue-2026-11-12.md)。单一主题不表示大学计算机课程完整。
 8. 初中已有二进制像素，但课程图中的网络路径原无操作入口；现已新增[数据包路径实验室](../../computer/middle/network-paths.html)，先预测、后逐跳对照最少跳数、最小指定代价与断线。以[归档变更](../../openspec/changes/archive/2026-11-13-middle-computer-network-path-lab/proposal.md)和[核查记录](../assessments/network-paths-2026-11-13.md)跟踪验收，不把固定图称为真实网络仿真。
 9. 按教育部 2022 信息科技标准核对第四学段后，[首轮逐项对照](../assessments/middle-information-technology-crosswalk-2026-11-13.md)确认本段课程主线是互联网、物联网与人工智能，先前把变量/函数作为初中优先缺口的排序不准确；[CE25 学业要求核查](../assessments/middle-information-technology-ce25-academic-themes-2026-11-13.md)进一步明确物联数据链路与跨学科活动的缺口。先补协议及网络数据全流程，再审身份验证、备份和物联网；小学算法与程序结构在本站可作为先修，不直接充当第四学段覆盖。
@@ -117,7 +117,7 @@
 
 ## 课程依据
 
-- [高中信息科技 HS25 两必修模块 15 条内容要求](curriculum-crosswalks/high-information-technology-hs25.json)按[2025 标准公开镜像与 HS20 原文](../assessments/high-information-technology-hs25-2026-11-15.md)核对；[中图人教版两册教材目录](pep-high-information-technology-books.md)只作章次示例。已有高中查找、数据编码与分析、借阅信息系统工作台和 AI 页面为 9 条提供局部证据，6 条缺失；学业要求、质量和选择性必修仍待建分母。
+- [高中信息科技 HS25 两必修模块 15 条内容要求](curriculum-crosswalks/high-information-technology-hs25.json)按[2025 标准公开镜像与 HS20 原文](../assessments/high-information-technology-hs25-2026-11-15.md)核对；[中图人教版两册教材目录](pep-high-information-technology-books.md)只作章次示例。高中查找、数据编码与分析、借阅信息系统和网络工作台及 AI 页面为 10 条提供局部证据，5 条缺失；学业要求、质量和选择性必修仍待建分母。
 - [义务教育信息科技课程标准 2025 年日常修订版](compulsory-2025-standard-version-audit.md)是现行课程来源；[第四学段三个模块 19 条内容要求](../assessments/middle-ce25-content-recheck-2026-11-13.md)及[三段学业要求](../assessments/middle-information-technology-ce25-academic-themes-2026-11-13.md)已复核，[教育部 2022 年原件](https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220420582361024968.pdf)保留作历史对照，其他学段、跨学科实施边界与完整学业质量仍须核。
 - CSTA PK-12 计算机科学标准提供算法、编程、数据、系统、安全、人本设计与伦理等 K–12 参考。[CSTA](https://csteachers.org/pk12standards/about/)
 - Microsoft MakeCode 的 [repeat 官方说明](https://makecode.microbit.org/blocks/loops/repeat)将该结构定义为按指定次数运行一段程序；2026-11-12 已核验该定义及重复四次的示例，作为循环指令工坊中“重复次数与程序片段”对应关系的依据。页面说明不替代本站关卡、年龄适配和学习效果的验证。

@@ -459,3 +459,33 @@ test('公网高中计数原理分类与分步、键盘页签和完成记录可�
   await expect(page.locator('#quizSaveStatus')).toContainText('已保存在本机');
   expect(failures).toEqual([]);
 });
+
+test('公网高中小型网络组装、瓶颈预测和有线/Wi-Fi 对照可用', async ({page}) => {
+  expect(baseValue, '发布验收需指定 KV_PUBLISHED_BASE_URL').toBeTruthy();
+  expect(expectedRevision, '发布验收需指定 GITHUB_SHA').toMatch(/^[a-f0-9]{40}$/);
+  const url = new URL('computer/high/network-assembly.html', baseValue);
+  url.searchParams.set('verify', expectedRevision);
+  const failures = [];
+  page.on('pageerror', error => failures.push(error.message));
+  page.on('response', response => {
+    if (response.url().startsWith(new URL(baseValue).href) && response.status() >= 400)
+      failures.push(`${response.status()} ${response.url()}`);
+  });
+  await page.goto(url.href, {waitUntil: 'domcontentloaded', timeout: 30000});
+  await expect(page).toHaveTitle(/小型网络组装与带宽实验室/);
+  await page.locator('#link-wan').check();
+  await page.locator('#check-network').click();
+  await expect(page.locator('#network-status')).toContainText('两台终端都存在');
+  await page.locator('#bottleneck-prediction').selectOption('wifi');
+  await page.locator('#check-prediction').click();
+  await expect(page.locator('#prediction-status')).toContainText('预测正确');
+  await page.locator('#run-wifi').click();
+  await expect(page.locator('#laptop-wifi-result')).toHaveText('4 Mbps · 24 秒');
+  await page.locator('#laptop-access').selectOption('wired');
+  await page.locator('#run-wired').click();
+  await expect(page.locator('#laptop-wired-result')).toHaveText('6 Mbps · 16 秒');
+  await page.locator('#faster-access').selectOption('wired');
+  await page.locator('#check-comparison').click();
+  await expect(page.locator('#progress-status')).toContainText('已保存');
+  expect(failures).toEqual([]);
+});

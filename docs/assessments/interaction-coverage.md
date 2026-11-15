@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：358；已登记部分交互证据：221；尚未登记：137。
+主题总数：359；已登记部分交互证据：222；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -65,6 +65,8 @@
   - 桌面与移动模拟视口验证UTF-8三符号逐字节预测、虚构记录的单位/缺失/重复处理、可编辑柱形图和均值/限定报告、首页搜索与进度、异常存储、320px键盘、减少动态、file直开及发布子路径；真实设备、屏幕阅读器和学习者效果待核验。 [high-data-workbench.spec.js](../../tests/browser/high-data-workbench.spec.js)
 - [图书借阅信息系统工作台 · 高中计算机](../../computer/high/information-system.html)
   - 桌面与移动模拟视口验证系统要素、借阅与拒绝、库存和版本、权限错误放行、断线和边界请求、完成进度与异常存储、首页搜索、320px键盘、file直开及发布子路径；真实部署、学习者效果与整页屏幕阅读器仍待核验。 [high-information-system.spec.js](../../tests/browser/high-information-system.spec.js)
+- [小型网络组装与带宽实验室 · 高中计算机](../../computer/high/network-assembly.html)
+  - 桌面与移动验证链路组装/断线、设备路径、错误与正确瓶颈预测、同参数 Wi-Fi/有线吞吐和传输时间、速率变更使旧结论失效、本机完成与损坏存储重试、目录搜索、320px 键盘、文件直开和发布子路径；模型参数非实测值，真实网络配置、设备课堂和整页屏幕阅读器仍待核。 [high-network-assembly.spec.js](../../tests/browser/high-network-assembly.spec.js)
 - [查找策略对照实验室 · 高中计算机](../../computer/high/search-strategies.html)
   - 桌面与移动模拟视口验证7/15项顺序与二分逐步比较、候选排除、首位与靠后反转、未找到规模对照、乱序阻止、四组预测与前提完成、计时器、异常存储、搜索和高中进度、320px键盘、减少动态、file及发布子路径；真实设备、屏幕阅读器和学习者效果仍待核验。 [high-computer-search-strategies.spec.js](../../tests/browser/high-computer-search-strategies.spec.js)
 - [二进制像素工坊 · 初中计算机](../../computer/middle/binary-pixels.html)
