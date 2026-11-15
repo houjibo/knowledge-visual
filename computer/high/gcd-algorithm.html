@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="通过辗转相除法构造最大公约数算法，观察余数状态、验证边界输入、比较操作次数并核查固定错误草案。">
+  <title>最大公约数算法工作台 · 高中计算机</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .shell { width: min(100% - 28px, 1080px); }
+    .hero { margin-bottom: 14px; }
+    .notice { padding: 12px 14px; border-left: 5px solid #385f9d; border-radius: 8px; background: #edf3ff; }
+    .cards, .pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .choice-card, .case-card, .visual-card, .risk-card { min-width: 0; padding: 13px; border: 1px solid #c9d4e8; border-radius: 12px; background: #f8faff; }
+    .choice-card label, .case-card label, .risk-card label { display: grid; gap: 6px; font-weight: 750; }
+    select, input[type="number"] { min-height: 44px; max-width: 100%; }
+    .choice-card select, .case-card input[type="number"], .case-card select, .risk-card select { width: 100%; }
+    .feedback { min-height: 1.5em; margin: 10px 0 0; }
+    .feedback.success { color: #175b38; font-weight: 750; }
+    .feedback.error { color: #8a2d21; font-weight: 750; }
+    .feedback.warning { color: #745000; font-weight: 750; }
+    .representation-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .9fr); gap: 14px; }
+    .flowchart { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .flow-node { min-width: 0; padding: 10px 12px; border: 2px solid #8fa2c0; border-radius: 10px; background: white; overflow-wrap: anywhere; }
+    .flow-node[data-state="active"] { border-color: #215b9e; background: #e8f3ff; }
+    .flow-node[data-state="correct"] { border-color: #398259; }
+    .flow-node strong { display: block; }
+    .pseudocode { min-height: 200px; margin: 0; padding: 14px; border-radius: 10px; background: #172236; color: #f3f6fc; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .actions button, .presets button { min-height: 44px; }
+    .presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+    .state-bars { display: grid; gap: 8px; margin: 12px 0; }
+    .state-row { display: grid; grid-template-columns: 108px minmax(0, 1fr); align-items: center; gap: 8px; }
+    .state-track, .compare-track { min-width: 0; height: 20px; border-radius: 999px; background: #e4eaf2; overflow: hidden; }
+    .state-fill, .compare-fill { display: block; height: 100%; min-width: 0; border-radius: inherit; }
+    .state-fill.a { background: #3974bc; }
+    .state-fill.b { background: #df9940; }
+    .state-fill.r { background: #3f9567; }
+    .trace { display: grid; gap: 6px; padding-left: 24px; }
+    .trace li { padding: 6px 8px; border-radius: 7px; background: #edf1f7; overflow-wrap: anywhere; }
+    .compare-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) minmax(110px, auto); align-items: center; gap: 8px; margin: 10px 0; }
+    #euclid-bar { background: #3974bc; }
+    #subtract-bar { background: #df9940; }
+    .draft { padding: 12px; border-radius: 10px; background: #172236; color: #f3f6fc; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .task-list { display: grid; gap: 6px; padding-left: 22px; }
+    .task-list li[data-done="true"] { color: #175b38; font-weight: 750; }
+    [hidden] { display: none !important; }
+    @media (max-width: 720px) {
+      .cards, .pair-grid, .representation-grid { grid-template-columns: minmax(0, 1fr); }
+      .compare-row { grid-template-columns: minmax(100px, auto) minmax(0, 1fr); }
+      .compare-row output { grid-column: 1 / -1; }
+    }
+    @media (max-width: 360px) {
+      .state-row { grid-template-columns: 78px minmax(0, 1fr); }
+      .actions button { flex: 1 1 100%; }
+      .compare-row { grid-template-columns: minmax(0, 1fr); }
+      .compare-row output { grid-column: auto; }
+    }
+  </style>
+</head>
+<body data-subject="computer" data-stage="high">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机</a><span aria-hidden="true">›</span><a href="index.html">高中</a><span aria-hidden="true">›</span><span aria-current="page">算法工作台</span></nav>
+    <main id="main-content">
+      <header class="hero"><p class="eyebrow">高中 · 数据与计算 · 算法设计与验证</p><h1>最大公约数算法工作台</h1><p>搭建辗转相除法，跟随两个数和余数的变化，验证边界输入，再用同一组数据比较另一种算法的操作次数。</p></header>
+      <p class="notice">这里运行的是范围受限的固定教学模型，不执行自由输入代码，也不调用实时生成式 AI。右侧错误草案是预先写好的核查样例；操作次数表示算法循环中的运算次数，不是设备运行时间。</p>
+
+      <section class="panel" aria-labelledby="build-title">
+        <p class="step-label">第 1 步 · 构造算法</p>
+        <h2 id="build-title">余数应该怎样交接？</h2>
+        <p>每一轮先保存余数，再把旧 b 交给 a、把余数交给 b。循环停止时，a 就是最大公约数。</p>
+        <div class="cards">
+          <div class="choice-card"><label for="block-condition">① 循环条件<select id="block-condition"><option value="">选择条件</option><option value="while-b-nonzero">当 b ≠ 0 时继续</option><option value="while-b-zero">当 b = 0 时继续</option><option value="while-a-diff-b">当 a ≠ b 时继续</option></select></label></div>
+          <div class="choice-card"><label for="block-remainder">② 保存余数<select id="block-remainder"><option value="">选择余数步骤</option><option value="save-remainder">r ← a mod b</option><option value="save-sum">r ← a + b</option><option value="skip-remainder">不保存余数</option></select></label></div>
+          <div class="choice-card"><label for="block-update-a">③ 更新 a<select id="block-update-a"><option value="">选择更新步骤</option><option value="assign-old-b">a ← 旧 b</option><option value="assign-old-a">a 保持不变</option><option value="assign-remainder">a ← r</option></select></label></div>
+          <div class="choice-card"><label for="block-update-b">④ 更新 b<select id="block-update-b"><option value="">选择更新步骤</option><option value="assign-remainder">b ← r</option><option value="assign-old-a">b ← 旧 a</option><option value="assign-zero">b ← 0</option></select></label></div>
+          <div class="choice-card"><label for="block-output">⑤ 循环结束后的结果<select id="block-output"><option value="">选择输出</option><option value="return-a">输出 a</option><option value="return-b">输出 b</option><option value="return-remainder">输出 r</option></select></label></div>
+        </div>
+        <button id="check-construction" type="button">检查算法步骤</button>
+        <p id="construction-status" class="feedback" role="status" aria-live="polite">选择每一步，再检查构造。</p>
+      </section>
+
+      <section class="panel" aria-labelledby="representation-title">
+        <p class="step-label">第 2 步 · 看懂表示</p>
+        <h2 id="representation-title">流程图与伪代码</h2>
+        <div class="representation-grid">
+          <div class="visual-card"><ol id="flowchart" class="flowchart" aria-label="辗转相除法流程图">
+            <li class="flow-node" data-node="start"><strong>开始</strong><span>输入 a、b</span></li>
+            <li class="flow-node" data-node="condition"><strong>判断循环条件</strong><span data-flow="condition">等待选择</span></li>
+            <li class="flow-node" data-node="remainder"><strong>计算余数</strong><span data-flow="remainder">等待选择</span></li>
+            <li class="flow-node" data-node="updateA"><strong>更新 a</strong><span data-flow="updateA">等待选择</span></li>
+            <li class="flow-node" data-node="updateB"><strong>更新 b</strong><span data-flow="updateB">等待选择</span></li>
+            <li class="flow-node" data-node="output"><strong>结束并输出</strong><span data-flow="output">等待选择</span></li>
+          </ol></div>
+          <div class="visual-card"><h3>伪代码</h3><pre id="pseudocode" class="pseudocode">检查结构后显示。</pre></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="verify-title">
+        <p class="step-label">第 3 步 · 预测并验证</p>
+        <h2 id="verify-title">你的预测能通过不同输入吗？</h2>
+        <p>输入两个 0 至 999 的整数，但不能同时为 0。先预测最大公约数，再核对并运行状态轨迹。</p>
+        <div class="case-card">
+          <div class="pair-grid">
+            <label for="number-a">输入 a<input id="number-a" type="number" min="0" max="999" step="1" value="252"></label>
+            <label for="number-b">输入 b<input id="number-b" type="number" min="0" max="999" step="1" value="105"></label>
+            <label for="prediction">预测最大公约数<input id="prediction" type="number" min="0" max="999" step="1" placeholder="输入预测值"></label>
+          </div>
+          <div class="presets" aria-label="选择输入案例">
+            <button type="button" data-preset="252,105">示例：252 与 105</button>
+            <button type="button" data-preset="987,1">差距明显：987 与 1</button>
+            <button type="button" data-preset="0,28">边界：0 与 28</button>
+            <button type="button" data-preset="0,0">检查定义域：0 与 0</button>
+          </div>
+          <div class="actions"><button id="check-prediction" type="button" disabled>核对预测</button><button id="step-run" type="button" disabled>下一轮</button><button id="run-all" type="button" disabled>运行到结束</button></div>
+          <p id="prediction-status" class="feedback" role="status" aria-live="polite">先构造算法，再输入预测值。</p>
+          <div id="state-bars" class="state-bars" aria-label="a、b 和余数的大小关系"></div>
+          <ol id="trace" class="trace" aria-label="余数运算状态轨迹"></ol>
+          <p id="run-summary" role="status" aria-live="polite">预测正确后可运行算法。</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="compare-title">
+        <p class="step-label">第 4 步 · 比较效率</p>
+        <h2 id="compare-title">同一组输入，两种算法各做了多少步？</h2>
+        <p>请先输入两个正整数。辗转相除法统计余数运算轮数；重复相减统计成功相减次数。每行的条形图以本次较大计数归一化。</p>
+        <button id="compare" type="button" disabled>比较当前输入</button>
+        <div class="visual-card" aria-live="polite">
+          <div class="compare-row"><strong>辗转相除法</strong><div class="compare-track"><span id="euclid-bar" class="compare-fill"></span></div><output id="euclid-count">尚未比较</output></div>
+          <div class="compare-row"><strong>重复相减</strong><div class="compare-track"><span id="subtract-bar" class="compare-fill"></span></div><output id="subtract-count">尚未比较</output></div>
+          <p id="comparison-summary">先完成结构检查并输入两个正整数。</p>
+        </div>
+        <p id="compare-status" class="feedback" role="status" aria-live="polite">计数值随输入而变，不代表完整运行时间或复杂度结论。</p>
+      </section>
+
+      <section class="panel" aria-labelledby="risk-title">
+        <p class="step-label">第 5 步 · 用反例发现风险</p>
+        <h2 id="risk-title">固定的 AI 草案会不会停下来？</h2>
+        <div class="pair-grid">
+          <article class="risk-card">
+            <h3>固定教学样例 · 非实时生成</h3>
+            <pre class="draft"># 固定错误样例
+while a != b:
+    if a &gt; b:
+        a = a - b
+    else:
+        b = b - a
+return a</pre>
+            <p>用一个操作数为 0 的输入找反例。模拟器最多演示 12 步，并会检测重复状态。</p>
+          </article>
+          <div class="risk-card">
+            <label for="draft-case">选择反例输入<select id="draft-case"><option value="12,0">a=12，b=0</option><option value="0,12">a=0，b=12</option></select></label>
+            <label for="draft-judgement">先判断<select id="draft-judgement"><option value="">选择判断</option><option value="non-terminating">可能不终止，风险较高</option><option value="terminating">可以安全终止</option></select></label>
+            <button id="run-draft" type="button">安全模拟并核对</button>
+            <p id="draft-trace" class="feedback" aria-live="polite">选择输入并先作判断。</p>
+            <p id="draft-status" class="feedback" role="status" aria-live="polite">本页不会请求真实模型或运行粘贴代码。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="progress-title">
+        <h2 id="progress-title">本次学习进度</h2>
+        <ul id="learning-steps" class="task-list">
+          <li data-step="construction">待完成 · 构造余数循环</li>
+          <li data-step="positive">待完成 · 验证正整数案例</li>
+          <li data-step="boundary">待完成 · 验证一个输入为零</li>
+          <li data-step="efficiency">待完成 · 比较算法操作次数</li>
+          <li data-step="risk">待完成 · 用反例检查固定草案</li>
+        </ul>
+        <p id="progress-status" class="feedback" role="status" aria-live="polite">正在读取本机学习进度…</p>
+        <button id="retry-save" type="button" hidden>修复后重试保存本机进度</button>
+      </section>
+
+      <section class="panel" aria-labelledby="basis-title">
+        <h2 id="basis-title">课程依据与边界</h2>
+        <p>2025 年修订的普通高中信息科技课程标准必修 1 内容要求 1.5 包含算法设计、验证、效率和风险；教学提示列举“辗转相除法”作为算法设计与实现案例。本工作台提供其中一个有界模拟，不代表完整编程、AI 实践或课程掌握。教育部 2025 年教学装备标准另列算法与程序设计学习资源，包含算法效率分析资料及可视化资源，可作教具设计参考。现行人教版教材逐册审定版次和完整目录仍在核对；中图人教版较早版《信息技术》必修 1 第 2 章“算法与程序实现”仅作目录示例，不能代替 2025 课标逐项要求。来源：<a href="https://qn1-next.xuetangonline.com/17921378608052.pdf">2025 修订版课程标准公开镜像</a>；教育部 <a href="https://www.moe.gov.cn/srcsite/A06/s3732/202507/W020250701322477433806.pdf">JY/T 0659—2025 教学装备配置标准</a>；<a href="https://www.ditu.cn/dtkczy/dtsxxkj/202303/20/1562676311596883738.html">出版方教材目录和书目页</a>。</p>
+      </section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回高中计算机</a>　·　<a href="algorithm-flowchart.html">继续算法描述与流程图实验室</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script src="assets/gcd-algorithm-model.js"></script>
+  <script src="assets/gcd-algorithm.js"></script>
+</body>
+</html>

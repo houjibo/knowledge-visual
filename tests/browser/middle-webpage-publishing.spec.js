@@ -102,7 +102,7 @@ test('storage rejection does not claim saved completion and retry updates the di
 test('home search and counts expose the new middle computer topic', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现由发布后验收');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '18');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '19');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
   await page.getByRole('searchbox', {name: '关键词'}).fill('网页编辑与发布');
