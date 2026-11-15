@@ -99,7 +99,7 @@ test('all conditions save only after successful work, including retry after stor
 test('home search, middle directory and home progress include the new topic', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现由发布后验收');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '19');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '20');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
   await page.getByRole('searchbox', {name: '关键词'}).fill('消息传输');
@@ -109,7 +109,7 @@ test('home search, middle directory and home progress include the new topic', as
   await expect(page.locator('#stage-progress')).toContainText('1/7');
   await expect(page.locator('[data-topic-slug="message-transfer"] [data-completion]')).toContainText('已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/19');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/20');
 });
 
 test('controls stay disabled until the lesson controller is ready', async ({page}) => {

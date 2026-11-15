@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：361；已登记部分交互证据：224；尚未登记：137。
+主题总数：362；已登记部分交互证据：225；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -69,6 +69,8 @@
   - 桌面与移动验证步骤构造/错误反馈、预测纠错、余数状态轨迹、(0,0) 定义域、正数与单零输入、操作次数条形图、静态错误草案重复状态、进度与损坏存储重试、目录搜索/总数、320px 键盘、文件直开和发布子路径；不执行学习者代码或实时模型，整页屏幕阅读器与真实学习者效果仍待核。 [high-gcd-algorithm.spec.js](../../tests/browser/high-gcd-algorithm.spec.js)
 - [图书借阅信息系统工作台 · 高中计算机](../../computer/high/information-system.html)
   - 桌面与移动模拟视口验证系统要素、借阅与拒绝、库存和版本、权限错误放行、断线和边界请求、完成进度与异常存储、首页搜索、320px键盘、file直开及发布子路径；真实部署、学习者效果与整页屏幕阅读器仍待核验。 [high-information-system.spec.js](../../tests/browser/high-information-system.spec.js)
+- [物联网反馈控制实验室 · 高中计算机](../../computer/high/iot-feedback-control.html)
+  - 桌面与移动模拟视口验证扰动下的固定时序/传感反馈预测、逐轮轨迹、同分情境、本地与云端断网及联网路径、自主可控证据边界、异常存储与重试、目录/搜索/进度、320px键盘、直接文件和发布子路径；不覆盖真实设备、真实性能或学习者迁移。 [high-iot-feedback-control.spec.js](../../tests/browser/high-iot-feedback-control.spec.js)
 - [小型网络组装与带宽实验室 · 高中计算机](../../computer/high/network-assembly.html)
   - 桌面与移动验证链路组装/断线、设备路径、错误与正确瓶颈预测、同参数 Wi-Fi/有线吞吐和传输时间、速率变更使旧结论失效、本机完成与损坏存储重试、目录搜索、320px 键盘、文件直开和发布子路径；模型参数非实测值，真实网络配置、设备课堂和整页屏幕阅读器仍待核。 [high-network-assembly.spec.js](../../tests/browser/high-network-assembly.spec.js)
 - [查找策略对照实验室 · 高中计算机](../../computer/high/search-strategies.html)

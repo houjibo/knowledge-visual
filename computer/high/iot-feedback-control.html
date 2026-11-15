@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="对照物联网定时控制与传感反馈，观察扰动、断网和控制器部署位置如何影响固定教学模型。">
+  <title>物联网反馈控制实验室 · 高中计算机</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .shell { width: min(100% - 28px, 1080px); }
+    .hero { margin-bottom: 14px; }
+    .notice { padding: 12px 14px; border-left: 5px solid #385f9d; border-radius: 8px; background: #edf3ff; }
+    .form-grid, .trace-grid, .deployment-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .choice, .visual-card, .risk-card { min-width: 0; padding: 13px; border: 1px solid #c9d4e8; border-radius: 12px; background: #f8faff; }
+    .choice label { display: grid; gap: 6px; font-weight: 750; }
+    select { width: 100%; min-height: 44px; max-width: 100%; }
+    fieldset.choice { margin: 0; }
+    fieldset.choice legend { padding: 0 4px; font-weight: 800; }
+    .radio-choice { display: flex !important; align-items: flex-start; gap: 8px !important; margin: 8px 0; font-weight: 600 !important; }
+    .radio-choice input { min-width: 20px; min-height: 20px; margin: 1px 0 0; }
+    .flow-loop { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; margin: 12px 0; padding: 0; list-style: none; }
+    .flow-loop li { position: relative; min-width: 0; padding: 12px; border: 2px solid #adc1d4; border-radius: 10px; background: #fff; overflow-wrap: anywhere; }
+    .flow-loop li:not(:last-child)::after { position: absolute; top: 50%; right: -19px; content: '→'; transform: translateY(-50%); font-weight: 900; color: #385f9d; }
+    .flow-loop strong { display: block; margin-bottom: 5px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .actions button { min-height: 44px; }
+    .feedback { min-height: 1.5em; margin: 10px 0 0; }
+    .feedback.success { color: #175b38; font-weight: 750; }
+    .feedback.error { color: #8a2d21; font-weight: 750; }
+    .feedback.warning { color: #745000; font-weight: 750; }
+    .trace { display: grid; gap: 7px; padding-left: 22px; }
+    .trace li { min-width: 0; padding: 9px 10px; border-radius: 8px; background: #edf1f7; overflow-wrap: anywhere; }
+    .trace li strong { display: block; }
+    .score-row { display: grid; grid-template-columns: 130px minmax(0, 1fr) auto; align-items: center; gap: 8px; margin: 9px 0; }
+    .score-track { min-width: 0; height: 18px; border-radius: 99px; background: #e4eaf2; overflow: hidden; }
+    .score-fill { display: block; height: 100%; border-radius: inherit; }
+    #scheduled-fill { background: #dc9148; }
+    #feedback-fill { background: #348461; }
+    .path { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .path-node { position: relative; min-width: 0; padding: 10px; border: 1px solid #adc1d4; border-radius: 9px; background: white; overflow-wrap: anywhere; }
+    .path-node:not(:last-child)::after { position: absolute; top: 50%; right: -9px; content: '→'; transform: translateY(-50%); z-index: 1; color: #385f9d; font-weight: 900; }
+    .path-node[data-state="active"] { border-color: #277454; background: #e6f5ed; }
+    .path-node[data-state="unavailable"] { border-color: #a86421; background: #fff1df; }
+    .path-node[data-state="bypassed"] { border-style: dashed; color: #555d69; background: #f0f2f5; }
+    .path-node strong { display: block; }
+    #deployment-path[data-architecture="local"] #path-actuator::after { content: none; }
+    .task-list { display: grid; gap: 6px; padding-left: 22px; }
+    .task-list li[data-done="true"] { color: #175b38; font-weight: 750; }
+    [hidden] { display: none !important; }
+    @media (max-width: 700px) {
+      .form-grid, .trace-grid, .deployment-grid { grid-template-columns: minmax(0, 1fr); }
+      .flow-loop { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+      .flow-loop li:not(:last-child)::after { top: auto; right: 50%; bottom: -18px; transform: translateX(50%) rotate(90deg); }
+      .path { grid-template-columns: minmax(0, 1fr); }
+      .path-node:not(:last-child)::after { top: auto; right: 50%; bottom: -13px; transform: translateX(50%); content: '↓'; }
+    }
+    @media (max-width: 360px) {
+      .shell { width: min(100% - 20px, 1080px); }
+      .panel, .hero { padding: 16px; }
+      .score-row { grid-template-columns: minmax(0, 1fr); }
+      .actions button { flex: 1 1 100%; }
+    }
+  </style>
+</head>
+<body data-subject="computer" data-stage="high">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机</a><span aria-hidden="true">›</span><a href="index.html">高中</a><span aria-hidden="true">›</span><span aria-current="page">物联网反馈控制实验室</span></nav>
+    <main id="main-content">
+      <header class="hero"><p class="eyebrow">高中 · 信息系统与社会 · HS25 必修 2 内容要求 2.4</p><h1>物联网反馈控制实验室</h1><p>给同一个虚构温控系统加入环境扰动，比较定时动作与传感反馈，再观察本地控制和云端控制在断网时的差异。</p></header>
+      <p class="notice">这是范围受限的固定教学模型：温度、风扇效果和扰动都是演示数据，不代表真实设备参数、能耗或安全效果。页面不会连接传感器、执行器、云端服务或生成式 AI。</p>
+
+      <section class="panel" aria-labelledby="loop-title">
+        <p class="step-label">第 1 步 · 观察反馈</p>
+        <h2 id="loop-title">系统如何用反馈修正动作？</h2>
+        <p>传感器报告当前温度；控制器比较目标后决定动作；风扇改变系统状态；下一轮传感器再读一次。定时方案只按预设时序动作，不读取每轮状态。</p>
+        <div class="visual-card">
+          <ol class="flow-loop" role="img" aria-label="反馈环路：传感器读取系统状态，控制器选择动作，执行器作用于温控对象，新的状态再由传感器读取。">
+            <li><strong>① 传感器</strong><span>读取当前温度</span></li>
+            <li><strong>② 控制器</strong><span>比较目标并决定</span></li>
+            <li><strong>③ 执行器</strong><span>风扇或加热器动作</span></li>
+            <li><strong>④ 温控对象</strong><span>温度变化后再反馈</span></li>
+          </ol>
+        </div>
+        <div class="form-grid">
+          <div class="choice"><label for="scenario">环境情境<select id="scenario"><option value="heatPulse">第 3 轮出现热量扰动</option><option value="calm">环境保持稳定</option></select></label></div>
+          <div class="choice"><label for="target-temperature">目标温度（模型单位）<select id="target-temperature"><option value="22">22</option><option value="24" selected>24</option><option value="26">26</option><option value="28">28</option></select></label></div>
+        </div>
+        <fieldset class="choice" style="margin-top:12px">
+          <legend>先预测：五轮后哪种方案更接近目标？</legend>
+          <label class="radio-choice"><input type="radio" name="comparison-prediction" value="scheduled">固定时序方案</label>
+          <label class="radio-choice"><input type="radio" name="comparison-prediction" value="feedback">传感反馈方案</label>
+          <label class="radio-choice"><input type="radio" name="comparison-prediction" value="tie">两种方案差不多</label>
+        </fieldset>
+        <div class="actions"><button id="check-prediction" type="button">检查预测</button><button id="next-round" type="button" disabled>显示下一轮</button><button id="run-rest" type="button" disabled>显示剩余轮次</button></div>
+        <p id="prediction-status" class="feedback" role="status" aria-live="polite">先选择预测结果。</p>
+        <div class="trace-grid">
+          <article class="visual-card"><h3>固定时序方案</h3><p>预设：前两轮开风扇，之后关闭；不读取传感器。</p><ol id="scheduled-trace" class="trace" aria-label="固定时序温控轨迹"></ol></article>
+          <article class="visual-card"><h3>传感反馈方案</h3><p>规则：高于目标 1 度以上开风扇，低于目标 1 度以上开加热器，其余时间暂停。</p><ol id="feedback-trace" class="trace" aria-label="传感反馈温控轨迹"></ol></article>
+        </div>
+        <div id="deviation-summary" class="visual-card" aria-live="polite" hidden>
+          <h3>本组输入的目标偏差</h3>
+          <p>每轮动作后温度与目标的绝对差之和；只描述这组固定模型输入。</p>
+          <div class="score-row"><strong>固定时序</strong><div class="score-track"><span id="scheduled-fill" class="score-fill"></span></div><output id="scheduled-score">—</output></div>
+          <div class="score-row"><strong>传感反馈</strong><div class="score-track"><span id="feedback-fill" class="score-fill"></span></div><output id="feedback-score">—</output></div>
+        </div>
+        <p id="comparison-status" class="feedback" role="status" aria-live="polite">正确预测后可逐轮查看两个系统。</p>
+      </section>
+
+      <section class="panel" aria-labelledby="deployment-title">
+        <p class="step-label">第 2 步 · 看控制器放在哪里</p>
+        <h2 id="deployment-title">断网时，哪条路径还能做出决定？</h2>
+        <p>选择本例中的控制决策位置和网络状态，先判断系统会不会发出新动作。模型里的云端方案断网后进入静止回退；现实设计可以选择缓存、冗余控制器等其他策略。</p>
+        <div class="form-grid">
+          <div class="choice"><label for="architecture">控制器位置<select id="architecture"><option value="local">本地控制器读取传感器</option><option value="cloud">云端服务读取并返回命令</option></select></label></div>
+          <div class="choice"><label for="network-state">网络状态<select id="network-state"><option value="offline">断网</option><option value="online">联网</option></select></label></div>
+        </div>
+        <fieldset class="choice" style="margin-top:12px">
+          <legend>先预测：本例中这一轮会有新的控制决定吗？</legend>
+          <label class="radio-choice"><input type="radio" name="deployment-prediction" value="yes">会</label>
+          <label class="radio-choice"><input type="radio" name="deployment-prediction" value="no">不会，转入静止回退</label>
+        </fieldset>
+        <div class="actions"><button id="run-deployment" type="button">检查预测并观察路径</button></div>
+        <p id="deployment-status" class="feedback" role="status" aria-live="polite">选择架构与网络状态，再作预测。</p>
+        <div class="deployment-grid">
+          <div class="path" id="deployment-path" aria-label="控制器部署路径">
+            <div id="path-sensor" class="path-node"><strong>传感器</strong><span>读数 32</span></div>
+            <div id="path-controller" class="path-node"><strong>控制器</strong><span>等待模拟</span></div>
+            <div id="path-actuator" class="path-node"><strong>风扇/加热器</strong><span>等待命令</span></div>
+            <div id="path-network" class="path-node"><strong>网络连接</strong><span>等待模拟</span></div>
+          </div>
+          <div class="visual-card"><h3>系统状态</h3><p id="deployment-outcome">等待预测并模拟。</p><p id="deployment-boundary">断网行为由此模型预先定义，不能推及所有物联网系统。</p></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="autonomy-title">
+        <p class="step-label">第 3 步 · 判断证据边界</p>
+        <h2 id="autonomy-title">“能离线运行”足以证明自主可控吗？</h2>
+        <fieldset class="choice">
+          <legend>选择更完整的判断</legend>
+          <label class="radio-choice"><input type="radio" name="autonomy-judgement" value="offline">能离线运行就证明整套物联网自主可控。</label>
+          <label class="radio-choice"><input type="radio" name="autonomy-judgement" value="cloud">所有云端系统一断网就必然完全停止。</label>
+          <label class="radio-choice"><input type="radio" name="autonomy-judgement" value="evidence">离线只说明这条控制路径在本例中可继续；还需核查关键设备、软件更新、数据保护、接口权限和运行维护。</label>
+        </fieldset>
+        <button id="check-autonomy" type="button">检查判断</button>
+        <p id="autonomy-status" class="feedback" role="status" aria-live="polite">自主可控涉及系统证据，不能由单一演示标签推断。</p>
+        <details><summary>模型、来源与边界</summary>
+          <p>《普通高中信息科技课程标准日常修订版（2017 年版 2025 年修订）》必修 2 内容要求 2.4 提出通过物联系统理解反馈优化，并认识物联网自主可控的意义。本页只提供有限模拟。W3C 物联网架构说明设备行为、交互接口、协议和安全配置属于系统设计方面；NIST 设备网络安全基线列出设备识别、配置、数据保护、接口访问与软件更新等能力。这些技术框架帮助提出核查问题，不能单独代表中国的课程政策、国家安全评估或产品认证。</p>
+          <p>来源：<a href="https://qn1-next.xuetangonline.com/17921378608052.pdf">2025 年高中信息科技课程标准公开 PDF 副本（印刷页 15，2.4）</a>；<a href="https://www.w3.org/TR/wot-architecture11/">W3C Web of Things Architecture 1.1</a>；<a href="https://csrc.nist.gov/pubs/ir/8259/a/final">NISTIR 8259A IoT 设备安全能力基线</a>。</p>
+        </details>
+      </section>
+
+      <section class="panel" aria-labelledby="progress-title">
+        <h2 id="progress-title">本次学习进度</h2>
+        <ul id="learning-steps" class="task-list">
+          <li data-step="comparison">○ 待完成 · 预测并比较两种控制方案</li>
+          <li data-step="deployment">○ 待完成 · 对照本地与云端断网路径</li>
+          <li data-step="autonomy">○ 待完成 · 判断自主可控所需证据</li>
+        </ul>
+        <p id="progress-status" class="feedback" role="status" aria-live="polite">正在读取本机学习进度…</p>
+        <button id="retry-save" type="button" hidden>修复后重试保存本机进度</button>
+      </section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回高中计算机</a>　·　<a href="network-assembly.html">继续网络组装实验室</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script src="assets/iot-feedback-control-model.js"></script>
+  <script src="assets/iot-feedback-control.js"></script>
+</body>
+</html>
