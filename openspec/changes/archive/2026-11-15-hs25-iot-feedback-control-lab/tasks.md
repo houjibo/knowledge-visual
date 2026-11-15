@@ -13,4 +13,4 @@
 
 - [x] 3.1 Update the high-school computer directory, homepage totals, topic catalog, inventory, interaction evidence and gap/curriculum documentation.
 - [x] 3.2 Run model, focused browser, `npm run check`, strict OpenSpec and release checks; fix failures without reducing coverage.
-- [ ] 3.3 Commit/push the feature; verify Actions, Pages revision and published resources, then append the evidence and archive the completed change.
+- [x] 3.3 Commit/push the feature; verify Actions, Pages revision and published resources, append the evidence, and archive the completed change.

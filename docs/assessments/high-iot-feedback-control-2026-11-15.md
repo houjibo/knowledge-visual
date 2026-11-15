@@ -1,6 +1,6 @@
 # 高中物联网反馈控制实验室核查
 
-核查日期：2026-11-15。页面：[物联网反馈控制实验室](../../computer/high/iot-feedback-control.html)；实现依据：[OpenSpec 变更](../../openspec/changes/hs25-iot-feedback-control-lab/proposal.md)。对应 [HS25 信息科技两必修模块映射](../plans/curriculum-crosswalks/high-information-technology-hs25.json)的必修 2 内容要求 2.4。当前增加的是 `partial` 教学证据，不代表整项要求或高中课程已覆盖。
+核查日期：2026-11-15。页面：[物联网反馈控制实验室](../../computer/high/iot-feedback-control.html)；实现依据：[已归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-15-hs25-iot-feedback-control-lab/proposal.md)。对应 [HS25 信息科技两必修模块映射](../plans/curriculum-crosswalks/high-information-technology-hs25.json)的必修 2 内容要求 2.4。当前增加的是 `partial` 教学证据，不代表整项要求或高中课程已覆盖。
 
 ## 来源与教材定位
 
@@ -35,4 +35,8 @@
 
 ### 公网发布验收
 
-本地完整门禁已通过。公开 revision、Actions、公开资源及本地/公网浏览器双开结果将在本次提交部署完成后补录；OpenSpec 变更在此项完成前保持进行中，不提前归档。
+本地完整门禁已通过。功能提交 [`62474e7`](https://github.com/houjibo/knowledge-visual/commit/62474e756f8c5db8fe2b115f6d1f251d78c3d720) 已推送；[GitHub Actions 发布流水线](https://github.com/houjibo/knowledge-visual/actions/runs/43711753134) 的桌面/移动浏览器矩阵、构建、部署、公开 revision 与资源核验、公开页面浏览器检查均通过。
+
+公开 `release-version.json` 已报告 revision `62474e756f8c5db8fe2b115f6d1f251d78c3d720` 且 `site_files_modified` 为 `false`。流水线 `verify-deployment` 对发布路径及代表性公开资源检查通过。发布后的[物联网反馈控制实验室](https://houjibo.github.io/knowledge-visual/computer/high/iot-feedback-control.html)可正常加载，标题、HS25 必修 2.4 定位、反馈实验控件、本地/云端比较和边界说明均可见；本地服务与公网页面已同时打开供验收。
+
+OpenSpec 变更在完成发布验收后归档；本条记录及归档提交只补充交付证据，不改变已发布站点内容。
