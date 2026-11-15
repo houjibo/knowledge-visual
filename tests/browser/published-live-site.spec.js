@@ -489,3 +489,59 @@ test('公网高中小型网络组装、瓶颈预测和有线/Wi-Fi 对照可用'
   await expect(page.locator('#progress-status')).toContainText('已保存');
   expect(failures).toEqual([]);
 });
+
+
+test('公网高中算法描述、流程图构造与有限查找轨迹可用', async ({page}) => {
+  expect(baseValue, '发布验收需指定 KV_PUBLISHED_BASE_URL').toBeTruthy();
+  expect(expectedRevision, '发布验收需指定 GITHUB_SHA').toMatch(/^[a-f0-9]{40}$/);
+  const url = new URL('computer/high/algorithm-flowchart.html', baseValue);
+  url.searchParams.set('verify', expectedRevision);
+  const failures = [];
+  page.on('pageerror', error => failures.push(error.message));
+  page.on('response', response => {
+    if (response.url().startsWith(new URL(baseValue).href) && response.status() >= 400)
+      failures.push(`${response.status()} ${response.url()}`);
+  });
+  await page.goto(url.href, {waitUntil: 'domcontentloaded', timeout: 30000});
+  await expect(page).toHaveTitle(/算法描述与流程图实验室/);
+  const choices = {
+    '#block-initialize': 'start-at-zero',
+    '#block-condition': 'test-index-before-length',
+    '#block-compare': 'compare-equals-target',
+    '#block-match': 'return-first-index',
+    '#block-miss': 'advance-one-and-repeat',
+    '#block-exhausted': 'report-not-found'
+  };
+  for (const [selector, value] of Object.entries(choices)) await page.locator(selector).selectOption(value);
+  await page.locator('#check-construction').click();
+  await expect(page.locator('#construction-status')).toContainText('结构正确');
+  await expect(page.locator('#pseudocode')).toContainText('i < n ?');
+
+  for (const [id, answer, output] of [
+    ['first-duplicate', 'index-1', '索引 1'],
+    ['last-match', 'index-4', '索引 4'],
+    ['not-found', 'not-found', '未找到']
+  ]) {
+    const prediction = {'first-duplicate': '#predict-first-duplicate', 'last-match': '#predict-last-match', 'not-found': '#predict-not-found'}[id];
+    const card = page.locator(`[data-case="${id}"]`);
+    await page.locator(prediction).selectOption(answer);
+    await card.locator('[data-action="check-prediction"]').click();
+    await expect(card.locator('[data-case-status]')).toContainText('预测正确');
+    await card.locator('[data-action="run"]').click();
+    await expect(card.locator('[data-case-status]')).toContainText(`运行完成：${output}`);
+  }
+  await page.locator('#termination-explanation').selectOption('increment-reaches-bound');
+  await page.locator('#check-termination').click();
+  await expect(page.locator('#progress-status')).toContainText('已保存');
+  await page.locator('.footer-nav a[href="index.html"]').click();
+  await expect(page.locator('#stage-progress')).toContainText('1/5');
+  await page.goto(new URL('', baseValue).href, {waitUntil: 'domcontentloaded'});
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '18');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/18');
+  await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
+  await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
+  await page.getByRole('searchbox', {name: '关键词'}).fill('流程图');
+  await page.locator('#site-results a[href="computer/high/algorithm-flowchart.html"]').click();
+  await expect(page).toHaveURL(/computer\/high\/algorithm-flowchart\.html/);
+  expect(failures).toEqual([]);
+});

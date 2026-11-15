@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="构造首次匹配查找算法的流程图与伪代码，预测并观察循环、分支和有限终止。">
+  <title>算法描述与流程图实验室 · 高中计算机</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .shell { width: min(100% - 28px, 1080px); }
+    .hero { margin-bottom: 14px; }
+    .notice { padding: 12px 14px; border-left: 5px solid #3f5e9e; border-radius: 8px; background: #edf3ff; }
+    .step-list, .case-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .step-card, .case-card, .view-card { min-width: 0; padding: 13px; border: 1px solid #c9d4e8; border-radius: 12px; background: #f8faff; }
+    .step-card label, .case-card label, .explanation-card label { display: grid; gap: 6px; font-weight: 750; }
+    .step-card select, .case-card select, .explanation-card select { width: 100%; min-height: 44px; }
+    .step-card small, .case-card small { color: #465571; }
+    .feedback { min-height: 1.5em; margin: 10px 0 0; }
+    .feedback.success { color: #175b38; font-weight: 750; }
+    .feedback.error { color: #8a2d21; font-weight: 750; }
+    .feedback.warning { color: #745000; font-weight: 750; }
+    .representation-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(250px, .9fr); gap: 14px; }
+    .flowchart { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .flow-node { min-width: 0; padding: 10px 12px; border: 2px solid #8fa2c0; border-radius: 10px; background: #fff; overflow-wrap: anywhere; }
+    .flow-node strong { display: block; }
+    .flow-node[data-state="active"] { border-color: #215b9e; background: #e8f3ff; box-shadow: 0 0 0 2px #b7d6ff; }
+    .flow-node[data-state="correct"] { border-color: #398259; }
+    .flow-branches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 4px 0 0 14px; }
+    .branch { min-width: 0; padding: 8px; border-left: 4px solid #8594ae; background: #eef2f8; overflow-wrap: anywhere; }
+    .branch strong { display: block; margin-bottom: 3px; }
+    .branch.yes { border-color: #398259; }
+    .branch.no { border-color: #ad6c21; }
+    .pseudocode { min-height: 260px; margin: 0; padding: 14px; border-radius: 10px; background: #172236; color: #f3f6fc; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .array-view { display: flex; flex-wrap: wrap; gap: 7px; margin: 10px 0; padding: 0; list-style: none; }
+    .array-cell { display: grid; min-width: 48px; min-height: 48px; place-content: center; padding: 4px; border: 1px solid #8798b2; border-radius: 8px; background: #fff; text-align: center; }
+    .array-cell small { font-size: .75rem; }
+    .array-cell[data-current="true"] { outline: 3px solid #2871b8; outline-offset: 1px; background: #e7f3ff; }
+    .case-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .trace { display: grid; gap: 5px; padding-left: 24px; }
+    .trace li { padding: 5px 7px; border-radius: 6px; background: #edf1f7; overflow-wrap: anywhere; }
+    .trace li[data-current="true"] { background: #dcecff; font-weight: 750; }
+    .explanation-card { padding: 13px; border: 1px solid #c9d4e8; border-radius: 12px; background: #f8faff; }
+    .task-list { display: grid; gap: 6px; padding-left: 22px; }
+    .task-list li[data-done="true"] { color: #175b38; font-weight: 750; }
+    [hidden] { display: none !important; }
+    @media (max-width: 720px) {
+      .step-list, .case-grid, .representation-grid { grid-template-columns: minmax(0, 1fr); }
+      .pseudocode { min-height: 200px; }
+    }
+    @media (max-width: 360px) {
+      .flow-branches { grid-template-columns: minmax(0, 1fr); margin-left: 6px; }
+      .case-actions button { flex: 1 1 100%; }
+    }
+  </style>
+</head>
+<body data-subject="computer" data-stage="high">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机</a><span aria-hidden="true">›</span><a href="index.html">高中</a><span aria-hidden="true">›</span><span aria-current="page">算法描述</span></nav>
+    <main id="main-content">
+      <header class="hero"><p class="eyebrow">高中 · 数据与计算 · 算法与程序实现</p><h1>算法描述与流程图实验室</h1><p>为“找出目标值第一次出现的位置”搭建流程，观察每一步如何依次执行、作出判断、重复和结束。</p></header>
+      <p class="notice">本页用结构化选项构造一个有限的查找示例，不会运行自由输入的代码。流程图和伪代码是同一套步骤的两种表示；完成这道练习不代表掌握全部算法或程序设计。</p>
+
+      <section class="panel" aria-labelledby="build-title">
+        <p class="step-label">第 1 步 · 构造算法</p>
+        <h2 id="build-title">每一段流程应该是什么？</h2>
+        <p>列表使用从 0 开始的索引。依次选择初始化、循环边界、比较、命中处理、未命中处理和遍历结束处理。</p>
+        <div class="step-list">
+          <div class="step-card"><label for="block-initialize">① 初始化索引</label><select id="block-initialize"><option value="">选择初始化步骤</option><option value="start-at-zero">i ← 0</option><option value="start-at-one">i ← 1</option><option value="start-at-target">i ← target</option></select></div>
+          <div class="step-card"><label for="block-condition">② 判断是否还有列表项</label><select id="block-condition"><option value="">选择循环边界</option><option value="test-index-before-length">i &lt; n</option><option value="allow-index-equals-length">i ≤ n</option><option value="test-index-equals-length">i = n</option></select></div>
+          <div class="step-card"><label for="block-compare">③ 比较当前项</label><select id="block-compare"><option value="">选择比较步骤</option><option value="compare-equals-target">A[i] = target</option><option value="compare-less-than-target">A[i] &lt; target</option><option value="compare-index-to-target">i = target</option></select></div>
+          <div class="step-card"><label for="block-match">④ 相等时</label><select id="block-match"><option value="">选择命中处理</option><option value="return-first-index">输出 i 并结束</option><option value="output-value-continue">输出 A[i] 后继续</option><option value="advance-on-match">i ← i + 1</option></select></div>
+          <div class="step-card"><label for="block-miss">⑤ 不相等时</label><select id="block-miss"><option value="">选择未命中处理</option><option value="advance-one-and-repeat">i ← i + 1，回到边界判断</option><option value="decrease-index">i ← i − 1</option><option value="stop-on-first-miss">报告未找到并结束</option></select></div>
+          <div class="step-card"><label for="block-exhausted">⑥ 到达列表末尾时</label><select id="block-exhausted"><option value="">选择遍历结束处理</option><option value="report-not-found">输出“未找到”并结束</option><option value="report-length">输出列表长度并结束</option><option value="restart-at-zero">重新从 0 开始</option></select></div>
+        </div>
+        <button id="check-construction" type="button">检查算法结构</button>
+        <p id="construction-status" class="feedback" role="status" aria-live="polite">选择每个步骤，再检查流程。</p>
+      </section>
+
+      <section class="panel" aria-labelledby="representation-title">
+        <p class="step-label">第 2 步 · 对照表示</p>
+        <h2 id="representation-title">同一算法的流程图与伪代码</h2>
+        <p>构造正确后，蓝色标记会跟随运行轨迹。流程图节点和伪代码都由上面的步骤选择生成。</p>
+        <div class="representation-grid">
+          <div class="view-card">
+            <h3>流程图</h3>
+            <ol id="flowchart" class="flowchart" aria-label="首次匹配查找流程图">
+              <li class="flow-node" data-node="start"><strong>开始</strong></li>
+              <li class="flow-node" data-node="initialize"><strong>初始化</strong><span data-flow-label="initialize">等待选择</span></li>
+              <li class="flow-node" data-node="condition"><strong>循环判断</strong><span data-flow-label="condition">等待选择</span></li>
+              <li class="flow-node" data-node="compare"><strong>当前项比较</strong><span data-flow-label="compare">等待选择</span></li>
+              <li class="flow-branches">
+                <div class="branch yes" data-node="found"><strong>相等</strong><span data-flow-label="match">等待选择</span></div>
+                <div class="branch no" data-node="increment"><strong>不相等</strong><span data-flow-label="miss">等待选择</span></div>
+              </li>
+              <li class="flow-node" data-node="exhausted"><strong>循环结束</strong><span data-flow-label="exhausted">等待选择</span></li>
+              <li class="flow-node" data-node="end"><strong>结束</strong></li>
+            </ol>
+          </div>
+          <div class="view-card"><h3>伪代码</h3><pre id="pseudocode" class="pseudocode" aria-label="与流程图对应的伪代码">检查算法结构后显示。</pre></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="run-title">
+        <p class="step-label">第 3 步 · 预测并运行</p>
+        <h2 id="run-title">算法会访问哪些位置？</h2>
+        <p>每个例子先预测输出，再逐步查看边界判断、比较、分支和索引更新。也可以一次展开完整轨迹。</p>
+        <div class="case-grid">
+          <article class="case-card" data-case="first-duplicate">
+            <h3>重复值：找 42</h3>
+            <p>列表：<code>[18, 42, 7, 42, 13]</code></p>
+            <label for="predict-first-duplicate">预测输出<select id="predict-first-duplicate"><option value="">先作预测</option><option value="index-1">索引 1（第一次出现）</option><option value="index-3">索引 3（最后一次出现）</option><option value="not-found">未找到</option></select></label>
+            <div class="case-actions"><button type="button" data-action="check-prediction" data-target="first-duplicate" disabled>核对预测</button><button type="button" data-action="step" data-target="first-duplicate" disabled>下一步</button><button type="button" data-action="run" data-target="first-duplicate" disabled>运行完整轨迹</button></div>
+            <p class="feedback" data-case-status role="status" aria-live="polite">先构造算法并预测结果。</p>
+            <ul class="array-view" data-array aria-label="列表项"></ul>
+            <ol class="trace" data-trace aria-label="查找执行轨迹"></ol>
+          </article>
+          <article class="case-card" data-case="last-match">
+            <h3>靠后命中：找 42</h3>
+            <p>列表：<code>[18, 23, 7, 13, 42]</code></p>
+            <label for="predict-last-match">预测输出<select id="predict-last-match"><option value="">先作预测</option><option value="index-1">索引 1</option><option value="index-4">索引 4</option><option value="not-found">未找到</option></select></label>
+            <div class="case-actions"><button type="button" data-action="check-prediction" data-target="last-match" disabled>核对预测</button><button type="button" data-action="step" data-target="last-match" disabled>下一步</button><button type="button" data-action="run" data-target="last-match" disabled>运行完整轨迹</button></div>
+            <p class="feedback" data-case-status role="status" aria-live="polite">先构造算法并预测结果。</p>
+            <ul class="array-view" data-array aria-label="列表项"></ul>
+            <ol class="trace" data-trace aria-label="查找执行轨迹"></ol>
+          </article>
+          <article class="case-card" data-case="not-found">
+            <h3>目标不存在：找 99</h3>
+            <p>列表：<code>[18, 42, 7, 13, 10]</code></p>
+            <label for="predict-not-found">预测输出<select id="predict-not-found"><option value="">先作预测</option><option value="index-4">索引 4</option><option value="not-found">未找到</option><option value="loop-forever">会一直重复</option></select></label>
+            <div class="case-actions"><button type="button" data-action="check-prediction" data-target="not-found" disabled>核对预测</button><button type="button" data-action="step" data-target="not-found" disabled>下一步</button><button type="button" data-action="run" data-target="not-found" disabled>运行完整轨迹</button></div>
+            <p class="feedback" data-case-status role="status" aria-live="polite">先构造算法并预测结果。</p>
+            <ul class="array-view" data-array aria-label="列表项"></ul>
+            <ol class="trace" data-trace aria-label="查找执行轨迹"></ol>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="explain-title">
+        <p class="step-label">第 4 步 · 解释终止</p>
+        <h2 id="explain-title">为什么查找一定会结束？</h2>
+        <div class="explanation-card">
+          <label for="termination-explanation">选择最能解释目标不存在时仍会结束的说法
+            <select id="termination-explanation"><option value="">先运行三个例子</option><option value="increment-reaches-bound">每次未命中都让 i 增加 1；有限列表的长度是 n，最终 i &lt; n 不成立。</option><option value="same-index-finish">未命中时 i 不变，但程序会自行结束。</option><option value="target-order-end">目标比当前值大时就能断定不存在。</option></select>
+          </label>
+          <button id="check-termination" type="button" disabled>检查终止解释</button>
+          <p id="termination-status" class="feedback" role="status" aria-live="polite">先完成三个运行例子。</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="progress-title">
+        <h2 id="progress-title">本次学习进度</h2>
+        <ul class="task-list" id="learning-steps">
+          <li data-step="construction">待完成 · 构造安全的首次匹配算法</li>
+          <li data-step="first-duplicate">待完成 · 预测并运行重复目标案例</li>
+          <li data-step="last-match">待完成 · 预测并运行靠后目标案例</li>
+          <li data-step="not-found">待完成 · 预测并运行未命中案例</li>
+          <li data-step="termination">待完成 · 解释有限终止条件</li>
+        </ul>
+        <p id="progress-status" class="feedback" role="status" aria-live="polite">正在读取本机学习进度…</p>
+        <button id="retry-save" type="button" hidden>重试保存本机进度</button>
+      </section>
+
+      <section class="panel" aria-labelledby="basis-title">
+        <h2 id="basis-title">课程依据与边界</h2>
+        <p>HS25 必修 1 内容要求 1.4 涉及算法特征、控制结构和算法描述。人教版示例目录为必修 1 第 2 章“算法与程序实现”，含 2.2.2“描述算法”、2.3.3“语句与程序结构”；该书依据较早课程标准编写，目录不能证明新版要求已落实。页面只提供首次匹配顺序查找的固定练习，不运行真实程序或生成式 AI。来源：<a href="https://qn1-next.xuetangonline.com/17921378608052.pdf">2025 修订版课程标准公开镜像</a>；<a href="https://www.ditu.cn/dtkczy/dtsxxkj/202303/20/1562676311596883738.html">出版方必修 1 目录与 ISBN</a>。</p>
+      </section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回高中计算机</a>　·　<a href="search-strategies.html">继续查找策略对照实验室</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script src="assets/algorithm-flowchart-model.js"></script>
+  <script src="assets/algorithm-flowchart.js"></script>
+</body>
+</html>
