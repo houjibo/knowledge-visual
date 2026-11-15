@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="高中信息系统工作台：配置虚构图书借阅规则，预测请求、观察输入处理输出与库存变化，比较权限检查和断线。">
+  <title>图书借阅信息系统工作台 · 高中计算机</title>
+  <link rel="stylesheet" href="../../assets/css/subject-learning.css">
+  <style>
+    .shell { width: min(100% - 28px, 1080px); }
+    .hero { margin-bottom: 14px; }
+    .step-label { display: inline-block; margin-bottom: 8px; padding: 3px 10px; border-radius: 100px; background: #e9e4ff; color: #3d307c; font-size: .86rem; font-weight: 800; }
+    .system-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .system-card { padding: 12px; border: 1px solid #c9d4e8; border-radius: 12px; background: #f7f9fd; }
+    .system-card strong, .system-card small { display: block; }
+    .system-card small { color: #465571; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .form-grid label, .risk-field { display: grid; gap: 5px; min-width: 0; font-weight: 700; }
+    select { width: 100%; min-height: 44px; padding: 7px 9px; border: 1px solid #8592a8; border-radius: 9px; background: #fff; }
+    .action-row { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 12px; }
+    .feedback { min-height: 2.8em; margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: #eef2fa; }
+    .feedback.success { background: #e4f4e9; color: #155c37; }
+    .feedback.error { background: #fff0e8; color: #8c3024; }
+    .feedback.warning { background: #fff4d8; color: #654b04; }
+    .feedback-list { padding-left: 1.4rem; }
+    .feedback-list li { margin: 4px 0; }
+    .state-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+    .state-card { padding: 10px; border: 1px solid #cfdaee; border-radius: 10px; background: #f8faff; }
+    .state-card small, .state-card strong { display: block; }
+    .state-card strong { font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+    .books { display: flex; gap: 8px; flex-wrap: wrap; min-height: 42px; margin: 10px 0; }
+    .book { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 42px; border: 2px solid #55449f; border-radius: 3px 8px 8px 3px; background: #e4ddff; color: #342779; font-weight: 800; }
+    .book.empty { border-style: dashed; background: #f0f1f4; color: #5c6573; }
+    .flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; list-style: none; padding: 0; }
+    .flow li { min-width: 0; min-height: 116px; padding: 11px; border: 2px solid #cbd6e7; border-radius: 11px; background: #f7f9fd; }
+    .flow li strong { display: block; margin-bottom: 6px; }
+    .flow li p { margin: 0; overflow-wrap: anywhere; font-size: .9rem; }
+    .flow li.passed, .flow li.changed { border-color: #277e56; background: #e8f6ee; }
+    .flow li.blocked { border-color: #bb5939; background: #fff0e8; }
+    .flow li.skipped, .flow li.unchanged { border-style: dashed; }
+    .flow li.reported { border-color: #55449f; background: #efeaff; }
+    .challenge-list, .guide-list, .history { padding-left: 1.4rem; }
+    .challenge-list li, .guide-list li, .history li { margin: 5px 0; }
+    [hidden] { display: none !important; }
+    @media (max-width: 780px) { .system-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .flow { grid-template-columns: 1fr; } .flow li { min-height: 0; } }
+    @media (max-width: 520px) { .form-grid, .state-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 380px) { .shell { width: min(100% - 20px, 1080px); } .panel { padding: 14px; } .system-grid, .form-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body data-subject="computer" data-stage="high">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <div class="shell">
+    <nav class="topbar breadcrumbs" aria-label="面包屑"><a href="../../index.html">首页</a><span aria-hidden="true">›</span><a href="../index.html">计算机</a><span aria-hidden="true">›</span><a href="index.html">高中</a><span aria-hidden="true">›</span><span aria-current="page">图书借阅信息系统工作台</span></nav>
+    <main id="main-content">
+      <header class="hero"><p class="eyebrow">高中计算机 · 信息系统与社会</p><h1>图书借阅信息系统工作台</h1><p>搭一个虚构的借阅规则原型：先预测请求怎样经过终端、连接、规则和数据，再观察库存是否改变。试着关闭权限检查，看清哪一步失守。</p></header>
+
+      <section class="panel" aria-labelledby="elements-title"><span class="step-label">第 1 步 · 认识系统</span><h2 id="elements-title">一个信息系统有哪些要素？</h2><p>这些角色和记录都是虚构的。图中的“连接”“处理程序”“数据表”由当前浏览器模拟，没有真实账号、服务器或图书馆。</p>
+        <div class="system-grid" aria-label="虚构借阅系统的组成">
+          <div class="system-card"><strong>👥 人</strong><small>学生 S-01、S-02 提交借阅；馆员 L-01 可补库存。</small></div>
+          <div class="system-card"><strong>💻 终端设备</strong><small>浏览器表单收集角色、动作与配置。</small></div>
+          <div class="system-card"><strong>↔ 模拟连接</strong><small>在线才把请求送到处理程序；断线停在终端。</small></div>
+          <div class="system-card"><strong>⚙ 处理程序</strong><small>核对角色、借阅上限、库存与容量。</small></div>
+          <div class="system-card"><strong>▣ 数据记录</strong><small>B-01 库存、每位学生借阅计数和版本号。</small></div>
+          <div class="system-card"><strong>✓ 结果反馈</strong><small>说明批准、拒绝或断线原因。</small></div>
+        </div>
+        <p>把四类信息放入输入→处理→输出的正确位置：</p>
+        <div class="form-grid">
+          <label for="element-input">本次请求的输入<select id="element-input"><option value="">选择</option><option value="request">角色与借阅/补库存动作</option><option value="policy">上限与权限检查</option><option value="inventory">库存与借阅计数</option><option value="decision">批准或拒绝的反馈</option></select></label>
+          <label for="element-rule">处理程序使用的规则<select id="element-rule"><option value="">选择</option><option value="request">角色与借阅/补库存动作</option><option value="policy">上限与权限检查</option><option value="inventory">库存与借阅计数</option><option value="decision">批准或拒绝的反馈</option></select></label>
+          <label for="element-data">会随成功请求改变的数据<select id="element-data"><option value="">选择</option><option value="request">角色与借阅/补库存动作</option><option value="policy">上限与权限检查</option><option value="inventory">库存与借阅计数</option><option value="decision">批准或拒绝的反馈</option></select></label>
+          <label for="element-output">系统给人的输出<select id="element-output"><option value="">选择</option><option value="request">角色与借阅/补库存动作</option><option value="policy">上限与权限检查</option><option value="inventory">库存与借阅计数</option><option value="decision">批准或拒绝的反馈</option></select></label>
+        </div><div class="action-row"><button type="button" id="check-elements">核对系统要素</button></div><ul id="element-feedback" class="feedback-list" aria-label="要素判断反馈"></ul><p id="elements-status" class="feedback" role="status" aria-live="polite">先识别输入、规则、数据和输出。</p>
+      </section>
+
+      <section class="panel" aria-labelledby="configure-title"><span class="step-label">第 2 步 · 配置原型</span><h2 id="configure-title">设置系统规则和请求</h2><p>一本书 B-01，库存上限 4 本。改变“库存起点”会重置本轮数据；改变上限、连接或权限检查会影响下一条请求。</p>
+        <div class="form-grid">
+          <label for="stock-start">库存起点<select id="stock-start"><option value="0">0 本</option><option value="1">1 本</option><option value="2" selected>2 本</option><option value="3">3 本</option></select></label>
+          <label for="loan-limit">每人借阅上限<select id="loan-limit"><option value="1" selected>1 本</option><option value="2">2 本</option></select></label>
+          <label for="access-check">处理程序的角色检查<select id="access-check"><option value="on" selected>开启：仅馆员可补库存</option><option value="off">关闭：故意不安全的对照</option></select></label>
+          <label for="connection">模拟连接<select id="connection"><option value="online" selected>在线</option><option value="offline">断线</option></select></label>
+          <label for="request-actor">请求者<select id="request-actor"><option value="S-01" selected>学生 S-01</option><option value="S-02">学生 S-02</option><option value="L-01">馆员 L-01</option></select></label>
+          <label for="request-action">动作<select id="request-action"><option value="borrow" selected>借阅 B-01</option><option value="restock">补 B-01 库存 1 本</option></select></label>
+          <label for="outcome-prediction">预测系统结果<select id="outcome-prediction"><option value="">先预测</option><option value="borrowed">借阅成功</option><option value="limit">超过借阅上限</option><option value="out-of-stock">库存不足</option><option value="restocked">补库存成功</option><option value="forbidden">未授权修改被阻止</option><option value="offline">断线，服务端未收到</option><option value="stock-full">库存已满</option><option value="wrong-role">角色不适合借阅</option></select></label>
+        </div>
+        <p>提交会实际运行本轮模拟，即使预测不正确，库存也会按规则改变；可以用右侧按钮按当前起点重新开始。</p>
+        <div class="action-row"><button type="button" id="run-request">提交模拟请求并核对</button><button type="button" class="secondary" id="reset-state">按当前起点重置数据</button></div>
+        <p id="prediction-status" class="feedback" role="status" aria-live="polite">先配置并预测一条请求的结果。</p>
+        <p id="configuration-warning" class="feedback warning" hidden>角色检查已关闭：这是故意不安全的教学配置，学生补库存可能被错误放行。</p>
+      </section>
+
+      <section class="panel" aria-labelledby="state-title"><span class="step-label">第 3 步 · 观察结果</span><h2 id="state-title">数据状态与处理轨迹</h2>
+        <div class="state-grid" aria-label="当前数据状态"><div class="state-card"><small>B-01 库存</small><strong id="stock-count">2 本</strong></div><div class="state-card"><small>S-01 已借</small><strong id="loans-s01">0 本</strong></div><div class="state-card"><small>S-02 已借</small><strong id="loans-s02">0 本</strong></div><div class="state-card"><small>数据版本</small><strong id="revision-count">0</strong></div></div>
+        <div id="stock-visual" class="books" role="img" aria-label="库存 2 本，4 个位置"></div>
+        <ol id="flow" class="flow" aria-label="模拟请求处理轨迹"><li data-stage="input"><strong>1 输入／终端</strong><p>等待请求</p></li><li data-stage="network"><strong>2 模拟连接</strong><p>等待请求</p></li><li data-stage="rules"><strong>3 处理规则</strong><p>等待请求</p></li><li data-stage="data"><strong>4 数据记录</strong><p>等待请求</p></li><li data-stage="output"><strong>5 输出反馈</strong><p>等待请求</p></li></ol>
+        <p id="state-change" class="feedback" role="status" aria-live="polite">提交请求后，这里会显示库存与版本的前后变化。</p>
+        <h3>本轮请求记录</h3><ol id="request-history" class="history"><li>尚无请求。</li></ol>
+      </section>
+
+      <section class="panel" aria-labelledby="risk-title"><span class="step-label">第 4 步 · 解释风险</span><h2 id="risk-title">错误放行后，怎样修复？</h2><p>先观察“关闭角色检查时学生补库存被放行”。然后选择能限制这类写入的做法。</p><label class="risk-field" for="risk-decision">你的修复判断<select id="risk-decision" disabled><option value="">先观察权限失效</option><option value="server-control">恢复处理程序的角色检查，并复核写入记录</option><option value="hide-button">只在学生终端隐藏补库存按钮</option><option value="delete-history">删除请求记录，让风险不再显示</option></select></label><div class="action-row"><button type="button" id="check-risk" disabled>核对修复判断</button></div><p id="risk-status" class="feedback" role="status" aria-live="polite">观察权限失效后再判断。</p></section>
+
+      <section class="panel" aria-labelledby="completion-title"><h2 id="completion-title">完成本次学习</h2><p>正确识别要素，并分别预测正常借阅、上限拒绝、权限阻止、权限关闭后的错误放行和断线，再解释修复方案。</p><ol class="guide-list"><li>默认配置下，让 S-01 连续借阅两次：第一次成功，第二次触及 1 本上限。</li><li>让 S-01 尝试补库存：先在开启角色检查时预测阻止，再关闭检查预测错误放行。</li><li>将连接设为断线，再预测任一请求；最后完成风险判断。</li></ol><ul id="challenge-list" class="challenge-list"></ul><p id="progress-status" class="feedback" role="status" aria-live="polite">正在读取本机进度…</p><button type="button" id="retry-save" class="secondary" hidden>重试保存已完成的学习</button></section>
+
+      <section class="panel"><h2>模型边界与依据</h2><p>页面只在当前浏览器中按固定规则模拟单本书、三名虚构角色和有限库存；“在线”不测真实网络，也不验证真实身份。关闭角色检查是故意不安全的反事实，不应在真实系统使用。本原型没有数据库事务、并发冲突、备份、加密、平台生态、大数据或真实图书馆业务流程。</p><p>依据：<a href="https://qn1-next.xuetangonline.com/17921378608052.pdf">2025 年高中信息科技课标必修 2</a>；<a href="https://www.ditu.cn/dtkczy/dtsxxkj/202303/20/1562676311596883737.html">中图人教版必修 2 出版方目录</a>（章次示例）；<a href="https://csrc.nist.gov/glossary/term/information_system">NIST 信息系统术语</a>；<a href="https://csrc.nist.gov/glossary/term/access_control">NIST 访问控制术语</a>。</p></section>
+    </main>
+    <footer class="footer-nav"><a href="index.html">← 返回高中计算机</a>　·　<a href="data-workbench.html">继续学习数据编码与分析</a></footer>
+  </div>
+  <script src="../../assets/js/subject-progress.js"></script>
+  <script src="assets/information-system-model.js"></script>
+  <script src="assets/information-system.js"></script>
+</body>
+</html>

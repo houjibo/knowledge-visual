@@ -180,7 +180,7 @@ test('write rejection is reported and retry succeeds after writes recover', asyn
 test('home search and high-stage directory count the new topic', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现由发布后浏览器验收');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '15');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '16');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('查找策略');
@@ -191,10 +191,10 @@ test('home search and high-stage directory count the new topic', async ({page}) 
   await page.locator('#prerequisite-select').selectOption('sorted');
   await page.locator('#check-prerequisite').click();
   await page.locator('.footer-nav a[href="index.html"]').click();
-  await expect(page.locator('#stage-progress')).toContainText('1/2');
+  await expect(page.locator('#stage-progress')).toContainText('1/3');
   await expect(page.locator('[data-topic-slug="search-strategies"] [data-completion]')).toContainText('已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/15');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/16');
 });
 
 test('320px keyboard and reduced motion preserve a readable manual comparison', async ({page}) => {
