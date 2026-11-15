@@ -1,6 +1,6 @@
 # 高中图书借阅信息系统工作台核查
 
-核查日期：2026-11-15。页面：[图书借阅信息系统工作台](../../computer/high/information-system.html)；变更：[OpenSpec 提案](../../openspec/changes/high-information-system-prototype/proposal.md)。课程主线为[高中信息科技 HS25 两必修模块逐项映射](../plans/curriculum-crosswalks/high-information-technology-hs25.json)的必修 2“信息系统与社会”2.1、2.2、2.5、2.8。15 条内容要求当前为 0 已验证、9 部分、6 缺失。[中图人教版必修 2 出版方目录](../plans/pep-high-information-technology-books.md)只用作可能的章次示例，不能代替现行标准或证明教材已同步修订。
+核查日期：2026-11-15。页面：[图书借阅信息系统工作台](../../computer/high/information-system.html)；变更：[OpenSpec 提案](../../openspec/changes/archive/2026-11-15-high-information-system-prototype/proposal.md)。课程主线为[高中信息科技 HS25 两必修模块逐项映射](../plans/curriculum-crosswalks/high-information-technology-hs25.json)的必修 2“信息系统与社会”2.1、2.2、2.5、2.8。15 条内容要求当前为 0 已验证、9 部分、6 缺失。[中图人教版必修 2 出版方目录](../plans/pep-high-information-technology-books.md)只用作可能的章次示例，不能代替现行标准或证明教材已同步修订。
 
 ## 学习者可以观察什么
 
@@ -18,4 +18,4 @@
 
 ## 验证
 
-[纯模型测试](../../tests/information-system-model.test.js)核对状态转换、拒绝与断线不写入、权限关闭的风险、边界值和输入有效性。[桌面与移动浏览器专项](../../tests/browser/high-information-system.spec.js)覆盖要素辨认、错误修正、不同请求与规则状态、异常存储、首页搜索、目录进度、320px 键盘、直接文件和发布子路径；[发布后浏览器验收](../../tests/browser/published-live-site.spec.js)另执行借阅、权限阻止/错误放行和断线路径。当前专项 21 项通过、1 项按发布子路径条件跳过；完整本地门禁通过：2432 项桌面/移动交互、8 项条件跳过，全站 392 页冒烟、发布包 22 项交互与 392 页加载均通过。Actions 和公网验收结果在发布后补录。真实学习者、真实设备和整页屏幕阅读器尚未核验。
+[纯模型测试](../../tests/information-system-model.test.js)核对状态转换、拒绝与断线不写入、权限关闭的风险、边界值和输入有效性。[桌面与移动浏览器专项](../../tests/browser/high-information-system.spec.js)覆盖要素辨认、错误修正、不同请求与规则状态、异常存储、首页搜索、目录进度、320px 键盘、直接文件和发布子路径；[发布后浏览器验收](../../tests/browser/published-live-site.spec.js)另执行借阅、权限阻止/错误放行和断线路径。专项 21 项通过、1 项按发布子路径条件跳过；完整本地门禁通过：2432 项桌面/移动交互、8 项条件跳过，全站 392 页冒烟、发布包 22 项交互与 392 页加载均通过。[GitHub Actions #362](https://github.com/houjibo/knowledge-visual/actions/runs/43662655520) 的检查、构建、Pages 部署和发布后验收全部成功；公网发布清单匹配 `57164cc093460131ded26183d0579d0f26d4ae0a`，独立脚本复核 90 个资源；公网浏览器专项 7/7 通过。真实学习者、真实设备和整页屏幕阅读器尚未核验。

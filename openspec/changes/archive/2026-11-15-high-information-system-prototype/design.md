@@ -6,4 +6,4 @@
 
 完成门槛包括系统要素/输入处理输出识别，正确预测正常借阅、借阅上限、未授权修改阻止、关闭检查后的未授权修改、断线五类结果，以及解释应恢复服务端权限检查。完成历史保存在当前浏览器；改变配置不撤销已赢得的历史进度，但当前预测及状态必须随新配置重新核对。损坏存储不覆盖，失败可重试。
 
-页面用文字和图形同步表示状态，原生控件可键盘操作，320px 下采用纵向流程。源条款以 HS25 当前映射为准；[中图人教版必修 2 目录](../../../docs/plans/pep-high-information-technology-books.md)只作章次定位，[NIST 信息系统定义](https://csrc.nist.gov/glossary/term/information_system)与[访问控制定义](https://csrc.nist.gov/glossary/term/access_control)用于校准术语，不作为中国课标覆盖认证。
+页面用文字和图形同步表示状态，原生控件可键盘操作，320px 下采用纵向流程。源条款以 HS25 当前映射为准；[中图人教版必修 2 目录](../../../../docs/plans/pep-high-information-technology-books.md)只作章次定位，[NIST 信息系统定义](https://csrc.nist.gov/glossary/term/information_system)与[访问控制定义](https://csrc.nist.gov/glossary/term/access_control)用于校准术语，不作为中国课标覆盖认证。
