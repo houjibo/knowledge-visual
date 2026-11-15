@@ -1,6 +1,6 @@
 ## Why
 
-[HS25 高中信息科技两必修模块映射](../../../docs/plans/curriculum-crosswalks/high-information-technology-hs25.json)显示必修 1 的 1.1 数据编码仍缺失，1.2 数据处理只有高中 AI 固定样本的局部证据。高中计算机目前只有查找策略主题。需要让学习者在可控的虚构数据上亲自预测编码、处理记录并解释图表，而不是从页面数量推断课程覆盖。
+[HS25 高中信息科技两必修模块映射](../../../../docs/plans/curriculum-crosswalks/high-information-technology-hs25.json)显示必修 1 的 1.1 数据编码仍缺失，1.2 数据处理只有高中 AI 固定样本的局部证据。高中计算机目前只有查找策略主题。需要让学习者在可控的虚构数据上亲自预测编码、处理记录并解释图表，而不是从页面数量推断课程覆盖。
 
 ## What Changes
 

@@ -63,6 +63,7 @@
   }
 
   function resetEncodingView() {
+    saveNotice = '';
     get('byte-prediction').value = '';
     get('encoding-result').hidden = true;
     setFeedback('encoding-status', '先预测当前符号的 UTF-8 字节数。');
@@ -98,6 +99,7 @@
   }
 
   function clearMeanAndReport() {
+    saveNotice = '';
     meanCorrect = false; reportCorrect = false;
     get('mean-prediction').value = '';
     get('report-decision').value = '';
@@ -230,6 +232,7 @@
   get('check-plan').addEventListener('click', checkPlan);
   for (const id of ['monday-reading', 'tuesday-reading', 'wednesday-reading', 'friday-reading']) get(id).addEventListener('input', onReadingsChanged);
   get('mean-prediction').addEventListener('input', () => {
+    saveNotice = '';
     meanCorrect = false; reportCorrect = false;
     get('report-decision').value = '';
     get('report-decision').disabled = true;
@@ -240,6 +243,7 @@
   });
   get('check-mean').addEventListener('click', checkMean);
   get('report-decision').addEventListener('change', () => {
+    saveNotice = '';
     reportCorrect = false;
     setFeedback('report-status', '结论已修改，请核对。');
     renderChallenges();

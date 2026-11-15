@@ -130,6 +130,16 @@ test('all challenges save progress and directory and home counts stay consistent
   await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/15');
 });
 
+test('a changed reading shows saved completion as history while the current challenge resets', async ({page}) => {
+  await page.goto(topic);
+  await finish(page);
+  await expect(page.locator('#progress-status')).toContainText('已保存');
+  await page.locator('#monday-reading').fill('50');
+  await expect(page.locator('#challenge-list')).toContainText('○ 待完成 · 当前四个有效日的均值');
+  await expect(page.locator('#progress-status')).toContainText('本机已有这个主题的完成记录');
+  expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)), progressKey)).toEqual({'data-workbench': true});
+});
+
 test('corrupt storage remains intact and earned completion can be retried', async ({page}) => {
   await page.addInitScript(key => localStorage.setItem(key, '{broken'), progressKey);
   await page.goto(topic);
