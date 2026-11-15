@@ -19,3 +19,7 @@
 ## 交叉表结论
 
 HS25-IT-BAS-M2-06 从 `missing` 调整为 `partial`。页面为交互路径比较、回答核验和业务动作边界提供可操作的局部证据；仍缺少真实生成式 AI 体验、真实信息系统中的创新应用、学习者自主提出任务及迁移效果证据。下一步须先明确隐私、安全、来源展示和人工确认边界，再评估受控真实工具任务；在人教版教材实际版次与 2025 课程要求对应关系核实前，不将教材目录当成标准覆盖证明。
+
+## 公开验收
+
+提交 `df68f35ade3dd926ec315dd3e5b595482f9a6f2a` 已推送至 `main`。GitHub Actions [run #43719033515](https://github.com/houjibo/knowledge-visual/actions/runs/43719033515) 的 core checks、桌面/移动浏览器回归、构建、Pages 部署和 `verify-deployment` 均成功。公开 `release-version.json` 的 revision 与该提交一致，`site_files_modified` 为 `false`；公开页面及模型/控制器资源返回 HTTP 200。公网与本地页面都已打开供实时验收。[OpenSpec 变更已归档](../../openspec/changes/archive/2026-11-15-hs25-ai-system-dialogue-lab/proposal.md)。
