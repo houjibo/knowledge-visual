@@ -16,4 +16,6 @@
 
 该页面只为一个抽象问题提供部分操作证据。仍缺跨问题类型的学生自主建模、更多控制结构组合、程序或生成式 AI 核验，以及真实学习者是否能迁移解释的证据；因此不将课标状态提升为“已验证”。人教版旧版目录只用于章节定位。
 
-本地模型测试 6/6；新页面专项桌面与移动各 5/5，包含目录搜索。`npm run check` 全量交互 2,454 通过、8 个按条件跳过；394 页加载冒烟通过，发布路径专项 22/22、发布包 394/394 通过；`npx openspec validate --all --strict` 通过。公网 Pages revision 与交互将在部署完成后补录。当前源材料总数保持 0 已验证、10 部分、5 缺失，不由主题页数推算课程覆盖率。
+本地模型测试 6/6；新页面专项桌面与移动共 10/10，包含目录搜索、进度重试、320px 键盘、文件直开和发布子路径。`npm run check` 全量交互 2,454 通过、8 个按条件跳过；394 页加载冒烟通过，发布路径专项 22/22、发布包 394/394 通过；严格 OpenSpec 与课程映射检查通过。
+
+提交 `297735d79ca4967aca2a3a98d72e9e82eaca8e27` 推送至 main。GitHub Actions [#366](https://github.com/houjibo/knowledge-visual/actions/runs/43674127589) 的 core、桌面/移动交互、构建、Pages 部署和部署验收全部成功；公网 `release-version.json` 的 revision 一致且 `site_files_modified` 为 false。部署核验检查 93 项公开资源，部署后浏览器矩阵 18 项通过，其中包含流程构造、三个查找案例、本机进度、目录数和首页搜索。公开主题页与本地页均已在浏览器打开。变更记录见[归档 OpenSpec](../../openspec/changes/archive/2026-11-15-hs25-algorithm-flowchart-workbench/proposal.md)。当前源材料总数保持 0 已验证、10 部分、5 缺失，不由主题页数推算课程覆盖率。
