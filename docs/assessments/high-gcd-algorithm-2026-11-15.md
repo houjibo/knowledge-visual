@@ -22,4 +22,4 @@
 - 聚焦回归：98 项中 95 项通过、3 项按发布项目配置跳过；桌面与移动项目均通过。
 - 本地完整验证：`npm run check` 退出码为 0；包括静态门禁、浏览器项目矩阵、全站页面烟测和发布包检查。发布包烟测的 395 个页面均通过。专题页本地服务响应 HTTP 200。
 
-GitHub Actions、Pages revision、公网交互验收及 OpenSpec 归档状态在推送后补记。
+GitHub Actions [run 43704932140](https://github.com/houjibo/knowledge-visual/actions/runs/43704932140) 的核心检查、桌面与移动浏览器矩阵、发布包构建、Pages 部署和部署后验证均成功。发布版本清单 `release-version.json` 的 revision 为 `660d8d36748ca9ed2ff306b7b511ad04fcbad9b5`，与本次提交一致，`site_files_modified` 为 `false`。本地和公网专题页均返回 HTTP 200，公网页面已打开并加载交互控件。OpenSpec 已归档为 `2026-11-15-hs25-gcd-algorithm-lab`，5 条需求已写入主规格；归档后的 `npm run check:static` 与其中 `openspec validate --all --strict` 均通过。
