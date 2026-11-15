@@ -1,6 +1,6 @@
 # 高中数据编码与分析工作台核查
 
-核查日期：2026-11-15。页面：[数据编码与分析工作台](../../computer/high/data-workbench.html)；变更：[归档 OpenSpec 提案](../../openspec/changes/archive/2026-11-15-high-data-encoding-analysis-workbench/proposal.md)。课程位置为 HS25 高中信息科技必修 1“数据与计算”内容要求 1.1 与 1.2；[15 条逐项映射](../plans/curriculum-crosswalks/high-information-technology-hs25.json)当前为 0 已验证、5 部分、10 缺失。课程标准仍是分母，[中图人教版必修教材目录](../plans/pep-high-information-technology-books.md)仅作章次示例。
+核查日期：2026-11-15。页面：[数据编码与分析工作台](../../computer/high/data-workbench.html)；变更：[归档 OpenSpec 提案](../../openspec/changes/archive/2026-11-15-high-data-encoding-analysis-workbench/proposal.md)。课程位置为 HS25 高中信息科技必修 1“数据与计算”内容要求 1.1 与 1.2；[15 条逐项映射](../plans/curriculum-crosswalks/high-information-technology-hs25.json)该工作台发布时为 0 已验证、5 部分、10 缺失；现行计数见逐项映射。课程标准仍是分母，[中图人教版必修教材目录](../plans/pep-high-information-technology-books.md)仅作章次示例。
 
 ## 可观察的学习任务
 

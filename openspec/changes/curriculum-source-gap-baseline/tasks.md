@@ -25,7 +25,8 @@
 - [ ] 2.1c 高中数学先取得并复核 HS25 原文，对照 HS20 条款变化，再按必修内容、学业质量与人教版 A 版现行逐册章目建立同格式试点。
 - [x] 2.1c1 从 HS25 原文拆解必修“集合”7 条内容要求，与 HS20 逐条比对，建立[当前版局部映射](../../../docs/plans/curriculum-crosswalks/high-math-sets-hs25.json)和[页面差距记录](../../../docs/assessments/high-math-sets-hs25-2026-11-14.md)。7 条均为部分；预备知识学业要求出现措辞变化，仍须另建映射；人教 A 版只核到必修第一册及第一章，完整小节和版次待核。
 - [x] 2.1d 对照 HS25 信息科技公开原文镜像与 PEP 的 HS20 原文，建立[两必修模块 15 条编号要求](../../../docs/plans/curriculum-crosswalks/high-information-technology-hs25.json)及[来源与差距核查](../../../docs/assessments/high-information-technology-hs25-2026-11-15.md)：0 已验证、4 部分、11 缺失；[中图人教版必修两册](../../../docs/plans/pep-high-information-technology-books.md)有出版方章目和 ISBN。官方机构原文附件、纸书版月、学业要求、质量与选修仍待核，2.6 保持未完成。
-- [x] 2.1d1 按[独立数据工作台核查](../../../docs/assessments/high-data-workbench-2026-11-15.md)为 HS25 必修 1 的 1.1/1.2 增加局部可操作证据；当前两必修模块仍以 15 条为分母，0 已验证、5 部分、10 缺失。真实采集、大数据、学业要求、质量与选修仍待 2.6 核对。
+- [x] 2.1d1 按[独立数据工作台核查](../../../docs/assessments/high-data-workbench-2026-11-15.md)为 HS25 必修 1 的 1.1/1.2 增加局部可操作证据；该工作台发布时两必修模块仍以 15 条为分母，0 已验证、5 部分、10 缺失。真实采集、大数据、学业要求、质量与选修仍待 2.6 核对。
+- [x] 2.1d2 按[独立借阅信息系统核查](../../../docs/assessments/high-information-system-2026-11-15.md)为 HS25 必修 2 的 2.1、2.2、2.5、2.8 增加局部可操作证据；两必修模块仍以 15 条为分母，当前 0 已验证、9 部分、6 缺失。真实系统搭建、平台生态、网络与安全实践、学业要求、质量与选修继续待 2.6 核对。
 - [ ] 2.2 小学数学、初中数学：有理数五条 CE22→CE25 已复核；继续比对其余范围并完成 CE25 分学段要求与本站主题的逐项映射。
 - [x] 2.2a 以 CE22 第四学段“有理数”5 条内容要求试点，记录稳定 ID、课标位置、站内证据和缺口；历史快照已由 CE25 现行内容映射接续，学业要求另见 2.2b，其余初中数学范围仍待核。
 - [x] 2.2b 对照 CE25 印刷页 57—58 与 CE22 印刷页 58 的“有理数”学业要求，以及两版印刷页 82—83 的第四学段学业质量；[一段学业要求](../../../docs/plans/curriculum-crosswalks/middle-math-rational-numbers-ce25-academic.json)与七个站内诊断点分层记录，[学业质量视角](../../../docs/assessments/middle-math-ce25-academic-quality-2026-11-13.md)不计入有理数单元分母。
