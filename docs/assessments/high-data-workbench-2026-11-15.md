@@ -13,6 +13,6 @@
 
 [纯模型测试](../../tests/data-workbench-model.test.js)用已知 UTF-8 字节、默认与边界读数核对模型；[浏览器测试](../../tests/browser/high-data-workbench.spec.js)覆盖桌面与移动模拟视口的错误与正确路径、数据变化、存储异常、首页搜索及进度、320px 键盘、文件直开和发布子路径。纯模型 5/5 通过；新页面专项在进度提示调整后为 21 项通过、1 项按发布子路径条件跳过。功能提交的完整本地门禁通过：2409 项桌面/移动交互通过、7 项条件跳过，全站 391 页冒烟、发布包 22 项交互和 391 页加载均通过。调整后的进度提示另由专项覆盖。
 
-[GitHub Actions #359](https://github.com/houjibo/knowledge-visual/actions/runs/43655817820)的检查、构建、部署和部署后验收全部成功；公网 `release-version.json` 与 `daec9329afd5d42866de0bf35a8b8bee6a55cec6` 一致且 `site_files_modified:false`。独立验证脚本复核 87 个公网资源，发布后浏览器验收 7/7 通过；本地与公网工作台均已在浏览器打开。归档提交中的进度提示小修另经桌面/移动专项核查；最终版本以仓库 `main` 的 Actions 和公开清单为准。
+[GitHub Actions #359](https://github.com/houjibo/knowledge-visual/actions/runs/43655817820)的检查、构建、部署和部署后验收全部成功；公网 `release-version.json` 与 `daec9329afd5d42866de0bf35a8b8bee6a55cec6` 一致且 `site_files_modified:false`。独立验证脚本复核 87 个公网资源，发布后浏览器验收 7/7 通过；本地与公网工作台均已在浏览器打开。[归档提交的 Actions #360](https://github.com/houjibo/knowledge-visual/actions/runs/43657397570)也全部成功，公网清单匹配 `d0e3599ad40a86b1b81f56f671885ed0ccd2eccd`；进度提示小修的本地桌面/移动专项 21/21、公网专项 16/16 通过（另 6 项按本地专用条件跳过）。
 
 这两项内容要求仍只标为**部分**：UTF-8 三例不能代表数据挖掘、知识发现或大数据；虚构的四个有效读数没有真实采集、多来源比较、完整分析报告和方案迭代。页面和自动化测试也不能证明真实学习者掌握或完成课标的实践要求。下一步优先补可追溯数据的采集与分析流程、算法构造和信息系统交互。

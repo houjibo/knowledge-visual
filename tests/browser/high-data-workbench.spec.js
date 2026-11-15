@@ -6,6 +6,8 @@ const {startReleaseServer} = require('./release-server');
 const topic = process.env.KV_PUBLISHED_BASE_URL
   ? new URL('computer/high/data-workbench.html', process.env.KV_PUBLISHED_BASE_URL.replace(/\/?$/, '/')).href
   : '/computer/high/data-workbench.html';
+const siteRoot = process.env.KV_PUBLISHED_BASE_URL
+  ? process.env.KV_PUBLISHED_BASE_URL.replace(/\/?$/, '/') : '/';
 const progressKey = 'kv-computer-high-progress';
 
 async function encodeAll(page) {
@@ -125,7 +127,7 @@ test('all challenges save progress and directory and home counts stay consistent
   await page.locator('.footer-nav a[href="index.html"]').click();
   await expect(page.locator('#stage-progress')).toContainText('1/2');
   await expect(page.locator('[data-topic-slug="data-workbench"] [data-completion]')).toContainText('已完成');
-  await page.goto('/');
+  await page.goto(siteRoot);
   await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '15');
   await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/15');
 });
@@ -171,7 +173,7 @@ test('write rejection is visible and retry succeeds when writes recover', async 
 
 test('home search discovers the new topic', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网搜索由部署后验收');
-  await page.goto('/');
+  await page.goto(siteRoot);
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('数据编码');
