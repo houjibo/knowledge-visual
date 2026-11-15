@@ -122,7 +122,7 @@ def main():
     subject_topics = {
         'computer/primary/index.html': ['robot-algorithms.html', 'repeat-loops.html', 'conditional-robot.html', 'sequential-search.html', 'adjacent-swap-sort.html'],
         'computer/middle/index.html': ['binary-pixels.html', 'message-transfer.html', 'network-paths.html', 'webpage-publishing.html', 'online-collaboration.html', 'online-learning-modes.html', 'iot-sensor-feedback.html'],
-        'computer/high/index.html': ['data-workbench.html', 'search-strategies.html', 'information-system.html', 'iot-feedback-control.html', 'network-assembly.html', 'algorithm-flowchart.html', 'gcd-algorithm.html'],
+        'computer/high/index.html': ['data-workbench.html', 'search-strategies.html', 'information-system.html', 'ai-system-dialogue.html', 'iot-feedback-control.html', 'network-assembly.html', 'algorithm-flowchart.html', 'gcd-algorithm.html'],
         'computer/uni/index.html': ['stack-queue.html'],
         'ai/primary/index.html': ['feature-classification-lab.html'],
         'ai/middle/index.html': ['data-label-quality.html', 'data-source-coverage.html', 'output-verification.html', 'data-minimization.html'],
