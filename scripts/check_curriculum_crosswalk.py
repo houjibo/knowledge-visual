@@ -144,6 +144,22 @@ def check_high_information_technology_baseline() -> None:
     assert all(isinstance(row.get("related_hs20_items"), list) for row in rows), path
 
 
+def check_equation_baseline(data: dict) -> None:
+    """Preserve the source denominator and identify its single optional item."""
+    assert data.get("id") == "CE25-MATH-L4-EQI"
+    assert data.get("baseline_status") == "current"
+    rows = data["requirements"]
+    expected = {f"CE25-MATH-L4-EQI-{group}-{index:02d}"
+                for group, count in (("EQ", 8), ("IN", 3))
+                for index in range(1, count + 1)}
+    assert len(rows) == len(expected) and {row["id"] for row in rows} == expected, "equation source denominator changed"
+    for row in rows:
+        optional = row["id"] == "CE25-MATH-L4-EQI-EQ-04"
+        assert row.get("course_requirement") == ("optional" if optional else "core"), f"{row['id']}: optional boundary changed"
+        expected_module = "方程与不等式／方程与方程组" if "-EQ-" in row["id"] else "方程与不等式／不等式与不等式组"
+        assert row.get("module") == expected_module, f"{row['id']}: source group changed"
+
+
 def main() -> None:
     paths = sorted(MAPS.glob("*.json"))
     assert paths, f"No curriculum crosswalks in {MAPS}"
@@ -151,6 +167,7 @@ def main() -> None:
         check_crosswalk(path)
     check_canonical_subsets()
     check_high_information_technology_baseline()
+    check_equation_baseline(json.loads((MAPS / "middle-math-equations-inequalities-ce25.json").read_text(encoding="utf-8")))
 
 
 if __name__ == "__main__":

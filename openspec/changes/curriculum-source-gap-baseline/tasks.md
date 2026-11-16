@@ -31,6 +31,7 @@
 - [x] 2.2a 以 CE22 第四学段“有理数”5 条内容要求试点，记录稳定 ID、课标位置、站内证据和缺口；历史快照已由 CE25 现行内容映射接续，学业要求另见 2.2b，其余初中数学范围仍待核。
 - [x] 2.2b 对照 CE25 印刷页 57—58 与 CE22 印刷页 58 的“有理数”学业要求，以及两版印刷页 82—83 的第四学段学业质量；[一段学业要求](../../../docs/plans/curriculum-crosswalks/middle-math-rational-numbers-ce25-academic.json)与七个站内诊断点分层记录，[学业质量视角](../../../docs/assessments/middle-math-ce25-academic-quality-2026-11-13.md)不计入有理数单元分母。
 - [ ] 2.2c 扩展第四学段其余数学主题的 CE25 内容要求、学业要求与阶段学业质量映射；按人教版现行目录核各章，不把站内诊断点与官方来源条目相加。
+- [x] 2.2c1 对照 CE25 与 CE22 内容要求，建立[方程与不等式 11 条局部映射](../../../docs/plans/curriculum-crosswalks/middle-math-equations-inequalities-ce25.json)：8 部分、3 缺失，含 1 条选学；[核查](../../../docs/assessments/middle-math-equations-inequalities-ce25-2026-11-16.md)复现配方错误。其余初中数学、学业要求及教材仍在 2.2c。
 - [x] 2.2d 按 CE25 第四学段“数与式”的“实数”第⑦项和“代数式”第④项，分别建立[近似数与科学记数法局部映射](../../../docs/plans/curriculum-crosswalks/middle-math-scientific-approximation-ce25.json)，两条均为部分；[七上人教版第二章 `2.3` 的课例分组](../../../docs/plans/pep-middle-math-2025-lesson-source-audit.md)另计，不并入已有“有理数”五条分母。完整第四学段仍见 2.2c。
 - [x] 2.2e 为 CE25 有理数第⑤条增加[情境列式局部学习证据](../../../docs/assessments/middle-rational-context-problems-2026-11-14.md)，内容要求五条现为 0 已验证、5 部分，学业要求的七个站内诊断点现为 6 部分、1 缺失；有限选项不代表开放建模或真实学习者掌握。
 - [x] 2.2f 为 CE25 有理数第①条增加[数轴比较局部学习证据](../../../docs/assessments/middle-rational-order-2026-11-14.md)：移动两点、判断负数／分数／同值大小并解释左右关系。五条内容要求和七个诊断点的状态总数不变；开放构造与真实学习者迁移待核。
