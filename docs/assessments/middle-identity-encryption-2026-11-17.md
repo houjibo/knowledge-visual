@@ -14,4 +14,4 @@
 
 ## 验证记录
 
-模型测试通过；桌面、移动专项及相关进度回归 40/40 通过，涵盖存储损坏和失败重试、资源失败、无外部请求、320px 键盘、文件直开及发布子路径。桌面首屏已目视检查。完整 `npm run check` 通过：功能回归 2536 项通过、8 项按配置跳过，开发站及发布包各 399 页加载通过，发布包专项 9 项通过。发布证据待补。变更契约见[OpenSpec](../../openspec/changes/middle-identity-encryption-lab/proposal.md)。
+模型测试通过；桌面、移动专项及相关进度回归 40/40 通过，涵盖存储损坏和失败重试、资源失败、无外部请求、320px 键盘、文件直开及发布子路径。桌面首屏已目视检查。完整 `npm run check` 通过：功能回归 2536 项通过、8 项按配置跳过，开发站及发布包各 399 页加载通过，发布包专项 9 项通过。[Actions #43935196037](https://github.com/houjibo/knowledge-visual/actions/runs/43935196037) 检查、构建、部署与部署后验证成功；公网 revision 为 `73d6972de2eaec8ad73c4e175b26d18121bc0079`，公网专项 6 项通过、12 项本机注入、文件或发布包专用跳过。变更契约见[OpenSpec](../../openspec/changes/archive/2026-11-17-middle-identity-encryption-lab/proposal.md)。
