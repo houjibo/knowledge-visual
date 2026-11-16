@@ -16,4 +16,4 @@
 
 ## 验证记录
 
-模型测试遍历所有 64 种训练样本子集并独立核对误差、并列与留出结果；桌面／移动专项及相关 AI 进度回归 66/66 通过，包含测试参与选择、存储损坏和拒写、320px 键盘、文件直开和发布子路径。桌面训练过程已目视检查。完整 `npm run check` 通过：功能回归 2552 项通过、8 项按配置跳过，开发站及发布包各 400 页加载通过，发布包专项 8 项通过；发布证据待补。变更契约见[OpenSpec](../../openspec/changes/middle-ai-rule-vs-learned-threshold/proposal.md)。
+模型测试遍历所有 64 种训练样本子集并独立核对误差、并列与留出结果；桌面／移动专项及相关 AI 进度回归 66/66 通过，包含测试参与选择、存储损坏和拒写、320px 键盘、文件直开和发布子路径。桌面训练过程已目视检查。完整 `npm run check` 通过：功能回归 2552 项通过、8 项按配置跳过，开发站及发布包各 400 页加载通过，发布包专项 8 项通过；[Actions #43945839454](https://github.com/houjibo/knowledge-visual/actions/runs/43945839454) 检查、构建、部署与部署后验证成功；公网 revision 为 `ea58b429fff2ead76b18c39b90b269b93df1ed41`，公网专项 8 项通过、8 项本地故障注入或文件测试跳过。变更契约见[OpenSpec](../../openspec/changes/archive/2026-11-17-middle-ai-rule-vs-learned-threshold/proposal.md)。
