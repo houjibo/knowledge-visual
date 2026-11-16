@@ -66,7 +66,7 @@
     display: grid; grid-template-columns: 1.2fr 1fr;
     gap: 20px; margin-bottom: 20px;
   }
-  @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) { .stage { grid-template-columns: minmax(0, 1fr); } }
 
   .canvas-wrap {
     background: var(--card);
@@ -118,7 +118,7 @@
   .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
   .slider-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
   .slider-row label { flex: 0 0 110px; color: #cbd5e1; }
-  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--primary); }
   .slider-row .val { flex: 0 0 60px; text-align: right; font-family: monospace; color: var(--primary); font-weight: 600; }
 
   .info-bar { display: flex; gap: 12px; justify-content: center; font-size: 12px; color: #94a3b8; margin: 8px 0; flex-wrap: wrap; }
@@ -308,12 +308,12 @@
           <span class="l-b">轨迹</span>
         </div>
         <div class="slider-row">
-          <label>步长 σ：</label>
+          <label for="sigma">尺度 σ：</label>
           <input type="range" id="sigma" min="0.5" max="5" step="0.1" value="2" />
           <span class="val" id="sigmaVal">2.0</span>
         </div>
         <div class="slider-row">
-          <label>粒子数：</label>
+          <label for="nParticles">粒子数：</label>
           <input type="range" id="nParticles" min="1" max="50" value="8" />
           <span class="val" id="nParticlesVal">8</span>
         </div>
@@ -322,25 +322,28 @@
           <button class="btn btn-secondary" id="btnBrownPause">⏸ 暂停</button>
           <button class="btn btn-secondary" id="btnBrownReset">重置</button>
         </div>
+        <p class="hint" id="brownStatus" role="status">改变尺度或粒子数会停止并重置轨迹。</p>
       </div>
       <div class="panel">
-        <h3>标准布朗运动 W(t)</h3>
+        <h3>一维标准布朗运动 W(t)</h3>
         <ol>
           <li>W(0) = 0</li>
           <li>独立增量</li>
           <li>W(t) − W(s) ~ N(0, t−s)（正态增量）</li>
-          <li>样本路径处处连续但处处不可微</li>
+          <li>样本路径以概率 1 连续且处处不可微</li>
         </ol>
         <div class="formula">
           E[W(t)] = 0,  Var(W(t)) = t
         </div>
         <p><b>维纳过程：</b>爱因斯坦 1905 年解释布朗（花粉）运动的数学模型。</p>
-        <p><b>标度性质：</b>W(αt)/√α 与 W(t) 同分布 —— 自相似性。</p>
+        <p><b>标度性质：</b>α &gt; 0 时，W(αt)/√α 与 W(t) 同分布 —— 自相似性。</p>
+        <p>画面是二维离散模拟：两个坐标各用独立的标准正态增量乘以 σ√Δt，当前径向距离 R = √(x²+y²)。固定 σ 时，每个坐标的方差为 σ²t，理论平均距离 E[R] = σ√(πt/2)。</p>
+        <p>样本均值来自有限粒子，会围绕理论期望波动；连线仅连接离散采样点，不能展示连续路径处处不可微。调整尺度或粒子数将停止并重新开始模拟。</p>
         <div class="stat-grid">
-          <div class="stat-box"><div class="stat-val" id="bTime">0.0</div><div class="stat-label">时间 t</div></div>
-          <div class="stat-box"><div class="stat-val" id="bMeanDist">0.00</div><div class="stat-label">平均 |W(t)|</div></div>
-          <div class="stat-box"><div class="stat-val" id="bTheoryDist">0.00</div><div class="stat-label">理论 √(2t/π)</div></div>
-          <div class="stat-box"><div class="stat-val" id="bMaxDist">0.00</div><div class="stat-label">最大 |W|</div></div>
+          <div class="stat-box"><div class="stat-val" id="bTime">0.00</div><div class="stat-label">时间 t</div></div>
+          <div class="stat-box"><div class="stat-val" id="bMeanDist">0.00</div><div class="stat-label">平均径向距离 R</div></div>
+          <div class="stat-box"><div class="stat-val" id="bTheoryDist">0.00</div><div class="stat-label">理论 σ√(πt/2)</div></div>
+          <div class="stat-box"><div class="stat-val" id="bMaxDist">0.00</div><div class="stat-label">当前最大径向距离</div></div>
         </div>
         <h3 style="margin-top:14px">应用</h3>
         <ul>
@@ -650,9 +653,8 @@ document.querySelectorAll('.tab').forEach(t => {
   const DT = 0.05;
 
   function gaussian() {
-    let u = 0, v = 0;
-    while (u === 0) u = Math.random();
-    while (v === 0) v = Math.random();
+    const u = 1 - Math.random();
+    const v = Math.random();
     return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
   }
 
@@ -726,8 +728,8 @@ document.querySelectorAll('.tab').forEach(t => {
     });
     // stats
     const meanDist = particles.length ? sumDist / particles.length : 0;
-    const theory = Math.sqrt(2 * t / Math.PI);
-    document.getElementById('bTime').textContent = t.toFixed(1);
+    const theory = sigma * Math.sqrt(Math.PI * t / 2);
+    document.getElementById('bTime').textContent = t.toFixed(2);
     document.getElementById('bMeanDist').textContent = meanDist.toFixed(2);
     document.getElementById('bTheoryDist').textContent = theory.toFixed(2);
     document.getElementById('bMaxDist').textContent = maxDist.toFixed(2);
@@ -743,20 +745,24 @@ document.querySelectorAll('.tab').forEach(t => {
   document.getElementById('sigma').addEventListener('input', e => {
     sigma = parseFloat(e.target.value);
     document.getElementById('sigmaVal').textContent = sigma.toFixed(1);
+    reset();
+    document.getElementById('brownStatus').textContent = '尺度已更改，轨迹已重置并暂停；点击开始运行新模拟。';
   });
   document.getElementById('nParticles').addEventListener('input', e => {
     N = parseInt(e.target.value);
     document.getElementById('nParticlesVal').textContent = N;
     reset();
+    document.getElementById('brownStatus').textContent = '粒子数已更改，轨迹已重置并暂停；点击开始运行新模拟。';
   });
   document.getElementById('btnBrownRun').addEventListener('click', () => {
-    if (!running) { running = true; loop(); }
+    if (!running) { running = true; document.getElementById('brownStatus').textContent = '模拟运行中。'; loop(); }
   });
   document.getElementById('btnBrownPause').addEventListener('click', () => {
     running = false;
     if (raf) cancelAnimationFrame(raf);
+    document.getElementById('brownStatus').textContent = '模拟已暂停，可继续或重置。';
   });
-  document.getElementById('btnBrownReset').addEventListener('click', reset);
+  document.getElementById('btnBrownReset').addEventListener('click', () => { reset(); document.getElementById('brownStatus').textContent = '轨迹已重置并暂停。'; });
   reset();
 })();
 
@@ -838,7 +844,7 @@ document.querySelectorAll('.tab').forEach(t => {
         'D. 仅在有限个点不可微'
       ],
       ans: 2,
-      expl: '布朗运动路径连续（无跳跃），但由于增量涨落太快（标度 √Δt），处处不可微。'
+      expl: '布朗运动路径以概率 1 连续且处处不可微；画出的有限步连线只是一种离散示意。'
     },
     {
       q: 'Black–Scholes 期权定价模型基于：',

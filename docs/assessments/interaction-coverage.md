@@ -417,6 +417,7 @@
   - 初中、高中、大学目录的跨标签徽章、存储异常及同名主题隔离；不代表全部主题的完成条件已核验。 [math-stage-directory-progress.spec.js](../../tests/browser/math-stage-directory-progress.spec.js)、[math-progress.spec.js](../../tests/browser/math-progress.spec.js)
 - [随机过程入门 · 马尔可夫链 / 泊松过程 / 布朗运动](../../math/uni/stochastic-process.html)
   - 校验固定转移矩阵的平稳向量、单轨迹频率距离与重置、周期反例及练习反馈；不覆盖全部随机过程内容、真实设备和整页无障碍。 [university-markov-stationary-correctness.spec.js](../../tests/browser/university-markov-stationary-correctness.spec.js)
+  - 二维布朗模拟的受控正态增量、尺度相关理论径向均值、参数重置、零随机数和有限样本说明；不涵盖泊松过程、整页无障碍或真实设备。 [university-brownian-distance-correctness.spec.js](../../tests/browser/university-brownian-distance-correctness.spec.js)
 - [交变电流 · 高中物理互动可视化](../../physics/high/alternating-current.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [恒定电流 - 高中物理互动可视化](../../physics/high/constant-current.html)
