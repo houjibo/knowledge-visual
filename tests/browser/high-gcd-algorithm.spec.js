@@ -93,10 +93,10 @@ test('constructs Euclidean steps, verifies positive and zero inputs, compares co
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)), progressKey)).toEqual({'gcd-algorithm': true});
 
   await page.locator('.footer-nav a[href="index.html"]').click();
-  await expect(page.locator('#stage-progress')).toContainText('1/8');
+  await expect(page.locator('#stage-progress')).toContainText('1/9');
   await page.goto('/index.html');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '21');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/21');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '22');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/22');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('最大公约数');

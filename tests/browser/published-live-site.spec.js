@@ -534,10 +534,10 @@ test('公网高中算法描述、流程图构造与有限查找轨迹可用', as
   await page.locator('#check-termination').click();
   await expect(page.locator('#progress-status')).toContainText('已保存');
   await page.locator('.footer-nav a[href="index.html"]').click();
-  await expect(page.locator('#stage-progress')).toContainText('1/8');
+  await expect(page.locator('#stage-progress')).toContainText('1/9');
   await page.goto(new URL('', baseValue).href, {waitUntil: 'domcontentloaded'});
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '21');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/21');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '22');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/22');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('流程图');
