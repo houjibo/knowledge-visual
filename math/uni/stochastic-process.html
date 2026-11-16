@@ -256,11 +256,11 @@
       <div class="canvas-wrap">
         <canvas id="cvPoisson" width="600" height="420"></canvas>
         <div class="legend">
-          <span class="l-a">到达事件</span>
-          <span class="l-b">计数 N(t)</span>
+          <span class="l-a">计数 N(t) 与到达事件</span>
+          <span class="l-b">理论期望 λt</span>
         </div>
         <div class="slider-row">
-          <label>强度 λ（次/秒）：</label>
+          <label for="lambda">强度 λ（次/秒）：</label>
           <input type="range" id="lambda" min="0.5" max="10" step="0.5" value="3" />
           <span class="val" id="lambdaVal">3.0</span>
         </div>
@@ -268,25 +268,28 @@
           <button class="btn" id="btnRunPoisson">▶ 模拟 30 秒</button>
           <button class="btn btn-secondary" id="btnResetPoisson">重置</button>
         </div>
+        <p class="hint" id="poissonStatus" role="status">尚未生成样本；改变强度会清除已有样本。</p>
       </div>
       <div class="panel">
-        <h3>泊松过程三大公理</h3>
+        <h3>齐次泊松过程</h3>
         <ol>
           <li>N(0) = 0（从零开始）</li>
-          <li>独立增量（不重叠区间独立）</li>
-          <li>平稳增量（速率 λ 恒定）</li>
+          <li>不重叠区间的计数增量相互独立</li>
+          <li>长度为 Δt 的区间计数服从 Poisson(λΔt)，只依赖区间长度（平稳增量）</li>
         </ol>
         <div class="formula">
           P(N(t) = k) = (λt)ᵏ e^(−λt) / k!
         </div>
         <p><b>间隔时间：</b>服从指数分布 <code>T ~ Exp(λ)</code>，均值 <code>1/λ</code>。</p>
-        <p><b>合并与拆分：</b>两个独立泊松过程合并后强度为 λ₁+λ₂；按概率 p 拆分后是强度 λp 的泊松过程。</p>
+        <p><b>合并与拆分：</b>两个独立泊松过程合并后强度为 λ₁+λ₂；每次到达相互独立地以概率 p 选择一类，得到强度 λp 的泊松过程。</p>
         <div class="stat-grid">
-          <div class="stat-box"><div class="stat-val" id="pCount">0</div><div class="stat-label">实际事件数</div></div>
-          <div class="stat-box"><div class="stat-val" id="pTheory">0.0</div><div class="stat-label">理论期望 λt</div></div>
-          <div class="stat-box"><div class="stat-val" id="pMeanInt">—</div><div class="stat-label">平均间隔（秒）</div></div>
+          <div class="stat-box"><div class="stat-val" id="pCount">—</div><div class="stat-label">样本事件数（30 秒）</div></div>
+          <div class="stat-box"><div class="stat-val" id="pTheory">0.0</div><div class="stat-label">30 秒理论期望 λ×30</div></div>
+          <div class="stat-box"><div class="stat-val" id="pMeanInt">—</div><div class="stat-label">相邻观测事件平均间隔（秒）</div></div>
           <div class="stat-box"><div class="stat-val" id="pTheoryInt">—</div><div class="stat-label">理论 1/λ</div></div>
         </div>
+        <p>平均间隔只统计窗口内相邻两次事件之间的完整间隔，不含起点到首次到达及末次到达后的截尾区间；不足两次事件时无法计算。有限样本会波动，窗口选择也可能影响该统计。</p>
+        <p>下列应用是可能的建模例子，实际数据是否满足恒定强度和独立性需要检验。</p>
         <h3 style="margin-top:14px">应用</h3>
         <ul>
           <li>呼叫中心：每分钟来电数</li>
@@ -518,14 +521,16 @@ document.querySelectorAll('.tab').forEach(t => {
   const ctx = cv.getContext('2d');
   let lambda = 3;
   let events = [];
-  let running = false;
+  let hasSample = false;
   const T_MAX = 30;
+  const MAX_EVENTS = 10000;
 
-  function reset() {
+  function reset(message = '尚未生成样本；改变强度会清除已有样本。') {
     events = [];
-    running = false;
+    hasSample = false;
     draw();
-    document.getElementById('pCount').textContent = '0';
+    document.getElementById('pCount').textContent = '—';
+    document.getElementById('poissonStatus').textContent = message;
     document.getElementById('pTheory').textContent = (lambda * T_MAX).toFixed(1);
     document.getElementById('pMeanInt').textContent = '—';
     document.getElementById('pTheoryInt').textContent = (1 / lambda).toFixed(2);
@@ -533,18 +538,25 @@ document.querySelectorAll('.tab').forEach(t => {
 
   function simulate() {
     reset();
-    running = true;
+    const candidate = [];
     let t = 0;
-    while (t < T_MAX) {
-      t += -Math.log(1 - Math.random()) / lambda;
-      if (t < T_MAX) events.push(t);
+    while (true) {
+      const u = Math.random();
+      t += u === 0 ? Infinity : -Math.log(u) / lambda;
+      if (t >= T_MAX) break;
+      if (candidate.length >= MAX_EVENTS) {
+        reset('事件超过计算上限，未生成完整样本；请重新模拟。');
+        return;
+      }
+      candidate.push(t);
     }
+    events = candidate;
+    hasSample = true;
     draw();
-    running = false;
     document.getElementById('pCount').textContent = events.length;
+    document.getElementById('poissonStatus').textContent = '已生成 30 秒样本；调整强度会清除样本。';
     if (events.length > 1) {
-      let sum = 0;
-      for (let i = 1; i < events.length; i++) sum += events[i] - events[i - 1];
+      const sum = events[events.length - 1] - events[0];
       document.getElementById('pMeanInt').textContent = (sum / (events.length - 1)).toFixed(2);
     }
   }
@@ -601,7 +613,7 @@ document.querySelectorAll('.tab').forEach(t => {
     ctx.textAlign = 'right';
     ctx.fillText('λt = ' + (lambda * T_MAX).toFixed(1), W - margin.r - 5, H - margin.b - (lambda * T_MAX / maxN) * ph - 6);
     // step function
-    if (events.length > 0) {
+    if (hasSample) {
       ctx.strokeStyle = '#06b6d4';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -632,12 +644,10 @@ document.querySelectorAll('.tab').forEach(t => {
   document.getElementById('lambda').addEventListener('input', e => {
     lambda = parseFloat(e.target.value);
     document.getElementById('lambdaVal').textContent = lambda.toFixed(1);
-    document.getElementById('pTheory').textContent = (lambda * T_MAX).toFixed(1);
-    document.getElementById('pTheoryInt').textContent = (1 / lambda).toFixed(2);
-    if (!running) draw();
+    reset('强度已更改，旧样本已清除；请重新模拟。');
   });
   document.getElementById('btnRunPoisson').addEventListener('click', simulate);
-  document.getElementById('btnResetPoisson').addEventListener('click', reset);
+  document.getElementById('btnResetPoisson').addEventListener('click', () => reset());
   reset();
 })();
 
