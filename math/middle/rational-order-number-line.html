@@ -76,6 +76,13 @@
       <h2 id="experiment-title">先定位，再比较</h2>
       <label for="case-select">选择一组数</label>
       <select id="case-select" disabled></select>
+      <div aria-labelledby="custom-title">
+        <h3 id="custom-title">自选一组数</h3>
+        <p>从 −4 到 4 选择四分之一的倍数，生成自己的比较题；自选练习不计入完成进度。</p>
+        <label for="custom-a">自选 A</label><select id="custom-a" disabled></select>
+        <label for="custom-b">自选 B</label><select id="custom-b" disabled></select>
+        <button id="custom-start" type="button" disabled>生成自选题</button>
+      </div>
       <p id="prompt" class="prompt">正在加载…</p>
       <div class="axis-card">
         <h3>同一条数轴上的 A 和 B</h3>
@@ -148,11 +155,12 @@
       const selected = $('case-select');
       const completed = new Set();
       const revealed = new Set();
+      let customCase = null;
       let positionsCorrect = false;
       let comparisonCorrect = false;
       let saveAttempted = false;
       let saveConfirmed = PageProgress.isDone(slug);
-      function current() { return model.getCase(selected.value); }
+      function current() { return selected.value === 'custom' ? customCase : model.getCase(selected.value); }
       function setFeedback(id, message, kind) {
         const node = $(id);
         node.textContent = message;
@@ -240,8 +248,8 @@
         $('check-comparison').disabled = true;
         const item = current();
         const explanation = model.relation(item) === 'equal' ? '两种写法落在同一刻度，所以两数相等。' : `数轴上${model.relation(item) === 'less' ? ' A 在 B 左边' : ' A 在 B 右边'}，右边的数更大。`;
-        setFeedback('comparison-feedback', `${model.relationText(item)}。${explanation}${revealed.has(item.id) ? ' 本题看过示例，不计独立完成。' : ''}`, 'good');
-        if (!revealed.has(item.id)) { completed.add(item.id); renderProgress(); }
+        setFeedback('comparison-feedback', `${model.relationText(item)}。${explanation}${item.id === 'custom' ? ' 自选练习不计入完成进度。' : revealed.has(item.id) ? ' 本题看过示例，不计独立完成。' : ''}`, 'good');
+        if (item.id !== 'custom' && !revealed.has(item.id)) { completed.add(item.id); renderProgress(); }
       }
       function showSolution() {
         const item = current();
@@ -250,7 +258,7 @@
         $('slider-b').value = String(item.bUnits / 4);
         renderAxis();
         const explanation = model.relation(item) === 'equal' ? '两点重合，写法不同但数值相同。' : model.relation(item) === 'less' ? 'A 在 B 左边，所以 A 更小。' : 'A 在 B 右边，所以 A 更大。';
-        $('solution').textContent = `示例：A = ${item.a}，B = ${item.b}；${model.relationText(item)}。${explanation}本题不计独立完成，可换同类另一题练习。`;
+        $('solution').textContent = `示例：A = ${item.a}，B = ${item.b}；${model.relationText(item)}。${explanation}${item.id === 'custom' ? '自选练习不计入完成进度。' : '本题不计独立完成，可换同类另一题练习。'}`;
         $('solution').hidden = false;
         for (const id of ['slider-a', 'slider-b', 'check-positions']) $(id).disabled = true;
         $('comparison-fields').disabled = true;
@@ -262,6 +270,32 @@
         option.value = item.id;
         option.textContent = item.label;
         selected.append(option);
+      });
+      const customOption = document.createElement('option');
+      customOption.value = 'custom';
+      customOption.textContent = '自选题';
+      customOption.disabled = true;
+      selected.append(customOption);
+      for (const id of ['custom-a', 'custom-b']) {
+        const input = $(id);
+        for (let units = -16; units <= 16; units++) {
+          const option = document.createElement('option');
+          option.value = String(units);
+          option.textContent = model.displayUnits(units);
+          input.append(option);
+        }
+        input.value = '0';
+        input.disabled = false;
+      }
+      $('custom-start').disabled = false;
+      $('custom-start').addEventListener('click', () => {
+        const aUnits = Number($('custom-a').value);
+        const bUnits = Number($('custom-b').value);
+        customCase = { id: 'custom', a: model.displayUnits(aUnits), b: model.displayUnits(bUnits), aUnits, bUnits };
+        revealed.delete('custom');
+        customOption.disabled = false;
+        selected.value = 'custom';
+        renderCase();
       });
       selected.disabled = false;
       $('show-solution').disabled = false;

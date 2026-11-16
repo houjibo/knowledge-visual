@@ -114,3 +114,43 @@ test('320px 键盘、文件直开和分数刻度一致', async ({page}) => {
   await answer(page, 'cross-zero', -0.75, 0.5, 'less', 'left');
   await expect(page.locator('#comparison-feedback')).toContainText('−3/4 < 1/2');
 });
+
+test('自选数对支持跨零、重合和重置，不改变预设进度', async ({page}) => {
+  await page.setViewportSize({width: 320, height: 740});
+  await page.goto(topic);
+  await page.locator('#custom-a').selectOption('-1');
+  await page.locator('#custom-b').selectOption('2');
+  await page.getByRole('button', {name: '生成自选题'}).click();
+  await setSlider(page, '#slider-a', -0.25);
+  await setSlider(page, '#slider-b', 0.5);
+  await page.locator('#check-positions').click();
+  await page.locator('input[name="relation"][value="less"]').check();
+  await page.locator('input[name="reason"][value="left"]').check();
+  await page.locator('#check-comparison').click();
+  await expect(page.locator('#comparison-feedback')).toContainText('−0.25 < 0.5');
+  await expect(page.locator('#progress-detail')).toContainText('跨零 0/1');
+  await page.locator('#show-solution').click();
+  await page.locator('#custom-a').selectOption('16');
+  await page.locator('#custom-b').selectOption('16');
+  await page.getByRole('button', {name: '生成自选题'}).click();
+  await expect(page.locator('#solution')).toBeHidden();
+  await expect(page.locator('#check-comparison')).toBeDisabled();
+  await setSlider(page, '#slider-a', 4);
+  await setSlider(page, '#slider-b', 4);
+  await page.locator('#check-positions').click();
+  await page.locator('input[name="relation"][value="equal"]').check();
+  await page.locator('input[name="reason"][value="same"]').check();
+  await page.locator('#check-comparison').click();
+  await expect(page.locator('#comparison-feedback')).toContainText('4 = 4');
+  await expect(page.locator('#progress-detail')).toContainText('同值 0/1');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+});
+
+ test('自选题在文件直开时可生成', async ({page}) => {
+  test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '仅检查本地文件');
+  await page.goto(pathToFileURL(resolve(__dirname, '../../math/middle/rational-order-number-line.html')).href);
+  await page.locator('#custom-a').selectOption('-16');
+  await page.locator('#custom-b').selectOption('16');
+  await page.getByRole('button', {name: '生成自选题'}).click();
+  await expect(page.locator('#prompt')).toContainText('A = −4、B = 4');
+});

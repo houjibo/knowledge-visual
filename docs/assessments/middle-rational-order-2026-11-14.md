@@ -23,3 +23,7 @@
 - 公网桌面／移动专项 `KV_PUBLISHED_BASE_URL=https://houjibo.github.io/knowledge-visual/ npx playwright test tests/browser/middle-rational-order-number-line.spec.js --project=desktop --project=mobile`：4 项通过、4 项本机专用条件跳过。已同时打开[本地页面](http://127.0.0.1:4173/math/middle/rational-order-number-line.html)和[公网页面](https://houjibo.github.io/knowledge-visual/math/middle/rational-order-number-line.html?verify=525fbd4)供验收。
 
 真实设备、完整屏幕阅读器和真实学习者开放作答尚未验收。
+
+## 2026-11-16：有限自选数对
+
+新增 −4 至 4 内四分之一倍数的自选 A、B，沿用点位、关系和位置解释；自选题不计入预设题完成进度。该网格仍不覆盖任意有理数或开放解释，课程第①条维持部分。变更见[OpenSpec](../../openspec/changes/rational-order-custom-pairs/proposal.md)；桌面和移动浏览器专项 12/12 通过，覆盖跨零、相等、重新生成、进度隔离、320px 和文件直开；桌面页面已目视检查。完整 `npm run check` 通过：功能回归 2498 项通过、8 项按配置跳过，开发站和发布包各 398 页加载通过；发布证据待补。
