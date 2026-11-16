@@ -10,4 +10,4 @@
 
 ## 验证与边界
 
-桌面和移动端专项测试从页面读取实际矩阵并计算 `πP`，以受控跨三状态轨迹计算频率与欧氏距离，检查重置、周期反例与练习反馈；也覆盖 320px、键盘单步、文件直开和构建发布子路径。完整 `npm run check` 通过：功能套件 2574 项通过、8 项按条件跳过，401 页加载检查通过，发布构建专项 3 项通过；桌面浏览器核对了矩阵和修正数值的布局。远端发布验证待补。测试不证明页面其他泊松、布朗运动及题库部分完全准确，也不替代真实设备和屏幕阅读器验证。变更契约见[OpenSpec](../../openspec/changes/university-markov-stationary-correctness/proposal.md)。
+桌面和移动端专项测试从页面读取实际矩阵并计算 `πP`，以受控跨三状态轨迹计算频率与欧氏距离，检查重置、周期反例与练习反馈；也覆盖 320px、键盘单步、文件直开和构建发布子路径。完整 `npm run check` 通过：功能套件 2574 项通过、8 项按条件跳过，401 页加载检查通过，发布构建专项 3 项通过；桌面浏览器核对了矩阵和修正数值的布局。[远端工作流](https://github.com/houjibo/knowledge-visual/actions/runs/43959576153)成功；公网 revision 为 `8d616f641dda616aec77abd3a7b881163bb376db`，桌面和移动端专项 4 项通过，2 项本地路径检查按条件跳过。测试不证明页面其他泊松、布朗运动及题库部分完全准确，也不替代真实设备和屏幕阅读器验证。变更契约见[OpenSpec](../../openspec/changes/archive/2026-11-17-university-markov-stationary-correctness/proposal.md)。
