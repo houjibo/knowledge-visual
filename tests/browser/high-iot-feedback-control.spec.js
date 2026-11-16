@@ -125,8 +125,8 @@ test('local and cloud outage paths, autonomy boundary, progress and discovery', 
   await page.locator('.footer-nav a[href="index.html"]').click();
   await expect(page.locator('#stage-progress')).toContainText('1/9');
   await page.goto(siteRoot);
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '22');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/22');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '23');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/23');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('物联网反馈控制');

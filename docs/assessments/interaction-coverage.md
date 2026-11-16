@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：364；已登记部分交互证据：227；尚未登记：137。
+主题总数：365；已登记部分交互证据：228；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -81,6 +81,8 @@
   - 桌面与移动模拟视口验证7/15项顺序与二分逐步比较、候选排除、首位与靠后反转、未找到规模对照、乱序阻止、四组预测与前提完成、计时器、异常存储、搜索和高中进度、320px键盘、减少动态、file及发布子路径；真实设备、屏幕阅读器和学习者效果仍待核验。 [high-computer-search-strategies.spec.js](../../tests/browser/high-computer-search-strategies.spec.js)
 - [二进制像素工坊 · 初中计算机](../../computer/middle/binary-pixels.html)
   - 桌面与移动浏览器验证两个独立学科入口、旧主题地址跳转、四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘操作、旧进度迁移及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [split-subjects-learning.spec.js](../../tests/browser/split-subjects-learning.spec.js)
+- [身份与保密实验室 · 初中计算机](../../computer/middle/identity-encryption.html)
+  - 桌面与移动验证虚构账号判断、三种传输预测、错误修正、进度及存储失败重试、320px 键盘、文件直开、发布子路径和无外部请求；真实账号配置、真实加密、真实设备及屏幕阅读器仍待核。 [middle-identity-encryption.spec.js](../../tests/browser/middle-identity-encryption.spec.js)
 - [传感与控制实验室 · 初中计算机](../../computer/middle/iot-sensor-feedback.html)
   - 桌面与移动视口核对两轮反馈、消息丢失、先预测后逐环观察、进度门槛及保存失败重试、320px 键盘、file 直开与发布子路径；虚构指数不等于实物搭建、真实网络或学习者理解。 [middle-iot-sensor-feedback.spec.js](../../tests/browser/middle-iot-sensor-feedback.spec.js)
 - [消息传输实验室 · 初中计算机](../../computer/middle/message-transfer.html)
