@@ -128,8 +128,8 @@ test('all challenges save progress and directory and home counts stay consistent
   await expect(page.locator('#stage-progress')).toContainText('1/9');
   await expect(page.locator('[data-topic-slug="data-workbench"] [data-completion]')).toContainText('已完成');
   await page.goto(siteRoot);
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '23');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/23');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '24');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/24');
 });
 
 test('a changed reading shows saved completion as history while the current challenge resets', async ({page}) => {

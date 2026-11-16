@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：366；已登记部分交互证据：229；尚未登记：137。
+主题总数：367；已登记部分交互证据：230；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -87,6 +87,8 @@
   - 桌面与移动验证虚构账号判断、三种传输预测、错误修正、进度及存储失败重试、320px 键盘、文件直开、发布子路径和无外部请求；真实账号配置、真实加密、真实设备及屏幕阅读器仍待核。 [middle-identity-encryption.spec.js](../../tests/browser/middle-identity-encryption.spec.js)
 - [传感与控制实验室 · 初中计算机](../../computer/middle/iot-sensor-feedback.html)
   - 桌面与移动视口核对两轮反馈、消息丢失、先预测后逐环观察、进度门槛及保存失败重试、320px 键盘、file 直开与发布子路径；虚构指数不等于实物搭建、真实网络或学习者理解。 [middle-iot-sensor-feedback.spec.js](../../tests/browser/middle-iot-sensor-feedback.spec.js)
+- [备份与恢复实验室 · 初中计算机](../../computer/middle/local-backup-restore.html)
+  - 桌面与移动核对实际练习文件下载和选择、校验预览、草稿保护、异步读取竞争、恢复、存储故障、320px 键盘、文件直开及发布子路径；真实独立设备、云端、硬件故障、学习迁移和整页屏幕阅读器仍待核。 [middle-local-backup-restore.spec.js](../../tests/browser/middle-local-backup-restore.spec.js)
 - [消息传输实验室 · 初中计算机](../../computer/middle/message-transfer.html)
   - 桌面与移动视口核对真实 UTF-8 字节、按序与乱序送达、缺块重发、预测和逐块完成门槛、进度保存失败重试、320px 键盘、file 直开及发布子路径；真实网络通信、实机和学习者理解仍待核查。 [middle-computer-message-transfer.spec.js](../../tests/browser/middle-computer-message-transfer.spec.js)
 - [数据包路径实验室 · 初中计算机](../../computer/middle/network-paths.html)

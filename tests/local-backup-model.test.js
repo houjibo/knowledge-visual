@@ -1,0 +1,13 @@
+const assert = require('node:assert/strict');
+const m = require('../computer/middle/assets/local-backup-model.js');
+const sample = m.snapshot(2, '虚构记录\n<img src=x onerror=alert(1)>');
+assert.ok(sample);
+assert.deepEqual(m.parse(JSON.stringify(sample)), sample);
+assert.equal(m.same(sample,m.parse(JSON.stringify(sample))),true);
+assert.equal(m.same(sample,m.snapshot(3,sample.text)),false);
+assert.equal(m.same(sample,m.snapshot(2,'另一版')),false);
+for (const text of ['', '   ', 'a'.repeat(501), null]) assert.equal(m.snapshot(1,text),null);
+for (const rev of [0,-1,1.5,1000001,NaN]) assert.equal(m.snapshot(rev,'数据'),null);
+for (const raw of ['', '{broken', '[]', '{}', JSON.stringify({...sample,schema_version:2}), JSON.stringify({...sample,kind:'wrong'}), 'a'.repeat(8193)]) assert.equal(m.parse(raw),null);
+assert.equal(m.parse(JSON.stringify({...sample,extra:'ignored'})).extra,undefined);
+console.log('local backup model: validation, safe snapshot and version comparison pass');
