@@ -498,17 +498,17 @@
         <!-- Tab 1: 配方法步骤动画 -->
         <div class="tab-content active" id="tab0">
             <div class="equation-input-area">
-                <label>输入方程：</label>
-                <input type="number" class="coeff-input" id="coeffA" value="1" min="1" max="20">
+                <span>输入方程（系数为 −20 至 20 的整数，a 不为 0）：</span>
+                <input type="number" class="coeff-input" id="coeffA" aria-label="二次项系数 a" value="1" min="-20" max="20" step="1">
                 <span>x² +</span>
-                <input type="number" class="coeff-input" id="coeffB" value="6">
+                <input type="number" class="coeff-input" id="coeffB" aria-label="一次项系数 b" value="6" min="-20" max="20" step="1">
                 <span>x +</span>
-                <input type="number" class="coeff-input" id="coeffC" value="5">
+                <input type="number" class="coeff-input" id="coeffC" aria-label="常数项 c" value="5" min="-20" max="20" step="1">
                 <span>= 0</span>
                 <button class="btn btn-primary" onclick="startCompletingSquare()">🚀 开始配方</button>
                 <button class="btn btn-secondary" onclick="resetSteps()">重置</button>
             </div>
-            <div class="equation-display" id="equationDisplay">
+            <div class="equation-display" id="equationDisplay" role="status" aria-live="polite">
                 当前方程：x² + 6x + 5 = 0
             </div>
             <div class="steps-container" id="stepsContainer"></div>
@@ -611,10 +611,20 @@ function signStr(val, showPlus) {
     return ` - ${Math.abs(val)}`;
 }
 
+function signedFrac(num, den) {
+    const negative = num !== 0 && (num < 0) !== (den < 0);
+    return `${negative ? '−' : '+'} ${fracStr(Math.abs(num), Math.abs(den))}`;
+}
+
 function startCompletingSquare() {
-    const a = parseInt(document.getElementById('coeffA').value) || 1;
-    const b = parseInt(document.getElementById('coeffB').value) || 0;
-    const c = parseInt(document.getElementById('coeffC').value) || 0;
+    const raw = ['coeffA', 'coeffB', 'coeffC'].map(id => document.getElementById(id).value.trim());
+    const values = raw.map(Number);
+    if (raw.some(value => !/^-?\d+$/.test(value)) || values.some(value => !Number.isSafeInteger(value) || Math.abs(value) > 20) || values[0] === 0) {
+        document.getElementById('stepsContainer').innerHTML = '';
+        document.getElementById('equationDisplay').textContent = '请输入 −20 至 20 的整数系数，且二次项系数 a 不能为 0。';
+        return;
+    }
+    const [a, b, c] = values;
 
     document.getElementById('equationDisplay').innerHTML =
         `当前方程：<span class="highlight-blue">${a===1?'':a}x² ${signStr(b,true)}x ${signStr(c,true)} = 0</span>`;
@@ -633,7 +643,7 @@ function startCompletingSquare() {
     if (a !== 1) {
         steps.push({
             title: `两边同除以 ${a}`,
-            math: `x² ${signStr(b,true)}x ${signStr(c,true)} = 0  →  x² + ${fracStr(b,a)}x + ${fracStr(c,a)} = 0`,
+            math: `${a}x² ${signStr(b,true)}x ${signStr(c,true)} = 0  →  x² ${signedFrac(b,a)}x ${signedFrac(c,a)} = 0`,
             desc: '配方法要求 x² 的系数为 1'
         });
         bCur = b; aCur = a; cCur = c; // keep as fractions conceptually
@@ -642,7 +652,7 @@ function startCompletingSquare() {
     // Step 3: Move constant to right
     steps.push({
         title: '移项：常数项移到右边',
-        math: `x² ${signStr(bCur/aCur,true)}x = ${fracStr(-cCur, aCur)}`,
+        math: `x² ${signedFrac(bCur,aCur)}x = ${fracStr(-cCur, aCur)}`,
         desc: '把常数项移到等号右边'
     });
 
@@ -660,7 +670,7 @@ function startCompletingSquare() {
     // Step 5: Add to both sides
     steps.push({
         title: '两边同加配方项',
-        math: `x² ${signStr(bCur/aCur,true)}x + <span class="highlight">${fracStr(halfBSq_num, halfBSq_den)}</span> = ${fracStr(-cCur, aCur)} + <span class="highlight">${fracStr(halfBSq_num, halfBSq_den)}</span>`,
+        math: `x² ${signedFrac(bCur,aCur)}x + <span class="highlight">${fracStr(halfBSq_num, halfBSq_den)}</span> = ${fracStr(-cCur, aCur)} + <span class="highlight">${fracStr(halfBSq_num, halfBSq_den)}</span>`,
         desc: '左边凑成完全平方式'
     });
 
@@ -669,7 +679,7 @@ function startCompletingSquare() {
     const rhs_den = aCur * halfBSq_den;
     steps.push({
         title: '左边写成完全平方',
-        math: `<span class="highlight-green">(x ${signStr(halfB_num/halfB_den,true)})²</span> = ${fracStr(rhs_num, rhs_den)}`,
+        math: `<span class="highlight-green">(x ${signedFrac(halfB_num,halfB_den)})²</span> = ${fracStr(rhs_num, rhs_den)}`,
         desc: '左边 = (x + b/2a)² 的形式'
     });
 
@@ -685,7 +695,7 @@ function startCompletingSquare() {
         const x_val = fracStr(-b, 2*a);
         steps.push({
             title: '开方求解',
-            math: `x ${signStr(halfB_num/halfB_den,true)} = 0 → <span class="highlight-green">x = ${x_val}</span>`,
+            math: `x ${signedFrac(halfB_num,halfB_den)} = 0 → <span class="highlight-green">x = ${x_val}</span>`,
             desc: 'Δ = 0，方程有两个相等的实数根（重根）'
         });
     } else {
@@ -695,13 +705,15 @@ function startCompletingSquare() {
         const x2 = (-b - sqrtD) / (2*a);
         steps.push({
             title: '两边开平方',
-            math: `x ${signStr(halfB_num/halfB_den,true)} = ±${isInteger ? sqrtD : '√'+discriminant} / ${2*a}`,
+            math: `x ${signedFrac(halfB_num,halfB_den)} = ±${isInteger ? sqrtD : '√'+discriminant} / ${2*Math.abs(a)}`,
             desc: '别忘了取 ± 两个值！'
         });
         steps.push({
             title: '求出两个根',
-            math: `<span class="highlight-green">x₁ = ${Number.isInteger(x1)?x1:x1.toFixed(4)}</span>，<span class="highlight-green">x₂ = ${Number.isInteger(x2)?x2:x2.toFixed(4)}</span>`,
-            desc: `验证：x₁ + x₂ = ${fracStr(-b,a)}，x₁ · x₂ = ${fracStr(c,a)} ✓`
+            math: isInteger
+                ? `<span class="highlight-green">x₁ = ${fracStr(-b + sqrtD, 2*a)}</span>，<span class="highlight-green">x₂ = ${fracStr(-b - sqrtD, 2*a)}</span>`
+                : `<span class="highlight-green">x₁ = (${ -b } + √${discriminant}) / (${2*a}) ≈ ${x1.toFixed(4)}</span>，<span class="highlight-green">x₂ = (${ -b } − √${discriminant}) / (${2*a}) ≈ ${x2.toFixed(4)}</span>`,
+            desc: `根与系数：x₁ + x₂ = ${fracStr(-b,a)}，x₁ · x₂ = ${fracStr(c,a)}；近似根的计算结果可能因舍入略有偏差。`
         });
     }
 
@@ -820,8 +832,8 @@ function updateDisc() {
     if (a === 0) {
         document.getElementById('discValueDisplay').textContent = 'a = 0 时不是二次方程';
         document.getElementById('discResult').className = 'disc-result zero';
-        document.getElementById('discResult').textContent = 'a = 0 → 退化为一次方程';
-        document.getElementById('rootsDisplay').textContent = b !== 0 ? `x = ${(-c/b).toFixed(2)}` : '无解';
+        document.getElementById('discResult').textContent = b !== 0 ? 'a = 0 → 一次方程' : c === 0 ? 'a = 0、b = 0 → 恒等式' : 'a = 0、b = 0 → 常数方程';
+        document.getElementById('rootsDisplay').textContent = b !== 0 ? `x ≈ ${(-c/b).toFixed(2)}` : c === 0 ? '任意实数都是解' : '无解';
         drawDiscGraph(a, b, c, []);
         return;
     }
@@ -837,13 +849,13 @@ function updateDisc() {
         roots.push(x1, x2);
         document.getElementById('discResult').className = 'disc-result positive';
         document.getElementById('discResult').textContent = 'Δ > 0 → 两个不相等的实数根';
-        document.getElementById('rootsDisplay').textContent = `x₁ = ${x1.toFixed(3)}, x₂ = ${x2.toFixed(3)}`;
+        document.getElementById('rootsDisplay').textContent = `x₁ ≈ ${x1.toFixed(3)}, x₂ ≈ ${x2.toFixed(3)}`;
     } else if (disc === 0) {
         const x0 = -b / (2*a);
         roots.push(x0);
         document.getElementById('discResult').className = 'disc-result zero';
         document.getElementById('discResult').textContent = 'Δ = 0 → 两个相等的实数根（重根）';
-        document.getElementById('rootsDisplay').textContent = `x₁ = x₂ = ${x0.toFixed(3)}`;
+        document.getElementById('rootsDisplay').textContent = `x₁ = x₂ ≈ ${x0.toFixed(3)}`;
     } else {
         document.getElementById('discResult').className = 'disc-result negative';
         document.getElementById('discResult').textContent = 'Δ < 0 → 无实数根（两个共轭复数根）';
