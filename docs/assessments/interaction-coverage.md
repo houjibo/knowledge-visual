@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：367；已登记部分交互证据：230；尚未登记：137。
+主题总数：367；已登记部分交互证据：231；尚未登记：136。
 
 ## 已登记部分交互证据
 
@@ -415,6 +415,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [导数与微分 · 大学数学互动可视化](../../math/uni/derivative.html)
   - 初中、高中、大学目录的跨标签徽章、存储异常及同名主题隔离；不代表全部主题的完成条件已核验。 [math-stage-directory-progress.spec.js](../../tests/browser/math-stage-directory-progress.spec.js)、[math-progress.spec.js](../../tests/browser/math-progress.spec.js)
+- [随机过程入门 · 马尔可夫链 / 泊松过程 / 布朗运动](../../math/uni/stochastic-process.html)
+  - 校验固定转移矩阵的平稳向量、单轨迹频率距离与重置、周期反例及练习反馈；不覆盖全部随机过程内容、真实设备和整页无障碍。 [university-markov-stationary-correctness.spec.js](../../tests/browser/university-markov-stationary-correctness.spec.js)
 - [交变电流 · 高中物理互动可视化](../../physics/high/alternating-current.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [恒定电流 - 高中物理互动可视化](../../physics/high/constant-current.html)
@@ -686,7 +688,6 @@
 - [随机变量及其分布 · 互动可视化](../../math/uni/random-variable.html)
 - [级数 · 互动可视化](../../math/uni/series.html)
 - [数理统计 · 互动可视化](../../math/uni/statistics.html)
-- [随机过程入门 · 马尔可夫链 / 泊松过程 / 布朗运动](../../math/uni/stochastic-process.html)
 - [拓扑学入门 · 互动可视化](../../math/uni/topology.html)
 - [矢量分析 · 梯度 散度 旋度 · 互动可视化](../../math/uni/vector-calculus.html)
 - [相互作用 · 高中物理互动可视化](../../physics/high/interactions.html)
