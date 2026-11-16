@@ -14,4 +14,4 @@
 
 ## 验证记录
 
-模型测试及相关浏览器专项通过（桌面和移动端共 56 项）；完整 `npm run check` 通过，主浏览器套件 2568 项通过、8 项按条件跳过，发布构建下本活动 8 项通过。远端发布验收待补。变更契约见[OpenSpec](../../openspec/changes/middle-local-backup-restore-lab/proposal.md)。
+模型测试及相关浏览器专项通过（桌面和移动端共 56 项）；完整 `npm run check` 通过，主浏览器套件 2568 项通过、8 项按条件跳过，发布构建下本活动 8 项通过。[远端工作流](https://github.com/houjibo/knowledge-visual/actions/runs/43954777290)通过；公网版本为 `5557c8738d25815158a9dd6c77f1d0066f01bc74`，桌面和移动端实际下载与恢复等 6 项通过，10 项本地专用故障注入检查按条件跳过。变更契约见[OpenSpec](../../openspec/changes/archive/2026-11-17-middle-local-backup-restore-lab/proposal.md)。
