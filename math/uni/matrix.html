@@ -55,8 +55,10 @@
 
   .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
   .slider-row label { flex: 0 0 120px; color: #cbd5e1; }
-  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--primary); }
   .slider-row .val { flex: 0 0 70px; text-align: right; font-family: monospace; color: var(--accent3); font-weight: 600; font-size: 13px; }
+
+  @media (max-width: 520px) { .slider-row label { flex-basis: 70px; } .slider-row .val { flex-basis: 52px; } }
 
   .mode-switch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
   .mode-btn { padding: 6px 14px; border-radius: 8px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); cursor: pointer; font-size: 13px; color: #93c5fd; transition: all .2s; user-select: none; }
@@ -403,7 +405,10 @@ function initInverse() {
   const ox = 200, oy = 300, sc = 70;
   drawGrid(ox, oy, sc, true);
 
-  const d = det2(inv_a);
+  // Inputs are restricted to a 0.05 grid; integer arithmetic decides exact rank on that grid.
+  const ticks = inv_a.map(v => Math.round(v * 20));
+  const detTicks = ticks[0] * ticks[3] - ticks[1] * ticks[2];
+  const d = detTicks / 400;
   const e1 = [1,0], e2 = [0,1];
   const te1 = matMul2(inv_a, e1);
   const te2 = matMul2(inv_a, e2);
@@ -420,7 +425,7 @@ function initInverse() {
   drawArrow(ox, oy, sc, te2, '#10b981', 3);
 
   // If invertible, show inverse mapping
-  if (Math.abs(d) > 0.01) {
+  if (detTicks !== 0) {
     const inv = [inv_a[3]/d, -inv_a[1]/d, -inv_a[2]/d, inv_a[0]/d];
     ctx.font = '12px monospace';
     ctx.fillStyle = '#10b981';
@@ -447,9 +452,9 @@ function initInverse() {
 
   // Rank indicator
   let rank = 2;
-  if (Math.abs(d) < 0.01) {
+  if (detTicks === 0) {
     // check if zero matrix
-    if (inv_a.every(v => Math.abs(v) < 0.01)) rank = 0;
+    if (ticks.every(v => v === 0)) rank = 0;
     else rank = 1;
   }
 
@@ -476,12 +481,12 @@ function initInverse() {
     <div class="slider-row"><label>m₂₁</label><input type="range" min="-2" max="2" step="0.05" value="${inv_a[2]}" id="s_m21"><span class="val">${inv_a[2].toFixed(2)}</span></div>
     <div class="slider-row"><label>m₂₂</label><input type="range" min="-2" max="2" step="0.05" value="${inv_a[3]}" id="s_m22"><span class="val">${inv_a[3].toFixed(2)}</span></div>
     <div class="info-grid">
-      <div><b>det(M)</b><br>${d.toFixed(3)}</div>
+      <div><b>det(M)</b><br>${d.toFixed(4)}</div>
       <div><b>rank(M)</b><br>${rank}</div>
-      <div><b>可逆?</b><br>${Math.abs(d)>0.01?'✅ 可逆':'❌ 奇异'}</div>
+      <div><b>可逆?</b><br>${detTicks !== 0?'✅ 可逆':'❌ 奇异'}</div>
       <div><b>零空间</b><br>${rank===2?'{0}':rank===1?'一条直线':'全空间'}</div>
     </div>
-    ${Math.abs(d)>0.01 ? `<div class="equation" style="font-size:0.9rem">M⁻¹ = 1/det · [<span class="eq-g">${inv_a[3].toFixed(2)}</span>, <span class="eq-g">${(-inv_a[1]).toFixed(2)}</span>; <span class="eq-g">${(-inv_a[2]).toFixed(2)}</span>, <span class="eq-g">${inv_a[0].toFixed(2)}</span>]</div>` : ''}
+    ${detTicks !== 0 ? `<div class="equation" style="font-size:0.9rem">M⁻¹ = 1/det · [<span class="eq-g">${inv_a[3].toFixed(2)}</span>, <span class="eq-g">${(-inv_a[1]).toFixed(2)}</span>; <span class="eq-g">${(-inv_a[2]).toFixed(2)}</span>, <span class="eq-g">${inv_a[0].toFixed(2)}</span>]</div>` : ''}
     <div class="steps">
       <div class="step active"><span class="sn">1</span>调整矩阵元素观察秩的变化</div>
       <div class="step"><span class="sn">2</span>使 det = 0 → 矩阵变奇异</div>
@@ -493,9 +498,10 @@ function initInverse() {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', () => {
+      const hadFocus = document.activeElement === el;
       inv_a[i] = parseFloat(el.value);
-      el.nextElementSibling.textContent = inv_a[i].toFixed(2);
       initInverse();
+      if (hadFocus) document.getElementById(id).focus();
     });
   });
 }

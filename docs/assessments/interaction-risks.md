@@ -46,7 +46,7 @@
 - [math/uni/limit.html](../../math/uni/limit.html)：99 行（tab）、100 行（tab）、101 行（tab）、102 行（tab）
 - [math/uni/linear-systems.html](../../math/uni/linear-systems.html)：117 行（tab）、118 行（tab）、119 行（tab）、120 行（tab）、189 行（mode-btn）、190 行（mode-btn）、191 行（mode-btn）、192 行（mode-btn）、229 行（mode-btn）、230 行（mode-btn）、231 行（mode-btn）、232 行（mode-btn）
 - [math/uni/logic-set.html](../../math/uni/logic-set.html)：84 行（tab）、85 行（tab）、86 行（tab）、87 行（tab）、88 行（tab）
-- [math/uni/matrix.html](../../math/uni/matrix.html)：100 行（tab）、101 行（tab）、102 行（tab）、103 行（tab）
+- [math/uni/matrix.html](../../math/uni/matrix.html)：102 行（tab）、103 行（tab）、104 行（tab）、105 行（tab）
 - [math/uni/multivariable.html](../../math/uni/multivariable.html)：107 行（tab）、108 行（tab）、109 行（tab）、110 行（tab）、111 行（tab）
 - [math/uni/number-theory.html](../../math/uni/number-theory.html)：80 行（tab）、81 行（tab）、82 行（tab）、83 行（tab）、84 行（tab）
 - [math/uni/numerical-methods.html](../../math/uni/numerical-methods.html)：78 行（tab）、79 行（tab）、80 行（tab）、81 行（tab）
