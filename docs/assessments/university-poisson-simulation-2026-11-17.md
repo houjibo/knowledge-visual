@@ -10,4 +10,4 @@
 
 ## 验证与边界
 
-桌面和移动专项覆盖泊松、马尔可夫、布朗三个部分共 20 项；验证受控间隔、零随机数和零事件、超限处理、参数切换与重置、320px、键盘、直接文件及发布子路径。完整 `npm run check` 通过：功能套件 2588 项通过、8 项按条件跳过，401 页加载与发布构建专项 4 项通过；远端验收待补。这不代表整个题库、真实设备或屏幕阅读器已完成审核。变更契约见[OpenSpec](../../openspec/changes/university-poisson-simulation-consistency/proposal.md)。
+桌面和移动专项覆盖泊松、马尔可夫、布朗三个部分共 20 项；验证受控间隔、零随机数和零事件、超限处理、参数切换与重置、320px、键盘、直接文件及发布子路径。完整 `npm run check` 通过：功能套件 2588 项通过、8 项按条件跳过，401 页加载与发布构建专项 4 项通过；[远端工作流](https://github.com/houjibo/knowledge-visual/actions/runs/43969924146)成功；公网 revision 为 `5769be7e070f08b9f09ab0e6cb45ef209a9bcb8b`，桌面和移动端专项 6 项通过，2 项本地路径检查按条件跳过。这不代表整个题库、真实设备或屏幕阅读器已完成审核。变更契约见[OpenSpec](../../openspec/changes/archive/2026-11-17-university-poisson-simulation-consistency/proposal.md)。
