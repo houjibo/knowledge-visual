@@ -22,3 +22,7 @@
 ## 交叉表结论
 
 HS25-IT-BAS-M1-06 从 `missing` 调整为 `partial`，两必修模块 15 条随之变为 0 已验证、13 部分、2 缺失（仍缺 1.3 设备与平台选择、2.7 负责任发布与传播）。本页为输入规范、结果核验和协作使用决策提供可操作的局部证据；仍缺少受控真实生成式工具实践、真实多人协作、学习者自主提出任务及迁移效果证据。下一步须先明确隐私、安全、来源展示和人工确认边界，再评估受控真实工具任务；在人教版教材实际版次与 2025 课程要求对应关系核实前，不把教材目录当成标准覆盖证明。
+
+## 公开验收
+
+提交 `f6db2dee82d771bb32345347975f8f3ebdc11c74` 已推送至 `main`。GitHub Actions [run #43790321259](https://github.com/houjibo/knowledge-visual/actions/runs/43790321259) 的 core checks、桌面/移动浏览器回归、构建、Pages 部署和 `verify-deployment` 七个 job 均成功。本地全量回归桌面 2,049 项通过、2 项按公网门控跳过，移动 2,045 项通过、6 项跳过（合计 4,094 通过、8 跳过，跳过均为公网专项）；全站加载冒烟与发布包页面加载均 398/398。公开 `release-version.json` 的 revision 与该提交一致、`site_files_modified` 为 `false`；新页面与两个脚本资源返回 HTTP 200，且与提交逐字节一致。另在公网页面用受控浏览器跑通完整三步流程：3/3 步骤完成、本机进度保存、协作快照显示网络请求数为 0、除同源资源外无任何第三方或 AI 请求、无页面错误。测试装置的“无外部请求”断言以 loopback 为白名单，手动指向公网时会把同源资源计入，这是既有 spec 的本地/发布包设计，不代表页面发起第三方调用；CI 的公网核验由专用 `published-live-site.spec.js` 承担。[OpenSpec 变更归档](../../openspec/changes/archive/2026-11-16-hs25-genai-responsible-use-lab/proposal.md)。
