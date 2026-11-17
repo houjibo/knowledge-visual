@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：371；已登记部分交互证据：238；尚未登记：133。
+主题总数：372；已登记部分交互证据：239；尚未登记：133。
 
 ## 已登记部分交互证据
 
@@ -434,6 +434,8 @@
   - 校验固定转移矩阵的平稳向量、单轨迹频率距离与重置、周期反例及练习反馈；不覆盖全部随机过程内容、真实设备和整页无障碍。 [university-markov-stationary-correctness.spec.js](../../tests/browser/university-markov-stationary-correctness.spec.js)
   - 二维布朗模拟的受控正态增量、尺度相关理论径向均值、参数重置、零随机数和有限样本说明；不涵盖泊松过程、整页无障碍或真实设备。 [university-brownian-distance-correctness.spec.js](../../tests/browser/university-brownian-distance-correctness.spec.js)
   - 泊松过程固定强度与受控事件间隔、零样本、强度更改清样本、异常密集轨迹上限和说明；不覆盖全部题库、真实设备及整页无障碍。 [university-poisson-simulation-consistency.spec.js](../../tests/browser/university-poisson-simulation-consistency.spec.js)
+- [实对称矩阵的谱分解 · 大学数学互动可视化](../../math/uni/symmetric-spectral.html)
+  - 桌面与移动视口核验不同实根、有理与无理特征值、标量重根、零矩阵、零向量、精确正交投影与谱重构、预测完成条件、无效输入、320px、键盘、文件直开及发布子路径；模型限 2×2 与 −5 到 5 对称整数矩阵，真实学习者及完整屏幕阅读器待核。 [university-symmetric-spectral-decomposition.spec.js](../../tests/browser/university-symmetric-spectral-decomposition.spec.js)
 - [交变电流 · 高中物理互动可视化](../../physics/high/alternating-current.html)
   - 测验重复计分、四题通关、刷新与写入失败；不代表整页模拟或内容已验收。 [physics-chemistry-quizzes.spec.js](../../tests/browser/physics-chemistry-quizzes.spec.js)
 - [恒定电流 - 高中物理互动可视化](../../physics/high/constant-current.html)
