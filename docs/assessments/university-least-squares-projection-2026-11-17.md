@@ -13,8 +13,11 @@
 
 - `node tests/least-squares-model.test.js`：606 个矩阵与向量案例，以独立的列向量投影公式或二阶正规方程闭式解核对 p/e、最小误差、退化方向和候选误差恒等式。
 - `npx playwright test tests/browser/university-least-squares-projection.spec.js --project=desktop --project=mobile`：8/8 通过，覆盖满秩、相关列、零矩阵、零残差、零投影、错误预测、候选系数、无效编辑恢复、目录、320px、键盘 Enter、文件直开与发布子路径。320px 截图核对无横向溢出；随后发现零长度箭头的视觉误导，修正后再跑专项 8/8，确认零投影、零残差及 b=0 均无零长度箭头。原始分数分子或分母越界（即使可约分）也被拒绝，补充模型及浏览器回归后再次通过。
-- `CI=1 npm run check` 全部通过：全量交互 2630 项通过、8 项按项目配置跳过；开发站和发布包均 403/403 页加载通过，发布包关键流程及新增工作台桌面专项通过。视觉修正后 `npm run check:static` 再次通过。远端 CI 和公网版本在发布后补记。
+- `CI=1 npm run check` 全部通过：全量交互 2630 项通过、8 项按项目配置跳过；开发站和发布包均 403/403 页加载通过，发布包关键流程及新增工作台桌面专项通过。视觉与输入边界修正后 `npm run check:static`、新增页面桌面／移动专项再次通过。
+- 最终功能提交 `e9b54d8d70f16c108b3d7c5751c1a72d8e1215df` 的 [GitHub Actions run 44037650003](https://github.com/houjibo/knowledge-visual/actions/runs/44037650003) 核心、桌面、移动、构建、部署及部署后验证全部成功。公网 `release-version.json` 的 revision 匹配该 SHA，`site_files_modified:false`；公网专项 6/6 通过，2 项仅本地文件与构建路径检查按配置跳过。
 
 ## 剩余差距
+
+变更契约见[归档 OpenSpec](../../openspec/changes/archive/2026-11-17-university-least-squares-projection/proposal.md)。
 
 模型限定 3×2 有界整数输入，不覆盖一般尺寸、一般实数病态计算或数值稳定性；候选向量分数也有输入界。真实回归数据、加权最小二乘、开放证明、真实学习者对“投影唯一而系数未必唯一”的理解和完整屏幕阅读器验收仍需单列。后续按课程先修关系补 Gram–Schmidt／QR，再处理正定性、SVD 与应用。
