@@ -12,8 +12,8 @@
 
 - `node tests/plu-model.test.js`：8412 个矩阵案例，独立子式计算系数与增广秩，交叉核对分类、特解、零空间方向及原有 Cramer 解；包括 2400 个有意构造的秩亏输入。
 - PLU 浏览器专项桌面／移动 8/8 通过，检查同一 A 更换 b 后从完整解切到矛盾行、增广秩错误反馈、秩 1/0、无进度、键盘、320px、文件直开与发布包子路径。Chromium 实际截图核对 1100px 的秩 1 参数解和 320px 的秩 1、无解分支；两种宽度均无横向溢出，公式卡片可读。
-- 完整 `CI=1 npm run check` 通过：2686 项浏览器功能回归通过、8 项按配置跳过；开发站与发布包各 410 页加载通过，发布包功能专项通过。远端 Actions 与公网结果待补录。
+- 完整 `CI=1 npm run check` 通过：2686 项浏览器功能回归通过、8 项按配置跳过；开发站与发布包各 410 页加载通过，发布包功能专项通过。提交 `fccacc5991e3b0dcee120eb3472fc3c5b9208993` 的 [Actions run 44143510348](https://github.com/houjibo/knowledge-visual/actions/runs/44143510348) 成功。公网 `release-version.json` 的 revision 匹配且 `site_files_modified:false`；页面与两个脚本均返回 200，公网桌面／移动专项 6 项通过、2 项本地专用场景按配置跳过。
 
 ## 剩余差距
 
-此模型仅处理三阶有界整数输入。一般矩形与高维系统、浮点数值稳定性、开放推导和真实学习者理解仍未验证；局部案例不代表 MIT 18.06 的完整解目标全面达成。变更契约见 [OpenSpec](../../openspec/changes/university-singular-system-complete-solutions/proposal.md)。
+此模型仅处理三阶有界整数输入。一般矩形与高维系统、浮点数值稳定性、开放推导和真实学习者理解仍未验证；局部案例不代表 MIT 18.06 的完整解目标全面达成。变更契约见 [OpenSpec](../../openspec/changes/archive/2026-11-18-university-singular-system-complete-solutions/proposal.md)。
