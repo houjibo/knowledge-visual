@@ -12,8 +12,9 @@
 
 - `node tests/gram-schmidt-model.test.js`：1,235 个独立矩阵案例（729 个三元穷举、500 个确定性随机、6 个边界），以独立有理数投影、子式秩、数值正交性及 `QR` 重构交叉核对。
 - `npx playwright test tests/browser/university-gram-schmidt-qr.spec.js --project=desktop --project=mobile`：8/8 通过，涵盖满秩、相关列、首列零、次列零、零矩阵、分数投影、完成条件、无效输入及分数原始边界、目录、320px、键盘 Enter、文件直开和发布子路径。
-- `CI=1 npm run check` 全部通过：全量交互 2,638 项、开发站与发布包各 404 页加载，新增工作台的桌面发布关键流程 4/4 通过。远端 Actions 和公网部署验证待本轮完成后补记。
+- `CI=1 npm run check` 全部通过：全量交互 2,638 项、开发站与发布包各 404 页加载，新增工作台的桌面发布关键流程 4/4 通过。
+- 功能提交 `20bba4094264d9344b219177ef84cb24b6cb5436` 的 [GitHub Actions run 44046982704](https://github.com/houjibo/knowledge-visual/actions/runs/44046982704) 完成且成功。公网 `release-version.json` 的 revision 匹配该 SHA，`site_files_modified:false`。公网专项首次 5/6 通过、2 项本地路径检查按配置跳过；移动端一项在导航时遇到连接重置，单项重跑 1/1 通过，合计六项均有通过证据。
 
 ## 剩余差距
 
-本工作台只处理 3×2 有界整数输入，分数预测有原始分子、分母上限。它不覆盖一般尺寸、一般实数或数值稳定的浮点 QR，也不代替开放证明、真实学习者理解测试与完整屏幕阅读器验收。后续核正定性、SVD 及线性代数其他项目；变更契约见 [OpenSpec](../../openspec/changes/university-gram-schmidt-qr/proposal.md)。
+本工作台只处理 3×2 有界整数输入，分数预测有原始分子、分母上限。它不覆盖一般尺寸、一般实数或数值稳定的浮点 QR，也不代替开放证明、真实学习者理解测试与完整屏幕阅读器验收。后续核正定性、SVD 及线性代数其他项目；变更契约见 [OpenSpec](../../openspec/changes/archive/2026-11-17-university-gram-schmidt-qr/proposal.md)。
