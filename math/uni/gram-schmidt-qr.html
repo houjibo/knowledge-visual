@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gram–Schmidt 与 QR · 大学数学互动可视化</title>
+  <style>
+    :root { color-scheme:dark; --bg:#101a31; --panel:#172740; --line:#566f8b; --text:#f3f8ff; --muted:#c5d3e7; --blue:#7dd3fc; --green:#86efac; --gold:#fcd34d; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:linear-gradient(145deg,#101a31,#123036 58%,#202441); color:var(--text); font:16px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+    .container { width:min(1120px,100%); margin:auto; padding:18px; }
+    .breadcrumb { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; font-size:14px; }
+    a { color:var(--blue); }
+    h1,h2,h3,p { margin-top:0; }
+    h1 { font-size:clamp(1.7rem,5vw,2.5rem); margin-bottom:4px; }
+    h2 { font-size:1.35rem; }
+    h3 { font-size:1.08rem; }
+    .lead { max-width:79ch; color:var(--muted); }
+    .panel { background:rgba(23,39,64,.95); border:1px solid var(--line); border-radius:16px; padding:20px; margin:16px 0; }
+    label { display:block; color:var(--muted); font-size:14px; }
+    input,select { color:var(--text); background:#0b1930; border:1px solid #758ba7; border-radius:8px; padding:7px 9px; min-height:42px; font:inherit; }
+    input:focus-visible,select:focus-visible,button:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
+    input[aria-invalid="true"] { border-color:#fca5a5; box-shadow:0 0 0 1px #fca5a5; }
+    .preset { display:block; max-width:390px; margin-bottom:14px; }
+    .preset select { display:block; max-width:100%; width:100%; margin-top:4px; }
+    .matrix-editor { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; max-width:360px; }
+    .matrix-editor label { text-align:center; }
+    .matrix-editor input { display:block; width:100%; min-width:0; text-align:center; margin-top:3px; }
+    .hint { color:var(--muted); font-size:13px; }
+    .status { min-height:1.5em; margin:10px 0 0; color:var(--gold); }
+    .prediction-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:14px 0; }
+    .prediction-grid input,.prediction-grid select { display:block; width:100%; margin-top:4px; }
+    .residual-guess { border:1px solid #607998; border-radius:12px; padding:12px; }
+    .residual-guess legend { padding:0 6px; font-weight:700; }
+    .three-inputs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .three-inputs input { width:100%; min-width:0; }
+    .actions { display:flex; flex-wrap:wrap; gap:9px; margin-top:14px; }
+    button { min-height:44px; padding:9px 15px; border:1px solid var(--blue); border-radius:9px; background:#16456b; color:var(--text); font:inherit; font-weight:650; cursor:pointer; }
+    button:hover { background:#1b5a89; }
+    button.secondary { background:#263a52; border-color:#8da2bc; }
+    .geometry-wrap { background:#0c2337; border:1px solid #466685; border-radius:12px; padding:10px; margin:12px 0; }
+    svg { display:block; width:100%; height:auto; }
+    .answer-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .answer-card { min-width:0; background:#10283e; border:1px solid #557592; border-radius:12px; padding:14px; overflow-wrap:anywhere; }
+    .answer-card h3 { color:var(--blue); margin-bottom:4px; }
+    .formula { font:1rem/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; overflow-wrap:anywhere; margin-bottom:8px; }
+    .check-result { background:#0f3036; border-left:3px solid var(--green); padding:10px; border-radius:5px; margin-top:14px; }
+    [hidden] { display:none !important; }
+    @media (max-width:680px) { .answer-grid { grid-template-columns:1fr; } }
+    @media (max-width:420px) { .container { padding:12px; } .panel { padding:14px; } .prediction-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<main class="container">
+  <nav class="breadcrumb" aria-label="当前位置"><a href="../../index.html">首页</a><span>›</span><a href="index.html">大学数学</a><span>›</span><span>Gram–Schmidt 与 QR</span></nav>
+  <header><h1>Gram–Schmidt 与 QR</h1><p class="lead">把第二列减去它在第一列方向上的投影，看看是否得到新的正交方向。再归一化并核验 A=QR。支持可编辑的 3×2 整数矩阵；零列和相关列不会被虚构成单位向量。</p></header>
+
+  <section class="panel" aria-labelledby="inputHeading">
+    <h2 id="inputHeading">1. 选择并编辑矩阵 A</h2>
+    <label class="preset" for="preset">示例情形<select id="preset">
+      <option value="independent">两列独立</option><option value="fractional">投影系数为分数</option>
+      <option value="dependent">两列相关</option><option value="first-zero">第一列为零</option>
+      <option value="second-zero">第二列为零</option><option value="zero">零矩阵</option><option value="custom">自行编辑</option>
+    </select></label>
+    <div id="matrixEditor" class="matrix-editor" role="group" aria-label="矩阵 A 的元素"></div>
+    <p class="hint">每项须为 −5 到 5 的整数。改变任一元素会撤销旧答案。</p>
+    <p id="inputStatus" class="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="predictionHeading">
+    <h2 id="predictionHeading">2. 预测投影减除后的方向</h2>
+    <p class="hint">若 a₁ 非零，c=(a₁·a₂)/(a₁·a₁)，p=c a₁，u₂=a₂−p。若 a₁=0，约定 c=0、p=0、u₂=a₂，跳过第一列的归一化。分数输入的原始分子绝对值和分母不超过 1,000,000。</p>
+    <div class="prediction-grid">
+      <label for="coefficientGuess">预测投影系数 c<input id="coefficientGuess" type="text" inputmode="text"></label>
+      <label for="rankGuess">预测 rank(A)<select id="rankGuess"><option value="">请选择</option><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></label>
+      <label for="directionGuess">第二列带来新方向吗？<select id="directionGuess"><option value="">请选择</option><option value="yes">是</option><option value="no">否</option></select></label>
+    </div>
+    <fieldset class="residual-guess"><legend>预测 u₂ = a₂−p 的三个分量</legend><div id="residualGuess" class="three-inputs"></div></fieldset>
+    <div class="actions"><button id="checkPrediction">核对预测</button><button id="revealAnswer" class="secondary">查看示范</button></div>
+    <p id="predictionFeedback" class="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <section id="answer" class="panel" aria-labelledby="answerHeading" hidden>
+    <h2 id="answerHeading">3. 正交化、归一化与 QR 乘回</h2>
+    <div id="geometry" class="geometry-wrap"></div>
+    <p class="hint">图用 p 与 u₂ 的正交方向作二维截面，按长度比例绘制 a₂=p+u₂；它不是 R³ 的固定坐标投影。零向量没有方向，不画箭头。</p>
+    <div id="answerGrid" class="answer-grid"></div>
+    <p id="verificationInfo" class="check-result"></p>
+  </section>
+  <p class="hint">依据：<a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/7ac32be444c25e48590f47573833ccc6_MIT18_06SCF11_Ses2.4sum.pdf">MIT 18.06SC 正交矩阵与 Gram–Schmidt 讲义</a>。本站只呈现有限整数模型及根号表达，不提供一般浮点 QR 算法。</p>
+</main>
+<script src="assets/common.js"></script>
+<script src="assets/gram-schmidt-model.js"></script>
+<script src="assets/gram-schmidt-qr.js"></script>
+<script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # 站点评估基线
 
-[页面清单](page-inventory.json) 于 2026-11-17 根据当前仓库重新生成：包含 403 个 HTML 文件，含 359 个学科主题和 10 个模拟场景。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
+[页面清单](page-inventory.json) 于 2026-11-17 根据当前仓库重新生成：包含 404 个 HTML 文件，含 360 个学科主题和 10 个模拟场景。具体分类和静态可达数量以 JSON 清单为准；从首页沿静态 HTML 链接可达不等于主题具有正确交互或已验证内容。2026-11-07 的 330 页浏览器基线保留在对应历史检查记录中。
 
 重新生成：`python3 scripts/inventory_pages.py --output docs/assessments/page-inventory.json`；运行 `python3 scripts/inventory_pages.py --check docs/assessments/page-inventory.json` 检查清单是否过期，运行 `python3 tests/inventory_test.py` 验证基本解析及导航行为。生成结果按路径稳定排序，无时间戳，可用版本差异检查变化。
 
@@ -131,3 +131,5 @@
 [大学四个基本子空间有限工作台核查](university-four-subspaces-workbench-2026-11-17.md)记录 MIT 18.06 来源、2–3 行列整数模型、精确计算与本地验收，以及一般矩阵和真实学习者验证边界。
 
 [大学投影与最小二乘工作台核查](university-least-squares-projection-2026-11-17.md)记录 MIT 18.06SC 依据、精确模型、退化条件、交互证据和剩余课程差距。
+
+[大学 Gram–Schmidt 与 QR 工作台核查](university-gram-schmidt-qr-2026-11-17.md)记录 MIT 18.06SC 依据、正交化与秩揭示薄 QR 的精确模型、零向量边界和交互验收。
