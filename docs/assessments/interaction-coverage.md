@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：367；已登记部分交互证据：232；尚未登记：135。
+主题总数：367；已登记部分交互证据：233；尚未登记：134。
 
 ## 已登记部分交互证据
 
@@ -415,6 +415,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [导数与微分 · 大学数学互动可视化](../../math/uni/derivative.html)
   - 初中、高中、大学目录的跨标签徽章、存储异常及同名主题隔离；不代表全部主题的完成条件已核验。 [math-stage-directory-progress.spec.js](../../tests/browser/math-stage-directory-progress.spec.js)、[math-progress.spec.js](../../tests/browser/math-progress.spec.js)
+- [线性方程组 · 大学数学互动可视化](../../math/uni/linear-systems.html)
+  - 高斯消元有符号系数预览、增广矩阵、代回、无效输入重置和键盘及发布路径；不覆盖任意矩阵完整参数解或数值稳定性。 [university-linear-system-signed-input.spec.js](../../tests/browser/university-linear-system-signed-input.spec.js)
 - [行列式与矩阵 · 大学数学互动可视化](../../math/uni/matrix.html)
   - 逆与秩面板的离散小行列式、零矩阵、秩一、键盘及发布路径；不覆盖整页、任意浮点矩阵和真实设备。 [university-matrix-small-determinant-correctness.spec.js](../../tests/browser/university-matrix-small-determinant-correctness.spec.js)
 - [随机过程入门 · 马尔可夫链 / 泊松过程 / 布朗运动](../../math/uni/stochastic-process.html)
@@ -679,7 +681,6 @@
 - [积分变换 · 傅里叶与拉普拉斯变换互动可视化](../../math/uni/integral-transform.html)
 - [积分 · 概念、方法与应用互动可视化](../../math/uni/integral.html)
 - [极限与连续 · 大学数学互动可视化](../../math/uni/limit.html)
-- [线性方程组 · 大学数学互动可视化](../../math/uni/linear-systems.html)
 - [集合与逻辑入门 · 互动可视化](../../math/uni/logic-set.html)
 - [大学数学 - 重积分可视化](../../math/uni/multiple-integrals.html)
 - [多元函数微分 · 大学数学互动可视化](../../math/uni/multivariable.html)

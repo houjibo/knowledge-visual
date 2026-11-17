@@ -86,10 +86,13 @@
   .btn.secondary { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
   .btn.secondary:hover { background: rgba(255,255,255,0.15); }
 
-  .input-row { display: flex; gap: 6px; align-items: center; margin: 6px 0; font-size: 14px; flex-wrap: wrap; }
-  .input-row input { width: 56px; padding: 6px 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: var(--light); text-align: center; font-family: monospace; font-size: 14px; }
+  .input-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 6px 0; }
+  .input-row label { min-width: 0; font-size: 12px; color: #cbd5e1; }
+  .input-row input { display: block; width: 100%; min-width: 0; padding: 6px 4px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: var(--light); text-align: center; font-family: monospace; font-size: 14px; }
   .input-row input:focus { outline: none; border-color: var(--primary); background: rgba(124,58,237,0.1); }
-  .input-row .eq-sign { color: #64748b; margin: 0 2px; }
+  .input-row input[aria-invalid="true"] { border-color: var(--accent1); }
+  .equation-preview { margin: 2px 0 12px; color: #cbd5e1; font-size: 13px; overflow-wrap: anywhere; }
+  @media (max-width: 360px) { .input-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
   .result-box { padding: 14px; border-radius: 10px; margin: 12px 0; font-size: 14px; line-height: 1.7; }
   .result-box.unique { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); }
@@ -133,28 +136,32 @@
       </div>
       <div class="panel">
         <h3>🔢 高斯消元法</h3>
-        <div class="desc">通过初等行变换将增广矩阵化为行阶梯形，再回代求解。拖动滑块调整方程系数，点击"下一步"观察消元过程。</div>
+        <div class="desc">输入带正负号的方程系数，将增广矩阵化为行阶梯形，再回代求解。系数与右端常数限于 −100 到 100；点击“下一步”观察消元过程。</div>
 
         <div class="section">
           <div style="font-size:13px;color:#94a3b8;margin-bottom:8px;">方程组（3元）：</div>
           <div class="input-row">
-            <input id="a00" value="1" /><span style="color:#94a3b8">x +</span>
-            <input id="a01" value="2" /><span style="color:#94a3b8">y +</span>
-            <input id="a02" value="1" /><span style="color:#94a3b8">z =</span>
-            <input id="b0" value="9" />
+            <label for="a00">x 系数<input id="a00" type="number" min="-100" max="100" step="any" value="1" /></label>
+            <label for="a01">y 系数<input id="a01" type="number" min="-100" max="100" step="any" value="2" /></label>
+            <label for="a02">z 系数<input id="a02" type="number" min="-100" max="100" step="any" value="1" /></label>
+            <label for="b0">右端 b<input id="b0" type="number" min="-100" max="100" step="any" value="9" /></label>
           </div>
+          <div class="equation-preview" id="equation0"></div>
           <div class="input-row">
-            <input id="a10" value="2" /><span style="color:#94a3b8">x +</span>
-            <input id="a11" value="4" /><span style="color:#94a3b8">y −</span>
-            <input id="a12" value="1" /><span style="color:#94a3b8">z =</span>
-            <input id="b1" value="4" />
+            <label for="a10">x 系数<input id="a10" type="number" min="-100" max="100" step="any" value="2" /></label>
+            <label for="a11">y 系数<input id="a11" type="number" min="-100" max="100" step="any" value="4" /></label>
+            <label for="a12">z 系数<input id="a12" type="number" min="-100" max="100" step="any" value="1" /></label>
+            <label for="b1">右端 b<input id="b1" type="number" min="-100" max="100" step="any" value="4" /></label>
           </div>
+          <div class="equation-preview" id="equation1"></div>
           <div class="input-row">
-            <input id="a20" value="3" /><span style="color:#94a3b8">x +</span>
-            <input id="a21" value="6" /><span style="color:#94a3b8">y +</span>
-            <input id="a22" value="2" /><span style="color:#94a3b8">z =</span>
-            <input id="b2" value="15" />
+            <label for="a20">x 系数<input id="a20" type="number" min="-100" max="100" step="any" value="3" /></label>
+            <label for="a21">y 系数<input id="a21" type="number" min="-100" max="100" step="any" value="6" /></label>
+            <label for="a22">z 系数<input id="a22" type="number" min="-100" max="100" step="any" value="2" /></label>
+            <label for="b2">右端 b<input id="b2" type="number" min="-100" max="100" step="any" value="15" /></label>
           </div>
+          <div class="equation-preview" id="equation2"></div>
+          <p id="gaussInputStatus" role="status" aria-live="polite"></p>
         </div>
 
         <div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap;">
@@ -291,18 +298,33 @@ let gaussAnimTimer = null;
 
 function readGaussInput() {
   const A = [], b = [];
+  let valid = true;
+  const read = id => {
+    const input = document.getElementById(id);
+    const value = Number(input.value);
+    const ok = input.value.trim() !== '' && !input.validity.badInput && Number.isFinite(value) && Math.abs(value) <= 100;
+    input.setAttribute('aria-invalid', String(!ok));
+    if (!ok) valid = false;
+    return ok ? value : null;
+  };
   for (let i = 0; i < 3; i++) {
     A[i] = [];
     for (let j = 0; j < 3; j++) {
-      A[i][j] = parseFloat(document.getElementById(`a${i}${j}`).value) || 0;
+      A[i][j] = read(`a${i}${j}`);
     }
-    b[i] = parseFloat(document.getElementById(`b${i}`).value) || 0;
+    b[i] = read(`b${i}`);
+    const equation = document.getElementById(`equation${i}`);
+    equation.textContent = A[i].every(Number.isFinite) && Number.isFinite(b[i])
+      ? `${A[i][0]}x ${A[i][1] < 0 ? '−' : '+'} ${Math.abs(A[i][1])}y ${A[i][2] < 0 ? '−' : '+'} ${Math.abs(A[i][2])}z = ${b[i]}`
+      : '该行含无效系数，暂不能计算。';
   }
-  return { A, b };
+  return valid ? { A, b } : null;
 }
 
 function buildAugMatrix() {
-  const { A, b } = readGaussInput();
+  const values = readGaussInput();
+  if (!values) return null;
+  const { A, b } = values;
   return A.map((row, i) => [...row, b[i]]);
 }
 
@@ -489,7 +511,22 @@ function solveFromRREF(mat) {
 }
 
 function initGauss() {
+  if (gaussAnimTimer) { clearInterval(gaussAnimTimer); gaussAnimTimer = null; }
   gaussMatrix = buildAugMatrix();
+  if (!gaussMatrix) {
+    gaussSteps = [];
+    gaussStep = 0;
+    gaussCtx.clearRect(0, 0, gaussCanvas.width, gaussCanvas.height);
+    document.getElementById('gaussSteps').textContent = '';
+    document.getElementById('gaussResult').textContent = '';
+    document.getElementById('gaussInputStatus').textContent = '输入无效：请填写 −100 到 100 之间的有限数。';
+    document.getElementById('gaussNext').disabled = true;
+    document.getElementById('gaussAuto').disabled = true;
+    return;
+  }
+  document.getElementById('gaussInputStatus').textContent = '输入有效；方程预览与增广矩阵使用相同系数。';
+  document.getElementById('gaussNext').disabled = false;
+  document.getElementById('gaussAuto').disabled = false;
   gaussSteps = computeGaussSteps(gaussMatrix);
   gaussStep = 0;
   renderGaussStep();
@@ -547,12 +584,12 @@ document.getElementById('gaussReset').addEventListener('click', () => {
   initGauss();
 });
 
-// Re-init on input change
+// Re-init immediately when a coefficient changes; never keep steps from an older system.
 for (let i = 0; i < 3; i++) {
   for (let j = 0; j < 3; j++) {
-    document.getElementById(`a${i}${j}`).addEventListener('change', initGauss);
+    document.getElementById(`a${i}${j}`).addEventListener('input', initGauss);
   }
-  document.getElementById(`b${i}`).addEventListener('change', initGauss);
+  document.getElementById(`b${i}`).addEventListener('input', initGauss);
 }
 
 // ================================================================
