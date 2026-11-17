@@ -6,4 +6,4 @@
 
 本地 Chromium 桌面和移动专项 6/6 通过：拉伸、反射、压到直线的数学关系及反馈、反射动画 0%→50%→100% 过零点、原点像素、箭头数量与当前插值标签、320px、键盘、静态文件和构建子路径。320px 截图检查了控件换行和零像标记。最终代码的完整 `npm run check` 通过：全站功能测试 2606 项通过、8 项按条件跳过，401 页加载、发布包检查及桌面专项 3 项通过。功能提交 `f1c8906d59b5ceec2b9943641141fd10e42852cb` 的 [Actions 工作流](https://github.com/houjibo/knowledge-visual/actions/runs/43996986265)全部成功；公开版本清单的 revision 匹配且 `site_files_modified:false`，公网桌面与移动专项 4 项通过、2 项本地专属场景跳过。变更契约见[归档 OpenSpec](../../openspec/changes/archive/2026-11-17-university-eigenvector-sign-direction/proposal.md)。
 
-邻近风险：对角化面板输入缺陷矩阵 `[1,1;0,1]` 后，会显示 `P=[1,1;0,0]`、`det(P)=0.000`，仍写“验证: P⁻¹AP = Λ ✓”；将动画拖到 100% 会抛出 `Cannot read properties of null (reading '0')`。已在本地 Chromium 复现；后续[对角化局部核查](university-eigen-diagonalization-validity-2026-11-17.md)已修复并覆盖标量重根、复根与缺陷分支（发布待核）。
+邻近风险：对角化面板输入缺陷矩阵 `[1,1;0,1]` 后，会显示 `P=[1,1;0,0]`、`det(P)=0.000`，仍写“验证: P⁻¹AP = Λ ✓”；将动画拖到 100% 会抛出 `Cannot read properties of null (reading '0')`。已在本地 Chromium 复现；后续[对角化局部核查](university-eigen-diagonalization-validity-2026-11-17.md)已修复并覆盖标量重根、复根与缺陷分支（已完成公网验收）。

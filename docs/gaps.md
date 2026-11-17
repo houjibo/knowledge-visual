@@ -1,10 +1,10 @@
 # 项目差距与后续方向
 
-最后局部核查：2026-11-17；大学矩阵秩判别、方程组输入符号与特征向量方向修复已完成公开验收；对角化误判本地已修复、发布待核，其余差距继续逐步核查。
+最后局部核查：2026-11-17；大学矩阵秩判别、方程组输入符号与特征向量方向修复已完成公开验收；对角化误判已完成公开验收，其余差距继续逐步核查。
 
 | 优先级 | 事实或差距 | 下一步及验收方向 |
 | --- | --- | --- |
-| 高 | [大学线性代数来源对照](assessments/university-linear-algebra-mit-18-06-2026-11-17.md)复现小非零行列式被误判为奇异、方程输入显示符号与运算不一致，并发现特征向量方向表述缺例外与缺陷矩阵对角化误判；[矩阵秩局部修复](assessments/university-matrix-small-determinant-2026-11-17.md)和[方程有符号输入局部修复](assessments/university-linear-system-signed-input-2026-11-17.md)已完成本地及公网验收。 | [特征向量方向局部修复](assessments/university-eigenvector-sign-direction-2026-11-17.md)已完成本地及公网验收；[对角化局部修复](assessments/university-eigen-diagonalization-validity-2026-11-17.md)本地专项通过、发布待核；下一步按先修关系补四个基本子空间、正交投影与最小二乘，之后扩展 QR、正定性和 SVD。 |
+| 高 | [大学线性代数来源对照](assessments/university-linear-algebra-mit-18-06-2026-11-17.md)复现小非零行列式被误判为奇异、方程输入显示符号与运算不一致，并发现特征向量方向表述缺例外与缺陷矩阵对角化误判；[矩阵秩局部修复](assessments/university-matrix-small-determinant-2026-11-17.md)和[方程有符号输入局部修复](assessments/university-linear-system-signed-input-2026-11-17.md)已完成本地及公网验收。 | [特征向量方向局部修复](assessments/university-eigenvector-sign-direction-2026-11-17.md)已完成本地及公网验收；[对角化局部修复](assessments/university-eigen-diagonalization-validity-2026-11-17.md)已完成本地及公网验收；下一步按先修关系补四个基本子空间、正交投影与最小二乘，之后扩展 QR、正定性和 SVD。 |
 | 高 | 大学泊松模拟曾把旧强度样本和新理论值并列、无法区分零事件与无样本，零随机值还可能卡死；已按[局部核查](assessments/university-poisson-simulation-2026-11-17.md)修正。 | 已完成完整门禁及远端验收；继续审核练习余项和真实设备、屏幕阅读器；随机过程课程映射另建。 |
 | 高 | 大学随机过程页的二维径向距离原与一维标准布朗运动期望比较，参数变更还混合轨迹；已按[局部核查](assessments/university-brownian-distance-2026-11-17.md)修正。 | 继续审查泊松过程及其参数状态、练习余项，真实设备和屏幕阅读器待测。 |
 | 高 | 大学随机过程页的马尔可夫链平稳向量及一般收敛解释曾不准确，已按[局部核查](assessments/university-markov-stationary-2026-11-17.md)修正并添加周期反例。 | 泊松过程和练习余项仍须逐项核对，随机过程课程映射另建，不能用本次修正代表整页正确。 |
