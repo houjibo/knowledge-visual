@@ -12,7 +12,7 @@ det(W)=0 时不计算 W⁻¹、c 或 B。工作台区分 W 为零矩阵、x 在�
 
 - `node tests/basis-change-model.test.js`：9604 个精确矩阵案例，核对行列式、Cramer 坐标、`AW=WB`、向量乘回、相似不变量及相关列边界。
 - 桌面／移动浏览器专项 8/8 通过，覆盖错误修正、主动揭示、分数、负行列式、相关列内外、零矩阵、无效输入、320px、键盘、目录、文件直开和发布包子路径。
-- 完整 `CI=1 npm run check` 通过：2678 项浏览器功能回归通过、8 项按配置跳过；开发站与发布包各 409 页加载通过，发布包功能专项通过。Chromium 实际截图检查 1100px 与 320px 的编辑、反馈、公式和图示排版，两种宽度均无横向溢出。Actions 与公网结果在完成后补录。
+- 完整 `CI=1 npm run check` 通过：2678 项浏览器功能回归通过、8 项按配置跳过；开发站与发布包各 409 页加载通过，发布包功能专项通过。Chromium 实际截图检查 1100px 与 320px 的编辑、反馈、公式和图示排版，两种宽度均无横向溢出。提交 `690bb48b26c91e28b56e0ed13fd3b55dad41da8e` 的 [Actions run 44118917296](https://github.com/houjibo/knowledge-visual/actions/runs/44118917296) 成功。公网 `release-version.json` 的 revision 匹配该提交且 `site_files_modified:false`；新页面和两个脚本均返回 200，公网桌面／移动专项 6 项通过、2 项本地专用场景按配置跳过。
 
 ## 剩余差距
 
