@@ -2,6 +2,8 @@
 
 交付日期：2026-11-18。基于[HS25“常用逻辑用语”6 条来源核查](high-math-logic-language-hs25-2026-11-18.md)，本次为其中必要、充分、充要条件 3 条增加局部学习任务；[量词与否定 3 条](../plans/curriculum-crosswalks/high-math-logic-language-hs25.json)仍缺。
 
+[OpenSpec 变更](../../openspec/changes/archive/2026-11-18-high-math-logic-conditions-workbench/proposal.md)记录了本次能力、边界和验收场景。
+
 ## 学习任务与数学边界
 
 [条件关系页](../../math/high/logic-conditions.html)提供 −6 至 6 的可变整数讨论域、九种条件和性质型、判定型、定义三个整除实例。学习者先分别预测 `P⇒Q`、`Q⇒P`，答错可修改，答对才显示两组成员、两个方向的反例或空前件说明，再归纳“P 对 Q 充分／必要／充要”。三个原样实例均答对才记录完成；自选域与条件的探索不计入该门槛。输入变动清除旧反馈。
@@ -21,4 +23,4 @@
 - `node tests/logic-conditions-model.test.js`：覆盖 10,368 组有限域与谓词对，含不对称方向、同义条件、空前件、空域和输入非法边界。
 - `tests/browser/high-logic-conditions.spec.js`：桌面与移动专项 10 项通过，覆盖错答重试、双向反例、完成门槛、手改失效、存储失败重试、320px、键盘、文件直开及发布子路径。
 - `CI=1 npm run check`：静态与 OpenSpec 严格校验通过；交互回归 2,696 项通过、8 项按配置跳过；全站 411 页冒烟及发布包 411 页加载通过，新增页发布包专项 5/5 通过。首次全量运行暴露一个旧测试把数学主题总数固定写成 214，已更新为 215 并单独复核 4/4，第二次全量门禁通过。
-- 远端 Actions 和公网验收结果在完成后补录；测试通过只证明本次固定案例和交互符合预期，不证明真实学习者掌握。
+- 功能提交 `49f27304b46977d5227c1b3e1184f5e6362e0e77` 的 [GitHub Actions](https://github.com/houjibo/knowledge-visual/actions/runs/44159312352) 核心、桌面、移动、构建、部署和部署后校验均成功；公开版本清单 revision 与提交一致。公网专项桌面／移动 8 项通过、2 项按本地专用条件跳过，实测性质命题反例、三实例完成、空域和保存重试。测试通过只证明本次固定案例和交互符合预期，不证明真实学习者掌握。
