@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：367；已登记部分交互证据：233；尚未登记：134。
+主题总数：367；已登记部分交互证据：234；尚未登记：133。
 
 ## 已登记部分交互证据
 
@@ -415,6 +415,8 @@
   - 按测试名称覆盖部分初始化或特定题目边界；不代表主题完整交互。 [primary-initialization.spec.js](../../tests/browser/primary-initialization.spec.js)
 - [导数与微分 · 大学数学互动可视化](../../math/uni/derivative.html)
   - 初中、高中、大学目录的跨标签徽章、存储异常及同名主题隔离；不代表全部主题的完成条件已核验。 [math-stage-directory-progress.spec.js](../../tests/browser/math-stage-directory-progress.spec.js)、[math-progress.spec.js](../../tests/browser/math-progress.spec.js)
+- [特征值与特征向量 · 大学数学互动可视化](../../math/uni/eigenvalues.html)
+  - 几何面板正负零特征值的最终反馈、反射动画过零点与画布零像、320px、键盘及发布路径；不覆盖重根、缺陷矩阵、对角化、全部习题或真实设备。 [university-eigenvector-sign-direction.spec.js](../../tests/browser/university-eigenvector-sign-direction.spec.js)
 - [线性方程组 · 大学数学互动可视化](../../math/uni/linear-systems.html)
   - 高斯消元有符号系数预览、增广矩阵、代回、无效输入重置和键盘及发布路径；不覆盖任意矩阵完整参数解或数值稳定性。 [university-linear-system-signed-input.spec.js](../../tests/browser/university-linear-system-signed-input.spec.js)
 - [行列式与矩阵 · 大学数学互动可视化](../../math/uni/matrix.html)
@@ -674,7 +676,6 @@
 - [组合数学 · 互动可视化](../../math/uni/combinatorics.html)
 - [复变函数 · 大学数学互动可视化](../../math/uni/complex-analysis.html)
 - [离散数学 · 图论互动可视化](../../math/uni/discrete-math.html)
-- [特征值与特征向量 · 大学数学互动可视化](../../math/uni/eigenvalues.html)
 - [傅里叶级数 · 频谱可视化互动学习](../../math/uni/fourier-analysis.html)
 - [博弈论入门 · 互动可视化](../../math/uni/game-theory.html)
 - [群论入门 · 互动可视化](../../math/uni/group-theory.html)

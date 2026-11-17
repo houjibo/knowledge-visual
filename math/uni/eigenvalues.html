@@ -123,25 +123,25 @@
       <div class="legend">
         <span style="color:#60a5fa">● 原始网格</span>
         <span style="color:#f87171">● 变换后</span>
-        <span style="color:#34d399">● 特征向量方向</span>
-        <span style="color:#fbbf24">● 变换后特征向量</span>
+        <span style="color:#34d399">● 原特征向量</span>
+        <span style="color:#fbbf24">● 当前像（零时标在原点）</span>
       </div>
     </div>
     <div class="panel">
       <h3>🔍 特征值的几何意义</h3>
       <div class="formula-box">
         A<span class="hl2">v⃗</span> = <span class="hl1">λ</span><span class="hl2">v⃗</span><br>
-        <span style="font-size:13px;color:#94a3b8">矩阵 A 作用在特征向量上，只改变长度（缩放 λ 倍），方向不变</span>
+        <span style="font-size:13px;color:#94a3b8">λ&gt;0 同向，λ&lt;0 反向；λ=0 时像是没有方向的零向量</span>
       </div>
 
-      <p>调节下方矩阵元素，观察变换如何拉伸/压缩空间。<span style="color:#34d399">绿色箭头</span>是特征向量方向——变换后仍在同一条线上。</p>
+      <p>调节矩阵元素，比较变换前后的向量。<span style="color:#34d399">绿色箭头</span>是原特征向量；非零的像仍在同一条直线上，负倍数会反向，零像落在原点。</p>
 
       <div class="matrix-label">矩阵 A（2×2）</div>
       <div class="matrix-input">
-        <input id="geo-a" type="number" value="2" step="0.5">
-        <input id="geo-b" type="number" value="1" step="0.5">
-        <input id="geo-c" type="number" value="1" step="0.5">
-        <input id="geo-d" type="number" value="2" step="0.5">
+        <input id="geo-a" aria-label="矩阵第一行第一列" type="number" value="2" step="0.5">
+        <input id="geo-b" aria-label="矩阵第一行第二列" type="number" value="1" step="0.5">
+        <input id="geo-c" aria-label="矩阵第二行第一列" type="number" value="1" step="0.5">
+        <input id="geo-d" aria-label="矩阵第二行第二列" type="number" value="2" step="0.5">
       </div>
 
       <div class="btn-group">
@@ -149,6 +149,7 @@
         <button class="btn btn-secondary" onclick="setPreset('stretch')">拉伸</button>
         <button class="btn btn-secondary" onclick="setPreset('shear')">剪切</button>
         <button class="btn btn-secondary" onclick="setPreset('reflect')">反射</button>
+        <button class="btn btn-secondary" onclick="setPreset('collapse')">压到直线</button>
         <button class="btn btn-secondary" onclick="setPreset('rotate')">旋转</button>
       </div>
 
@@ -156,6 +157,7 @@
         <label>动画进度 <span id="animProgress">0%</span></label>
         <input type="range" id="animSlider" min="0" max="100" value="0" oninput="setAnimProgress(this.value)">
       </div>
+      <p id="geoAnimInfo" role="status" aria-live="polite">动画显示从恒等变换 I 到目标矩阵 A 的插值。</p>
 
       <div id="geoResult" class="result-box">
         <h4>📊 特征值与特征向量</h4>
@@ -353,6 +355,17 @@ let geoMatrix = [2,1,1,2];
 let geoEigen = null;
 let geoAnimT = 0;
 
+function geoDirection(factor) {
+  if (factor === 0) return '零向量在原点，无方向';
+  if (Math.abs(factor) < 1e-10) return '接近原点';
+  return factor > 0 ? '同向' : '反向';
+}
+
+function geoFactorText(factor) {
+  if (factor === 0) return '0';
+  return Math.abs(factor) < 0.005 ? factor.toExponential(2) : factor.toFixed(2);
+}
+
 function drawGeo() {
   const W = geoCvs.width, H = geoCvs.height;
   const cx = W/2, cy = H/2, scale = 50;
@@ -411,26 +424,32 @@ function drawGeo() {
   geoCtx.stroke();
   geoCtx.setLineDash([]);
 
+  let zeroImage = false;
+  let approximateZeroImage = false;
   // Draw eigenvectors if real
   if (geoEigen && geoEigen.v1 && geoEigen.disc >= 0) {
     const {v1, v2, l1, l2} = geoEigen;
-    // Eigenvector 1
-    drawArrow(geoCtx, cx, cy, cx+v1[0]*scale*3, cy-v1[1]*scale*3, 'rgba(52,211,153,0.5)', 2);
-    // Transformed eigenvector 1
     const tv1 = [ma*v1[0]+mb*v1[1], mc*v1[0]+md*v1[1]];
-    drawArrow(geoCtx, cx, cy, cx+tv1[0]*scale*3, cy-tv1[1]*scale*3, 'rgba(251,191,36,0.8)', 3);
-
-    // Eigenvector 2
-    drawArrow(geoCtx, cx, cy, cx+v2[0]*scale*3, cy-v2[1]*scale*3, 'rgba(52,211,153,0.5)', 2);
     const tv2 = [ma*v2[0]+mb*v2[1], mc*v2[0]+md*v2[1]];
-    drawArrow(geoCtx, cx, cy, cx+tv2[0]*scale*3, cy-tv2[1]*scale*3, 'rgba(251,191,36,0.8)', 3);
+    for (const [v, tv, lambda] of [[v1, tv1, l1], [v2, tv2, l2]]) {
+      drawArrow(geoCtx, cx, cy, cx+v[0]*scale*3, cy-v[1]*scale*3, 'rgba(52,211,153,0.5)', 2);
+      if (Math.hypot(...tv) < 1e-10) {
+        zeroImage = true;
+        if (1-t+t*lambda !== 0) approximateZeroImage = true;
+      }
+      else drawArrow(geoCtx, cx, cy, cx+tv[0]*scale*3, cy-tv[1]*scale*3, 'rgba(251,191,36,0.8)', 3);
+    }
 
     // Labels
     geoCtx.font = '13px sans-serif';
     geoCtx.fillStyle = '#34d399';
     geoCtx.fillText('v⃗₁', cx+v1[0]*scale*3+6, cy-v1[1]*scale*3);
     geoCtx.fillStyle = '#fbbf24';
-    geoCtx.fillText('λ₁v⃗₁', cx+tv1[0]*scale*3+6, cy-tv1[1]*scale*3);
+    if (Math.hypot(...tv1) >= 1e-10) geoCtx.fillText('M(t)v⃗₁', cx+tv1[0]*scale*3+6, cy-tv1[1]*scale*3);
+
+    document.getElementById('geoAnimInfo').textContent = `动画为 M(t)=(1−t)I+tA；当前 v⃗₁ ×${geoFactorText(1-t+t*l1)}（${geoDirection(1-t+t*l1)}），v⃗₂ ×${geoFactorText(1-t+t*l2)}（${geoDirection(1-t+t*l2)}）。`;
+  } else {
+    document.getElementById('geoAnimInfo').textContent = '动画为 M(t)=(1−t)I+tA；此矩阵没有可追踪的实特征向量方向。';
   }
 
   // Axes
@@ -440,6 +459,14 @@ function drawGeo() {
   geoCtx.moveTo(0, cy); geoCtx.lineTo(W, cy);
   geoCtx.moveTo(cx, 0); geoCtx.lineTo(cx, H);
   geoCtx.stroke();
+  if (zeroImage) {
+    geoCtx.fillStyle = '#fbbf24';
+    geoCtx.beginPath();
+    geoCtx.arc(cx, cy, 7, 0, Math.PI*2);
+    geoCtx.fill();
+    geoCtx.font = '13px sans-serif';
+    geoCtx.fillText(approximateZeroImage ? '像 ≈ 0⃗' : '像 = 0⃗', cx+12, cy-12);
+  }
 }
 
 function drawArrow(ctx, x1, y1, x2, y2, color, width) {
@@ -475,6 +502,7 @@ function updateGeo() {
       <span class="info-tag tag-red">λ₂ = ${l2.toFixed(3)}</span><br>
       <span class="info-tag tag-green">v⃗₁ = [${v1[0].toFixed(3)}, ${v1[1].toFixed(3)}]</span><br>
       <span class="info-tag tag-green">v⃗₂ = [${v2[0].toFixed(3)}, ${v2[1].toFixed(3)}]</span><br>
+      <span style="font-size:12px;color:#cbd5e1">最终：v⃗₁ ${geoDirection(l1)}；v⃗₂ ${geoDirection(l2)}。</span><br>
       <span style="font-size:12px;color:#94a3b8;margin-top:6px;display:block">
         tr(A) = ${geoEigen.tr.toFixed(2)} = λ₁+λ₂ &nbsp;|&nbsp; det(A) = ${geoEigen.det.toFixed(2)} = λ₁·λ₂
       </span>`;
@@ -490,6 +518,7 @@ function setPreset(name) {
     stretch: [3,0,0,1.5],
     shear: [1,1,0,1],
     reflect: [1,0,0,-1],
+    collapse: [2,0,0,0],
     rotate: [0,-1,1,0]
   };
   const p = presets[name];
