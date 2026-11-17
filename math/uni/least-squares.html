@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>投影与最小二乘 · 大学数学互动可视化</title>
+  <style>
+    :root { color-scheme:dark; --bg:#0e1930; --panel:#162640; --line:#526985; --text:#f3f7ff; --muted:#c6d3e4; --blue:#7dd3fc; --green:#86efac; --gold:#fcd34d; --pink:#f9a8d4; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--text); background:linear-gradient(150deg,#0e1930,#142c38 60%,#1d2547); font:16px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+    .container { width:min(1120px,100%); margin:auto; padding:18px; }
+    .breadcrumb { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; font-size:14px; }
+    a { color:var(--blue); }
+    h1,h2,h3,p { margin-top:0; }
+    h1 { font-size:clamp(1.7rem,5vw,2.5rem); margin-bottom:4px; }
+    h2 { font-size:1.35rem; }
+    h3 { font-size:1.08rem; }
+    .lead { color:var(--muted); max-width:78ch; }
+    .panel { background:rgba(22,38,64,.95); border:1px solid var(--line); border-radius:16px; padding:20px; margin:16px 0; }
+    .controls { display:flex; flex-wrap:wrap; gap:14px; align-items:end; }
+    label { display:block; color:var(--muted); font-size:14px; }
+    select,input { color:var(--text); background:#0b1930; border:1px solid #7287a4; border-radius:8px; padding:7px 9px; min-height:42px; font:inherit; }
+    select:focus-visible,input:focus-visible,button:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
+    input[aria-invalid="true"] { border-color:#fca5a5; box-shadow:0 0 0 1px #fca5a5; }
+    .controls select { display:block; margin-top:4px; max-width:100%; }
+    .input-layout { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:18px; max-width:580px; }
+    .matrix-editor,.vector-editor { display:grid; gap:8px; margin:8px 0; }
+    .matrix-editor { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .matrix-editor label,.vector-editor label { text-align:center; }
+    .matrix-editor input,.vector-editor input { display:block; width:100%; min-width:0; text-align:center; margin-top:3px; }
+    .hint { color:var(--muted); font-size:13px; }
+    .status { min-height:1.5em; margin:10px 0 0; color:var(--gold); }
+    .prediction-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:12px 0; }
+    .prediction-grid select { display:block; width:100%; margin-top:4px; }
+    .vector-predictions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .vector-predictions fieldset { min-width:0; border:1px solid #607797; border-radius:12px; padding:12px; }
+    legend { padding:0 6px; font-weight:700; }
+    .three-inputs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .three-inputs input { width:100%; min-width:0; }
+    .actions { display:flex; flex-wrap:wrap; gap:9px; margin-top:14px; }
+    button { border:1px solid var(--blue); background:#16456b; color:var(--text); border-radius:9px; padding:9px 15px; min-height:44px; font:inherit; font-weight:650; cursor:pointer; }
+    button:hover { background:#1b5a89; }
+    button.secondary { background:#273a51; border-color:#8ca1ba; }
+    .result-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .result-card { background:#10283d; border:1px solid #527594; border-radius:12px; padding:14px; overflow-wrap:anywhere; }
+    .result-card h3 { color:var(--blue); margin-bottom:4px; }
+    .formula { font:1rem/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; overflow-wrap:anywhere; }
+    .geometry-wrap { background:#0b2235; border:1px solid #466484; border-radius:12px; margin:14px 0; padding:10px; }
+    svg { display:block; width:100%; height:auto; }
+    .candidate-inputs { display:flex; gap:9px; flex-wrap:wrap; align-items:end; }
+    .candidate-inputs label { width:90px; }
+    .candidate-inputs input { width:100%; }
+    .candidate-result { background:#102f36; border-left:3px solid var(--green); padding:10px; border-radius:5px; margin-top:12px; min-height:2.5em; }
+    [hidden] { display:none !important; }
+    @media (max-width:680px) { .vector-predictions,.result-grid { grid-template-columns:1fr; } }
+    @media (max-width:420px) { .container { padding:12px; } .panel { padding:14px; } .input-layout,.prediction-grid { grid-template-columns:1fr; } .vector-editor { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  </style>
+</head>
+<body>
+<main class="container">
+  <nav class="breadcrumb" aria-label="当前位置"><a href="../../index.html">首页</a><span>›</span><a href="index.html">大学数学</a><span>›</span><span>投影与最小二乘</span></nav>
+  <header><h1>投影与最小二乘</h1><p class="lead">给定 A 的两列和目标 b，寻找列空间中离 b 最近的 p。先预测，再用残差 e=b−p 和候选系数检验“最近”的含义。支持可编辑的 3×2 整数矩阵与三维整数 b。</p></header>
+
+  <section class="panel" aria-labelledby="inputHeading">
+    <h2 id="inputHeading">1. 选择并编辑 A 与 b</h2>
+    <div class="controls"><label for="preset">示例情形<select id="preset">
+      <option value="full">满列秩：目标不在列空间</option><option value="in-column">满列秩：目标在列空间</option>
+      <option value="dependent">两列相关：系数不唯一</option><option value="orthogonal">目标与列空间正交</option>
+      <option value="zero">零矩阵：投影是零向量</option><option value="custom">自行编辑</option>
+    </select></label></div>
+    <div class="input-layout"><div><h3>矩阵 A（3×2）</h3><div id="matrixEditor" class="matrix-editor" role="group" aria-label="矩阵 A 的元素"></div></div><div><h3>向量 b ∈ R³</h3><div id="targetEditor" class="vector-editor" role="group" aria-label="目标向量 b 的分量"></div></div></div>
+    <p class="hint">每项须为 −5 到 5 的整数；空值或越界会撤销旧结果。</p><p id="inputStatus" class="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="predictionHeading">
+    <h2 id="predictionHeading">2. 预测投影与残差</h2>
+    <p class="hint">p 在 C(A)，e=b−p 与 A 的每一列正交；若 e=0，则 b 原本就在列空间。填写整数或分数（分子绝对值、分母不超过 1,000,000）。</p>
+    <div class="prediction-grid">
+      <label for="memberGuess">b 是否在 C(A)？<select id="memberGuess"><option value="">请选择</option><option value="yes">是</option><option value="no">否</option></select></label>
+      <label for="uniqueGuess">最小二乘系数是否唯一？<select id="uniqueGuess"><option value="">请选择</option><option value="yes">是</option><option value="no">否</option></select></label>
+    </div>
+    <div class="vector-predictions">
+      <fieldset><legend>我预测的 p = Ax̂</legend><div id="projectionGuess" class="three-inputs"></div></fieldset>
+      <fieldset><legend>我预测的 e = b−p</legend><div id="residualGuess" class="three-inputs"></div></fieldset>
+    </div>
+    <div class="actions"><button id="checkPrediction">核对预测</button><button id="revealAnswer" class="secondary">查看示范</button></div>
+    <p id="predictionFeedback" class="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <section id="answer" class="panel" aria-labelledby="answerHeading" hidden>
+    <h2 id="answerHeading">3. 观察正交分解，再试候选系数</h2>
+    <div id="geometry" class="geometry-wrap"></div>
+    <p class="hint">图中横向表示 p 的方向，纵向表示与它正交的 e 的方向，按长度比例绘制；它是 p、e 张成的截面，不是 R³ 的固定坐标投影。零向量没有方向。</p>
+    <div id="answerGrid" class="result-grid"></div>
+    <p id="verificationInfo" class="candidate-result"></p>
+    <h3>换一组系数 x，比一比误差</h3>
+    <p class="hint">输入两个整数或分数。即使正规方程的系数解不唯一，投影 p 与最小残差平方和仍唯一。</p>
+    <div id="candidateInputs" class="candidate-inputs"></div>
+    <div class="actions"><button id="checkCandidate" class="secondary">计算 Ax 与误差</button></div>
+    <p id="candidateFeedback" class="candidate-result" role="status" aria-live="polite"></p>
+  </section>
+  <p class="hint">依据：<a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/198bde3a6536b62989b6cc09495575c1_MIT18_06SCF11_Ses2.3sum.pdf">MIT 18.06SC 投影矩阵与最小二乘讲义</a>。本站只计算有限整数示例，不提供任意矩阵的数值解算保证。</p>
+</main>
+<script src="assets/common.js"></script>
+<script src="assets/least-squares-model.js"></script>
+<script src="assets/least-squares.js"></script>
+<script src="assets/nav.js" data-home="../../index.html" data-back="index.html" data-label="大学数学"></script>
+</body>
+</html>

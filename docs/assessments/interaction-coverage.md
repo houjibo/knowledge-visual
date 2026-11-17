@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：368；已登记部分交互证据：235；尚未登记：133。
+主题总数：369；已登记部分交互证据：236；尚未登记：133。
 
 ## 已登记部分交互证据
 
@@ -420,6 +420,8 @@
   - 对角化面板不同实根、标量重根、缺陷与复根、近重根、零根、输入重置、三段动画端点、键盘及发布路径；不覆盖一般复对角化、矩阵幂、全部习题或真实设备。 [university-eigen-diagonalization-validity.spec.js](../../tests/browser/university-eigen-diagonalization-validity.spec.js)
 - [四个基本子空间 · 大学数学互动可视化](../../math/uni/four-subspaces.html)
   - 桌面与移动视口核验满秩、秩亏、零、矩形与方阵的基和维数、替代基、精确分数乘积、错误输入、学习完成、320px、键盘、文件直开与发布子路径；矩阵限 2–3 行列及 −5 到 5 整数，真实学习者与完整屏幕阅读器待核。 [university-four-subspaces-workbench.spec.js](../../tests/browser/university-four-subspaces-workbench.spec.js)
+- [投影与最小二乘 · 大学数学互动可视化](../../math/uni/least-squares.html)
+  - 桌面与移动视口核验预测与揭示完成条件、精确投影和残差、相关列非唯一系数、零矩阵、零残差、零投影、候选误差、无效输入、320px、键盘、文件直开及发布子路径；模型限 3×2 与 −5 到 5 整数，真实学习者及完整屏幕阅读器待核。 [university-least-squares-projection.spec.js](../../tests/browser/university-least-squares-projection.spec.js)
 - [线性方程组 · 大学数学互动可视化](../../math/uni/linear-systems.html)
   - 高斯消元有符号系数预览、增广矩阵、代回、无效输入重置和键盘及发布路径；不覆盖任意矩阵完整参数解或数值稳定性。 [university-linear-system-signed-input.spec.js](../../tests/browser/university-linear-system-signed-input.spec.js)
 - [行列式与矩阵 · 大学数学互动可视化](../../math/uni/matrix.html)
