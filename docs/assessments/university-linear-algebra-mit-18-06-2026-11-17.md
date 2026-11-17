@@ -14,7 +14,7 @@
 | 6 行列式性质、余子式、排列、逆和体积 | [矩阵](../../math/uni/matrix.html)有 2×2 有向面积、秩和逆的图示及练习。 | 推广到更高维、行列式性质及余子式/排列展开仍待核；本页数值分类发现明确错误，已按[局部核查](university-matrix-small-determinant-2026-11-17.md)修复并完成公网验收。 |
 | 7 特征值、特征向量、对角化及幂／矩阵指数应用 | [特征值与特征向量](../../math/uni/eigenvalues.html)有 2×2 特征值、对角化和固定习题。 | 矩阵幂、指数及差分／微分方程应用未在本页核到；负特征值和零特征值的方向反馈已按[局部核查](university-eigenvector-sign-direction-2026-11-17.md)修正（已完成公网验收）；缺陷矩阵的错误对角化结论与末端报错、标量重根及复根分支已按[局部核查](university-eigen-diagonalization-validity-2026-11-17.md)修复并在本地验证，已完成公网验收；一般复对角化仍未覆盖。 |
 | 8 实对称矩阵、正交特征向量与正定性 | [正定性与二次型工作台](../../math/uni/positive-definite.html)提供可编辑 2×2 矩阵的对称性、六类符号、判据和反例；[谱分解工作台](../../math/uni/symmetric-spectral.html)提供可编辑实对称矩阵的正交特征方向与乘回；特征值页仍有一般 2×2 样例。 | [正定性核查](university-positive-definite-quadratic-forms-2026-11-17.md)与[谱分解核查](university-symmetric-spectral-decomposition-2026-11-17.md)验证两个有限模型；一般维度、开放证明、非对称情形及真实学习者理解仍待核。 |
-| 9 线性变换、基变换与奇异值分解 | [矩阵变换](../../math/uni/matrix.html)显示二维旋转、缩放、剪切和反射；[矩形矩阵 SVD 工作台](../../math/uni/svd.html)新增有界 3×2 矩阵预测、奇异方向与薄分解乘回。 | [SVD 局部核查](university-svd-rectangular-workbench-2026-11-17.md)验证有限模型的满秩、秩亏、零矩阵与重根分支；完整基变换、一般维数证明、应用和真实学习者理解仍待核。 |
+| 9 线性变换、基变换与奇异值分解 | [矩阵变换](../../math/uni/matrix.html)显示二维旋转、缩放、剪切和反射；[矩形矩阵 SVD 工作台](../../math/uni/svd.html)新增有界 3×2 矩阵预测、奇异方向与薄分解乘回；[Haar 基变换实验](../../math/uni/haar-basis-compression.html)新增四像素正交换基、系数截断与重建误差。 | [SVD 局部核查](university-svd-rectangular-workbench-2026-11-17.md)验证有限模型的满秩、秩亏、零矩阵与重根分支；[Haar 局部核查](university-haar-basis-compression-2026-11-17.md)验证有限正交换基与截断；一般非正交基、相似变换、真实图像编码、一般维数证明和学习者理解仍待核。 |
 | 10 网络、马尔可夫、傅里叶矩阵、FFT 和线性规划等应用 | [随机过程](../../math/uni/stochastic-process.html)含有限马尔可夫链；[傅里叶级数](../../math/uni/fourier-analysis.html)为相关素材。 | 需核实际内容并区分傅里叶级数与离散傅里叶矩阵/FFT；图网络、线性规划等不因相关页面存在而算已覆盖。 |
 
 ## 已复现的优先准确性问题
