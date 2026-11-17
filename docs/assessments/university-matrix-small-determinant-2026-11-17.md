@@ -10,4 +10,4 @@
 
 ## 验证与后续
 
-桌面和移动专项及窄屏截图检查滑块数值，并检查小正负非零行列式、逆矩阵数值、零矩阵、一个浮点乘积可能产生消去误差的真正奇异矩阵、连续键盘调节、320px、文件直开和发布子路径。完整 `npm run check` 通过：全站功能套件 2594 项通过、8 项按条件跳过，401 页加载及发布构建专项 3 项通过；推送和公网验收待补。其他选项卡、任意实数矩阵及屏幕阅读器尚未全面核验；线性方程的输入符号和特征向量方向措辞仍需独立修复。契约见[OpenSpec](../../openspec/changes/university-matrix-small-determinant-correctness/proposal.md)。
+桌面和移动专项及窄屏截图检查滑块数值，并检查小正负非零行列式、逆矩阵数值、零矩阵、一个浮点乘积可能产生消去误差的真正奇异矩阵、连续键盘调节、320px、文件直开和发布子路径。完整 `npm run check` 通过：全站功能套件 2594 项通过、8 项按条件跳过，401 页加载及发布构建专项 3 项通过；[远端工作流](https://github.com/houjibo/knowledge-visual/actions/runs/43973034315)通过；公网 revision 为 `d3d3ccfe2da7392211cfcbc42b977984f338e6fe`，桌面和移动专项 4 项通过，2 项本地路径检查按条件跳过。其他选项卡、任意实数矩阵及屏幕阅读器尚未全面核验；线性方程的输入符号和特征向量方向措辞仍需独立修复。契约见[OpenSpec](../../openspec/changes/archive/2026-11-17-university-matrix-small-determinant-correctness/proposal.md)。
