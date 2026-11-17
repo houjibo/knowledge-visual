@@ -12,7 +12,7 @@
 ## 当前验证
 
 - `node tests/least-squares-model.test.js`：606 个矩阵与向量案例，以独立的列向量投影公式或二阶正规方程闭式解核对 p/e、最小误差、退化方向和候选误差恒等式。
-- `npx playwright test tests/browser/university-least-squares-projection.spec.js --project=desktop --project=mobile`：8/8 通过，覆盖满秩、相关列、零矩阵、零残差、零投影、错误预测、候选系数、无效编辑恢复、目录、320px、键盘 Enter、文件直开与发布子路径。320px 截图核对无横向溢出；随后发现零长度箭头的视觉误导，修正后再跑专项 8/8，确认零投影、零残差及 b=0 均无零长度箭头。
+- `npx playwright test tests/browser/university-least-squares-projection.spec.js --project=desktop --project=mobile`：8/8 通过，覆盖满秩、相关列、零矩阵、零残差、零投影、错误预测、候选系数、无效编辑恢复、目录、320px、键盘 Enter、文件直开与发布子路径。320px 截图核对无横向溢出；随后发现零长度箭头的视觉误导，修正后再跑专项 8/8，确认零投影、零残差及 b=0 均无零长度箭头。原始分数分子或分母越界（即使可约分）也被拒绝，补充模型及浏览器回归后再次通过。
 - `CI=1 npm run check` 全部通过：全量交互 2630 项通过、8 项按项目配置跳过；开发站和发布包均 403/403 页加载通过，发布包关键流程及新增工作台桌面专项通过。视觉修正后 `npm run check:static` 再次通过。远端 CI 和公网版本在发布后补记。
 
 ## 剩余差距

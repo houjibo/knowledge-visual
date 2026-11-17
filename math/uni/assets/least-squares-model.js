@@ -25,9 +25,9 @@
   function parseFraction(value) {
     const text=String(value).trim();
     if (text.length>20) return null;
-    const parsed=parseExact(text);
-    if (!parsed) return null;
-    const n=parsed.n,d=parsed.d;
+    const match=text.match(/^([+-]?\d+)(?:\/([1-9]\d*))?$/);
+    if (!match) return null;
+    const n=BigInt(match[1]),d=BigInt(match[2]||'1');
     return n < -1000000n || n > 1000000n || d > 1000000n ? null : frac(n,d);
   }
 

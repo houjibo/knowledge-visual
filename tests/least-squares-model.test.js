@@ -75,6 +75,8 @@ assert.deepEqual(zero.projection,['0','0','0']);
 assert.equal(zero.directions.length,2);
 assert.equal(model.verifyCandidate(zero,['1','99']).optimum,true);
 assert.equal(model.verifyCandidate(zero,['1/0','0']),null);
+assert.equal(model.parseFraction('2000000/2'),null);
+assert.equal(model.parseFraction('1/2000000'),null);
 assert.equal(model.checkPrediction(dependent,{member:'',unique:'',projection:['','',''],residual:['','','']}).member,false);
 assert.throws(()=>model.solve([[6,0],[0,1],[1,1]],[0,0,0]),RangeError);
 console.log('least squares: 606 independent projection cases, exact residual identities and degenerate solutions passed');

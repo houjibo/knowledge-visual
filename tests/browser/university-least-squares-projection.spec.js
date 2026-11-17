@@ -100,6 +100,9 @@ test('编辑与无效分数撤销旧结果，恢复后只取新输入',async({pa
   await page.locator('#candidate-0').fill('1/0');
   await page.locator('#checkCandidate').click();
   await expect(page.locator('#candidateFeedback')).toContainText('系数输入无效');
+  await page.locator('#candidate-0').fill('2000000/2');
+  await page.locator('#checkCandidate').click();
+  await expect(page.locator('#candidateFeedback')).toContainText('系数输入无效');
 });
 
 test('大学目录、320px、键盘、文件直开和发布子路径可学习',async({page})=>{
