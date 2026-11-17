@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：374；已登记部分交互证据：239；尚未登记：135。
+主题总数：375；已登记部分交互证据：239；尚未登记：136。
 
 ## 已登记部分交互证据
 
@@ -684,6 +684,7 @@
 - [统计与数据整理](../../math/topics/statistics/index.html)
 - [时间计算](../../math/topics/time-calculation/index.html)
 - [三角形的高与分类](../../math/topics/triangle-properties/index.html)
+- [非正交基的坐标与相似变换 · 大学数学互动可视化](../../math/uni/change-of-basis.html)
 - [组合数学 · 互动可视化](../../math/uni/combinatorics.html)
 - [复变函数 · 大学数学互动可视化](../../math/uni/complex-analysis.html)
 - [离散数学 · 图论互动可视化](../../math/uni/discrete-math.html)
