@@ -12,7 +12,10 @@
 
 - `node tests/four-subspaces-model.test.js`：626 个矩阵案例，含 2×2 三值全枚举、带种子的矩形与方阵及边界案例；以独立子式秩检查四个基的维数、乘积、正交、替代基和无效输入。
 - `npx playwright test tests/browser/university-four-subspaces-workbench.spec.js --project=desktop --project=mobile`：8/8 通过；覆盖预测错误与纠正、揭示完成条件、分数、候选向量、零／满秩、矩形、无效编辑恢复、目录、320px、键盘 Enter、文件直开和构建子路径。
-- `npm run check:static` 通过；全量浏览器首轮 2564 通过、8 跳过、58 项在测试环境长时间停顿中超时，随后用 2 个 worker 单独重跑失败项 58/58 通过。全站开发页加载 402/402，发布包逐页加载 402/402，`npm run test:release` 全部通过。远端 CI 与公网版本核对在发布后补记。此页的模型范围、有限用例与课程目标不能推成任意实数矩阵求解能力，也不能代替真实学习者或完整屏幕阅读器验收。
+- `npm run check:static` 通过；全量浏览器首轮 2564 通过、8 跳过、58 项在测试环境长时间停顿中超时，随后用 2 个 worker 单独重跑失败项 58/58 通过。全站开发页加载 402/402，发布包逐页加载 402/402，`npm run test:release` 全部通过。
+- 功能提交 `f3dc7737d59f3231c91e05ab318120ec7a811d48` 的 [GitHub Actions run 44028887100](https://github.com/houjibo/knowledge-visual/actions/runs/44028887100) 核心、桌面、移动、构建、部署和部署后校验全部成功。公网 `release-version.json` 的 revision 与该 SHA 相同，`site_files_modified:false`；公网桌面／移动专项 6/6 通过，2 项只用于本地文件与构建路径的测试按配置跳过。
+
+变更契约已见[归档 OpenSpec](../../openspec/changes/archive/2026-11-17-university-four-subspaces-workbench/proposal.md)。此页的模型范围、有限用例与课程目标不能推成任意实数矩阵求解能力，也不能代替真实学习者或完整屏幕阅读器验收。
 
 ## 后续差距
 
