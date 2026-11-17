@@ -12,8 +12,9 @@
 
 - `node tests/positive-definite-model.test.js`：14,649 个矩阵案例，包括全部 14,641 个有界整数矩阵和 8 个针对性边界；以独立特征值数值符号与矩阵乘法核对六类、对称性、二次型值、证据向量与输入边界。
 - `npx playwright test tests/browser/university-positive-definite-quadratic-forms.spec.js --project=desktop --project=mobile`：8/8 通过，覆盖六类符号、非对称反例、行列式正但负定、预测与揭示、无效输入、零测试向量、目录、320px、键盘 Enter、文件直开和发布子路径。桌面与 320px 页面截图人工核对无横向溢出。
-- `CI=1 npm run check` 全部通过：全量交互 2,646 项、开发站与发布包各 405 页加载，新增页面桌面发布关键流程 4/4 通过。远端 Actions 和公网部署验证待本轮完成后补记。
+- `CI=1 npm run check` 全部通过：全量交互 2,646 项、开发站与发布包各 405 页加载，新增页面桌面发布关键流程 4/4 通过。
+- 功能提交 `8391cf5239d92efc526721ab701c2305840ddd54` 的 [GitHub Actions run 44058763476](https://github.com/houjibo/knowledge-visual/actions/runs/44058763476) 成功；公网 `release-version.json` 的 revision 匹配该 SHA，`site_files_modified:false`。公网桌面／移动专项 6/6 通过，2 项仅本地文件与构建路径检查按配置跳过。
 
 ## 剩余差距
 
-本工作台只处理 2×2 有界整数矩阵，区域图为有限网格；模型判别才支持对所有实向量的符号结论。它未提供一般维度的正定性算法、正交特征向量构造、谱定理的交互证明、真实应用、学习者理解实验或完整屏幕阅读器验收。后续据 [MIT 18.06 十项目标对照](university-linear-algebra-mit-18-06-2026-11-17.md)继续补该项目的谱定理与 SVD 等差距。变更契约见 [OpenSpec](../../openspec/changes/university-positive-definite-quadratic-forms/proposal.md)。
+本工作台只处理 2×2 有界整数矩阵，区域图为有限网格；模型判别才支持对所有实向量的符号结论。它未提供一般维度的正定性算法、正交特征向量构造、谱定理的交互证明、真实应用、学习者理解实验或完整屏幕阅读器验收。后续据 [MIT 18.06 十项目标对照](university-linear-algebra-mit-18-06-2026-11-17.md)继续补该项目的谱定理与 SVD 等差距。变更契约见 [OpenSpec](../../openspec/changes/archive/2026-11-17-university-positive-definite-quadratic-forms/proposal.md)。
