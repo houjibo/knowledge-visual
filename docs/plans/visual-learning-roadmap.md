@@ -111,7 +111,7 @@
 
 ## 当前队列
 
-**优先新增：**按[课程来源与全站差距矩阵](curriculum-gap-map.md)完成六学科四阶段的逐条标准映射和教材版本选择；先校准高中数学与初中计算机，再按差距和学习价值发起独立小变更。页面数不作为正式覆盖率。
+**优先新增：**按[课程来源与全站差距矩阵](curriculum-gap-map.md)完成六学科四阶段的逐条标准映射和教材版本选择；先校准高中数学与初中计算机，再按差距和学习价值发起独立小变更。页面数不作为正式覆盖率。高中数学[“常用逻辑用语”6 条核查](../assessments/high-math-logic-language-hs25-2026-11-18.md)已发现全缺口；按条件关系、量词及否定两步补齐。
 
 1. [初中质量与密度](../assessments/middle-mass-density-2026-11-12.md)的键盘、参考密度、图示和保存反馈，以及[天平称量与双任务门槛](../assessments/mass-density-balance-2026-11-13.md)，均已通过主分支Actions和公网验收；后续以真实学习者反馈决定下一步教学改进。
 2. 根据 [逐主题交互证据](../assessments/interaction-coverage.md)、[交互风险线索](../assessments/interaction-risks.md) 和 [差距台账](../gaps.md) 优先处理尚未覆盖的关键学习操作与可能阻塞的随机生成；近期已完成[高中有机化学的主题键盘入口、图文一致和保存反馈](../assessments/organic-2026-11-13.md)，并新增[共享传动轴工坊](../assessments/line-shaft-workshop-2026-11-13.md)。本轮[高中计数原理的分类/分步图文、键盘与完成反馈](../assessments/high-counting-2026-11-13.md)已通过本地、Actions 与公网验收；后续继续按证据选择仍阻碍学习的主题。已登记部分证据不等于主题已完整验收。

@@ -144,6 +144,25 @@ def check_high_information_technology_baseline() -> None:
     assert all(isinstance(row.get("related_hs20_items"), list) for row in rows), path
 
 
+def check_high_math_logic_baseline() -> None:
+    """Keep the six independently stated HS25 logic requirements stable."""
+    path = MAPS / "high-math-logic-language-hs25.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["id"] == "HS25-MATH-BAS-LOGIC" and data["baseline_status"] == "current", path
+    rows = data["requirements"]
+    assert len(rows) == 6, "HS25 mandatory logic unit must contain six source items"
+    assert {row["id"] for row in rows} == {
+        f"HS25-MATH-BAS-LOGIC-{index:02d}" for index in range(1, 7)
+    }, "HS25 logic source item IDs changed"
+    assert Counter(row["module"] for row in rows) == {
+        "必修／预备知识／必要条件、充分条件、充要条件": 3,
+        "必修／预备知识／全称量词与存在量词": 1,
+        "必修／预备知识／量词命题的否定": 2,
+    }, "HS25 logic source grouping changed"
+    assert all(row["source_locator"].endswith("印刷页15") for row in rows[:3]), path
+    assert all(row["source_locator"].endswith("印刷页16") for row in rows[3:]), path
+
+
 def check_equation_baseline(data: dict) -> None:
     """Preserve the source denominator and identify its single optional item."""
     assert data.get("id") == "CE25-MATH-L4-EQI"
@@ -167,6 +186,7 @@ def main() -> None:
         check_crosswalk(path)
     check_canonical_subsets()
     check_high_information_technology_baseline()
+    check_high_math_logic_baseline()
     check_equation_baseline(json.loads((MAPS / "middle-math-equations-inequalities-ce25.json").read_text(encoding="utf-8")))
 
 
