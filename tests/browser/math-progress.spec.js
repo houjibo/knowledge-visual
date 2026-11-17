@@ -14,15 +14,15 @@ test('数学新进度按学段区分同名主题并在刷新后保留', async ({
   await page.goto('/math/uni/index.html');
   await expect(badge(page, 'derivative.html')).toHaveCount(0);
   await page.goto('/math/index.html');
-  await expect(page.locator('#stageProgress')).toContainText('高中 ✓ 1/20');
+  await expect(page.locator('#stageProgress')).toContainText('高中 ✓ 1/21');
   await expect(page.locator('#stageProgress')).toContainText('大学 尚未开始');
   await page.reload();
-  await expect(page.locator('#stageProgress')).toContainText('高中 ✓ 1/20');
+  await expect(page.locator('#stageProgress')).toContainText('高中 ✓ 1/21');
   await page.goto('/math/uni/derivative.html');
   await page.evaluate(() => PageProgress.markDone('derivative'));
   expect(await page.evaluate(() => PageProgress.count())).toBe(2);
   await page.goto('/');
-  await expect(page.locator('[data-subject="math"] .sp-label')).toContainText('已学 2/215');
+  await expect(page.locator('[data-subject="math"] .sp-label')).toContainText('已学 2/216');
 });
 
 test('旧记录保留：无冲突可读，同名记录不猜测学段', async ({page}) => {

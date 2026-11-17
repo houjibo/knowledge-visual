@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：377；已登记部分交互证据：240；尚未登记：137。
+主题总数：378；已登记部分交互证据：241；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -140,6 +140,8 @@
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
 - [必要、充分与充要条件 - 互动可视化](../../math/high/logic-conditions.html)
   - 桌面与移动视口核验正逆向预测、反例、空前件、同义条件、空域、三实例完成、手改重置、320px、键盘、文件直开和发布子路径；有限整数模型与真实学习者迁移另有边界。 [high-logic-conditions.spec.js](../../tests/browser/high-logic-conditions.spec.js)
+- [全称、存在与命题否定 - 互动可视化](../../math/high/logic-quantifiers.html)
+  - 桌面与移动视口核验全真、混合、全假、空域的量词真值与否定构造、证据选择、错答重试、独立进度、存储失败、320px、键盘、文件直开和发布子路径；真实学习者与开放表达待核。 [high-logic-quantifiers.spec.js](../../tests/browser/high-logic-quantifiers.spec.js)
 - [概率 - 高中数学互动可视化](../../math/high/probability.html)
   - 受控时钟和随机数验证硬币、骰子、摸球批量取消；骰子目标历史统计和柱状图、摸球换配置及一道练习；其他实验、完整题目与无障碍未全面验收。 [high-probability-experiment.spec.js](../../tests/browser/high-probability-experiment.spec.js)
   - 线段长度与端点边界、采样重算和画布点位置、蒙特卡洛估算重置；全部题目和无障碍未全面验收。 [geometric-probability.spec.js](../../tests/browser/geometric-probability.spec.js)

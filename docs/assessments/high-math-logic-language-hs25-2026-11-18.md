@@ -29,6 +29,8 @@
 
 每一阶段按[需求交付工作流](../workflows/requirement-delivery.md)发起独立 OpenSpec 功能变更，完成静态、浏览器、发布包和公网验收，再更新本台账。全站课程覆盖率仍不可计算。
 
+实施时第二步改为[独立量词主题](high-math-quantifier-negation-workbench-2026-11-18.md)，以免条件关系页既有完成记录误表示量词任务也已完成；两页共用整数条件目录。
+
 ## 本次核查
 
 - `python3 scripts/check_curriculum_crosswalk.py`：6 条来源单位与 3／1／2 分组、印刷页位置及状态汇总一致。

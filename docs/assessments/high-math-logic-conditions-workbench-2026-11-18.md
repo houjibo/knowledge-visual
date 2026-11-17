@@ -1,6 +1,6 @@
 # 高中数学：条件关系工作台
 
-交付日期：2026-11-18。基于[HS25“常用逻辑用语”6 条来源核查](high-math-logic-language-hs25-2026-11-18.md)，本次为其中必要、充分、充要条件 3 条增加局部学习任务；[量词与否定 3 条](../plans/curriculum-crosswalks/high-math-logic-language-hs25.json)仍缺。
+交付日期：2026-11-18。基于[HS25“常用逻辑用语”6 条来源核查](high-math-logic-language-hs25-2026-11-18.md)，本次为其中必要、充分、充要条件 3 条增加局部学习任务；交付时量词与否定 3 条仍缺，后续由[独立工作台](high-math-quantifier-negation-workbench-2026-11-18.md)补为部分。
 
 [OpenSpec 变更](../../openspec/changes/archive/2026-11-18-high-math-logic-conditions-workbench/proposal.md)记录了本次能力、边界和验收场景。
 
