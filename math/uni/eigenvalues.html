@@ -55,6 +55,7 @@
   .btn-primary:hover { background: #4f46e5; }
   .btn-secondary { background: rgba(255,255,255,0.1); color: var(--light); border: 1px solid rgba(255,255,255,0.15); }
   .btn-secondary:hover { background: rgba(255,255,255,0.18); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
   .btn-group { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 
   .formula-box { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 10px; padding: 14px; margin-bottom: 14px; font-size: 15px; line-height: 1.8; text-align: center; }
@@ -219,7 +220,7 @@
       <div class="legend">
         <span style="color:#60a5fa">● 标准基 e₁⃗ e₂⃗</span>
         <span style="color:#34d399">● 特征向量基</span>
-        <span style="color:#fbbf24">● 对角化变换</span>
+        <span style="color:#fbbf24">● 当前矩阵作用后的向量</span>
       </div>
     </div>
     <div class="panel">
@@ -229,27 +230,27 @@
         <span style="font-size:13px;color:#94a3b8">P = 特征向量矩阵，Λ = 特征值对角矩阵</span>
       </div>
 
-      <p>对角化将复杂变换分解为 3 步：① 换到特征基 ② 简单缩放 ③ 换回原基。</p>
+      <p>矩阵作用从右到左：① 用 P⁻¹ 进入特征坐标 ② 用 Λ 沿坐标轴缩放 ③ 用 P 返回原坐标。滑块段内的画面是相邻阶段之间的过渡。</p>
 
-      <div class="matrix-label">矩阵 A（可对角化）</div>
+      <div class="matrix-label">矩阵 A（每项为 −100 到 100 的有限数；可尝试不可对角化的矩阵）</div>
       <div class="matrix-input">
-        <input id="diag-a" type="number" value="4" step="1">
-        <input id="diag-b" type="number" value="2" step="1">
-        <input id="diag-c" type="number" value="1" step="1">
-        <input id="diag-d" type="number" value="3" step="1">
+        <input id="diag-a" aria-label="矩阵第一行第一列" type="number" value="4" step="any">
+        <input id="diag-b" aria-label="矩阵第一行第二列" type="number" value="2" step="any">
+        <input id="diag-c" aria-label="矩阵第二行第一列" type="number" value="1" step="any">
+        <input id="diag-d" aria-label="矩阵第二行第二列" type="number" value="3" step="any">
       </div>
 
       <div class="btn-group">
         <button class="btn btn-primary" onclick="calcDiag()">计算对角化</button>
-        <button class="btn btn-secondary" onclick="playDiagAnim()">▶ 播放动画</button>
+        <button id="diagPlay" class="btn btn-secondary" onclick="playDiagAnim()" disabled>▶ 播放动画</button>
       </div>
 
       <div class="slider-group">
-        <label>动画阶段 <span id="diagPhase">准备就绪</span></label>
-        <input type="range" id="diagSlider" min="0" max="100" value="0" oninput="setDiagPhase(this.value)">
+        <label for="diagSlider">动画阶段 <span id="diagPhase">先计算并验证矩阵</span></label>
+        <input type="range" id="diagSlider" min="0" max="100" value="0" oninput="setDiagPhase(this.value)" disabled>
       </div>
 
-      <div id="diagResult" class="result-box" style="display:none">
+      <div id="diagResult" class="result-box" style="display:none" role="status" aria-live="polite">
         <h4>📊 对角化结果</h4>
         <p id="diagInfo"></p>
       </div>
@@ -304,14 +305,18 @@ document.querySelectorAll('.tab').forEach(tab => {
 // ============ MATH UTILS ============
 function eigen2x2(a,b,c,d) {
   const tr = a + d, det = a*d - b*c;
-  const disc = tr*tr - 4*det;
+  const disc = (a-d)*(a-d) + 4*b*c;
   let l1, l2, v1, v2;
   if (disc >= 0) {
     const sq = Math.sqrt(disc);
     l1 = (tr + sq) / 2;
     l2 = (tr - sq) / 2;
-    v1 = eigvec(a,b,c,d,l1);
-    v2 = eigvec(a,b,c,d,l2);
+    if (disc === 0 && a === d && b === 0 && c === 0) {
+      v1 = [1, 0]; v2 = [0, 1];
+    } else {
+      v1 = eigvec(a,b,c,d,l1);
+      v2 = eigvec(a,b,c,d,l2);
+    }
   } else {
     const re = tr/2, im = Math.sqrt(-disc)/2;
     l1 = {re, im};
@@ -322,13 +327,13 @@ function eigen2x2(a,b,c,d) {
 }
 
 function eigvec(a,b,c,d,l) {
-  let x, y;
-  if (Math.abs(b) > 1e-10) { x = b; y = l - a; }
-  else if (Math.abs(c) > 1e-10) { x = l - d; y = c; }
-  else if (Math.abs(l - a) > 1e-10) { x = 0; y = 1; }
-  else { x = 1; y = 0; }
-  const len = Math.sqrt(x*x+y*y);
-  return len > 1e-10 ? [x/len, y/len] : [1, 0];
+  const fromFirstRow = [b, l-a];
+  const fromSecondRow = [l-d, c];
+  const firstLength = Math.hypot(...fromFirstRow);
+  const secondLength = Math.hypot(...fromSecondRow);
+  const v = firstLength >= secondLength ? fromFirstRow : fromSecondRow;
+  const length = Math.hypot(...v);
+  return length > 0 ? [v[0]/length, v[1]/length] : [1, 0];
 }
 
 function matMul2(a,b) {
@@ -642,9 +647,11 @@ function updateCalcSteps() {
     eigen.disc >= 0
       ? `Δ = ${eigen.tr.toFixed(1)}² - 4×${eigen.det.toFixed(1)} = ${eigen.disc.toFixed(2)} ≥ 0\nλ₁ = ${eigen.l1.toFixed(3)}, λ₂ = ${eigen.l2.toFixed(3)}`
       : `Δ = ${eigen.disc.toFixed(2)} < 0，无实特征值`,
-    eigen.disc >= 0 && eigen.v1
-      ? `λ₁=${eigen.l1.toFixed(2)} → v⃗₁ = [${eigen.v1[0].toFixed(3)}, ${eigen.v1[1].toFixed(3)}]\nλ₂=${eigen.l2.toFixed(2)} → v⃗₂ = [${eigen.v2[0].toFixed(3)}, ${eigen.v2[1].toFixed(3)}]`
-      : '复数特征值，无实特征向量'
+    eigen.disc < 0
+      ? '复数特征值，无实特征向量'
+      : eigen.disc === 0 && !(a === d && b === 0 && c === 0)
+        ? `重特征值 λ=${eigen.l1.toFixed(2)}，只有一条独立特征线，例如 v⃗ = [${eigen.v1[0].toFixed(3)}, ${eigen.v1[1].toFixed(3)}]；无法组成二维特征基。`
+        : `λ₁=${eigen.l1.toFixed(2)} → v⃗₁ = [${eigen.v1[0].toFixed(3)}, ${eigen.v1[1].toFixed(3)}]\nλ₂=${eigen.l2.toFixed(2)} → v⃗₂ = [${eigen.v2[0].toFixed(3)}, ${eigen.v2[1].toFixed(3)}]`
   ];
   detail.textContent = steps[calcStep] || '';
 }
@@ -654,6 +661,44 @@ const diagCvs = document.getElementById('diagCanvas');
 const diagCtx = diagCvs.getContext('2d');
 let diagData = null;
 let diagAnimPhase = 0;
+let diagTimer = null;
+let diagFrameMatrix = [1, 0, 0, 1];
+
+function stopDiagAnim() {
+  if (diagTimer !== null) clearInterval(diagTimer);
+  diagTimer = null;
+}
+
+function resetDiag() {
+  stopDiagAnim();
+  diagData = null;
+  diagAnimPhase = 0;
+  document.getElementById('diagSlider').value = '0';
+  document.getElementById('diagSlider').disabled = true;
+  document.getElementById('diagPlay').disabled = true;
+  document.getElementById('diagPhase').textContent = '先计算并验证矩阵';
+  document.getElementById('diagResult').style.display = 'none';
+  document.getElementById('diagInfo').textContent = '';
+  ['ds1','ds2','ds3','ds4'].forEach(id => document.getElementById(id).classList.remove('active'));
+  drawDiag();
+}
+
+function readDiagMatrix() {
+  const inputs = ['diag-a','diag-b','diag-c','diag-d'].map(id => document.getElementById(id));
+  const values = inputs.map(input => {
+    const raw = input.value.trim();
+    const value = Number(raw);
+    const valid = raw !== '' && Number.isFinite(value) && Math.abs(value) <= 100;
+    input.setAttribute('aria-invalid', String(!valid));
+    return valid ? value : null;
+  });
+  return values.every(Number.isFinite) ? values : null;
+}
+
+function showDiagMessage(message) {
+  document.getElementById('diagInfo').textContent = message;
+  document.getElementById('diagResult').style.display = 'block';
+}
 
 function drawDiag() {
   const W = diagCvs.width, H = diagCvs.height;
@@ -668,9 +713,8 @@ function drawDiag() {
   diagCtx.moveTo(cx, 0); diagCtx.lineTo(cx, H);
   diagCtx.stroke();
 
-  const t = diagAnimPhase / 100;
-
   if (!diagData) {
+    diagFrameMatrix = [1, 0, 0, 1];
     // Draw standard basis
     drawArrow(diagCtx, cx, cy, cx+scale*2, cy, 'rgba(96,165,250,0.6)', 2);
     drawArrow(diagCtx, cx, cy, cx, cy-scale*2, 'rgba(96,165,250,0.6)', 2);
@@ -681,59 +725,22 @@ function drawDiag() {
     return;
   }
 
-  const {P, Pinv, Lambda, eigen} = diagData;
-
-  // Phase 1 (0-33): Original basis → eigenvector basis (P transform)
-  // Phase 2 (33-66): Diagonal scaling (Λ)
-  // Phase 3 (66-100): Back to original basis (P⁻¹)
-
-  let currentMatrix;
-  if (t <= 0.33) {
-    // Interpolate from I to P
-    const s = t / 0.33;
-    currentMatrix = [
-      1-s+P[0]*s, P[1]*s,
-      P[2]*s, 1-s+P[3]*s
-    ];
-    document.getElementById('diagPhase').textContent = '阶段1: 换到特征基 (P)';
-  } else if (t <= 0.66) {
-    // Apply Λ in eigenvector basis
-    const s = (t - 0.33) / 0.33;
-    // Interpolate scaling
-    const l1s = 1 + (Lambda[0]-1)*s;
-    const l2s = 1 + (Lambda[3]-1)*s;
-    // In eigenvector basis, scale then we need P * diag * ...
-    // Actually let's show it as: first show basis change, then scaling
-    const scaledP = [P[0]*l1s, P[1]*l2s, P[2]*l1s, P[3]*l2s];
-    currentMatrix = scaledP;
-    document.getElementById('diagPhase').textContent = '阶段2: 对角缩放 (Λ)';
+  const {P, Pinv, Lambda, A, eigen} = diagData;
+  const identity = [1, 0, 0, 1];
+  const scaledCoordinates = matMul2(Lambda, Pinv);
+  let from, to, fraction;
+  if (diagAnimPhase <= 33) {
+    from = identity; to = Pinv; fraction = diagAnimPhase / 33;
+    document.getElementById('diagPhase').textContent = '阶段1：P⁻¹ 进入特征坐标';
+  } else if (diagAnimPhase <= 66) {
+    from = Pinv; to = scaledCoordinates; fraction = (diagAnimPhase - 33) / 33;
+    document.getElementById('diagPhase').textContent = '阶段2：ΛP⁻¹ 沿特征坐标缩放';
   } else {
-    // Interpolate back
-    const s = (t - 0.66) / 0.34;
-    const A = matMul2(P, matMul2(Lambda, Pinv));
-    currentMatrix = [
-      Lambda[0]*(P[0]*(1-s)+A[0]*s) + Lambda[3]*P[1]*0, // simplified
-      P[0]*Lambda[0]*(1-s)+A[1]*s,
-      P[2]*Lambda[0]*(1-s)+A[2]*s,
-      Lambda[3]*(P[3]*(1-s)+A[3]*s)
-    ];
-    // Just use A directly for final phase
-    currentMatrix = [
-      P[0]+( A[0]-P[0])*s, P[1]+(A[1]-P[1])*s,
-      P[2]+(A[2]-P[2])*s, P[3]+(A[3]-P[3])*s
-    ];
-    // Hmm, let me simplify: just interpolate identity to A through the 3 phases
-    const s2 = (t - 0.66) / 0.34;
-    currentMatrix = [
-      A[0]*s2 + P[0]*(1-s2), // not quite right but visually ok
-      A[1]*s2 + P[1]*(1-s2),
-      A[2]*s2 + P[2]*(1-s2),
-      A[3]*s2 + P[3]*(1-s2)
-    ];
-    // Actually let's just show A applied
-    currentMatrix = A;
-    document.getElementById('diagPhase').textContent = '阶段3: 换回原基 (P⁻¹) → 结果 = A';
+    from = scaledCoordinates; to = A; fraction = (diagAnimPhase - 66) / 34;
+    document.getElementById('diagPhase').textContent = '阶段3：PΛP⁻¹ 回到原坐标，结果为 A';
   }
+  const currentMatrix = from.map((value, i) => value + (to[i] - value) * fraction);
+  diagFrameMatrix = currentMatrix;
 
   // Draw grid with current matrix
   const [ma,mb,mc,md] = currentMatrix;
@@ -765,38 +772,77 @@ function drawDiag() {
     // Transformed
     const tv1 = matVec2(currentMatrix, v1);
     const tv2 = matVec2(currentMatrix, v2);
-    drawArrow(diagCtx, cx, cy, cx+tv1[0]*scale*2.5, cy-tv1[1]*scale*2.5, 'rgba(251,191,36,0.7)', 3);
-    drawArrow(diagCtx, cx, cy, cx+tv2[0]*scale*2.5, cy-tv2[1]*scale*2.5, 'rgba(251,191,36,0.7)', 3);
+    let zeroImage = false;
+    for (const tv of [tv1, tv2]) {
+      if (Math.hypot(...tv) < 1e-10) zeroImage = true;
+      else drawArrow(diagCtx, cx, cy, cx+tv[0]*scale*2.5, cy-tv[1]*scale*2.5, 'rgba(251,191,36,0.7)', 3);
+    }
+    if (zeroImage) {
+      diagCtx.fillStyle = '#fbbf24';
+      diagCtx.beginPath();
+      diagCtx.arc(cx, cy, 6, 0, Math.PI*2);
+      diagCtx.fill();
+    }
   }
 }
 
 function calcDiag() {
-  const a = parseFloat(document.getElementById('diag-a').value)||0;
-  const b = parseFloat(document.getElementById('diag-b').value)||0;
-  const c = parseFloat(document.getElementById('diag-c').value)||0;
-  const d = parseFloat(document.getElementById('diag-d').value)||0;
+  resetDiag();
+  const values = readDiagMatrix();
+  if (!values) {
+    showDiagMessage('请输入 −100 到 100 之间的四个有限数，空值不能当作 0。');
+    return;
+  }
+  const [a,b,c,d] = values;
+  const A = [a,b,c,d];
   const eigen = eigen2x2(a,b,c,d);
 
-  if (eigen.disc < 0 || !eigen.v1) {
-    document.getElementById('diagInfo').textContent = '该矩阵有复数特征值，不可对角化（在实数域上）。请换一个矩阵试试。';
-    document.getElementById('diagResult').style.display = 'block';
+  if (!Number.isFinite(eigen.disc)) {
+    showDiagMessage('数值超出当前计算精度，请缩小矩阵元素。');
+    return;
+  }
+  if (eigen.disc < 0) {
+    showDiagMessage('该矩阵有共轭复特征值，不能在实数域对角化；本面板只展示实对角化。');
+    return;
+  }
+  const scalar = eigen.disc === 0 && a === d && b === 0 && c === 0;
+  if (eigen.disc === 0 && !scalar) {
+    showDiagMessage(`重特征值 λ=${eigen.l1.toPrecision(4)} 只有一条独立特征线，无法组成可逆的 P，不能在实数域对角化。`);
     return;
   }
 
   const P = [eigen.v1[0], eigen.v2[0], eigen.v1[1], eigen.v2[1]];
+  const detP = P[0]*P[3] - P[1]*P[2];
   const Pinv = inv2(P);
+  if (!Pinv || Math.abs(detP) <= 1e-10) {
+    showDiagMessage('两条计算出的特征向量几乎平行，当前数值精度不足以验证对角化；数学上可能仍可对角化，请换用更明确的数值。');
+    return;
+  }
   const Lambda = [eigen.l1, 0, 0, eigen.l2];
+  const diagonalCheck = matMul2(Pinv, matMul2(A, P));
+  const reconstructed = matMul2(P, matMul2(Lambda, Pinv));
+  const residual = Math.max(
+    ...diagonalCheck.map((value, i) => Math.abs(value - Lambda[i])),
+    ...reconstructed.map((value, i) => Math.abs(value - A[i]))
+  );
+  if (!Number.isFinite(residual) || residual > 1e-8*Math.max(1, ...A.map(Math.abs))) {
+    showDiagMessage('特征基的数值乘回误差超过当前教学精度，不能显示对角化验证；请换用更稳定的矩阵。');
+    return;
+  }
 
-  diagData = {P, Pinv, Lambda, eigen};
+  diagData = {P, Pinv, Lambda, A, eigen};
+  document.getElementById('diagPlay').disabled = false;
+  document.getElementById('diagSlider').disabled = false;
 
   const info = document.getElementById('diagInfo');
   info.innerHTML = `
     <span class="info-tag tag-red">λ₁ = ${eigen.l1.toFixed(3)}</span>
     <span class="info-tag tag-red">λ₂ = ${eigen.l2.toFixed(3)}</span><br><br>
+    ${scalar ? '<span>重根标量矩阵：选用独立的标准基 e₁、e₂。</span><br>' : ''}
     <strong style="color:#34d399">P =</strong> [${P.map(x=>x.toFixed(3)).join(', ')}]<br>
     <strong style="color:#fbbf24">Λ =</strong> diag(${eigen.l1.toFixed(3)}, ${eigen.l2.toFixed(3)})<br><br>
     <span style="font-size:12px;color:#94a3b8">
-      验证: P⁻¹AP = Λ ✓ &nbsp;|&nbsp; det(P) = ${(P[0]*P[3]-P[1]*P[2]).toFixed(3)}
+      数值核验通过：P⁻¹AP ≈ Λ，PΛP⁻¹ ≈ A；det(P) = ${detP.toPrecision(3)}，最大残差 ${residual.toExponential(2)}
     </span>`;
   document.getElementById('diagResult').style.display = 'block';
 
@@ -809,19 +855,36 @@ function calcDiag() {
 }
 
 function playDiagAnim() {
+  if (!diagData) return;
+  stopDiagAnim();
   diagAnimPhase = 0;
-  const interval = setInterval(() => {
+  document.getElementById('diagSlider').value = '0';
+  drawDiag();
+  diagTimer = setInterval(() => {
     diagAnimPhase += 1;
     document.getElementById('diagSlider').value = diagAnimPhase;
     drawDiag();
-    if (diagAnimPhase >= 100) clearInterval(interval);
+    if (diagAnimPhase >= 100) stopDiagAnim();
   }, 40);
 }
 
 function setDiagPhase(v) {
-  diagAnimPhase = parseInt(v);
+  if (!diagData) {
+    document.getElementById('diagSlider').value = '0';
+    return;
+  }
+  stopDiagAnim();
+  diagAnimPhase = Math.min(100, Math.max(0, Number(v) || 0));
+  document.getElementById('diagSlider').value = String(diagAnimPhase);
   drawDiag();
 }
+
+['diag-a','diag-b','diag-c','diag-d'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    resetDiag();
+    if (!readDiagMatrix()) showDiagMessage('矩阵输入无效：四项必须是 −100 到 100 之间的有限数。');
+  });
+});
 
 // ============ TAB 4: QUIZ ============
 const quizData = [

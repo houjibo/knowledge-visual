@@ -44,7 +44,7 @@ test('反射动画过零点时画布不把零向量画成箭头', async ({page})
     window.geoLabels = [];
     const original = drawArrow;
     window.drawArrow = function(ctx, x1, y1, x2, y2, color, width) {
-      if (ctx === geoCtx && color.includes('251,191,36')) window.geoArrows.push({x1,y1,x2,y2});
+      if (ctx === geoCtx && (color.includes('251,191,36') || color.includes('52,211,153'))) window.geoArrows.push({x1,y1,x2,y2,color});
       return original(ctx, x1, y1, x2, y2, color, width);
     };
     const fillText = geoCtx.fillText.bind(geoCtx);
@@ -61,14 +61,16 @@ test('反射动画过零点时画布不把零向量画成箭头', async ({page})
     arrows: window.geoArrows.splice(0),
     pixel: [...geoCtx.getImageData(geoCvs.width/2,geoCvs.height/2,1,1).data]
   }));
-  expect(midpoint.arrows).toHaveLength(3);
+  expect(midpoint.arrows.filter(arrow => arrow.color.includes('251,191,36'))).toHaveLength(3);
   expect(midpoint.pixel.slice(0,3)).toEqual([251,191,36]);
   expect(await page.evaluate(() => window.geoLabels)).toContain('M(t)v⃗₁');
   await progress(page, 100);
   await expect(page.locator('#geoAnimInfo')).toContainText('v⃗₂ ×-1.00（反向）');
   const finalArrows = await page.evaluate(() => window.geoArrows.splice(0));
-  expect(finalArrows).toHaveLength(2);
-  expect(finalArrows[1].y2).toBeGreaterThan(finalArrows[1].y1);
+  expect(finalArrows).toHaveLength(4);
+  const originalV2 = finalArrows[2], imageV2 = finalArrows[3];
+  const dot = (originalV2.x2-originalV2.x1)*(imageV2.x2-imageV2.x1) + (originalV2.y2-originalV2.y1)*(imageV2.y2-imageV2.y1);
+  expect(dot).toBeLessThan(0);
 });
 
 test('窄屏、键盘、文件直开和发布子路径可查看方向反馈', async ({page}) => {

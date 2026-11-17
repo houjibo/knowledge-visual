@@ -417,6 +417,7 @@
   - 初中、高中、大学目录的跨标签徽章、存储异常及同名主题隔离；不代表全部主题的完成条件已核验。 [math-stage-directory-progress.spec.js](../../tests/browser/math-stage-directory-progress.spec.js)、[math-progress.spec.js](../../tests/browser/math-progress.spec.js)
 - [特征值与特征向量 · 大学数学互动可视化](../../math/uni/eigenvalues.html)
   - 几何面板正负零特征值的最终反馈、反射动画过零点与画布零像、320px、键盘及发布路径；不覆盖重根、缺陷矩阵、对角化、全部习题或真实设备。 [university-eigenvector-sign-direction.spec.js](../../tests/browser/university-eigenvector-sign-direction.spec.js)
+  - 对角化面板不同实根、标量重根、缺陷与复根、近重根、零根、输入重置、三段动画端点、键盘及发布路径；不覆盖一般复对角化、矩阵幂、全部习题或真实设备。 [university-eigen-diagonalization-validity.spec.js](../../tests/browser/university-eigen-diagonalization-validity.spec.js)
 - [线性方程组 · 大学数学互动可视化](../../math/uni/linear-systems.html)
   - 高斯消元有符号系数预览、增广矩阵、代回、无效输入重置和键盘及发布路径；不覆盖任意矩阵完整参数解或数值稳定性。 [university-linear-system-signed-input.spec.js](../../tests/browser/university-linear-system-signed-input.spec.js)
 - [行列式与矩阵 · 大学数学互动可视化](../../math/uni/matrix.html)
