@@ -8,7 +8,10 @@
     tie:{A:[[2,1,0],[-2,0,1],[0,1,1]],b:[1,2,3]},
     'zero-column':{A:[[0,1,0],[0,0,1],[0,0,0]],b:[1,2,3]},
     singular:{A:[[1,1,1],[2,2,2],[0,1,1]],b:[1,2,3]},
-    zero:{A:[[0,0,0],[0,0,0],[0,0,0]],b:[0,0,0]}
+    inconsistent:{A:[[1,1,1],[2,2,2],[0,1,1]],b:[1,3,3]},
+    'rank-one':{A:[[1,1,0],[2,2,0],[0,0,0]],b:[1,2,0]},
+    zero:{A:[[0,0,0],[0,0,0],[0,0,0]],b:[0,0,0]},
+    'zero-inconsistent':{A:[[0,0,0],[0,0,0],[0,0,0]],b:[1,0,0]}
   };
   const $=id=>document.getElementById(id),f=PLUModel.format;
   const number=n=>typeof n==='number'?String(n):f(n);
@@ -16,7 +19,7 @@
   const matrix=M=>`[${M.map(vector).join(' ; ')}]`;
   function field(id,value,limit,labelText){const label=document.createElement('label'),input=document.createElement('input');input.id=id;input.type='number';input.min=String(-limit);input.max=String(limit);input.step='1';input.value=String(value);input.addEventListener('input',edited);label.htmlFor=id;label.append(labelText,input);return label;}
   function renderInputs(A,b){$('matrixEditor').replaceChildren();$('vectorEditor').replaceChildren();for(let i=0;i<3;i++)for(let j=0;j<3;j++)$('matrixEditor').append(field(`a-${i}-${j}`,A[i][j],3,`a${i+1}${j+1}`));for(let i=0;i<3;i++)$('vectorEditor').append(field(`b-${i}`,b[i],4,`b${i+1}`));}
-  function clearOutcome(){$('answer').hidden=true;$('predictionFeedback').textContent='';for(const id of ['m21Guess','m31Guess','detGuess','x1Guess'])$(id).value='';for(const id of ['pivotGuess','uniqueGuess'])$(id).value='';}
+  function clearOutcome(){$('answer').hidden=true;$('predictionFeedback').textContent='';for(const id of ['m21Guess','m31Guess','detGuess','augRankGuess','x1Guess'])$(id).value='';for(const id of ['pivotGuess','solutionGuess'])$(id).value='';}
   function read(){let valid=true;function readField(id,limit){const input=$(id),raw=input.value.trim(),n=Number(raw),okay=raw!==''&&Number.isInteger(n)&&Math.abs(n)<=limit;input.setAttribute('aria-invalid',String(!okay));if(!okay)valid=false;return n;}
     const A=Array.from({length:3},(_,i)=>Array.from({length:3},(_,j)=>readField(`a-${i}-${j}`,3))),b=Array.from({length:3},(_,i)=>readField(`b-${i}`,4));$('inputStatus').textContent=valid?'':'输入无效：A 每项须为 −3 到 3 的整数，b 每项须为 −4 到 4 的整数；空值不能当作 0。';return valid?{A,b}:null;}
   function edited(){$('preset').value='custom';clearOutcome();read();}
@@ -32,13 +35,18 @@
       return card(`第 ${k} 列：选主元并消元`,[`本轮前 U=${matrix(step.before)}`,`主元来自 A 原第 ${step.pivotOriginal+1} 行。${move}`,multipliers,`本轮后 U=${matrix(step.after)}`]);
     }));
     const detSign=s.swaps%2?'-':'+';
-    const cards=[card('P、L、U 的精确分解',[`P 的行顺序：A 原第 ${s.order.map(i=>i+1).join('、')} 行`,`P=${matrix(s.P)}`,`L=${matrix(s.L)}`,`U=${matrix(s.U)}`,`PA=${matrix(s.PA)}`,`LU=${matrix(s.LU)}`]),card('行列式、秩和可逆性',[`交换次数 ${s.swaps}，det(P)=${detSign}1`,`det(A)=det(P) × U₁₁U₂₂U₃₃=${s.det}`,`rank(A)=${s.rank}（独立子式判定）`,s.unique?'三阶满秩，Ax=b 有唯一解。':'A 奇异：Ax=b 没有唯一解；给定 b 可能无解，也可能有无穷多解。'])];
-    if(s.unique)cards.push(card('前代与回代',[`b=${vector(s.b)}；Pb=${vector(s.Pb)}`,`Ly=Pb，y=${vector(s.y)}`,`Ux=y，x=${vector(s.x)}`,`代回 Ax=${vector(s.Ax)}=b。`]));
-    else cards.push(card('奇异时的求解边界',[`b=${vector(s.b)}`,`U 至少有一个零对角主元，不能用通常的唯一解回代。`,`本工作台不据此声称无解或无穷多解；需另做相容性检查。`]));
+    const classification={unique:'唯一解',infinite:'无穷多解',none:'无解'}[s.classification];
+    const cards=[card('P、L、U 的精确分解',[`P 的行顺序：A 原第 ${s.order.map(i=>i+1).join('、')} 行`,`P=${matrix(s.P)}`,`L=${matrix(s.L)}`,`U=${matrix(s.U)}`,`PA=${matrix(s.PA)}`,`LU=${matrix(s.LU)}`]),card('行列式、秩和相容性',[`交换次数 ${s.swaps}，det(P)=${detSign}1`,`det(A)=det(P) × U₁₁U₂₂U₃₃=${s.det}`,`rank(A)=${s.rank}（独立子式判定）`,`rank([A|b])=${s.rankAugmented}；Ax=b：${classification}。`,s.rankAugmented>s.rank?'b 不在 A 的列空间。':'b 在 A 的列空间。']),card('右端也要一起消元',[`b=${vector(s.b)}；Pb=${vector(s.Pb)}`,`Ly=Pb，y=${vector(s.y)}`,`RREF([U|y])=${matrix(s.rref)}`,`rank([U|y])=rank([A|b])=${s.rankAugmented}。`])];
+    if(s.unique)cards.push(card('前代与回代',[`Ux=y，x=${vector(s.x)}`,`代回 Ax=${vector(s.Ax)}=b。`]));
+    else if(s.classification==='none')cards.push(card('矛盾行证明无解',[`RREF 第 ${s.contradictionRow+1} 行：[0, 0, 0 | 1]，即 0=1。`,`rank([A|b])=${s.rankAugmented}>rank(A)=${s.rank}；不存在满足 Ax=b 的 x。`]));
+    else{
+      const terms=s.nullBasis.map((_,i)=>`t${i+1}n${i+1}`);
+      cards.push(card('特解与全部自由方向',[`主元列：${s.pivotColumns.map(i=>`x${i+1}`).join('、')||'无'}；自由列：${s.freeColumns.map(i=>`x${i+1}`).join('、')}`,`自由变量全设 0：xₚ=${vector(s.particular)}`,`Axₚ=${vector(s.AxParticular)}=b。`,...s.nullBasis.map((n,i)=>`n${i+1}=${vector(n)}；An${i+1}=${vector(s.nullImages[i])}`),`完整解：x=xₚ+${terms.join('+')}，t₁…t${terms.length} 可取任意实数。`]));
+    }
     $('answerCards').replaceChildren(...cards);
-    $('verificationInfo').textContent=s.unique?'精确核验：PA=LU，Ly=Pb，Ux=y，Ax=b；行交换的奇偶性已计入 det(A)。':'精确核验：PA=LU；独立子式确认秩小于 3，故不存在唯一解。';
+    $('verificationInfo').textContent=s.unique?'精确核验：PA=LU，Ly=Pb，Ux=y，Ax=b；行交换的奇偶性已计入 det(A)。':s.classification==='none'?'精确核验：PA=LU，Ly=Pb；增广矩阵化简出现 0=1，因此无解。':'精确核验：PA=LU，Ly=Pb，Axₚ=b，所有 Anⱼ=0；特解加零空间给出全部解。';
   }
   function current(){const data=read();if(!data){clearOutcome();return null;}return PLUModel.solve(data.A,data.b);}
-  function check(){const s=current();if(!s)return;const checks=PLUModel.prediction(s,{pivot:$('pivotGuess').value,m21:$('m21Guess').value,m31:$('m31Guess').value,det:$('detGuess').value,unique:$('uniqueGuess').value,x1:$('x1Guess').value}),labels={pivot:'首列主元行',m21:'m₂₁',m31:'m₃₁',det:'行列式',unique:'唯一性',x1:'解的 x₁'},all=Object.values(checks).every(Boolean);$('predictionFeedback').textContent=Object.entries(checks).map(([key,okay])=>`${okay?'✓':'再核'} ${labels[key]}`).join('；')+(all?s.unique?'。已完成预测。':'。正确识别无唯一解；请换可逆矩阵完成三角求解任务。':'。可修改后重试，或查看示范。');if(all){show(s);if(s.unique&&typeof PageProgress!=='undefined')PageProgress.markDone('plu-elimination');}else $('answer').hidden=true;}
+  function check(){const s=current();if(!s)return;const checks=PLUModel.prediction(s,{pivot:$('pivotGuess').value,m21:$('m21Guess').value,m31:$('m31Guess').value,det:$('detGuess').value,augRank:$('augRankGuess').value,classification:$('solutionGuess').value,x1:$('x1Guess').value}),labels={pivot:'首列主元行',m21:'m₂₁',m31:'m₃₁',det:'行列式',augRank:'增广秩',classification:'解的类型',x1:'解的 x₁'},all=Object.values(checks).every(Boolean);$('predictionFeedback').textContent=Object.entries(checks).map(([key,okay])=>`${okay?'✓':'再核'} ${labels[key]}`).join('；')+(all?s.unique?'。已完成预测。':'。已正确判断解集；请换可逆矩阵完成三角求解任务。':'。可修改后重试，或查看示范。');if(all){show(s);if(s.unique&&typeof PageProgress!=='undefined')PageProgress.markDone('plu-elimination');}else $('answer').hidden=true;}
   $('preset').addEventListener('change',()=>{const example=presets[$('preset').value];if(example)setExample(example);});$('checkPrediction').addEventListener('click',check);$('revealAnswer').addEventListener('click',()=>{const s=current();if(!s)return;show(s);$('predictionFeedback').textContent='已显示示范；此操作不记录完成。';});setExample(presets.swap);
 })();

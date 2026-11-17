@@ -119,4 +119,4 @@
 4. 继续验证完成条件、存储失败和恢复；评估同名旧记录的人工归属方案，保留原始数据。
 5. 推送本地变更后核实远端 CI；继续维护全站加载与浏览器回归，扩展其他学段、真实设备和可访问性证据，不以加载通过替代功能验收。
 6. 按 [站点发布与专业化运营计划](site-operations.md) 持续维护已运行的静态发布包、门禁与公开站点，补充真实学习者反馈和回退演练证据。
-7. 大学线性代数沿 [MIT 18.06 对照](../assessments/university-linear-algebra-mit-18-06-2026-11-17.md) 逐项推进；SVD 有限工作台已公开验收，[Haar 基变换与图像系数截断实验](../assessments/university-haar-basis-compression-2026-11-17.md)已完成本地、远端及公网验收。[非正交基坐标与相似变换工作台](../assessments/university-nonorthogonal-basis-similarity-2026-11-17.md)已完成本地、远端及公网验收；[消元与 PLU 有限工作台](../assessments/university-plu-elimination-workbench-2026-11-18.md)已完成本地、远端及公网验收；下一步核一般维度、数值病态、奇异方程完整解集与真实图像编码，不把有限模型计为完整课程覆盖。
+7. 大学线性代数沿 [MIT 18.06 对照](../assessments/university-linear-algebra-mit-18-06-2026-11-17.md) 逐项推进；SVD 有限工作台已公开验收，[Haar 基变换与图像系数截断实验](../assessments/university-haar-basis-compression-2026-11-17.md)已完成本地、远端及公网验收。[非正交基坐标与相似变换工作台](../assessments/university-nonorthogonal-basis-similarity-2026-11-17.md)已完成本地、远端及公网验收；[消元与 PLU 有限工作台](../assessments/university-plu-elimination-workbench-2026-11-18.md)已完成本地、远端及公网验收；[奇异方程完整解增量](../assessments/university-plu-singular-solutions-2026-11-18.md)已完成本地专项；下一步核一般维度、数值病态与真实图像编码，不把有限模型计为完整课程覆盖。

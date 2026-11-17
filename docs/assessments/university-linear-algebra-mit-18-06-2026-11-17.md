@@ -6,8 +6,8 @@
 
 | 来源目标（按大纲原顺序概述） | 现有线索 | 可观察差距与下一步 |
 | --- | --- | --- |
-| 1 方阵消元、主元、回代、可逆性及 LU 分解 | [线性方程组](../../math/uni/linear-systems.html)有三元消元步骤；[矩阵](../../math/uni/matrix.html)展示 2×2 可逆性；[消元与 PLU 工作台](../../math/uni/plu-elimination.html)提供可编辑 3×3 整数矩阵、行交换、精确分解与三角求解。 | [局部核查](university-plu-elimination-workbench-2026-11-18.md)验证有限模型的 `PA=LU` 与可逆求解；一般维度、浮点稳定性及奇异方程完整解集仍待核。 |
-| 2 `Ax=b` 完整解、列空间、秩、零空间与自由变量 | [线性方程组](../../math/uni/linear-systems.html)有三维解的结构和秩的固定练习；[矩阵](../../math/uni/matrix.html)有二维零空间文字。 | 缺可自选矩阵、列空间成员判断及输出完整参数解的联动证据；现有页面对任意矩阵不构成完整求解保证。 |
+| 1 方阵消元、主元、回代、可逆性及 LU 分解 | [线性方程组](../../math/uni/linear-systems.html)有三元消元步骤；[矩阵](../../math/uni/matrix.html)展示 2×2 可逆性；[消元与 PLU 工作台](../../math/uni/plu-elimination.html)提供可编辑 3×3 整数矩阵、行交换、精确分解与三角求解。 | [局部核查](university-plu-elimination-workbench-2026-11-18.md)验证有限模型的 `PA=LU` 与可逆求解；一般维度和浮点稳定性仍待核；奇异方程的有限完整解见[增量核查](university-plu-singular-solutions-2026-11-18.md)。 |
+| 2 `Ax=b` 完整解、列空间、秩、零空间与自由变量 | [线性方程组](../../math/uni/linear-systems.html)有三维解的结构和秩的固定练习；[矩阵](../../math/uni/matrix.html)有二维零空间文字；[PLU 工作台](../../math/uni/plu-elimination.html)可编辑三阶 A 与 b，按增广秩区分相容性并给出特解和特殊零空间方向。 | [局部核查](university-plu-singular-solutions-2026-11-18.md)覆盖有界整数三阶输入的无解、唯一解与无穷多解；一般尺寸、真实数值稳定性、开放证明和学习者理解仍待核，不能推为任意矩阵求解保证。 |
 | 3 基、维数及四个基本子空间 | [线性方程组](../../math/uni/linear-systems.html)涉及齐次解空间维数和基础解系；[矩阵](../../math/uni/matrix.html)描述列向量张成空间的维数；[四个基本子空间](../../math/uni/four-subspaces.html)新增 2–3 行列整数矩阵工作台。 | [局部核查](university-four-subspaces-workbench-2026-11-17.md)已验证有限模型的四组基、维数、零空间方程和正交关系；一般实数矩阵、开放证明及真实学习者理解仍待核。 |
 | 4 投影与最小二乘 | [高中统计回归](../../math/high/statistics.html)有拟合直线和残差；[投影与最小二乘工作台](../../math/uni/least-squares.html)新增 3×2 有界整数案例。 | [局部核查](university-least-squares-projection-2026-11-17.md)验证列空间投影、残差正交、正规方程及相关列的非唯一系数；一般矩阵、真实数据、开放证明和学习者理解仍未验证。 |
 | 5 Gram–Schmidt 与 QR 分解 | [Gram–Schmidt 与 QR 工作台](../../math/uni/gram-schmidt-qr.html)提供可编辑 3×2 有界整数矩阵、预测投影减除、正交方向与精确薄 QR 乘回。 | [局部核查](university-gram-schmidt-qr-2026-11-17.md)覆盖满秩、相关列、零列与分数投影；一般实数矩阵、数值稳定性、开放证明及真实学习者理解仍待核。 |

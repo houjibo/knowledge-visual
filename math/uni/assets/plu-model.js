@@ -17,6 +17,19 @@
   function matVec(A,v){return A.map(row=>row.reduce((sum,a,k)=>add(sum,mul(a,v[k])),R(0)));}
   function determinant(A){const [[a,b,c],[d,e,f],[g,h,i]]=A;return a*(e*i-f*h)-b*(d*i-f*g)+c*(d*h-e*g);}
   function rank(A){if(determinant(A)!==0)return 3;for(let r=0;r<3;r++)for(let s=r+1;s<3;s++)for(let c=0;c<3;c++)for(let d=c+1;d<3;d++)if(A[r][c]*A[s][d]-A[r][d]*A[s][c]!==0)return 2;return A.flat().some(n=>n!==0)?1:0;}
+  function reduceAugmented(U,y){
+    const R=U.map((row,i)=>[...row.map(a=>rat(a.n,a.d)),rat(y[i].n,y[i].d)]),pivots=[];
+    let next=0;
+    for(let col=0;col<4&&next<3;col++){
+      let selected=next;while(selected<3&&isZero(R[selected][col]))selected++;
+      if(selected===3)continue;
+      if(selected!==next)[R[next],R[selected]]=[R[selected],R[next]];
+      const pivot=R[next][col];for(let j=col;j<4;j++)R[next][j]=div(R[next][j],pivot);
+      for(let i=0;i<3;i++)if(i!==next){const factor=R[i][col];for(let j=col;j<4;j++)R[i][j]=sub(R[i][j],mul(factor,R[next][j]));}
+      pivots.push({row:next,col});next++;
+    }
+    return {R,pivots};
+  }
   function solve(Ainput,binput){
     if(!Array.isArray(Ainput)||Ainput.length!==3||Ainput.some(row=>!Array.isArray(row)||row.length!==3||row.some(n=>!Number.isInteger(n)||Math.abs(n)>3))||!Array.isArray(binput)||binput.length!==3||binput.some(n=>!Number.isInteger(n)||Math.abs(n)>4))throw new RangeError('3×3 integer A −3..3 and b −4..4 required');
     const A=Ainput.map(row=>row.slice()),b=binput.slice(),U=A.map(row=>row.map(R)),L=[[R(1),R(0),R(0)],[R(0),R(1),R(0)],[R(0),R(0),R(1)]],order=[0,1,2],steps=[];
@@ -39,21 +52,37 @@
     if(PA.some((row,i)=>row.some((v,j)=>!eq(v,LU[i][j]))))throw new Error('PA=LU failed');
     const det=determinant(A),pivotProduct=U.reduce((v,row,i)=>mul(v,row[i]),R(swaps%2?-1:1));
     if(!eq(pivotProduct,R(det)))throw new Error('determinant sign failed');
-    const matrixRank=rank(A),unique=matrixRank===3;
-    const result={A,b,P,L,U,PA,LU,order,swaps,det,rank:matrixRank,unique,steps,firstPivot:steps[0].pivotOriginal,firstMultipliers:steps[0].multipliers.map(item=>item.value)};
+    const matrixRank=rank(A),unique=matrixRank===3,Pb=order.map(i=>R(b[i])),y=[];
+    for(let i=0;i<3;i++){let v=Pb[i];for(let j=0;j<i;j++)v=sub(v,mul(L[i][j],y[j]));y.push(v);}
+    const Ly=matVec(L,y);if(Ly.some((v,i)=>!eq(v,Pb[i])))throw new Error('forward substitution failed');
+    const reduced=reduceAugmented(U,y),coefficientPivots=reduced.pivots.filter(p=>p.col<3),rankAugmented=reduced.pivots.length;
+    if(coefficientPivots.length!==matrixRank)throw new Error('coefficient rank mismatch');
+    const classification=rankAugmented>matrixRank?'none':unique?'unique':'infinite';
+    const freeColumns=[0,1,2].filter(col=>!coefficientPivots.some(p=>p.col===col));
+    const result={A,b,P,L,U,PA,LU,order,swaps,det,rank:matrixRank,rankAugmented,classification,unique,steps,firstPivot:steps[0].pivotOriginal,firstMultipliers:steps[0].multipliers.map(item=>item.value),Pb,y,Ly,rref:reduced.R,pivotColumns:coefficientPivots.map(p=>p.col),freeColumns};
+    if(classification==='none'){
+      const contradiction=reduced.pivots.find(p=>p.col===3);
+      if(!contradiction||reduced.R[contradiction.row].slice(0,3).some(a=>!isZero(a))||!eq(reduced.R[contradiction.row][3],R(1)))throw new Error('missing contradiction row');
+      result.contradictionRow=contradiction.row;
+    }else{
+      const particular=[R(0),R(0),R(0)];for(const p of coefficientPivots)particular[p.col]=reduced.R[p.row][3];
+      const nullBasis=freeColumns.map(col=>{const v=[R(0),R(0),R(0)];v[col]=R(1);for(const p of coefficientPivots)v[p.col]=neg(reduced.R[p.row][col]);return v;});
+      const rationalA=A.map(row=>row.map(R)),AxParticular=matVec(rationalA,particular),nullImages=nullBasis.map(v=>matVec(rationalA,v));
+      if(AxParticular.some((v,i)=>!eq(v,R(b[i])))||nullImages.some(v=>v.some(a=>!isZero(a))))throw new Error('complete solution failed');
+      Object.assign(result,{particular,nullBasis,AxParticular,nullImages});
+    }
     if(unique){
-      const Pb=order.map(i=>R(b[i])),y=[],x=Array(3);
-      for(let i=0;i<3;i++){let v=Pb[i];for(let j=0;j<i;j++)v=sub(v,mul(L[i][j],y[j]));y.push(v);}
+      const x=Array(3);
       for(let i=2;i>=0;i--){let v=y[i];for(let j=i+1;j<3;j++)v=sub(v,mul(U[i][j],x[j]));x[i]=div(v,U[i][i]);}
-      const Ax=matVec(A.map(row=>row.map(R)),x),Ly=matVec(L,y),Ux=matVec(U,x);
-      if(Ax.some((v,i)=>!eq(v,R(b[i]))||!eq(Ly[i],Pb[i])||!eq(Ux[i],y[i])))throw new Error('triangular solve failed');
-      Object.assign(result,{Pb,y,x,Ax,Ly,Ux});
+      const Ax=matVec(A.map(row=>row.map(R)),x),Ux=matVec(U,x);
+      if(Ax.some((v,i)=>!eq(v,R(b[i]))||!eq(Ux[i],y[i])||!eq(x[i],result.particular[i])))throw new Error('triangular solve failed');
+      Object.assign(result,{x,Ax,Ux});
     }
     return result;
   }
   function parse(raw){const m=/^([+-]?\d{1,4})(?:\/(\d{1,4}))?$/.exec(String(raw).trim());if(!m)return null;const d=m[2]===undefined?1:Number(m[2]);return d===0?null:rat(Number(m[1]),d);}
   function prediction(s,p){
-    const pivot=s.firstPivot===null?'none':String(s.firstPivot+1),det=parse(p.det),checks={pivot:p.pivot===pivot,det:det!==null&&eq(det,R(s.det)),unique:p.unique===(s.unique?'yes':'no')};
+    const pivot=s.firstPivot===null?'none':String(s.firstPivot+1),det=parse(p.det),augRank=parse(p.augRank),checks={pivot:p.pivot===pivot,det:det!==null&&eq(det,R(s.det)),augRank:augRank!==null&&eq(augRank,R(s.rankAugmented)),classification:p.classification===s.classification};
     if(s.firstPivot!==null){checks.m21=eqOrFalse(parse(p.m21),s.firstMultipliers[0]);checks.m31=eqOrFalse(parse(p.m31),s.firstMultipliers[1]);}
     if(s.unique)checks.x1=eqOrFalse(parse(p.x1),s.x[0]);
     return checks;
