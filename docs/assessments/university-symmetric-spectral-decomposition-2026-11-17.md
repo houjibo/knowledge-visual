@@ -12,8 +12,9 @@
 
 - `node tests/symmetric-spectral-model.test.js`：6,655 个矩阵与向量案例，遍历全部 1,331 个允许的对称矩阵及五种测试向量；模型先做精确代数核验，测试再用独立数值特征值、正交性、矩阵与向量乘回交叉核对。
 - `npx playwright test tests/browser/university-symmetric-spectral-decomposition.spec.js --project=desktop --project=mobile`：8/8 通过，覆盖有理/无理特征值、对角、异号、标量重根、零矩阵、零向量、预测与揭示、无效输入、对称联动、目录、320px、键盘 Enter、文件直开及发布子路径。桌面与 320px 截图人工核对无横向溢出。
-- `CI=1 npm run check` 全部通过：全量交互 2,654 项、开发站与发布包各 406 页加载，新增页面桌面发布关键流程 4/4 通过。远端 Actions 和公网部署验证待本轮完成后补记。
+- `CI=1 npm run check` 全部通过：全量交互 2,654 项、开发站与发布包各 406 页加载，新增页面桌面发布关键流程 4/4 通过。
+- 功能提交 `3c986ddd6f43db5d3d3099fbee8b4896c79f0aaf` 的 [GitHub Actions run 44071755464](https://github.com/houjibo/knowledge-visual/actions/runs/44071755464) 成功；公网 `release-version.json` 的 revision 匹配该 SHA，`site_files_modified:false`。公网桌面／移动专项 6/6 通过，2 项仅本地文件与构建路径检查按配置跳过。
 
 ## 剩余差距
 
-模型仅处理 2×2 有界整数实对称矩阵和有界整数向量，不覆盖一般维度、非对称矩阵或浮点数值稳定性。没有开放证明、真实学习者对重根基不唯一的理解测试、完整屏幕阅读器验收；SVD、一般基变换和应用继续按 [MIT 18.06 十项目标对照](university-linear-algebra-mit-18-06-2026-11-17.md)推进。变更契约见 [OpenSpec](../../openspec/changes/university-symmetric-spectral-decomposition/proposal.md)。
+模型仅处理 2×2 有界整数实对称矩阵和有界整数向量，不覆盖一般维度、非对称矩阵或浮点数值稳定性。没有开放证明、真实学习者对重根基不唯一的理解测试、完整屏幕阅读器验收；SVD、一般基变换和应用继续按 [MIT 18.06 十项目标对照](university-linear-algebra-mit-18-06-2026-11-17.md)推进。变更契约见 [OpenSpec](../../openspec/changes/archive/2026-11-17-university-symmetric-spectral-decomposition/proposal.md)。
