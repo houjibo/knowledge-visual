@@ -12,8 +12,8 @@
 
 - `node tests/plu-model.test.js`：6007 个精确矩阵案例，独立计算行列式、二阶子式秩、Cramer 解与首列主元；另核两轮换行、L 旧乘数、分数、平局、零首列、零矩阵和无效输入。
 - 桌面／移动浏览器专项 8/8 通过，覆盖先错后改、主动揭示、完整步骤、两轮换行、奇异、零首列、320px、键盘、目录、文件直开与发布包子路径。Chromium 1100px 与 320px 实际截图检查了编辑面板、答案卡片和公式文本；两种宽度均无横向溢出。
-- 完整 `CI=1 npm run check` 通过：2686 项浏览器功能回归通过、8 项按配置跳过；开发站与发布包各 410 页加载通过，发布包功能专项通过。Actions 与公网结果在完成后补录。
+- 完整 `CI=1 npm run check` 通过：2686 项浏览器功能回归通过、8 项按配置跳过；开发站与发布包各 410 页加载通过，发布包功能专项通过。提交 `c7da29ed1eae615a2f1ebb240f35f51e6d37433d` 的 [Actions run 44129412326](https://github.com/houjibo/knowledge-visual/actions/runs/44129412326) 成功。公网 `release-version.json` 的 revision 匹配该提交且 `site_files_modified:false`；新页面和两个脚本均返回 200，公网桌面／移动专项 6 项通过、2 项本地专用场景按配置跳过。
 
 ## 剩余差距
 
-仅处理 3×3 有界整数与精确分数。一般尺寸、浮点数值稳定性、奇异方程组相容性和完整解集、开放推导及真实学习者理解仍未验证。变更契约见 [OpenSpec](../../openspec/changes/university-plu-elimination-workbench/proposal.md)。
+仅处理 3×3 有界整数与精确分数。一般尺寸、浮点数值稳定性、奇异方程组相容性和完整解集、开放推导及真实学习者理解仍未验证。变更契约见 [OpenSpec](../../openspec/changes/archive/2026-11-18-university-plu-elimination-workbench/proposal.md)。
