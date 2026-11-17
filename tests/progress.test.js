@@ -30,7 +30,7 @@ assert.deepEqual(stageProgress('chemistry/index.html', {
 }), ['尚未开始', '✓ 2/16 已完成 · 13%', '✓ 1/17 已完成 · 6%']);
 
 function homepage(store) {
-  const totals = {math: '214', physics: '55', chemistry: '46', science: '17'};
+  const totals = {math: '215', physics: '55', chemistry: '46', science: '17'};
   const cards = Object.keys(totals).map(subject => {
     const children = {'.sp-label': {}, '.sp-pct': {}, '.sp-fill': {style: {}}};
     return {children, getAttribute: key => key === 'data-subject' ? subject : totals[subject],
@@ -62,7 +62,7 @@ const document = {querySelectorAll: () => links, getElementById: () => ({replace
 vm.runInNewContext(math.slice(start, end) + '\nrenderStageProgress({legacy: {one: 1, "random-variables": 1}, scoped: {}});', {document,
   localStorage: {getItem: () => '{"one":1,"random-variables":1}'}});
 assert.equal(chips[0].textContent, '小学 ✓ 1/2 · 50%');
-assert.equal(chips[2].textContent, '高中 ✓ 1/19 · 5%');
+assert.equal(chips[2].textContent, '高中 ✓ 1/20 · 5%');
 console.log('Progress regression scenarios passed');
 
 // PageProgress is a global lexical binding, not a property on window.
