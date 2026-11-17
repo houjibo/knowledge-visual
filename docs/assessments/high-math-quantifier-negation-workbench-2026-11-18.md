@@ -2,6 +2,8 @@
 
 交付日期：2026-11-18。依据[HS25“常用逻辑用语”6 条来源核查](high-math-logic-language-hs25-2026-11-18.md)，本次为第 04—06 条增加局部学习任务：[全称与存在量词](../plans/curriculum-crosswalks/high-math-logic-language-hs25.json)、全称命题的否定、存在命题的否定。
 
+[OpenSpec 变更](../../openspec/changes/archive/2026-11-18-high-math-quantifier-negation-workbench/proposal.md)记录了能力边界、完成条件和验收场景。
+
 ## 设计决定与学习任务
 
 原计划建议在[条件关系页](../../math/high/logic-conditions.html)复用讨论域。该页已把三个条件实例答对记录为 `high:logic-conditions`；若直接扩充为六条任务，旧完成徽章会误表示量词任务也完成。因此新增独立的[量词与否定页](../../math/high/logic-quantifiers.html)与 `high:logic-quantifiers` 进度键，两页共用整数候选域和谓词目录，原有完成记录不改写。
@@ -19,4 +21,4 @@
 - `node tests/logic-quantifiers-model.test.js`：73,728 组讨论域／谓词对与两条否定恒等式通过。
 - `tests/browser/high-logic-quantifiers.spec.js`：桌面／移动专项 12 项通过，覆盖四类真值、双向否定、证据选择、错答重试、输入重置、独立进度、存储失败、320px、键盘、文件直开及发布子路径。
 - `CI=1 npm run check`：静态、课程映射和 OpenSpec 严格校验通过；浏览器交互回归 2,708 项通过、8 项按配置跳过；412 页全站冒烟和 412 页发布包加载均通过，新增页发布包专项 6/6 通过。
-- 远端 Actions 和公网核验结果待完成后补录。测试通过不代表真实学习者掌握。
+- 功能提交 `6cfc1d181684a50f236df16f75630523b060194a` 的 [GitHub Actions](https://github.com/houjibo/knowledge-visual/actions/runs/44169311047) 核心、桌面、移动、构建、部署和部署后校验均成功；公开版本清单 revision 与提交一致。公网专项桌面／移动 10 项通过、2 项按本地专用条件跳过，覆盖混合域反例与见证、两种否定、空域、独立进度、存储重试及窄屏。测试通过不代表真实学习者掌握。
