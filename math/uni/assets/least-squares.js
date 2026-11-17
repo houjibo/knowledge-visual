@@ -99,12 +99,13 @@
   }
   function showAnswer(solution) {
     current=solution; $('answer').hidden=false; diagram(solution);
-    const directions=solution.directions.length?solution.directions.map((d,i)=>`${i===0?'t':'s'}·${vector(d)}`).join(' + '):'无自由方向';
+    const directions=solution.directions.map((d,i)=>`${i===0?'t':'s'}·${vector(d)}`).join(' + ');
+    const solutionLine=directions?`x̂ = x̂₀ + ${directions}`:'x̂ = x̂₀（唯一）';
     const rankText=solution.rank===0?'零矩阵：AᵀA 不可逆，所有系数都得到同一零投影。':solution.unique?'两列独立：最小二乘系数唯一。':'两列相关：AᵀA 不可逆；系数不唯一，但投影唯一。';
     $('answerGrid').replaceChildren(
       card('投影与残差',[`p = ${vector(solution.projection)}`,`e = b−p = ${vector(solution.residual)}`,`‖e‖² = ${solution.minErrorSquared}`]),
       card('正规方程',[`AᵀA = ${matrix(solution.gram)}`,`Aᵀb = ${vector(solution.normalRight)}`,`RREF([AᵀA | Aᵀb]) = ${matrix(solution.normalRref)}`]),
-      card('一个系数解与全部最优解',[`x̂₀ = ${vector(solution.particular)}`,`x̂ = x̂₀ + ${directions}`,rankText]),
+      card('一个系数解与全部最优解',[`x̂₀ = ${vector(solution.particular)}`,solutionLine,rankText]),
       card('两种特殊情形',[solution.bInColumn?'e=0：b 已在 C(A) 中。':'e≠0：b 不在 C(A) 中。',solution.bOrthogonalToColumn?'p=0：b 与 C(A) 正交。':'p≠0：b 在 C(A) 中有非零分量。'])
     );
     $('verificationInfo').textContent=`精确核验：Aᵀe = ${vector(solution.verification.atResidual)}；p·e = ${solution.verification.projectionResidualDot}；b=p+e 成立。最小 ‖b−Ax‖² = ${solution.minErrorSquared}。`;

@@ -20,6 +20,7 @@ test('先预测 p 与 e，揭示不记完成，候选误差精确比较',async({
   await expect(page.locator('#answer')).toBeVisible();
   await expect(page.locator('#answerGrid')).toContainText('[7/6, 5/3, 13/6]');
   await expect(page.locator('#answerGrid')).toContainText('[-1/6, 1/3, -1/6]');
+  await expect(page.locator('#answerGrid')).toContainText('x̂ = x̂₀（唯一）');
   await expect(page.locator('#verificationInfo')).toContainText('最小 ‖b−Ax‖² = 1/6');
   await expect(page.locator('#geometry svg')).toHaveAttribute('role','img');
   expect(await page.evaluate(()=>PageProgress.isDone('least-squares'))).toBe(false);
@@ -51,6 +52,7 @@ test('相关列、零矩阵、零残差和零投影分支正确',async({page})=>
   await page.locator('#preset').selectOption('dependent');
   await page.locator('#revealAnswer').click();
   await expect(page.locator('#answerGrid')).toContainText('两列相关：AᵀA 不可逆；系数不唯一，但投影唯一');
+  await expect(page.locator('#answerGrid')).toContainText('x̂ = x̂₀ + t·[-2, 1]');
   await expect(page.locator('#answerGrid')).toContainText('[-1/9, -2/9, 2/9]');
   await page.locator('#candidate-0').fill('-1/9');
   await page.locator('#candidate-1').fill('0');
