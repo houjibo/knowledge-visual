@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：370；已登记部分交互证据：237；尚未登记：133。
+主题总数：371；已登记部分交互证据：238；尚未登记：133。
 
 ## 已登记部分交互证据
 
@@ -428,6 +428,8 @@
   - 高斯消元有符号系数预览、增广矩阵、代回、无效输入重置和键盘及发布路径；不覆盖任意矩阵完整参数解或数值稳定性。 [university-linear-system-signed-input.spec.js](../../tests/browser/university-linear-system-signed-input.spec.js)
 - [行列式与矩阵 · 大学数学互动可视化](../../math/uni/matrix.html)
   - 逆与秩面板的离散小行列式、零矩阵、秩一、键盘及发布路径；不覆盖整页、任意浮点矩阵和真实设备。 [university-matrix-small-determinant-correctness.spec.js](../../tests/browser/university-matrix-small-determinant-correctness.spec.js)
+- [正定性与二次型 · 大学数学互动可视化](../../math/uni/positive-definite.html)
+  - 桌面与移动视口核验六类二次型符号、对称与非对称矩阵、首个顺序主子式与行列式反例、非零符号及零方向见证、预测完成条件、无效输入、320px、键盘、文件直开及发布子路径；模型限 2×2 与 −5 到 5 整数，真实学习者及完整屏幕阅读器待核。 [university-positive-definite-quadratic-forms.spec.js](../../tests/browser/university-positive-definite-quadratic-forms.spec.js)
 - [随机过程入门 · 马尔可夫链 / 泊松过程 / 布朗运动](../../math/uni/stochastic-process.html)
   - 校验固定转移矩阵的平稳向量、单轨迹频率距离与重置、周期反例及练习反馈；不覆盖全部随机过程内容、真实设备和整页无障碍。 [university-markov-stationary-correctness.spec.js](../../tests/browser/university-markov-stationary-correctness.spec.js)
   - 二维布朗模拟的受控正态增量、尺度相关理论径向均值、参数重置、零随机数和有限样本说明；不涵盖泊松过程、整页无障碍或真实设备。 [university-brownian-distance-correctness.spec.js](../../tests/browser/university-brownian-distance-correctness.spec.js)

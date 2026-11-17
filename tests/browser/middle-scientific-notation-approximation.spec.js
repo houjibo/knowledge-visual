@@ -104,7 +104,7 @@ test('four independently answered classes save completion and appear in both dir
   await page.goto('/math/index.html');
   await expect(page.locator('#stageProgress')).toContainText('初中 ✓ 1/35');
   await page.goto('/');
-  await expect(page.locator('[data-subject="math"]')).toHaveAttribute('data-total', '208');
+  await expect(page.locator('[data-subject="math"]')).toHaveAttribute('data-total', '209');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('math');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
   await page.getByRole('searchbox', {name: '关键词'}).fill('科学记数法');
