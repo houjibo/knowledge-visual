@@ -121,7 +121,7 @@ test('storage rejection retains eligibility and corrupt source is not overwritte
 test('home search, stage count and progress all include the new AI topic', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现由发布后验收');
   await page.goto('/');
-  await expect(page.locator('[data-subject="ai"]')).toHaveAttribute('data-total', '11');
+  await expect(page.locator('[data-subject="ai"]')).toHaveAttribute('data-total', '12');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('误报');
@@ -131,7 +131,7 @@ test('home search, stage count and progress all include the new AI topic', async
   await expect(page.locator('#stage-progress')).toContainText('1/3');
   await expect(page.locator('[data-topic-slug="threshold-errors"] [data-completion]')).toContainText('已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="ai"] .sp-label')).toContainText('已学 1/11');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toContainText('已学 1/12');
 });
 
 test('320px layout and keyboard slider keep all key outcomes readable', async ({page}) => {

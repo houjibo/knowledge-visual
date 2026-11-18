@@ -118,7 +118,7 @@ test('identifies system elements, boundary and autonomous control', async ({page
   expect(remoteRequests).toEqual([]);
 
   await page.goto(siteRoot);
-  await expect(page.locator('[data-subject="ai"]')).toHaveAttribute('data-total', '11');
+  await expect(page.locator('[data-subject="ai"]')).toHaveAttribute('data-total', '12');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
   await page.getByRole('searchbox', {name: '关键词'}).fill('智慧社会系统');

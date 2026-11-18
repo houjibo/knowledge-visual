@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：384；已登记部分交互证据：247；尚未登记：137。
+主题总数：385；已登记部分交互证据：248；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -14,6 +14,8 @@
   - 桌面与移动视口核对虚构工件分值、阈值4/9/13、四格结果、精确率和召回率、先预测后揭晓、两种目标判断、保存失败与损坏、首页搜索、320px键盘、file直开及发布子路径；真实模型、设备、完整屏幕阅读器和学习效果未验收。 [high-ai-threshold-errors.spec.js](../../tests/browser/high-ai-threshold-errors.spec.js)
 - [训练与测试集实验室 · 高中人工智能训练集和留出测试集样本及分类阈值](../../ai/high/train-test-generalization.html)
   - 桌面与移动浏览器验证固定样本下训练/测试准确率、测试标签揭示、调参警示、键盘阈值、进度存储拒绝和高中目录计数；现实数据代表性、真实设备和整页屏幕阅读器未验收。 [high-ai-train-test-visualization.spec.js](../../tests/browser/high-ai-train-test-visualization.spec.js)
+- [AI 应用识别实验室 · 初中人工智能](../../ai/middle/ai-application-recognition.html)
+  - 桌面与移动验证去品牌化案例中 AI 应用与固定自动化的区分（是否从数据学习/适应新情况）、学习/生活/工作多影响域归类、AI 可可靠辅助与需人类复核任务的能力边界、无真实服务与外部请求、损坏/拒写进度恢复、首页 AI 学科计数、320px键盘、文件直开和发布子路径；案例为本地脚本而非真实应用，真实应用调研、平台实测、学习者迁移和整页屏幕阅读器未验收。 [middle-ai-application-recognition.spec.js](../../tests/browser/middle-ai-application-recognition.spec.js)
 - [数据标签侦察实验室 · 初中人工智能](../../ai/middle/data-label-quality.html)
   - 桌面与 320px 浏览器验证冲突标签的平票、更正、排除、复核依据、重置、键盘选择、首页搜索与进度；样例是固定虚构示意，真实模型训练、真实数据判断、真实设备和整页屏幕阅读器未验收。 [middle-ai-data-label-quality.spec.js](../../tests/browser/middle-ai-data-label-quality.spec.js)
 - [信息最小化实验室 · 初中人工智能](../../ai/middle/data-minimization.html)
