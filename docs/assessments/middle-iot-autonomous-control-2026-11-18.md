@@ -22,3 +22,7 @@
 ## 交叉表结论
 
 CE25-IT-L4-IOT-06 从 `missing` 调整为 `partial`，第四学段信息科技 19 条随之变为 0 已验证、16 部分、3 缺失（仍缺物联网实验规程 IOT-03、AI 应用识别 AI-01、智慧社会 AI-06）。本页为自主可控与物联网安全提供可操作的局部证据；仍缺真实供应链调研、安全运维实践、学习者自主任务及迁移效果证据。下一步可在受控环境核对权威来源的设备维护案例；在教材实际节目录与课标要求对应核实前，不把教材目录当成标准覆盖证明。
+
+## 公开验收
+
+提交 `85f81b61b745a43abfc690b18ba9df77eabab522` 已推送至 `main`。GitHub Actions [run #44277151815](https://github.com/houjibo/knowledge-visual/actions/runs/44277151815) 的 core checks、桌面/移动浏览器回归、构建、Pages 部署和 `verify-deployment` 七个 job 均成功。本地全量回归桌面 2,226 项通过、2 项按公网门控跳过，移动 2,222 项通过、6 项跳过（合计 4,448 通过、8 跳过，跳过均为公网专项）；全站加载冒烟与发布包页面加载均 417/417。公开 `release-version.json` 的 revision 与该提交一致、`site_files_modified` 为 `false`；新页面与两个脚本资源返回 HTTP 200，且与提交逐字节一致。另在公网页面用受控浏览器跑通完整三步流程：3/3 步骤完成、本机进度保存、快照显示连接真实设备为否且网络请求数为 0、除同源资源外无任何第三方请求、无页面错误。测试装置的“无外部请求”断言以 loopback 为白名单，手动指向公网时会把同源资源计入，这是既有 spec 的本地/发布包设计，不代表页面发起第三方调用；CI 的公网核验由专用 `published-live-site.spec.js` 承担。[OpenSpec 变更归档](../../openspec/changes/archive/2026-11-18-ce25-iot-autonomous-control-security-lab/proposal.md)。
