@@ -129,11 +129,11 @@ test('seven verified challenges save progress and match stage and home totals', 
   await expect(page.locator('#progress-status')).toContainText('已保存');
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)), progressKey)).toEqual({'information-system': true});
   await page.locator('.footer-nav a[href="index.html"]').click();
-  await expect(page.locator('#stage-progress')).toContainText('1/9');
+  await expect(page.locator('#stage-progress')).toContainText('1/10');
   await expect(page.locator('[data-topic-slug="information-system"] [data-completion]')).toContainText('已完成');
   await page.goto(siteRoot);
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '24');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/24');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '25');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/25');
 });
 
 test('corrupt progress stays intact until retry after storage repair', async ({page}) => {

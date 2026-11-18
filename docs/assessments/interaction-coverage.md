@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：378；已登记部分交互证据：241；尚未登记：137。
+主题总数：379；已登记部分交互证据：242；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -79,6 +79,8 @@
   - 桌面与移动模拟视口验证扰动下的固定时序/传感反馈预测、逐轮轨迹、同分情境、本地与云端断网及联网路径、自主可控证据边界、异常存储与重试、目录/搜索/进度、320px键盘、直接文件和发布子路径；不覆盖真实设备、真实性能或学习者迁移。 [high-iot-feedback-control.spec.js](../../tests/browser/high-iot-feedback-control.spec.js)
 - [小型网络组装与带宽实验室 · 高中计算机](../../computer/high/network-assembly.html)
   - 桌面与移动验证链路组装/断线、设备路径、错误与正确瓶颈预测、同参数 Wi-Fi/有线吞吐和传输时间、速率变更使旧结论失效、本机完成与损坏存储重试、目录搜索、320px 键盘、文件直开和发布子路径；模型参数非实测值，真实网络配置、设备课堂和整页屏幕阅读器仍待核。 [high-network-assembly.spec.js](../../tests/browser/high-network-assembly.spec.js)
+- [负责任发布与传播实验室 · 高中计算机](../../computer/high/responsible-publishing.html)
+  - 桌面与移动验证虚构节水成果发布任务下的平台按需求选用、发布前来源/隐私/授权/权限四项检查与问题稿拦截、撤回原件与已转发副本的传播边界、无真实发布与外部请求、损坏/拒写进度恢复、首页搜索与主题计数、320px键盘、文件直开和发布子路径；平台与稿件为本地脚本而非真实平台，受控真实平台、真实传播后果、学习者迁移和整页屏幕阅读器未验收。 [high-responsible-publishing.spec.js](../../tests/browser/high-responsible-publishing.spec.js)
 - [查找策略对照实验室 · 高中计算机](../../computer/high/search-strategies.html)
   - 桌面与移动模拟视口验证7/15项顺序与二分逐步比较、候选排除、首位与靠后反转、未找到规模对照、乱序阻止、四组预测与前提完成、计时器、异常存储、搜索和高中进度、320px键盘、减少动态、file及发布子路径；真实设备、屏幕阅读器和学习者效果仍待核验。 [high-computer-search-strategies.spec.js](../../tests/browser/high-computer-search-strategies.spec.js)
 - [二进制像素工坊 · 初中计算机](../../computer/middle/binary-pixels.html)

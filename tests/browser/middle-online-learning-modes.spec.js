@@ -119,7 +119,7 @@ test('wrong conclusion does not save, and storage denial can be retried', async 
 test('home search, counts and stage directory discover the new topic', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网发现由发布后验收');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '24');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '25');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
   await page.getByRole('searchbox', {name: '关键词'}).fill('交流方式选择');
@@ -129,7 +129,7 @@ test('home search, counts and stage directory discover the new topic', async ({p
   await expect(page.locator('#stage-progress')).toContainText('1/9');
   await expect(page.locator('[data-topic-slug="online-learning-modes"] [data-completion]')).toContainText('已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/24');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/25');
 });
 
 test('controls stay disabled while the lesson controller loads', async ({page}) => {
