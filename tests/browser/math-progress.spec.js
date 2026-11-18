@@ -32,7 +32,7 @@ test('旧记录保留：无冲突可读，同名记录不猜测学段', async ({
   await page.goto('/math/index.html');
   await expect(page.locator('#mathLegacyWarning')).toBeVisible();
   await expect(page.locator('#mathLegacyWarning')).toContainText('导数');
-  await expect(page.locator('#stageProgress')).toContainText('初中 ✓ 1/35');
+  await expect(page.locator('#stageProgress')).toContainText('初中 ✓ 1/36');
   await expect(page.locator('#stageProgress')).toContainText('高中 尚未开始');
   await expect(page.locator('#stageProgress')).toContainText('大学 尚未开始');
   await page.goto('/math/middle/index.html');

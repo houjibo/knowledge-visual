@@ -102,7 +102,7 @@ test('four independently answered classes save completion and appear in both dir
   await page.goto('/math/middle/index.html');
   await expect(page.locator('a[href="scientific-notation-approximation.html"] .progress-badge')).toHaveText('✓');
   await page.goto('/math/index.html');
-  await expect(page.locator('#stageProgress')).toContainText('初中 ✓ 1/35');
+  await expect(page.locator('#stageProgress')).toContainText('初中 ✓ 1/36');
   await page.goto('/');
   await expect(page.locator('[data-subject="math"]')).toHaveAttribute('data-total', '217');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('math');
