@@ -25,3 +25,7 @@
 ## 未覆盖与后续
 
 选学的开放真实情境、课堂教学证据与更一般的求解方法仍待补；若需 verified，须另立含学习者反馈的工作流，而不是继续增加固定脚本案例。
+
+## 公开验收
+
+功能提交 `db3c63b` 与测试修复提交 `bbfd7971d6b19e5227866222fd86a6feb5e0ca58` 已推送至 `main`。GitHub Actions [run #44358787042](https://github.com/houjibo/knowledge-visual/actions/runs/44358787042) 的 core checks、桌面/移动浏览器回归、构建、Pages 部署和 `verify-deployment` 七个 job 均成功（首个 feat 运行因 math-progress 与 scientific-notation 两个 spec 硬编码数学初中阶段分母“1/35”而失败，已在修复提交中同步为 1/36 并全量复跑通过）。本地全量回归桌面 2,254 项、移动 2,250 项通过，跳过项均为公网门控；全站加载冒烟 421/421；发布门禁退出 0。公开 `release-version.json` 的 revision 与修复提交一致、`site_files_modified` 为 `false`；新页面与模型脚本返回 HTTP 200 且与提交逐字节一致。公网受控浏览器确认选学标注可见、case-1 整数解反馈正确、无第三方请求、无页面错误。[OpenSpec 变更归档](../../openspec/changes/archive/2026-11-19-ce25-three-var-linear-system-optional-lab/proposal.md)。
