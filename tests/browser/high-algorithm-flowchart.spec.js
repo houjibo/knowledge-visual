@@ -91,10 +91,10 @@ test('constructs matching flowchart and pseudocode, checks predictions, and trac
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)), progressKey)).toEqual({'algorithm-flowchart': true});
 
   await page.locator('.footer-nav a[href="index.html"]').click();
-  await expect(page.locator('#stage-progress')).toContainText('1/10');
+  await expect(page.locator('#stage-progress')).toContainText('1/11');
   await page.goto('/index.html');
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '25');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/25');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '26');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/26');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('流程图');
