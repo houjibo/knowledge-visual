@@ -60,9 +60,9 @@ test('实际下载、模拟丢失、选择文件和恢复后判断独立副本',
   await expect(page.locator('#check-conclusion')).toBeDisabled();
   await page.getByRole('link',{name:'← 返回初中计算机'}).click();
   await expect(page.locator('[data-topic-slug="local-backup-restore"] [data-completion]')).toContainText('已完成');
-  await expect(page.locator('#stage-progress')).toContainText('1/12');
+  await expect(page.locator('#stage-progress')).toContainText('1/13');
   await page.getByRole('link',{name:'首页',exact:true}).click();
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total','29');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total','30');
 });
 
 test('旧版本与当前版本不同，预览不覆盖且未保存草稿阻止恢复', async ({page}) => {

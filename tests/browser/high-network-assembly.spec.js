@@ -76,8 +76,8 @@ test('assembles routes, gates simulation behind prediction and compares shared t
   await expect(page.locator('#stage-progress')).toContainText('1/11');
   await expect(page.locator('[data-topic-slug="network-assembly"] [data-completion]')).toContainText('已完成');
   await page.goto(siteRoot);
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '29');
-  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/29');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '30');
+  await expect(page.locator('[data-subject="computer"] .sp-label')).toContainText('已学 1/30');
   expect(errors).toEqual([]);
 });
 

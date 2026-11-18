@@ -121,7 +121,7 @@ def main():
                 errors.append(f'{subject}/{stage}: progress total {matches[0]}, topic cards {count}')
     subject_topics = {
         'computer/primary/index.html': ['robot-algorithms.html', 'repeat-loops.html', 'conditional-robot.html', 'sequential-search.html', 'adjacent-swap-sort.html'],
-        'computer/middle/index.html': ['binary-pixels.html', 'message-transfer.html', 'network-paths.html', 'webpage-publishing.html', 'online-collaboration.html', 'online-learning-modes.html', 'identity-encryption.html', 'local-backup-restore.html', 'iot-sensor-feedback.html', 'iot-internet-distinction.html', 'iot-device-identity.html', 'iot-autonomous-control.html'],
+        'computer/middle/index.html': ['binary-pixels.html', 'message-transfer.html', 'network-paths.html', 'webpage-publishing.html', 'online-collaboration.html', 'online-learning-modes.html', 'identity-encryption.html', 'local-backup-restore.html', 'iot-sensor-feedback.html', 'iot-internet-distinction.html', 'iot-device-identity.html', 'iot-autonomous-control.html', 'iot-experiment-procedure.html'],
         'computer/high/index.html': ['data-workbench.html', 'search-strategies.html', 'information-system.html', 'ai-system-dialogue.html', 'genai-responsible-use.html', 'responsible-publishing.html', 'device-platform-choice.html', 'iot-feedback-control.html', 'network-assembly.html', 'algorithm-flowchart.html', 'gcd-algorithm.html'],
         'computer/uni/index.html': ['stack-queue.html'],
         'ai/primary/index.html': ['feature-classification-lab.html'],

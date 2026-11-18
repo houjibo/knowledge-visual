@@ -99,7 +99,7 @@ test('matches device identities, infers personal data and chooses privacy protec
   expect(remoteRequests).toEqual([]);
 
   await page.goto(siteRoot);
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '29');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '30');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
   await page.getByRole('searchbox', {name: '关键词'}).fill('物联设备数字身份');

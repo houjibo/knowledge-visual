@@ -102,7 +102,7 @@ test('judges supply chain, maintenance and autonomous control', async ({page}) =
   expect(remoteRequests).toEqual([]);
 
   await page.goto(siteRoot);
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '29');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '30');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
   await page.getByRole('searchbox', {name: '关键词'}).fill('物联网自主可控');
