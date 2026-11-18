@@ -95,7 +95,7 @@ test('chooses a device, matches stages to platforms and uses platform data', asy
   expect(remoteRequests).toEqual([]);
 
   await page.goto(siteRoot);
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '26');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '27');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('设备与平台选择');

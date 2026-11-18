@@ -74,9 +74,9 @@ test('六项独立完成后保存，刷新后本轮重新开始，目录和首�
   await expect(page.locator('#progress-status')).toContainText('此前已记录');
   await page.getByRole('link',{name:'← 返回初中计算机'}).click();
   await expect(page.locator('a[href="identity-encryption.html"] [data-completion]')).toContainText('已完成');
-  await expect(page.locator('#stage-progress')).toContainText('1/9');
+  await expect(page.locator('#stage-progress')).toContainText('1/10');
   await page.getByRole('link',{name:'首页',exact:true}).click();
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total','26');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total','27');
 });
 
 test('存储失败不谎报完成并允许重试', async ({page}) => {
