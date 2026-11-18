@@ -108,7 +108,7 @@ test('初中目录、AI 总进度和隐私关键词搜索包含新主题', async
   await expect(page.locator('#stage-progress')).toHaveText('已完成 0/6 个主题');
   await expect(page.locator('[data-topic-slug="data-minimization"]')).toContainText('信息最小化实验室');
   await page.goto('/');
-  await expect(page.locator('.subject-card[href="ai/index.html"]')).toContainText('10 个知识点');
+  await expect(page.locator('.subject-card[href="ai/index.html"]')).toContainText('11 个知识点');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('ai');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('middle');
   await page.getByRole('searchbox', {name: '关键词'}).fill('个人信息');
