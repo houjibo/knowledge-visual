@@ -125,7 +125,7 @@ def main():
         'computer/high/index.html': ['data-workbench.html', 'search-strategies.html', 'information-system.html', 'ai-system-dialogue.html', 'genai-responsible-use.html', 'responsible-publishing.html', 'device-platform-choice.html', 'iot-feedback-control.html', 'network-assembly.html', 'algorithm-flowchart.html', 'gcd-algorithm.html'],
         'computer/uni/index.html': ['stack-queue.html'],
         'ai/primary/index.html': ['feature-classification-lab.html'],
-        'ai/middle/index.html': ['data-label-quality.html', 'data-source-coverage.html', 'rule-learned-comparison.html', 'output-verification.html', 'data-minimization.html'],
+        'ai/middle/index.html': ['data-label-quality.html', 'data-source-coverage.html', 'rule-learned-comparison.html', 'output-verification.html', 'data-minimization.html', 'smart-society-system.html'],
         'ai/high/index.html': ['classifier-lab.html', 'train-test-generalization.html', 'threshold-errors.html'],
         'ai/uni/index.html': ['neuron-forward-pass.html'],
         'simulation-world/index.html': ['solar-system.html', 'gear-transmission.html', 'belt-pulley.html', 'slider-crank.html', 'robot-arm.html', 'assembly-line.html', 'warehouse-sort.html', 'cam-factory.html', 'line-shaft-workshop.html', 'steam-engine.html'],

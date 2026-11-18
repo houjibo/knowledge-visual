@@ -56,10 +56,10 @@ test('逐项移除五个额外字段，推荐保持不变并完成本机进度',
     .toEqual({'data-minimization': true});
 
   await page.goto('/ai/middle/index.html');
-  await expect(page.locator('#stage-progress')).toHaveText('本机已记录完成 1/5 个主题。');
+  await expect(page.locator('#stage-progress')).toHaveText('本机已记录完成 1/6 个主题。');
   await expect(page.locator('[data-topic-slug="data-minimization"] [data-completion]')).toHaveText('✓ 已完成');
   await page.goto('/');
-  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/10');
+  await expect(page.locator('[data-subject="ai"] .sp-label')).toHaveText('已学 1/11');
 });
 
 test('存储被拒绝时仍能完成练习并如实提示', async ({page}) => {
@@ -105,7 +105,7 @@ test('键盘可移除字段，320px 下完整练习无横向溢出', async ({pag
 
 test('初中目录、AI 总进度和隐私关键词搜索包含新主题', async ({page}) => {
   await page.goto('/ai/middle/index.html');
-  await expect(page.locator('#stage-progress')).toHaveText('已完成 0/5 个主题');
+  await expect(page.locator('#stage-progress')).toHaveText('已完成 0/6 个主题');
   await expect(page.locator('[data-topic-slug="data-minimization"]')).toContainText('信息最小化实验室');
   await page.goto('/');
   await expect(page.locator('.subject-card[href="ai/index.html"]')).toContainText('10 个知识点');

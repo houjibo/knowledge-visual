@@ -67,9 +67,9 @@ test('本机进度需本轮训练并对照，刷新、目录和首页数量一�
   await expect(page.locator('#test-button')).toBeDisabled();
   await page.getByRole('link',{name:'← 返回初中人工智能'}).click();
   await expect(page.locator('[data-topic-slug="rule-learned-comparison"] [data-completion]')).toContainText('已完成');
-  await expect(page.locator('#stage-progress')).toContainText('1/5');
+  await expect(page.locator('#stage-progress')).toContainText('1/6');
   await page.getByRole('link',{name:'首页',exact:true}).click();
-  await expect(page.locator('[data-subject="ai"]')).toHaveAttribute('data-total','10');
+  await expect(page.locator('[data-subject="ai"]')).toHaveAttribute('data-total','11');
 });
 
 test('存储损坏时保留数据且可重试', async ({page}) => {

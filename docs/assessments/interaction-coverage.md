@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：383；已登记部分交互证据：246；尚未登记：137。
+主题总数：384；已登记部分交互证据：247；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -24,6 +24,8 @@
   - 桌面与 320px 视口核验四条固定模拟回答，检查证据支持/反驳/不足、漏答聚焦、错答修正、本机存储失败及键盘提交；真实设备和屏幕阅读器尚未全面验收。 [middle-ai-output-verification.spec.js](../../tests/browser/middle-ai-output-verification.spec.js)
 - [手写规则与学习阈值 · 初中人工智能](../../ai/middle/rule-learned-comparison.html)
   - 桌面与移动验证训练子集、阈值误差与并列规则、同一留出集合对照、测试参与选择提示、进度异常、320px 键盘、文件直开及发布子路径；真实数据、真实学习迁移、实机和整页屏幕阅读器仍待核。 [middle-ai-rule-learned.spec.js](../../tests/browser/middle-ai-rule-learned.spec.js)
+- [智慧社会系统辨析实验室 · 初中人工智能](../../ai/middle/smart-society-system.html)
+  - 桌面与移动验证虚构城市案例的智慧社会系统六要素匹配（感知/网络/平台/决策/应用/制度）、系统与单一自动化设备边界（感应门、定时路灯反例）、自主可控做法与单一厂商锁定风险、无真实平台与外部请求、损坏/拒写进度恢复、首页 AI 学科计数、320px键盘、文件直开和发布子路径；案例为本地脚本而非真实城市系统，真实系统调研、平台运维、学习者迁移和整页屏幕阅读器未验收。 [middle-ai-smart-society-system.spec.js](../../tests/browser/middle-ai-smart-society-system.spec.js)
 - [特征线索分类实验室 · 小学人工智能](../../ai/primary/feature-classification-lab.html)
   - 桌面与移动浏览器检查颜色/形状多数规则、并列不确定、测试标签揭示、看过样例后的比较提示、键盘、进度存储拒绝、首页搜索和 320px；样例是固定合成示意，真实模型训练、真实图像、真实设备和整页屏幕阅读器未验收。 [primary-ai-feature-classification.spec.js](../../tests/browser/primary-ai-feature-classification.spec.js)
 - [神经元前向计算器 · 大学人工智能双输入单输出神经元示意图](../../ai/uni/neuron-forward-pass.html)

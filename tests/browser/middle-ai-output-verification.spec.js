@@ -114,7 +114,7 @@ test('键盘可以完成判断，320px 下证据和分类选项无横向溢出',
 
 test('初中目录、首页搜索和学科总数包含新主题', async ({page}) => {
   await page.goto('/ai/middle/index.html');
-  await expect(page.locator('#stage-progress')).toHaveText('已完成 0/5 个主题');
+  await expect(page.locator('#stage-progress')).toHaveText('已完成 0/6 个主题');
   await expect(page.locator('[data-topic-slug="output-verification"]')).toContainText('回答核验实验室');
   await page.goto('/');
   await expect(page.locator('.subject-card[href="ai/index.html"]')).toContainText('10 个知识点');
