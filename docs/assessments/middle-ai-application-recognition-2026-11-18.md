@@ -22,3 +22,7 @@
 ## 交叉表结论
 
 CE25-IT-L4-AI-01 从 `missing` 调整为 `partial`，第四学段信息科技 19 条随之变为 0 已验证、18 部分、1 缺失（仅剩物联网实验规程 IOT-03）。本页为 AI 应用识别、影响归类与能力边界提供可操作的局部证据；仍缺真实应用调研、平台实测、学习者自主任务及迁移效果证据。下一步可在受控环境核对权威来源的真实 AI 应用；在教材实际节目录与课标要求对应核实前，不把教材目录当成标准覆盖证明。
+
+## 公开验收
+
+提交 `ce8a5f8d1b9a082d516eb886cdcd54c7639a9527` 已推送至 `main`。GitHub Actions [run #44316124883](https://github.com/houjibo/knowledge-visual/actions/runs/44316124883) 的 core checks、桌面/移动浏览器回归、构建、Pages 部署和 `verify-deployment` 七个 job 均成功（本变更在 feat 阶段即同步了 `ai/middle/index.html` 硬编码 `topics` 数组与两个既有 spec 的首页徽标断言，未产生额外修复提交，CI 一次通过）。本地全量回归桌面 2,240 项、移动 2,236 项通过，跳过项均为公网门控；全站加载冒烟与发布包页面加载均 419/419。公开 `release-version.json` 的 revision 与该提交一致、`site_files_modified` 为 `false`；新页面与两个脚本资源返回 HTTP 200，且与提交逐字节一致。另在公网页面用受控浏览器跑通完整三步流程：3/3 步骤完成、本机进度（键 `kv-ai-middle-progress`）保存、快照显示连接真实服务为否且网络请求数为 0、除同源资源外无任何第三方请求、无页面错误。测试装置的“无外部请求”断言以 loopback 为白名单，手动指向公网时会把同源资源计入，这是既有 spec 的本地/发布包设计，不代表页面发起第三方调用；CI 的公网核验由专用 `published-live-site.spec.js` 承担。[OpenSpec 变更归档](../../openspec/changes/archive/2026-11-18-ce25-ai-application-recognition-lab/proposal.md)。
