@@ -14,4 +14,4 @@
 
 - [x] 3.1 运行模型专项、页面桌面/移动专项、静态和严格 OpenSpec 检查，修复所有失败并记录未覆盖范围。
 - [x] 3.2 运行 `npm run check` 与发布路径专项；确认全站导航/检索、文件模式和旧入口无回归，并同步 AI 学科 data-total、sp-label 与 AI 初中阶段分母等计数断言。
-- [ ] 3.3 提交并推送功能变更；验证 Actions、Pages revision、公开页面和模型资源，补齐公开验收证据，再归档 OpenSpec change。
+- [x] 3.3 提交并推送功能变更；验证 Actions、Pages revision、公开页面和模型资源，补齐公开验收证据，再归档 OpenSpec change。
