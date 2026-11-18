@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：386；已登记部分交互证据：249；尚未登记：137。
+主题总数：387；已登记部分交互证据：250；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -214,6 +214,8 @@
   - 桌面与移动视口检查科学记数法的等值/规范分判、正负指数逐位展开、指定精度舍入与半值进位、示例不计完成、存储失败重试、目录和搜索、320px键盘、file直开及发布子路径；真实学习者、整页屏幕阅读器和完整课标目标另核。 [middle-scientific-notation-approximation.spec.js](../../tests/browser/middle-scientific-notation-approximation.spec.js)
 - [平方与立方开方实验室 · 初中数学](../../math/middle/square-cube-roots.html)
   - 桌面与移动视口验证平方网格、立方分层、六类开方预测—理由—验算、负数边界、完成与目录徽章、搜索、320px 键盘、文件直开、存储失败重试及发布子路径；真实学习者、实体计算器、非完全幂与整页屏幕阅读器仍待核。 [middle-square-cube-roots.spec.js](../../tests/browser/middle-square-cube-roots.spec.js)
+- [三元一次方程组（选学） · 初中数学互动可视化](../../math/middle/three-var-linear-system.html)
+  - 桌面与移动验证选学三元一次方程组的消元化归步骤展示、三未知数整数解校验（正确/错误/非法输入）、固定小题测验、选学标注与二元前置链接、320px键盘、文件直开与发布子路径离线；仅固定整数选学案例，开放真实情境与课堂教学未覆盖，整页屏幕阅读器未验收。 [middle-three-var-linear-system.spec.js](../../tests/browser/middle-three-var-linear-system.spec.js)
 - [20以内进位加法与退位减法](../../math/topics/20-within-addition-subtraction/index.html)
   - 固定随机边界、凑十破十的正确反馈和重复计分、十关完成及重启；未覆盖整页视觉内容。 [carry-borrow-practice.spec.js](../../tests/browser/carry-borrow-practice.spec.js)
 - [24时计时法](../../math/topics/24h-time/index.html)

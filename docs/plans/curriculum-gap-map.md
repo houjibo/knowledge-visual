@@ -6,7 +6,7 @@
 
 ## 如何计算距离
 
-- **供给基线**：从[逐页清单](../assessments/page-inventory.json)统计主题 HTML。当前 376 个学科主题、10 个模拟场景；项目总计 420 个 HTML，其中还包括目录、首页和兼容入口。一个页面可含多个知识点，多个页面也可能重复同一目标。
+- **供给基线**：从[逐页清单](../assessments/page-inventory.json)统计主题 HTML。当前 377 个学科主题、10 个模拟场景；项目总计 421 个 HTML，其中还包括目录、首页和兼容入口。一个页面可含多个知识点，多个页面也可能重复同一目标。
 - **课程距离**：正式分母应是选定来源中逐条可观察的学习要求，分类为“已验证覆盖／部分覆盖／缺失／未映射／不适用”。只有逐条拆解、链接到页面和内容/交互核查之后，才可算已验证覆盖率。**当前 19 个适用学科×阶段均未完成完整交叉映射，故全站覆盖百分比不可计算。**[高中数学“集合”7 条 HS25 必修内容要求](curriculum-crosswalks/high-math-sets-hs25.json)已与 HS20 逐条对照，现均为部分；[“常用逻辑用语”6 条](curriculum-crosswalks/high-math-logic-language-hs25.json)也已核，6 条均为部分，条件关系与量词否定分别有有限任务；预备知识其他单元与学业要求另核。初中信息科技第四学段三模块 19 条内容要求与初中数学“有理数”5 条已完成[2022→2025 版逐条复核](../assessments/middle-ce25-content-recheck-2026-11-13.md)；有理数乘方有限案例从“缺失”提升为“部分”，见[乘方核查](../assessments/middle-rational-powers-2026-11-13.md)；[情境列式](../assessments/middle-rational-context-problems-2026-11-14.md)为第⑤条、[数轴比较实验室](../assessments/middle-rational-order-2026-11-14.md)为第①条提供有限任务，五条现均为部分。[有理数一段学业要求](curriculum-crosswalks/middle-math-rational-numbers-ce25-academic.json)与[信息科技三个模块各一段学业要求](curriculum-crosswalks/middle-information-technology-ce25-academic.json)已另核；[传感反馈实验](../assessments/iot-sensor-feedback-2026-11-14.md)只增加局部物联证据；[网页编辑与发布实验](../assessments/middle-webpage-publishing-2026-11-14.md)把互联网第（3）条补为部分证据；[资料共享与同步实验](../assessments/middle-online-collaboration-2026-11-14.md)把第（1）条补为部分证据；[交流方式选择实验](../assessments/middle-online-learning-modes-2026-11-14.md)把第（5）条补为部分证据；[完整“数与式”22 条映射](curriculum-crosswalks/middle-math-number-expressions-ce25.json)将有理数 5 条和近似数／科学记数法 2 条作为子集，只计一次；当前 0 已验证、22 部分、0 缺失；[平方与立方开方实验室](../assessments/middle-square-cube-roots-2026-11-15.md)为实数④⑤增加局部交互证据，[无理数夹逼实验室](../assessments/middle-irrational-root-bounds-2026-11-15.md)为实数⑥增加整数和十分位界及平方比较理由；[实数对称与距离实验室](../assessments/middle-real-symmetry-distance-2026-11-15.md)为实数③增加反射与距离任务，见[核查记录](../assessments/middle-math-number-expressions-ce25-2026-11-15.md)。站内诊断点不能当作新增的官方条目；[互联智能设计五个活动](../assessments/middle-information-technology-ce25-academic-themes-2026-11-13.md)也暂不并入内容分母。两份 `CE22` 原清单仍是历史快照。完整学段质量、其余主题与跨学科实施边界待核，不能推算全站百分比。这表示审计尚未完成，不表示现有学习内容的覆盖为零。
 - **可见预警**：19 个适用格均有至少 1 个主题；其中 3 格只有 1–2 个主题：大学计算机与小学、大学人工智能。它们是先核对的候选，不据页数直接判定知识缺失程度。
 - **适用边界**：小学物理和小学化学主要融入小学科学，暂不设独立站点学段；“初中科学”在义务教育课程方案中可作为物理/化学/生物学的替代安排，本站是否设置该独立入口待决；高中和大学“科学”不是本站选定的统一独立课程。五格保持“范围待定／不单列”，不算成已覆盖或缺失。
@@ -17,13 +17,13 @@
 
 | 学科 | 小学 | 初中 | 高中 | 大学 | 小计 |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| 数学 | 124 | 35 | 21 | 36 | 216 |
+| 数学 | 124 | 36 | 21 | 36 | 217 |
 | 物理 | — | 20 | 16 | 19 | 55 |
 | 化学 | — | 13 | 16 | 17 | 46 |
 | 科学 | 17 | —（初中待决） | — | — | 17 |
 | 计算机 | 5 | 13 | 11 | 1 | 30 |
 | 人工智能 | 1 | 7 | 3 | 1 | 12 |
-| **学科主题合计** | **147** | **88** | **67** | **74** | **376** |
+| **学科主题合计** | **147** | **89** | **67** | **74** | **377** |
 
 ## 分阶段核对与首批候选
 
@@ -32,7 +32,7 @@
 | 学科阶段 | 来源 ID | 教材／大纲示例 | 当前页 | 首批要核对的目标与候选切片 |
 | --- | --- | --- | ---: | --- |
 | 小学数学 | CE25、CE22 对照、BOOK-CE | 人教版第十二套 | 124 | 按 2025 版的 1–2、3–4、5–6 年级要求拆分数与代数、图形与几何、统计与概率、综合实践；核查重复页与数学建模活动。 |
-| 初中数学 | CE25、CE22 对照、BOOK-CE | 人教版第十二套 | 35 | [六册编排索引](pep-middle-math-series-structure.md)据人教社原图记录 34 章与 12 个实践活动；[七上样本](pep-middle-math-grade7-up-audit.md)核到该册版次、ISBN 和六章；[地方分册核查](pep-volume-edition-source-audit.md)再核到七下、八上、八下的版月样本，九上仅有平台新编线索，六册完整小节目录仍待核。[CE25 “数与式”22 条内容要求](curriculum-crosswalks/middle-math-number-expressions-ce25.json)为 0 已验证、22 部分、0 缺失；此前有理数 5 条及近似数／科学记数法 2 条是其子集，不重复计数；[一段学业要求](curriculum-crosswalks/middle-math-rational-numbers-ce25-academic.json)为部分，七个站内诊断点 6 部分、1 缺失；第四学段质量描述只作[阶段视角](../assessments/middle-math-ce25-academic-quality-2026-11-13.md)。[方程与不等式 11 条](curriculum-crosswalks/middle-math-equations-inequalities-ce25.json)为 10 部分、1 缺失（选学）；[配方原式错误已修复](../assessments/middle-math-equations-inequalities-ce25-2026-11-16.md)，本地和公网专项及 Actions 通过。其余初中主题仍待核。 |
+| 初中数学 | CE25、CE22 对照、BOOK-CE | 人教版第十二套 | 36 | [六册编排索引](pep-middle-math-series-structure.md)据人教社原图记录 34 章与 12 个实践活动；[七上样本](pep-middle-math-grade7-up-audit.md)核到该册版次、ISBN 和六章；[地方分册核查](pep-volume-edition-source-audit.md)再核到七下、八上、八下的版月样本，九上仅有平台新编线索，六册完整小节目录仍待核。[CE25 “数与式”22 条内容要求](curriculum-crosswalks/middle-math-number-expressions-ce25.json)为 0 已验证、22 部分、0 缺失；此前有理数 5 条及近似数／科学记数法 2 条是其子集，不重复计数；[一段学业要求](curriculum-crosswalks/middle-math-rational-numbers-ce25-academic.json)为部分，七个站内诊断点 6 部分、1 缺失；第四学段质量描述只作[阶段视角](../assessments/middle-math-ce25-academic-quality-2026-11-13.md)。[方程与不等式 11 条](curriculum-crosswalks/middle-math-equations-inequalities-ce25.json)为 11 部分、0 缺失（原唯一缺失为选学三元一次方程组，已补选学实验室）；[配方原式错误已修复](../assessments/middle-math-equations-inequalities-ce25-2026-11-16.md)，本地和公网专项及 Actions 通过。其余初中主题仍待核。 |
 | 高中数学 | HS25、HS20 对照、BOOK-HS | 人教版第十一套 A 版 | 21 | [必修“集合”7 条](curriculum-crosswalks/high-math-sets-hs25.json)已逐项映射，0 已验证、7 部分；[“常用逻辑用语”6 条](curriculum-crosswalks/high-math-logic-language-hs25.json)已逐项映射，0 已验证、6 部分、0 缺失，[量词与否定工作台](../assessments/high-math-quantifier-negation-workbench-2026-11-18.md)补后三条局部任务，[条件关系工作台](../assessments/high-math-logic-conditions-workbench-2026-11-18.md)为前三条增加有限任务，原[核查与交付次序](../assessments/high-math-logic-language-hs25-2026-11-18.md)已列；[版本对照](../assessments/high-math-sets-hs25-2026-11-14.md)标明学业要求用语变化，[三轮语言转换练习](../assessments/high-math-set-language-conversion-2026-11-14.md)、[可变全集补集工作台](../assessments/high-math-variable-universe-complement-2026-11-14.md)和[双集合关系/交并预测](../assessments/high-math-set-relations-operations-2026-11-14.md)补充局部操作证据。继续核预备知识其他单元、函数、几何代数、概率统计、建模/探究与教材完整节目录。 |
 | 大学数学 | UNI-M | MIT OCW 基础轨 | 36 | 以微积分与线性代数为基础轨；[MIT 18.06 十项目标静态对照与排序](../assessments/university-linear-algebra-mit-18-06-2026-11-17.md)记录已复现错误、[方程有符号输入局部修复](../assessments/university-linear-system-signed-input-2026-11-17.md)、[消元与 PLU 有限工作台](../assessments/university-plu-elimination-workbench-2026-11-18.md)、[奇异方程完整解增量](../assessments/university-plu-singular-solutions-2026-11-18.md)、[四个基本子空间有限工作台](../assessments/university-four-subspaces-workbench-2026-11-17.md)、[投影与最小二乘有限工作台](../assessments/university-least-squares-projection-2026-11-17.md)、[Gram–Schmidt／QR 有限工作台](../assessments/university-gram-schmidt-qr-2026-11-17.md)、[正定性与二次型有限工作台](../assessments/university-positive-definite-quadratic-forms-2026-11-17.md)、[实对称矩阵谱分解有限工作台](../assessments/university-symmetric-spectral-decomposition-2026-11-17.md)、[矩形矩阵 SVD 有限工作台](../assessments/university-svd-rectangular-workbench-2026-11-17.md)、[Haar 基变换与图像系数截断有限实验](../assessments/university-haar-basis-compression-2026-11-17.md)、[非正交基坐标与相似变换有限工作台](../assessments/university-nonorthogonal-basis-similarity-2026-11-17.md)及后续一般维度与应用缺口；先核对积分应用与线性代数任务，拓展主题另列来源；[随机过程平稳分布局部核查](../assessments/university-markov-stationary-2026-11-17.md)修正现有示例的错误数值并区分不变与收敛；[二维布朗运动核查](../assessments/university-brownian-distance-2026-11-17.md)修正径向期望及参数混合问题；[泊松模拟核查](../assessments/university-poisson-simulation-2026-11-17.md)修正强度变更与样本不一致及随机值边界，未构成完整课程映射。 |
 | 初中物理 | CE25、CE22 对照、BOOK-CE | 人教版第十二套 | 20 | 从 2025 版将运动、力、能量、物质与实验探究分别映射；先核对测量误差和从数据得结论的操作。 |
@@ -51,7 +51,7 @@
 | 高中人工智能 | AI25、HS25 | AI 通识指南／[中图人教版信息技术](pep-high-information-technology-books.md) | 3 | 高中 AI 页面已作为 HS25 必修1 1.2、1.7 的部分证据；生成式 AI 规范和指南目标仍需核对。HS25 必修2 2.6 的对话交互任务列在计算机导航并在其唯一交叉表中计为部分；AI 导航不另造第二份国家必修分母。 |
 | 大学人工智能 | UNI-CS | CS2023 人工智能领域 | 1 | 现有单神经元计算之外，核对搜索、知识表示、学习、评估、偏差及安全；与计算机共享来源要求避免重复计数。 |
 
-模拟世界目前有 10 个场景，按场景问题、模型假设、操作、反馈和发布证据追踪；它没有统一“国家课程单元”分母，不纳入上述 376 个学科主题页或课程覆盖率。机械/工业化的下一步以[场景规划](simulation-world-curriculum.md)单独排序。
+模拟世界目前有 10 个场景，按场景问题、模型假设、操作、反馈和发布证据追踪；它没有统一“国家课程单元”分母，不纳入上述 377 个学科主题页或课程覆盖率。机械/工业化的下一步以[场景规划](simulation-world-curriculum.md)单独排序。
 
 **教材来源准备度另计**：[分册版次核查](pep-volume-edition-source-audit.md)给初中数学六册中的四册取得地方公开的精确版月样本，九上只核到 2026 年平台新编目录线索，九下待当期证据；初中物理与化学各两册取得地方版月样本。完整小节目录和按课标逐条映射均未因此自动完成，不能将 `4/6` 当作课程覆盖率。
 
@@ -63,7 +63,7 @@
 | 高中数学必修“常用逻辑用语”内容要求 | [6 个编号或独立条目](curriculum-crosswalks/high-math-logic-language-hs25.json)：必要／充分／充要 3、量词 1、否定 2 | 0 已验证、6 部分、0 缺失 | 与集合 7 条属于不同单元；仍只是 HS25 必修局部试点，不与学业要求相加。 |
 | 高中信息科技两必修模块内容要求 | [15 个编号条目](curriculum-crosswalks/high-information-technology-hs25.json)：数据与计算 7、信息系统与社会 8 | 0 已验证、15 部分、0 缺失 | 仅为 HS25 内容要求局部试点；物联反馈、网络组装、对话交互、生成式 AI 负责任使用、负责任发布传播与设备平台选择均是固定本地脚本模型，受控真实平台/生成式工具实践、真实系统、自主可控全链路证据、学业要求、质量和选修另核。 |
 | 初中数学第四学段“数与式”内容要求 | [22 个编号条目](curriculum-crosswalks/middle-math-number-expressions-ce25.json)：有理数 5、实数 8、代数式 9 | 0 已验证、22 部分、0 缺失 | 旧有理数 5 条及近似数／科学记数法 2 条是本行子集，不另加；仍非初中数学完整分母。 |
-| 初中数学第四学段“方程与不等式”内容要求 | [11 个编号条目](curriculum-crosswalks/middle-math-equations-inequalities-ce25.json)：方程 8、不等式 3 | 0 已验证、10 部分、1 缺失；缺失为选学 | 与“数与式”22 条分属不同主题；学业要求、阶段质量与函数另计，不能当初中数学全范围。 |
+| 初中数学第四学段“方程与不等式”内容要求 | [11 个编号条目](curriculum-crosswalks/middle-math-equations-inequalities-ce25.json)：方程 8、不等式 3 | 0 已验证、11 部分、0 缺失（原选学三元一次方程组已补选学实验室，仍无 verified） | 与“数与式”22 条分属不同主题；学业要求、阶段质量与函数另计，不能当初中数学全范围。 |
 | 初中数学有理数学业要求 | 1 段来源要求 | 1 部分；其下 7 个站内诊断点为 6 部分、1 缺失 | 不与内容要求或诊断点相加。 |
 | 初中数学第四学段学业质量 | 1 个阶段描述，覆盖整段数学学习 | 本轮仅核查与有理数有关的质量视角 | 不下沉为有理数单元分母；待第四学段完整映射。 |
 | 初中信息科技三个模块内容要求 | 19 个编号条目 | 0 已验证、19 部分、0 缺失 | 只在该内容要求试点计数；跨学科主题和阶段质量另核。 |

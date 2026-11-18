@@ -22,7 +22,7 @@ test('数学新进度按学段区分同名主题并在刷新后保留', async ({
   await page.evaluate(() => PageProgress.markDone('derivative'));
   expect(await page.evaluate(() => PageProgress.count())).toBe(2);
   await page.goto('/');
-  await expect(page.locator('[data-subject="math"] .sp-label')).toContainText('已学 2/216');
+  await expect(page.locator('[data-subject="math"] .sp-label')).toContainText('已学 2/217');
 });
 
 test('旧记录保留：无冲突可读，同名记录不猜测学段', async ({page}) => {
