@@ -96,7 +96,7 @@ test('classifies inputs, verifies generated outputs against sources and keeps th
   expect(remoteRequests).toEqual([]);
 
   await page.goto(siteRoot);
-  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '27');
+  await expect(page.locator('[data-subject="computer"]')).toHaveAttribute('data-total', '28');
   await page.getByRole('combobox', {name: '学科', exact: true}).selectOption('computer');
   await page.getByRole('combobox', {name: '学段', exact: true}).selectOption('high');
   await page.getByRole('searchbox', {name: '关键词'}).fill('生成式 AI 负责任使用');

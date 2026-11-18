@@ -4,7 +4,7 @@
 > 本索引只记录已登记的部分自动化场景，不表示测试本次已运行、主题已验收、教学内容正确或无障碍达标。
 > 加载冒烟不算交互证据；未登记不等于一定没有测试。具体场景以链接的测试代码为准。
 
-主题总数：381；已登记部分交互证据：244；尚未登记：137。
+主题总数：382；已登记部分交互证据：245；尚未登记：137。
 
 ## 已登记部分交互证据
 
@@ -89,6 +89,8 @@
   - 桌面与移动浏览器验证两个独立学科入口、旧主题地址跳转、四个首批主题的核心计算、正确/错误反馈、完成记录或存储失败、重置、键盘操作、旧进度迁移及 320px 窄屏；标准课程覆盖、真实设备和整页屏幕阅读器仍未验收。 [split-subjects-learning.spec.js](../../tests/browser/split-subjects-learning.spec.js)
 - [身份与保密实验室 · 初中计算机](../../computer/middle/identity-encryption.html)
   - 桌面与移动验证虚构账号判断、三种传输预测、错误修正、进度及存储失败重试、320px 键盘、文件直开、发布子路径和无外部请求；真实账号配置、真实加密、真实设备及屏幕阅读器仍待核。 [middle-identity-encryption.spec.js](../../tests/browser/middle-identity-encryption.spec.js)
+- [物联设备数字身份与隐私实验室 · 初中计算机](../../computer/middle/iot-device-identity.html)
+  - 桌面与移动验证虚构联网设备的数字身份标识匹配（区分人的身份证号）、无姓名设备数据可推断的作息/位置/健康信息、匿名化随机轮换标识与数据最小化保护、无真实设备与外部请求、损坏/拒写进度恢复、首页搜索与主题计数、320px键盘、文件直开和发布子路径；设备标识为本地脚本而非真实设备，真实设备观察、平台隐私设置、学习者迁移和整页屏幕阅读器未验收。 [middle-iot-device-identity.spec.js](../../tests/browser/middle-iot-device-identity.spec.js)
 - [物联网与互联网辨析实验室 · 初中计算机](../../computer/middle/iot-internet-distinction.html)
   - 桌面与移动验证虚构日常连接案例的互联网/物联网分类（人与人通信、传感上报、远程控制）、物联网传感器/网络/受控设备三要素识别、便利与隐私两面影响、无真实设备与外部请求、损坏/拒写进度恢复、首页搜索与主题计数、320px键盘、文件直开和发布子路径；案例为本地脚本而非真实设备，真实设备观察、实际流量区分、学习者迁移和整页屏幕阅读器未验收。 [middle-iot-internet-distinction.spec.js](../../tests/browser/middle-iot-internet-distinction.spec.js)
 - [传感与控制实验室 · 初中计算机](../../computer/middle/iot-sensor-feedback.html)
