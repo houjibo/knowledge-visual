@@ -26,3 +26,7 @@
 ## 交叉表结论
 
 CE25-IT-L4-IOT-03 从 `missing` 调整为 `partial`（仅规程与数据流程先修，真实原型搭建与设备数据收发仍待实践工作流）。至此第四学段信息科技 19 条内容要求全部达到部分覆盖（0 已验证、19 部分、0 缺失），但无一条达到需真实学习者/实机证据的 `verified`。本页证据不应外推为已完成真实物联网实验。
+
+## 公开验收
+
+提交 `2341fa2cf18c1eb08a03d87d586ec90c0bd11813` 已推送至 `main`。GitHub Actions [run #44330525546](https://github.com/houjibo/knowledge-visual/actions/runs/44330525546) 的 core checks、桌面/移动浏览器回归、构建、Pages 部署和 `verify-deployment` 七个 job 均成功。本地全量回归桌面 2,247 项、移动 2,243 项通过，跳过项均为公网门控；全站加载冒烟与发布包页面加载均 420/420。公开 `release-version.json` 的 revision 与该提交一致、`site_files_modified` 为 `false`；新页面与两个脚本资源返回 HTTP 200，且与提交逐字节一致。公网受控浏览器跑通完整三步流程（3/3 步骤完成、本机进度保存、网络请求数为 0、无第三方请求、无页面错误），并确认页面显著位置保留“不能替代亲手搭建原型”的先修边界提示。测试装置的“无外部请求”断言以 loopback 为白名单；CI 的公网核验由专用 `published-live-site.spec.js` 承担。[OpenSpec 变更归档](../../openspec/changes/archive/2026-11-18-ce25-iot-experiment-procedure-prep-lab/proposal.md)。
