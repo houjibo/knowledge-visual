@@ -150,6 +150,17 @@ canvas { display: block; margin: 0 auto; border-radius: 12px; max-width: 100%; h
 }
 .func-info-item .label { font-size: 12px; color: #888; margin-bottom: 4px; }
 .func-info-item .value { font-size: 16px; font-weight: 600; color: #ffd200; }
+.piecewise-lab select, .piecewise-lab input[type="text"] { max-width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #94a3b8; font: inherit; color: #101827; background: #fff; }
+.piecewise-lab fieldset { border: 1px solid #64748b; border-radius: 10px; padding: 10px; margin: 12px 0; }
+.piecewise-lab fieldset label { display: block; margin: 8px 0; line-height: 1.5; }
+.piecewise-lab .piecewise-inputs { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+.piecewise-lab .piecewise-inputs label { display: grid; gap: 5px; }
+.piecewise-lab .piecewise-feedback { margin: 12px 0; padding: 10px; line-height: 1.6; border-radius: 8px; background: #14532d; overflow-wrap: anywhere; }
+.piecewise-lab .piecewise-feedback.error { background: #7c2d12; }
+.piecewise-lab .piecewise-feedback[hidden], .piecewise-lab .piecewise-results[hidden] { display: none; }
+.piecewise-lab table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+.piecewise-lab th, .piecewise-lab td { border: 1px solid #64748b; padding: 6px; text-align: center; }
+.piecewise-lab :focus-visible { outline: 3px solid #ffd200; outline-offset: 3px; }
 
 /* 性质判定 */
 .property-card {
@@ -312,6 +323,32 @@ canvas { display: block; margin: 0 auto; border-radius: 12px; max-width: 100%; h
     <div id="domainExplain" class="info-text" style="text-align:center;"></div>
   </div>
 
+  <section class="card piecewise-lab" id="piecewise-lab" aria-labelledby="piecewise-title">
+    <h3 id="piecewise-title">分段函数 · 先预测再看图表</h3>
+    <p class="info-text">同一个输入只能有一个函数值。先判断分界点属于哪一段，再选输入检查规则。时间和重量按连续量建模；输入框最多填写两位小数。</p>
+    <label for="piecewise-scenario">选择情境</label>
+    <select id="piecewise-scenario"></select>
+    <p id="piecewise-context" class="info-text"></p>
+    <fieldset><legend>哪条分段规则符合情境？</legend><div id="piecewise-rules"></div></fieldset>
+    <fieldset><legend>输入恰为 2 时属于哪一段？</legend>
+      <label><input type="radio" name="piecewise-boundary" value="first">前段</label>
+      <label><input type="radio" name="piecewise-boundary" value="second">后段</label>
+    </fieldset>
+    <div class="piecewise-inputs">
+      <label for="piecewise-input" id="piecewise-input-label">输入数值<input id="piecewise-input" type="text" inputmode="decimal" value="2"></label>
+      <label for="piecewise-value" id="piecewise-value-label">预测函数值<input id="piecewise-value" type="text" inputmode="decimal"></label>
+      <button type="button" class="btn orange" id="piecewise-check">核对并查看图表</button>
+    </div>
+    <div id="piecewise-feedback" class="piecewise-feedback" role="status" hidden></div>
+    <div id="piecewise-results" class="piecewise-results" hidden>
+      <p id="piecewise-summary" class="info-text"></p>
+      <table><caption>分界点两侧的输入与函数值</caption><thead><tr><th scope="col" id="piecewise-table-input">输入</th><th scope="col" id="piecewise-table-value">函数值</th></tr></thead><tbody id="piecewise-table-body"></tbody></table>
+      <p class="info-text">横轴每格 1 个输入单位；纵轴每格 2 个输出单位，图中比例不同。</p>
+      <canvas id="piecewise-canvas" width="400" height="250" role="img" aria-label="分段函数图像；端点归属与下方文字说明一致"></canvas>
+      <p id="piecewise-graph-description" class="info-text"></p>
+    </div>
+  </section>
+
   <div class="card">
     <h3>📐 函数三要素</h3>
     <div class="grid-2">
@@ -410,6 +447,7 @@ canvas { display: block; margin: 0 auto; border-radius: 12px; max-width: 100%; h
 </div>
 
 <script src="../assets/js/common.js"></script>
+<script src="assets/piecewise-function-model.js"></script>
 <script>
 // ===== Tab Switching =====
 document.querySelectorAll('.tab').forEach(tab => {
@@ -421,6 +459,107 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
   });
 });
+
+// ===== Panel 1: Piecewise functions =====
+const piecewiseModel = window.KVPiecewiseFunctionModel;
+const piecewiseScenario = document.getElementById('piecewise-scenario');
+const piecewiseLab = document.getElementById('piecewise-lab');
+const piecewiseFeedback = document.getElementById('piecewise-feedback');
+const piecewiseResults = document.getElementById('piecewise-results');
+piecewiseModel.scenarios.forEach(scenario => piecewiseScenario.add(new Option(scenario.title, scenario.id)));
+
+function hidePiecewiseResults() {
+  piecewiseFeedback.hidden = true;
+  piecewiseFeedback.textContent = '';
+  piecewiseResults.hidden = true;
+}
+function refreshPiecewiseScenario() {
+  const scenario = piecewiseModel.getScenario(piecewiseScenario.value);
+  document.getElementById('piecewise-context').textContent = scenario.context;
+  document.getElementById('piecewise-input-label').firstChild.textContent = `输入 ${scenario.variable}（${scenario.inputUnit}）`;
+  document.getElementById('piecewise-value-label').firstChild.textContent = `预测函数值（${scenario.outputUnit}）`;
+  const rules = document.getElementById('piecewise-rules');
+  rules.replaceChildren();
+  scenario.options.forEach(option => {
+    const label = document.createElement('label');
+    const radio = document.createElement('input');
+    radio.type = 'radio'; radio.name = 'piecewise-rule'; radio.value = option.id;
+    radio.addEventListener('change', hidePiecewiseResults);
+    label.append(radio, document.createTextNode(option.label));
+    rules.append(label);
+  });
+  piecewiseLab.querySelectorAll('input[name="piecewise-boundary"]').forEach(input => { input.checked = false; });
+  document.getElementById('piecewise-input').value = '2';
+  document.getElementById('piecewise-value').value = '';
+  hidePiecewiseResults();
+}
+function drawPiecewiseGraph(scenario) {
+  const canvas = document.getElementById('piecewise-canvas');
+  const ctx = canvas.getContext('2d');
+  const xPixel = x => 50 + x * 64;
+  const yPixel = y => 210 - y * 19;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(50, 20); ctx.lineTo(50, 210); ctx.lineTo(370, 210); ctx.stroke();
+  ctx.fillStyle = '#e2e8f0'; ctx.font = '12px sans-serif';
+  for (const x of [0, 1, 2, 3, 4, 5]) ctx.fillText(String(x), xPixel(x) - 3, 228);
+  for (const y of [0, 2, 4, 6, 8, 10]) ctx.fillText(String(y), 22, yPixel(y) + 4);
+  ctx.fillText(`${scenario.variable}（${scenario.inputUnit}）`, 275, 246);
+  ctx.fillText(scenario.outputUnit, 15, 16);
+  ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3;
+  scenario.segments.forEach(segment => {
+    ctx.beginPath(); ctx.moveTo(xPixel(segment.from), yPixel(segment.yFrom));
+    ctx.lineTo(xPixel(segment.to), yPixel(segment.yTo)); ctx.stroke();
+  });
+  for (const closed of [false, true]) {
+    scenario.segments.forEach(segment => {
+      for (const [x, y, included] of [
+        [segment.from, segment.yFrom, segment.startClosed],
+        [segment.to, segment.yTo, segment.endClosed]
+      ]) {
+        if (included !== closed) continue;
+        ctx.beginPath(); ctx.arc(xPixel(x), yPixel(y), 5, 0, Math.PI * 2);
+        ctx.fillStyle = closed ? '#38bdf8' : '#0f0c29'; ctx.fill();
+        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.stroke();
+      }
+    });
+  }
+}
+function showPiecewiseResults(scenario) {
+  const body = document.getElementById('piecewise-table-body');
+  body.replaceChildren();
+  piecewiseModel.table(scenario.id).forEach(({input, value}) => {
+    const row = document.createElement('tr');
+    for (const text of [input, value]) {
+      const cell = document.createElement('td'); cell.textContent = String(text); row.append(cell);
+    }
+    body.append(row);
+  });
+  document.getElementById('piecewise-table-input').textContent = `${scenario.variable}（${scenario.inputUnit}）`;
+  document.getElementById('piecewise-table-value').textContent = `函数值（${scenario.outputUnit}）`;
+  document.getElementById('piecewise-summary').textContent = `定义域 ${scenario.domain}；值域 ${scenario.range}。规则：${scenario.options[0].label}。`;
+  document.getElementById('piecewise-graph-description').textContent = scenario.id === 'shipping'
+    ? '0<w≤2 时图像为 5 元的水平线，(2,5) 是实心点；2<w≤5 时为 8 元的水平线，(2,8) 是空心点，分界处有跳跃。'
+    : '0≤t≤2 时图像从 (0,0) 到 (2,4)，(2,4) 是实心点；2<t≤5 时从同一位置延续到 (5,7)，分界处连续。';
+  piecewiseResults.hidden = false;
+  drawPiecewiseGraph(scenario);
+}
+piecewiseScenario.addEventListener('change', refreshPiecewiseScenario);
+piecewiseLab.querySelectorAll('input[name="piecewise-boundary"]').forEach(input => input.addEventListener('change', hidePiecewiseResults));
+for (const id of ['piecewise-input', 'piecewise-value']) {
+  document.getElementById(id).addEventListener('input', hidePiecewiseResults);
+}
+document.getElementById('piecewise-check').addEventListener('click', () => {
+  const selected = name => piecewiseLab.querySelector(`input[name="${name}"]:checked`)?.value || '';
+  const scenario = piecewiseModel.getScenario(piecewiseScenario.value);
+  const result = piecewiseModel.check(scenario.id, document.getElementById('piecewise-input').value,
+    selected('piecewise-rule'), selected('piecewise-boundary'), document.getElementById('piecewise-value').value);
+  piecewiseFeedback.hidden = false;
+  piecewiseFeedback.classList.toggle('error', result.status !== 'correct');
+  piecewiseFeedback.textContent = result.feedback;
+  if (result.status === 'correct' || result.status === 'wrong') showPiecewiseResults(scenario);
+});
+refreshPiecewiseScenario();
 
 // ===== Panel 1: Domain Explorer =====
 const funcExamples = [

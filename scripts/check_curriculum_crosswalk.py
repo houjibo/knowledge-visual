@@ -195,6 +195,21 @@ def check_high_math_quadratic_function_baseline() -> None:
     assert all(row.get("course_requirement") == "mandatory" for row in rows), path
 
 
+def check_high_math_function_concept_properties_baseline() -> None:
+    """Keep six mandatory function items and one optional history task distinct."""
+    path = MAPS / "high-math-function-concept-properties-hs25.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["id"] == "HS25-MATH-FUN-CP" and data["baseline_status"] == "current", path
+    assert len(data.get("source_sha256", "")) == 64, path
+    rows = data["requirements"]
+    assert [row["id"] for row in rows] == [f"HS25-MATH-FUN-CP-{index:02d}" for index in range(1, 8)], path
+    assert Counter(row["module"].split("／")[2] for row in rows) == {
+        "函数概念": 3, "函数性质": 3, "函数的形成与发展": 1
+    }, path
+    assert [row.get("course_requirement") for row in rows] == ["mandatory"] * 6 + ["optional"], path
+    assert all(row["source_locator"].endswith("印刷页19") for row in rows), path
+
+
 def check_equation_baseline(data: dict) -> None:
     """Preserve the source denominator and identify its single optional item."""
     assert data.get("id") == "CE25-MATH-L4-EQI"
@@ -221,6 +236,7 @@ def main() -> None:
     check_high_math_logic_baseline()
     check_high_math_equality_inequality_baseline()
     check_high_math_quadratic_function_baseline()
+    check_high_math_function_concept_properties_baseline()
     check_equation_baseline(json.loads((MAPS / "middle-math-equations-inequalities-ce25.json").read_text(encoding="utf-8")))
 
 
