@@ -48,14 +48,17 @@
 .foundation-lab[hidden] { display: none; }
 .foundation-lab h2 { margin: 0 0 8px; font-size: 1.2rem; }
 .foundation-controls { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 12px 0; }
-.foundation-controls label { display: grid; gap: 4px; }
-.foundation-controls select { width: 100%; min-width: 0; font: inherit; padding: 8px; border-radius: 8px; color: #111827; }
+.foundation-controls label { display: grid; gap: 4px; min-width: 0; }
+.foundation-controls select, .foundation-controls input[type=text] { width: 100%; min-width: 0; font: inherit; padding: 8px; border-radius: 8px; color: #111827; }
 .foundation-lab fieldset { border: 1px solid #64748b; border-radius: 10px; display: flex; flex-wrap: wrap; gap: 12px; }
 .foundation-lab fieldset label { display: inline-flex; align-items: center; gap: 4px; }
 .foundation-lab button { font: inherit; color: white; border: 1px solid #a78bfa; border-radius: 8px; background: #6d28d9; padding: 8px 14px; cursor: pointer; margin-top: 12px; }
-.foundation-lab .feedback { padding: 10px; border-radius: 8px; background: #064e3b; margin-top: 10px; }
+.foundation-lab .feedback { padding: 10px; border-radius: 8px; background: #064e3b; margin-top: 10px; overflow-wrap: anywhere; }
 .foundation-lab .feedback.error { background: #7c2d12; }
 .foundation-lab .feedback[hidden] { display: none; }
+.open-foundation { margin-top: 24px; border-top: 1px solid #64748b; padding-top: 18px; }
+.open-foundation h3 { margin: 0 0 8px; font-size: 1.1rem; }
+.open-foundation fieldset { margin: 10px 0; }
 @media (max-width: 600px) { .foundation-controls { grid-template-columns: 1fr; } }
 .optimization-lab { margin-top: 20px; background: rgba(15,23,42,0.75); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 18px; line-height: 1.6; }
 .optimization-lab[hidden], .optimization-lab .feedback[hidden] { display: none; }
@@ -131,6 +134,28 @@
     </fieldset>
     <button type="button" id="foundation-check">核对关系与理由</button>
     <div id="foundation-feedback" class="feedback" role="status" hidden></div>
+    <div class="open-foundation" aria-labelledby="open-foundation-title">
+      <h3 id="open-foundation-title">自选数值：用差值说明一般规则</h3>
+      <p>填写 a、b、c，先预测两边同加或同乘后的关系，再选择差值通式。可操作例子支持正负零、绝对值不超过 1000 且最多三位小数；代数恒等式适用于任意实数。</p>
+      <div class="foundation-controls">
+        <label for="open-foundation-a">a<input id="open-foundation-a" type="text" inputmode="decimal" value="3"></label>
+        <label for="open-foundation-b">b<input id="open-foundation-b" type="text" inputmode="decimal" value="1"></label>
+        <label for="open-foundation-c">c<input id="open-foundation-c" type="text" inputmode="decimal" value="-2"></label>
+        <label for="open-foundation-operation">两边同时<select id="open-foundation-operation"><option value="multiply">乘以 c</option><option value="add">加上 c</option></select></label>
+      </div>
+      <fieldset><legend>预测变换后的关系</legend>
+        <label><input type="radio" name="open-foundation-prediction" value="&lt;">左边 &lt; 右边</label>
+        <label><input type="radio" name="open-foundation-prediction" value="=">左边 = 右边</label>
+        <label><input type="radio" name="open-foundation-prediction" value="&gt;">左边 &gt; 右边</label>
+      </fieldset>
+      <fieldset><legend>变换后左边减右边的通式是？</legend>
+        <label><input type="radio" name="open-foundation-formula" value="unchanged">a−b</label>
+        <label><input type="radio" name="open-foundation-formula" value="scaled">c(a−b)</label>
+        <label><input type="radio" name="open-foundation-formula" value="shifted">(a−b)+c</label>
+      </fieldset>
+      <button type="button" id="open-foundation-check">核对关系与通式</button>
+      <div id="open-foundation-feedback" class="feedback" role="status" hidden></div>
+    </div>
   </section>
   <section class="optimization-lab" id="optimization-lab" aria-labelledby="optimization-title" hidden>
     <h2 id="optimization-title">构造最值：先检查等号能否取到</h2>
@@ -209,7 +234,7 @@ function resetFoundationPrediction() {
   const state = foundationsModel.evaluate(start, operation, c);
   document.getElementById('foundation-current').textContent = `原式 ${state.a} ${state.before} ${state.b}；现在两边同${operation === 'add' ? '加' : '乘'} ${c}。`;
 }
-foundationLab.querySelectorAll('select').forEach(select => select.addEventListener('change', resetFoundationPrediction));
+foundationLab.querySelectorAll(':scope > .foundation-controls select').forEach(select => select.addEventListener('change', resetFoundationPrediction));
 foundationLab.querySelectorAll('input[name="foundation-prediction"]').forEach(input => {
   input.addEventListener('change', () => { foundationFeedback.hidden = true; });
 });
@@ -222,6 +247,28 @@ document.getElementById('foundation-check').addEventListener('click', () => {
   foundationFeedback.textContent = result.feedback;
 });
 resetFoundationPrediction();
+
+const openFoundationInputs = ['a', 'b', 'c'].map(name => document.getElementById(`open-foundation-${name}`));
+const openFoundationOperation = document.getElementById('open-foundation-operation');
+const openFoundationFeedback = document.getElementById('open-foundation-feedback');
+function resetOpenFoundation() {
+  foundationLab.querySelectorAll('input[name="open-foundation-prediction"], input[name="open-foundation-formula"]').forEach(input => { input.checked = false; });
+  openFoundationFeedback.hidden = true;
+  openFoundationFeedback.textContent = '';
+}
+openFoundationInputs.forEach(input => input.addEventListener('input', resetOpenFoundation));
+openFoundationOperation.addEventListener('change', resetOpenFoundation);
+foundationLab.querySelectorAll('input[name="open-foundation-prediction"], input[name="open-foundation-formula"]').forEach(input => {
+  input.addEventListener('change', () => { openFoundationFeedback.hidden = true; });
+});
+document.getElementById('open-foundation-check').addEventListener('click', () => {
+  const prediction = foundationLab.querySelector('input[name="open-foundation-prediction"]:checked')?.value || '';
+  const formula = foundationLab.querySelector('input[name="open-foundation-formula"]:checked')?.value || '';
+  const result = foundationsModel.checkOpen(...openFoundationInputs.map(input => input.value), openFoundationOperation.value, prediction, formula);
+  openFoundationFeedback.hidden = false;
+  openFoundationFeedback.classList.toggle('error', result.status !== 'correct');
+  openFoundationFeedback.textContent = result.feedback;
+});
 
 /* ===== TABS ===== */
 document.querySelectorAll('.tab').forEach(tab => {

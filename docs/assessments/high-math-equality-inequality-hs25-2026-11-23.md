@@ -43,3 +43,11 @@
 此增量提供预设长方形边长／面积语境和数值构造，不证明学习者能自主列约束、在新情境中迁移或真实理解；来源行 `HS25-MATH-BAS-EQI-02` 继续为 `partial`。下一步开放条件和表达，观察真实学习者；性质行 `01` 仍需一般论证。
 
 验证：`node tests/inequality-optimization-model.test.js` 覆盖六种条件、错误数值、空答、非有限输入与零边界；`npx playwright test tests/browser/high-inequality-optimization.spec.js --project=desktop --project=mobile` 10 项通过，含键盘、320px、文件直开和发布子路径。`CI=1 npm run check` 完整通过：静态与 OpenSpec 严格校验通过；功能矩阵 2992 项通过、8 项条件跳过；开发站及发布包各 421 页加载通过，发布包关键路径 22 项通过，新增不等式专项发布包桌面 5 项通过。功能提交 `8606a3977cc600feb2dfebf916cac4dc6d8f6c75` 的 [Actions 运行](https://github.com/houjibo/knowledge-visual/actions/runs/45127315659) 全部成功，公开 `release-version.json` revision 与提交一致，`site_files_modified:false`。对[公网不等式页](https://houjibo.github.io/knowledge-visual/math/high/inequality.html)运行新旧桌面／移动专项：22 项交互通过、4 项本地文件／子路径场景按条件跳过。契约见[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-23-high-amgm-extrema-boundaries/proposal.md)。
+
+## 后续增量：开放数值与差值通式（2026-11-23）
+
+性质标签在固定数值预测后加入自选 a、b、c 的同加／同乘工作台。例子输入支持绝对值不超过 1000、至多三位小数的正负零；使用千分位整数计算，避免把十进制相等关系误判为浮点不等。学习者先选择变换后的关系和差值通式，反馈代入数值，并说明 `(a+c)−(b+c)=a−b`、`ac−bc=c(a−b)` 对任意实数成立。同加保持差值；同乘由 c 的正负零决定严格不等号方向，相等关系在任意乘数下保持。改变条件会清空旧预测。
+
+这补足了开放取值和通式解释，但通式仍由选项提供；未观察学习者独立书写证明、识别适用条件或迁移至新情境。来源行 `HS25-MATH-BAS-EQI-01` 继续为 `partial`。
+
+验证：`node tests/inequality-foundations-model.test.js` 覆盖 12 个原固定例子和 686 个开放输入组合，并检查小数、空值、非有限输入、超界与错误通式；新增专项桌面／移动 10 项通过，原性质专项桌面／移动 16 项通过。`CI=1 npm run check` 完整通过：静态、OpenSpec 严格校验与浏览器项目覆盖预检通过；功能矩阵 3002 项通过、8 项条件跳过；开发站及发布包各 421 页加载通过，发布包关键路径 22 项通过，新增专项发布包桌面 5 项通过。公网核对结果待发布后补入。契约见[本次 OpenSpec 变更](../../openspec/changes/high-inequality-open-difference-proof/proposal.md)。
