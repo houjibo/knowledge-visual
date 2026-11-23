@@ -31,4 +31,7 @@
 - `npx playwright test tests/browser/high-inequality-foundations-accuracy.spec.js --project=desktop --project=mobile`：16 项通过，覆盖数学边界、基本不等式精确等号、错答、重复提交、标签切换、八题进度、键盘、320px、文件与发布子路径。
 - `python3 scripts/check_curriculum_crosswalk.py`：2 条独立必修来源单位，0 已验证、2 部分、0 缺失，状态总数与证据路径通过。
 - `CI=1 npm run check`：完整静态、OpenSpec 和浏览器项目覆盖预检通过；功能矩阵 2,982 项通过、8 项条件跳过；开发站与发布包各 421 页加载通过，发布包关键路径 22 项通过，新增不等式专项发布包桌面 8 项通过。
-- Actions 与公网操作结果待发布后补记。
+- 功能提交 `67f22ffcdffd7eea4933784c2478c7dcfad1e44b` 的 [Actions 运行](https://github.com/houjibo/knowledge-visual/actions/runs/45120324297) 全部成功；公开 `release-version.json` revision 与提交一致，`site_files_modified:false`。
+- 对[公网不等式页](https://houjibo.github.io/knowledge-visual/math/high/inequality.html)运行相同桌面／移动专项：14 项实际交互通过、2 项本地文件／子路径场景按条件跳过；覆盖负数和零乘法、重根、精确等号、键盘、320px、重复计分及进度保存。
+
+契约见[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-23-high-inequality-foundations-accuracy/proposal.md)。
