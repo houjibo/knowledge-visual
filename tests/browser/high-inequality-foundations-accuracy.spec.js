@@ -42,12 +42,12 @@ test('负开口重根无解、正开口重根排除根，零系数不能选择',
   await page.locator('#slA').selectOption('-1');
   await setRange(page, '#slB', 2);
   await setRange(page, '#slC', -1);
-  await expect(page.locator('#quadratic-disc')).toHaveText('0.0');
-  await expect(page.locator('#quadratic-solution')).toHaveText('∅（空集）');
+  await expect(page.locator('#quadratic-disc')).toHaveText('0');
+  await expect(page.locator('#quadratic-solution')).toHaveText('∅');
   await page.locator('#slA').selectOption('1');
   await setRange(page, '#slB', -2);
   await setRange(page, '#slC', 1);
-  await expect(page.locator('#quadratic-solution')).toHaveText('x ≠ 1.00');
+  await expect(page.locator('#quadratic-solution')).toHaveText('{x∈ℝ | x≠1}');
   await page.locator('#slB').focus();
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('#slB')).toBeFocused();

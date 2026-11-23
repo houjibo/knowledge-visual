@@ -60,6 +60,16 @@
 .open-foundation h3 { margin: 0 0 8px; font-size: 1.1rem; }
 .open-foundation fieldset { margin: 10px 0; }
 @media (max-width: 600px) { .foundation-controls { grid-template-columns: 1fr; } }
+.quadratic-lab { margin-top: 20px; background: rgba(15,23,42,0.75); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 18px; line-height: 1.6; }
+.quadratic-lab[hidden], .quadratic-lab fieldset[hidden], .quadratic-lab .feedback[hidden] { display: none; }
+.quadratic-lab h2 { margin: 0 0 8px; font-size: 1.2rem; }
+.quadratic-lab select { max-width: 100%; font: inherit; padding: 8px; border-radius: 8px; color: #111827; }
+.quadratic-lab fieldset { border: 1px solid #64748b; border-radius: 10px; display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
+.quadratic-lab fieldset label { display: inline-flex; align-items: center; gap: 4px; }
+.quadratic-lab button { font: inherit; color: white; border: 1px solid #a78bfa; border-radius: 8px; background: #6d28d9; padding: 8px 14px; cursor: pointer; }
+.quadratic-lab .feedback { padding: 10px; border-radius: 8px; background: #064e3b; margin-top: 10px; overflow-wrap: anywhere; }
+.quadratic-lab .feedback.error { background: #7c2d12; }
+.quadratic-lab :focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
 .optimization-lab { margin-top: 20px; background: rgba(15,23,42,0.75); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 18px; line-height: 1.6; }
 .optimization-lab[hidden], .optimization-lab .feedback[hidden] { display: none; }
 .optimization-lab h2 { margin: 0 0 8px; font-size: 1.2rem; }
@@ -157,6 +167,32 @@
       <div id="open-foundation-feedback" class="feedback" role="status" hidden></div>
     </div>
   </section>
+  <section class="quadratic-lab" id="quadratic-lab" aria-labelledby="quadratic-lab-title" hidden>
+    <h2 id="quadratic-lab-title">先预测：零点、方程根与正值区间</h2>
+    <p>先判断方程实根个数和 f(x)&gt;0 的解集形态，核对后上方图像切到本题。图上的小数坐标是近似值，文字解集保留精确边界。</p>
+    <label for="quadratic-task-scenario">选择任务</label>
+    <select id="quadratic-task-scenario"></select>
+    <p id="quadratic-task-prompt"></p>
+    <fieldset id="quadratic-task-model" hidden><legend>实际条件应列成哪个不等式？</legend>
+      <label><input type="radio" name="quadratic-task-model" value="area-greater">x(5−x) &gt; 4</label>
+      <label><input type="radio" name="quadratic-task-model" value="area-less">x(5−x) &lt; 4</label>
+      <label><input type="radio" name="quadratic-task-model" value="perimeter-greater">x+(5−x) &gt; 4</label>
+    </fieldset>
+    <fieldset><legend>对应方程有几个实根，即函数有几个实零点？</legend>
+      <label><input type="radio" name="quadratic-task-roots" value="0">0 个</label>
+      <label><input type="radio" name="quadratic-task-roots" value="1">1 个</label>
+      <label><input type="radio" name="quadratic-task-roots" value="2">2 个</label>
+    </fieldset>
+    <fieldset><legend>函数 f(x)&gt;0 的解集形态是？</legend>
+      <label><input type="radio" name="quadratic-task-region" value="outside">两根外侧</label>
+      <label><input type="radio" name="quadratic-task-region" value="inside">两根之间</label>
+      <label><input type="radio" name="quadratic-task-region" value="except">除切点外全体实数</label>
+      <label><input type="radio" name="quadratic-task-region" value="all">全体实数</label>
+      <label><input type="radio" name="quadratic-task-region" value="none">空集</label>
+    </fieldset>
+    <button type="button" id="quadratic-task-check">核对并观察上方图像</button>
+    <div id="quadratic-task-feedback" class="feedback" role="status" hidden></div>
+  </section>
   <section class="optimization-lab" id="optimization-lab" aria-labelledby="optimization-title" hidden>
     <h2 id="optimization-title">构造最值：先检查等号能否取到</h2>
     <p>选择条件下的一组数，填写整个取值范围内<strong>可取到</strong>的最值。选项用于构造候选；反馈中的代数式说明连续范围内为何最优。</p>
@@ -176,6 +212,7 @@
 
 <script src="assets/inequality-foundations-model.js"></script>
 <script src="assets/inequality-optimization-model.js"></script>
+<script src="assets/quadratic-function-link-model.js"></script>
 <script>
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
@@ -192,6 +229,39 @@ let roundMistakes = false;
 const foundationsModel = window.KVInequalityFoundationsModel;
 const foundationLab = document.getElementById('foundation-lab');
 const foundationFeedback = document.getElementById('foundation-feedback');
+const quadraticModel = window.KVQuadraticFunctionLinkModel;
+const quadraticLab = document.getElementById('quadratic-lab');
+const quadraticTaskScenario = document.getElementById('quadratic-task-scenario');
+const quadraticTaskFeedback = document.getElementById('quadratic-task-feedback');
+
+quadraticModel.scenarios.forEach(scenario => quadraticTaskScenario.add(new Option(scenario.title, scenario.id)));
+function refreshQuadraticTask() {
+  const scenario = quadraticModel.getScenario(quadraticTaskScenario.value);
+  const modelFieldset = document.getElementById('quadratic-task-model');
+  modelFieldset.hidden = !scenario.model;
+  document.getElementById('quadratic-task-prompt').textContent = scenario.context ||
+    `设 f(x)=${quadraticModel.polynomial(scenario.a, scenario.b, scenario.c)}。判断 f(x)=0 的实根个数，以及 f(x)>0 的解集形态。`;
+  quadraticLab.querySelectorAll('input[type="radio"]').forEach(input => { input.checked = false; });
+  quadraticTaskFeedback.hidden = true;
+  quadraticTaskFeedback.textContent = '';
+}
+quadraticTaskScenario.addEventListener('change', refreshQuadraticTask);
+quadraticLab.querySelectorAll('input[type="radio"]').forEach(input => input.addEventListener('change', () => { quadraticTaskFeedback.hidden = true; }));
+document.getElementById('quadratic-task-check').addEventListener('click', () => {
+  const selected = name => quadraticLab.querySelector(`input[name="${name}"]:checked`)?.value || '';
+  const scenario = quadraticModel.getScenario(quadraticTaskScenario.value);
+  const result = quadraticModel.checkScenario(scenario.id, selected('quadratic-task-model'),
+    selected('quadratic-task-roots'), selected('quadratic-task-region'));
+  quadraticTaskFeedback.hidden = false;
+  quadraticTaskFeedback.classList.toggle('error', result.status !== 'correct');
+  quadraticTaskFeedback.textContent = result.feedback;
+  if (result.status !== 'incomplete') {
+    quadA = scenario.a; quadB = scenario.b; quadC = scenario.c;
+    updateQuadraticPanel();
+    drawQuadratic();
+  }
+});
+refreshQuadraticTask();
 const optimizationModel = window.KVInequalityOptimizationModel;
 const optimizationLab = document.getElementById('optimization-lab');
 const optimizationScenario = document.getElementById('optimization-scenario');
@@ -583,12 +653,7 @@ function updatePropertiesPanel() {
 function quad(x) { return quadA * x * x + quadB * x + quadC; }
 
 function getQuadraticRoots() {
-  const disc = quadB * quadB - 4 * quadA * quadC;
-  if (disc < 0) return { type: 'empty', roots: [] };
-  if (disc === 0) return { type: 'equal', roots: [-quadB / (2 * quadA)] };
-  const r1 = (-quadB - Math.sqrt(disc)) / (2 * quadA);
-  const r2 = (-quadB + Math.sqrt(disc)) / (2 * quadA);
-  return { type: 'two', roots: [Math.min(r1, r2), Math.max(r1, r2)] };
+  return quadraticModel.analyze(quadA, quadB, quadC);
 }
 
 function drawQuadratic() {
@@ -630,14 +695,18 @@ function drawQuadratic() {
     const [r1, r2] = info.roots;
     ctx.globalAlpha = 0.15;
     ctx.fillStyle = C.solution;
+    const fillVisible = (left, right) => {
+      const start = Math.max(0, left), end = Math.min(W, right);
+      if (end > start) ctx.fillRect(start, 0, end - start, H);
+    };
     // ax² + bx + c > 0 的解集
     if (quadA > 0) {
       // 外部：x < r1 或 x > r2
-      ctx.fillRect(0, 0, ox + r1 * sx, H);
-      ctx.fillRect(ox + r2 * sx, 0, W - ox - r2 * sx, H);
+      fillVisible(0, ox + r1 * sx);
+      fillVisible(ox + r2 * sx, W);
     } else {
       // 内部：r1 < x < r2
-      ctx.fillRect(ox + r1 * sx, 0, (r2 - r1) * sx, H);
+      fillVisible(ox + r1 * sx, ox + r2 * sx);
     }
     ctx.globalAlpha = 1;
 
@@ -645,7 +714,7 @@ function drawQuadratic() {
     info.roots.forEach(r => {
       ctx.fillStyle = C.boundary;
       ctx.beginPath(); ctx.arc(ox + r * sx, oy, 6, 0, Math.PI * 2); ctx.fill();
-      text(r.toFixed(1), ox + r * sx, oy + 35, C.boundary, 13);
+      text('≈' + r.toFixed(1), ox + r * sx, oy + 35, C.boundary, 13);
     });
   }
 
@@ -659,21 +728,27 @@ function drawQuadratic() {
     const nr1 = ox + r1 * sx, nr2 = ox + r2 * sx;
     // 解集线
     ctx.strokeStyle = C.solution; ctx.lineWidth = 4;
+    const strokeVisible = (left, right) => {
+      const start = Math.max(60, left), end = Math.min(660, right);
+      if (end > start) {
+        ctx.beginPath(); ctx.moveTo(start, nlY); ctx.lineTo(end, nlY); ctx.stroke();
+      }
+    };
     if (quadA > 0) {
-      ctx.beginPath(); ctx.moveTo(60, nlY); ctx.lineTo(nr1, nlY); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(nr2, nlY); ctx.lineTo(660, nlY); ctx.stroke();
+      strokeVisible(60, nr1);
+      strokeVisible(nr2, 660);
       // 空心圆
       ctx.strokeStyle = C.boundary; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(nr1, nlY, 5, 0, Math.PI * 2); ctx.stroke();
       ctx.beginPath(); ctx.arc(nr2, nlY, 5, 0, Math.PI * 2); ctx.stroke();
     } else {
-      ctx.beginPath(); ctx.moveTo(nr1, nlY); ctx.lineTo(nr2, nlY); ctx.stroke();
+      strokeVisible(nr1, nr2);
       ctx.strokeStyle = C.boundary; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(nr1, nlY, 5, 0, Math.PI * 2); ctx.stroke();
       ctx.beginPath(); ctx.arc(nr2, nlY, 5, 0, Math.PI * 2); ctx.stroke();
     }
-    text('x₁=' + r1.toFixed(1), nr1, nlY - 15, C.boundary, 12);
-    text('x₂=' + r2.toFixed(1), nr2, nlY - 15, C.boundary, 12);
+    text('x₁≈' + r1.toFixed(1), nr1, nlY - 15, C.boundary, 12);
+    text('x₂≈' + r2.toFixed(1), nr2, nlY - 15, C.boundary, 12);
   } else if (info.type === 'empty' && quadA > 0) {
     ctx.strokeStyle = C.solution; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.moveTo(60, nlY); ctx.lineTo(660, nlY); ctx.stroke();
@@ -687,7 +762,7 @@ function drawQuadratic() {
     }
     ctx.strokeStyle = C.boundary; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(rootX, nlY, 5, 0, Math.PI * 2); ctx.stroke();
-    text('x₀=' + info.roots[0].toFixed(1), rootX, nlY - 15, C.boundary, 12);
+    text('x₀≈' + info.roots[0].toFixed(1), rootX, nlY - 15, C.boundary, 12);
   }
 
   // 公式
@@ -696,30 +771,23 @@ function drawQuadratic() {
   text(`${quadA}x² ${signB}${quadB}x ${signC}${quadC} = 0`, 360, H - 30, '#fbbf24', 16);
 
   // Δ
-  const disc = quadB * quadB - 4 * quadA * quadC;
-  text(`Δ = ${disc.toFixed(1)}`, 600, H - 30, disc > 0 ? C.am : C.boundary, 14);
+  const disc = info.discriminant;
+  text(`Δ = ${disc}`, 600, H - 30, disc > 0 ? C.am : C.boundary, 14);
 }
 
 function quadraticSolutionText() {
-  const info = getQuadraticRoots();
-  if (info.type === 'empty') {
-    return quadA > 0 ? 'ℝ（全体实数）' : '∅（空集）';
-  }
-  if (info.type === 'equal') {
-    return quadA > 0 ? `x ≠ ${info.roots[0].toFixed(2)}` : '∅（空集）';
-  }
-  const [r1, r2] = info.roots;
-  return quadA > 0
-    ? `x < ${r1.toFixed(2)} 或 x > ${r2.toFixed(2)}`
-    : `${r1.toFixed(2)} < x < ${r2.toFixed(2)}`;
+  return getQuadraticRoots().solution;
 }
 
 function refreshQuadraticPanel() {
   for (const id of ['slA', 'slB', 'slC']) {
     document.getElementById(id).nextElementSibling.textContent = document.getElementById(id).value;
   }
-  document.getElementById('quadratic-disc').textContent = (quadB * quadB - 4 * quadA * quadC).toFixed(1);
+  const info = getQuadraticRoots();
+  document.getElementById('quadratic-disc').textContent = String(info.discriminant);
   document.getElementById('quadratic-opening').textContent = quadA > 0 ? '向上 ↑' : '向下 ↓';
+  document.getElementById('quadratic-root-count').textContent = String(info.rootCount);
+  document.getElementById('quadratic-zeros').textContent = info.labels.length ? info.labels.join('，') : '无实零点';
   document.getElementById('quadratic-solution').textContent = quadraticSolutionText();
 }
 
@@ -733,6 +801,8 @@ function updateQuadraticPanel() {
     <div class="info-grid">
       <div>判别式 Δ = <b id="quadratic-disc"></b></div>
       <div>开口 <b id="quadratic-opening"></b></div>
+      <div>实零点个数 <b id="quadratic-root-count"></b></div>
+      <div>实零点（精确） <b id="quadratic-zeros"></b></div>
       <div style="grid-column:1/3">解集: <b id="quadratic-solution"></b></div>
     </div>
     <div class="prop-card" style="margin-top:12px">
@@ -754,6 +824,8 @@ function updateQuadraticPanel() {
       quadA = parseFloat(document.getElementById('slA').value);
       quadB = parseFloat(document.getElementById('slB').value);
       quadC = parseFloat(document.getElementById('slC').value);
+      quadraticTaskFeedback.hidden = true;
+      quadraticTaskFeedback.textContent = '';
       refreshQuadraticPanel();
       drawQuadratic();
     });
@@ -1163,6 +1235,7 @@ function updateLegend() {
 
 function updatePanel() {
   foundationLab.hidden = currentMode !== 'properties';
+  quadraticLab.hidden = currentMode !== 'quadratic';
   optimizationLab.hidden = currentMode !== 'amgm';
   updateLegend();
   switch (currentMode) {
