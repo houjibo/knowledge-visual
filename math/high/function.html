@@ -161,6 +161,18 @@ canvas { display: block; margin: 0 auto; border-radius: 12px; max-width: 100%; h
 .piecewise-lab table { border-collapse: collapse; width: 100%; margin: 10px 0; }
 .piecewise-lab th, .piecewise-lab td { border: 1px solid #64748b; padding: 6px; text-align: center; }
 .piecewise-lab :focus-visible { outline: 3px solid #ffd200; outline-offset: 3px; }
+.correspondence-lab table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+.correspondence-lab th, .correspondence-lab td { border: 1px solid #64748b; padding: 6px 2px; text-align: center; }
+.correspondence-lab th { font-size: 13px; }
+.correspondence-lab td label { display: inline-flex; align-items: center; gap: 3px; cursor: pointer; }
+.correspondence-lab input[type="checkbox"], .correspondence-lab input[type="radio"] { width: 18px; height: 18px; accent-color: #ffd200; }
+.correspondence-lab fieldset { border: 1px solid #64748b; border-radius: 10px; padding: 10px; margin: 12px 0; }
+.correspondence-lab fieldset label { display: inline-flex; align-items: center; gap: 5px; margin: 5px 14px 5px 0; }
+.correspondence-lab svg { display: block; width: 100%; max-width: 400px; height: auto; margin: 12px auto; background: #111b36; border-radius: 10px; }
+.correspondence-lab .correspondence-feedback { padding: 10px; border-radius: 8px; line-height: 1.6; background: #14532d; overflow-wrap: anywhere; }
+.correspondence-lab .correspondence-feedback.error { background: #7c2d12; }
+.correspondence-lab .correspondence-feedback[hidden] { display: none; }
+.correspondence-lab :focus-visible { outline: 3px solid #ffd200; outline-offset: 3px; }
 
 /* 性质判定 */
 .property-card {
@@ -312,6 +324,32 @@ canvas { display: block; margin: 0 auto; border-radius: 12px; max-width: 100%; h
     </p>
   </div>
 
+  <section class="card correspondence-lab" id="correspondence-lab" aria-labelledby="correspondence-title">
+    <h3 id="correspondence-title">集合对应 · 每个输入有几个输出？</h3>
+    <p class="info-text">固定数集 A={−2,0,2}、B={0,2,4}。A 是拟定的定义域，B 是陪域。勾选每个 x 指向的 y；可以故意留空或给一个 x 选两个 y。先预测，再核对。不同 x 可以指向同一个 y。</p>
+    <div class="btn-row" aria-label="载入可编辑的对应样例">
+      <button type="button" class="btn" data-correspondence-preset="square">平方对应</button>
+      <button type="button" class="btn" data-correspondence-preset="missing">删去 0 的箭头</button>
+      <button type="button" class="btn" data-correspondence-preset="multiple">给 −2 加一条箭头</button>
+    </div>
+    <table><caption>A 中元素到 B 中元素的箭头选择</caption><thead><tr><th scope="col">A 中的 x</th><th scope="col">指向 y=0</th><th scope="col">指向 y=2</th><th scope="col">指向 y=4</th></tr></thead><tbody id="correspondence-matrix"></tbody></table>
+    <svg id="correspondence-diagram" viewBox="0 0 400 220" role="img" aria-label="A 到 B 的当前对应图" aria-describedby="correspondence-description">
+      <defs><marker id="correspondence-arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#38bdf8"/></marker></defs>
+      <text x="50" y="18" fill="#fff">A</text><text x="325" y="18" fill="#fff">B</text>
+      <g id="correspondence-edges"></g>
+      <g fill="#23395b" stroke="#e2e8f0" stroke-width="2"><circle cx="70" cy="45" r="21"/><circle cx="70" cy="110" r="21"/><circle cx="70" cy="175" r="21"/><circle cx="330" cy="45" r="21"/><circle cx="330" cy="110" r="21"/><circle cx="330" cy="175" r="21"/></g>
+      <g fill="#fff" text-anchor="middle" font-size="15"><text x="70" y="50">−2</text><text x="70" y="115">0</text><text x="70" y="180">2</text><text x="330" y="50">0</text><text x="330" y="115">2</text><text x="330" y="180">4</text></g>
+    </svg>
+    <p id="correspondence-description" class="info-text"></p>
+    <fieldset><legend>这组对应是从 A 到 B 的函数吗？</legend>
+      <label><input type="radio" name="correspondence-prediction" value="yes">是函数</label>
+      <label><input type="radio" name="correspondence-prediction" value="no">不是函数</label>
+    </fieldset>
+    <fieldset id="correspondence-range-field"><legend>如果是函数，预测值域包含哪些 B 元素？</legend><div id="correspondence-range"></div></fieldset>
+    <button type="button" class="btn orange" id="correspondence-check">核对对应和值域</button>
+    <p id="correspondence-feedback" class="correspondence-feedback" role="status" hidden></p>
+  </section>
+
   <div class="card">
     <h3>🔍 定义域探索器</h3>
     <p class="info-text">点击不同函数，查看其定义域和值域的确定方法：</p>
@@ -447,6 +485,7 @@ canvas { display: block; margin: 0 auto; border-radius: 12px; max-width: 100%; h
 </div>
 
 <script src="../assets/js/common.js"></script>
+<script src="assets/correspondence-model.js"></script>
 <script src="assets/piecewise-function-model.js"></script>
 <script>
 // ===== Tab Switching =====
@@ -459,6 +498,88 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
   });
 });
+
+// ===== Panel 1: Finite correspondences =====
+const correspondenceModel = window.KVCorrespondenceModel;
+const correspondenceLab = document.getElementById('correspondence-lab');
+const correspondenceMatrix = document.getElementById('correspondence-matrix');
+const correspondenceFeedback = document.getElementById('correspondence-feedback');
+const svgNamespace = 'http://www.w3.org/2000/svg';
+for (const x of correspondenceModel.domain) {
+  const row = document.createElement('tr');
+  const heading = document.createElement('th'); heading.scope = 'row'; heading.textContent = `x=${x}`;
+  row.append(heading);
+  for (const y of correspondenceModel.codomain) {
+    const cell = document.createElement('td');
+    const label = document.createElement('label');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox'; checkbox.dataset.x = String(x); checkbox.dataset.y = String(y);
+    checkbox.setAttribute('aria-label', `x=${x} 指向 y=${y}`);
+    checkbox.addEventListener('change', refreshCorrespondence);
+    label.append(checkbox, document.createTextNode(`y=${y}`));
+    cell.append(label); row.append(cell);
+  }
+  correspondenceMatrix.append(row);
+}
+const correspondenceRange = document.getElementById('correspondence-range');
+for (const y of correspondenceModel.codomain) {
+  const label = document.createElement('label');
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox'; checkbox.value = String(y);
+  checkbox.addEventListener('change', () => { correspondenceFeedback.hidden = true; });
+  label.append(checkbox, document.createTextNode(String(y)));
+  correspondenceRange.append(label);
+}
+function selectedCorrespondence() {
+  const mapping = {};
+  for (const x of correspondenceModel.domain) {
+    mapping[String(x)] = [...correspondenceMatrix.querySelectorAll(`input[data-x="${x}"]:checked`)]
+      .map(input => Number(input.dataset.y));
+  }
+  return mapping;
+}
+function refreshCorrespondence() {
+  const mapping = selectedCorrespondence();
+  const edges = document.getElementById('correspondence-edges');
+  edges.replaceChildren();
+  const description = [];
+  correspondenceModel.domain.forEach((x, i) => {
+    const outputs = mapping[String(x)];
+    description.push(`x=${x} 指向${outputs.length ? outputs.join('、') : '无'}。`);
+    for (const y of outputs) {
+      const line = document.createElementNS(svgNamespace, 'line');
+      line.setAttribute('x1', '92'); line.setAttribute('y1', String(45 + i * 65));
+      line.setAttribute('x2', '307'); line.setAttribute('y2', String(45 + correspondenceModel.codomain.indexOf(y) * 65));
+      line.setAttribute('stroke', '#38bdf8'); line.setAttribute('stroke-width', '2');
+      line.setAttribute('marker-end', 'url(#correspondence-arrow)');
+      edges.append(line);
+    }
+  });
+  document.getElementById('correspondence-description').textContent = `当前箭头：${description.join('')}`;
+  correspondenceFeedback.hidden = true;
+}
+for (const button of correspondenceLab.querySelectorAll('[data-correspondence-preset]')) {
+  button.addEventListener('click', () => {
+    const mapping = correspondenceModel.presets[button.dataset.correspondencePreset];
+    correspondenceMatrix.querySelectorAll('input').forEach(input => {
+      input.checked = mapping[input.dataset.x].includes(Number(input.dataset.y));
+    });
+    correspondenceLab.querySelectorAll('input[name="correspondence-prediction"]').forEach(input => { input.checked = false; });
+    correspondenceRange.querySelectorAll('input').forEach(input => { input.checked = false; });
+    refreshCorrespondence();
+  });
+}
+correspondenceLab.querySelectorAll('input[name="correspondence-prediction"]').forEach(input =>
+  input.addEventListener('change', () => { correspondenceFeedback.hidden = true; }));
+document.getElementById('correspondence-check').addEventListener('click', () => {
+  const prediction = correspondenceLab.querySelector('input[name="correspondence-prediction"]:checked')?.value;
+  const range = [...correspondenceRange.querySelectorAll('input:checked')].map(input => Number(input.value));
+  const result = correspondenceModel.check(selectedCorrespondence(), prediction, range);
+  correspondenceFeedback.textContent = result.feedback;
+  correspondenceFeedback.classList.toggle('error', result.status !== 'correct');
+  correspondenceFeedback.hidden = false;
+});
+correspondenceLab.querySelector('[data-correspondence-preset="square"]').click();
 
 // ===== Panel 1: Piecewise functions =====
 const piecewiseModel = window.KVPiecewiseFunctionModel;

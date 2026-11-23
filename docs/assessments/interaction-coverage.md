@@ -153,6 +153,8 @@
   - 桌面与移动视口验证绝对值解析、性质题键盘锁定、2/6 未通过、4/6 通过及保存失败重试；实机及其他习题内容尚未全面验收。 [high-function-practice-reliability.spec.js](../../tests/browser/high-function-practice-reliability.spec.js)
   - 桌面与移动视口验证五种定义域示例代表坐标、倒数断点、键盘选中状态及窄屏画布；其他图示和真实设备尚未全面验收。 [function-domain-visual-consistency.spec.js](../../tests/browser/function-domain-visual-consistency.spec.js)
   - 桌面与移动视口核对负偶次幂左右分支、零次幂、反比例函数正负零系数及代表画布坐标；概念演示与其他模型尚未全面核验。 [high-function-power-reciprocal-accuracy.spec.js](../../tests/browser/high-function-power-reciprocal-accuracy.spec.js)
+  - 桌面与移动视口核对两种固定分段情境的定义域、分界点函数值、图表端点、320px 键盘、文件直开与发布子路径；自主建模和真实学习者迁移未验收。 [high-function-piecewise-situations.spec.js](../../tests/browser/high-function-piecewise-situations.spec.js)
+  - 桌面与移动视口核对有限集合对应的漏配、一对多、合法多对一、陪域与值域、图文同步、320px 键盘、文件直开与发布子路径；一般实数定义域及真实学习者迁移未验收。 [high-function-correspondence-lab.spec.js](../../tests/browser/high-function-correspondence-lab.spec.js)
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
 - [不等式 · 性质、解集与均值不等式互动可视化](../../math/high/inequality.html)
   - 桌面与移动视口验证六个主题顶层模式的键盘顺序、Enter／空格、选中状态、内容与指针切换；页面内部控件、真实设备和整页无障碍尚未全面验收。 [high-math-mode-keyboard-access.spec.js](../../tests/browser/high-math-mode-keyboard-access.spec.js)
