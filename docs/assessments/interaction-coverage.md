@@ -58,6 +58,7 @@
 - [化学反应速率与平衡 - 高中化学可视化](../../chemistry/high/reaction-rate.html)
   - 桌面与窄屏逐主题检查反应速率、影响因素、化学平衡和勒夏特列原理的八张画布在切换及缩放后具有可见尺寸和绘制像素，并检查参数与平衡动画状态保留；不代表化学模型正确性、键盘无障碍或真实设备体验已全面验收。 [reaction-rate-canvas-visibility.spec.js](../../tests/browser/reaction-rate-canvas-visibility.spec.js)
   - 桌面与移动浏览器检查速率公式及模型指数前提、温度和催化文字、320px 布局、键盘主题/测验、完成刷新和保存失败重试；平衡定量模型、真实设备与屏幕阅读器人工体验未核。 [reaction-rate-concept-access.spec.js](../../tests/browser/reaction-rate-concept-access.spec.js)
+  - 桌面与移动浏览器核 A⇌B 三起点份额/速率/曲线、合成氨六类 Q/K 扰动与连续操作、重置、320px 键盘、文件直开及发布子路径；真实气体/动力学与实际设备未核。 [reaction-equilibrium-model.spec.js](../../tests/browser/reaction-equilibrium-model.spec.js)
 - [原子与元素 · 初中化学互动可视化](../../chemistry/middle/04-atom-element.html)
   - 桌面与移动视口逐个验证三个主题的模式键盘切换、选中状态及内容，并模拟触摸返回；真实设备与模式内部控件尚未全面验收。 [middle-chemistry-mode-keyboard-access.spec.js](../../tests/browser/middle-chemistry-mode-keyboard-access.spec.js)
 - [化学式与化合价 · 互动可视化](../../chemistry/middle/05-formula.html)

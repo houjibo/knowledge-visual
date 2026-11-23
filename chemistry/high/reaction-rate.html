@@ -64,6 +64,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .eq-btn { padding: 8px 14px; border: 1px solid #555; border-radius: 8px; background: rgba(30,30,60,0.8); color: #ddd; cursor: pointer; font-size: 0.82em; transition: all 0.2s; }
 .eq-btn:hover { border-color: #ffd93d; color: #ffd93d; }
 .eq-btn.active { background: #ffd93d; color: #111; border-color: #ffd93d; }
+.eq-btn:focus-visible, .lechat-btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 
 .eq-status { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
 .eq-stat { font-size: 0.85em; }
@@ -213,24 +214,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div class="card">
     <h3>⚖️ 化学平衡的建立</h3>
     <p style="font-size:0.85em;color:#aaa;margin-bottom:12px;">
-      可逆反应中，正反应速率 = 逆反应速率时，达到化学平衡。此时各物质浓度不再改变。
-      <br><span class="formula">aA + bB ⇌ cC + dD</span>
+      本图只模拟封闭恒容的 <span class="formula">A ⇌ B</span>（1:1）一级可逆反应，A+B=1。
+      模型取 k<sub>正</sub>=0.5、k<sub>逆</sub>=0.2，故 K=B/A=2.5；正逆反应同时存在，平衡时两速率相等而不为零。
+      时间、份额与速率均为模型相对量，不是实测浓度或秒。
     </p>
     <div class="eq-canvas-wrap">
       <canvas id="eqCanvas"></canvas>
     </div>
     <div class="eq-controls">
-      <button class="eq-btn" onclick="setEqMode('forward')">正反应开始</button>
-      <button class="eq-btn" onclick="setEqMode('reverse')">逆反应开始</button>
-      <button class="eq-btn" onclick="setEqMode('both')">双向开始</button>
+      <button class="eq-btn" aria-pressed="false" onclick="setEqMode('forward', this)">从纯 A 开始</button>
+      <button class="eq-btn" aria-pressed="false" onclick="setEqMode('reverse', this)">从纯 B 开始</button>
+      <button class="eq-btn" aria-pressed="false" onclick="setEqMode('both', this)">A、B 各半开始</button>
       <button class="eq-btn" onclick="resetEq()">重置</button>
     </div>
     <div class="eq-graph">
       <canvas id="eqGraph"></canvas>
     </div>
-    <div class="eq-status">
-      <div class="eq-stat">正反应速率: <span id="vForward">0.00</span></div>
-      <div class="eq-stat">逆反应速率: <span id="vReverse">0.00</span></div>
+    <div class="eq-status" aria-live="polite">
+      <div class="eq-stat">A 份额: <span id="eqA">1.000</span></div>
+      <div class="eq-stat">B 份额: <span id="eqB">0.000</span></div>
+      <div class="eq-stat">正向模型速率: <span id="vForward">0.500</span></div>
+      <div class="eq-stat">逆向模型速率: <span id="vReverse">0.000</span></div>
       <div class="eq-stat">状态: <span id="eqState">未开始</span></div>
     </div>
   </div>
@@ -241,8 +245,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div class="card">
     <h3>🔄 勒夏特列原理（平衡移动）</h3>
     <p style="font-size:0.85em;color:#aaa;margin-bottom:12px;">
-      改变影响平衡的条件，平衡向<span class="highlight">减弱这种改变</span>的方向移动。
-      <br>反应：<span class="formula">N₂ + 3H₂ ⇌ 2NH₃</span>  <span style="color:#e74c3c;">ΔH < 0（放热）</span>
+      对 <span class="formula">N₂ + 3H₂ ⇌ 2NH₃</span>（放热）做理想气体平衡商示意。
+      每次先改变模型压强档位、温度方案或加入模型份额，再沿 1:3:2 计量关系求新平衡。升温/降温分别把目标 K 设为基准的 1/4、4 倍，仅表示方向；数值不代表实际温度、反应速率或工业压强。达到新平衡时总压保持设定档位，容器体积可变。
     </p>
     <div class="lechat-canvas-wrap">
       <canvas id="lechatCanvas"></canvas>
@@ -256,8 +260,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="lechat-btn conc-add" onclick="lechatChange('addNH3')">+NH₃</button>
       <button class="lechat-btn reset" onclick="lechatReset()">⟲ 重置</button>
     </div>
-    <div class="lechat-result" id="lechatResult">
-      点击上方按钮，观察平衡如何移动！
+    <div class="lechat-result" id="lechatResult" aria-live="polite">
+      点击上方按钮，比较扰动后的平衡商与新平衡。
+    </div>
+    <div class="eq-status" id="lechatNumbers">
+      <div class="eq-stat">N₂ 模型份额: <span id="lechatN2">8.00</span></div>
+      <div class="eq-stat">H₂ 模型份额: <span id="lechatH2">24.00</span></div>
+      <div class="eq-stat">NH₃ 模型份额: <span id="lechatNH3">12.00</span></div>
+      <div class="eq-stat">扰动后 Q/K: <span id="lechatRatio">1.000</span></div>
+      <div class="eq-stat">重新平衡 ξ: <span id="lechatExtent">0.000</span></div>
+      <div class="eq-stat">新平衡 Q/K: <span id="lechatPostRatio">1.000</span></div>
     </div>
   </div>
 </div>
@@ -281,6 +293,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 <script src="assets/touch.js"></script>
 <script src="assets/common.js"></script>
+<script src="assets/reaction-equilibrium-model.js"></script>
 <script>
 // ============ Tab Switching ============
 function renderSectionCanvases(idx) {
@@ -296,7 +309,7 @@ function renderSectionCanvases(idx) {
       drawFactorArea();
       break;
     case 2: {
-      const latest = eqHistory.length ? eqHistory[eqHistory.length - 1] : { a: 0.75, b: 0.25 };
+      const latest = eqHistory.length ? eqHistory[eqHistory.length - 1] : ReactionEquilibriumModel.simpleState('forward', 0);
       drawEq(latest.a, latest.b);
       drawEqGraph();
       break;
@@ -693,78 +706,60 @@ function drawFactorArea() {
 
 // ============ Section 3: Equilibrium ============
 let eqMode = null;
-let eqTime = 0;
 let eqAnimId = null;
+let eqStartAt = null;
 let eqHistory = [];
-const EQ_K = 2.5; // equilibrium constant ratio
 
-function setEqMode(mode) {
-  eqMode = mode;
-  eqTime = 0;
-  eqHistory = [];
-  document.querySelectorAll('.eq-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+function renderEqState(state) {
+  document.getElementById('eqA').textContent = state.a.toFixed(3);
+  document.getElementById('eqB').textContent = state.b.toFixed(3);
+  document.getElementById('vForward').textContent = state.forwardRate.toFixed(3);
+  document.getElementById('vReverse').textContent = state.reverseRate.toFixed(3);
+  const close = Math.abs(state.forwardRate - state.reverseRate) < 0.001;
+  document.getElementById('eqState').textContent = !eqMode ? '未开始' : close ? '✅ 接近平衡' : '⏳ 趋向平衡中...';
+  document.getElementById('eqState').style.color = close && eqMode ? '#6bcb77' : '#ffd93d';
+  if (activeSectionIndex() === 2) {
+    drawEq(state.a, state.b);
+    drawEqGraph();
+  }
+}
+
+function setEqMode(mode, button) {
   if (eqAnimId) cancelAnimationFrame(eqAnimId);
-  animateEq();
+  eqMode = mode;
+  eqStartAt = null;
+  const initial = ReactionEquilibriumModel.simpleState(mode, 0);
+  eqHistory = [initial];
+  document.querySelectorAll('.eq-btn[aria-pressed]').forEach(b => {
+    b.classList.toggle('active', b === button);
+    b.setAttribute('aria-pressed', String(b === button));
+  });
+  renderEqState(initial);
+  eqAnimId = requestAnimationFrame(animateEq);
 }
 
 function resetEq() {
-  eqMode = null;
-  eqTime = 0;
-  eqHistory = [];
   if (eqAnimId) cancelAnimationFrame(eqAnimId);
-  document.querySelectorAll('.eq-btn').forEach(b => b.classList.remove('active'));
-  drawEq(0, 0);
-  drawEqGraph();
-  document.getElementById('vForward').textContent = '0.00';
-  document.getElementById('vReverse').textContent = '0.00';
-  document.getElementById('eqState').textContent = '未开始';
+  eqAnimId = null;
+  eqMode = null;
+  eqStartAt = null;
+  eqHistory = [];
+  document.querySelectorAll('.eq-btn[aria-pressed]').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-pressed', 'false');
+  });
+  renderEqState(ReactionEquilibriumModel.simpleState('forward', 0));
 }
 
-function animateEq() {
+function animateEq(now) {
   if (!eqMode) return;
-  eqTime += 0.02;
-  
-  let concA, concB;
-  const eqFrac = 1 / (1 + 1/EQ_K); // fraction at equilibrium
-  
-  if (eqMode === 'forward') {
-    concA = Math.exp(-eqTime * 0.5) * (1 - eqFrac) + eqFrac * (1 - Math.exp(-eqTime * 0.3));
-    concA = 1 - eqFrac * (1 - Math.exp(-eqTime * 0.3));
-    concB = eqFrac * (1 - Math.exp(-eqTime * 0.3));
-  } else if (eqMode === 'reverse') {
-    concA = eqFrac * (1 - Math.exp(-eqTime * 0.3));
-    concB = 1 - eqFrac * (1 - Math.exp(-eqTime * 0.3));
-    // swap
-    [concA, concB] = [concB, concA];
-    concB = 1 - concA;
-  } else {
-    const mid = 0.5;
-    concA = mid + (eqFrac - mid) * (1 - Math.exp(-eqTime * 0.3));
-    concB = 1 - concA;
-  }
-  
-  const vf = Math.max(0, concA * 0.8 * Math.exp(-eqTime * 0.1) + 0.05);
-  const vr = Math.max(0, concB * 0.8 * Math.exp(-eqTime * 0.1) * EQ_K * 0.3 + 0.05);
-  const vfDisplay = (concA * 0.5 * (1 + Math.exp(-eqTime))).toFixed(2);
-  const vrDisplay = (concB * 0.5 * EQ_K * (1 - Math.exp(-eqTime * 0.8))).toFixed(2);
-  
-  eqHistory.push({ t: eqTime, a: concA, b: concB, vf: +vfDisplay, vr: +vrDisplay });
-  if (eqHistory.length > 300) eqHistory.shift();
-  
-  drawEq(concA, concB);
-  drawEqGraph();
-  
-  document.getElementById('vForward').textContent = vfDisplay;
-  document.getElementById('vReverse').textContent = vrDisplay;
-  
-  const diff = Math.abs(+vfDisplay - +vrDisplay);
-  document.getElementById('eqState').textContent = diff < 0.05 ? '✅ 已达平衡' : '⏳ 趋向平衡中...';
-  document.getElementById('eqState').style.color = diff < 0.05 ? '#6bcb77' : '#ffd93d';
-  
-  if (eqTime < 15) {
-    eqAnimId = requestAnimationFrame(animateEq);
-  }
+  if (eqStartAt === null) eqStartAt = now;
+  const time = Math.min(15, (now - eqStartAt) / 1000 * 1.2);
+  const state = ReactionEquilibriumModel.simpleState(eqMode, time);
+  if (time > eqHistory[eqHistory.length - 1].time) eqHistory.push(state);
+  renderEqState(state);
+  if (time < 15) eqAnimId = requestAnimationFrame(animateEq);
+  else eqAnimId = null;
 }
 
 function drawEq(a, b) {
@@ -839,25 +834,46 @@ function drawEqGraph() {
   ctx.fillStyle = '#888';
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('时间 →', w/2, h - 5);
+  ctx.fillText('模型时间 →', w/2, h - 5);
   ctx.save();
   ctx.translate(12, h/2);
   ctx.rotate(-Math.PI/2);
-  ctx.fillText('浓度', 0, 0);
+  ctx.fillText('A/B 份额', 0, 0);
   ctx.restore();
-  
+
+  const scaleY = h - 45;
+  const equilibriumA = ReactionEquilibriumModel.SIMPLE_EQUILIBRIUM_A;
+  const guides = [
+    {fraction: equilibriumA, label: 'A 平衡', color: '#4a90d9'},
+    {fraction: 1 - equilibriumA, label: 'B 平衡', color: '#6bcb77'}
+  ];
+  guides.forEach(guide => {
+    const y = h - 27 - guide.fraction * scaleY;
+    ctx.strokeStyle = guide.color;
+    ctx.globalAlpha = 0.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(42, y);
+    ctx.lineTo(w - 10, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = guide.color;
+    ctx.textAlign = 'left';
+    ctx.fillText(guide.label, 45, y - 4);
+  });
+
   if (eqHistory.length < 2) return;
-  
-  const maxT = eqHistory[eqHistory.length - 1].t;
+
+  const maxT = eqHistory[eqHistory.length - 1].time;
   const scaleX = (w - 55) / Math.max(maxT, 1);
-  const scaleY = (h - 45);
   
   // Draw A line
   ctx.strokeStyle = '#4a90d9';
   ctx.lineWidth = 2;
   ctx.beginPath();
   eqHistory.forEach((pt, i) => {
-    const x = 42 + pt.t * scaleX;
+    const x = 42 + pt.time * scaleX;
     const y = h - 27 - pt.a * scaleY;
     if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   });
@@ -867,26 +883,11 @@ function drawEqGraph() {
   ctx.strokeStyle = '#6bcb77';
   ctx.beginPath();
   eqHistory.forEach((pt, i) => {
-    const x = 42 + pt.t * scaleX;
+    const x = 42 + pt.time * scaleX;
     const y = h - 27 - pt.b * scaleY;
     if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   });
   ctx.stroke();
-  
-  // Equilibrium line
-  if (eqHistory.length > 10) {
-    const lastA = eqHistory[eqHistory.length - 1].a;
-    const eqY = h - 27 - lastA * scaleY;
-    ctx.strokeStyle = 'rgba(255,217,61,0.3)';
-    ctx.setLineDash([4,4]);
-    ctx.beginPath();
-    ctx.moveTo(42, eqY);
-    ctx.lineTo(w - 10, eqY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#ffd93d';
-    ctx.fillText('平衡', w - 25, eqY - 5);
-  }
   
   // Legend
   ctx.font = '10px sans-serif';
@@ -895,165 +896,86 @@ function drawEqGraph() {
 }
 
 // ============ Section 4: Le Chatelier ============
-let lechatState = {
-  n2: 8, h2: 24, nh3: 12,
-  temp: 1, pressure: 1,
-  forwardRate: 0.5, reverseRate: 0.5
-};
+let lechatState = ReactionEquilibriumModel.initialAmmoniaState();
+
+function renderLechatState() {
+  document.getElementById('lechatN2').textContent = lechatState.n2.toFixed(2);
+  document.getElementById('lechatH2').textContent = lechatState.h2.toFixed(2);
+  document.getElementById('lechatNH3').textContent = lechatState.nh3.toFixed(2);
+  document.getElementById('lechatRatio').textContent = lechatState.preRatio.toFixed(3);
+  document.getElementById('lechatExtent').textContent = (lechatState.extent >= 0 ? '+' : '') + lechatState.extent.toFixed(3);
+  document.getElementById('lechatPostRatio').textContent = lechatState.postRatio.toFixed(3);
+  if (activeSectionIndex() === 3) drawLechat();
+}
 
 function lechatReset() {
-  lechatState = { n2: 8, h2: 24, nh3: 12, temp: 1, pressure: 1, forwardRate: 0.5, reverseRate: 0.5 };
-  document.getElementById('lechatResult').innerHTML = '已重置。反应：<span class="formula">N₂ + 3H₂ ⇌ 2NH₃</span>  ΔH < 0（放热）';
-  drawLechat();
+  lechatState = ReactionEquilibriumModel.initialAmmoniaState();
+  document.getElementById('lechatResult').textContent = '已重置到基准平衡：温度方案常规、压强档位 1，Q/K=1。';
+  renderLechatState();
 }
 
 function lechatChange(type) {
-  let msg = '';
-  const s = lechatState;
-  
-  switch(type) {
-    case 'tempUp':
-      s.temp = 2;
-      // Endothermic direction (reverse) favored
-      s.nh3 -= 3; s.n2 += 1.5; s.h2 += 4.5;
-      s.forwardRate *= 0.6; s.reverseRate *= 1.4;
-      msg = '🌡️ <span class="shift">升温</span> → 平衡向<span class="shift">逆反应方向</span>移动（吸热方向）<br>NH₃ 减少，N₂ 和 H₂ 增多。工业合成氨选择适当温度是兼顾速率和平衡！';
-      break;
-    case 'tempDown':
-      s.temp = 0.5;
-      s.nh3 += 3; s.n2 -= 1.5; s.h2 -= 4.5;
-      s.forwardRate *= 1.4; s.reverseRate *= 0.6;
-      msg = '❄️ <span class="shift">降温</span> → 平衡向<span class="shift">正反应方向</span>移动（放热方向）<br>NH₃ 增多！但温度太低反应速率会很慢，需权衡。';
-      break;
-    case 'pressUp':
-      s.pressure = 2;
-      // Fewer moles side favored (forward: 4 mol → 2 mol)
-      s.nh3 += 4; s.n2 -= 2; s.h2 -= 6;
-      s.forwardRate *= 1.5; s.reverseRate *= 0.7;
-      msg = '⬆️ <span class="shift">加压</span> → 平衡向<span class="shift">气体分子数减少</span>的方向移动<br>4 mol → 2 mol，正向移动，NH₃ 增多！工业合成氨采用高压(20~50MPa)。';
-      break;
-    case 'pressDown':
-      s.pressure = 0.5;
-      s.nh3 -= 4; s.n2 += 2; s.h2 += 6;
-      s.forwardRate *= 0.7; s.reverseRate *= 1.5;
-      msg = '⬇️ <span class="shift">减压</span> → 平衡向<span class="shift">气体分子数增多</span>的方向移动<br>NH₃ 减少，逆向移动。';
-      break;
-    case 'addN2':
-      s.n2 += 5;
-      s.forwardRate *= 1.6;
-      msg = '+N₂ <span class="shift">增大反应物浓度</span> → 平衡向<span class="shift">正反应方向</span>移动<br>NH₃ 将增多，直到新的平衡建立。';
-      break;
-    case 'addNH3':
-      s.nh3 += 6;
-      s.reverseRate *= 1.6;
-      msg = '+NH₃ <span class="shift">增大生成物浓度</span> → 平衡向<span class="shift">逆反应方向</span>移动<br>系统消耗部分新增的 NH₃。';
-      break;
-  }
-  
-  // Clamp values
-  s.n2 = Math.max(1, s.n2);
-  s.h2 = Math.max(1, s.h2);
-  s.nh3 = Math.max(1, s.nh3);
-  
-  document.getElementById('lechatResult').innerHTML = msg;
-  drawLechat();
+  lechatState = ReactionEquilibriumModel.perturbAmmonia(lechatState, type);
+  const descriptions = {
+    tempUp: '升温方案使目标 K 为基准的 1/4',
+    tempDown: '降温方案使目标 K 为基准的 4 倍',
+    pressUp: '压强档位调为 2',
+    pressDown: '压强档位调为 0.5',
+    addN2: '加入 5 份 N₂（保持总压档位）',
+    addNH3: '加入 6 份 NH₃（保持总压档位）'
+  };
+  const direction = lechatState.extent > 0.000001 ? '正向' :
+    lechatState.extent < -0.000001 ? '逆向' : '无明显';
+  document.getElementById('lechatResult').textContent =
+    `${descriptions[type]}；扰动后 Q/K=${lechatState.preRatio.toFixed(3)}，` +
+    `${direction}移动 ξ=${lechatState.extent.toFixed(3)}，新平衡 Q/K≈${lechatState.postRatio.toFixed(3)}。`;
+  renderLechatState();
 }
 
 function drawLechat() {
-  const { ctx, w, h } = getCanvasCtx('lechatCanvas');
+  const {ctx, w, h} = getCanvasCtx('lechatCanvas');
   ctx.fillStyle = '#0c0c20';
   ctx.fillRect(0, 0, w, h);
-  
-  const s = lechatState;
-  const total = s.n2 + s.h2 + s.nh3;
-  
-  // Draw reaction vessel
-  ctx.strokeStyle = 'rgba(100,100,200,0.4)';
-  ctx.lineWidth = 2;
-  const vx = w * 0.05, vy = h * 0.1, vw = w * 0.55, vh = h * 0.75;
-  ctx.strokeRect(vx, vy, vw, vh);
-  
-  // Draw particles
-  const rng4 = (s2) => { let x = s2; return () => { x = (x * 48271) % 2147483647; return x / 2147483647; }; };
-  const r4 = rng4(Math.round(s.n2 * 100 + s.h2 * 10 + s.nh3));
-  
-  const drawP = (count, color, label, size) => {
-    for (let i = 0; i < Math.min(count, 50); i++) {
-      const px = vx + 15 + r4() * (vw - 30);
-      const py = vy + 15 + r4() * (vh - 30);
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(px, py, size, 0, Math.PI * 2);
-      ctx.fill();
-      if (size > 5) {
-        ctx.fillStyle = 'white';
-        ctx.font = `bold ${size}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(label, px, py);
-      }
-    }
-  };
-  
-  const scale = Math.sqrt(200 / Math.max(total, 1));
-  drawP(s.n2, '#e74c3c', 'N', Math.max(4, 7 * scale));
-  drawP(s.h2, '#3498db', 'H', Math.max(3, 5 * scale));
-  drawP(s.nh3, '#2ecc71', 'N', Math.max(5, 8 * scale));
-  
-  // Info panel on right
-  const ix = w * 0.65;
   ctx.fillStyle = '#ffd93d';
-  ctx.font = 'bold 13px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('N₂ + 3H₂ ⇌ 2NH₃', ix, h * 0.12);
-  ctx.fillStyle = '#e74c3c';
-  ctx.font = '11px sans-serif';
-  ctx.fillText('ΔH < 0 (放热反应)', ix, h * 0.18);
-  
-  ctx.fillStyle = '#ccc';
-  ctx.font = '12px sans-serif';
-  const items = [
-    { label: 'N₂', val: s.n2.toFixed(0), color: '#e74c3c' },
-    { label: 'H₂', val: s.h2.toFixed(0), color: '#3498db' },
-    { label: 'NH₃', val: s.nh3.toFixed(0), color: '#2ecc71' },
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('N₂ + 3H₂ ⇌ 2NH₃', w / 2, 24);
+  const vessel = {x: 16, y: 40, width: w - 32, height: h - 95};
+  ctx.strokeStyle = 'rgba(100,100,200,0.55)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(vessel.x, vessel.y, vessel.width, vessel.height);
+
+  const amounts = [lechatState.n2, lechatState.h2, lechatState.nh3];
+  const total = amounts.reduce((sum, value) => sum + value, 0);
+  const dotCount = 50;
+  const colors = ['#e74c3c', '#3498db', '#2ecc71'];
+  let seed = Math.round(lechatState.n2 * 1000 + lechatState.h2 * 100 + lechatState.nh3 * 10) || 1;
+  const random = () => { seed = seed * 16807 % 2147483647; return seed / 2147483647; };
+  for (let i = 0; i < dotCount; i++) {
+    const fraction = (i + 0.5) / dotCount;
+    const species = fraction < amounts[0] / total ? 0 :
+      fraction < (amounts[0] + amounts[1]) / total ? 1 : 2;
+    ctx.fillStyle = colors[species];
+    ctx.beginPath();
+    ctx.arc(vessel.x + 12 + random() * (vessel.width - 24),
+      vessel.y + 12 + random() * (vessel.height - 24), species === 2 ? 5 : 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const legend = [
+    {x: w * 0.13, label: 'N₂', color: colors[0]},
+    {x: w * 0.43, label: 'H₂', color: colors[1]},
+    {x: w * 0.73, label: 'NH₃', color: colors[2]}
   ];
-  items.forEach((item, i) => {
-    const y = h * 0.3 + i * 35;
+  legend.forEach(item => {
     ctx.fillStyle = item.color;
-    ctx.beginPath(); ctx.arc(ix + 8, y, 6, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#ccc';
-    ctx.fillText(`${item.label}: ${item.val}`, ix + 22, y + 4);
+    ctx.beginPath();
+    ctx.arc(item.x, h - 29, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ddd';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(item.label, item.x + 9, h - 25);
   });
-  
-  // Rate bars
-  ctx.fillStyle = '#aaa';
-  ctx.font = '11px sans-serif';
-  ctx.fillText('正反应速率:', ix, h * 0.58);
-  const barMax = w * 0.28;
-  ctx.fillStyle = 'rgba(231,76,60,0.3)';
-  ctx.fillRect(ix, h * 0.61, barMax, 14);
-  ctx.fillStyle = '#e74c3c';
-  ctx.fillRect(ix, h * 0.61, barMax * Math.min(s.forwardRate / 2, 1), 14);
-  
-  ctx.fillStyle = '#aaa';
-  ctx.fillText('逆反应速率:', ix, h * 0.72);
-  ctx.fillStyle = 'rgba(52,152,219,0.3)';
-  ctx.fillRect(ix, h * 0.75, barMax, 14);
-  ctx.fillStyle = '#3498db';
-  ctx.fillRect(ix, h * 0.75, barMax * Math.min(s.reverseRate / 2, 1), 14);
-  
-  // Equilibrium indicator
-  const balanced = Math.abs(s.forwardRate - s.reverseRate) < 0.15;
-  ctx.fillStyle = balanced ? '#6bcb77' : '#ffd93d';
-  ctx.font = 'bold 12px sans-serif';
-  ctx.fillText(balanced ? '✅ 平衡状态' : '⏳ 平衡移动中...', ix, h * 0.9);
-  
-  // Temperature/Pressure indicators
-  ctx.fillStyle = s.temp > 1 ? '#e74c3c' : s.temp < 1 ? '#3498db' : '#888';
-  ctx.font = '11px sans-serif';
-  ctx.fillText(`温度: ${s.temp > 1 ? '高' : s.temp < 1 ? '低' : '常'}`, ix, h * 0.96);
-  ctx.fillStyle = s.pressure > 1 ? '#f39c12' : s.pressure < 1 ? '#2ecc71' : '#888';
-  ctx.fillText(`压强: ${s.pressure > 1 ? '高' : s.pressure < 1 ? '低' : '常'}`, ix + 80, h * 0.96);
 }
 
 // ============ Quiz Mode ============
