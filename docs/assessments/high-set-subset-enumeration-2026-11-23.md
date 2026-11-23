@@ -17,6 +17,7 @@
 - `node tests/set-subsets-model.test.js`：8 种 A 的个数与正确集合、空集和全集边界、漏选、误选、错误个数与非法输入通过。
 - `npx playwright test tests/browser/sets-subset-enumeration.spec.js --project=desktop --project=mobile`：8 项通过，涵盖错误修正、边界、重置、320px、键盘、直接文件与发布子路径。
 - `CI=1 npm run check`：完整静态、严格 OpenSpec 与浏览器项目覆盖预检通过；功能矩阵 2,966 通过、8 项条件跳过；开发站与发布包各 421 页加载通过，发布包关键路径 22 项通过，新增练习发布包桌面专项 4 项通过。
-- 远端 Actions 和公网核查结果待本变更发布后补记。
+- 功能提交 `39beffc9df6b6ecce5fd3c0e2bcd64058d0d28ca` 的 [Actions 运行](https://github.com/houjibo/knowledge-visual/actions/runs/45112084785) 中 7 个 job 均成功；公开 `release-version.json` 返回同一 revision 且 `site_files_modified:false`。
+- 公网 `KV_PUBLISHED_BASE_URL=https://houjibo.github.io/knowledge-visual/ npx playwright test tests/browser/sets-subset-enumeration.spec.js --project=desktop --project=mobile`：6 项实际交互通过、2 项仅本地加载场景按条件跳过；覆盖漏选空集、误选桃、空集与全集、320px 键盘。测试页面为[公开集合页](https://houjibo.github.io/knowledge-visual/math/high/sets.html)。
 
-契约见[本轮 OpenSpec 变更](../../openspec/changes/high-set-subset-enumeration/proposal.md)。
+契约见[归档 OpenSpec 变更](../../openspec/changes/archive/2026-11-23-high-set-subset-enumeration/proposal.md)。
