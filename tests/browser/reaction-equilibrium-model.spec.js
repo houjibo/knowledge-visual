@@ -82,6 +82,7 @@ test('六类扰动的 Q/K、方向和新平衡份额一致', async ({page}) => {
 
 test('320px 键盘操作可读，文件直开与发布子路径加载模型', async ({page}) => {
   test.skip(!!process.env.KV_PUBLISHED_BASE_URL, '公网路径由上方共用用例验证');
+  await page.clock.install({time: new Date('2026-01-01T00:00:00Z')});
   await page.setViewportSize({width: 320, height: 800});
   await page.goto(pathToFileURL(resolve(__dirname, '../../chemistry/high/reaction-rate.html')).href);
   await page.locator('.tab').nth(3).focus();
@@ -95,6 +96,7 @@ test('320px 键盘操作可读，文件直开与发布子路径加载模型', as
   try {
     const response = await page.goto(new URL('chemistry/high/reaction-rate.html', release.base).href);
     expect(response.status()).toBe(200);
+    await page.clock.pauseAt(new Date('2026-01-01T00:01:00Z'));
     await page.locator('.tab').nth(2).click();
     await page.locator('.eq-btn').nth(1).click();
     await expect(page.locator('#eqA')).toHaveText('0.000');
