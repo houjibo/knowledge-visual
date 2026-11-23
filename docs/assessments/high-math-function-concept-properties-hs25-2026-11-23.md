@@ -44,7 +44,7 @@
 
 行为契约见[归档的 OpenSpec 变更](../../openspec/changes/archive/2026-11-23-high-function-piecewise-situations/proposal.md)。
 
-集合对应行为契约见[OpenSpec 变更](../../openspec/changes/high-function-correspondence-lab/proposal.md)。
+集合对应行为契约见[归档的 OpenSpec 变更](../../openspec/changes/archive/2026-11-23-high-function-correspondence-lab/proposal.md)。
 
 ### 集合对应增量验证
 
@@ -52,3 +52,5 @@
 - 新专项与相关函数页回归在桌面和移动端共 18 项通过；新增专项覆盖动态箭头与文字同步、预测更改清除旧反馈、320px 键盘、文件直开与发布子路径。320px 截图人工检查了表格、箭头与预测区的可读性。
 - 首次完整门禁在交互证据索引处停下：SVG 内 `<title>` 被页面清单合并到网页标题，导致索引过期。改为 SVG `aria-label` 后清单标题恢复，补登分段与集合对应两组交互证据并重新生成索引；该失败运行不计为通过。
 - `CI=1 npm run check` 从头重跑完整通过：静态、课程映射与 OpenSpec 严格校验通过；浏览器功能矩阵 3022 项通过、8 项按配置跳过；开发站与发布包各 421 页加载通过，发布包关键流程 22 项通过，集合对应与分段专项在发布包桌面共 7 项通过。自动化未测真实设备、完整屏幕阅读器或学习者概念迁移。
+- 功能提交 `b0371d4ac7682a27295670400768d3d5c274cfa5` 的 [Actions 运行](https://github.com/houjibo/knowledge-visual/actions/runs/45173111836) 中核心、桌面／移动、汇总、构建、部署和部署后校验全部成功；公开 `release-version.json` 的 revision 与提交一致，`site_files_modified:false`。
+- 对公网运行集合对应专项：桌面／移动共 6 项实际交互通过，2 项仅适用于本地文件直开与本地发布子路径的场景按条件跳过。这只证明固定有限集合实验的线上行为，不证明一般定义域能力或完整课程掌握。

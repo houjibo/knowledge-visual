@@ -1,8 +1,9 @@
+# high-function-correspondence-lab Specification
+
 ## Purpose
+帮助高中学习者亲手构造有限数集之间的对应，比较漏配、一对多和合法多对一三种情况，理解函数要求定义域中每个输入恰有一个输出，并根据真正取到的函数值区分值域与陪域。
 
-帮助高中学习者用可构造的有限集合对应理解函数的每个输入恰有一个输出，并从实际输出区分值域与陪域。
-
-## ADDED Requirements
+## Requirements
 
 ### Requirement: 构造并判定有限集合对应
 函数概念页 SHALL 允许学习者编辑 A 中每个元素到 B 的箭头、预测是否为函数，并在核对后说明每个输入的对应数量。
