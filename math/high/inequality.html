@@ -42,6 +42,21 @@
   .mode-switch { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
   .mode-btn { padding: 6px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: 13px; color: #e2e8f0; }
   .mode-btn.active { background: var(--primary); border-color: var(--primary); }
+.mode-btn:focus-visible, .quiz-opt:focus-visible, .foundation-lab :focus-visible { outline: 3px solid #ffdb70; outline-offset: 3px; }
+.mode-btn, .quiz-opt { color: var(--light); font-family: inherit; text-align: left; }
+.foundation-lab { margin-top: 20px; background: rgba(15,23,42,0.75); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 18px; }
+.foundation-lab[hidden] { display: none; }
+.foundation-lab h2 { margin: 0 0 8px; font-size: 1.2rem; }
+.foundation-controls { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 12px 0; }
+.foundation-controls label { display: grid; gap: 4px; }
+.foundation-controls select { width: 100%; min-width: 0; font: inherit; padding: 8px; border-radius: 8px; color: #111827; }
+.foundation-lab fieldset { border: 1px solid #64748b; border-radius: 10px; display: flex; flex-wrap: wrap; gap: 12px; }
+.foundation-lab fieldset label { display: inline-flex; align-items: center; gap: 4px; }
+.foundation-lab button { font: inherit; color: white; border: 1px solid #a78bfa; border-radius: 8px; background: #6d28d9; padding: 8px 14px; cursor: pointer; margin-top: 12px; }
+.foundation-lab .feedback { padding: 10px; border-radius: 8px; background: #064e3b; margin-top: 10px; }
+.foundation-lab .feedback.error { background: #7c2d12; }
+.foundation-lab .feedback[hidden] { display: none; }
+@media (max-width: 600px) { .foundation-controls { grid-template-columns: 1fr; } }
   .quiz { margin-top: 14px; padding: 14px; background: rgba(139,92,246,0.08); border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); }
   .quiz-q { font-size: 14px; margin-bottom: 10px; }
   .quiz-opts { display: grid; gap: 6px; }
@@ -90,10 +105,28 @@
       <div id="panelContent"></div>
     </div>
   </div>
+  <section class="foundation-lab" id="foundation-lab" aria-labelledby="foundation-title">
+    <h2 id="foundation-title">先预测：等式与不等式怎样变？</h2>
+    <p>先选相等或大于的起点，再选同加或同乘。预测两边变换后的关系，核对数值和理由。固定整数帮助比较规则，不代替一般证明。</p>
+    <div class="foundation-controls">
+      <label for="foundation-start">原始关系<select id="foundation-start"><option value="greater">3 &gt; 1</option><option value="equal">2 = 2</option></select></label>
+      <label for="foundation-operation">两边同时<select id="foundation-operation"><option value="multiply">乘以 c</option><option value="add">加上 c</option></select></label>
+      <label for="foundation-c">c 的值<select id="foundation-c"><option value="-2">−2</option><option value="0">0</option><option value="2">2</option></select></label>
+    </div>
+    <p id="foundation-current"></p>
+    <fieldset><legend>预测：变换后左边与右边是什么关系？</legend>
+      <label><input type="radio" name="foundation-prediction" value="&lt;">左边 &lt; 右边</label>
+      <label><input type="radio" name="foundation-prediction" value="=">左边 = 右边</label>
+      <label><input type="radio" name="foundation-prediction" value="&gt;">左边 &gt; 右边</label>
+    </fieldset>
+    <button type="button" id="foundation-check">核对关系与理由</button>
+    <div id="foundation-feedback" class="feedback" role="status" hidden></div>
+  </section>
 </div>
 
 <footer>高中数学 · 不等式互动可视化 · 知识可视化项目</footer>
 
+<script src="assets/inequality-foundations-model.js"></script>
 <script>
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
@@ -105,8 +138,35 @@ let propIndex = 0;
 let quadA = 1, quadB = -2, quadC = -3;
 let amA = 3, amB = 5;
 let quizIndex = 0, quizScore = 0;
-let quizRounds = 0; // 已完成的完整轮次，用于满分判定
-const PASS_THRESHOLD = 8; // 满分通过才标记掌握
+let quizLocked = false;
+let roundMistakes = false;
+const foundationsModel = window.KVInequalityFoundationsModel;
+const foundationLab = document.getElementById('foundation-lab');
+const foundationFeedback = document.getElementById('foundation-feedback');
+
+function resetFoundationPrediction() {
+  foundationLab.querySelectorAll('input[name="foundation-prediction"]').forEach(input => { input.checked = false; });
+  foundationFeedback.hidden = true;
+  foundationFeedback.textContent = '';
+  const start = document.getElementById('foundation-start').value;
+  const operation = document.getElementById('foundation-operation').value;
+  const c = Number(document.getElementById('foundation-c').value);
+  const state = foundationsModel.evaluate(start, operation, c);
+  document.getElementById('foundation-current').textContent = `原式 ${state.a} ${state.before} ${state.b}；现在两边同${operation === 'add' ? '加' : '乘'} ${c}。`;
+}
+foundationLab.querySelectorAll('select').forEach(select => select.addEventListener('change', resetFoundationPrediction));
+foundationLab.querySelectorAll('input[name="foundation-prediction"]').forEach(input => {
+  input.addEventListener('change', () => { foundationFeedback.hidden = true; });
+});
+document.getElementById('foundation-check').addEventListener('click', () => {
+  const prediction = foundationLab.querySelector('input[name="foundation-prediction"]:checked')?.value || '';
+  const result = foundationsModel.check(document.getElementById('foundation-start').value,
+    document.getElementById('foundation-operation').value, Number(document.getElementById('foundation-c').value), prediction);
+  foundationFeedback.hidden = false;
+  foundationFeedback.classList.toggle('error', result.status !== 'correct');
+  foundationFeedback.textContent = result.feedback;
+});
+resetFoundationPrediction();
 
 /* ===== TABS ===== */
 document.querySelectorAll('.tab').forEach(tab => {
@@ -399,7 +459,7 @@ function updatePropertiesPanel() {
     <div class="equation">${p.formula}</div>
     <p style="font-size:14px;color:#cbd5e1;line-height:1.6">${p.desc}</p>
     <div class="mode-switch">
-      ${properties.map((pp, i) => `<div class="mode-btn ${i === propIndex ? 'active' : ''}" data-pidx="${i}">${pp.title}</div>`).join('')}
+      ${properties.map((pp, i) => `<button type="button" class="mode-btn ${i === propIndex ? 'active' : ''}" data-pidx="${i}" aria-pressed="${i === propIndex}">${pp.title}</button>`).join('')}
     </div>
     <div class="prop-card">
       <div class="prop-title">💡 观察画布</div>
@@ -512,6 +572,20 @@ function drawQuadratic() {
     }
     text('x₁=' + r1.toFixed(1), nr1, nlY - 15, C.boundary, 12);
     text('x₂=' + r2.toFixed(1), nr2, nlY - 15, C.boundary, 12);
+  } else if (info.type === 'empty' && quadA > 0) {
+    ctx.strokeStyle = C.solution; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(60, nlY); ctx.lineTo(660, nlY); ctx.stroke();
+    text('全体实数', 360, nlY - 15, C.solution, 13);
+  } else if (info.type === 'equal') {
+    const rootX = ox + info.roots[0] * sx;
+    if (quadA > 0) {
+      ctx.strokeStyle = C.solution; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(60, nlY); ctx.lineTo(rootX, nlY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(rootX, nlY); ctx.lineTo(660, nlY); ctx.stroke();
+    }
+    ctx.strokeStyle = C.boundary; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(rootX, nlY, 5, 0, Math.PI * 2); ctx.stroke();
+    text('x₀=' + info.roots[0].toFixed(1), rootX, nlY - 15, C.boundary, 12);
   }
 
   // 公式
@@ -524,52 +598,62 @@ function drawQuadratic() {
   text(`Δ = ${disc.toFixed(1)}`, 600, H - 30, disc > 0 ? C.am : C.boundary, 14);
 }
 
+function quadraticSolutionText() {
+  const info = getQuadraticRoots();
+  if (info.type === 'empty') {
+    return quadA > 0 ? 'ℝ（全体实数）' : '∅（空集）';
+  }
+  if (info.type === 'equal') {
+    return quadA > 0 ? `x ≠ ${info.roots[0].toFixed(2)}` : '∅（空集）';
+  }
+  const [r1, r2] = info.roots;
+  return quadA > 0
+    ? `x < ${r1.toFixed(2)} 或 x > ${r2.toFixed(2)}`
+    : `${r1.toFixed(2)} < x < ${r2.toFixed(2)}`;
+}
+
+function refreshQuadraticPanel() {
+  for (const id of ['slA', 'slB', 'slC']) {
+    document.getElementById(id).nextElementSibling.textContent = document.getElementById(id).value;
+  }
+  document.getElementById('quadratic-disc').textContent = (quadB * quadB - 4 * quadA * quadC).toFixed(1);
+  document.getElementById('quadratic-opening').textContent = quadA > 0 ? '向上 ↑' : '向下 ↓';
+  document.getElementById('quadratic-solution').textContent = quadraticSolutionText();
+}
+
 function updateQuadraticPanel() {
   document.getElementById('panelTitle').textContent = '📐 一元二次不等式';
-  const info = getQuadraticRoots();
-  const disc = quadB * quadB - 4 * quadA * quadC;
-  let solutionText = '';
-  if (info.type === 'empty') {
-    solutionText = quadA > 0 ? '解集为 ℝ（全体实数）' : '解集为 ∅（空集）';
-  } else if (info.type === 'equal') {
-    solutionText = `x ≠ ${info.roots[0].toFixed(2)}`;
-  } else {
-    const [r1, r2] = info.roots;
-    solutionText = quadA > 0
-      ? `x < ${r1.toFixed(2)} 或 x > ${r2.toFixed(2)}`
-      : `${r1.toFixed(2)} < x < ${r2.toFixed(2)}`;
-  }
-
   let html = `
     <div class="equation">ax² + bx + c > 0</div>
-    <div class="slider-row"><label>a =</label><input type="range" min="-3" max="3" step="0.5" value="${quadA}" id="slA"><span class="val">${quadA}</span></div>
-    <div class="slider-row"><label>b =</label><input type="range" min="-5" max="5" step="0.5" value="${quadB}" id="slB"><span class="val">${quadB}</span></div>
-    <div class="slider-row"><label>c =</label><input type="range" min="-5" max="5" step="0.5" value="${quadC}" id="slC"><span class="val">${quadC}</span></div>
+    <div class="slider-row"><label for="slA">a =</label><select id="slA" aria-label="二次项系数 a">${Array.from({length: 13}, (_, i) => (i - 6) * 0.5).filter(value => value !== 0).map(value => `<option value="${value}" ${quadA === value ? 'selected' : ''}>${value}</option>`).join('')}</select><span class="val">${quadA}</span></div>
+    <div class="slider-row"><label for="slB">b =</label><input type="range" min="-5" max="5" step="0.5" value="${quadB}" id="slB"><span class="val">${quadB}</span></div>
+    <div class="slider-row"><label for="slC">c =</label><input type="range" min="-5" max="5" step="0.5" value="${quadC}" id="slC"><span class="val">${quadC}</span></div>
     <div class="info-grid">
-      <div>判别式 Δ = <b>${disc.toFixed(1)}</b></div>
-      <div>开口 <b>${quadA > 0 ? '向上 ↑' : quadA < 0 ? '向下 ↓' : '—'}</b></div>
-      <div style="grid-column:1/3">解集: <b>${solutionText}</b></div>
+      <div>判别式 Δ = <b id="quadratic-disc"></b></div>
+      <div>开口 <b id="quadratic-opening"></b></div>
+      <div style="grid-column:1/3">解集: <b id="quadratic-solution"></b></div>
     </div>
     <div class="prop-card" style="margin-top:12px">
       <div class="prop-title">📖 解题步骤</div>
       <p style="font-size:13px;color:#94a3b8;line-height:1.6">
         1. 计算 Δ = b² - 4ac<br>
-        2. Δ > 0 → 两个实根 x₁, x₂<br>
-        3. a > 0 开口向上，> 0 取两边<br>
-        4. a < 0 开口向下，> 0 取中间
+        2. Δ &gt; 0 → 两个实根；开口向上取根外，向下取根间<br>
+        3. Δ = 0 → 唯一根处等于零；向上时除根外均满足，向下时无解<br>
+        4. Δ &lt; 0 → 无实根；向上时全体实数满足，向下时无解
       </p>
     </div>
   `;
   document.getElementById('panelContent').innerHTML = html;
+  refreshQuadraticPanel();
 
   ['slA', 'slB', 'slC'].forEach(id => {
     const el = document.getElementById(id);
-    el.addEventListener('input', () => {
+    el.addEventListener(id === 'slA' ? 'change' : 'input', () => {
       quadA = parseFloat(document.getElementById('slA').value);
       quadB = parseFloat(document.getElementById('slB').value);
       quadC = parseFloat(document.getElementById('slC').value);
-      if (quadA === 0) quadA = 0.5;
-      updateQuadraticPanel();
+      refreshQuadraticPanel();
+      drawQuadratic();
     });
   });
 }
@@ -654,10 +738,10 @@ function drawAMGM(t) {
   // 数值
   text(`AM = ${am.toFixed(2)}`, 160, cy - R - 30, C.am, 16);
   text(`GM = ${gm.toFixed(2)}`, 560, cy - R - 30, C.gm, 16);
-  text(`AM - GM = ${(am - gm).toFixed(3)}`, 360, cy + 145, am === gm ? '#10b981' : '#fbbf24', 15);
+  text(`AM - GM = ${(am - gm).toFixed(3)}`, 360, cy + 145, a === b ? '#10b981' : '#fbbf24', 15);
 
   // 等号条件提示
-  if (Math.abs(a - b) < 0.1) {
+  if (a === b) {
     text('✨ a = b 时等号成立！', cx, cy + 180, '#10b981', 18);
   }
 
@@ -683,20 +767,28 @@ function drawAMGM(t) {
   text(`正方形 (√ab)² = ${(a*b).toFixed(1)}`, 420 + gs / 2, barY + gs + 20, C.am, 12);
 }
 
-function updateAMGMPanel() {
-  document.getElementById('panelTitle').textContent = '🔵 均值不等式';
+function refreshAMGMPanel() {
   const am = (amA + amB) / 2;
   const gm = Math.sqrt(amA * amB);
+  document.getElementById('slA2').nextElementSibling.textContent = amA.toFixed(1);
+  document.getElementById('slB2').nextElementSibling.textContent = amB.toFixed(1);
+  document.getElementById('amgm-am').textContent = am.toFixed(3);
+  document.getElementById('amgm-gm').textContent = gm.toFixed(3);
+  document.getElementById('amgm-gap').textContent = (am - gm).toFixed(3);
+  document.getElementById('amgm-equality').textContent = amA === amB ? '✅ 成立' : '❌ a≠b';
+}
 
+function updateAMGMPanel() {
+  document.getElementById('panelTitle').textContent = '🔵 均值不等式';
   let html = `
-    <div class="equation">(a+b)/2 ≥ √(ab)</div>
-    <div class="slider-row"><label>a =</label><input type="range" min="0.5" max="8" step="0.1" value="${amA}" id="slA2"><span class="val">${amA.toFixed(1)}</span></div>
-    <div class="slider-row"><label>b =</label><input type="range" min="0.5" max="8" step="0.1" value="${amB}" id="slB2"><span class="val">${amB.toFixed(1)}</span></div>
+    <div class="equation">(a+b)/2 ≥ √(ab)（a,b ≥ 0）</div>
+    <div class="slider-row"><label for="slA2">a =</label><input type="range" min="0.5" max="8" step="0.1" value="${amA}" id="slA2"><span class="val">${amA.toFixed(1)}</span></div>
+    <div class="slider-row"><label for="slB2">b =</label><input type="range" min="0.5" max="8" step="0.1" value="${amB}" id="slB2"><span class="val">${amB.toFixed(1)}</span></div>
     <div class="info-grid">
-      <div>算术平均 AM = <b>${am.toFixed(3)}</b></div>
-      <div>几何平均 GM = <b>${gm.toFixed(3)}</b></div>
-      <div>AM - GM = <b>${(am - gm).toFixed(3)}</b></div>
-      <div>等号条件: <b>${Math.abs(amA - amB) < 0.1 ? '✅ 成立' : '❌ a≠b'}</b></div>
+      <div>算术平均 AM = <b id="amgm-am"></b></div>
+      <div>几何平均 GM = <b id="amgm-gm"></b></div>
+      <div>AM - GM = <b id="amgm-gap"></b></div>
+      <div>等号条件: <b id="amgm-equality"></b></div>
     </div>
     <div class="prop-card" style="margin-top:12px">
       <div class="prop-title">📐 几何直觉</div>
@@ -710,21 +802,22 @@ function updateAMGMPanel() {
     <div class="prop-card">
       <div class="prop-title">🎯 常用变形</div>
       <p style="font-size:13px;color:#94a3b8;line-height:1.6">
-        • a + b ≥ 2√(ab)（和 ≥ 积的函数）<br>
-        • ab ≤ (a+b)²/4（积 ≤ 和的函数）<br>
+        • a + b ≥ 2√(ab)（a,b ≥ 0）<br>
+        • ab ≤ (a+b)²/4（a,b ≥ 0）<br>
         • x + 1/x ≥ 2（x > 0 时）
       </p>
     </div>
   `;
   document.getElementById('panelContent').innerHTML = html;
+  refreshAMGMPanel();
 
   document.getElementById('slA2').addEventListener('input', (e) => {
     amA = parseFloat(e.target.value);
-    updateAMGMPanel();
+    refreshAMGMPanel();
   });
   document.getElementById('slB2').addEventListener('input', (e) => {
     amB = parseFloat(e.target.value);
-    updateAMGMPanel();
+    refreshAMGMPanel();
   });
 }
 
@@ -746,9 +839,9 @@ const quizzes = [
   },
   {
     q: '若 a > b > 0，下列哪个一定成立？',
-    opts: ['a² > b²', '1/a > 1/b', 'a + c > b + c（c < 0）', 'ac > bc'],
+    opts: ['a² > b²', '1/a > 1/b', 'a - c < b - c（c < 0）', 'ac > bc'],
     ans: 0,
-    explain: 'a > b > 0 → a² > b²（正数平方保序）。B 反了，C 对但不依赖条件，D 需 c > 0。'
+    explain: 'a > b > 0 → a² > b²（正数平方保序）。B 的倒数方向反了；C 的同减方向写反了；D 需 c > 0。'
   },
   {
     q: '函数 f(x) = x + 1/x (x > 0) 的最小值是？',
@@ -868,12 +961,12 @@ function updateQuizPanel() {
   let html = `
     <div class="equation" style="font-style:normal;font-family:inherit;font-size:14px;color:#cbd5e1">${q.q}</div>
     <div class="quiz-opts">
-      ${q.opts.map((opt, i) => `<div class="quiz-opt" data-qi="${i}">${String.fromCharCode(65 + i)}. ${opt}</div>`).join('')}
+      ${q.opts.map((opt, i) => `<button type="button" class="quiz-opt" data-qi="${i}" ${quizLocked ? 'disabled' : ''}>${String.fromCharCode(65 + i)}. ${opt}</button>`).join('')}
     </div>
-    <div class="quiz-feedback" id="quizFb"></div>
+    <div class="quiz-feedback" id="quizFb" role="status"></div>
     <div class="prop-card" style="margin-top:12px">
       <div class="prop-title">💡 提示</div>
-      <p style="font-size:13px;color:#94a3b8">点击选项或画布上的选项区域作答。答对自动进入下一题。</p>
+      <p style="font-size:13px;color:#94a3b8">点击选项或画布上的选项区域作答；键盘可聚焦按钮。答对自动进入下一题。本轮每题首次答对才记录完成。</p>
     </div>
   `;
   document.getElementById('panelContent').innerHTML = html;
@@ -887,9 +980,12 @@ function updateQuizPanel() {
 }
 
 function handleQuizAnswer(idx) {
+  if (currentMode !== 'quiz' || quizLocked) return;
+  quizLocked = true;
   const q = quizzes[quizIndex];
   const opts = document.querySelectorAll('.quiz-opt');
   const fb = document.getElementById('quizFb');
+  opts.forEach(opt => { opt.disabled = true; });
 
   if (idx === q.ans) {
     opts[idx].classList.add('correct');
@@ -901,20 +997,24 @@ function handleQuizAnswer(idx) {
       quizIndex = (quizIndex + 1) % quizzes.length;
       if (quizIndex === 0) {
         // 完成一轮：满分则标记掌握
-        if (isLastInRound && quizScore === PASS_THRESHOLD && typeof PageProgress !== 'undefined') {
+        if (isLastInRound && quizScore === quizzes.length && !roundMistakes && typeof PageProgress !== 'undefined') {
           PageProgress.markDone('inequality');
         }
         quizScore = 0;
+        roundMistakes = false;
       }
-      updateQuizPanel();
+      quizLocked = false;
+      if (currentMode === 'quiz') { updateQuizPanel(); drawQuiz(); }
     }, 2000);
   } else {
+    roundMistakes = true;
     opts[idx].classList.add('wrong');
     opts[q.ans].classList.add('correct');
     fb.textContent = '❌ 错误。' + q.explain;
     fb.style.color = '#ef4444';
     setTimeout(() => {
-      updateQuizPanel();
+      quizLocked = false;
+      if (currentMode === 'quiz') { updateQuizPanel(); drawQuiz(); }
     }, 3000);
   }
 }
@@ -949,6 +1049,7 @@ function updateLegend() {
 }
 
 function updatePanel() {
+  foundationLab.hidden = currentMode !== 'properties';
   updateLegend();
   switch (currentMode) {
     case 'properties': updatePropertiesPanel(); break;

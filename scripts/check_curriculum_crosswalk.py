@@ -163,6 +163,21 @@ def check_high_math_logic_baseline() -> None:
     assert all(row["source_locator"].endswith("印刷页16") for row in rows[3:]), path
 
 
+def check_high_math_equality_inequality_baseline() -> None:
+    """Keep the two independent HS25 equality/inequality source items stable."""
+    path = MAPS / "high-math-equality-inequality-hs25.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["id"] == "HS25-MATH-BAS-EQI" and data["baseline_status"] == "current", path
+    rows = data["requirements"]
+    assert len(rows) == 2, "HS25 equality/inequality unit has two source requirements"
+    assert [row["id"] for row in rows] == [f"HS25-MATH-BAS-EQI-{index:02d}" for index in (1, 2)], path
+    assert [row["module"] for row in rows] == [
+        "必修／预备知识／等式与不等式的性质", "必修／预备知识／基本不等式"
+    ], path
+    assert all(row["source_locator"].endswith("印刷页16") and row.get("course_requirement") == "mandatory"
+               for row in rows), path
+
+
 def check_equation_baseline(data: dict) -> None:
     """Preserve the source denominator and identify its single optional item."""
     assert data.get("id") == "CE25-MATH-L4-EQI"
@@ -187,6 +202,7 @@ def main() -> None:
     check_canonical_subsets()
     check_high_information_technology_baseline()
     check_high_math_logic_baseline()
+    check_high_math_equality_inequality_baseline()
     check_equation_baseline(json.loads((MAPS / "middle-math-equations-inequalities-ce25.json").read_text(encoding="utf-8")))
 
 

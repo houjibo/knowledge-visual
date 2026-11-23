@@ -24,6 +24,7 @@
 - [x] 2.1b3 为 CE25 互联网应用第（3）条新增[网页编辑与模拟发布局部证据](../../../docs/assessments/middle-webpage-publishing-2026-11-14.md)：字段、预览和快照可操作，内容要求 7 部分、12 缺失，16 个站内诊断点 7 部分、9 缺失；真实托管和公开发布继续待办，不能把模拟版本视为完整覆盖。
 - [ ] 2.1c 高中数学先取得并复核 HS25 原文，对照 HS20 条款变化，再按必修内容、学业质量与人教版 A 版现行逐册章目建立同格式试点。
 - [x] 2.1c1 从 HS25 原文拆解必修“集合”7 条内容要求，与 HS20 逐条比对，建立[当前版局部映射](../../../docs/plans/curriculum-crosswalks/high-math-sets-hs25.json)和[页面差距记录](../../../docs/assessments/high-math-sets-hs25-2026-11-14.md)。7 条均为部分；预备知识学业要求出现措辞变化，仍须另建映射；人教 A 版只核到必修第一册及第一章，完整小节和版次待核。
+- [x] 2.1c2 对照 HS25/HS20 必修“相等关系与不等关系”两条独立内容要求，建立[唯一局部映射](../../../docs/plans/curriculum-crosswalks/high-math-equality-inequality-hs25.json)及[页面核查](../../../docs/assessments/high-math-equality-inequality-hs25-2026-11-23.md)；两条均为部分，二次不等式与学业要求另计。基本不等式零边界与可构造最值仍待补。
 - [x] 2.1d 对照 HS25 信息科技公开原文镜像与 PEP 的 HS20 原文，建立[两必修模块 15 条编号要求](../../../docs/plans/curriculum-crosswalks/high-information-technology-hs25.json)及[来源与差距核查](../../../docs/assessments/high-information-technology-hs25-2026-11-15.md)：0 已验证、4 部分、11 缺失；[中图人教版必修两册](../../../docs/plans/pep-high-information-technology-books.md)有出版方章目和 ISBN。官方机构原文附件、纸书版月、学业要求、质量与选修仍待核，2.6 保持未完成。
 - [x] 2.1d1 按[独立数据工作台核查](../../../docs/assessments/high-data-workbench-2026-11-15.md)为 HS25 必修 1 的 1.1/1.2 增加局部可操作证据；该工作台发布时两必修模块仍以 15 条为分母，0 已验证、5 部分、10 缺失。真实采集、大数据、学业要求、质量与选修仍待 2.6 核对。
 - [x] 2.1d2 按[独立借阅信息系统核查](../../../docs/assessments/high-information-system-2026-11-15.md)为 HS25 必修 2 的 2.1、2.2、2.5、2.8 增加局部可操作证据；两必修模块仍以 15 条为分母，当前 0 已验证、9 部分、6 缺失。真实系统搭建、平台生态、网络与安全实践、学业要求、质量与选修继续待 2.6 核对。
