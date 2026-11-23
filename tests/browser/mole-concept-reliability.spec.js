@@ -3,18 +3,17 @@ const {test, expect} = require('@playwright/test');
 const url = '/chemistry/high/mole-concept.html';
 
 async function expectPainted(page, selector) {
-  const result = await page.locator(selector).evaluate(canvas => {
+  await expect.poll(() => page.locator(selector).evaluate(canvas => {
     const rect = canvas.getBoundingClientRect();
-    const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
     let painted = false;
-    for (let i = 3; i < pixels.length; i += 4) {
-      if (pixels[i] !== 0) { painted = true; break; }
+    if (canvas.width > 0 && canvas.height > 0) {
+      const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+      for (let i = 3; i < pixels.length; i += 4) {
+        if (pixels[i] !== 0) { painted = true; break; }
+      }
     }
-    return {displayWidth: rect.width, width: canvas.width, painted};
-  });
-  expect(result.displayWidth).toBeGreaterThan(0);
-  expect(result.width).toBeGreaterThan(0);
-  expect(result.painted).toBe(true);
+    return {visible: rect.width > 0, sized: canvas.width > 0, painted};
+  }), {timeout: 5000}).toEqual({visible: true, sized: true, painted: true});
 }
 
 test('探究模式画布绘制、切换 tab 无脚本错误', async ({page}) => {

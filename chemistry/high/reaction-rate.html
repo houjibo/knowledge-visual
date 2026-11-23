@@ -17,6 +17,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .tab { padding: 10px 20px; border: 1px solid #444; border-radius: 20px; cursor: pointer; transition: all 0.3s; font-size: 0.9em; }
 .tab:hover { border-color: #4a90d9; }
 .tab.active { background: linear-gradient(135deg, #4a90d9, #6b5ce7); border-color: transparent; color: white; }
+.tab:focus-visible, .quiz-opt:focus-visible { outline: 3px solid #ffd93d; outline-offset: 3px; }
 
 .section { display: none; padding: 20px; max-width: 900px; margin: 0 auto; }
 .section.active { display: block; }
@@ -92,6 +93,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 .formula { font-family: 'Times New Roman', serif; font-style: italic; color: #ccc; }
 .highlight { color: #ff6b6b; font-weight: bold; }
+.model-note { margin-top: 10px; color: #bfc8e8; font-size: 0.85em; line-height: 1.6; }
+.quiz-opts { display: grid; gap: 10px; margin-top: 14px; }
+.quiz-opt { width: 100%; padding: 12px 14px; border: 1px solid #606b92; border-radius: 8px; background: #202647; color: #fff; font: inherit; text-align: left; cursor: pointer; }
+.quiz-opt:hover:not(:disabled) { border-color: #ffd93d; }
+.quiz-opt.correct { border-color: #6bcb77; background: #173b32; }
+.quiz-opt.wrong { border-color: #ff6b6b; background: #4c2633; }
+.quiz-opt:disabled { cursor: default; opacity: 1; }
+.quiz-result { margin-top: 12px; min-height: 1.5em; line-height: 1.5; }
+#quizNextBtn { cursor: pointer; }
+#quizNextBtn:disabled { cursor: not-allowed; opacity: 0.45; }
 </style>
 </head>
 <body>
@@ -101,21 +112,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <p>高中化学 · 反应原理 | 互动可视化</p>
 </div>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab(0)">① 反应速率</div>
-  <div class="tab" onclick="switchTab(1)">② 影响因素</div>
-  <div class="tab" onclick="switchTab(2)">③ 化学平衡</div>
-  <div class="tab" onclick="switchTab(3)">④ 勒夏特列原理</div>
-  <div class="tab" onclick="switchTab(4)">⑤ 随堂测验</div>
-</div>
+<nav class="tabs" aria-label="化学反应速率与平衡主题">
+  <button type="button" class="tab active" aria-pressed="true" onclick="switchTab(0)">① 反应速率</button>
+  <button type="button" class="tab" aria-pressed="false" onclick="switchTab(1)">② 影响因素</button>
+  <button type="button" class="tab" aria-pressed="false" onclick="switchTab(2)">③ 化学平衡</button>
+  <button type="button" class="tab" aria-pressed="false" onclick="switchTab(3)">④ 勒夏特列原理</button>
+  <button type="button" class="tab" aria-pressed="false" onclick="switchTab(4)">⑤ 随堂测验</button>
+</nav>
 
 <!-- Section 1: Reaction Rate Animation -->
 <div class="section active" id="sec0">
   <div class="card">
     <h3>🔬 反应速率可视化</h3>
     <p style="font-size:0.85em;color:#aaa;margin-bottom:12px;">
-      观察反应物分子如何转化为生成物。反应速率 = Δc/Δt，单位 mol/(L·s)。
-      <br>公式：<span class="formula">v = -Δ[A]/Δt = Δ[B]/Δt</span>
+      观察粒子从 A 转化为 B。若反应为 A → B（1:1）、体积恒定且无显著中间体积累，平均反应速率可写为
+      <span class="formula">v = -Δ[A]/Δt = Δ[B]/Δt</span>。
+      对 aA → bB，应按化学计量数换算：<span class="formula">v = -Δ[A]/(aΔt) = Δ[B]/(bΔt)</span>。
+      浓度用 mol/L、时间用 s 时，常用单位为 mol/(L·s)。
     </p>
     <div class="rate-canvas-wrap">
       <canvas id="rateCanvas"></canvas>
@@ -124,12 +137,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn btn-primary" onclick="startRate()">▶ 开始反应</button>
       <button class="btn btn-danger" onclick="resetRate()">⟲ 重置</button>
       <div class="slider-group">
-        <label>温度:</label>
+        <label for="tempSlider">温度档位:</label>
         <input type="range" id="tempSlider" min="1" max="10" value="5" oninput="updateRateParams()">
         <span class="val" id="tempVal">5</span>
       </div>
       <div class="slider-group">
-        <label>浓度:</label>
+        <label for="concSlider">浓度档位:</label>
         <input type="range" id="concSlider" min="1" max="10" value="5" oninput="updateRateParams()">
         <span class="val" id="concVal">5</span>
       </div>
@@ -137,9 +150,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="rate-info">
       <div class="rate-box"><div class="label">反应物 A</div><div class="value" id="reactantCount">30</div></div>
       <div class="rate-box"><div class="label">生成物 B</div><div class="value" id="productCount">0</div></div>
-      <div class="rate-box"><div class="label">反应速率 v</div><div class="value" id="rateValue">0.00</div></div>
+      <div class="rate-box"><div class="label">模型转化倾向指数</div><div class="value" id="rateValue">0.00</div></div>
       <div class="rate-box"><div class="label">已转化</div><div class="value" id="conversionRate">0%</div></div>
     </div>
+    <p class="model-note">粒子数与两个滑块均为示意量。无量纲指数 = 剩余 A 粒子数 × 温度档位/5 × 浓度档位/5 × 0.01；它只用于比较模型趋势，不是实测温度、浓度、每秒转化率或化学反应速率。</p>
   </div>
 </div>
 
@@ -153,10 +167,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="factor-grid">
       <div class="factor-card">
         <h4>🌡️ 温度</h4>
-        <p>温度升高 → 分子运动加快 → 有效碰撞增多 → 速率增大<br>每升高10°C，速率约增大2~4倍</p>
+        <p>多数反应升温时速率增大；具体变化取决于反应和条件，不能把每升高 10°C 的固定倍数当作普遍规律。下方滑块只表示模型档位。</p>
         <canvas class="factor-canvas" id="factorTemp"></canvas>
         <div class="slider-group" style="margin-top:8px;">
-          <label>T:</label>
+          <label for="fTempSlider">温度档位:</label>
           <input type="range" id="fTempSlider" min="1" max="10" value="3" oninput="drawFactorTemp()">
           <span class="val" id="fTempVal">3</span>
         </div>
@@ -166,14 +180,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <p>浓度增大 → 单位体积分子数增多 → 碰撞频率增大 → 速率增大</p>
         <canvas class="factor-canvas" id="factorConc"></canvas>
         <div class="slider-group" style="margin-top:8px;">
-          <label>c:</label>
+          <label for="fConcSlider">浓度档位:</label>
           <input type="range" id="fConcSlider" min="1" max="10" value="3" oninput="drawFactorConc()">
           <span class="val" id="fConcVal">3</span>
         </div>
       </div>
       <div class="factor-card">
         <h4>🧪 催化剂</h4>
-        <p>降低活化能 → 更多分子达到反应能量 → 速率显著增大<br>催化剂不参与反应，反应前后质量不变</p>
+        <p>催化剂提供活化能较低的反应路径，通常使反应加快；它可参与反应步骤，并在催化循环中再生。催化剂通常不改变平衡位置。</p>
         <canvas class="factor-canvas" id="factorCat"></canvas>
         <div class="controls" style="margin-top:8px;">
           <button class="btn btn-success" onclick="toggleCatalyst()">切换催化剂</button>
@@ -185,7 +199,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <p>固体颗粒越小 → 表面积越大 → 接触越充分 → 速率越大</p>
         <canvas class="factor-canvas" id="factorArea"></canvas>
         <div class="slider-group" style="margin-top:8px;">
-          <label>粒度:</label>
+          <label for="fAreaSlider">粒度档位:</label>
           <input type="range" id="fAreaSlider" min="1" max="5" value="3" oninput="drawFactorArea()">
           <span class="val" id="fAreaVal">中</span>
         </div>
@@ -256,9 +270,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="quiz" id="rateQuiz">
       <div class="quiz-q" id="quizQ"></div>
       <div class="quiz-opts" id="quizOpts"></div>
-      <div class="quiz-result" id="quizResult"></div>
+      <div class="quiz-result" id="quizResult" aria-live="polite"></div>
       <div style="display:flex;gap:8px;margin-top:12px;justify-content:center;">
-        <button onclick="quizNext()" id="quizNextBtn" style="padding:8px 20px;border-radius:8px;border:none;cursor:pointer;background:var(--primary,#3b82f6);color:#fff;">下一题 →</button>
+        <button onclick="quizNext()" id="quizNextBtn" style="padding:8px 20px;border-radius:8px;border:none;background:var(--primary,#3b82f6);color:#fff;">下一题 →</button>
         <button onclick="quizRestart()" style="padding:8px 20px;border-radius:8px;border:1px solid #666;cursor:pointer;background:transparent;color:#ccc;">⟲ 重测</button>
       </div>
     </div>
@@ -298,7 +312,10 @@ function activeSectionIndex() {
 }
 
 function switchTab(idx) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', i===idx);
+    t.setAttribute('aria-pressed', String(i===idx));
+  });
   document.querySelectorAll('.section').forEach((s,i) => s.classList.toggle('active', i===idx));
   renderSectionCanvases(idx);
 }
@@ -343,6 +360,7 @@ function updateRateParams() {
   document.getElementById('concVal').textContent = c;
   rateSpeed = t / 5;
   rateConc = c / 5;
+  updateRateInfo();
 }
 
 function startRate() {
@@ -1040,7 +1058,7 @@ function drawLechat() {
 
 // ============ Quiz Mode ============
 const QUIZ_BANK = [
-  { q: '反应速率的国际单位是？', opts: ['mol/(L·s)', 'mol/L', 's/mol', 'L/(mol·s)'], correct: 0 },
+  { q: '若浓度以 mol/L、时间以秒表示，反应速率的常用单位是？', opts: ['mol/(L·s)', 'mol/L', 's/mol', 'L/(mol·s)'], correct: 0 },
   { q: '升高温度时，反应速率通常如何变化？', opts: ['不变', '减慢', '加快', '先快后慢'], correct: 2 },
   { q: '催化剂的作用是？', opts: ['改变平衡位置', '降低活化能', '增加反应物浓度', '放出热量'], correct: 1 },
   { q: '对已达平衡的反应 A⇌B，加入更多 A，平衡会？', opts: ['向左移动', '不移动', '向右移动', '无法判断'], correct: 2 },
@@ -1051,15 +1069,16 @@ function quizRender() {
   const q = QUIZ_BANK[quizIdx];
   document.getElementById('quizQ').innerHTML = `<b>第 ${quizIdx+1}/4 题：</b>${q.q}`;
   document.getElementById('quizOpts').innerHTML = q.opts.map((o,i)=>
-    `<div class="quiz-opt" onclick="quizAnswer(${i})">${String.fromCharCode(65+i)}. ${o}</div>`).join('');
+    `<button type="button" class="quiz-opt" onclick="quizAnswer(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('');
   document.getElementById('quizResult').className = 'quiz-result';
+  document.getElementById('quizResult').textContent = '';
   document.getElementById('quizNextBtn').disabled = true;
 }
 function quizAnswer(i) {
   const q = QUIZ_BANK[quizIdx];
   const opts = document.querySelectorAll('#quizOpts .quiz-opt');
   opts.forEach((el,j)=>{
-    el.style.pointerEvents='none';
+    el.disabled = true;
     if (j===q.correct) el.classList.add('correct');
     else if (j===i) el.classList.add('wrong');
   });
@@ -1080,10 +1099,7 @@ function quizNext() {
     let msg = `得分：<b>${quizScore}/4</b> — ${pass?'✅ 合格！':'📚 再复习一下吧'}`;
     // 进度追踪（r100）：合格即点亮知识地图
     if (pass && typeof PageProgress !== 'undefined') {
-      if (!PageProgress.isDone('reaction-rate')) {
-        PageProgress.markDone('reaction-rate');
-        msg += ' 已记录完成 ✓';
-      }
+      msg += PageProgress.markDone('reaction-rate') ? ' 已记录完成 ✓' : ' 进度未保存，请稍后重测重试';
     }
     r.innerHTML = msg;
     document.getElementById('quizNextBtn').disabled = true;
