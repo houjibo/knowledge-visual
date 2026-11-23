@@ -33,4 +33,7 @@
 - 桌面／移动新增专项 6 项通过，覆盖 `w=0` 排除、`w=2` 前档、`w=2.01` 后档、`t=2` 连续、320px 键盘、文件直开和发布子路径；浏览器像素验证寄件图的 `(2,5)` 实心与 `(2,8)` 空心。相关函数页回归 28 项通过。
 - 首次全量运行触发既有函数图像测试的模糊标签冲突：新增标题“分段函数：”被 `getByLabel('函数：')` 一并匹配。把标题改为“分段函数 ·”后新旧专项通过，并从头重跑全量；没有将中断运行记为通过。
 - `CI=1 npm run check` 最终完整通过：静态与 OpenSpec 严格校验通过；浏览器功能矩阵 3014 项通过、8 项按配置跳过；开发站和发布包各 421 页加载通过，发布包关键流程 22 项通过，新增分段专项发布包桌面 3 项通过。
-- 功能提交、Actions、公开 revision 与公网专项结果待推送后补录；本地通过不等于公网通过。
+- 功能提交 `222c245873d7761dcc17752fcfd268b840101520` 的 [Actions 运行](https://github.com/houjibo/knowledge-visual/actions/runs/45162909967) 中 core、桌面／移动、汇总、构建、部署和部署后校验全部成功。公开 `release-version.json` revision 与该提交一致，`site_files_modified:false`；公开[函数页](https://houjibo.github.io/knowledge-visual/math/high/function.html)和模型资源均返回 HTTP 200。
+- 对公网运行新增桌面／移动专项：4 项实际交互通过，2 项仅适用于文件直开与本地发布子路径的场景按条件跳过。此结果只证明这两个固定情境的上线行为，未验证自主建模或完整课程掌握。
+
+行为契约见[归档的 OpenSpec 变更](../../openspec/changes/archive/2026-11-23-high-function-piecewise-situations/proposal.md)。
