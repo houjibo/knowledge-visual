@@ -16,4 +16,6 @@
 - 原画布专项 `reaction-rate-canvas-visibility.spec.js` 同跑，验证改动没有使已修复的八张画布失效。
 - 首次全量浏览器矩阵 2,951 项通过、8 项按配置跳过，另有 1 项无关页面“振动与波”在首次动画帧前检查像素失败。第一次复跑中振动页通过，但同类“热学”测试偶发相同失败。两测试原先仅等画布可见即同步读像素；现对同模板的 11 个高中物理/化学画布测试及振动页改为有界轮询可见尺寸与非透明像素，永久空白仍会失败。热学与振动页移动端各重复 20 轮、共 200 项通过；完整门禁复跑以最终日志为准。
 - 最终 `CI=1 npm run check` 退出码为 0：静态与 OpenSpec 门禁通过，浏览器交互 2,952 项通过、8 项按配置跳过；421 个本地页面冒烟和 421 个发布包页面加载均通过。窄屏 `file://` 截图人工核对速率与测验页；测验未作答时“下一题”呈禁用外观。
+- 实现提交 `5a0b0ab25a0d067c7939521637d3005bd29c665c` 已推送；[Actions run 45096772288](https://github.com/houjibo/knowledge-visual/actions/runs/45096772288) 的核心、桌面/移动交互、构建、部署与部署后核验均成功。公开 `release-version.json` revision 与提交一致；[反应速率页](https://houjibo.github.io/knowledge-visual/chemistry/high/reaction-rate.html)及 `common.css`、`common.js` 均返回 HTTP 200。公开站点 1280px 和 320px Chromium 键盘完成四题、写入进度、无横向溢出且无脚本异常。
+- [OpenSpec 变更](../../openspec/changes/archive/2026-11-23-chemistry-reaction-rate-concept-access/proposal.md)已归档；当前行为契约见[主规格](../../openspec/specs/chemistry-reaction-rate-concept-access/spec.md)。
 - 本次仍未审计平衡及勒夏特列数值模型的定量准确性，也未进行真实设备和屏幕阅读器人工测试；不能据此宣称整页或高中化学课程完全验收。
