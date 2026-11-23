@@ -18,4 +18,6 @@
 - `tests/reaction-equilibrium-model.test.js` 核三个起点的守恒和解析速率关系、六类扰动方向、Q/K≈1、连续 120 步的氮氢守恒与非负份额。
 - `tests/browser/reaction-equilibrium-model.spec.js` 在桌面/移动核三个起点、正逆读数和状态、六类扰动、连续操作、重置、320px 键盘、`file://` 及发布子路径。原画布与速率概念专项共 10 项复跑通过。320px 两段截图已人工检查。
 - `CI=1 npm run check` 全量退出码 0：静态与 OpenSpec 门禁、2,958 项浏览器交互通过（8 项按配置跳过），421 个本地页面冒烟和 421 个发布包页面加载通过。新模型脚本已进入发布包白名单检查。
+- 实现提交 `019100ea45741c746e7f7b2a022a2fd2b53b4773` 已推送；[Actions run 45104909533](https://github.com/houjibo/knowledge-visual/actions/runs/45104909533) 的核心、双端、构建、部署与部署后核验均成功。公开 revision 与提交一致；[页面](https://houjibo.github.io/knowledge-visual/chemistry/high/reaction-rate.html)及新模型脚本均返回 HTTP 200。公网专项桌面/移动 4 项通过，2 项文件直开与本地子路径检查按条件跳过（已在本地通过）。
+- [OpenSpec 变更](../../openspec/changes/archive/2026-11-23-chemistry-equilibrium-model-consistency/proposal.md)已归档，当前契约见[主规格](../../openspec/specs/chemistry-equilibrium-model-consistency/spec.md)。
 - 尚未验证真实气体活度、实际温度对应的 K、合成氨反应动力学、工业催化条件或真实设备与屏幕阅读器体验；不能将本次有限模型算作完整课程覆盖。
