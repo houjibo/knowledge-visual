@@ -28,4 +28,6 @@
 - `node tests/quadratic-function-link-model.test.js`：覆盖六类判别式／开口组合、情境、分数与根式、`0.25` 判别式、非法系数和漏答。
 - 新旧不等式专项桌面／移动 22 项通过，覆盖先预测再核对、错答、面积列式、320px、键盘、文件直开和发布子路径；新增专项单独重跑 6 项通过。
 - `CI=1 npm run check` 全量通过：静态检查与 OpenSpec 严格校验通过；浏览器功能矩阵 3008 项通过、8 项按配置跳过；开发站与发布包各 421 页加载通过，发布包关键流程 22 项通过，新增专项发布包桌面 3 项通过。
-- 功能提交、GitHub Actions、公开 revision 与公网专项结果待推送后补录；本地通过不等于公网通过。
+- 功能提交 `ee4420d148d0fa6481c0d64f9d68988f8d7d4967` 的 [首轮 Actions](https://github.com/houjibo/knowledge-visual/actions/runs/45147564602) 中 core 与移动成功，桌面有一项既有化学反应平衡测试失败，部署被跳过。失败是测试在动画继续运行时期待“从纯 B 开始”的初始 A 份额始终为 `0.000`，CI 实测推进到 `0.281`；不是本轮数学模型的断言失败。
+- 测试在断言初始状态前冻结虚拟时钟，与同文件已用的时钟控制一致。`CI=1 npx playwright test tests/browser/reaction-equilibrium-model.spec.js --project=desktop --repeat-each=3`：9 项通过。修复提交 `2198776f985302d5b2e59b3a6cf93ff6f77e6c5d` 的 [第二轮 Actions](https://github.com/houjibo/knowledge-visual/actions/runs/45150073673) 显示 core、桌面／移动、汇总、构建、部署及部署后验证全部成功。
+- 公开 `release-version.json` revision 为 `2198776f985302d5b2e59b3a6cf93ff6f77e6c5d`，`site_files_modified:false`；公开[不等式页](https://houjibo.github.io/knowledge-visual/math/high/inequality.html)和新模型资源返回 HTTP 200。对公网运行新旧不等式桌面／移动专项：18 项交互通过，4 项仅用于本地文件／发布子路径的场景按条件跳过。
